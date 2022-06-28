@@ -1,20 +1,16 @@
 <script lang="ts">
     import Home from "./Home.svelte";
-    import type { IdentityController } from "../../fsm/identity.controller";
-    import { getContext } from "svelte";
+    import { currentUserStore } from "../../stores/chat";
+    import { apiStore } from "../../stores/api";
 
-    let controller: IdentityController = getContext("identityController");
-
+    export let logout: () => void;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
         messageIndex: undefined,
     };
 
-    function logout() {
-        controller.logout();
-    }
+    $: user = $currentUserStore!;
+    $: api = $apiStore!;
 </script>
 
-{#if controller.homeController !== undefined}
-    <Home controller={controller.homeController} {params} on:logout={logout} />
-{/if}
+<Home {user} {api} {params} {logout} on:logout />

@@ -27,10 +27,8 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
-    isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
-    updatePollVotes,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
@@ -38,6 +36,7 @@ import {
     toggleReaction,
     userIdsFromEvents,
     indexIsInRanges,
+    updateEventPollContent,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -46,7 +45,6 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
-import type { IMessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -57,6 +55,8 @@ import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { replace } from "svelte-spa-router";
+import { messagesRead } from "../stores/markRead";
+import { isPreviewing } from "../domain/chat/chat.utils.shared";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -90,7 +90,6 @@ export class ChatController {
         public api: ServiceContainer,
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
-        public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
@@ -152,7 +151,7 @@ export class ChatController {
     get unreadMessageCount(): number {
         if (isPreviewing(this.chatVal)) return 0;
 
-        return this.markRead.unreadMessageCount(
+        return messagesRead.unreadMessageCount(
             this.chatId,
             this.minVisibleMessageIndex,
             this.chatVal.latestMessage?.event.messageIndex
@@ -228,42 +227,20 @@ export class ChatController {
      * In order to get the UI to update immediately, we want to find the poll message that we are referring to,
      * and update it to reflect the user's vote
      */
-    private updatePollContent(
+    private findAndUpdatePollContent(
         messageIndex: number,
         answerIndex: number,
         type: "register" | "delete"
     ): void {
         this.events.update((events) => {
-            return events.map((evt) => {
-                if (
-                    evt.event.kind === "message" &&
-                    evt.event.messageIndex === messageIndex &&
-                    evt.event.content.kind === "poll_content"
-                ) {
-                    console.log("Updated poll: ", evt.event.content);
-                    return {
-                        ...evt,
-                        event: {
-                            ...evt.event,
-                            content: {
-                                ...evt.event.content,
-                                votes: updatePollVotes(
-                                    this.user.userId,
-                                    evt.event.content,
-                                    answerIndex,
-                                    type
-                                ),
-                            },
-                        },
-                    };
-                }
-                return evt;
-            });
+            return events.map((evt) =>
+                updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
+            );
         });
     }
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
-        this.updatePollContent(messageIndex, answerIndex, type);
+        this.findAndUpdatePollContent(messageIndex, answerIndex, type);
         const promise =
             this.chatVal.kind === "group_chat"
                 ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
@@ -381,7 +358,6 @@ export class ChatController {
             replaceLocal(
                 this.user.userId,
                 this.chatId,
-                this.markRead,
                 chat.readByMe,
                 keepCurrentEvents ? events : [],
                 resp.events
@@ -581,7 +557,7 @@ export class ChatController {
                 userId: this.user.userId,
             });
             // mark our own messages as read manually since we will not be observing them
-            this.markRead.markMessageRead(
+            messagesRead.markMessageRead(
                 this.chatId,
                 messageEvent.event.messageIndex,
                 messageEvent.event.messageId
@@ -695,7 +671,7 @@ export class ChatController {
             });
         }
         unconfirmed.delete(this.chatId, messageId);
-        this.markRead.removeUnconfirmedMessage(this.chatId, messageId);
+        messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
         this.events.update((events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
@@ -813,7 +789,7 @@ export class ChatController {
     markAllRead(): void {
         const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
         if (latestMessageIndex) {
-            this.markRead.markRangeRead(
+            messagesRead.markRangeRead(
                 this.chatId,
                 getMinVisibleMessageIndex(this.chatVal),
                 latestMessageIndex
@@ -868,7 +844,7 @@ export class ChatController {
 
     confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
-            this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
+            messagesRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
                 event: this.mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
@@ -914,7 +890,7 @@ export class ChatController {
     }
 
     isRead(messageIndex: number, messageId: bigint): boolean {
-        return this.markRead.isRead(this.chatId, messageIndex, messageId);
+        return messagesRead.isRead(this.chatId, messageIndex, messageId);
     }
 
     setFocusMessageIndex(idx: number): void {
@@ -1219,7 +1195,7 @@ export class ChatController {
     }
 
     messageRead(messageIndex: number, messageId: bigint): void {
-        this.markRead.markMessageRead(this.chatId, messageIndex, messageId);
+        messagesRead.markMessageRead(this.chatId, messageIndex, messageId);
 
         const rtc: WebRtcMessage = {
             kind: "remote_user_read_message",

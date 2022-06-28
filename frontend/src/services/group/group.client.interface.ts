@@ -34,7 +34,10 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IGroupClient {
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>>;
+    chatEventsByIndex(
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
@@ -44,6 +47,7 @@ export interface IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(
@@ -54,15 +58,23 @@ export interface IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
-    editMessage(message: Message): Promise<EditMessageResponse>;
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse>;
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse>;
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;
@@ -76,7 +88,8 @@ export interface IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse>;
     getInviteCode(): Promise<InviteCodeResponse>;

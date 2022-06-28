@@ -11,7 +11,7 @@
     import { getContext } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../fsm/home.controller";
+    import { currentUserKey } from "../../../stores/user";
     import { formatTokens } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";

@@ -5,20 +5,20 @@
         GroupSearchResponse,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
-    import type { UserSummary } from "../../domain/user/user";
-    import type { HomeController } from "../../fsm/home.controller";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { unsubscribeNotifications } from "../../utils/notifications";
+    import type { ServiceContainer } from "../../services/serviceContainer";
 
-    export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
+    export let api: ServiceContainer;
+    export let user: CreatedUser;
 
-    $: api = controller.api;
-    $: userId = controller.user!.userId;
+    $: userId = user.userId;
 
     // TODO - this component doesn't do anything now. We could remove it but it might be a useful abstraction
 </script>
@@ -39,13 +39,13 @@
             on:logout
             on:searchEntered
             on:deleteDirectChat
+            createdUser={user}
             {searchResultsAvailable}
             {searchTerm}
             {searching}
             {groupSearchResults}
             {userSearchResults}
-            {messageSearchResults}
-            {controller} />
+            {messageSearchResults} />
     </div>
 </Panel>
 

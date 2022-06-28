@@ -57,7 +57,8 @@ import {
     publicProfileResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, MAX_EVENTS, mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -81,7 +82,6 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import type { IMessageReadTracker } from "../../stores/markRead";
 import { base64ToBigint } from "../../utils/base64";
 import type { GroupInvite } from "../../services/serviceContainer";
 
@@ -130,11 +130,11 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const thread_root_message_index: [] = [];
         const args = {
-            thread_root_message_index,
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
             events: eventIndexes,
         };
@@ -172,12 +172,12 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
-            const thread_root_message_index: [] = [];
             const args = {
-                thread_root_message_index,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 user_id: Principal.fromText(userId),
                 max_events: MAX_EVENTS,
                 start_index: index,
@@ -195,10 +195,7 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    async getInitialState(
-        _: IMessageReadTracker,
-        _selectedChatId?: string
-    ): Promise<MergedUpdatesResponse> {
+    async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({}),
             initialStateResponse
@@ -218,7 +215,6 @@ export class UserClient extends CandidService implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        _: IMessageReadTracker,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
         const updatesResponse = await this.handleQueryResponse(
@@ -286,15 +282,18 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        const thread_root_message_index: [] = [];
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
             .then((content) => {
                 const req = {
                     content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
-                    thread_root_message_index,
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     message_id: message.messageId,
                 };
                 return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
@@ -306,29 +305,29 @@ export class UserClient extends CandidService implements IUserClient {
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         const dataClient = DataClient.create(this.identity);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.userId, recipientId])
             : dataClient.uploadData(message.content, [this.userId, recipientId]);
 
-        return uploadContentPromise
-            .then((content) => {
-                const req: ApiSendMessageArgs = {
-                    content: apiMessageContent(content ?? message.content),
-                    recipient: Principal.fromText(recipientId),
-                    sender_name: sender.username,
-                    message_id: message.messageId,
-                    replies_to: apiOptional(
-                        (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
-                        message.repliesTo
-                    ),
-                    forwarding: message.forwarded,
-                    thread_root_message_index: [],
-                };
-                return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
-            });
+        return uploadContentPromise.then((content) => {
+            const req: ApiSendMessageArgs = {
+                content: apiMessageContent(content ?? message.content),
+                recipient: Principal.fromText(recipientId),
+                sender_name: sender.username,
+                message_id: message.messageId,
+                replies_to: apiOptional(
+                    (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
+                    message.repliesTo
+                ),
+                forwarding: message.forwarded,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            };
+            return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+        });
     }
 
     @profile("userClient")
@@ -419,12 +418,13 @@ export class UserClient extends CandidService implements IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.userService.toggle_reaction({
                 user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
             }),
@@ -433,11 +433,15 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.userService.delete_messages({
                 user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
             }),
             deleteMessageResponse
@@ -547,12 +551,13 @@ export class UserClient extends CandidService implements IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.userService.register_poll_vote({
                 user_id: Principal.fromText(otherUser),
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,

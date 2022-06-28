@@ -18,7 +18,7 @@
     import type { CreatedUser } from "../../domain/user/user";
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { formatTokens } from "../../utils/cryptoFormatter";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";

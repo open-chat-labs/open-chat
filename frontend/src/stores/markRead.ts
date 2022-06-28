@@ -1,5 +1,6 @@
 import DRange from "drange";
-import { Subscriber, Unsubscriber, writable } from "svelte/store";
+import type { ServiceContainer } from "../services/serviceContainer";
+import type { Subscriber, Unsubscriber } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";
@@ -12,34 +13,13 @@ export interface MarkMessagesRead {
 
 type MessageRangesByChat = Record<string, DRange>;
 
-export interface IMessageReadTracker {
-    markRangeRead: (chatId: string, from: number, to: number) => void;
-    markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
-    confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
-    removeUnconfirmedMessage: (chatId: string, messageId: bigint) => boolean;
-    syncWithServer: (chatId: string, ranges: DRange) => void;
-    unreadMessageCount: (
-        chatId: string,
-        firstMessageIndex: number,
-        latestMessageIndex: number | undefined
-    ) => number;
-    getFirstUnreadMessageIndex: (
-        chatId: string,
-        firstMessageIndex: number,
-        latestMessageIndex: number | undefined
-    ) => number | undefined;
-    isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
-    stop: () => void;
-    subscribe(sub: Subscriber<MessageReadState>): Unsubscriber;
-}
-
 export type MessageReadState = {
     serverState: MessageRangesByChat;
     waiting: Record<string, Map<bigint, number>>;
     state: MessageRangesByChat;
 };
 
-export class MessageReadTracker implements IMessageReadTracker {
+export class MessageReadTracker {
     private interval: number | undefined;
     public serverState: MessageRangesByChat = {};
     public waiting: Record<string, Map<bigint, number>> = {}; // The map is messageId -> (unconfirmed) messageIndex
@@ -58,12 +38,12 @@ export class MessageReadTracker implements IMessageReadTracker {
         };
     }
 
-    constructor(private api: MarkMessagesRead) {
+    start(api: ServiceContainer): void {
         if (process.env.NODE_ENV !== "test") {
-            this.interval = window.setInterval(() => this.sendToServer(), MARK_READ_INTERVAL);
+            this.interval = window.setInterval(() => this.sendToServer(api), MARK_READ_INTERVAL);
         }
         if (process.env.NODE_ENV !== "test") {
-            window.onbeforeunload = () => this.sendToServer();
+            window.onbeforeunload = () => this.sendToServer(api);
         }
     }
 
@@ -74,7 +54,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         }
     }
 
-    private sendToServer(): void {
+    private sendToServer(api: ServiceContainer): void {
         const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, ranges]) => {
             if (ranges.length > 0) {
                 req.push({
@@ -87,7 +67,7 @@ export class MessageReadTracker implements IMessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            this.api.markMessagesRead(req);
+            api.markMessagesRead(req);
         }
     }
 
@@ -213,58 +193,8 @@ export class MessageReadTracker implements IMessageReadTracker {
     }
 }
 
-export class FakeMessageReadTracker implements IMessageReadTracker {
-    markRangeRead(_chatId: string, _from: number, _to: number): void {
-        return undefined;
-    }
+export const messagesRead = new MessageReadTracker();
 
-    markMessageRead(_chat: string, _messageIndex: number, _messageId: bigint): void {
-        return undefined;
-    }
-
-    confirmMessage(_chatId: string, _messageIndex: number, _messageId: bigint): boolean {
-        return false;
-    }
-
-    removeUnconfirmedMessage(_chatId: string, _messageId: bigint): boolean {
-        return false;
-    }
-
-    syncWithServer(_chatId: string, _ranges: DRange): void {
-        return undefined;
-    }
-
-    unreadMessageCount(
-        _chatId: string,
-        _firstMessageIndex: number,
-        _latestMessageIndex: number | undefined
-    ): number {
-        return 0;
-    }
-
-    getFirstUnreadMessageIndex(
-        _chatId: string,
-        _firstMessageIndex: number,
-        _latestMessageIndex: number | undefined
-    ): number | undefined {
-        return 0;
-    }
-
-    isRead(_chat: string, _messageIndex: number, _messageId: bigint): boolean {
-        return false;
-    }
-
-    stop(): void {
-        return undefined;
-    }
-
-    store = writable<MessageReadState>({
-        waiting: {},
-        state: {},
-        serverState: {},
-    });
-
-    subscribe(_sub: Subscriber<MessageReadState>): Unsubscriber {
-        return () => undefined;
-    }
+export function startMessagesReadTracker(api: ServiceContainer): void {
+    messagesRead.start(api);
 }

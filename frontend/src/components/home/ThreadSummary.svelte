@@ -17,7 +17,7 @@
     const dispatch = createEventDispatcher();
 
     function replyInThread() {
-        dispatch("replyInThread", threadSummary);
+        dispatch("replyInThread");
     }
 </script>
 

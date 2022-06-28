@@ -11,7 +11,7 @@
         MessageMatch,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { createEventDispatcher, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
@@ -20,27 +20,30 @@
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import type { HomeController } from "../../fsm/home.controller";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
+    import {
+        chatsLoading,
+        chatSummariesListStore,
+        chatSummariesStore,
+        selectedChatStore,
+    } from "../../stores/chat";
+    import { messagesRead } from "../../stores/markRead";
 
-    export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
+    export let createdUser: CreatedUser;
 
     const dispatch = createEventDispatcher();
 
     let chatsWithUnreadMsgs: number;
 
-    $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
-    $: userId = controller.user!.userId;
-    $: chatsList = controller.chatSummariesList;
-    $: selectedChat = controller.selectedChat;
-    $: chatsLoading = controller.loading;
+    $: user = $userStore[createdUser.userId];
+    $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
@@ -58,13 +61,16 @@
         return false;
     }
 
-    $: chats = searchTerm !== "" ? $chatsList.filter(chatMatchesSearch) : $chatsList;
+    $: chats =
+        searchTerm !== ""
+            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            : $chatSummariesListStore;
 
-    let unsub = controller.messagesRead.subscribe((_val) => {
+    let unsub = messagesRead.subscribe((_val) => {
         chatsWithUnreadMsgs = chats
             ? chats.reduce(
                   (num, chat) =>
-                      controller.messagesRead.unreadMessageCount(
+                      messagesRead.unreadMessageCount(
                           chat.chatId,
                           getMinVisibleMessageIndex(chat),
                           chat.latestMessage?.event.messageIndex
@@ -79,8 +85,6 @@
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
     }
-
-    $: chatLookup = controller.chatSummaries;
 
     function chatWith(userId: string): void {
         dispatch("chatWith", userId);
@@ -101,7 +105,7 @@
     }
 
     function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
-        const chat = $chatLookup[chatId];
+        const chat = $chatSummariesStore[chatId];
         if (chat === undefined) {
             return { blobUrl: undefined };
         }
@@ -109,7 +113,7 @@
     }
 
     function messageMatchTitle({ chatId, sender }: MessageMatch): string {
-        const chat = $chatLookup[chatId];
+        const chat = $chatSummariesStore[chatId];
         if (chat === undefined) {
             return "";
         }
@@ -165,10 +169,9 @@
                 {#each chats as chatSummary, i (chatSummary.chatId)}
                     <ChatSummary
                         index={i}
-                        messagesRead={controller.messagesRead}
                         {chatSummary}
                         {userId}
-                        selected={$selectedChat?.chatId === chatSummary.chatId}
+                        selected={$selectedChatStore?.chatId === chatSummary.chatId}
                         on:click={closeSearch}
                         on:deleteDirectChat />
                 {/each}

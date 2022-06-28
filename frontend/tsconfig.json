@@ -7,7 +7,7 @@
         "experimentalDecorators": true,
         "module": "es2020",
         "strict": true,
-        "types": ["jest", "node", "@types/dom-mediacapture-record"],
+        "types": ["svelte", "jest", "node", "@types/dom-mediacapture-record"],
         "paths": {
             "*": ["./src/*"]
         },

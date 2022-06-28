@@ -7,7 +7,7 @@
     import Envelope from "../Envelope.svelte";
     import { getContext } from "svelte";
     import type { CreatedUser } from "../../domain/user/user";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { buildCryptoTransferText, buildTransactionLink } from "../../domain/chat/chat.utils";
     import { cryptoLookup } from "../../domain/crypto";
 
