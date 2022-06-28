@@ -336,6 +336,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+    console.log("Send message response: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -674,6 +675,11 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             name: candid.GroupChatCreated.name,
             description: candid.GroupChatCreated.description,
             created_by: candid.GroupChatCreated.created_by.toString(),
+        };
+    }
+    if ("DirectChatCreated" in candid) {
+        return {
+            kind: "direct_chat_created",
         };
     }
     if ("ParticipantsAdded" in candid) {

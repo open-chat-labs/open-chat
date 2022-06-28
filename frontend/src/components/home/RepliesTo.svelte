@@ -9,10 +9,10 @@
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
+    import type { CreatedUser } from "../../domain/user/user";
     import { userStore } from "../../stores/user";
     import { toTitleCase } from "../../utils/string";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
 
     const currentUser = getContext<CreatedUser>(currentUserKey);
 

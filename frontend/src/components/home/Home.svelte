@@ -1,6 +1,6 @@
 <script lang="ts">
     import BackgroundLogo from "../BackgroundLogo.svelte";
-    import { number, _ } from "svelte-i18n";
+    import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -10,8 +10,9 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
+    import type { Notification } from "../../domain/notifications";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
+    import { onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
         dimensions,
@@ -27,7 +28,7 @@
         MessageMatch,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
@@ -39,32 +40,50 @@
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
+        MemberRole,
         Message,
-        ThreadSummary,
     } from "../../domain/chat/chat";
-    import { currentUserKey, HomeController } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import type { Questions } from "../../domain/faq";
-    import { apiKey } from "../../services/serviceContainer";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import {
         canSendMessages,
-        emptyChatMetrics,
         mergeChatMetrics,
+        userIdsFromEvents,
     } from "../../domain/chat/chat.utils";
+    import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { threadStore } from "../../stores/thread";
+    import {
+        chatSummariesListStore,
+        chatSummariesStore,
+        chatsLoading,
+        selectedChatStore,
+        chatsInitialised,
+        createDirectChat,
+        setSelectedChat,
+        serverChatSummariesStore,
+        currentUserStore,
+        removeChat,
+        updateSummaryWithConfirmedMessage,
+        clearSelectedChat,
+    } from "../../stores/chat";
+    import { setCachedMessageFromNotification } from "../../utils/caching";
+    import { missingUserIds } from "../../domain/user/user.utils";
+    import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
 
-    const dispatch = createEventDispatcher();
+    export let api: ServiceContainer;
+    export let user: CreatedUser;
+    export let logout: () => void;
 
-    export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
         messageIndex: undefined,
@@ -87,8 +106,8 @@
 
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
-    setContext(apiKey, controller.api);
-    setContext(currentUserKey, controller.user);
+    setContext(apiKey, api);
+    setContext(currentUserKey, user);
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -105,23 +124,20 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
 
+    $: console.log("Hot groups: ", hotGroups);
+
     $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
         (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
         undefined
     );
-    $: userId = controller.user.userId;
-    $: api = controller.api;
-    $: chatsLoading = controller.loading;
-    $: chatSummaries = controller.chatSummaries;
-    $: chatSummariesList = controller.chatSummariesList;
-    $: selectedChat = controller.selectedChat;
-    $: wasmVersion = controller.user.wasmVersion;
+    $: userId = user.userId;
+    $: wasmVersion = user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: combinedMetrics = $chatSummariesList
+    $: combinedMetrics = $chatSummariesListStore
         .map((c) => c.myMetrics)
         .reduce(mergeChatMetrics, emptyChatMetrics());
-    $: chat = $selectedChat?.chat;
+    $: chat = $selectedChatStore?.chat;
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
@@ -150,25 +166,16 @@
         ($mobileWidth && params.chatId != null) ||
         ($mobileWidth && params.chatId == null && hotGroups.kind !== "idle");
 
-    function logout() {
-        dispatch("logout");
-    }
-
     onMount(() => {
         // bootstrap anything that needs a service container here
-        rtcConnectionsManager.init(controller.user.userId);
-        initNotificationStores(api, controller.user!.userId, (n) =>
-            controller.notificationReceived(n)
-        );
-    });
-
-    onDestroy(() => {
-        controller.destroy();
+        rtcConnectionsManager.init(user.userId);
+        rtcConnectionsManager.subscribe((msg) => handleWebRtcMessage(msg));
+        initNotificationStores(api, user.userId, (n) => notificationReceived(n));
     });
 
     $: {
         // wait until we have loaded the chats
-        if (controller.initialised) {
+        if ($chatsInitialised) {
             if (params.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
                 const title = local_qs.get("title") ?? "";
@@ -186,7 +193,7 @@
             }
 
             // if we have a chatid in the params then we need to select that chat
-            if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
+            if (params.chatId && params.chatId !== $selectedChatStore?.chatId?.toString()) {
                 // if the chat in the param is not known to us then we need to attempt to load the
                 // chat on the assumption that it is a group we want to preview
                 // if we have an unknown chat in the param, then redirect to home
@@ -194,22 +201,22 @@
                 const messageIndex =
                     params.messageIndex == null ? undefined : Number(params.messageIndex);
 
-                if ($chatSummaries[chatId] === undefined) {
+                if ($chatSummariesStore[chatId] === undefined) {
                     if (qs.get("type") === "direct") {
-                        controller.createDirectChat(chatId);
+                        createDirectChat(chatId);
                     } else {
                         const code = qs.get("code");
                         if (code) {
-                            controller.api.groupInvite = {
+                            api.groupInvite = {
                                 chatId,
                                 code,
                             };
                         }
 
                         hotGroups = { kind: "loading" };
-                        controller.previewChat(chatId).then((canPreview) => {
+                        previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
-                                controller.selectChat(chatId, messageIndex);
+                                setSelectedChat(api, chatId, messageIndex);
                                 resetRightPanel();
                                 hotGroups = { kind: "idle" };
                             } else {
@@ -220,7 +227,7 @@
                 } else {
                     hotGroups = { kind: "idle" };
                     interruptRecommended = true;
-                    controller.selectChat(chatId, messageIndex);
+                    setSelectedChat(api, chatId, messageIndex);
                     resetRightPanel();
                 }
             }
@@ -228,9 +235,9 @@
             if (
                 params.chatId &&
                 params.messageIndex &&
-                params.chatId === $selectedChat?.chatId?.toString()
+                params.chatId === $selectedChatStore?.chatId?.toString()
             ) {
-                $selectedChat?.goToMessageIndex(Number(params.messageIndex), false);
+                $selectedChatStore?.goToMessageIndex(Number(params.messageIndex), false);
             }
 
             const faq = qs.get("faq");
@@ -241,8 +248,8 @@
             }
 
             // if there is no chatId param, tell the machine to clear the selection
-            if (params.chatId === null && $selectedChat !== undefined) {
-                controller.clearSelectedChat();
+            if (params.chatId === null && $selectedChatStore !== undefined) {
+                clearSelectedChat();
             }
 
             if (params.chatId === null && !$mobileWidth && hotGroups.kind === "idle") {
@@ -257,18 +264,126 @@
         }
     }
 
-    function resetRightPanel() {
-        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChat?.chatVal);
-    }
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        controller.updateUserAvatar({
-            blobData: ev.detail.data,
-            blobUrl: ev.detail.url,
+    /**
+     * We may wish to look at chats without joining them.
+     * If the chat is either a public group or a private group with an invite code then
+     * we load the chat summary directly.
+     * We will then add that chat to our chat list locally with a custom role of "Previewer"
+     * This will allow us to interact with the chat in a readonly mode.
+     *
+     * We will load the chat and then add it to the chat list. If we refresh the page
+     * it will just disppear (unless of course we still have the canisterId in the url)
+     */
+    function previewChat(chatId: string): Promise<boolean> {
+        return api.getPublicGroupSummary(chatId).then((maybeChat) => {
+            if (maybeChat === undefined) {
+                return false;
+            }
+            addOrReplaceChat(maybeChat);
+            return true;
         });
     }
 
+    function addOrReplaceChat(chat: ChatSummary): void {
+        serverChatSummariesStore.update((summaries) => {
+            return {
+                ...summaries,
+                [chat.chatId]: chat,
+            };
+        });
+    }
+
+    function notificationReceived(notification: Notification): void {
+        let chatId: string;
+        let message: EventWrapper<Message>;
+        switch (notification.kind) {
+            case "direct_notification": {
+                chatId = notification.sender;
+                message = notification.message;
+                break;
+            }
+            case "group_notification": {
+                chatId = notification.chatId;
+                message = notification.message;
+                break;
+            }
+            case "added_to_group_notification":
+                return;
+        }
+
+        const chat = $chatSummariesStore[chatId];
+        if (chat === undefined) {
+            return;
+        }
+        const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+        setCachedMessageFromNotification(notification);
+        Promise.all([
+            api.rehydrateMessage(chatType, chatId, message),
+            addMissingUsersFromMessage(message),
+        ]).then(([m, _]) => {
+            updateSummaryWithConfirmedMessage(chatId, m);
+
+            const selectedChat = $selectedChatStore;
+            if (selectedChat?.chatId === chatId) {
+                selectedChat?.handleMessageSentByOther(m, true);
+            }
+        });
+    }
+
+    async function addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
+        const users = userIdsFromEvents([message]);
+        const missingUsers = missingUserIds($userStore, users);
+        if (missingUsers.length > 0) {
+            const usersResp = await api.getUsers(
+                {
+                    userGroups: [
+                        {
+                            users: missingUsers,
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                },
+                true
+            );
+            userStore.addMany(usersResp.users);
+        }
+    }
+
+    function resetRightPanel() {
+        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore?.chatVal);
+    }
+
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        const data = {
+            blobData: ev.detail.data,
+            blobUrl: ev.detail.url,
+        };
+        user = {
+            ...user,
+            ...data,
+        };
+        currentUserStore.set(user);
+
+        const partialUser = $userStore[user.userId];
+        if (partialUser) {
+            userStore.add({
+                ...partialUser,
+                ...data,
+            });
+        }
+
+        api
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            .setUserAvatar(data.blobData!)
+            .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
+            .catch((err) => {
+                rollbar.error("Failed to update user's avatar", err);
+                toastStore.showFailureToast("avatarUpdateFailed");
+            });
+    }
+
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        $selectedChat?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        $selectedChatStore?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -327,10 +442,6 @@
         searchTerm = "";
         searching = false;
         searchResultsAvailable = false;
-    }
-
-    function clearSelectedChat() {
-        push("/");
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -395,13 +506,13 @@
     function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
         switch (confirmActionEvent.kind) {
             case "leave":
-                return controller.leaveGroup(confirmActionEvent.chatId);
+                return leaveGroup(confirmActionEvent.chatId);
             case "delete":
-                return controller.deleteGroup(confirmActionEvent.chatId).then((_) => {
+                return deleteGroup(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
             case "makePrivate":
-                return controller.makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
+                return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
             default:
@@ -409,40 +520,126 @@
         }
     }
 
+    function makeGroupPrivate(chatId: string): Promise<void> {
+        return api
+            .makeGroupPrivate(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    serverChatSummariesStore.update((summaries) => {
+                        const summary = summaries[chatId];
+                        if (summary === undefined || summary.kind !== "group_chat") {
+                            return summaries;
+                        }
+
+                        return {
+                            ...summaries,
+                            [chatId]: {
+                                ...summary,
+                                public: false,
+                            },
+                        };
+                    });
+                } else {
+                    toastStore.showFailureToast("makeGroupPrivateFailed");
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("makeGroupPrivateFailed");
+                rollbar.error("Error making group private", err);
+            });
+    }
+
+    function deleteGroup(chatId: string): Promise<void> {
+        clearSelectedChat();
+        return api
+            .deleteGroup(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("deleteGroupSuccess");
+                    removeChat(chatId);
+                } else {
+                    rollbar.warn("Unable to delete group", resp);
+                    toastStore.showFailureToast("deleteGroupFailure");
+                    push(`/${chatId}`);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("deleteGroupFailure");
+                rollbar.error("Unable to delete group", err);
+                push(`/${chatId}`);
+            });
+    }
+
+    function leaveGroup(chatId: string): Promise<void> {
+        clearSelectedChat();
+        return api
+            .leaveGroup(chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
+                    toastStore.showSuccessToast("leftGroup");
+                    removeChat(chatId);
+                } else {
+                    if (resp === "owner_cannot_leave") {
+                        toastStore.showFailureToast("ownerCantLeave");
+                    } else {
+                        toastStore.showFailureToast("failedToLeaveGroup");
+                    }
+                    push(`/${chatId}`);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("failedToLeaveGroup");
+                rollbar.error("Unable to leave group", err);
+                push(`/${chatId}`);
+            });
+    }
+
     function deleteDirectChat(ev: CustomEvent<string>) {
         if (ev.detail === params.chatId) {
-            controller.clearSelectedChat();
+            clearSelectedChat();
         }
-        tick().then(() => controller.removeChat(ev.detail));
+        tick().then(() => removeChat(ev.detail));
     }
 
     function chatWith(ev: CustomEvent<string>) {
-        const chat = $chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            controller.createDirectChat(ev.detail);
+            createDirectChat(ev.detail);
         }
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (ev.detail.chatId === $selectedChat?.chatId) {
-            controller.goToMessageIndex(ev.detail.messageIndex);
+        if (ev.detail.chatId === $selectedChatStore?.chatId) {
+            $selectedChatStore.externalGoToMessage(ev.detail.messageIndex);
         } else {
             push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
     function addParticipants() {
-        if ($selectedChat !== undefined) {
+        if ($selectedChatStore !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "add_participants" }];
         }
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        controller.replyPrivatelyTo(ev.detail);
+        const chat = $chatSummariesListStore.find((c) => {
+            return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
+        });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const chatId = chat?.chatId ?? ev.detail.sender!.userId;
+        draftMessages.delete(chatId);
+        draftMessages.setReplyingTo(chatId, ev.detail);
+        if (chat) {
+            push(`/${chat.chatId}`);
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            createDirectChat(ev.detail.sender!.userId);
+        }
     }
 
     function forwardMessage(ev: CustomEvent<Message>) {
@@ -451,7 +648,7 @@
     }
 
     function showParticipants() {
-        if ($selectedChat !== undefined) {
+        if ($selectedChatStore !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
         }
     }
@@ -460,14 +657,11 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function replyInThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; threadSummary?: ThreadSummary }>
-    ) {
-        if ($selectedChat !== undefined) {
+    function replyInThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+        if ($selectedChatStore !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    threadSummary: ev.detail.threadSummary,
                     rootEvent: ev.detail.rootEvent,
                 },
             ];
@@ -475,7 +669,7 @@
     }
 
     function showGroupDetails() {
-        if ($selectedChat !== undefined) {
+        if ($selectedChatStore !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "group_details",
@@ -485,11 +679,11 @@
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
-        controller.addOrReplaceChat(ev.detail);
+        addOrReplaceChat(ev.detail);
     }
 
     function showPinned() {
-        if ($selectedChat !== undefined) {
+        if ($selectedChatStore !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "show_pinned",
@@ -500,26 +694,53 @@
 
     function joinGroup(ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>) {
         joining = ev.detail.group;
-        controller
-            .joinGroup(joining)
+        const group = ev.detail.group;
+
+        api.joinGroup(group.chatId)
+            .then((resp) => {
+                if (resp.kind === "group_chat") {
+                    addOrReplaceChat(resp);
+                    setSelectedChat(api, group.chatId, undefined);
+                    return true;
+                } else if (resp.kind === "already_in_group") {
+                    addOrReplaceChat({
+                        ...group,
+                        myRole: "participant" as MemberRole,
+                    });
+                    setSelectedChat(api, group.chatId, undefined);
+                    return true;
+                } else {
+                    if (resp.kind === "blocked") {
+                        toastStore.showFailureToast("youreBlocked");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
+                    return false;
+                }
+            })
             .then((success) => {
                 if (success && ev.detail.select) {
                     hotGroups = { kind: "idle" };
                     push(`/${ev.detail.group.chatId}`);
                 }
             })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                toastStore.showFailureToast("joinGroupFailed");
+                return false;
+            })
             .finally(() => (joining = undefined));
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
-        controller.clearSelectedChat();
+        clearSelectedChat();
         tick().then(() => {
-            controller.removeChat(ev.detail);
+            removeChat(ev.detail);
         });
     }
 
     function whatsHot() {
-        controller.clearSelectedChat();
+        clearSelectedChat();
         tick().then(() => {
             interruptRecommended = false;
             hotGroups = { kind: "loading" };
@@ -573,7 +794,7 @@
     }
 
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {
-        controller.addOrReplaceChat(ev.detail);
+        addOrReplaceChat(ev.detail);
         if (ev.detail.public) {
             trackEvent("public_group_created");
         } else {
@@ -604,80 +825,79 @@
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
-{#if controller.user}
-    <main class:old-layout={oldLayout}>
-        {#if showLeft}
-            <LeftPanel
-                {controller}
-                {groupSearchResults}
-                {userSearchResults}
-                {messageSearchResults}
-                {searchTerm}
-                {searchResultsAvailable}
-                {searching}
-                on:showAbout={() => (modal = ModalType.About)}
-                on:showFaq={() => (modal = ModalType.Faq)}
-                on:showRoadmap={() => (modal = ModalType.Roadmap)}
-                on:searchEntered={performSearch}
-                on:userAvatarSelected={userAvatarSelected}
-                on:chatWith={chatWith}
-                on:whatsHot={whatsHot}
-                on:newGroup={newGroup}
-                on:profile={showProfile}
-                on:logout={logout}
-                on:deleteDirectChat={deleteDirectChat}
-                on:loadMessage={loadMessage} />
-        {/if}
-        {#if showMiddle}
-            <MiddlePanel
-                {hotGroups}
-                {joining}
-                {selectedThreadMessageIndex}
-                loadingChats={$chatsLoading}
-                blocked={!!blocked}
-                controller={$selectedChat}
-                on:clearSelection={clearSelectedChat}
-                on:blockUser={blockUser}
-                on:unblockUser={unblockUser}
-                on:leaveGroup={triggerConfirm}
-                on:chatWith={chatWith}
-                on:replyPrivatelyTo={replyPrivatelyTo}
-                on:addParticipants={addParticipants}
-                on:showGroupDetails={showGroupDetails}
-                on:replyInThread={replyInThread}
-                on:showParticipants={showParticipants}
-                on:updateChat={updateChat}
-                on:joinGroup={joinGroup}
-                on:cancelPreview={cancelPreview}
-                on:cancelRecommendations={cancelRecommendations}
-                on:recommend={whatsHot}
-                on:dismissRecommendation={dismissRecommendation}
-                on:upgrade={upgrade}
-                on:showPinned={showPinned}
-                on:goToMessageIndex={goToMessageIndex}
-                on:forward={forwardMessage} />
-        {/if}
-        {#if $numberOfColumns === 3}
-            <RightPanel
-                {userId}
-                controller={$selectedChat}
-                metrics={combinedMetrics}
-                bind:rightPanelHistory
-                on:showFaqQuestion={showFaqQuestion}
-                on:userAvatarSelected={userAvatarSelected}
-                on:goToMessageIndex={goToMessageIndex}
-                on:addParticipants={addParticipants}
-                on:showParticipants={showParticipants}
-                on:chatWith={chatWith}
-                on:upgrade={upgrade}
-                on:blockUser={blockUser}
-                on:deleteGroup={triggerConfirm}
-                on:makeGroupPrivate={triggerConfirm}
-                on:updateChat={updateChat}
-                on:groupCreated={groupCreated} />
-        {/if}
-    </main>
-{/if}
+<main class:old-layout={oldLayout}>
+    {#if showLeft}
+        <LeftPanel
+            {api}
+            {user}
+            {groupSearchResults}
+            {userSearchResults}
+            {messageSearchResults}
+            {searchTerm}
+            {searchResultsAvailable}
+            {searching}
+            on:showAbout={() => (modal = ModalType.About)}
+            on:showFaq={() => (modal = ModalType.Faq)}
+            on:showRoadmap={() => (modal = ModalType.Roadmap)}
+            on:searchEntered={performSearch}
+            on:userAvatarSelected={userAvatarSelected}
+            on:chatWith={chatWith}
+            on:whatsHot={whatsHot}
+            on:newGroup={newGroup}
+            on:profile={showProfile}
+            on:logout={logout}
+            on:deleteDirectChat={deleteDirectChat}
+            on:loadMessage={loadMessage} />
+    {/if}
+    {#if showMiddle}
+        <MiddlePanel
+            {hotGroups}
+            {joining}
+            {selectedThreadMessageIndex}
+            loadingChats={$chatsLoading}
+            blocked={!!blocked}
+            controller={$selectedChatStore}
+            on:clearSelection={clearSelectedChat}
+            on:blockUser={blockUser}
+            on:unblockUser={unblockUser}
+            on:leaveGroup={triggerConfirm}
+            on:chatWith={chatWith}
+            on:replyPrivatelyTo={replyPrivatelyTo}
+            on:addParticipants={addParticipants}
+            on:showGroupDetails={showGroupDetails}
+            on:replyInThread={replyInThread}
+            on:showParticipants={showParticipants}
+            on:updateChat={updateChat}
+            on:joinGroup={joinGroup}
+            on:cancelPreview={cancelPreview}
+            on:cancelRecommendations={cancelRecommendations}
+            on:recommend={whatsHot}
+            on:dismissRecommendation={dismissRecommendation}
+            on:upgrade={upgrade}
+            on:showPinned={showPinned}
+            on:goToMessageIndex={goToMessageIndex}
+            on:forward={forwardMessage} />
+    {/if}
+    {#if $numberOfColumns === 3}
+        <RightPanel
+            {userId}
+            controller={$selectedChatStore}
+            metrics={combinedMetrics}
+            bind:rightPanelHistory
+            on:showFaqQuestion={showFaqQuestion}
+            on:userAvatarSelected={userAvatarSelected}
+            on:goToMessageIndex={goToMessageIndex}
+            on:addParticipants={addParticipants}
+            on:showParticipants={showParticipants}
+            on:chatWith={chatWith}
+            on:upgrade={upgrade}
+            on:blockUser={blockUser}
+            on:deleteGroup={triggerConfirm}
+            on:makeGroupPrivate={triggerConfirm}
+            on:updateChat={updateChat}
+            on:groupCreated={groupCreated} />
+    {/if}
+</main>
 
 {#if $numberOfColumns === 2 && rightPanelHistory.length > 0}
     <Overlay fade={!$mobileWidth}>
@@ -687,7 +907,7 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
-                controller={$selectedChat}
+                controller={$selectedChatStore}
                 metrics={combinedMetrics}
                 bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
@@ -715,9 +935,9 @@
 
 <Toast />
 
-{#if upgradeStorage && controller.user}
+{#if upgradeStorage && user}
     <Upgrade
-        user={controller.user}
+        {user}
         {api}
         step={upgradeStorage}
         on:showFaqQuestion={showFaqQuestion}
@@ -737,7 +957,10 @@
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
-                chatsSummaries={filterChatSelection($chatSummariesList, $selectedChat?.chatId)}
+                chatsSummaries={filterChatSelection(
+                    $chatSummariesListStore,
+                    $selectedChatStore?.chatId
+                )}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
         {/if}

@@ -1,13 +1,18 @@
 import { writable } from "svelte/store";
 import { dedupe } from "../utils/list";
 import type {
+    ChatEvent,
     EventWrapper,
     LocalReaction,
     Message,
     MessageContent,
     ThreadSummary,
 } from "../domain/chat/chat";
-import { containsReaction, toggleReaction } from "../domain/chat/chat.utils";
+import {
+    containsReaction,
+    toggleReaction,
+    updateEventPollContent,
+} from "../domain/chat/chat.utils";
 
 const localReactions: Record<string, LocalReaction[]> = {};
 
@@ -64,6 +69,15 @@ const { subscribe, set, update } = writable<ThreadLookup>({});
 export const threadStore = {
     subscribe,
     set,
+    removeMessageFromThread: (threadRootMessageIndex: number, messageIndex: number): void => {
+        update((store) => {
+            const evts = store[threadRootMessageIndex] ?? [];
+            return {
+                ...store,
+                [threadRootMessageIndex]: evts.filter((e) => e.event.messageIndex !== messageIndex),
+            };
+        });
+    },
     addMessageToThread: (
         messageIndex: number,
         rootEvt: EventWrapper<Message>,
@@ -121,6 +135,20 @@ export const threadStore = {
             return store;
         });
     },
+    registerVote: (
+        rootMessageIndex: number,
+        messageIndex: number,
+        answerIndex: number,
+        type: "register" | "delete",
+        userId: string
+    ): void => {
+        update((store) => {
+            store[rootMessageIndex] = store[rootMessageIndex].map((e) =>
+                updateEventPollContent(messageIndex, answerIndex, type, userId, e)
+            );
+            return store;
+        });
+    },
     // todo - this is not ready and isn't going to work yet
     toggleReaction: (
         rootMessageIndex: number,
@@ -162,13 +190,16 @@ export const threadStore = {
     },
 };
 
-export function getNextEventAndMessageIndexes(
-    lookup: ThreadLookup,
-    messageIndex: number
-): [number, number] {
-    const evts = lookup[messageIndex] ?? [];
-    return [
-        (evts[evts.length - 1]?.index ?? 0) + 1,
-        (evts[evts.length - 1]?.event?.messageIndex ?? 0) + 1,
-    ];
+export function getNextEventAndMessageIndexes(events: EventWrapper<ChatEvent>[]): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0]
+    );
 }

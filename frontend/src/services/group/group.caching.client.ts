@@ -63,23 +63,26 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
-    private setCachedEvents<T extends ChatEvent>(resp: EventsResponse<T>): EventsResponse<T> {
-        setCachedEvents(this.db, this.chatId, resp).catch((err) =>
+    private setCachedEvents<T extends ChatEvent>(
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
+    ): EventsResponse<T> {
+        setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
             rollbar.error("Error writing cached group events", err)
         );
         return resp;
     }
 
-    private handleMissingEvents([cachedEvents, missing]: [
-        EventsSuccessResult<GroupChatEvent>,
-        Set<number>
-    ]): Promise<EventsResponse<GroupChatEvent>> {
+    private handleMissingEvents(
+        [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing])
-                .then((resp) => this.setCachedEvents(resp))
+                .chatEventsByIndex([...missing], threadRootMessageIndex)
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -90,10 +93,16 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     @profile("groupCachingClient")
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, this.chatId).then(
-            (res) => this.handleMissingEvents(res)
-        );
+    chatEventsByIndex(
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return getCachedEventsByIndex<GroupChatEvent>(
+            this.db,
+            eventIndexes,
+            this.chatId,
+            threadRootMessageIndex
+        ).then((res) => this.handleMissingEvents(res, threadRootMessageIndex));
     }
 
     @profile("groupCachingClient")
@@ -128,6 +137,7 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
@@ -135,7 +145,8 @@ export class CachingGroupClient implements IGroupClient {
             eventIndexRange,
             this.chatId,
             startIndex,
-            ascending
+            ascending,
+            threadRootMessageIndex
         );
 
         // we may or may not have all of the requested events
@@ -143,10 +154,16 @@ export class CachingGroupClient implements IGroupClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, startIndex, ascending, interrupt)
-                .then((resp) => this.setCachedEvents(resp));
+                .chatEvents(
+                    eventIndexRange,
+                    startIndex,
+                    ascending,
+                    threadRootMessageIndex,
+                    interrupt
+                )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing]);
+            return this.handleMissingEvents([cachedEvents, missing], threadRootMessageIndex);
         }
     }
 
@@ -161,15 +178,23 @@ export class CachingGroupClient implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .sendMessage(senderName, mentioned, message)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
+            .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.chatId,
+                    message,
+                    threadRootMessageIndex
+                )
+            );
     }
 
-    editMessage(message: Message): Promise<EditMessageResponse> {
-        return this.client.editMessage(message);
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
+        return this.client.editMessage(message, threadRootMessageIndex);
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
@@ -188,12 +213,19 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.updatePermissions(permissions);
     }
 
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(messageId, reaction);
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse> {
+        return this.client.toggleReaction(messageId, reaction, threadRootMessageIndex);
     }
 
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.client.deleteMessage(messageId);
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.client.deleteMessage(messageId, threadRootMessageIndex);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -277,9 +309,15 @@ export class CachingGroupClient implements IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(messageIdx, answerIdx, voteType);
+        return this.client.registerPollVote(
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {

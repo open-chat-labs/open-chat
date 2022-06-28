@@ -3,7 +3,11 @@ import { writable } from "svelte/store";
 import { isTouchDevice } from "../utils/devices";
 import { configKeys } from "../utils/config";
 
+const test = process.env.NODE_ENV === "test";
+
 function boolFromLS(key: string, def: boolean): boolean {
+    if (test) return def;
+
     const val = localStorage.getItem(key);
     switch (val) {
         case "true":
@@ -38,20 +42,26 @@ function createLsBoolStore(key: string, def: boolean) {
         subscribe: store.subscribe,
         toggle: (): void =>
             store.update((val) => {
-                localStorage.setItem(key, (!val).toString());
+                if (!test) {
+                    localStorage.setItem(key, (!val).toString());
+                }
                 return !val;
             }),
     };
 }
 
 const scrollStratStore = writable<ScrollStrategy>(
-    (localStorage.getItem(configKeys.scrollStrategy) || "latestMessage") as ScrollStrategy
+    (test
+        ? null
+        : localStorage.getItem(configKeys.scrollStrategy) || "latestMessage") as ScrollStrategy
 );
 
 export const scrollStrategy = {
     subscribe: scrollStratStore.subscribe,
     set: (strategy: ScrollStrategy): void => {
         scrollStratStore.set(strategy);
-        localStorage.setItem(configKeys.scrollStrategy, strategy);
+        if (!test) {
+            localStorage.setItem(configKeys.scrollStrategy, strategy);
+        }
     },
 };

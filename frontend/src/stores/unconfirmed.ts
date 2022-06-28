@@ -21,8 +21,11 @@ export const unconfirmed = {
             return {
                 ...state,
                 [chatId]: {
-                    messages: [...chatEvents?.messages ?? [], message],
-                    messageIds: new Set<bigint>([...chatEvents?.messageIds ?? [], message.event.messageId])
+                    messages: [...(chatEvents?.messages ?? []), message],
+                    messageIds: new Set<bigint>([
+                        ...(chatEvents?.messageIds ?? []),
+                        message.event.messageId,
+                    ]),
                 },
             };
         });
@@ -34,7 +37,7 @@ export const unconfirmed = {
         if (get(store)[chatId]?.messageIds.has(messageId)) {
             store.update((state) => {
                 const chatEvents = state[chatId];
-                const messageIds = new Set<bigint>([...chatEvents?.messageIds ?? []]);
+                const messageIds = new Set<bigint>([...(chatEvents?.messageIds ?? [])]);
                 if (messageIds.delete(messageId)) {
                     return {
                         ...state,

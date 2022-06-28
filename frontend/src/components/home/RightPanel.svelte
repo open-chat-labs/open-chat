@@ -8,7 +8,14 @@
     import Participants from "./groupdetails/Participants.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import type { RightPanelState } from "../../fsm/rightPanel";
-    import type { ChatMetrics, FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
+    import type {
+        ChatEvent,
+        ChatMetrics,
+        EventWrapper,
+        FullParticipant,
+        GroupChatSummary,
+        Message,
+    } from "../../domain/chat/chat";
     import type { ChatController } from "../../fsm/chat.controller";
     import { userStore } from "../../stores/user";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
@@ -17,7 +24,7 @@
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
@@ -41,6 +48,7 @@
     $: participants = controller?.participants ?? writable([]);
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
+    $: events = controller?.events;
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -98,6 +106,20 @@
             pop();
         }
     }
+
+    function findMessage(
+        events: EventWrapper<ChatEvent>[],
+        messageId: bigint
+    ): EventWrapper<Message> | undefined {
+        return events.find((e) => {
+            return e.event.kind === "message" && e.event.messageId === messageId;
+        }) as EventWrapper<Message> | undefined;
+    }
+
+    $: threadRootEvent =
+        lastState.kind === "message_thread_panel" && events !== undefined
+            ? findMessage($events ?? [], lastState.rootEvent.event.messageId)
+            : undefined;
 </script>
 
 <Panel right>
@@ -149,12 +171,8 @@
             on:closeProfile={pop} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
-    {:else if lastState.kind === "message_thread_panel" && controller !== undefined}
-        <Thread
-            rootEvent={lastState.rootEvent}
-            {controller}
-            threadSummary={lastState.threadSummary}
-            on:close={pop} />
+    {:else if threadRootEvent !== undefined && controller !== undefined}
+        <Thread rootEvent={threadRootEvent} {controller} on:close={pop} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

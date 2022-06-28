@@ -4,11 +4,11 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
     import type {
+        ChatEvent,
         EnhancedReplyContext,
         EventWrapper,
         Message,
         MessageContent,
-        ThreadSummary,
     } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -16,10 +16,9 @@
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser, User } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../fsm/home.controller";
+    import { currentUserKey } from "../../../stores/user";
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
-    import type { MessageReadState } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         canBlockUsers,
@@ -43,12 +42,15 @@
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import type { Cryptocurrency } from "../../../domain/crypto";
     import { lastCryptoSent } from "../../../stores/crypto";
+    import { trackEvent } from "../../../utils/tracking";
+    import { rollbar } from "../../../utils/logging";
+    import { toastStore } from "../../../stores/toast";
+    import { dedupe } from "utils/list";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
-    export let threadSummary: ThreadSummary | undefined;
     export let rootEvent: EventWrapper<Message>;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -58,24 +60,54 @@
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
+    let loading = false;
+
+    let previousRootEvent: EventWrapper<Message> | undefined;
+
+    let events: EventWrapper<ChatEvent>[] = [];
 
     $: {
-        window.setTimeout(() => {
-            // todo this annoyingly fires twice - sigh
-            console.log("adding root message to thread");
-            threadStore.addMessageToThread(rootEvent.event.messageIndex, rootEvent, rootEvent);
-        }, 500);
+        if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
+            console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
+            previousRootEvent = rootEvent;
+
+            events = [rootEvent];
+            if (thread !== undefined) {
+                loadThreadMessages(
+                    [0, thread.latestEventIndex],
+                    thread.latestEventIndex,
+                    false,
+                    threadRootMessageIndex
+                );
+            }
+        } else {
+            // we haven't changed the thread we are looking at, but the threads latest index has changed (i.e. an event has been added by someone else)
+            if (
+                thread !== undefined &&
+                thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
+            ) {
+                console.log(
+                    "thread: loading new ",
+                    previousRootEvent?.event.thread?.latestEventIndex ?? 0
+                );
+                loadThreadMessages(
+                    [0, thread.latestEventIndex],
+                    (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
+                    true,
+                    threadRootMessageIndex
+                );
+            }
+        }
     }
 
+    $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
-    $: messageIndex = rootEvent.event.messageIndex;
+    $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
-    $: markRead = controller.markRead;
-    $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-    $: draftMessage = readable(draftThreadMessages.get(messageIndex), (set) =>
-        draftThreadMessages.subscribe((d) => set(d[messageIndex] ?? {}))
+    $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
+        draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -83,11 +115,48 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents(
-        $threadStore[rootEvent.event.messageIndex] ?? []
-    ).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents(events).reverse() as EventWrapper<Message>[][][];
 
     const dispatch = createEventDispatcher();
+
+    async function loadThreadMessages(
+        range: [number, number],
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number
+    ): Promise<void> {
+        if (thread === undefined || controller.chatVal === undefined) return;
+        loading = true;
+
+        const eventsPromise =
+            controller.chatVal.kind === "direct_chat"
+                ? api.directChatEvents(
+                      range,
+                      controller.chatVal.them,
+                      startIndex,
+                      ascending,
+                      threadRootMessageIndex
+                  )
+                : api.groupChatEvents(
+                      range,
+                      controller.chatVal.chatId,
+                      startIndex,
+                      ascending,
+                      threadRootMessageIndex
+                  );
+
+        const eventsResponse = await eventsPromise;
+
+        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            events = dedupe(
+                (a, b) => a.index === b.index,
+                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+            );
+        }
+
+        console.log("Events: ", events);
+        loading = false;
+    }
 
     function close() {
         dispatch("close");
@@ -98,12 +167,7 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function isReadByMe(_store: MessageReadState, evt: EventWrapper<Message>): boolean {
-        return true;
-    }
-
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        console.log("send message: ", ev.detail);
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
@@ -111,20 +175,20 @@
         } else {
             sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
-        draftThreadMessages.delete(messageIndex);
+        draftThreadMessages.delete(threadRootMessageIndex);
     }
 
     // todo - lots of duplication here with chatController.editEvent
     // todo - there is a problem when editing the root message of a thread (in either middle or thread panel)
     // the edit needs to also be reflected in the other window - maybe this will just work when the update loop stuff is done
     function editEvent(ev: EventWrapper<Message>): void {
-        draftThreadMessages.setEditingEvent(messageIndex, ev);
+        draftThreadMessages.setEditingEvent(threadRootMessageIndex, ev);
         draftThreadMessages.setAttachment(
-            messageIndex,
+            threadRootMessageIndex,
             ev.event.content.kind !== "text_content" ? ev.event.content : undefined
         );
         draftThreadMessages.setReplyingTo(
-            messageIndex,
+            threadRootMessageIndex,
             ev.event.repliesTo && ev.event.repliesTo.kind === "rehydrated_reply_context"
                 ? {
                       ...ev.event.repliesTo,
@@ -163,53 +227,58 @@
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(
-                $threadStore,
-                messageIndex
-            );
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(events);
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
-
-            // we don't have an api for this yet so let's just write the message to the thread store
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            threadStore.addMessageToThread(messageIndex, rootEvent, event);
 
-            // api.sendMessage($chat, controller.user, mentioned, msg)
-            //     .then((resp) => {
-            //         if (resp.kind === "success" || resp.kind === "transfer_success") {
-            //             controller.confirmMessage(msg, resp);
-            //             if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-            //                 api.refreshAccountBalance(
-            //                     msg.content.transfer.token,
-            //                     currentUser.cryptoAccount
-            //                 );
-            //             }
-            //             if ($chat.kind === "direct_chat") {
-            //                 trackEvent("sent_direct_message");
-            //             } else {
-            //                 if ($chat.public) {
-            //                     trackEvent("sent_public_group_message");
-            //                 } else {
-            //                     trackEvent("sent_private_group_message");
-            //                 }
-            //             }
-            //             if (msg.repliesTo !== undefined) {
-            //                 // double counting here which I think is OK since we are limited to string events
-            //                 trackEvent("replied_to_message");
-            //             }
-            //         } else {
-            //             controller.removeMessage(msg.messageId, controller.user.userId);
-            //             rollbar.warn("Error response sending message", resp);
-            //             toastStore.showFailureToast("errorSendingMessage");
-            //         }
-            //     })
-            //     .catch((err) => {
-            //         controller.removeMessage(msg.messageId, controller.user.userId);
-            //         console.log(err);
-            //         toastStore.showFailureToast("errorSendingMessage");
-            //         rollbar.error("Exception sending message", err);
-            //     });
+            unconfirmed.add($chat.chatId, event);
+            events = [...events, event];
+
+            api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
+                .then((resp) => {
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
+                        unconfirmed.delete($chat.chatId, msg.messageId);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            api.refreshAccountBalance(
+                                msg.content.transfer.token,
+                                currentUser.cryptoAccount
+                            );
+                        }
+                        replaceMessage({
+                            ...event,
+                            index: resp.eventIndex,
+                            event: { ...event.event, messageIndex: resp.messageIndex },
+                        });
+                        trackEvent("sent_threaded_message");
+                    } else {
+                        removeMessage(msg);
+                        rollbar.warn("Error response sending message", resp);
+                        toastStore.showFailureToast("errorSendingMessage");
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    unconfirmed.delete($chat.chatId, msg.messageId);
+                    removeMessage(msg);
+                    toastStore.showFailureToast("errorSendingMessage");
+                    rollbar.error("Exception sending message", err);
+                });
         }
+    }
+
+    function replaceMessage(evt: EventWrapper<Message>) {
+        events = events.map((e) => {
+            return e.event.kind === "message" && e.event.messageId === evt.event.messageId
+                ? evt
+                : e;
+        });
+    }
+
+    function removeMessage(msg: Message) {
+        events = events.filter(
+            (e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId
+        );
     }
 
     function editMessageWithAttachment(
@@ -225,37 +294,41 @@
             };
 
             const event = { ...editingEvent, event: msg! };
-            threadStore.replaceMessageInThread(messageIndex, event);
-            // controller.sendMessage(event);
-
-            // api.editMessage($chat, msg!)
-            //     .then((resp) => {
-            //         if (resp !== "success") {
-            //             rollbar.warn("Error response editing", resp);
-            //             toastStore.showFailureToast("errorEditingMessage");
-            //         }
-            //     })
-            //     .catch((err) => {
-            //         rollbar.error("Exception sending message", err);
-            //         toastStore.showFailureToast("errorEditingMessage");
-            //     });
+            const original = replaceEvent(event);
+            api.editMessage($chat, msg, threadRootMessageIndex)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        rollbar.warn("Error response editing", resp);
+                        toastStore.showFailureToast("errorEditingMessage");
+                        if (original !== undefined) {
+                            replaceEvent(original);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Exception sending message", err);
+                    toastStore.showFailureToast("errorEditingMessage");
+                    if (original !== undefined) {
+                        replaceEvent(original);
+                    }
+                });
         }
     }
 
     function cancelReply() {
-        draftThreadMessages.setReplyingTo(messageIndex, undefined);
+        draftThreadMessages.setReplyingTo(threadRootMessageIndex, undefined);
     }
 
     function clearAttachment() {
-        draftThreadMessages.setAttachment(messageIndex, undefined);
+        draftThreadMessages.setAttachment(threadRootMessageIndex, undefined);
     }
 
     function cancelEditEvent() {
-        draftThreadMessages.delete(messageIndex);
+        draftThreadMessages.delete(threadRootMessageIndex);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>) {
-        draftThreadMessages.setTextContent(messageIndex, ev.detail);
+        draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
     function startTyping() {
@@ -267,7 +340,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        draftThreadMessages.setAttachment(messageIndex, ev.detail);
+        draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
     function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
@@ -297,67 +370,155 @@
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
+    function registerVote(
+        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+    ) {
+        console.log("register vote - todo");
+
+        // update the store
+        threadStore.registerVote(
+            threadRootMessageIndex,
+            ev.detail.messageIndex,
+            ev.detail.answerIndex,
+            ev.detail.type,
+            currentUser.userId
+        );
+
+        // make the api call
+        const promise =
+            $chat.kind === "group_chat"
+                ? api.registerGroupChatPollVote(
+                      $chat.chatId,
+                      ev.detail.messageIndex,
+                      ev.detail.answerIndex,
+                      ev.detail.type,
+                      threadRootMessageIndex
+                  )
+                : api.registerDirectChatPollVote(
+                      $chat.them,
+                      ev.detail.messageIndex,
+                      ev.detail.answerIndex,
+                      ev.detail.type,
+                      threadRootMessageIndex
+                  );
+
+        promise
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("poll.voteFailed");
+                    rollbar.error("Poll vote failed: ", resp);
+                    console.log("poll vote failed: ", resp);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("poll.voteFailed");
+                rollbar.error("Poll vote failed: ", err);
+                console.log("poll vote failed: ", err);
+            });
+    }
+
     function deleteMessage(ev: CustomEvent<Message>): void {
-        threadStore.replaceMessageContent(rootEvent.event.messageIndex, ev.detail.messageIndex, {
+        replaceMessageContent(ev.detail.messageId, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
         });
+
+        const apiPromise =
+            $chat.kind === "group_chat"
+                ? api.deleteGroupMessage($chat.chatId, ev.detail.messageId, threadRootMessageIndex)
+                : api.deleteDirectMessage($chat.them, ev.detail.messageId, threadRootMessageIndex);
+
+        apiPromise
+            .then((resp) => {
+                // check it worked - undo if it didn't
+                if (resp !== "success") {
+                    toastStore.showFailureToast("deleteFailed");
+                    replaceMessageContent(ev.detail.messageId, ev.detail.content);
+                }
+            })
+            .catch((_err) => {
+                toastStore.showFailureToast("deleteFailed");
+                replaceMessageContent(ev.detail.messageId, ev.detail.content);
+            });
+    }
+
+    function replaceMessageContent(messageId: unknown, content: MessageContent) {
+        events = events.map((e) => {
+            return e.event.kind === "message" && e.event.messageId === messageId
+                ? { ...e, event: { ...e.event, content } }
+                : e;
+        });
+    }
+
+    function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
+        let original: EventWrapper<ChatEvent> | undefined = undefined;
+        events = events.map((e) => {
+            if (e.index === evt.index) {
+                original = e;
+                return evt;
+            }
+            return e;
+        });
+        return original;
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        draftThreadMessages.setReplyingTo(messageIndex, ev.detail);
+        draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (!canReact) return;
         // optimistic update
 
-        // todo - this is not exactly going to work at the moment because the controller method goes through the list of
-        // loaded events whereas we need to go through the thread events
-        controller.toggleReaction(
-            ev.detail.message.messageId,
-            ev.detail.reaction,
-            controller.user.userId
-        );
+        // todo - we need to separate what this controller method does so that we can have a thread version
+        // and that needs to be done in a way that minimises duplication
+        // controller.toggleReaction(
+        //     ev.detail.message.messageId,
+        //     ev.detail.reaction,
+        //     controller.user.userId
+        // );
 
-        // const apiPromise =
-        //     $chat.kind === "group_chat"
-        //         ? api.toggleGroupChatReaction(
-        //               $chat.chatId,
-        //               ev.detail.message.messageId,
-        //               ev.detail.reaction
-        //           )
-        //         : api.toggleDirectChatReaction(
-        //               $chat.them,
-        //               ev.detail.message.messageId,
-        //               ev.detail.reaction
-        //           );
+        const apiPromise =
+            $chat.kind === "group_chat"
+                ? api.toggleGroupChatReaction(
+                      $chat.chatId,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction,
+                      threadRootMessageIndex
+                  )
+                : api.toggleDirectChatReaction(
+                      $chat.them,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction,
+                      threadRootMessageIndex
+                  );
 
-        // apiPromise
-        //     .then((resp) => {
-        //         if (resp !== "added" && resp !== "removed") {
-        //             // toggle again to undo
-        //             controller.toggleReaction(
-        //                 ev.detail.message.messageId,
-        //                 ev.detail.reaction,
-        //                 controller.user.userId
-        //             );
-        //         } else {
-        //             if (resp === "added") {
-        //                 trackEvent("reacted_to_message");
-        //             }
-        //         }
-        //     })
-        //     .catch((err) => {
-        //         // toggle again to undo
-        //         console.log("Reaction failed: ", err);
-        //         controller.toggleReaction(
-        //             ev.detail.message.messageId,
-        //             ev.detail.reaction,
-        //             controller.user.userId
-        //         );
-        //     });
+        apiPromise
+            .then((resp) => {
+                if (resp !== "added" && resp !== "removed") {
+                    // toggle again to undo
+                    console.log("Reaction failed: ", resp);
+                    // controller.toggleReaction(
+                    //     ev.detail.message.messageId,
+                    //     ev.detail.reaction,
+                    //     controller.user.userId
+                    // );
+                } else {
+                    if (resp === "added") {
+                        trackEvent("reacted_to_message");
+                    }
+                }
+            })
+            .catch((err) => {
+                // toggle again to undo
+                console.log("Reaction failed: ", err);
+                // controller.toggleReaction(
+                //     ev.detail.message.messageId,
+                //     ev.detail.reaction,
+                //     controller.user.userId
+                // );
+            });
     }
 
     // TODO - this is another piece of (almost) duplication that we need to get rid of
@@ -441,7 +602,6 @@
                         canReact={canReactToMessages($chat)}
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === evt}
-                        threadSummary={undefined}
                         selectedThreadMessageIndex={undefined}
                         on:chatWith
                         on:goToMessageIndex={goToMessageIndex}
@@ -453,7 +613,7 @@
                         on:blockUser
                         on:pinMessage
                         on:unpinMessage
-                        on:registerVote
+                        on:registerVote={registerVote}
                         on:editMessage={() => editEvent(evt)}
                         on:upgrade
                         on:forward

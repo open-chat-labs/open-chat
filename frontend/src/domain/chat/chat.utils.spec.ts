@@ -12,7 +12,6 @@ import type {
 } from "./chat";
 import {
     addVoteToPoll,
-    emptyChatMetrics,
     enoughVisibleMessages,
     getParticipantsString,
     indexIsInRanges,
@@ -21,6 +20,7 @@ import {
     newMessageId,
     rangesAreEqual,
 } from "./chat.utils";
+import { emptyChatMetrics } from "./chat.utils.shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore

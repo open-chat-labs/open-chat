@@ -15,9 +15,9 @@
         getFirstUnreadMessageIndex,
         getMessageContent,
         getStorageRequiredForMessage,
-        isPreviewing,
         newMessageId,
     } from "../../domain/chat/chat.utils";
+    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
         EnhancedReplyContext,
         EventWrapper,
@@ -46,7 +46,8 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { CreatedUser, User } from "../../domain/user/user";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
+    import { messagesRead } from "../../stores/markRead";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -86,11 +87,8 @@
             showSearchHeader = false;
             chatId = controller.chatId;
             unreadMessages = controller.unreadMessageCount;
-            firstUnreadMention = getFirstUnreadMention(controller.markRead, controller.chatVal);
-            firstUnreadMessage = getFirstUnreadMessageIndex(
-                controller.markRead,
-                controller.chatVal
-            );
+            firstUnreadMention = getFirstUnreadMention(controller.chatVal);
+            firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
 
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
@@ -100,10 +98,10 @@
             });
         }
     }
-    let unsub = controller.markRead.subscribe(() => {
+    let unsub = messagesRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
-        firstUnreadMention = getFirstUnreadMention(controller.markRead, controller.chatVal);
-        firstUnreadMessage = getFirstUnreadMessageIndex(controller.markRead, controller.chatVal);
+        firstUnreadMention = getFirstUnreadMention(controller.chatVal);
+        firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
     });
 
     function onWindowFocus() {
