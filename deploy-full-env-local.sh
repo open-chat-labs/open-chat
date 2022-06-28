@@ -42,4 +42,4 @@ popd
 ./deploy-local.sh $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID
 
 # Send the first user 10 ICP
-dfx --identity $IDENTITY canister call ledger send_dfx '(record { memo = 0; amount = record { e8s = 1000000000 }; fee = record { e8s = 0 }; to = "782a6c522af8cb950f239389874b9b1bf71a5ac8bb6d587f955254d9c9358fc8" })'
+dfx --identity $IDENTITY canister call ledger send_dfx '(record { memo = 0; amount = record { e8s = 1000000000 }; fee = record { e8s = 0 }; to = "496d10c35b260217613ff59523e843a8b2bc087685a6550d4837904e37e3def6" })'

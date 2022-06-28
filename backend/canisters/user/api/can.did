@@ -336,6 +336,27 @@ type WithdrawCryptoResponse =
         CurrencyNotSupported;
     };
 
+type PinChatRequest =
+    record {
+        chat_id: ChatId;
+    };
+
+type PinChatResponse =
+    variant {
+        Success;
+        PinnedLimitReached: nat32;
+    };
+
+type UnpinChatRequest =
+    record {
+        chat_id: ChatId;
+    };
+
+type UnpinChatResponse =
+    variant {
+        Success;
+    };
+
 type InitialStateArgs =
     record {
     };
@@ -349,6 +370,7 @@ type InitialStateResponse =
             cycles_balance: Cycles;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: Version;
+            pinned_chats: vec ChatId;
         };
         InternalError: text;
     };
@@ -382,6 +404,8 @@ type UpdatesResponse =
             avatar_id: AvatarIdUpdate;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: opt Version;
+            blocked_users_v2: opt vec UserId;
+            pinned_chats: opt vec ChatId;
         };
         InternalError: text;
     };
@@ -543,6 +567,8 @@ service: {
     set_bio: (SetBioArgs) -> (SetBioResponse);
     transfer_crypto_within_group: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
     withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
+    pin_chat: (PinChatRequest) -> (PinChatResponse);
+    unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

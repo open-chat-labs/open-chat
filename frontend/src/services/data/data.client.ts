@@ -228,6 +228,13 @@ export class DataClient implements IDataClient {
             }
         }
 
+        if (bytesUsed !== undefined && byteLimit !== undefined) {
+            storageStore.set({
+                byteLimit,
+                bytesUsed,
+            });
+        }
+
         if (error !== undefined) {
             throw new Error("Unable to forward file: " + error);
         }
