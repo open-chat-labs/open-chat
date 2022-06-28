@@ -1129,7 +1129,6 @@ export function updateEventPollContent<T extends ChatEvent>(
         evt.event.messageIndex === messageIndex &&
         evt.event.content.kind === "poll_content"
     ) {
-        console.log("Updated poll: ", evt.event.content);
         return {
             ...evt,
             event: {

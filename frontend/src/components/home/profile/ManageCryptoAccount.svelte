@@ -62,7 +62,6 @@
         })
             .then((resp) => {
                 if (resp.kind === "completed") {
-                    console.log(resp);
                     amountToWithdrawE8s = BigInt(0);
                     targetAccount = "";
                     balanceWithRefresh.refresh();

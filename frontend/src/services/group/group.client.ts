@@ -252,7 +252,6 @@ export class GroupClient extends CandidService implements IGroupClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            console.log("Sending message: ", args);
             return this.handleResponse(this.groupService.send_message(args), sendMessageResponse);
         });
     }
