@@ -124,8 +124,6 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
 
-    $: console.log("Hot groups: ", hotGroups);
-
     $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
         (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
         undefined
