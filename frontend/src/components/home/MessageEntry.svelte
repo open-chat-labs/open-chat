@@ -91,7 +91,8 @@
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
                 inp.textContent = text;
-                setCaretToEnd();
+                // TODO - figure this out
+                // setCaretToEnd();
             }
         }
         if (editingEvent === undefined) {

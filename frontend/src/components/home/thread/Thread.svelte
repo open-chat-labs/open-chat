@@ -70,8 +70,8 @@
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
             console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
-
             events = [];
+
             if (thread !== undefined) {
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
@@ -115,7 +115,7 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents(events).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents([rootEvent, ...events]).reverse() as EventWrapper<Message>[][][];
 
     const dispatch = createEventDispatcher();
 
@@ -148,13 +148,10 @@
         const eventsResponse = await eventsPromise;
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            events = [
-                rootEvent,
-                ...dedupe(
-                    (a, b) => a.index === b.index,
-                    [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
-                ),
-            ];
+            events = dedupe(
+                (a, b) => a.index === b.index,
+                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+            );
         }
 
         console.log("Events: ", events);
@@ -544,6 +541,12 @@
             console.log(`message index ${ev.detail.index} not found`);
         }
     }
+
+    function userGroupKey(group: EventWrapper<Message>[]): string {
+        return group[0].event.sender;
+    }
+
+    $: console.log("Grouped: ", messages);
 </script>
 
 <PollBuilder
@@ -580,7 +583,7 @@
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
+            {#each dayGroup as userGroup}
                 {#each userGroup as evt, _i (evt.event.messageId.toString())}
                     <ChatMessage
                         senderId={evt.event.sender}
