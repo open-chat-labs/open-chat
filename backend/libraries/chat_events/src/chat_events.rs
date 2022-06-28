@@ -106,7 +106,6 @@ impl AllChatEvents {
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    #[serde(alias = "chat_type")]
     events_type: ChatEventsType,
     chat_id: ChatId,
     events: ChatEventsVec,
@@ -116,11 +115,6 @@ pub struct ChatEvents {
     latest_message_index: Option<MessageIndex>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DirectChatEvents {
-    pub inner: ChatEvents,
 }
 
 #[derive(CandidType, Serialize, Deserialize)]

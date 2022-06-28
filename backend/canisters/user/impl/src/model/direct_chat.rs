@@ -1,6 +1,6 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, DirectChatEvents};
-use serde::{de, Deserialize, Serialize};
+use chat_events::ChatEvents;
+use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
 use utils::range_set::RangeSet;
 
@@ -8,20 +8,11 @@ use utils::range_set::RangeSet;
 pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
-    #[serde(deserialize_with = "deserialize_chat_events")]
     pub events: ChatEvents,
     pub unread_message_index_map: UnreadMessageIndexMap,
     pub read_by_me: Timestamped<RangeSet>,
     pub read_by_them: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
-}
-
-fn deserialize_chat_events<'de, D>(deserializer: D) -> Result<ChatEvents, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let direct_chat_events: DirectChatEvents = de::Deserialize::deserialize(deserializer)?;
-    Ok(direct_chat_events.inner)
 }
 
 impl DirectChat {
