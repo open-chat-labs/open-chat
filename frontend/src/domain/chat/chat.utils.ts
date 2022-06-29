@@ -31,6 +31,8 @@ import type {
     CryptocurrencyContent,
     AggregateParticipantsJoinedOrLeft,
     ChatMetrics,
+    SendMessageSuccess,
+    TransferSuccess,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -1437,4 +1439,18 @@ function buildIdenticonUrl(userId: string): string {
         format: "svg",
     });
     return `data:image/svg+xml;base64,${identicon}`;
+}
+
+export function mergeSendMessageResponse(
+    msg: Message,
+    resp: SendMessageSuccess | TransferSuccess
+): Message {
+    return {
+        ...msg,
+        messageIndex: resp.messageIndex,
+        content:
+            resp.kind === "transfer_success"
+                ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
+                : msg.content,
+    };
 }

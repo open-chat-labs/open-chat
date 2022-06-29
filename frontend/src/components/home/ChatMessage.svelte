@@ -557,7 +557,7 @@
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && groupChat && !me}
+                                {#if confirmed && groupChat && !me && !inThread}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}

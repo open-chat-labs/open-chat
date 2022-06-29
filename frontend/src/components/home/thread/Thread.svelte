@@ -10,6 +10,8 @@
         EventWrapper,
         Message,
         MessageContent,
+        SendMessageSuccess,
+        TransferSuccess,
     } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -20,7 +22,6 @@
     import { currentUserKey } from "../../../stores/user";
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
-    import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -32,6 +33,7 @@
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
+        mergeSendMessageResponse,
         replaceAffected,
         replaceLocal,
         userIdsFromEvents,
@@ -51,7 +53,8 @@
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
     import { selectReaction } from "../../../stores/reactions";
-    import { immutableStore } from "stores/immutable";
+    import { immutableStore } from "../../../stores/immutable";
+    import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -67,6 +70,7 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
+    let unconfirmed = createUnconfirmedStore();
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
@@ -268,24 +272,19 @@
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            unconfirmed.add($chat.chatId, event);
+            unconfirmed.add(threadRootMessageIndex, event);
             events.update((evts) => [...evts, event]);
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then((resp) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        unconfirmed.delete($chat.chatId, msg.messageId);
+                        confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             api.refreshAccountBalance(
                                 msg.content.transfer.token,
                                 currentUser.cryptoAccount
                             );
                         }
-                        replaceMessage({
-                            ...event,
-                            index: resp.eventIndex,
-                            event: { ...event.event, messageIndex: resp.messageIndex },
-                        });
                         trackEvent("sent_threaded_message");
                     } else {
                         removeMessage(msg);
@@ -303,12 +302,22 @@
         }
     }
 
-    function replaceMessage(evt: EventWrapper<Message>) {
-        events.update((evts) =>
-            evts.map((e) =>
-                e.event.kind === "message" && e.event.messageId === evt.event.messageId ? evt : e
-            )
-        );
+    function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
+        if (unconfirmed.delete(threadRootMessageIndex, candidate.messageId)) {
+            const confirmed = {
+                event: mergeSendMessageResponse(candidate, resp),
+                index: resp.eventIndex,
+                timestamp: resp.timestamp,
+            };
+            events.update((events) =>
+                events.map((e) => {
+                    if (e.event === candidate) {
+                        return confirmed;
+                    }
+                    return e;
+                })
+            );
+        }
     }
 
     function removeMessage(msg: Message) {
@@ -591,7 +600,10 @@
                         senderId={evt.event.sender}
                         focused={evt.event.messageIndex === focusMessageIndex}
                         {observer}
-                        confirmed={!unconfirmed.contains($chat.chatId, evt.event.messageId)}
+                        confirmed={!unconfirmed.contains(
+                            threadRootMessageIndex,
+                            evt.event.messageId
+                        )}
                         readByMe={true}
                         readByThem={true}
                         chatId={$chat.chatId}
@@ -615,12 +627,9 @@
                         on:goToMessageIndex={goToMessageIndex}
                         on:replyPrivatelyTo
                         on:replyTo={replyTo}
-                        on:replyInThread
                         on:selectReaction={onSelectReaction}
                         on:deleteMessage={deleteMessage}
                         on:blockUser
-                        on:pinMessage
-                        on:unpinMessage
                         on:registerVote={registerVote}
                         on:editMessage={() => editEvent(evt)}
                         on:upgrade

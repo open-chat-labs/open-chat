@@ -33,6 +33,7 @@ import {
     userIdsFromEvents,
     indexIsInRanges,
     updateEventPollContent,
+    mergeSendMessageResponse,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -767,22 +768,11 @@ export class ChatController {
         );
     }
 
-    mergeSendMessageResponse(msg: Message, resp: SendMessageSuccess | TransferSuccess): Message {
-        return {
-            ...msg,
-            messageIndex: resp.messageIndex,
-            content:
-                resp.kind === "transfer_success"
-                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
-                    : msg.content,
-        };
-    }
-
     confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             messagesRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
-                event: this.mergeSendMessageResponse(candidate, resp),
+                event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };

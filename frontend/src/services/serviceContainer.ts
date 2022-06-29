@@ -338,7 +338,8 @@ export class ServiceContainer implements MarkMessagesRead {
                 startIndex,
                 ascending,
                 threadRootMessageIndex
-            )
+            ),
+            threadRootMessageIndex
         );
     }
 
@@ -350,7 +351,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEventsByIndex(eventIndexes, theirUserId, threadRootMessageIndex)
+            this.userClient.chatEventsByIndex(eventIndexes, theirUserId, threadRootMessageIndex),
+            threadRootMessageIndex
         );
     }
 
@@ -381,7 +383,8 @@ export class ServiceContainer implements MarkMessagesRead {
                 startIndex,
                 ascending,
                 threadRootMessageIndex
-            )
+            ),
+            threadRootMessageIndex
         );
     }
 
@@ -393,7 +396,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes, threadRootMessageIndex)
+            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes, threadRootMessageIndex),
+            threadRootMessageIndex
         );
     }
 
@@ -473,7 +477,8 @@ export class ServiceContainer implements MarkMessagesRead {
     private async resolveMissingIndexes<T extends ChatEvent>(
         chatType: "direct" | "group",
         currentChatId: string,
-        events: EventWrapper<T>[]
+        events: EventWrapper<T>[],
+        threadRootMessageIndex?: number
     ): Promise<Record<string, EventWrapper<Message>[]>> {
         const missing = this.findMissingEventIndexesByChat(currentChatId, events);
         const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
@@ -483,7 +488,7 @@ export class ServiceContainer implements MarkMessagesRead {
             if (chatId === currentChatId && chatType === "direct") {
                 missingMessages.push(
                     this.userClient
-                        .chatEventsByIndex(idxs, currentChatId)
+                        .chatEventsByIndex(idxs, currentChatId, threadRootMessageIndex)
                         .then((resp) => this.messagesFromEventsResponse(chatId, resp))
                 );
             } else {
@@ -491,7 +496,7 @@ export class ServiceContainer implements MarkMessagesRead {
                 const client = this.getGroupClient(chatId);
                 missingMessages.push(
                     client
-                        .chatEventsByIndex(idxs)
+                        .chatEventsByIndex(idxs, threadRootMessageIndex)
                         .then((resp) => this.messagesFromEventsResponse(chatId, resp))
                 );
             }
@@ -549,7 +554,8 @@ export class ServiceContainer implements MarkMessagesRead {
     private async rehydrateEventResponse<T extends ChatEvent>(
         chatType: "direct" | "group",
         currentChatId: string,
-        eventsPromise: Promise<EventsResponse<T>>
+        eventsPromise: Promise<EventsResponse<T>>,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
@@ -557,7 +563,12 @@ export class ServiceContainer implements MarkMessagesRead {
             return resp;
         }
 
-        const missing = await this.resolveMissingIndexes(chatType, currentChatId, resp.events);
+        const missing = await this.resolveMissingIndexes(
+            chatType,
+            currentChatId,
+            resp.events,
+            threadRootMessageIndex
+        );
         resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
         resp.events = this.reydrateEventList(resp.events);
         resp.affectedEvents = this.reydrateEventList(resp.affectedEvents);
@@ -590,9 +601,15 @@ export class ServiceContainer implements MarkMessagesRead {
     async rehydrateMessage(
         chatType: "direct" | "group",
         currentChatId: string,
-        message: EventWrapper<Message>
+        message: EventWrapper<Message>,
+        threadRootMessageIndex?: number
     ): Promise<EventWrapper<Message>> {
-        const missing = await this.resolveMissingIndexes(chatType, currentChatId, [message]);
+        const missing = await this.resolveMissingIndexes(
+            chatType,
+            currentChatId,
+            [message],
+            threadRootMessageIndex
+        );
         [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
         [message] = this.reydrateEventList([message]);
         return message;

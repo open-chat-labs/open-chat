@@ -163,19 +163,21 @@ export function selectReaction(
     currentUserId: string,
     threadRootMessageIndex?: number
 ): void {
-    // optimistic update
-    eventStore.update((events) =>
-        toggleReactionInEventList(
-            chat,
-            userId,
-            events,
-            messageId,
-            reaction,
-            chatUserIds,
-            currentUserId,
-            threadRootMessageIndex
-        )
-    );
+    const toggle = () =>
+        // optimistic update
+        eventStore.update((events) =>
+            toggleReactionInEventList(
+                chat,
+                userId,
+                events,
+                messageId,
+                reaction,
+                chatUserIds,
+                currentUserId,
+                threadRootMessageIndex
+            )
+        );
+    toggle();
 
     const apiPromise =
         chat.kind === "group_chat"
@@ -187,18 +189,7 @@ export function selectReaction(
             if (resp !== "added" && resp !== "removed") {
                 // toggle again to undo
                 console.log("Reaction failed: ", resp);
-                eventStore.update((events) =>
-                    toggleReactionInEventList(
-                        chat,
-                        userId,
-                        events,
-                        messageId,
-                        reaction,
-                        chatUserIds,
-                        currentUserId,
-                        threadRootMessageIndex
-                    )
-                );
+                toggle();
             } else {
                 if (resp === "added") {
                     trackEvent("reacted_to_message");
@@ -208,18 +199,7 @@ export function selectReaction(
         .catch((err) => {
             // toggle again to undo
             console.log("Reaction failed: ", err);
-            eventStore.update((events) =>
-                toggleReactionInEventList(
-                    chat,
-                    userId,
-                    events,
-                    messageId,
-                    reaction,
-                    chatUserIds,
-                    currentUserId,
-                    threadRootMessageIndex
-                )
-            );
+            toggle();
         });
 }
 
