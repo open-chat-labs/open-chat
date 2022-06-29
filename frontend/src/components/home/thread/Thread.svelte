@@ -1,5 +1,5 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
+    import ThreadHeader from "./ThreadHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
@@ -595,14 +595,7 @@
         {controller} />
 {/if}
 
-<SectionHeader flush={true} shadow={true}>
-    <h4>{$_("thread.title")}</h4>
-    <span title={$_("close")} class="close" on:click={close}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
+<ThreadHeader on:close {rootEvent} chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
@@ -689,14 +682,6 @@
     on:createPoll={createPoll} />
 
 <style type="text/scss">
-    h4 {
-        flex: 1;
-        margin: 0;
-        text-align: center;
-    }
-    .close {
-        flex: 0 0 30px;
-    }
     .thread-messages {
         flex: auto;
         background-color: var(--panel-bg);
