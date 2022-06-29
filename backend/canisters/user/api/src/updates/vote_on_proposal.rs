@@ -17,5 +17,6 @@ pub enum Response {
     CallerNotInGroup,
     NoEligibleNeurons,
     ProposalNotFound,
+    ProposalNotAcceptingVotes,
     InternalError(String),
 }
