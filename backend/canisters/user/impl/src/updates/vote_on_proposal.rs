@@ -1,4 +1,5 @@
 use crate::governance_clients::nns;
+use crate::governance_clients::nns::GetBallotsResult;
 use crate::guards::caller_is_owner;
 use crate::openchat_bot::send_voted_on_proposal_message;
 use crate::{mutate_state, run_regular_jobs};
@@ -14,7 +15,12 @@ async fn vote_on_proposal(args: Args) -> Response {
     run_regular_jobs();
 
     let mut ballots = match nns::get_ballots(args.governance_canister_id, args.proposal_id).await {
-        Ok(b) => b,
+        Ok(r) => match r {
+            GetBallotsResult::Success(b) if !b.is_empty() => b,
+            GetBallotsResult::Success(_) => return NoEligibleNeurons,
+            GetBallotsResult::ProposalNotFound => return ProposalNotFound,
+            GetBallotsResult::ProposalNotAcceptingVotes => return ProposalNotAcceptingVotes,
+        },
         Err(error) => return InternalError(format!("{:?}", error)),
     };
     ballots.sort_unstable_by_key(|(n, _)| *n);
@@ -50,7 +56,9 @@ async fn vote_on_proposal(args: Args) -> Response {
         );
     });
 
-    if !voted.is_empty() {
+    // Don't register the vote in the group if there were any errors, this allows the user to try
+    // again
+    if errors.is_empty() {
         ic_cdk::spawn(register_vote_in_group(args.chat_id, args.message_id, args.adopt));
     }
 

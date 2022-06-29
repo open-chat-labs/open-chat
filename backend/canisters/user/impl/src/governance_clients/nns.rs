@@ -5,10 +5,9 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use types::{CanisterId, NeuronId, ProposalId};
 
-pub async fn get_ballots(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-) -> CallResult<Vec<(NeuronId, Option<bool>)>> {
+const REWARD_STATUS_ACCEPTING_VOTES: i32 = 1;
+
+pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<GetBallotsResult> {
     let args = list_proposals::ListProposalInfo {
         limit: 1,
         before_proposal: Some(WrappedProposalId { id: proposal_id + 1 }),
@@ -20,30 +19,39 @@ pub async fn get_ballots(
     let response: CallResult<(list_proposals::ListProposalInfoResponse,)> =
         ic_cdk::call(governance_canister_id, "list_proposals", (&args,)).await;
 
-    let ballots = response?
+    let result = response?
         .0
         .proposal_info
         .into_iter()
         .next()
         .filter(|p| p.id.as_ref().map_or(false, |id| id.id == proposal_id))
-        .map(|p| {
-            p.ballots
-                .into_iter()
-                .map(|(n, b)| {
-                    (
-                        n,
-                        match b.vote {
-                            1 => Some(true),
-                            2 => Some(false),
-                            _ => None,
-                        },
-                    )
-                })
-                .collect()
+        .map(|p| match p.reward_status {
+            REWARD_STATUS_ACCEPTING_VOTES => GetBallotsResult::Success(
+                p.ballots
+                    .into_iter()
+                    .map(|(n, b)| {
+                        (
+                            n,
+                            match b.vote {
+                                1 => Some(true),
+                                2 => Some(false),
+                                _ => None,
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+            _ => GetBallotsResult::ProposalNotAcceptingVotes,
         })
-        .unwrap_or_default();
+        .unwrap_or(GetBallotsResult::ProposalNotFound);
 
-    Ok(ballots)
+    Ok(result)
+}
+
+pub enum GetBallotsResult {
+    Success(Vec<(NeuronId, Option<bool>)>),
+    ProposalNotAcceptingVotes,
+    ProposalNotFound,
 }
 
 pub async fn register_vote(
