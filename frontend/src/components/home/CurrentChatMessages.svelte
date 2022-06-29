@@ -30,6 +30,7 @@
     import { trackEvent } from "../../utils/tracking";
     import { threadSummaryStore } from "../../stores/thread";
     import { userStore } from "../../stores/user";
+    import { selectReaction, toggleReactionInEventList } from "stores/reactions";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -258,52 +259,19 @@
         return -(messagesDiv?.scrollTop ?? 0);
     }
 
-    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (!canReact) return;
-        // optimistic update
-        controller.toggleReaction(
+
+        selectReaction(
+            controller.api,
+            controller.events,
+            $chat,
+            controller.user.userId,
             ev.detail.message.messageId,
             ev.detail.reaction,
+            controller.chatUserIds,
             controller.user.userId
         );
-
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? controller.api.toggleGroupChatReaction(
-                      $chat.chatId,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  )
-                : controller.api.toggleDirectChatReaction(
-                      $chat.them,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  );
-
-        apiPromise
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    // toggle again to undo
-                    controller.toggleReaction(
-                        ev.detail.message.messageId,
-                        ev.detail.reaction,
-                        controller.user.userId
-                    );
-                } else {
-                    if (resp === "added") {
-                        trackEvent("reacted_to_message");
-                    }
-                }
-            })
-            .catch((err) => {
-                // toggle again to undo
-                console.log("Reaction failed: ", err);
-                controller.toggleReaction(
-                    ev.detail.message.messageId,
-                    ev.detail.reaction,
-                    controller.user.userId
-                );
-            });
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
@@ -538,7 +506,7 @@
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={selectReaction}
+                        on:selectReaction={onSelectReaction}
                         on:blockUser={blockUser}
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}

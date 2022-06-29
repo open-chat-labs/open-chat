@@ -85,7 +85,14 @@ export class RtcConnectionsManager {
         });
     }
 
-    public sendMessage = (userIds: string[], message: WebRtcMessage): void => {
+    public sendMessage = (
+        userIds: string[],
+        message: WebRtcMessage,
+        threadRootMessageIndex?: number
+    ): void => {
+        // TODO - come back to this
+        if (threadRootMessageIndex !== undefined) return;
+
         userIds.forEach((userId) => {
             const conn = this.connections.get(userId);
             if (conn && conn.open) {

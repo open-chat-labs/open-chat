@@ -8,7 +8,6 @@
         EnhancedReplyContext,
         EventsResponse,
         EventWrapper,
-        LocalReaction,
         Message,
         MessageContent,
     } from "../../../domain/chat/chat";
@@ -29,17 +28,17 @@
         canPinMessages,
         canReactToMessages,
         canSendMessages,
-        containsReaction,
         createMessage,
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
         replaceAffected,
         replaceLocal,
+        userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
-    import { derived, readable } from "svelte/store";
+    import { derived, readable, Writable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
@@ -51,8 +50,8 @@
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
-    import { overwriteCachedEvents } from "../../../utils/caching";
-    import { localReactions, toggleReaction } from "../../../stores/reactions";
+    import { selectReaction } from "../../../stores/reactions";
+    import { immutableStore } from "stores/immutable";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -71,13 +70,13 @@
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
-    let events: EventWrapper<ChatEvent>[] = [];
+    let events: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
             console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
-            events = [];
+            events.set([]);
 
             if (thread !== undefined) {
                 loadThreadMessages(
@@ -122,7 +121,7 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents([rootEvent, ...events]).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
 
     const dispatch = createEventDispatcher();
 
@@ -155,30 +154,34 @@
         const eventsResponse = await eventsPromise;
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            events = dedupe(
-                (a, b) => a.index === b.index,
-                handleEventsResponse(events, eventsResponse).sort((a, b) => a.index - b.index)
+            const updated = await handleEventsResponse($events, eventsResponse);
+            events.set(
+                dedupe(
+                    (a, b) => a.index === b.index,
+                    updated.sort((a, b) => a.index - b.index)
+                )
             );
         }
 
-        console.log("Events: ", events);
+        console.log("Events: ", $events);
         loading = false;
     }
 
-    function handleEventsResponse(
+    async function handleEventsResponse(
         events: EventWrapper<ChatEvent>[],
         resp: EventsResponse<ChatEvent>
-    ): EventWrapper<ChatEvent>[] {
+    ): Promise<EventWrapper<ChatEvent>[]> {
         if (resp === "events_failed") return [];
 
-        return replaceAffected(
+        const updated = replaceAffected(
             replaceLocal(currentUser.userId, $chat.chatId, $chat.readByMe, events, resp.events),
             resp.affectedEvents
         );
 
-        // TODO - we *will* need something like this
-        // const userIds = userIdsFromEvents(updated);
-        // await this.updateUserStore(userIds);
+        const userIds = userIdsFromEvents(updated);
+        await controller.updateUserStore(userIds);
+
+        return updated;
 
         // this.events.set(updated);
 
@@ -260,13 +263,13 @@
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(events);
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes($events);
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             unconfirmed.add($chat.chatId, event);
-            events = [...events, event];
+            events.update((evts) => [...evts, event]);
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then((resp) => {
@@ -301,16 +304,16 @@
     }
 
     function replaceMessage(evt: EventWrapper<Message>) {
-        events = events.map((e) => {
-            return e.event.kind === "message" && e.event.messageId === evt.event.messageId
-                ? evt
-                : e;
-        });
+        events.update((evts) =>
+            evts.map((e) =>
+                e.event.kind === "message" && e.event.messageId === evt.event.messageId ? evt : e
+            )
+        );
     }
 
     function removeMessage(msg: Message) {
-        events = events.filter(
-            (e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId
+        events.update((evts) =>
+            evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId)
         );
     }
 
@@ -477,22 +480,26 @@
     }
 
     function replaceMessageContent(messageId: unknown, content: MessageContent) {
-        events = events.map((e) => {
-            return e.event.kind === "message" && e.event.messageId === messageId
-                ? { ...e, event: { ...e.event, content } }
-                : e;
-        });
+        events.update((evts) =>
+            evts.map((e) =>
+                e.event.kind === "message" && e.event.messageId === messageId
+                    ? { ...e, event: { ...e.event, content } }
+                    : e
+            )
+        );
     }
 
     function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
         let original: EventWrapper<ChatEvent> | undefined = undefined;
-        events = events.map((e) => {
-            if (e.index === evt.index) {
-                original = e;
-                return evt;
-            }
-            return e;
-        });
+        events.update((evts) =>
+            evts.map((e) => {
+                if (e.index === evt.index) {
+                    original = e;
+                    return evt;
+                }
+                return e;
+            })
+        );
         return original;
     }
 
@@ -500,110 +507,20 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
-    // TODO - we have got rid of a lot of duplication but there is more that can be done
-    function swapReaction(messageId: bigint, reaction: string): void {
-        messageId = BigInt(messageId);
-        const key = messageId.toString();
-        if (localReactions[key] === undefined) {
-            localReactions[key] = [];
-        }
-        const messageReactions = localReactions[key];
-        events = events.map((e) => {
-            if (e.event.kind === "message" && e.event.messageId === messageId) {
-                const addOrRemove = containsReaction(
-                    currentUser.userId,
-                    reaction,
-                    e.event.reactions
-                )
-                    ? "remove"
-                    : "add";
-                messageReactions.push({
-                    reaction,
-                    timestamp: Date.now(),
-                    kind: addOrRemove,
-                    userId: currentUser.userId,
-                });
-                const updatedEvent = {
-                    ...e,
-                    event: {
-                        ...e.event,
-                        reactions: toggleReaction(currentUser.userId, e.event.reactions, reaction),
-                    },
-                };
-                overwriteCachedEvents($chat.chatId, [updatedEvent], threadRootMessageIndex).catch(
-                    (err) =>
-                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
-                );
-                // TODO - deal with webrtc
-                // if (userId === currentUser.userId) {
-                //     rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                //         kind: "remote_user_toggled_reaction",
-                //         chatType: this.chatVal.kind,
-                //         chatId: this.chatVal.chatId,
-                //         messageId,
-                //         userId,
-                //         reaction,
-                //     });
-                // }
-                return updatedEvent;
-            }
-            return e;
-        });
-    }
-
-    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (!canReact) return;
-        // optimistic update
 
-        // todo - we need to separate what this controller method does so that we can have a thread version
-        // and that needs to be done in a way that minimises duplication
-        // controller.toggleReaction(
-        //     ev.detail.message.messageId,
-        //     ev.detail.reaction,
-        //     controller.user.userId
-        // );
-        swapReaction(ev.detail.message.messageId, ev.detail.reaction);
-
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? api.toggleGroupChatReaction(
-                      $chat.chatId,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction,
-                      threadRootMessageIndex
-                  )
-                : api.toggleDirectChatReaction(
-                      $chat.them,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction,
-                      threadRootMessageIndex
-                  );
-
-        apiPromise
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    // toggle again to undo
-                    console.log("Reaction failed: ", resp);
-                    // controller.toggleReaction(
-                    //     ev.detail.message.messageId,
-                    //     ev.detail.reaction,
-                    //     controller.user.userId
-                    // );
-                } else {
-                    if (resp === "added") {
-                        trackEvent("reacted_to_message");
-                    }
-                }
-            })
-            .catch((err) => {
-                // toggle again to undo
-                console.log("Reaction failed: ", err);
-                // controller.toggleReaction(
-                //     ev.detail.message.messageId,
-                //     ev.detail.reaction,
-                //     controller.user.userId
-                // );
-            });
+        selectReaction(
+            api,
+            events,
+            $chat,
+            currentUser.userId,
+            ev.detail.message.messageId,
+            ev.detail.reaction,
+            controller.chatUserIds,
+            currentUser.userId,
+            threadRootMessageIndex
+        );
     }
 
     // TODO - this is another piece of (almost) duplication that we need to get rid of
@@ -699,7 +616,7 @@
                         on:replyPrivatelyTo
                         on:replyTo={replyTo}
                         on:replyInThread
-                        on:selectReaction={selectReaction}
+                        on:selectReaction={onSelectReaction}
                         on:deleteMessage={deleteMessage}
                         on:blockUser
                         on:pinMessage

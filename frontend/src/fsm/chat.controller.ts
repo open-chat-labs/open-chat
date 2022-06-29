@@ -20,7 +20,6 @@ import type {
 } from "../domain/chat/chat";
 import {
     activeUserIdFromEvent,
-    containsReaction,
     createMessage,
     getMinVisibleMessageIndex,
     getNextEventIndex,
@@ -44,7 +43,6 @@ import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
@@ -54,7 +52,6 @@ import { immutableStore } from "../stores/immutable";
 import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { localReactions, toggleReaction } from "../stores/reactions";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
@@ -294,7 +291,7 @@ export class ChatController {
         }
     }
 
-    private async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
+    async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
         const participantIds = get(this.participants).map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
         const allUserIds = [...participantIds, ...blockedIds, ...userIdsFromEvents];
@@ -659,52 +656,6 @@ export class ChatController {
         messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
         this.events.update((events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
-        );
-    }
-
-    toggleReaction(messageId: bigint, reaction: string, userId: string): void {
-        messageId = BigInt(messageId);
-        const key = messageId.toString();
-        if (localReactions[key] === undefined) {
-            localReactions[key] = [];
-        }
-        const messageReactions = localReactions[key];
-        this.events.update((events) =>
-            events.map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
-                        ? "remove"
-                        : "add";
-                    messageReactions.push({
-                        reaction,
-                        timestamp: Date.now(),
-                        kind: addOrRemove,
-                        userId,
-                    });
-                    const updatedEvent = {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            reactions: toggleReaction(userId, e.event.reactions, reaction),
-                        },
-                    };
-                    overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
-                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
-                    );
-                    if (userId === this.user.userId) {
-                        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                            kind: "remote_user_toggled_reaction",
-                            chatType: this.chatVal.kind,
-                            chatId: this.chatVal.chatId,
-                            messageId,
-                            userId,
-                            reaction,
-                        });
-                    }
-                    return updatedEvent;
-                }
-                return e;
-            })
         );
     }
 

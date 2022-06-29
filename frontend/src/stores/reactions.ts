@@ -1,4 +1,17 @@
-import type { LocalReaction, Reaction } from "../domain/chat/chat";
+import { containsReaction } from "../domain/chat/chat.utils";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import type { ServiceContainer } from "../services/serviceContainer";
+import type { Writable } from "svelte/store";
+import { overwriteCachedEvents } from "../utils/caching";
+import { rollbar } from "../utils/logging";
+import { trackEvent } from "../utils/tracking";
+import type {
+    ChatEvent,
+    ChatSummary,
+    EventWrapper,
+    LocalReaction,
+    Reaction,
+} from "../domain/chat/chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
@@ -79,6 +92,135 @@ export function toggleReaction(
     }
 
     return result;
+}
+
+export function toggleReactionInEventList(
+    chat: ChatSummary,
+    userId: string,
+    events: EventWrapper<ChatEvent>[],
+    messageId: bigint,
+    reaction: string,
+    chatUserIds: Set<string>,
+    currentUserId: string,
+    threadRootMessageIndex?: number
+): EventWrapper<ChatEvent>[] {
+    messageId = BigInt(messageId);
+    const key = messageId.toString();
+    if (localReactions[key] === undefined) {
+        localReactions[key] = [];
+    }
+    const messageReactions = localReactions[key];
+    return events.map((e) => {
+        if (e.event.kind === "message" && e.event.messageId === messageId) {
+            const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
+                ? "remove"
+                : "add";
+            messageReactions.push({
+                reaction,
+                timestamp: Date.now(),
+                kind: addOrRemove,
+                userId: userId,
+            });
+            const updatedEvent = {
+                ...e,
+                event: {
+                    ...e.event,
+                    reactions: toggleReaction(userId, e.event.reactions, reaction),
+                },
+            };
+            overwriteCachedEvents(chat.chatId, [updatedEvent], threadRootMessageIndex).catch(
+                (err) => rollbar.error("Unable to overwrite cached event toggling reaction", err)
+            );
+
+            if (userId === currentUserId) {
+                rtcConnectionsManager.sendMessage(
+                    [...chatUserIds],
+                    {
+                        kind: "remote_user_toggled_reaction",
+                        chatType: chat.kind,
+                        chatId: chat.chatId,
+                        messageId,
+                        userId: userId,
+                        reaction,
+                    },
+                    threadRootMessageIndex
+                );
+            }
+            return updatedEvent;
+        }
+        return e;
+    });
+}
+
+export function selectReaction(
+    api: ServiceContainer,
+    eventStore: Writable<EventWrapper<ChatEvent>[]>,
+    chat: ChatSummary,
+    userId: string,
+    messageId: bigint,
+    reaction: string,
+    chatUserIds: Set<string>,
+    currentUserId: string,
+    threadRootMessageIndex?: number
+): void {
+    // optimistic update
+    eventStore.update((events) =>
+        toggleReactionInEventList(
+            chat,
+            userId,
+            events,
+            messageId,
+            reaction,
+            chatUserIds,
+            currentUserId,
+            threadRootMessageIndex
+        )
+    );
+
+    const apiPromise =
+        chat.kind === "group_chat"
+            ? api.toggleGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            : api.toggleDirectChatReaction(chat.them, messageId, reaction, threadRootMessageIndex);
+
+    apiPromise
+        .then((resp) => {
+            if (resp !== "added" && resp !== "removed") {
+                // toggle again to undo
+                console.log("Reaction failed: ", resp);
+                eventStore.update((events) =>
+                    toggleReactionInEventList(
+                        chat,
+                        userId,
+                        events,
+                        messageId,
+                        reaction,
+                        chatUserIds,
+                        currentUserId,
+                        threadRootMessageIndex
+                    )
+                );
+            } else {
+                if (resp === "added") {
+                    trackEvent("reacted_to_message");
+                }
+            }
+        })
+        .catch((err) => {
+            // toggle again to undo
+            console.log("Reaction failed: ", err);
+            eventStore.update((events) =>
+                toggleReactionInEventList(
+                    chat,
+                    userId,
+                    events,
+                    messageId,
+                    reaction,
+                    chatUserIds,
+                    currentUserId,
+                    threadRootMessageIndex
+                )
+            );
+        });
 }
 
 export function startPruningLocalReactions(): void {
