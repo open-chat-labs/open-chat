@@ -36,11 +36,11 @@
         mergeSendMessageResponse,
         replaceAffected,
         replaceLocal,
+        updateEventPollContent,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
-    import { derived, readable, Writable } from "svelte/store";
+    import { derived, readable, writable, Writable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
@@ -71,6 +71,8 @@
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
     let unconfirmed = createUnconfirmedStore();
+    let scrollTop = writable(0);
+    let messagesDiv: HTMLDivElement | undefined;
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
@@ -360,6 +362,20 @@
         }
     }
 
+    function getNextEventAndMessageIndexes(events: EventWrapper<ChatEvent>[]): [number, number] {
+        return events.reduce(
+            ([maxEvtIdx, maxMsgIdx], evt) => {
+                const msgIdx =
+                    evt.event.kind === "message"
+                        ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                        : maxMsgIdx;
+                const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+                return [evtIdx, msgIdx];
+            },
+            [0, 0]
+        );
+    }
+
     function cancelReply() {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, undefined);
     }
@@ -418,15 +434,16 @@
     function registerVote(
         ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
     ) {
-        console.log("register vote - todo");
-
-        // update the store
-        threadStore.registerVote(
-            threadRootMessageIndex,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type,
-            currentUser.userId
+        events.update((events) =>
+            events.map((e) =>
+                updateEventPollContent(
+                    ev.detail.messageIndex,
+                    ev.detail.answerIndex,
+                    ev.detail.type,
+                    currentUser.userId,
+                    e
+                )
+            )
         );
 
         // make the api call
@@ -553,11 +570,10 @@
         }
     }
 
-    function userGroupKey(group: EventWrapper<Message>[]): string {
-        return group[0].event.sender;
+    // TODO - not quite sure what to do with this yet
+    function onScroll() {
+        $scrollTop = messagesDiv?.scrollTop ?? 0;
     }
-
-    $: console.log("Grouped: ", messages);
 </script>
 
 <PollBuilder
@@ -588,7 +604,7 @@
     </span>
 </SectionHeader>
 
-<div class="thread-messages">
+<div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">

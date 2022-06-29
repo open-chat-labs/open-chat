@@ -27,10 +27,8 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { trackEvent } from "../../utils/tracking";
-    import { threadSummaryStore } from "../../stores/thread";
     import { userStore } from "../../stores/user";
-    import { selectReaction, toggleReactionInEventList } from "stores/reactions";
+    import { selectReaction } from "../../stores/reactions";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
