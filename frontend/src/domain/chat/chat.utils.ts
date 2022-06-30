@@ -834,6 +834,7 @@ function partitionEvents(
     );
 }
 
+// FIXME - this is using messageRead but that's not ok because this is also called from threads where the indexes will be wrong
 export function replaceLocal(
     userId: string,
     chatId: string,

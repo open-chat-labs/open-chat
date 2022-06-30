@@ -76,7 +76,8 @@ export interface IUserClient {
         groupId: string,
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;

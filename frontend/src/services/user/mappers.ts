@@ -567,6 +567,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        console.log("Updates response: ", candid);
         return {
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),

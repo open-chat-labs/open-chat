@@ -339,6 +339,8 @@ export class ChatController {
             this.userGroupKeys.clear();
         }
 
+        console.log("Events Response: ", resp);
+
         const updated = replaceAffected(
             replaceLocal(
                 this.user.userId,

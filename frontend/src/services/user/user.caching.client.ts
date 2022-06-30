@@ -380,11 +380,14 @@ export class CachingUserClient implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, message)
-            .then(setCachedMessageFromSendResponse(this.db, groupId, message));
+            .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(this.db, groupId, message, threadRootMessageIndex)
+            );
     }
 
     @profile("userCachingClient")

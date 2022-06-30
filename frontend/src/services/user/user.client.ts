@@ -335,7 +335,8 @@ export class UserClient extends CandidService implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        _threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         const req: ApiTransferCryptoWithinGroupArgs = {
             content: apiPendingCryptoContent(message.content as CryptocurrencyContent),

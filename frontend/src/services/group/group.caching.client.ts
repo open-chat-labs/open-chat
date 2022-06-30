@@ -275,6 +275,9 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.getPublicSummary();
     }
 
+    /**
+     * This is only called to populate pinned messages which is why we don't need to care about threadRootMessageIndex
+     */
     @profile("groupCachingClient")
     async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);

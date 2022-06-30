@@ -15,7 +15,6 @@
     } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser, User } from "../../../domain/user/user";
