@@ -380,7 +380,7 @@ export class ChatController {
     }
 
     private getUsersToMakeRtcConnectionsWith(): string[] {
-        if (get(this.chat).kind === "direct_chat") {
+        if (this.chatVal.kind === "direct_chat") {
             return [this.chatId];
         }
 
@@ -1125,15 +1125,17 @@ export class ChatController {
     messageRead(messageIndex: number, messageId: bigint): void {
         messagesRead.markMessageRead(this.chatId, messageIndex, messageId);
 
-        const rtc: WebRtcMessage = {
-            kind: "remote_user_read_message",
-            chatType: this.kind,
-            messageId: messageId,
-            chatId: this.chatId,
-            userId: this.user.userId,
-        };
+        if (this.chatVal.kind === "direct_chat") {
+            const rtc: WebRtcMessage = {
+                kind: "remote_user_read_message",
+                chatType: this.kind,
+                messageId,
+                chatId: this.chatId,
+                userId: this.user.userId,
+            };
 
-        rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+            rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+        }
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the

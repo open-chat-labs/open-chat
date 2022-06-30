@@ -9,7 +9,7 @@ use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -20,7 +20,7 @@ use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
-mod governance_client;
+mod governance_clients;
 mod group_summaries;
 mod guards;
 mod lifecycle;
@@ -118,7 +118,6 @@ struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
-    #[serde(deserialize_with = "deserialize_blocked_users")]
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -138,16 +137,7 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
-    #[serde(default)]
     pub pinned_chats: Timestamped<Vec<ChatId>>,
-}
-
-fn deserialize_blocked_users<'de, D>(deserializer: D) -> Result<Timestamped<HashSet<UserId>>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let blocked_users: HashSet<UserId> = de::Deserialize::deserialize(deserializer)?;
-    Ok(Timestamped::new(blocked_users, 1))
 }
 
 impl Data {

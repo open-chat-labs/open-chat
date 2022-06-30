@@ -1,12 +1,57 @@
-use crate::governance_client::manage_neuron::RegisterVote;
+use super::nns::manage_neuron::RegisterVote;
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
+use std::collections::HashMap;
 use types::{CanisterId, NeuronId, ProposalId};
 
-pub async fn get_neuron_ids(governance_canister_id: CanisterId) -> CallResult<Vec<NeuronId>> {
-    let response: CallResult<(Vec<NeuronId>,)> = ic_cdk::call(governance_canister_id, "get_neuron_ids", ()).await;
-    response.map(|r| r.0)
+const REWARD_STATUS_ACCEPTING_VOTES: i32 = 1;
+
+pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<GetBallotsResult> {
+    let args = list_proposals::ListProposalInfo {
+        limit: 1,
+        before_proposal: Some(WrappedProposalId { id: proposal_id + 1 }),
+        exclude_topic: Vec::new(),
+        include_reward_status: Vec::new(),
+        include_status: Vec::new(),
+    };
+
+    let response: CallResult<(list_proposals::ListProposalInfoResponse,)> =
+        ic_cdk::call(governance_canister_id, "list_proposals", (&args,)).await;
+
+    let result = response?
+        .0
+        .proposal_info
+        .into_iter()
+        .next()
+        .filter(|p| p.id.as_ref().map_or(false, |id| id.id == proposal_id))
+        .map(|p| match p.reward_status {
+            REWARD_STATUS_ACCEPTING_VOTES => GetBallotsResult::Success(
+                p.ballots
+                    .into_iter()
+                    .map(|(n, b)| {
+                        (
+                            n,
+                            match b.vote {
+                                1 => Some(true),
+                                2 => Some(false),
+                                _ => None,
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+            _ => GetBallotsResult::ProposalNotAcceptingVotes,
+        })
+        .unwrap_or(GetBallotsResult::ProposalNotFound);
+
+    Ok(result)
+}
+
+pub enum GetBallotsResult {
+    Success(Vec<(NeuronId, Option<bool>)>),
+    ProposalNotAcceptingVotes,
+    ProposalNotFound,
 }
 
 pub async fn register_vote(
@@ -30,13 +75,43 @@ pub async fn register_vote(
     })
 }
 
+mod list_proposals {
+    use super::*;
+
+    #[derive(CandidType, Deserialize)]
+    pub struct ListProposalInfo {
+        pub limit: u32,
+        pub before_proposal: Option<WrappedProposalId>,
+        pub exclude_topic: Vec<i32>,
+        pub include_reward_status: Vec<i32>,
+        pub include_status: Vec<i32>,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub struct ListProposalInfoResponse {
+        pub proposal_info: Vec<ProposalInfo>,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub struct ProposalInfo {
+        pub id: Option<WrappedProposalId>,
+        pub ballots: HashMap<u64, Ballot>,
+        pub reward_status: i32,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub struct Ballot {
+        pub vote: i32,
+    }
+}
+
 #[derive(CandidType, Deserialize)]
-pub struct ManageNeuron {
+struct ManageNeuron {
     pub neuron_id_or_subaccount: Option<manage_neuron::NeuronIdOrSubaccount>,
     pub command: Option<manage_neuron::Command>,
 }
 
-pub mod manage_neuron {
+mod manage_neuron {
     use super::*;
 
     #[derive(CandidType, Deserialize)]
@@ -57,11 +132,11 @@ pub mod manage_neuron {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct ManageNeuronResponse {
+struct ManageNeuronResponse {
     pub command: Option<manage_neuron_response::Command>,
 }
 
-pub mod manage_neuron_response {
+mod manage_neuron_response {
     use super::*;
 
     #[derive(CandidType, Deserialize)]

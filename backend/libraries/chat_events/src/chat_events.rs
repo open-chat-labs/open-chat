@@ -106,7 +106,6 @@ impl AllChatEvents {
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    #[serde(alias = "chat_type")]
     events_type: ChatEventsType,
     chat_id: ChatId,
     events: ChatEventsVec,
@@ -116,11 +115,6 @@ pub struct ChatEvents {
     latest_message_index: Option<MessageIndex>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DirectChatEvents {
-    pub inner: ChatEvents,
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -331,6 +325,8 @@ impl ChatEvents {
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
             .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
+
+        root_message.last_updated = Some(now);
 
         let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
         summary.latest_event_index = latest_event_index;

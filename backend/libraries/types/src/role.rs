@@ -38,12 +38,7 @@ pub struct GroupPermissions {
     pub create_polls: PermissionRole,
     pub send_messages: PermissionRole,
     pub react_to_messages: PermissionRole,
-    #[serde(default = "default_permission")]
     pub reply_in_thread: PermissionRole,
-}
-
-fn default_permission() -> PermissionRole {
-    PermissionRole::Members
 }
 
 impl Default for GroupPermissions {

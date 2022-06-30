@@ -20,7 +20,7 @@ fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState
 
     let version = args.group_canister_wasm.version;
 
-    if !runtime_state.data.test_mode && version <= runtime_state.data.group_canister_wasm.version {
+    if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm.version {
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
@@ -30,8 +30,16 @@ fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState
             .data
             .public_groups
             .iter()
+            .filter(|g| g.wasm_version() != version)
             .map(|g| g.id())
-            .chain(runtime_state.data.private_groups.iter().map(|g| g.id()))
+            .chain(
+                runtime_state
+                    .data
+                    .private_groups
+                    .iter()
+                    .filter(|g| g.wasm_version() != version)
+                    .map(|g| g.id()),
+            )
         {
             runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
         }
