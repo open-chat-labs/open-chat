@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::{AllChatEvents, ChatEvents};
 use notifications_canister::c2c_push_notification;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -147,7 +147,6 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    #[serde(deserialize_with = "deserialize_chat_events")]
     pub events: AllChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
@@ -162,17 +161,6 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-}
-
-fn deserialize_chat_events<'de, D>(deserializer: D) -> Result<AllChatEvents, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let chat_events: ChatEvents = de::Deserialize::deserialize(deserializer)?;
-    Ok(AllChatEvents {
-        main: chat_events,
-        threads: HashMap::new(),
-    })
 }
 
 #[allow(clippy::too_many_arguments)]
