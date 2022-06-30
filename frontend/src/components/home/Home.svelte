@@ -79,6 +79,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
+    import { pinnedChatsStore } from "../../stores/pinnedChats";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -476,6 +477,34 @@
             });
     }
 
+    function pinChat(ev: CustomEvent<string>) {
+        const chatId = ev.detail;
+        pinnedChatsStore.pin(chatId);
+        api.pinChat(chatId)
+            .then((resp) => {
+                if (resp.kind === "pinned_limit_reached") {
+                    toastStore.showFailureToast("pinChat.limitExceeded", {
+                        values: { limit: resp.limit },
+                    });
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("pinChat.failed");
+                rollbar.error("Error pinning chat", err);
+                pinnedChatsStore.unpin(chatId);
+            });
+    }
+
+    function unpinChat(ev: CustomEvent<string>) {
+        const chatId = ev.detail;
+        pinnedChatsStore.unpin(chatId);
+        api.unpinChat(chatId).catch((err) => {
+            toastStore.showFailureToast("pinChat.unpinFailed");
+            rollbar.error("Error unpinning chat", err);
+            pinnedChatsStore.pin(chatId);
+        });
+    }
+
     function getConfirmMessage(confirmActionEvent: ConfirmActionEvent | undefined): string {
         if (confirmActionEvent === undefined) return "";
 
@@ -845,6 +874,8 @@
             on:profile={showProfile}
             on:logout={logout}
             on:deleteDirectChat={deleteDirectChat}
+            on:pinChat={pinChat}
+            on:unpinChat={unpinChat}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}

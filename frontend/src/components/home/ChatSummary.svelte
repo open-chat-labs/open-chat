@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { push } from "svelte-spa-router";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Delete from "svelte-material-icons/Delete.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import PinIcon from "svelte-material-icons/Pin.svelte";
+    import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
@@ -23,11 +27,15 @@
     import { userStore } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
+    import { pinnedChatsStore } from "../../stores/pinnedChats";
     import { createEventDispatcher, onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import MenuIcon from "../MenuIcon.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -149,15 +157,28 @@
         }
     }
 
+    function onClick() {
+        push(`/${chatSummary.chatId}`);
+    }
+
+    function pinChat() {
+        dispatch("pinChat", chatSummary.chatId);
+    }
+
+    function unpinChat() {
+        dispatch("unpinChat", chatSummary.chatId);
+    }
+
     $: displayDate = getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
+    $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
 </script>
 
-<a
+<div
     role="button"
     class="chat-summary"
     class:first={index === 0}
@@ -170,8 +191,7 @@
     class:rtl={$rtlStore}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
-    href={`/#/${chatSummary.chatId}`}
-    on:click>
+    on:click={onClick}>
     <div class="avatar">
         <Avatar
             statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "var(--chatSummary-bg)"}
@@ -216,6 +236,36 @@
                 {unreadMessages > 999 ? "999+" : unreadMessages}
             </div>
         {/if}
+        {#if pinned}
+            <div class="pin-icon">
+                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+            </div>
+        {/if}
+        <div class="menu">
+            <MenuIcon>
+                <div class="menu-icon" slot="icon">
+                    <ChevronDown size="1.6em" color="var(--icon-txt" viewBox="0 0 24 24" />
+                </div>
+                <div slot="menu">
+                    <Menu>
+                        {#if !pinned}
+                            <MenuItem on:click={pinChat}>
+                                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("pinChat.menuItem")}</div>
+                            </MenuItem>
+                        {:else}
+                            <MenuItem on:click={unpinChat}>
+                                <PinOffIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
+                            </MenuItem>
+                        {/if}
+                    </Menu>
+                </div>
+            </MenuIcon>
+        </div>
     {/if}
     {#if canDelete}
         <div
@@ -231,7 +281,7 @@
             <Delete size={$iconSize} color={"#fff"} slot="icon" />
         </div>
     {/if}
-</a>
+</div>
 
 <style type="text/scss">
     .delete-chat {
@@ -269,6 +319,7 @@
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         border-bottom: var(--chatSummary-bd);
+        user-select: none;
 
         &:hover {
             background-color: var(--chatSummary-hv);
@@ -286,6 +337,29 @@
 
         &.selected {
             background-color: var(--chatSummary-bg-selected);
+        }
+
+        .menu {
+            flex: 0;
+        }
+
+        .menu-icon {
+            display: none;
+            width: 1.2em;
+            height: 0;
+            position: relative;
+            bottom: 0.4em;
+        }
+
+        .pin-icon {
+            height: 0;
+            @include font-size(fs-80);
+        }
+
+        &:hover {
+            .menu-icon {
+                display: block;
+            }
         }
     }
     .avatar {
@@ -309,6 +383,7 @@
         .name-date {
             display: flex;
             margin-bottom: $sp1;
+
             .chat-name {
                 @include font(book, normal, fs-100);
                 color: var(--chatSummary-txt1);
@@ -318,8 +393,8 @@
         }
 
         .chat-msg {
-            @include font(book, normal, fs-80);
             color: var(--chatSummary-txt2);
+            @include font(book, normal, fs-80);
         }
     }
 

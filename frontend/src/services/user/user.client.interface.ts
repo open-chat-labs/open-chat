@@ -22,6 +22,7 @@ import type {
     RegisterPollVoteResponse,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
+    CurrentChatState,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -29,13 +30,19 @@ import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
-import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
+import type {
+    PinChatResponse,
+    PublicProfile,
+    SetBioResponse,
+    UnpinChatResponse,
+    UserSummary,
+} from "../../domain/user/user";
 import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IUserClient {
     userId: string;
     getUpdates(
-        chatSummaries: ChatSummary[],
+        currentState: CurrentChatState,
         args: UpdateArgs,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
@@ -120,4 +127,6 @@ export interface IUserClient {
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse>;
+    pinChat(chatId: string): Promise<PinChatResponse>;
+    unpinChat(chatId: string): Promise<UnpinChatResponse>;
 }

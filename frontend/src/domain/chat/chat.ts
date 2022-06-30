@@ -553,13 +553,21 @@ export type MergedUpdatesResponse = {
     wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
+    pinnedChats: string[];
     avatarIdUpdate: OptionUpdate<bigint>;
     affectedEvents: Record<string, number[]>;
     timestamp: bigint;
 };
 
-export type UpdatesResponse = {
+export type CurrentChatState = {
+    chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
+    pinnedChats: string[];
+};
+
+export type UpdatesResponse = {
+    blockedUsers: Set<string> | undefined;
+    pinnedChats: string[] | undefined;
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
@@ -571,6 +579,7 @@ export type UpdatesResponse = {
 
 export type InitialStateResponse = {
     blockedUsers: Set<string>;
+    pinnedChats: string[];
     chats: ChatSummary[];
     timestamp: bigint;
     cyclesBalance: bigint;
