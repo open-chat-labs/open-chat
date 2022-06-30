@@ -38,7 +38,6 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    #[serde(alias = "CryptocurrencyNew")]
     Cryptocurrency(CryptocurrencyContentInternal),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
