@@ -1,7 +1,5 @@
 <script lang="ts">
     import ThreadHeader from "./ThreadHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
     import type {
         ChatEvent,
@@ -13,8 +11,9 @@
         SendMessageSuccess,
         TransferSuccess,
     } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
+    import Loading from "../../Loading.svelte";
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser, User } from "../../../domain/user/user";
@@ -39,7 +38,7 @@
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { derived, readable, writable, Writable } from "svelte/store";
+    import { derived, readable, Writable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
@@ -55,6 +54,7 @@
     import { immutableStore } from "../../../stores/immutable";
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
 
+    const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
@@ -69,8 +69,8 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
+    let initialised = false;
     let unconfirmed = createUnconfirmedStore();
-    let scrollTop = writable(0);
     let messagesDiv: HTMLDivElement | undefined;
 
     let previousRootEvent: EventWrapper<Message> | undefined;
@@ -82,6 +82,7 @@
             console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
             events.set([]);
+            initialised = false;
 
             if (thread !== undefined) {
                 loadThreadMessages(
@@ -166,10 +167,21 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
+            if (ascending && withinThreshold()) {
+                scrollBottom();
+            }
         }
 
-        console.log("Events: ", $events);
+        initialised = true;
         loading = false;
+    }
+
+    function calculateFromBottom(): number {
+        return -(messagesDiv?.scrollTop ?? 0);
+    }
+
+    function withinThreshold(): boolean {
+        return calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
     }
 
     async function handleEventsResponse(
@@ -187,13 +199,6 @@
         await controller.updateUserStore(userIds);
 
         return updated;
-
-        // this.events.set(updated);
-
-        // TODO - do we need this confirmedEventIndexesLoaded thing?
-        // if (resp.events.length > 0) {
-        //     resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
-        // }
 
         // TODO - we will need this too
         // this.makeRtcConnections();
@@ -275,6 +280,7 @@
 
             unconfirmed.add(threadRootMessageIndex, event);
             events.update((evts) => [...evts, event]);
+            scrollBottom();
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then((resp) => {
@@ -569,9 +575,13 @@
         }
     }
 
-    // TODO - not quite sure what to do with this yet
-    function onScroll() {
-        $scrollTop = messagesDiv?.scrollTop ?? 0;
+    function scrollBottom(behavior: ScrollBehavior = "smooth") {
+        tick().then(() => {
+            messagesDiv?.scrollTo({
+                top: 0,
+                behavior,
+            });
+        });
     }
 </script>
 
@@ -596,59 +606,63 @@
 
 <ThreadHeader on:close {rootEvent} chatSummary={$chat} />
 
-<div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
-    {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
-        <div class="day-group">
-            <div class="date-label">
-                {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
-            </div>
-            {#each dayGroup as userGroup}
-                {#each userGroup as evt, _i (evt.event.messageId.toString())}
-                    <ChatMessage
-                        senderId={evt.event.sender}
-                        focused={evt.event.messageIndex === focusMessageIndex}
-                        {observer}
-                        confirmed={!unconfirmed.contains(
-                            threadRootMessageIndex,
-                            evt.event.messageId
-                        )}
-                        readByMe={true}
-                        readByThem={true}
-                        chatId={$chat.chatId}
-                        chatType={$chat.kind}
-                        user={controller.user}
-                        me={evt.event.sender === currentUser.userId}
-                        first={true}
-                        last={false}
-                        preview={false}
-                        inThread={true}
-                        pinned={false}
-                        canPin={canPinMessages($chat)}
-                        canBlockUser={canBlockUsers($chat)}
-                        canDelete={canDeleteOtherUsersMessages($chat)}
-                        canSend={canSendMessages($chat, $userStore)}
-                        canReact={canReactToMessages($chat)}
-                        publicGroup={$chat.kind === "group_chat" && $chat.public}
-                        editing={$editingEvent === evt}
-                        selectedThreadMessageIndex={undefined}
-                        on:chatWith
-                        on:goToMessageIndex={goToMessageIndex}
-                        on:replyPrivatelyTo
-                        on:replyTo={replyTo}
-                        on:selectReaction={onSelectReaction}
-                        on:deleteMessage={deleteMessage}
-                        on:blockUser
-                        on:registerVote={registerVote}
-                        on:editMessage={() => editEvent(evt)}
-                        on:upgrade
-                        on:forward
-                        eventIndex={evt.index}
-                        timestamp={evt.timestamp}
-                        msg={evt.event} />
+<div bind:this={messagesDiv} class="thread-messages">
+    {#if loading && !initialised}
+        <Loading />
+    {:else}
+        {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
+            <div class="day-group">
+                <div class="date-label">
+                    {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
+                </div>
+                {#each dayGroup as userGroup}
+                    {#each userGroup as evt, _i (evt.event.messageId.toString())}
+                        <ChatMessage
+                            senderId={evt.event.sender}
+                            focused={evt.event.messageIndex === focusMessageIndex}
+                            {observer}
+                            confirmed={!unconfirmed.contains(
+                                threadRootMessageIndex,
+                                evt.event.messageId
+                            )}
+                            readByMe={true}
+                            readByThem={true}
+                            chatId={$chat.chatId}
+                            chatType={$chat.kind}
+                            user={controller.user}
+                            me={evt.event.sender === currentUser.userId}
+                            first={true}
+                            last={false}
+                            preview={false}
+                            inThread={true}
+                            pinned={false}
+                            canPin={canPinMessages($chat)}
+                            canBlockUser={canBlockUsers($chat)}
+                            canDelete={canDeleteOtherUsersMessages($chat)}
+                            canSend={canSendMessages($chat, $userStore)}
+                            canReact={canReactToMessages($chat)}
+                            publicGroup={$chat.kind === "group_chat" && $chat.public}
+                            editing={$editingEvent === evt}
+                            selectedThreadMessageIndex={undefined}
+                            on:chatWith
+                            on:goToMessageIndex={goToMessageIndex}
+                            on:replyPrivatelyTo
+                            on:replyTo={replyTo}
+                            on:selectReaction={onSelectReaction}
+                            on:deleteMessage={deleteMessage}
+                            on:blockUser
+                            on:registerVote={registerVote}
+                            on:editMessage={() => editEvent(evt)}
+                            on:upgrade
+                            on:forward
+                            eventIndex={evt.index}
+                            timestamp={evt.timestamp}
+                            msg={evt.event} />
+                    {/each}
                 {/each}
-            {/each}
-        </div>
-    {/each}
+            </div>
+        {/each}
+    {/if}
 </div>
 
 <Footer
