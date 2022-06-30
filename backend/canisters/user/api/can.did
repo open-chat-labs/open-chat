@@ -357,6 +357,25 @@ type UnpinChatResponse =
         Success;
     };
 
+type VoteOnProposalArgs =
+    record {
+        governance_canister_id: CanisterId;
+        proposal_id: nat64;
+        adopt: bool;
+        chat_id: ChatId;
+        message_id: MessageId;
+    };
+
+type VoteOnProposalResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        NoEligibleNeurons;
+        ProposalNotFound;
+        ProposalNotAcceptingVotes;
+        InternalError: text;
+    };
+
 type InitialStateArgs =
     record {
     };
@@ -569,6 +588,7 @@ service: {
     withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
+    vote_on_proposal: (VoteOnProposalArgs) -> (VoteOnProposalResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
