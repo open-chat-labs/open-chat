@@ -1,6 +1,7 @@
 <script lang="ts">
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
+    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import type {
         ChatEvent,
         EnhancedReplyContext,
@@ -14,10 +15,13 @@
     import { createEventDispatcher, getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
+    import Fab from "../../Fab.svelte";
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser, User } from "../../../domain/user/user";
     import { currentUserKey } from "../../../stores/user";
+    import { iconSize } from "../../../stores/iconSize";
+    import { rtlStore } from "../../../stores/rtl";
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
     import {
@@ -38,7 +42,7 @@
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { derived, readable, Writable } from "svelte/store";
+    import { derived, Readable, readable, writable, Writable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
@@ -72,6 +76,10 @@
     let initialised = false;
     let unconfirmed = createUnconfirmedStore();
     let messagesDiv: HTMLDivElement | undefined;
+    let fromBottom: Writable<number> = writable(0);
+    let withinThreshold: Readable<boolean> = derived([fromBottom], ([$fromBottom]) => {
+        return $fromBottom < FROM_BOTTOM_THRESHOLD;
+    });
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
@@ -167,7 +175,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
-            if (ascending && withinThreshold()) {
+            if (ascending && $withinThreshold) {
                 scrollBottom();
             }
         }
@@ -178,10 +186,6 @@
 
     function calculateFromBottom(): number {
         return -(messagesDiv?.scrollTop ?? 0);
-    }
-
-    function withinThreshold(): boolean {
-        return calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
     }
 
     async function handleEventsResponse(
@@ -575,13 +579,17 @@
         }
     }
 
-    function scrollBottom(behavior: ScrollBehavior = "smooth") {
+    function scrollBottom() {
         tick().then(() => {
             messagesDiv?.scrollTo({
                 top: 0,
-                behavior,
+                behavior: "smooth",
             });
         });
+    }
+
+    function onScroll() {
+        $fromBottom = calculateFromBottom();
     }
 </script>
 
@@ -604,9 +612,19 @@
         {controller} />
 {/if}
 
+<div
+    title={$_("goToFirstMessage")}
+    class:show={!$withinThreshold}
+    class="fab to-bottom"
+    class:rtl={$rtlStore}>
+    <Fab on:click={scrollBottom}>
+        <ArrowDown size={$iconSize} color={"#fff"} />
+    </Fab>
+</div>
+
 <ThreadHeader on:close {rootEvent} chatSummary={$chat} />
 
-<div bind:this={messagesDiv} class="thread-messages">
+<div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
         <Loading />
     {:else}
@@ -729,5 +747,29 @@
             text-align: center;
             margin-bottom: $sp4;
         }
+    }
+
+    .fab {
+        transition: opacity ease-in-out 300ms;
+        position: absolute;
+        @include z-index("fab");
+        right: 20px;
+        bottom: 0;
+        opacity: 0;
+        pointer-events: none;
+
+        &.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        &.rtl {
+            left: $sp6;
+            right: unset;
+        }
+    }
+
+    .to-bottom {
+        bottom: 80px;
     }
 </style>
