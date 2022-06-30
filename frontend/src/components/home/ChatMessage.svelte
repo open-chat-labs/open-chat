@@ -112,8 +112,8 @@
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
 
-        if (readByMe) {
-            observer?.unobserve(msgElement);
+        if (readByMe && observer && msgElement) {
+            observer.unobserve(msgElement);
         }
     });
 

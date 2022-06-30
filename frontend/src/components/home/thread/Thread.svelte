@@ -57,6 +57,7 @@
     import { selectReaction } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
+    import { isPreviewing } from "domain/chat/chat.utils.shared";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -136,6 +137,7 @@
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
+    $: preview = isPreviewing($chat);
 
     const dispatch = createEventDispatcher();
 
@@ -651,7 +653,7 @@
                             me={evt.event.sender === currentUser.userId}
                             first={true}
                             last={false}
-                            preview={false}
+                            {preview}
                             inThread={true}
                             pinned={false}
                             canPin={canPinMessages($chat)}
@@ -683,34 +685,36 @@
     {/if}
 </div>
 
-<Footer
-    chat={$chat}
-    fileToAttach={$fileToAttach}
-    editingEvent={$editingEvent}
-    replyingTo={$replyingTo}
-    textContent={$textContent}
-    participants={$participants}
-    blockedUsers={$blockedUsers}
-    user={controller.user}
-    joining={undefined}
-    preview={false}
-    mode={"thread"}
-    {blocked}
-    on:joinGroup
-    on:cancelPreview
-    on:upgrade
-    on:cancelReply={cancelReply}
-    on:clearAttachment={clearAttachment}
-    on:cancelEditEvent={cancelEditEvent}
-    on:setTextContent={setTextContent}
-    on:startTyping={startTyping}
-    on:stopTyping={stopTyping}
-    on:fileSelected={fileSelected}
-    on:audioCaptured={fileSelected}
-    on:sendMessage={sendMessage}
-    on:attachGif={attachGif}
-    on:tokenTransfer={tokenTransfer}
-    on:createPoll={createPoll} />
+{#if !preview}
+    <Footer
+        chat={$chat}
+        fileToAttach={$fileToAttach}
+        editingEvent={$editingEvent}
+        replyingTo={$replyingTo}
+        textContent={$textContent}
+        participants={$participants}
+        blockedUsers={$blockedUsers}
+        user={controller.user}
+        joining={undefined}
+        {preview}
+        mode={"thread"}
+        {blocked}
+        on:joinGroup
+        on:cancelPreview
+        on:upgrade
+        on:cancelReply={cancelReply}
+        on:clearAttachment={clearAttachment}
+        on:cancelEditEvent={cancelEditEvent}
+        on:setTextContent={setTextContent}
+        on:startTyping={startTyping}
+        on:stopTyping={stopTyping}
+        on:fileSelected={fileSelected}
+        on:audioCaptured={fileSelected}
+        on:sendMessage={sendMessage}
+        on:attachGif={attachGif}
+        on:tokenTransfer={tokenTransfer}
+        on:createPoll={createPoll} />
+{/if}
 
 <style type="text/scss">
     .thread-messages {
