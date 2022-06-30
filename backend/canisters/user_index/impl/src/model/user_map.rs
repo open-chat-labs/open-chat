@@ -441,35 +441,35 @@ mod tests {
         user_map.register(principal3, user_id3, Version::new(0, 0, 0), username3.clone(), 3, None);
         user_map.submit_phone_number(principal3, phone_number3.clone(), "123".to_string(), 4);
 
-        let phone_number_to_principal: Vec<_> = user_map
-            .phone_number_to_principal
+        let phone_number_to_user_id: Vec<_> = user_map
+            .phone_number_to_user_id
             .iter()
-            .map(|(ph, p)| (ph.clone(), p.clone()))
-            .sorted_by_key(|(_, p)| *p)
+            .map(|(ph, u)| (ph.clone(), u.clone()))
+            .sorted_by_key(|(_, u)| *u)
             .collect();
-        let user_id_to_principal: Vec<_> = user_map
-            .user_id_to_principal
+        let principal_to_user_id: Vec<_> = user_map
+            .principal_to_user_id
             .iter()
-            .map(|(u, p)| (u.clone(), p.clone()))
-            .sorted_by_key(|(_, p)| *p)
+            .map(|(p, u)| (p.clone(), u.clone()))
+            .sorted_by_key(|(_, u)| *u)
             .collect();
-        let username_to_principal: Vec<_> = user_map
-            .username_to_principal
+        let username_to_user_id: Vec<_> = user_map
+            .username_to_user_id
             .iter()
-            .map(|(u, p)| (u.clone(), p.clone()))
-            .sorted_by_key(|(_, p)| *p)
+            .map(|(name, u)| (name.clone(), u.clone()))
+            .sorted_by_key(|(_, u)| *u)
             .collect();
 
-        assert_eq!(user_map.users_by_principal.len(), 3);
+        assert_eq!(user_map.users.len(), 3);
 
-        assert_eq!(phone_number_to_principal, vec!((phone_number3, principal3)));
+        assert_eq!(phone_number_to_user_id, vec!((phone_number3, user_id3)));
         assert_eq!(
-            username_to_principal,
-            vec!((username1, principal1), (username2, principal2), (username3, principal3))
+            username_to_user_id,
+            vec!((username1, user_id1), (username2, user_id2), (username3, user_id3))
         );
         assert_eq!(
-            user_id_to_principal,
-            vec!((user_id1, principal1), (user_id2, principal2), (user_id3, principal3))
+            principal_to_user_id,
+            vec!((principal1, user_id1), (principal2, user_id2), (principal3, user_id3))
         );
     }
 
@@ -517,11 +517,11 @@ mod tests {
 
             assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
 
-            assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
-            assert_eq!(user_map.phone_number_to_principal.keys().collect_vec(), vec!(&phone_number2));
-            assert_eq!(user_map.username_to_principal.len(), 1);
-            assert!(user_map.username_to_principal.contains_key(&username2));
-            assert_eq!(user_map.user_id_to_principal.keys().collect_vec(), vec!(&user_id));
+            assert_eq!(user_map.users.keys().collect_vec(), vec!(&user_id));
+            assert_eq!(user_map.phone_number_to_user_id.keys().collect_vec(), vec!(&phone_number2));
+            assert_eq!(user_map.username_to_user_id.len(), 1);
+            assert!(user_map.username_to_user_id.contains_key(&username2));
+            assert_eq!(user_map.principal_to_user_id.keys().collect_vec(), vec!(&principal));
         }
     }
 
@@ -695,17 +695,11 @@ mod tests {
         assert_eq!(user_map.prune_unconfirmed_phone_numbers_if_required(now), Some(1));
         assert_eq!(
             user_map.users_with_unconfirmed_phone_numbers.iter().copied().collect_vec(),
-            vec![principal2]
+            vec![user_id2]
         );
-        assert!(user_map
-            .users_by_principal
-            .get(&principal1)
-            .unwrap()
-            .phone_status
-            .phone_number()
-            .is_none());
+        assert!(user_map.users.get(&user_id1).unwrap().phone_status.phone_number().is_none());
         assert_eq!(
-            user_map.phone_number_to_principal.keys().cloned().collect_vec(),
+            user_map.phone_number_to_user_id.keys().cloned().collect_vec(),
             vec![phone_number2]
         );
     }
