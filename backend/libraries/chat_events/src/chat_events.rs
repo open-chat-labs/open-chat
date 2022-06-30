@@ -326,6 +326,8 @@ impl ChatEvents {
             .and_then(|e| e.event.as_message_mut())
             .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
 
+        root_message.last_updated = Some(now);
+
         let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
         summary.latest_event_index = latest_event_index;
         summary.latest_event_timestamp = now;
