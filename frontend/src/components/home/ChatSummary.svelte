@@ -158,6 +158,7 @@
     }
 
     function onClick() {
+        dispatch("click");
         push(`/${chatSummary.chatId}`);
     }
 
