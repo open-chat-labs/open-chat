@@ -486,6 +486,7 @@
                     toastStore.showFailureToast("pinChat.limitExceeded", {
                         values: { limit: resp.limit },
                     });
+                    pinnedChatsStore.unpin(chatId);
                 }
             })
             .catch((err) => {
