@@ -1,11 +1,10 @@
 import type { Writable } from "svelte/store";
-import { get, writable } from "svelte/store";
+import { get } from "svelte/store";
+import { immutableStore } from "./immutable";
 
 const initialValue: string[] = [];
-const store = writable(initialValue);
-export const pinnedChatsStore = {
-    ...createStore(store),
-};
+
+export const pinnedChatsStore = createStore(immutableStore(initialValue));
 
 function createStore(store: Writable<string[]>) {
     return {
@@ -14,8 +13,9 @@ function createStore(store: Writable<string[]>) {
         pin: (chat_id: string): boolean => {
             if (!get(store).includes(chat_id)) {
                 store.update((ids) => {
-                    ids.unshift(chat_id);
-                    return [...ids];
+                    const ids_clone = [...ids];
+                    ids_clone.unshift(chat_id);
+                    return ids_clone;
                 });
                 return true;
             }
@@ -25,8 +25,9 @@ function createStore(store: Writable<string[]>) {
             const index = get(store).indexOf(chat_id);
             if (index >= 0) {
                 store.update((ids) => {
-                    ids.splice(index, 1);
-                    return [...ids];
+                    const ids_clone = [...ids];
+                    ids_clone.splice(index, 1);
+                    return ids_clone;
                 });
                 return true;
             }

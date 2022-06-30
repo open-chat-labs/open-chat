@@ -1,6 +1,7 @@
 <script lang="ts">
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import { _ } from "svelte-i18n";
+    import Alert from "../Alert.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -103,6 +104,7 @@
         Faq,
         Roadmap,
         SelectChat,
+        Message,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -124,6 +126,7 @@
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
+    let modalMessage = "";
 
     $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
         (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
@@ -478,6 +481,15 @@
     }
 
     function pinChat(ev: CustomEvent<string>) {
+        const pinnedChatLimit = 5;
+        if ($pinnedChatsStore.length >= pinnedChatLimit) {
+            modalMessage = $_("pinChat.limitExceeded", {
+                values: { limit: pinnedChatLimit },
+            });
+            modal = ModalType.Message;
+            return;
+        }
+
         const chatId = ev.detail;
         pinnedChatsStore.pin(chatId);
         api.pinChat(chatId)
@@ -993,6 +1005,8 @@
                 )}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
+        {:else if modal === ModalType.Message}
+            <Alert message={modalMessage} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
