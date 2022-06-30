@@ -636,7 +636,7 @@
                     {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
                 </div>
                 {#each dayGroup as userGroup}
-                    {#each userGroup as evt, _i (evt.event.messageId.toString())}
+                    {#each userGroup as evt, i (evt.event.messageId.toString())}
                         <ChatMessage
                             senderId={evt.event.sender}
                             focused={evt.event.messageIndex === focusMessageIndex}
@@ -651,8 +651,8 @@
                             chatType={$chat.kind}
                             user={controller.user}
                             me={evt.event.sender === currentUser.userId}
-                            first={true}
-                            last={false}
+                            first={i === 0}
+                            last={i + 1 === userGroup.length}
                             {preview}
                             inThread={true}
                             pinned={false}
