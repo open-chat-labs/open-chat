@@ -55,6 +55,7 @@
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
+    import { configKeys } from "../../utils/config";
 
     const dispatch = createEventDispatcher();
 
@@ -98,6 +99,7 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let threadsEnabled = localStorage.getItem(configKeys.threadsEnabled) === "true";
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
@@ -545,7 +547,7 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    {#if !inThread}
+                                    {#if !inThread && threadsEnabled}
                                         <MenuItem on:click={replyInThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
