@@ -1,5 +1,7 @@
 <script lang="ts">
     import { push } from "svelte-spa-router";
+    import { slide } from "svelte/transition";
+    import { expoInOut } from "svelte/easing";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
@@ -219,6 +221,11 @@
         {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true)}
     </div>
     {#if !preview}
+        {#if pinned}
+            <div class="pin-icon">
+                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+            </div>
+        {/if}
         {#if unreadMentions > 0}
             <div
                 in:pop={{ duration: 1500 }}
@@ -235,11 +242,6 @@
                 class:rtl={$rtlStore}
                 class="notification">
                 {unreadMessages > 999 ? "999+" : unreadMessages}
-            </div>
-        {/if}
-        {#if pinned}
-            <div class="pin-icon">
-                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
             </div>
         {/if}
         <div class="menu">
@@ -345,8 +347,9 @@
         }
 
         .menu-icon {
-            display: none;
-            width: 1.2em;
+            width: 0;
+            transition: width 200ms;
+            visibility: hidden;
             height: 0;
             position: relative;
             bottom: 0.4em;
@@ -359,7 +362,8 @@
 
         &:hover {
             .menu-icon {
-                display: block;
+                width: 1.2em;
+                visibility: visible;
             }
         }
     }
