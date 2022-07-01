@@ -198,7 +198,14 @@
         if (resp === "events_failed") return [];
 
         const updated = replaceAffected(
-            replaceLocal(currentUser.userId, $chat.chatId, $chat.readByMe, events, resp.events),
+            replaceLocal(
+                currentUser.userId,
+                $chat.chatId,
+                $chat.readByMe,
+                events,
+                resp.events,
+                true
+            ),
             resp.affectedEvents
         );
 

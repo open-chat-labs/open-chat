@@ -834,13 +834,13 @@ function partitionEvents(
     );
 }
 
-// FIXME - this is using messageRead but that's not ok because this is also called from threads where the indexes will be wrong
 export function replaceLocal(
     userId: string,
     chatId: string,
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
-    fromServer: EventWrapper<ChatEvent>[]
+    fromServer: EventWrapper<ChatEvent>[],
+    inThread = false // from threads, we should not mark messages as read
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);
@@ -852,15 +852,17 @@ export function replaceLocal(
     Object.entries(serverMsgs).forEach(([id, e]) => {
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
-            const idNum = BigInt(id);
-            if (unconfirmed.delete(chatId, idNum)) {
-                messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
-            } else if (
-                e.event.sender === userId &&
-                !indexIsInRanges(e.event.messageIndex, readByMe)
-            ) {
-                // If this message was sent by us and is not currently marked as read, mark it as read
-                messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+            if (!inThread) {
+                const idNum = BigInt(id);
+                if (unconfirmed.delete(chatId, idNum)) {
+                    messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
+                } else if (
+                    e.event.sender === userId &&
+                    !indexIsInRanges(e.event.messageIndex, readByMe)
+                ) {
+                    // If this message was sent by us and is not currently marked as read, mark it as read
+                    messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+                }
             }
             revokeObjectUrls(clientMsgs[id]);
             clientMsgs[id] = e;
