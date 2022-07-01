@@ -30,6 +30,7 @@
     import { userStore } from "../../stores/user";
     import { selectReaction } from "../../stores/reactions";
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
+    import { trackEvent } from "../../utils/tracking";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -283,7 +284,11 @@
             reaction,
             controller.chatUserIds,
             controller.user.userId
-        );
+        ).then((added) => {
+            if (added) {
+                trackEvent("reacted_to_message");
+            }
+        });
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {

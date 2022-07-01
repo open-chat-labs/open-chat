@@ -4,7 +4,6 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import type { Writable } from "svelte/store";
 import { overwriteCachedEvents } from "../utils/caching";
 import { rollbar } from "../utils/logging";
-import { trackEvent } from "../utils/tracking";
 import type {
     ChatEvent,
     ChatSummary,
@@ -162,7 +161,7 @@ export function selectReaction(
     chatUserIds: Set<string>,
     currentUserId: string,
     threadRootMessageIndex?: number
-): void {
+): Promise<boolean> {
     const toggle = () =>
         // optimistic update
         eventStore.update((events) =>
@@ -184,7 +183,7 @@ export function selectReaction(
             ? api.toggleGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
             : api.toggleDirectChatReaction(chat.them, messageId, reaction, threadRootMessageIndex);
 
-    apiPromise
+    return apiPromise
         .then((resp) => {
             if (resp !== "added" && resp !== "removed") {
                 // toggle again to undo
@@ -192,14 +191,16 @@ export function selectReaction(
                 toggle();
             } else {
                 if (resp === "added") {
-                    trackEvent("reacted_to_message");
+                    return true;
                 }
             }
+            return false;
         })
         .catch((err) => {
             // toggle again to undo
             console.log("Reaction failed: ", err);
             toggle();
+            return false;
         });
 }
 

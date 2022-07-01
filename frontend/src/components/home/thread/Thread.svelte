@@ -526,7 +526,11 @@
             controller.chatUserIds,
             currentUser.userId,
             threadRootMessageIndex
-        );
+        ).then((added) => {
+            if (added) {
+                trackEvent("reacted_to_message");
+            }
+        });
     }
 
     // TODO - this is another piece of (almost) duplication that we need to get rid of

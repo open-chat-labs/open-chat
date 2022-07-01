@@ -50,7 +50,7 @@ import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
-import { localReactions, mergeReactions } from "stores/reactions";
+import { localReactions, mergeReactions } from "../../stores/reactions";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
