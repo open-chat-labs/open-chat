@@ -18,6 +18,8 @@ import type {
     ChallengeAttempt,
     CreateChallengeResponse,
     PublicProfile,
+    PinChatResponse,
+    UnpinChatResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -66,6 +68,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    CurrentChatState,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -744,11 +747,11 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getUpdates(
-        chatSummaries: ChatSummary[],
+        currentState: CurrentChatState,
         args: UpdateArgs,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getUpdates(chatSummaries, args, selectedChatId).then((resp) => {
+        return this.userClient.getUpdates(currentState, args, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(resp);
         });
     }
@@ -1075,5 +1078,13 @@ export class ServiceContainer implements MarkMessagesRead {
 
     resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
         return this.getGroupClient(chatId).resetInviteCode();
+    }
+
+    pinChat(chatId: string): Promise<PinChatResponse> {
+        return this.userClient.pinChat(chatId);
+    }
+
+    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+        return this.userClient.unpinChat(chatId);
     }
 }

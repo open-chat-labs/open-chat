@@ -544,5 +544,12 @@
     "invitedUsers": "Usuarios invitados",
     "hotGroups": "Grupos calientes",
     "showHotGroups": "Muéstrame algunos grupos calientes",
-    "noHotGroups": "No hay grupos calientes 😭"
+    "noHotGroups": "No hay grupos calientes 😭",
+    "pinChat": {
+        "limitExceeded": "Solo puedes anclar hasta {limit} chats",
+        "failed": "Error al anclar el chat. Inténtalo más tarde.",
+        "unpinFailed": "Error al desanclar el chat. Inténtalo más tarde.",
+        "menuItem": "Marcar chat",
+        "unpinMenuItem": "Desanclar chat"
+    }
 }

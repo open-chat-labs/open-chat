@@ -31,6 +31,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
+    CurrentChatState,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -55,6 +56,8 @@ import {
     withdrawCryptoResponse,
     transferWithinGroupResponse,
     publicProfileResponse,
+    pinChatResponse,
+    unpinChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -72,7 +75,13 @@ import {
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
-import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
+import type {
+    PinChatResponse,
+    PublicProfile,
+    SetBioResponse,
+    UnpinChatResponse,
+    UserSummary,
+} from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
     SearchDirectChatResponse,
@@ -206,6 +215,7 @@ export class UserClient extends CandidService implements IUserClient {
             chatSummaries: resp.chats.sort(compareChats),
             timestamp: resp.timestamp,
             blockedUsers: resp.blockedUsers,
+            pinnedChats: resp.pinnedChats,
             avatarIdUpdate: undefined,
             affectedEvents: {},
         };
@@ -213,7 +223,7 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     async getUpdates(
-        chatSummaries: ChatSummary[],
+        currentState: CurrentChatState,
         args: UpdateArgs,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
@@ -233,7 +243,8 @@ export class UserClient extends CandidService implements IUserClient {
         );
 
         const anyUpdates =
-            updatesResponse.blockedUsers.size > 0 ||
+            updatesResponse.blockedUsers !== undefined ||
+            updatesResponse.pinnedChats !== undefined ||
             updatesResponse.chatsUpdated.length > 0 ||
             updatesResponse.chatsAdded.length > 0 ||
             updatesResponse.chatsRemoved.size > 0 ||
@@ -244,10 +255,11 @@ export class UserClient extends CandidService implements IUserClient {
         return {
             wasUpdated: anyUpdates,
             chatSummaries: anyUpdates
-                ? mergeChatUpdates(chatSummaries, updatesResponse)
-                : chatSummaries,
+                ? mergeChatUpdates(currentState.chatSummaries, updatesResponse)
+                : currentState.chatSummaries,
             timestamp: updatesResponse.timestamp,
-            blockedUsers: updatesResponse.blockedUsers,
+            blockedUsers: updatesResponse.blockedUsers ?? currentState.blockedUsers,
+            pinnedChats: updatesResponse.pinnedChats ?? currentState.pinnedChats,
             avatarIdUpdate: updatesResponse.avatarIdUpdate,
             affectedEvents: updatesResponse.chatsUpdated.reduce((result, chatSummary) => {
                 if (chatSummary.affectedEvents.length > 0) {
@@ -575,5 +587,25 @@ export class UserClient extends CandidService implements IUserClient {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
         return this.handleResponse(this.userService.withdraw_crypto(req), withdrawCryptoResponse);
+    }
+
+    @profile("userClient")
+    pinChat(chatId: string): Promise<PinChatResponse> {
+        return this.handleResponse(
+            this.userService.pin_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            pinChatResponse
+        );
+    }
+
+    @profile("userClient")
+    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+        return this.handleResponse(
+            this.userService.unpin_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            unpinChatResponse
+        );
     }
 }

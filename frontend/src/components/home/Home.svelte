@@ -80,6 +80,7 @@
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
     import { startPruningLocalReactions } from "../../stores/reactions";
+    import { pinnedChatsStore } from "../../stores/pinnedChats";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -124,6 +125,7 @@
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
+    let modalMessage = "";
 
     $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
         (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
@@ -476,6 +478,43 @@
                 rollbar.error("Error unblocking user", err);
                 blockedUsers.add(ev.detail.userId);
             });
+    }
+
+    function pinChat(ev: CustomEvent<string>) {
+        const pinnedChatLimit = 5;
+        if ($pinnedChatsStore.length >= pinnedChatLimit) {
+            toastStore.showSuccessToast("pinChat.limitExceeded", {
+                values: { limit: pinnedChatLimit },
+            });
+            return;
+        }
+
+        const chatId = ev.detail;
+        pinnedChatsStore.pin(chatId);
+        api.pinChat(chatId)
+            .then((resp) => {
+                if (resp.kind === "pinned_limit_reached") {
+                    toastStore.showFailureToast("pinChat.limitExceeded", {
+                        values: { limit: resp.limit },
+                    });
+                    pinnedChatsStore.unpin(chatId);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("pinChat.failed");
+                rollbar.error("Error pinning chat", err);
+                pinnedChatsStore.unpin(chatId);
+            });
+    }
+
+    function unpinChat(ev: CustomEvent<string>) {
+        const chatId = ev.detail;
+        pinnedChatsStore.unpin(chatId);
+        api.unpinChat(chatId).catch((err) => {
+            toastStore.showFailureToast("pinChat.unpinFailed");
+            rollbar.error("Error unpinning chat", err);
+            pinnedChatsStore.pin(chatId);
+        });
     }
 
     function getConfirmMessage(confirmActionEvent: ConfirmActionEvent | undefined): string {
@@ -847,6 +886,8 @@
             on:profile={showProfile}
             on:logout={logout}
             on:deleteDirectChat={deleteDirectChat}
+            on:pinChat={pinChat}
+            on:unpinChat={unpinChat}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}

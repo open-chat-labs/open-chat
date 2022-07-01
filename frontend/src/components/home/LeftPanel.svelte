@@ -39,6 +39,8 @@
             on:logout
             on:searchEntered
             on:deleteDirectChat
+            on:pinChat
+            on:unpinChat
             createdUser={user}
             {searchResultsAvailable}
             {searchTerm}

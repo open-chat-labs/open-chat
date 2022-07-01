@@ -543,5 +543,12 @@
     "invitedUsers": "Utenti invitati",
     "hotGroups": "Gruppi caldi",
     "showHotGroups": "Mostrami alcuni gruppi caldi",
-    "noHotGroups": "Nessun gruppo caldo 😭"
+    "noHotGroups": "Nessun gruppo caldo 😭",
+    "pinChat": {
+        "limitExceeded": "Puoi bloccare solo le chat di {limit}",
+        "failed": "Impossibile bloccare la chat. Riprova più tardi",
+        "unpinFailed": "Impossibile sbloccare la chat. Riprova più tardi",
+        "menuItem": "Appunta la chat",
+        "unpinMenuItem": "Sblocca la chat"
+    }
 }

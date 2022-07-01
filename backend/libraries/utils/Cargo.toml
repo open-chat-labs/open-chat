@@ -10,7 +10,7 @@ edition = "2021"
 candid = "0.7.14"
 canister_client_macros = { path = "../canister_client_macros" }
 getrandom = { version = "0.2.3", features = ["js"] }
-ic-cdk = "0.5.1"
+ic-cdk = "0.5.2"
 itertools = "0.10.3"
 msgpack = { path = "../msgpack" }
 rand = "0.7.3"

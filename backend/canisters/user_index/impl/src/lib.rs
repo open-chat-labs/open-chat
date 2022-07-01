@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::{canister, memory};
@@ -24,7 +25,7 @@ mod updates;
 pub const USER_LIMIT: usize = 25_000;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
-const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
+const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * 60 * 1000; // 10 minutes

@@ -1,4 +1,4 @@
-import type { ChatSummary, EventWrapper, Message } from "../domain/chat/chat";
+import type { ChatSummary, CurrentChatState, EventWrapper, Message } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
@@ -15,6 +15,7 @@ import { Poller } from "../fsm/poller";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { blockedUsers } from "./blockedUsers";
+import { pinnedChatsStore } from "./pinnedChats";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
@@ -83,9 +84,19 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
     }
 );
 
-export const chatSummariesListStore = derived(chatSummariesStore, (summaries) => {
-    return Object.values(summaries).sort(compareChats);
-});
+// This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
+export const chatSummariesListStore = derived(
+    [chatSummariesStore, pinnedChatsStore],
+    ([summaries, pinnedChats]) => {
+        const pinned = pinnedChats
+            .filter((id) => summaries[id] !== undefined)
+            .map((id) => summaries[id]);
+        const unpinned = Object.values(summaries)
+            .filter((chat) => !pinnedChats.includes(chat.chatId))
+            .sort(compareChats);
+        return pinned.concat(unpinned);
+    }
+);
 
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
@@ -206,11 +217,16 @@ async function loadChats(api: ServiceContainer) {
         chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
         const selectedChat = get(selectedChatStore);
+        const currentState: CurrentChatState = {
+            chatSummaries: chats,
+            blockedUsers: get(blockedUsers),
+            pinnedChats: get(pinnedChatsStore),
+        };
         const chatsResponse =
             chatUpdatesSince === undefined
                 ? await api.getInitialState(selectedChat?.chatId)
                 : await api.getUpdates(
-                      chats,
+                      currentState,
                       updateArgsFromChats(chatUpdatesSince, chats),
                       selectedChat?.chatId
                   );
@@ -238,7 +254,14 @@ async function loadChats(api: ServiceContainer) {
             );
 
             userStore.addMany(usersResponse.users);
-            blockedUsers.set(chatsResponse.blockedUsers);
+
+            if (chatsResponse.blockedUsers !== undefined) {
+                blockedUsers.set(chatsResponse.blockedUsers);
+            }
+
+            if (chatsResponse.pinnedChats !== undefined) {
+                pinnedChatsStore.set(chatsResponse.pinnedChats);
+            }
 
             const selectedChat = get(selectedChatStore);
             let selectedChatInvalid = true;
