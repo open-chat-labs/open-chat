@@ -110,7 +110,7 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = $typing[chatId]?.has(senderId);
+    $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
 
     afterUpdate(() => {

@@ -379,12 +379,10 @@
         draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
-    // FIXME
     function startTyping() {
         controller.startTyping();
     }
 
-    // FIXME
     function stopTyping() {
         controller.stopTyping();
     }

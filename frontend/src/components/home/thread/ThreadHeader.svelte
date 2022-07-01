@@ -27,17 +27,19 @@
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
-        const subtext =
-            getTypingString($userStore, chatSummary, typing) ||
-            `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
-        const someoneTyping = getTypingString($userStore, chatSummary, typing);
+        const subtext = `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
+        // TODO - typing indicator is not going to work in its current form
+        // const subtext =
+        //     getTypingString($userStore, chatSummary, typing) ||
+        //          `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
+        // const someoneTyping = getTypingString($userStore, chatSummary, typing);
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext,
-                typing: someoneTyping,
+                typing: false,
             };
         }
         return {
@@ -45,7 +47,7 @@
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
             subtext,
-            typing: someoneTyping,
+            typing: false,
         };
     }
 </script>
