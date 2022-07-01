@@ -10,6 +10,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
 use utils::canister::{self, CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;
@@ -20,7 +21,7 @@ mod queries;
 mod updates;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
+const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
