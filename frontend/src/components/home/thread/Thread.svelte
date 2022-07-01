@@ -151,24 +151,13 @@
         if (thread === undefined || controller.chatVal === undefined) return;
         loading = true;
 
-        const eventsPromise =
-            controller.chatVal.kind === "direct_chat"
-                ? api.directChatEvents(
-                      range,
-                      controller.chatVal.them,
-                      startIndex,
-                      ascending,
-                      threadRootMessageIndex
-                  )
-                : api.groupChatEvents(
-                      range,
-                      controller.chatVal.chatId,
-                      startIndex,
-                      ascending,
-                      threadRootMessageIndex
-                  );
-
-        const eventsResponse = await eventsPromise;
+        const eventsResponse = await api.chatEvents(
+            controller.chatVal,
+            range,
+            startIndex,
+            ascending,
+            threadRootMessageIndex
+        );
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
             const updated = await handleEventsResponse($events, eventsResponse);
@@ -390,10 +379,12 @@
         draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
+    // FIXME
     function startTyping() {
         controller.startTyping();
     }
 
+    // FIXME
     function stopTyping() {
         controller.stopTyping();
     }
@@ -444,25 +435,13 @@
             )
         );
 
-        // make the api call
-        const promise =
-            $chat.kind === "group_chat"
-                ? api.registerGroupChatPollVote(
-                      $chat.chatId,
-                      ev.detail.messageIndex,
-                      ev.detail.answerIndex,
-                      ev.detail.type,
-                      threadRootMessageIndex
-                  )
-                : api.registerDirectChatPollVote(
-                      $chat.them,
-                      ev.detail.messageIndex,
-                      ev.detail.answerIndex,
-                      ev.detail.type,
-                      threadRootMessageIndex
-                  );
-
-        promise
+        api.registerPollVote(
+            $chat,
+            ev.detail.messageIndex,
+            ev.detail.answerIndex,
+            ev.detail.type,
+            threadRootMessageIndex
+        )
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -564,7 +543,7 @@
             `.thread-messages [data-index='${ev.detail.index}']`
         );
         if (element) {
-            element.scrollIntoView({ behavior: "auto", block: "center" });
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
             setTimeout(() => {
                 focusMessageIndex = undefined;
             }, 200);

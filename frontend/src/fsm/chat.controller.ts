@@ -227,17 +227,8 @@ export class ChatController {
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
         this.findAndUpdatePollContent(messageIndex, answerIndex, type);
-        const promise =
-            this.chatVal.kind === "group_chat"
-                ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
-                : this.api.registerDirectChatPollVote(
-                      this.chatVal.them,
-                      messageIndex,
-                      answerIndex,
-                      type
-                  );
-
-        promise
+        this.api
+            .registerPollVote(this.chatVal, messageIndex, answerIndex, type)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -438,17 +429,9 @@ export class ChatController {
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
-        if (this.chatVal.kind === "direct_chat") {
-            return this.api.directChatEvents(
-                indexRangeForChat(get(this.serverChatSummary)),
-                this.chatVal.them,
-                startIndex,
-                ascending
-            );
-        }
-        return this.api.groupChatEvents(
+        return this.api.chatEvents(
+            this.chatVal,
             indexRangeForChat(get(this.serverChatSummary)),
-            this.chatVal.chatId,
             startIndex,
             ascending
         );

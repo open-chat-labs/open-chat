@@ -322,6 +322,30 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
+    chatEvents(
+        chat: ChatSummary,
+        eventIndexRange: IndexRange,
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<ChatEvent>> {
+        return chat.kind === "group_chat"
+            ? this.groupChatEvents(
+                  eventIndexRange,
+                  chat.chatId,
+                  startIndex,
+                  ascending,
+                  threadRootMessageIndex
+              )
+            : this.directChatEvents(
+                  eventIndexRange,
+                  chat.them,
+                  startIndex,
+                  ascending,
+                  threadRootMessageIndex
+              );
+    }
+
     directChatEvents(
         eventIndexRange: IndexRange,
         theirUserId: string,
@@ -976,7 +1000,31 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).unpinMessage(messageIndex);
     }
 
-    registerGroupChatPollVote(
+    registerPollVote(
+        chat: ChatSummary,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
+    ): Promise<RegisterPollVoteResponse> {
+        return chat.kind === "group_chat"
+            ? this.registerGroupChatPollVote(
+                  chat.chatId,
+                  messageIdx,
+                  answerIdx,
+                  voteType,
+                  threadRootMessageIndex
+              )
+            : this.registerDirectChatPollVote(
+                  chat.them,
+                  messageIdx,
+                  answerIdx,
+                  voteType,
+                  threadRootMessageIndex
+              );
+    }
+
+    private registerGroupChatPollVote(
         chatId: string,
         messageIdx: number,
         answerIdx: number,
@@ -991,7 +1039,7 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
-    registerDirectChatPollVote(
+    private registerDirectChatPollVote(
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
