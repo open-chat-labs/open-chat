@@ -125,8 +125,8 @@
         dispatch("searchEntered", "");
     }
 
-    function onScroll(e: any) {
-        chatScrollTop = e.currentTarget.scrollTop;
+    function onScroll() {
+        chatScrollTop = chatListElement.scrollTop;
         menuStore.hideMenu();
     }
 
