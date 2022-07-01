@@ -10,7 +10,7 @@ edition = "2021"
 candid = "0.7.14"
 canister_client_macros = { path = "../../../libraries/canister_client_macros" }
 group_canister = { path = "../api" }
-ic-cdk = "0.5.1"
+ic-cdk = "0.5.2"
 msgpack = { path = "../../../libraries/msgpack" }
 tracing = "0.1.33"
 types = { path = "../../../libraries/types" }

@@ -22,8 +22,8 @@ futures = "0.3.21"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.1"
-ic-cdk-macros = "0.5.1"
+ic-cdk = "0.5.2"
+ic-cdk-macros = "0.5.2"
 ic-ledger-types = "0.1.1"
 itertools = "0.10.3"
 ledger_utils = { path = "../../../libraries/ledger_utils" }

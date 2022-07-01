@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-ic-cdk = "0.5.1"
 open_storage_bucket_canister = { package = "bucket_canister", git = "https://github.com/open-ic/open-storage", rev = "6f530e95b96b6d84e89963ed4744dc2632cb8622" }
 open_storage_bucket_canister_c2c_client = { package = "bucket_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "6f530e95b96b6d84e89963ed4744dc2632cb8622" }
+ic-cdk = "0.5.2"
 types = { path = "../types" }
