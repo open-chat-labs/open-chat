@@ -8,6 +8,7 @@ pub struct Args {
     pub sender_message_index: MessageIndex,
     pub sender_name: String,
     pub content: MessageContent,
+    #[serde(alias = "replies_to")]
     pub replies_to_v2: Option<C2CReplyContext>,
     pub forwarding: bool,
 }
