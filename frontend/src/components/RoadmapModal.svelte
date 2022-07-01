@@ -25,11 +25,12 @@
             <li><del>Share messages and receive shares from other apps</del></li>
             <li><del>Edit sent messages</del></li>
             <li><del>Message forwarding</del></li>
+            <li><del>Pin chats</del></li>
             <li>Threaded replies</li>
+            <li>Special groups for viewing/discussing/voting on NNS and SNS proposals</li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
-            <li>Special groups for viewing/discussing/voting on NNS and SNS proposals</li>
             <li>Streamlined sign-in</li>
             <li>Communities (think Slack workspaces or Discord servers)</li>
             <li>2-way voice calls</li>
