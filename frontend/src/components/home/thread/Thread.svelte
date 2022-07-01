@@ -57,7 +57,8 @@
     import { selectReaction } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
-    import { isPreviewing } from "domain/chat/chat.utils.shared";
+    import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
+    import { relayPublish } from "../../../stores/relay";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -491,18 +492,18 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
+        if (ev.detail === rootEvent.event) {
+            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
+            return;
+        }
+
         replaceMessageContent(ev.detail.messageId, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
         });
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? api.deleteGroupMessage($chat.chatId, ev.detail.messageId, threadRootMessageIndex)
-                : api.deleteDirectMessage($chat.them, ev.detail.messageId, threadRootMessageIndex);
-
-        apiPromise
+        api.deleteMessage($chat, ev.detail.messageId, threadRootMessageIndex)
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
@@ -545,6 +546,11 @@
     }
 
     function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        if (ev.detail.message === rootEvent.event) {
+            relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
+            return;
+        }
+
         if (!canReact) return;
 
         selectReaction(
@@ -656,6 +662,8 @@
                             {preview}
                             inThread={true}
                             pinned={false}
+                            supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
+                            supportsReply={evt.event.messageId !== rootEvent.event.messageId}
                             canPin={canPinMessages($chat)}
                             canBlockUser={canBlockUsers($chat)}
                             canDelete={canDeleteOtherUsersMessages($chat)}

@@ -837,7 +837,17 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
-    deleteGroupMessage(
+    deleteMessage(
+        chat: ChatSummary,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return chat.kind === "group_chat"
+            ? this.deleteGroupMessage(chat.chatId, messageId, threadRootMessageIndex)
+            : this.deleteDirectMessage(chat.them, messageId, threadRootMessageIndex);
+    }
+
+    private deleteGroupMessage(
         chatId: string,
         messageId: bigint,
         threadRootMessageIndex?: number
@@ -845,7 +855,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).deleteMessage(messageId, threadRootMessageIndex);
     }
 
-    deleteDirectMessage(
+    private deleteDirectMessage(
         otherUserId: string,
         messageId: bigint,
         threadRootMessageIndex?: number

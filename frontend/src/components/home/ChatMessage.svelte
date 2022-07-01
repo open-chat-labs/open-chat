@@ -85,6 +85,10 @@
     export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
+    // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
+    export let supportsEdit: boolean;
+    export let supportsReply: boolean;
+
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
@@ -95,7 +99,7 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
-    $: canEdit = !crypto && !poll && me;
+    $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
@@ -533,7 +537,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed && canSend}
+                                {#if confirmed && canSend && supportsReply}
                                     <MenuItem on:click={reply}>
                                         <Reply
                                             size={$iconSize}

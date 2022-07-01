@@ -83,9 +83,9 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
     }
 );
 
-export const chatSummariesListStore = derived(chatSummariesStore, (summaries) =>
-    Object.values(summaries).sort(compareChats)
-);
+export const chatSummariesListStore = derived(chatSummariesStore, (summaries) => {
+    return Object.values(summaries).sort(compareChats);
+});
 
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
