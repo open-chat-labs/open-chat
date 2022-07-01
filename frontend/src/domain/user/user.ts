@@ -172,3 +172,7 @@ export type UpgradeStorageResponse =
     | { kind: "internal_error" }
     | { kind: "storage_limit_exceeded" }
     | { kind: "user_not_found" };
+
+export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
+
+export type UnpinChatResponse = "success";

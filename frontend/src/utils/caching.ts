@@ -229,6 +229,7 @@ export async function setCachedChats(
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
+                pinnedChats: data.pinnedChats,
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
             },

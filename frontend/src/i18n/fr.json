@@ -543,5 +543,12 @@
     "invitedUsers": "Utilisateurs invités",
     "hotGroups": "Groupes chauds",
     "showHotGroups": "Montrez-moi des groupes chauds",
-    "noHotGroups": "Pas de groupes chauds 😭"
+    "noHotGroups": "Pas de groupes chauds 😭",
+    "pinChat": {
+        "limitExceeded": "Vous ne pouvez épingler que {limit} chats",
+        "failed": "Échec de l'épinglage du chat - veuillez réessayer plus tard",
+        "unpinFailed": "Échec de désépinglage du chat - veuillez réessayer plus tard",
+        "menuItem": "Épingler le chat",
+        "unpinMenuItem": "Détacher le chat"
+    }
 }

@@ -543,5 +543,12 @@
     "invitedUsers": "Eingeladene Benutzer",
     "showHotGroups": "Zeig mir ein paar heiße Gruppen",
     "noHotGroups": "Keine heißen Gruppen 😭",
-    "hotGroups": "Heiße Gruppen"
+    "hotGroups": "Heiße Gruppen",
+    "pinChat": {
+        "limitExceeded": "Sie können nur an {limit} Chats anheften",
+        "failed": "Fehler beim Anpinnen des Chats – bitte versuchen Sie es später erneut",
+        "unpinFailed": "Der Chat konnte nicht gelöst werden. Versuchen Sie es später erneut",
+        "menuItem": "Pin-Chat",
+        "unpinMenuItem": "Chat loslösen"
+    }
 }

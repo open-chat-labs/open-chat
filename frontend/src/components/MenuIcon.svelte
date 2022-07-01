@@ -8,7 +8,8 @@
 
     onDestroy(closeMenu);
 
-    async function showMenu(_e: MouseEvent): Promise<void> {
+    async function showMenu(e: MouseEvent): Promise<void> {
+        e.preventDefault();
         if ($menuStore === contextMenu) {
             menuStore.hideMenu();
         } else {

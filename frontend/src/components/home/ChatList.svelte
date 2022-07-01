@@ -173,6 +173,8 @@
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}
                         on:click={closeSearch}
+                        on:pinChat
+                        on:unpinChat
                         on:deleteDirectChat />
                 {/each}
 
