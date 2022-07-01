@@ -30,6 +30,8 @@ import type {
     ApiTransferCryptoWithinGroupResponse,
     ApiChatMetrics,
     ApiPublicProfileResponse,
+    ApiPinChatResponse,
+    ApiUnpinChatResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -76,7 +78,12 @@ import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
-import type { PublicProfile, SetBioResponse } from "../../domain/user/user";
+import type {
+    PinChatResponse,
+    PublicProfile,
+    SetBioResponse,
+    UnpinChatResponse,
+} from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
@@ -295,6 +302,22 @@ export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse 
 }
 
 export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserResponse {
+    return "success";
+}
+
+export function pinChatResponse(candid: ApiPinChatResponse): PinChatResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+
+    if ("PinnedLimitReached" in candid) {
+        return { kind: "pinned_limit_reached", limit: candid.PinnedLimitReached };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiPinChatResponse type received", candid);
+}
+
+export function unpinChatResponse(_candid: ApiUnpinChatResponse): UnpinChatResponse {
     return "success";
 }
 
@@ -557,6 +580,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
     if ("Success" in candid) {
         return {
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            pinnedChats: candid.Success.pinned_chats.map((u) => u.toString()),
             chats: candid.Success.chats.map(chatSummary),
             timestamp: candid.Success.timestamp,
             cyclesBalance: candid.Success.cycles_balance,
@@ -568,7 +592,10 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            blockedUsers: optional(
+                candid.Success.blocked_users_v2,
+                (user_ids) => new Set(user_ids.map((u) => u.toString()))
+            ),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
@@ -576,6 +603,9 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             timestamp: candid.Success.timestamp,
             cyclesBalance: optional(candid.Success.cycles_balance, identity),
             transactions: [], // todo - come back when we need this
+            pinnedChats: optional(candid.Success.pinned_chats, (chat_ids) =>
+                chat_ids.map((u) => u.toString())
+            ),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);

@@ -544,5 +544,12 @@
     "invitedUsers": "Người dùng được mời",
     "hotGroups": "Nhóm nóng",
     "showHotGroups": "Cho tôi xem một số nhóm nóng",
-    "noHotGroups": "Không có nhóm nóng 😭"
+    "noHotGroups": "Không có nhóm nóng 😭",
+    "pinChat": {
+        "limitExceeded": "Bạn chỉ có thể ghim tối đa {limit} cuộc trò chuyện",
+        "failed": "Không thể ghim cuộc trò chuyện - vui lòng thử lại sau",
+        "unpinFailed": "Không thể bỏ ghim cuộc trò chuyện - vui lòng thử lại sau",
+        "menuItem": "Ghim cuộc trò chuyện",
+        "unpinMenuItem": "Bỏ ghim cuộc trò chuyện"
+    }
 }

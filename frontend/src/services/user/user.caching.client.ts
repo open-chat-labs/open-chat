@@ -24,6 +24,7 @@ import type {
     EventsSuccessResult,
     ChatEvent,
     PendingCryptocurrencyWithdrawal,
+    CurrentChatState,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -49,7 +50,13 @@ import {
     userIdsFromEvents,
 } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
-import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
+import type {
+    PinChatResponse,
+    PublicProfile,
+    SetBioResponse,
+    UnpinChatResponse,
+    UserSummary,
+} from "../../domain/user/user";
 import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
@@ -326,7 +333,7 @@ export class CachingUserClient implements IUserClient {
         if (cachedChats) {
             return this.client
                 .getUpdates(
-                    cachedChats.chatSummaries,
+                    cachedChats,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
                     selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
@@ -349,13 +356,13 @@ export class CachingUserClient implements IUserClient {
 
     @profile("userCachingClient")
     async getUpdates(
-        chatSummaries: ChatSummary[],
+        currentState: CurrentChatState,
         args: UpdateArgs,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args, selectedChatId) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(currentState, args, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
                 this.primeCaches(cachedChats, resp, selectedChatId);
                 return resp;
@@ -510,5 +517,13 @@ export class CachingUserClient implements IUserClient {
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.client.withdrawCryptocurrency(domain);
+    }
+
+    pinChat(chatId: string): Promise<PinChatResponse> {
+        return this.client.pinChat(chatId);
+    }
+
+    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+        return this.client.unpinChat(chatId);
     }
 }

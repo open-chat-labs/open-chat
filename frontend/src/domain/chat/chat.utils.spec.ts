@@ -393,7 +393,8 @@ describe("merging updates", () => {
             chatsAdded: [],
             avatarIdUpdate: undefined,
             timestamp: BigInt(0),
-            blockedUsers: new Set<string>(),
+            blockedUsers: undefined,
+            pinnedChats: undefined,
             transactions: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
@@ -409,7 +410,8 @@ describe("merging updates", () => {
             chatsAdded: [directChatId(6), directChatId(7)],
             avatarIdUpdate: undefined,
             timestamp: BigInt(0),
-            blockedUsers: new Set<string>(),
+            blockedUsers: undefined,
+            pinnedChats: undefined,
             transactions: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
@@ -486,7 +488,8 @@ describe("merging updates", () => {
                 chatsAdded: [],
                 avatarIdUpdate: undefined,
                 timestamp: BigInt(0),
-                blockedUsers: new Set<string>(),
+                blockedUsers: undefined,
+                pinnedChats: undefined,
                 transactions: [],
             };
             expect(() => mergeChatUpdates(initialChats, updatesResponse)).toThrow();
@@ -499,7 +502,8 @@ describe("merging updates", () => {
                 chatsAdded: [],
                 avatarIdUpdate: undefined,
                 timestamp: BigInt(0),
-                blockedUsers: new Set<string>(),
+                blockedUsers: undefined,
+                pinnedChats: undefined,
                 transactions: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
@@ -521,7 +525,8 @@ describe("merging updates", () => {
                 chatsAdded: [],
                 avatarIdUpdate: undefined,
                 timestamp: BigInt(0),
-                blockedUsers: new Set<string>(),
+                blockedUsers: undefined,
+                pinnedChats: undefined,
                 transactions: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);

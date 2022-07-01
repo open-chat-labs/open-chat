@@ -90,6 +90,8 @@ import {
     Cryptocurrency,
     PublicProfileResponse,
     ThreadSummary,
+    PinChatResponse,
+    UnpinChatResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -182,6 +184,8 @@ export {
     PublicProfileResponse as ApiPublicProfileResponse,
     ThreadSummary as ApiThreadSummary,
     ProposalContent as ApiProposalContent,
+    PinChatResponse as ApiPinChatResponse,
+    UnpinChatResponse as ApiUnpinChatResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

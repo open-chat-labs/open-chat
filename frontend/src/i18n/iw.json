@@ -541,5 +541,12 @@
     "invitedUsers": "משתמשים מוזמנים",
     "hotGroups": "קבוצות לוהטות",
     "showHotGroups": "תראה לי כמה קבוצות חמות",
-    "noHotGroups": "אין קבוצות לוהטות 😭"
+    "noHotGroups": "אין קבוצות לוהטות 😭",
+    "pinChat": {
+        "limitExceeded": "אתה יכול להצמיד רק עד {limit} צ'אטים",
+        "failed": "הצמדת הצ'אט נכשלה - נסה מאוחר יותר",
+        "unpinFailed": "ביטול ההצמדה של הצ'אט נכשל - נסה מאוחר יותר",
+        "menuItem": "הצמד צ'אט",
+        "unpinMenuItem": "בטל את ההצמדה של הצ'אט"
+    }
 }
