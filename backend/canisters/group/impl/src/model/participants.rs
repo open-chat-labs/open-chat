@@ -167,7 +167,7 @@ impl Participants {
         if let Some(user) = self
             .user_id_to_principal_map
             .get(&user_id)
-            .and_then(|p| self.by_principal.remove(&p))
+            .and_then(|p| self.by_principal.remove(p))
         {
             self.user_id_to_principal_map.insert(user_id, new_principal);
             self.by_principal.insert(new_principal, user);
