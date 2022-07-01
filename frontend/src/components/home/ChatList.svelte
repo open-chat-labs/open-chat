@@ -29,6 +29,7 @@
         selectedChatStore,
     } from "../../stores/chat";
     import { messagesRead } from "../../stores/markRead";
+    import { menuStore } from "../../stores/menu";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -124,6 +125,11 @@
         dispatch("searchEntered", "");
     }
 
+    function onScroll() {
+        chatScrollTop = chatListElement.scrollTop;
+        menuStore.hideMenu();
+    }
+
     let chatListElement: HTMLElement;
     let chatScrollTop = 0;
 
@@ -155,10 +161,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
 
-    <div
-        bind:this={chatListElement}
-        class="body"
-        on:scroll={(e) => (chatScrollTop = e.currentTarget.scrollTop)}>
+    <div bind:this={chatListElement} class="body" on:scroll={onScroll}>
         {#if $chatsLoading}
             <Loading />
         {:else}
