@@ -34,7 +34,7 @@
         storageSectionOpen,
         userInfoOpen,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
@@ -78,6 +78,12 @@
     }
 
     $: bioDirty = userbio !== originalBio;
+
+    onMount(() => {
+        api.getBio().then((bio) => {
+            originalBio = userbio = bio;
+        });
+    });
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
