@@ -346,7 +346,7 @@ export class ServiceContainer implements MarkMessagesRead {
               );
     }
 
-    directChatEvents(
+    private directChatEvents(
         eventIndexRange: IndexRange,
         theirUserId: string,
         startIndex: number,
@@ -392,7 +392,7 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
-    groupChatEvents(
+    private groupChatEvents(
         eventIndexRange: IndexRange,
         chatId: string,
         startIndex: number,
