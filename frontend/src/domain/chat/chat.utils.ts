@@ -174,6 +174,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "reaction_removed":
             case "poll_vote_registered":
             case "poll_vote_deleted":
+            case "proposal_vote_registered":
                 userIds.add(e.event.message.updatedBy);
                 break;
             case "direct_chat_created":
@@ -227,6 +228,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "reaction_removed":
         case "poll_vote_registered":
         case "poll_vote_deleted":
+        case "proposal_vote_registered":
             return event.message.updatedBy;
         case "direct_chat_created":
         case "aggregate_participants_joined_left":
