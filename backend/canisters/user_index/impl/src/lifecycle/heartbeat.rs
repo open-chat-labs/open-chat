@@ -8,9 +8,6 @@ use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE};
 use utils::cycles::can_spend_cycles;
 
-const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 2;
-const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
-
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
@@ -18,6 +15,7 @@ fn heartbeat() {
     retry_failed_messages::run();
     sync_users_to_open_storage::run();
     sync_events_to_user_canisters::run();
+    notify_user_principal_migrations::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
@@ -26,6 +24,8 @@ fn heartbeat() {
 mod upgrade_canisters {
     use super::*;
     type CanisterToUpgrade = utils::canister::CanisterToUpgrade<user_canister::post_upgrade::Args>;
+
+    const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 2;
 
     pub fn run() {
         let canisters_to_upgrade = mutate_state(next_batch);
@@ -175,6 +175,8 @@ mod topup_canister_pool {
 mod retry_failed_messages {
     use super::*;
 
+    const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
+
     pub fn run() {
         let messages_to_retry = mutate_state(next_batch);
         if !messages_to_retry.is_empty() {
@@ -275,6 +277,60 @@ mod sync_events_to_user_canisters {
 
     fn on_failure(user_id: UserId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
         runtime_state.data.user_event_sync_queue.mark_sync_failed(user_id, events);
+    }
+}
+
+mod notify_user_principal_migrations {
+    use super::*;
+    use crate::model::user_principal_migration_queue::CanisterToNotifyOfUserPrincipalMigration;
+
+    const MAX_CANISTERS_TO_NOTIFY_PER_HEARTBEAT: u32 = 5;
+
+    pub fn run() {
+        let next_batch = mutate_state(next_batch);
+        if !next_batch.is_empty() {
+            ic_cdk::spawn(notify_many(next_batch));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, CanisterToNotifyOfUserPrincipalMigration)> {
+        (0..MAX_CANISTERS_TO_NOTIFY_PER_HEARTBEAT)
+            .map_while(|_| runtime_state.data.user_principal_migration_queue.take())
+            .collect()
+    }
+
+    async fn notify_many(canisters: Vec<(UserId, CanisterToNotifyOfUserPrincipalMigration)>) {
+        let futures: Vec<_> = canisters
+            .into_iter()
+            .map(|(user_id, canister)| notify(user_id, canister))
+            .collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn notify(user_id: UserId, canister: CanisterToNotifyOfUserPrincipalMigration) {
+        let result = match &canister {
+            CanisterToNotifyOfUserPrincipalMigration::OpenStorage(canister_id, args) => {
+                open_storage_index_canister_c2c_client::update_user_id(*canister_id, args)
+                    .await
+                    .map(|_| ())
+            }
+            CanisterToNotifyOfUserPrincipalMigration::Notifications(canister_id, args) => {
+                notifications_canister_c2c_client::c2c_update_user_principal(*canister_id, args)
+                    .await
+                    .map(|_| ())
+            }
+            CanisterToNotifyOfUserPrincipalMigration::Group(chat_id, args) => {
+                group_canister_c2c_client::c2c_update_user_principal((*chat_id).into(), args)
+                    .await
+                    .map(|_| ())
+            }
+        };
+
+        mutate_state(|state| match result {
+            Ok(_) => state.data.user_principal_migration_queue.mark_success(user_id),
+            Err(_) => state.data.user_principal_migration_queue.mark_failure(user_id, canister),
+        });
     }
 }
 

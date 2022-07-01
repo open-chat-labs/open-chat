@@ -163,8 +163,22 @@ impl Participants {
         }
     }
 
+    pub fn update_user_principal(&mut self, user_id: UserId, new_principal: Principal) -> bool {
+        if let Some(user) = self
+            .user_id_to_principal_map
+            .get(&user_id)
+            .and_then(|p| self.by_principal.remove(&p))
+        {
+            self.user_id_to_principal_map.insert(user_id, new_principal);
+            self.by_principal.insert(new_principal, user);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn len(&self) -> u32 {
-        self.user_id_to_principal_map.len() as u32
+        self.by_principal.len() as u32
     }
 
     pub fn change_role(

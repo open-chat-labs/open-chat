@@ -2,6 +2,7 @@ use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
+use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -128,6 +129,7 @@ struct Data {
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_event_sync_queue: UserEventSyncQueue,
+    pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
@@ -167,6 +169,7 @@ impl Data {
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_event_sync_queue: UserEventSyncQueue::default(),
+            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
