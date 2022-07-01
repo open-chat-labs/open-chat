@@ -199,6 +199,7 @@ impl Default for Data {
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_event_sync_queue: UserEventSyncQueue::default(),
+            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
