@@ -408,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
+    'ProposalVoteRegistered' : UpdatedMessage,
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
@@ -478,6 +479,7 @@ export const idlFactory = ({ IDL }) => {
     'text_messages' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
+    'proposal_votes' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
@@ -866,6 +868,21 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const VoteOnProposalArgs = IDL.Record({
+    'adopt' : IDL.Bool,
+    'proposal_id' : IDL.Nat64,
+    'governance_canister_id' : CanisterId,
+    'chat_id' : ChatId,
+    'message_id' : MessageId,
+  });
+  const VoteOnProposalResponse = IDL.Variant({
+    'ProposalNotFound' : IDL.Null,
+    'NoEligibleNeurons' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'ProposalNotAcceptingVotes' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const WithdrawCryptoRequest = IDL.Record({
     'withdrawal' : PendingCryptoTransaction,
   });
@@ -973,6 +990,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
+    'vote_on_proposal' : IDL.Func(
+        [VoteOnProposalArgs],
+        [VoteOnProposalResponse],
+        [],
+      ),
     'withdraw_crypto' : IDL.Func(
         [WithdrawCryptoRequest],
         [WithdrawCryptoResponse],
