@@ -218,10 +218,6 @@
         // this.makeRtcConnections();
     }
 
-    function close() {
-        dispatch("close");
-    }
-
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
@@ -238,25 +234,8 @@
         draftThreadMessages.delete(threadRootMessageIndex);
     }
 
-    // todo - lots of duplication here with chatController.editEvent
-    // todo - there is a problem when editing the root message of a thread (in either middle or thread panel)
-    // the edit needs to also be reflected in the other window - maybe this will just work when the update loop stuff is done
     function editEvent(ev: EventWrapper<Message>): void {
-        draftThreadMessages.setEditingEvent(threadRootMessageIndex, ev);
-        draftThreadMessages.setAttachment(
-            threadRootMessageIndex,
-            ev.event.content.kind !== "text_content" ? ev.event.content : undefined
-        );
-        draftThreadMessages.setReplyingTo(
-            threadRootMessageIndex,
-            ev.event.repliesTo && ev.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...ev.event.repliesTo,
-                      content: ev.event.content,
-                      sender: $userStore[ev.event.sender],
-                  }
-                : undefined
-        );
+        draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
     function newMessage(

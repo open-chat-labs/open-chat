@@ -877,21 +877,7 @@ export class ChatController {
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        draftMessages.setEditingEvent(this.chatId, event);
-        draftMessages.setAttachment(
-            this.chatId,
-            event.event.content.kind !== "text_content" ? event.event.content : undefined
-        );
-        draftMessages.setReplyingTo(
-            this.chatId,
-            event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...event.event.repliesTo,
-                      content: event.event.content,
-                      sender: get(userStore)[event.event.sender],
-                  }
-                : undefined
-        );
+        draftMessages.setEditing(this.chatId, event);
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
