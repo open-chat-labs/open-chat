@@ -363,7 +363,7 @@ type VoteOnProposalArgs =
         proposal_id: nat64;
         adopt: bool;
         chat_id: ChatId;
-        message_id: MessageId;
+        message_index: MessageIndex;
     };
 
 type VoteOnProposalResponse =
