@@ -6,7 +6,7 @@ use crate::{mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, ChatId, MessageId, NeuronId, ProposalId};
+use types::{CanisterId, NeuronId, ProposalId};
 use user_canister::vote_on_proposal::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -54,13 +54,14 @@ async fn vote_on_proposal(args: Args) -> Response {
             &errors,
             state,
         );
-    });
 
-    // Don't register the vote in the group if there were any errors, this allows the user to try
-    // again
-    if errors.is_empty() {
-        ic_cdk::spawn(register_vote_in_group(args.chat_id, args.message_id, args.adopt));
-    }
+        if errors.is_empty() {
+            if let Some(group_chat) = state.data.group_chats.get_mut(&args.chat_id) {
+                let now = state.env.now();
+                group_chat.record_proposal_vote(args.message_index, now);
+            }
+        }
+    });
 
     Success
 }
@@ -73,9 +74,4 @@ async fn register_vote(
 ) -> (NeuronId, CallResult<Result<(), nns::GovernanceError>>) {
     let response = nns::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await;
     (neuron_id, response)
-}
-
-async fn register_vote_in_group(chat_id: ChatId, message_id: MessageId, adopt: bool) {
-    let c2c_args = group_canister::c2c_register_proposal_vote::Args { message_id, adopt };
-    let _ = group_canister_c2c_client::c2c_register_proposal_vote(chat_id.into(), &c2c_args).await;
 }

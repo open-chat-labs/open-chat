@@ -70,6 +70,8 @@ pub struct GroupChatSummary {
     pub wasm_version: Version,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
+    #[serde(default)]
+    pub recent_proposal_votes: Vec<MessageIndex>,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
 }
@@ -117,6 +119,8 @@ pub struct GroupChatSummaryUpdates {
     pub wasm_version: Option<Version>,
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
+    #[serde(default)]
+    pub recent_proposal_votes: Vec<MessageIndex>,
     pub affected_events: Vec<EventIndex>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
@@ -237,6 +241,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
             permissions: s.permissions,
+            recent_proposal_votes: vec![],
             metrics: s.metrics,
             my_metrics: s.my_metrics,
         }
@@ -284,6 +289,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
             permissions: s.permissions,
+            recent_proposal_votes: vec![],
             affected_events: s.affected_events,
             metrics: s.metrics,
             my_metrics: s.my_metrics,
@@ -309,7 +315,6 @@ pub struct ChatMetrics {
     pub edits: u64,
     pub reactions: u64,
     pub proposals: u64,
-    pub proposal_votes: u64,
     pub last_active: TimestampMillis,
 }
 
@@ -330,7 +335,6 @@ impl ChatMetrics {
         self.edits += other.edits;
         self.reactions += other.reactions;
         self.proposals += other.proposals;
-        self.proposal_votes += other.proposal_votes;
         self.last_active = max(self.last_active, other.last_active);
     }
 }

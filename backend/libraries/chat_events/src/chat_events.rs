@@ -169,18 +169,6 @@ pub enum EndPollResult {
     UnableToEndPoll,
 }
 
-pub enum RegisterProposalVoteResult {
-    Success(RegisterProposalVoteSuccessResult),
-    AlreadyVoted(RegisterProposalVoteSuccessResult),
-    ProposalNotFound,
-}
-
-pub struct RegisterProposalVoteSuccessResult {
-    pub adopt_votes: u32,
-    pub reject_votes: u32,
-    pub my_vote: bool,
-}
-
 pub enum ToggleReactionResult {
     Added(EventIndex),
     Removed(EventIndex),
@@ -529,45 +517,6 @@ impl ChatEvents {
         EndPollResult::PollNotFound
     }
 
-    pub fn register_proposal_vote(
-        &mut self,
-        user_id: UserId,
-        message_id: MessageId,
-        adopt: bool,
-        now: TimestampMillis,
-    ) -> RegisterProposalVoteResult {
-        if let Some(message) = self
-            .get_event_index_by_message_id(message_id)
-            .and_then(|e| self.events.get_mut(e))
-            .and_then(|e| e.event.as_message_mut())
-        {
-            if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                let existing_vote = p.register_vote(user_id, adopt).err();
-                let adopt_votes = p.adopt_votes.len() as u32;
-                let reject_votes = p.reject_votes.len() as u32;
-                let result = RegisterProposalVoteSuccessResult {
-                    adopt_votes,
-                    reject_votes,
-                    my_vote: existing_vote.unwrap_or(adopt),
-                };
-                return if existing_vote.is_none() {
-                    message.last_updated = Some(now);
-                    self.push_event(
-                        ChatEventInternal::ProposalVoteRegistered(Box::new(UpdatedMessageInternal {
-                            updated_by: user_id,
-                            message_id,
-                        })),
-                        now,
-                    );
-                    RegisterProposalVoteResult::Success(result)
-                } else {
-                    RegisterProposalVoteResult::AlreadyVoted(result)
-                };
-            }
-        }
-        RegisterProposalVoteResult::ProposalNotFound
-    }
-
     pub fn toggle_reaction(
         &mut self,
         user_id: UserId,
@@ -826,7 +775,6 @@ impl ChatEvents {
             ChatEventInternal::PollVoteRegistered(v) => self.message_id_map.get(&v.message_id).copied(),
             ChatEventInternal::PollVoteDeleted(v) => self.message_id_map.get(&v.message_id).copied(),
             ChatEventInternal::PollEnded(p) => self.message_index_map.get(p).copied(),
-            ChatEventInternal::ProposalVoteRegistered(p) => self.message_id_map.get(&p.message_id).copied(),
             _ => None,
         }
     }
@@ -952,7 +900,6 @@ impl ChatEvents {
             ChatEventInternal::PollVoteRegistered(v) => ChatEvent::PollVoteRegistered(self.hydrate_poll_vote_registered(v)),
             ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
-            ChatEventInternal::ProposalVoteRegistered(v) => ChatEvent::ProposalVoteRegistered(self.hydrate_updated_message(v)),
             ChatEventInternal::ThreadUpdated(m) => {
                 ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index))
             }
