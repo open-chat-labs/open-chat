@@ -67,6 +67,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'ProposalVoteRegistered' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -110,6 +111,7 @@ export interface ChatMetrics {
   'text_messages' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
+  'proposal_votes' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
@@ -890,6 +892,19 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
+export interface VoteOnProposalArgs {
+  'adopt' : boolean,
+  'proposal_id' : bigint,
+  'governance_canister_id' : CanisterId,
+  'chat_id' : ChatId,
+  'message_id' : MessageId,
+}
+export type VoteOnProposalResponse = { 'ProposalNotFound' : null } |
+  { 'NoEligibleNeurons' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : null } |
+  { 'ProposalNotAcceptingVotes' : null } |
+  { 'InternalError' : string };
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface WithdrawCryptoRequest {
@@ -961,6 +976,9 @@ export interface _SERVICE {
     >,
   'unpin_chat' : (arg_0: UnpinChatRequest) => Promise<UnpinChatResponse>,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
+  'vote_on_proposal' : (arg_0: VoteOnProposalArgs) => Promise<
+      VoteOnProposalResponse
+    >,
   'withdraw_crypto' : (arg_0: WithdrawCryptoRequest) => Promise<
       WithdrawCryptoResponse
     >,

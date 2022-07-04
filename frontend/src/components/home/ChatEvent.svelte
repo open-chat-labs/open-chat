@@ -42,6 +42,8 @@
     export let editing: boolean;
     export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
+    export let supportsEdit: boolean;
+    export let supportsReply: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -77,6 +79,8 @@
         {publicGroup}
         {editing}
         {inThread}
+        {supportsEdit}
+        {supportsReply}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

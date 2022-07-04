@@ -55,6 +55,7 @@
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
+    import { configKeys } from "../../utils/config";
 
     const dispatch = createEventDispatcher();
 
@@ -85,6 +86,10 @@
     export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
+    // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
+    export let supportsEdit: boolean;
+    export let supportsReply: boolean;
+
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
@@ -94,8 +99,9 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let threadsEnabled = localStorage.getItem(configKeys.threadsEnabled) === "true";
 
-    $: canEdit = !crypto && !poll && me;
+    $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
@@ -106,14 +112,14 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = $typing[chatId]?.has(senderId);
+    $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
 
-        if (readByMe) {
-            observer?.unobserve(msgElement);
+        if (readByMe && observer && msgElement) {
+            observer.unobserve(msgElement);
         }
     });
 
@@ -533,7 +539,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed && canSend}
+                                {#if confirmed && canSend && supportsReply}
                                     <MenuItem on:click={reply}>
                                         <Reply
                                             size={$iconSize}
@@ -541,12 +547,12 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    <!-- {#if !inThread}
+                                    {#if !inThread && threadsEnabled}
                                         <MenuItem on:click={replyInThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
                                         </MenuItem>
-                                    {/if} -->
+                                    {/if}
                                 {/if}
                                 {#if canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
@@ -557,7 +563,7 @@
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && groupChat && !me}
+                                {#if confirmed && groupChat && !me && !inThread}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}

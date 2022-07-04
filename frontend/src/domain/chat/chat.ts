@@ -338,6 +338,7 @@ export type GroupChatEvent =
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
     | DirectChatCreated
+    | ProposalVoteRegistered
     | ThreadUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -464,6 +465,11 @@ export type ThreadUpdated = {
     kind: "thread_updated";
     messageIndex: number;
     eventIndex: number;
+};
+
+export type ProposalVoteRegistered = {
+    kind: "proposal_vote_registered";
+    message: StaleMessage;
 };
 
 export type PermissionsChanged = {

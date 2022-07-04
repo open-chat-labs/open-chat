@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import { afterUpdate, createEventDispatcher, onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import { _ } from "svelte-i18n";
@@ -27,9 +27,10 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { trackEvent } from "../../utils/tracking";
-    import { threadSummaryStore } from "../../stores/thread";
     import { userStore } from "../../stores/user";
+    import { selectReaction } from "../../stores/reactions";
+    import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
+    import { trackEvent } from "../../utils/tracking";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -113,6 +114,19 @@
                 }
             });
         }, options);
+
+        // this is where we pick up events that may be published from a thread
+        relaySubscribe((event: RelayedEvent) => {
+            if (event.kind === "relayed_delete_message") {
+                deleteMessage(event.message);
+            }
+
+            if (event.kind === "relayed_select_reaction") {
+                onSelectReaction(event);
+            }
+        });
+
+        return relayUnsubscribe;
     });
 
     afterUpdate(() => {
@@ -258,52 +272,27 @@
         return -(messagesDiv?.scrollTop ?? 0);
     }
 
-    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+    function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
-        // optimistic update
-        controller.toggleReaction(
-            ev.detail.message.messageId,
-            ev.detail.reaction,
+
+        selectReaction(
+            controller.api,
+            controller.events,
+            $chat,
+            controller.user.userId,
+            message.messageId,
+            reaction,
+            controller.chatUserIds,
             controller.user.userId
-        );
+        ).then((added) => {
+            if (added) {
+                trackEvent("reacted_to_message");
+            }
+        });
+    }
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? controller.api.toggleGroupChatReaction(
-                      $chat.chatId,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  )
-                : controller.api.toggleDirectChatReaction(
-                      $chat.them,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  );
-
-        apiPromise
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    // toggle again to undo
-                    controller.toggleReaction(
-                        ev.detail.message.messageId,
-                        ev.detail.reaction,
-                        controller.user.userId
-                    );
-                } else {
-                    if (resp === "added") {
-                        trackEvent("reacted_to_message");
-                    }
-                }
-            })
-            .catch((err) => {
-                // toggle again to undo
-                console.log("Reaction failed: ", err);
-                controller.toggleReaction(
-                    ev.detail.message.messageId,
-                    ev.detail.reaction,
-                    controller.user.userId
-                );
-            });
+    function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        onSelectReaction(ev.detail);
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
@@ -319,27 +308,27 @@
         controller.editEvent(ev.detail);
     }
 
-    function deleteMessage(ev: CustomEvent<Message>) {
-        if (!canDelete && controller.user.userId !== ev.detail.sender) return;
+    function onDeleteMessage(ev: CustomEvent<Message>) {
+        deleteMessage(ev.detail);
+    }
 
-        controller.deleteMessage(ev.detail.messageId, controller.user.userId);
+    function deleteMessage(message: Message) {
+        if (!canDelete && controller.user.userId !== message.sender) return;
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? controller.api.deleteGroupMessage(controller.chatId, ev.detail.messageId)
-                : controller.api.deleteDirectMessage($chat.them, ev.detail.messageId);
+        controller.deleteMessage(message.messageId, controller.user.userId);
 
-        apiPromise
+        controller.api
+            .deleteMessage($chat, message.messageId)
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    controller.undeleteMessage(ev.detail, controller.user.userId);
+                    controller.undeleteMessage(message, controller.user.userId);
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                controller.undeleteMessage(ev.detail, controller.user.userId);
+                controller.undeleteMessage(message, controller.user.userId);
             });
     }
 
@@ -526,6 +515,8 @@
                         {canSend}
                         {canReact}
                         {canInvite}
+                        supportsEdit={true}
+                        supportsReply={true}
                         inThread={false}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
@@ -535,10 +526,10 @@
                         on:replyTo={replyTo}
                         on:replyInThread
                         on:replyPrivatelyTo
-                        on:deleteMessage={deleteMessage}
+                        on:deleteMessage={onDeleteMessage}
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={selectReaction}
+                        on:selectReaction={onSelectReactionEv}
                         on:blockUser={blockUser}
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}

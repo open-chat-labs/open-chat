@@ -1,25 +1,29 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
+    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import type {
         ChatEvent,
         EnhancedReplyContext,
+        EventsResponse,
         EventWrapper,
         Message,
         MessageContent,
+        SendMessageSuccess,
+        TransferSuccess,
     } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
+    import Loading from "../../Loading.svelte";
+    import Fab from "../../Fab.svelte";
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser, User } from "../../../domain/user/user";
     import { currentUserKey } from "../../../stores/user";
+    import { iconSize } from "../../../stores/iconSize";
+    import { rtlStore } from "../../../stores/rtl";
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
-    import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -31,10 +35,14 @@
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
+        mergeSendMessageResponse,
+        replaceAffected,
+        replaceLocal,
+        updateEventPollContent,
+        userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
-    import { derived, readable } from "svelte/store";
+    import { derived, Readable, readable, writable, Writable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
@@ -45,8 +53,14 @@
     import { trackEvent } from "../../../utils/tracking";
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
-    import { dedupe } from "utils/list";
+    import { dedupe } from "../../../utils/list";
+    import { selectReaction } from "../../../stores/reactions";
+    import { immutableStore } from "../../../stores/immutable";
+    import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
+    import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
+    import { relayPublish } from "../../../stores/relay";
 
+    const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
@@ -61,17 +75,25 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
+    let initialised = false;
+    let unconfirmed = createUnconfirmedStore();
+    let messagesDiv: HTMLDivElement | undefined;
+    let fromBottom: Writable<number> = writable(0);
+    let withinThreshold: Readable<boolean> = derived([fromBottom], ([$fromBottom]) => {
+        return $fromBottom < FROM_BOTTOM_THRESHOLD;
+    });
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
-    let events: EventWrapper<ChatEvent>[] = [];
+    let events: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
             console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
+            events.set([]);
+            initialised = false;
 
-            events = [rootEvent];
             if (thread !== undefined) {
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
@@ -115,7 +137,8 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents(events).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
+    $: preview = isPreviewing($chat);
 
     const dispatch = createEventDispatcher();
 
@@ -128,38 +151,60 @@
         if (thread === undefined || controller.chatVal === undefined) return;
         loading = true;
 
-        const eventsPromise =
-            controller.chatVal.kind === "direct_chat"
-                ? api.directChatEvents(
-                      range,
-                      controller.chatVal.them,
-                      startIndex,
-                      ascending,
-                      threadRootMessageIndex
-                  )
-                : api.groupChatEvents(
-                      range,
-                      controller.chatVal.chatId,
-                      startIndex,
-                      ascending,
-                      threadRootMessageIndex
-                  );
-
-        const eventsResponse = await eventsPromise;
+        const eventsResponse = await api.chatEvents(
+            controller.chatVal,
+            range,
+            startIndex,
+            ascending,
+            threadRootMessageIndex
+        );
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            events = dedupe(
-                (a, b) => a.index === b.index,
-                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+            const updated = await handleEventsResponse($events, eventsResponse);
+            events.set(
+                dedupe(
+                    (a, b) => a.index === b.index,
+                    updated.sort((a, b) => a.index - b.index)
+                )
             );
+            if (ascending && $withinThreshold) {
+                scrollBottom();
+            }
         }
 
-        console.log("Events: ", events);
+        initialised = true;
         loading = false;
     }
 
-    function close() {
-        dispatch("close");
+    function calculateFromBottom(): number {
+        return -(messagesDiv?.scrollTop ?? 0);
+    }
+
+    async function handleEventsResponse(
+        events: EventWrapper<ChatEvent>[],
+        resp: EventsResponse<ChatEvent>
+    ): Promise<EventWrapper<ChatEvent>[]> {
+        if (resp === "events_failed") return [];
+
+        const updated = replaceAffected(
+            replaceLocal(
+                currentUser.userId,
+                $chat.chatId,
+                $chat.readByMe,
+                events,
+                resp.events,
+                true
+            ),
+            resp.affectedEvents
+        );
+
+        const userIds = userIdsFromEvents(updated);
+        await controller.updateUserStore(userIds);
+
+        return updated;
+
+        // TODO - we will need this too
+        // this.makeRtcConnections();
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -178,25 +223,8 @@
         draftThreadMessages.delete(threadRootMessageIndex);
     }
 
-    // todo - lots of duplication here with chatController.editEvent
-    // todo - there is a problem when editing the root message of a thread (in either middle or thread panel)
-    // the edit needs to also be reflected in the other window - maybe this will just work when the update loop stuff is done
     function editEvent(ev: EventWrapper<Message>): void {
-        draftThreadMessages.setEditingEvent(threadRootMessageIndex, ev);
-        draftThreadMessages.setAttachment(
-            threadRootMessageIndex,
-            ev.event.content.kind !== "text_content" ? ev.event.content : undefined
-        );
-        draftThreadMessages.setReplyingTo(
-            threadRootMessageIndex,
-            ev.event.repliesTo && ev.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...ev.event.repliesTo,
-                      content: ev.event.content,
-                      sender: $userStore[ev.event.sender],
-                  }
-                : undefined
-        );
+        draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
     function newMessage(
@@ -227,29 +255,25 @@
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(events);
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes($events);
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            unconfirmed.add($chat.chatId, event);
-            events = [...events, event];
+            unconfirmed.add(threadRootMessageIndex, event);
+            events.update((evts) => [...evts, event]);
+            scrollBottom();
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then((resp) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        unconfirmed.delete($chat.chatId, msg.messageId);
+                        confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             api.refreshAccountBalance(
                                 msg.content.transfer.token,
                                 currentUser.cryptoAccount
                             );
                         }
-                        replaceMessage({
-                            ...event,
-                            index: resp.eventIndex,
-                            event: { ...event.event, messageIndex: resp.messageIndex },
-                        });
                         trackEvent("sent_threaded_message");
                     } else {
                         removeMessage(msg);
@@ -267,17 +291,27 @@
         }
     }
 
-    function replaceMessage(evt: EventWrapper<Message>) {
-        events = events.map((e) => {
-            return e.event.kind === "message" && e.event.messageId === evt.event.messageId
-                ? evt
-                : e;
-        });
+    function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
+        if (unconfirmed.delete(threadRootMessageIndex, candidate.messageId)) {
+            const confirmed = {
+                event: mergeSendMessageResponse(candidate, resp),
+                index: resp.eventIndex,
+                timestamp: resp.timestamp,
+            };
+            events.update((events) =>
+                events.map((e) => {
+                    if (e.event === candidate) {
+                        return confirmed;
+                    }
+                    return e;
+                })
+            );
+        }
     }
 
     function removeMessage(msg: Message) {
-        events = events.filter(
-            (e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId
+        events.update((evts) =>
+            evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId)
         );
     }
 
@@ -313,6 +347,20 @@
                     }
                 });
         }
+    }
+
+    function getNextEventAndMessageIndexes(events: EventWrapper<ChatEvent>[]): [number, number] {
+        return events.reduce(
+            ([maxEvtIdx, maxMsgIdx], evt) => {
+                const msgIdx =
+                    evt.event.kind === "message"
+                        ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                        : maxMsgIdx;
+                const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+                return [evtIdx, msgIdx];
+            },
+            [0, 0]
+        );
     }
 
     function cancelReply() {
@@ -373,36 +421,25 @@
     function registerVote(
         ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
     ) {
-        console.log("register vote - todo");
+        events.update((events) =>
+            events.map((e) =>
+                updateEventPollContent(
+                    ev.detail.messageIndex,
+                    ev.detail.answerIndex,
+                    ev.detail.type,
+                    currentUser.userId,
+                    e
+                )
+            )
+        );
 
-        // update the store
-        threadStore.registerVote(
-            threadRootMessageIndex,
+        api.registerPollVote(
+            $chat,
             ev.detail.messageIndex,
             ev.detail.answerIndex,
             ev.detail.type,
-            currentUser.userId
-        );
-
-        // make the api call
-        const promise =
-            $chat.kind === "group_chat"
-                ? api.registerGroupChatPollVote(
-                      $chat.chatId,
-                      ev.detail.messageIndex,
-                      ev.detail.answerIndex,
-                      ev.detail.type,
-                      threadRootMessageIndex
-                  )
-                : api.registerDirectChatPollVote(
-                      $chat.them,
-                      ev.detail.messageIndex,
-                      ev.detail.answerIndex,
-                      ev.detail.type,
-                      threadRootMessageIndex
-                  );
-
-        promise
+            threadRootMessageIndex
+        )
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -418,18 +455,18 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
+        if (ev.detail === rootEvent.event) {
+            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
+            return;
+        }
+
         replaceMessageContent(ev.detail.messageId, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
         });
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? api.deleteGroupMessage($chat.chatId, ev.detail.messageId, threadRootMessageIndex)
-                : api.deleteDirectMessage($chat.them, ev.detail.messageId, threadRootMessageIndex);
-
-        apiPromise
+        api.deleteMessage($chat, ev.detail.messageId, threadRootMessageIndex)
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
@@ -444,22 +481,26 @@
     }
 
     function replaceMessageContent(messageId: unknown, content: MessageContent) {
-        events = events.map((e) => {
-            return e.event.kind === "message" && e.event.messageId === messageId
-                ? { ...e, event: { ...e.event, content } }
-                : e;
-        });
+        events.update((evts) =>
+            evts.map((e) =>
+                e.event.kind === "message" && e.event.messageId === messageId
+                    ? { ...e, event: { ...e.event, content } }
+                    : e
+            )
+        );
     }
 
     function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
         let original: EventWrapper<ChatEvent> | undefined = undefined;
-        events = events.map((e) => {
-            if (e.index === evt.index) {
-                original = e;
-                return evt;
-            }
-            return e;
-        });
+        events.update((evts) =>
+            evts.map((e) => {
+                if (e.index === evt.index) {
+                    original = e;
+                    return evt;
+                }
+                return e;
+            })
+        );
         return original;
     }
 
@@ -467,58 +508,29 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
-    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        if (ev.detail.message === rootEvent.event) {
+            relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
+            return;
+        }
+
         if (!canReact) return;
-        // optimistic update
 
-        // todo - we need to separate what this controller method does so that we can have a thread version
-        // and that needs to be done in a way that minimises duplication
-        // controller.toggleReaction(
-        //     ev.detail.message.messageId,
-        //     ev.detail.reaction,
-        //     controller.user.userId
-        // );
-
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? api.toggleGroupChatReaction(
-                      $chat.chatId,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction,
-                      threadRootMessageIndex
-                  )
-                : api.toggleDirectChatReaction(
-                      $chat.them,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction,
-                      threadRootMessageIndex
-                  );
-
-        apiPromise
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    // toggle again to undo
-                    console.log("Reaction failed: ", resp);
-                    // controller.toggleReaction(
-                    //     ev.detail.message.messageId,
-                    //     ev.detail.reaction,
-                    //     controller.user.userId
-                    // );
-                } else {
-                    if (resp === "added") {
-                        trackEvent("reacted_to_message");
-                    }
-                }
-            })
-            .catch((err) => {
-                // toggle again to undo
-                console.log("Reaction failed: ", err);
-                // controller.toggleReaction(
-                //     ev.detail.message.messageId,
-                //     ev.detail.reaction,
-                //     controller.user.userId
-                // );
-            });
+        selectReaction(
+            api,
+            events,
+            $chat,
+            currentUser.userId,
+            ev.detail.message.messageId,
+            ev.detail.reaction,
+            controller.chatUserIds,
+            currentUser.userId,
+            threadRootMessageIndex
+        ).then((added) => {
+            if (added) {
+                trackEvent("reacted_to_message");
+            }
+        });
     }
 
     // TODO - this is another piece of (almost) duplication that we need to get rid of
@@ -533,13 +545,26 @@
             `.thread-messages [data-index='${ev.detail.index}']`
         );
         if (element) {
-            element.scrollIntoView({ behavior: "auto", block: "center" });
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
             setTimeout(() => {
                 focusMessageIndex = undefined;
             }, 200);
         } else {
             console.log(`message index ${ev.detail.index} not found`);
         }
+    }
+
+    function scrollBottom() {
+        tick().then(() => {
+            messagesDiv?.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+        });
+    }
+
+    function onScroll() {
+        $fromBottom = calculateFromBottom();
     }
 </script>
 
@@ -562,108 +587,111 @@
         {controller} />
 {/if}
 
-<SectionHeader flush={true} shadow={true}>
-    <h4>{$_("thread.title")}</h4>
-    <span title={$_("close")} class="close" on:click={close}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
-
-<div class="thread-messages">
-    {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
-        <div class="day-group">
-            <div class="date-label">
-                {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
-            </div>
-            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
-                {#each userGroup as evt, _i (evt.event.messageId.toString())}
-                    <ChatMessage
-                        senderId={evt.event.sender}
-                        focused={evt.event.messageIndex === focusMessageIndex}
-                        {observer}
-                        confirmed={!unconfirmed.contains($chat.chatId, evt.event.messageId)}
-                        readByMe={true}
-                        readByThem={true}
-                        chatId={$chat.chatId}
-                        chatType={$chat.kind}
-                        user={controller.user}
-                        me={evt.event.sender === currentUser.userId}
-                        first={true}
-                        last={false}
-                        preview={false}
-                        inThread={true}
-                        pinned={false}
-                        canPin={canPinMessages($chat)}
-                        canBlockUser={canBlockUsers($chat)}
-                        canDelete={canDeleteOtherUsersMessages($chat)}
-                        canSend={canSendMessages($chat, $userStore)}
-                        canReact={canReactToMessages($chat)}
-                        publicGroup={$chat.kind === "group_chat" && $chat.public}
-                        editing={$editingEvent === evt}
-                        selectedThreadMessageIndex={undefined}
-                        on:chatWith
-                        on:goToMessageIndex={goToMessageIndex}
-                        on:replyPrivatelyTo
-                        on:replyTo={replyTo}
-                        on:replyInThread
-                        on:selectReaction={selectReaction}
-                        on:deleteMessage={deleteMessage}
-                        on:blockUser
-                        on:pinMessage
-                        on:unpinMessage
-                        on:registerVote={registerVote}
-                        on:editMessage={() => editEvent(evt)}
-                        on:upgrade
-                        on:forward
-                        eventIndex={evt.index}
-                        timestamp={evt.timestamp}
-                        msg={evt.event} />
-                {/each}
-            {/each}
-        </div>
-    {/each}
+<div
+    title={$_("goToFirstMessage")}
+    class:show={!$withinThreshold}
+    class="fab to-bottom"
+    class:rtl={$rtlStore}>
+    <Fab on:click={scrollBottom}>
+        <ArrowDown size={$iconSize} color={"#fff"} />
+    </Fab>
 </div>
 
-<Footer
-    chat={$chat}
-    fileToAttach={$fileToAttach}
-    editingEvent={$editingEvent}
-    replyingTo={$replyingTo}
-    textContent={$textContent}
-    participants={$participants}
-    blockedUsers={$blockedUsers}
-    user={controller.user}
-    joining={undefined}
-    preview={false}
-    mode={"thread"}
-    {blocked}
-    on:joinGroup
-    on:cancelPreview
-    on:upgrade
-    on:cancelReply={cancelReply}
-    on:clearAttachment={clearAttachment}
-    on:cancelEditEvent={cancelEditEvent}
-    on:setTextContent={setTextContent}
-    on:startTyping={startTyping}
-    on:stopTyping={stopTyping}
-    on:fileSelected={fileSelected}
-    on:audioCaptured={fileSelected}
-    on:sendMessage={sendMessage}
-    on:attachGif={attachGif}
-    on:tokenTransfer={tokenTransfer}
-    on:createPoll={createPoll} />
+<ThreadHeader on:close {rootEvent} chatSummary={$chat} />
+
+<div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
+    {#if loading && !initialised}
+        <Loading />
+    {:else}
+        {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
+            <div class="day-group">
+                <div class="date-label">
+                    {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
+                </div>
+                {#each dayGroup as userGroup}
+                    {#each userGroup as evt, i (evt.event.messageId.toString())}
+                        <ChatMessage
+                            senderId={evt.event.sender}
+                            focused={evt.event.messageIndex === focusMessageIndex}
+                            {observer}
+                            confirmed={!unconfirmed.contains(
+                                threadRootMessageIndex,
+                                evt.event.messageId
+                            )}
+                            readByMe={true}
+                            readByThem={true}
+                            chatId={$chat.chatId}
+                            chatType={$chat.kind}
+                            user={controller.user}
+                            me={evt.event.sender === currentUser.userId}
+                            first={i === 0}
+                            last={i + 1 === userGroup.length}
+                            {preview}
+                            inThread={true}
+                            pinned={false}
+                            supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
+                            supportsReply={evt.event.messageId !== rootEvent.event.messageId}
+                            canPin={canPinMessages($chat)}
+                            canBlockUser={canBlockUsers($chat)}
+                            canDelete={canDeleteOtherUsersMessages($chat)}
+                            canSend={canSendMessages($chat, $userStore)}
+                            canReact={canReactToMessages($chat)}
+                            publicGroup={$chat.kind === "group_chat" && $chat.public}
+                            editing={$editingEvent === evt}
+                            selectedThreadMessageIndex={undefined}
+                            on:chatWith
+                            on:goToMessageIndex={goToMessageIndex}
+                            on:replyPrivatelyTo
+                            on:replyTo={replyTo}
+                            on:selectReaction={onSelectReaction}
+                            on:deleteMessage={deleteMessage}
+                            on:blockUser
+                            on:registerVote={registerVote}
+                            on:editMessage={() => editEvent(evt)}
+                            on:upgrade
+                            on:forward
+                            eventIndex={evt.index}
+                            timestamp={evt.timestamp}
+                            msg={evt.event} />
+                    {/each}
+                {/each}
+            </div>
+        {/each}
+    {/if}
+</div>
+
+{#if !preview}
+    <Footer
+        chat={$chat}
+        fileToAttach={$fileToAttach}
+        editingEvent={$editingEvent}
+        replyingTo={$replyingTo}
+        textContent={$textContent}
+        participants={$participants}
+        blockedUsers={$blockedUsers}
+        user={controller.user}
+        joining={undefined}
+        {preview}
+        mode={"thread"}
+        {blocked}
+        on:joinGroup
+        on:cancelPreview
+        on:upgrade
+        on:cancelReply={cancelReply}
+        on:clearAttachment={clearAttachment}
+        on:cancelEditEvent={cancelEditEvent}
+        on:setTextContent={setTextContent}
+        on:startTyping={startTyping}
+        on:stopTyping={stopTyping}
+        on:fileSelected={fileSelected}
+        on:audioCaptured={fileSelected}
+        on:sendMessage={sendMessage}
+        on:attachGif={attachGif}
+        on:tokenTransfer={tokenTransfer}
+        on:createPoll={createPoll} />
+{/if}
 
 <style type="text/scss">
-    h4 {
-        flex: 1;
-        margin: 0;
-        text-align: center;
-    }
-    .close {
-        flex: 0 0 30px;
-    }
     .thread-messages {
         flex: auto;
         background-color: var(--panel-bg);
@@ -698,5 +726,29 @@
             text-align: center;
             margin-bottom: $sp4;
         }
+    }
+
+    .fab {
+        transition: opacity ease-in-out 300ms;
+        position: absolute;
+        @include z-index("fab");
+        right: 20px;
+        bottom: 0;
+        opacity: 0;
+        pointer-events: none;
+
+        &.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        &.rtl {
+            left: $sp6;
+            right: unset;
+        }
+    }
+
+    .to-bottom {
+        bottom: 80px;
     }
 </style>

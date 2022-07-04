@@ -10,7 +10,6 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
-    LocalReaction,
     Message,
     MessageContent,
     Participant,
@@ -21,22 +20,20 @@ import type {
 } from "../domain/chat/chat";
 import {
     activeUserIdFromEvent,
-    containsReaction,
     createMessage,
     getMinVisibleMessageIndex,
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
     mergeUnconfirmedIntoSummary,
-    pruneLocalReactions,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
     serialiseMessageForRtc,
-    toggleReaction,
     userIdsFromEvents,
     indexIsInRanges,
     updateEventPollContent,
+    mergeSendMessageResponse,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -47,7 +44,6 @@ import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
@@ -58,7 +54,6 @@ import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 
-const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export class ChatController {
@@ -76,9 +71,7 @@ export class ChatController {
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
 
-    private localReactions: Record<string, LocalReaction[]> = {};
     private initialised = false;
-    private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
@@ -121,19 +114,12 @@ export class ChatController {
             } else {
                 this.loadPreviousMessages();
             }
-            this.pruneInterval = window.setInterval(() => {
-                this.localReactions = pruneLocalReactions(this.localReactions);
-            }, PRUNE_LOCAL_REACTIONS_INTERVAL);
             this.loadDetails();
         }
     }
 
     destroy(): void {
-        if (this.pruneInterval !== undefined) {
-            console.log("Stopping the local reactions pruner");
-            window.clearInterval(this.pruneInterval);
-            this.events.set([]);
-        }
+        this.events.set([]);
     }
 
     get chatVal(): ChatSummary {
@@ -241,17 +227,8 @@ export class ChatController {
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
         this.findAndUpdatePollContent(messageIndex, answerIndex, type);
-        const promise =
-            this.chatVal.kind === "group_chat"
-                ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
-                : this.api.registerDirectChatPollVote(
-                      this.chatVal.them,
-                      messageIndex,
-                      answerIndex,
-                      type
-                  );
-
-        promise
+        this.api
+            .registerPollVote(this.chatVal, messageIndex, answerIndex, type)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -306,7 +283,7 @@ export class ChatController {
         }
     }
 
-    private async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
+    async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
         const participantIds = get(this.participants).map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
         const allUserIds = [...participantIds, ...blockedIds, ...userIdsFromEvents];
@@ -354,7 +331,6 @@ export class ChatController {
         }
 
         const updated = replaceAffected(
-            this.chatId,
             replaceLocal(
                 this.user.userId,
                 this.chatId,
@@ -362,8 +338,7 @@ export class ChatController {
                 keepCurrentEvents ? events : [],
                 resp.events
             ),
-            resp.affectedEvents,
-            this.localReactions
+            resp.affectedEvents
         );
 
         const userIds = userIdsFromEvents(updated);
@@ -452,17 +427,9 @@ export class ChatController {
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
-        if (this.chatVal.kind === "direct_chat") {
-            return this.api.directChatEvents(
-                indexRangeForChat(get(this.serverChatSummary)),
-                this.chatVal.them,
-                startIndex,
-                ascending
-            );
-        }
-        return this.api.groupChatEvents(
+        return this.api.chatEvents(
+            this.chatVal,
             indexRangeForChat(get(this.serverChatSummary)),
-            this.chatVal.chatId,
             startIndex,
             ascending
         );
@@ -676,52 +643,6 @@ export class ChatController {
         );
     }
 
-    toggleReaction(messageId: bigint, reaction: string, userId: string): void {
-        messageId = BigInt(messageId);
-        const key = messageId.toString();
-        if (this.localReactions[key] === undefined) {
-            this.localReactions[key] = [];
-        }
-        const messageReactions = this.localReactions[key];
-        this.events.update((events) =>
-            events.map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
-                        ? "remove"
-                        : "add";
-                    messageReactions.push({
-                        reaction,
-                        timestamp: Date.now(),
-                        kind: addOrRemove,
-                        userId,
-                    });
-                    const updatedEvent = {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            reactions: toggleReaction(userId, e.event.reactions, reaction),
-                        },
-                    };
-                    overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
-                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
-                    );
-                    if (userId === this.user.userId) {
-                        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                            kind: "remote_user_toggled_reaction",
-                            chatType: this.chatVal.kind,
-                            chatId: this.chatVal.chatId,
-                            messageId,
-                            userId,
-                            reaction,
-                        });
-                    }
-                    return updatedEvent;
-                }
-                return e;
-            })
-        );
-    }
-
     isDirectChatWith(userId: string): boolean {
         return this.chatVal.kind === "direct_chat" && this.chatVal.them === userId;
     }
@@ -830,22 +751,11 @@ export class ChatController {
         );
     }
 
-    mergeSendMessageResponse(msg: Message, resp: SendMessageSuccess | TransferSuccess): Message {
-        return {
-            ...msg,
-            messageIndex: resp.messageIndex,
-            content:
-                resp.kind === "transfer_success"
-                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
-                    : msg.content,
-        };
-    }
-
     confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             messagesRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
-                event: this.mergeSendMessageResponse(candidate, resp),
+                event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
@@ -948,21 +858,7 @@ export class ChatController {
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        draftMessages.setEditingEvent(this.chatId, event);
-        draftMessages.setAttachment(
-            this.chatId,
-            event.event.content.kind !== "text_content" ? event.event.content : undefined
-        );
-        draftMessages.setReplyingTo(
-            this.chatId,
-            event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...event.event.repliesTo,
-                      content: event.event.content,
-                      sender: get(userStore)[event.event.sender],
-                  }
-                : undefined
-        );
+        draftMessages.setEditing(this.chatId, event);
     }
 
     dismissAsAdmin(userId: string): Promise<void> {

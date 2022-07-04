@@ -79,6 +79,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
+    import { startPruningLocalReactions } from "../../stores/reactions";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
 
     export let api: ServiceContainer;
@@ -171,6 +172,7 @@
         rtcConnectionsManager.init(user.userId);
         rtcConnectionsManager.subscribe((msg) => handleWebRtcMessage(msg));
         initNotificationStores(api, user.userId, (n) => notificationReceived(n));
+        startPruningLocalReactions();
     });
 
     $: {

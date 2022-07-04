@@ -31,6 +31,8 @@ import type {
     CryptocurrencyContent,
     AggregateParticipantsJoinedOrLeft,
     ChatMetrics,
+    SendMessageSuccess,
+    TransferSuccess,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -48,6 +50,7 @@ import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
+import { localReactions, mergeReactions } from "../../stores/reactions";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -171,6 +174,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "reaction_removed":
             case "poll_vote_registered":
             case "poll_vote_deleted":
+            case "proposal_vote_registered":
                 userIds.add(e.event.message.updatedBy);
                 break;
             case "direct_chat_created":
@@ -224,6 +228,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "reaction_removed":
         case "poll_vote_registered":
         case "poll_vote_deleted":
+        case "proposal_vote_registered":
             return event.message.updatedBy;
         case "direct_chat_created":
         case "aggregate_participants_joined_left":
@@ -744,44 +749,6 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
     };
 }
 
-export function toggleReaction(
-    userId: string,
-    reactions: Reaction[],
-    reaction: string
-): Reaction[] {
-    const result: Reaction[] = [];
-    let found = false;
-
-    reactions.forEach((r) => {
-        if (r.reaction === reaction) {
-            const userIds = new Set(r.userIds);
-            if (userIds.delete(userId)) {
-                if (userIds.size > 0) {
-                    result.push({
-                        ...r,
-                        userIds,
-                    });
-                }
-            } else {
-                userIds.add(userId);
-                result.push({
-                    ...r,
-                    userIds,
-                });
-            }
-            found = true;
-        } else {
-            result.push(r);
-        }
-    });
-
-    if (!found) {
-        result.push({ reaction, userIds: new Set([userId]) });
-    }
-
-    return result;
-}
-
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
     return (
         ew.event.kind !== "reaction_added" &&
@@ -826,33 +793,6 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
-export function mergeReactions(incoming: Reaction[], localReactions: LocalReaction[]): Reaction[] {
-    const merged = localReactions.reduce<Reaction[]>((result, local) => {
-        return applyLocalReaction(local, result);
-    }, incoming);
-    return merged;
-}
-
-// todo - this needs tweaking because local reactions may have come via rtc and therefore not might not be mine
-function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
-    const r = reactions.find((r) => r.reaction === local.reaction);
-    if (r === undefined) {
-        if (local.kind === "add") {
-            reactions.push({ reaction: local.reaction, userIds: new Set([local.userId]) });
-        }
-    } else {
-        if (local.kind === "add") {
-            r.userIds.add(local.userId);
-        } else {
-            r.userIds.delete(local.userId);
-            if (r.userIds.size === 0) {
-                reactions = reactions.filter((r) => r.reaction !== local.reaction);
-            }
-        }
-    }
-    return reactions;
-}
-
 export function containsReaction(userId: string, reaction: string, reactions: Reaction[]): boolean {
     const r = reactions.find((r) => r.reaction === reaction);
     return r ? r.userIds.has(userId) : false;
@@ -860,8 +800,7 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 
 function mergeMessageEvents(
     existing: EventWrapper<ChatEvent>,
-    incoming: EventWrapper<ChatEvent>,
-    localReactions: Record<string, LocalReaction[]>
+    incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
     if (existing.event.kind === "message") {
         if (incoming.event.kind === "message") {
@@ -902,7 +841,8 @@ export function replaceLocal(
     chatId: string,
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
-    fromServer: EventWrapper<ChatEvent>[]
+    fromServer: EventWrapper<ChatEvent>[],
+    inThread = false // from threads, we should not mark messages as read
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);
@@ -914,15 +854,17 @@ export function replaceLocal(
     Object.entries(serverMsgs).forEach(([id, e]) => {
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
-            const idNum = BigInt(id);
-            if (unconfirmed.delete(chatId, idNum)) {
-                messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
-            } else if (
-                e.event.sender === userId &&
-                !indexIsInRanges(e.event.messageIndex, readByMe)
-            ) {
-                // If this message was sent by us and is not currently marked as read, mark it as read
-                messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+            if (!inThread) {
+                const idNum = BigInt(id);
+                if (unconfirmed.delete(chatId, idNum)) {
+                    messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
+                } else if (
+                    e.event.sender === userId &&
+                    !indexIsInRanges(e.event.messageIndex, readByMe)
+                ) {
+                    // If this message was sent by us and is not currently marked as read, mark it as read
+                    messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+                }
             }
             revokeObjectUrls(clientMsgs[id]);
             clientMsgs[id] = e;
@@ -955,10 +897,8 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
 }
 
 export function replaceAffected(
-    chatId: string,
     events: EventWrapper<ChatEvent>[],
-    affectedEvents: EventWrapper<ChatEvent>[],
-    localReactions: Record<string, LocalReaction[]>
+    affectedEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     if (affectedEvents.length === 0) {
         return events;
@@ -971,7 +911,7 @@ export function replaceAffected(
     return events.map((event) => {
         const affectedEvent = affectedEventsLookup[event.index];
         if (affectedEvent !== undefined) {
-            return mergeMessageEvents(event, affectedEvent, localReactions);
+            return mergeMessageEvents(event, affectedEvent);
         } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
             const repliesTo = event.event.repliesTo.eventIndex;
             const affectedReplyContent = affectedEventsLookup[repliesTo];
@@ -993,19 +933,6 @@ export function replaceAffected(
         }
         return event;
     });
-}
-
-export function pruneLocalReactions(
-    reactions: Record<string, LocalReaction[]>
-): Record<string, LocalReaction[]> {
-    const limit = Date.now() - 10000;
-    return Object.entries(reactions).reduce((pruned, [k, v]) => {
-        const filtered = v.filter((r) => r.timestamp > limit);
-        if (filtered.length > 0) {
-            pruned[k] = filtered;
-        }
-        return pruned;
-    }, {} as Record<string, LocalReaction[]>);
 }
 
 export function replaceMessageContent(
@@ -1517,4 +1444,18 @@ function buildIdenticonUrl(userId: string): string {
         format: "svg",
     });
     return `data:image/svg+xml;base64,${identicon}`;
+}
+
+export function mergeSendMessageResponse(
+    msg: Message,
+    resp: SendMessageSuccess | TransferSuccess
+): Message {
+    return {
+        ...msg,
+        messageIndex: resp.messageIndex,
+        content:
+            resp.kind === "transfer_success"
+                ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
+                : msg.content,
+    };
 }

@@ -13,6 +13,8 @@ import type {
     RemoteUserUndeletedMessage,
     WebRtcMessage,
 } from "./webrtc";
+import type { ServiceContainer } from "../../services/serviceContainer";
+import { toggleReactionInEventList } from "../../stores/reactions";
 
 function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
     return get(chatSummariesListStore).find(
@@ -32,7 +34,17 @@ function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
 
 function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
     delegateToChatController(message, (chat) =>
-        chat.toggleReaction(message.messageId, message.reaction, message.userId)
+        chat.events.update((events) =>
+            toggleReactionInEventList(
+                chat.chatVal,
+                message.userId,
+                events,
+                message.messageId,
+                message.reaction,
+                chat.chatUserIds,
+                chat.user.userId
+            )
+        )
     );
 }
 function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
