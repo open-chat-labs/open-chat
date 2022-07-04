@@ -86,9 +86,14 @@
     export let user: CreatedUser;
     export let logout: () => void;
 
-    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+    export let params: {
+        chatId: string | null;
+        messageIndex: string | undefined | null;
+        threadMessageIndex: string | undefined | null;
+    } = {
         chatId: null,
         messageIndex: undefined,
+        threadMessageIndex: undefined,
     };
 
     type ConfirmAction = "leave" | "delete" | "makePrivate";
@@ -202,6 +207,10 @@
                 const chatId = params.chatId;
                 const messageIndex =
                     params.messageIndex == null ? undefined : Number(params.messageIndex);
+                const threadMessageIndex =
+                    params.threadMessageIndex == null
+                        ? undefined
+                        : Number(params.threadMessageIndex);
 
                 if ($chatSummariesStore[chatId] === undefined) {
                     if (qs.get("type") === "direct") {
@@ -218,7 +227,7 @@
                         hotGroups = { kind: "loading" };
                         previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
-                                setSelectedChat(api, chatId, messageIndex);
+                                setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
                                 resetRightPanel();
                                 hotGroups = { kind: "idle" };
                             } else {
@@ -229,7 +238,7 @@
                 } else {
                     hotGroups = { kind: "idle" };
                     interruptRecommended = true;
-                    setSelectedChat(api, chatId, messageIndex);
+                    setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
                     resetRightPanel();
                 }
             }
@@ -739,14 +748,14 @@
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
-                    setSelectedChat(api, group.chatId, undefined);
+                    setSelectedChat(api, group.chatId, undefined, undefined);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    setSelectedChat(api, group.chatId, undefined);
+                    setSelectedChat(api, group.chatId, undefined, undefined);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {

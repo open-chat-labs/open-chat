@@ -53,6 +53,7 @@ import { immutableStore } from "../stores/immutable";
 import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
+import ts from "typescript";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
@@ -84,6 +85,7 @@ export class ChatController {
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
         private _focusMessageIndex: number | undefined,
+        private _focusThreadMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
@@ -401,6 +403,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
+                threadMessageIndex: this._focusThreadMessageIndex,
                 messageIndex: messageIndex,
                 preserveFocus,
                 allowRecursion: false,
@@ -662,6 +665,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
+                threadMessageIndex: undefined,
                 messageIndex: messageIndex,
                 preserveFocus: false,
                 allowRecursion: true,

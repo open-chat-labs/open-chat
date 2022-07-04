@@ -4,9 +4,14 @@
     import { apiStore } from "../../stores/api";
 
     export let logout: () => void;
-    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+    export let params: {
+        chatId: string | null;
+        messageIndex: string | undefined | null;
+        threadMessageIndex: string | undefined | null;
+    } = {
         chatId: null,
         messageIndex: undefined,
+        threadMessageIndex: undefined,
     };
 
     $: user = $currentUserStore!;

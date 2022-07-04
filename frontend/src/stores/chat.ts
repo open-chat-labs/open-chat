@@ -54,6 +54,7 @@ type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
 type LoadedEventWindow = {
     kind: "loaded_event_window";
+    threadMessageIndex: number | undefined;
     messageIndex: number;
     preserveFocus: boolean;
     allowRecursion: boolean;
@@ -104,7 +105,8 @@ export const chatsInitialised = writable(false);
 export function setSelectedChat(
     api: ServiceContainer,
     chatId: string,
-    messageIndex?: number
+    messageIndex?: number,
+    threadMessageIndex?: number
 ): void {
     const summaries = get(chatSummariesStore);
     const currentUser = get(currentUserStore);
@@ -145,8 +147,13 @@ export function setSelectedChat(
     );
 
     selectedChatStore.set(
-        new ChatController(api, user, readableChatSummary, messageIndex, (message) =>
-            updateSummaryWithConfirmedMessage(chat.chatId, message)
+        new ChatController(
+            api,
+            user,
+            readableChatSummary,
+            messageIndex,
+            threadMessageIndex,
+            (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
         )
     );
 }

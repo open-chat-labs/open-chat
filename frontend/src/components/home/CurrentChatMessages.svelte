@@ -162,7 +162,8 @@
     function scrollToMessageIndex(
         index: number,
         preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true
+        loadWindowIfMissing: boolean = true,
+        threadMessageIndex: number | undefined = undefined
     ) {
         if (index < 0) {
             controller.clearFocusMessageIndex();
@@ -377,9 +378,15 @@
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
+                        const threadMessageIndex = evt.event.threadMessageIndex;
                         tick().then(() => {
                             expectedScrollTop = undefined;
-                            scrollToMessageIndex(index, preserveFocus, allowRecursion);
+                            scrollToMessageIndex(
+                                index,
+                                preserveFocus,
+                                allowRecursion,
+                                threadMessageIndex
+                            );
                         });
                         initialised = true;
                         break;
