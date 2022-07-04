@@ -99,7 +99,8 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
-    let threadsEnabled = localStorage.getItem(configKeys.threadsEnabled) === "true";
+    let threadsEnabled =
+        chatType === "group_chat" && localStorage.getItem(configKeys.threadsEnabled) === "true";
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
