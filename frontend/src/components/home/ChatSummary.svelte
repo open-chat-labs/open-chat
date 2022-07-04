@@ -247,7 +247,7 @@
         <div class="menu">
             <MenuIcon>
                 <div class="menu-icon" slot="icon">
-                    <ChevronDown size="1.6em" color="var(--icon-txt" />
+                    <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
                 </div>
                 <div slot="menu">
                     <Menu>
@@ -348,9 +348,9 @@
 
         .menu-icon {
             width: 0;
-            transition: width 200ms;
-            visibility: hidden;
+            transition: width 200ms ease-in-out, opacity 200ms;
             height: 0;
+            opacity: 0;
             position: relative;
             bottom: 0.4em;
         }
@@ -362,8 +362,9 @@
 
         &:hover {
             .menu-icon {
+                transition-delay: 200ms;
                 width: 1.2em;
-                visibility: visible;
+                opacity: 1;
             }
         }
     }

@@ -76,6 +76,7 @@
 
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
+            messageEntry.saveSelection();
             onDataTransfer(e.clipboardData);
             e.preventDefault();
         }
