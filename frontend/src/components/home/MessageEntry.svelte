@@ -316,7 +316,7 @@
         messageActions.close();
     }
 
-    function saveSelection() {
+    export function saveSelection() {
         try {
             // seeing errors in the logs to do with this
             selectedRange = window.getSelection()?.getRangeAt(0);
