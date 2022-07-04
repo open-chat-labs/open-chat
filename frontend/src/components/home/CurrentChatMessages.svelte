@@ -31,6 +31,7 @@
     import { selectReaction } from "../../stores/reactions";
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
+    import * as shareFunctions from "../../domain/share";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -177,6 +178,9 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
+            if (threadMessageIndex !== undefined) {
+                console.log("let's open the thread and ");
+            }
             if (!preserveFocus) {
                 setTimeout(() => {
                     controller.clearFocusMessageIndex();
@@ -486,6 +490,18 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
+
+    function shareMessage(ev: CustomEvent<Message>) {
+        shareFunctions.shareMessage(
+            controller.user.userId,
+            ev.detail.sender === controller.user.userId,
+            ev.detail
+        );
+    }
+
+    function copyMessageUrl(ev: CustomEvent<Message>) {
+        shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
+    }
 </script>
 
 <div
@@ -541,6 +557,8 @@
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}
                         on:registerVote={registerVote}
+                        on:copyMessageUrl={copyMessageUrl}
+                        on:shareMessage={shareMessage}
                         on:upgrade
                         on:forward
                         event={evt} />

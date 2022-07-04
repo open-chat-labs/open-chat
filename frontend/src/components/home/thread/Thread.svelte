@@ -59,6 +59,7 @@
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
+    import * as shareFunctions from "../../../domain/share";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -566,6 +567,18 @@
     function onScroll() {
         $fromBottom = calculateFromBottom();
     }
+
+    function shareMessage(ev: CustomEvent<Message>) {
+        shareFunctions.shareMessage(
+            controller.user.userId,
+            ev.detail.sender === controller.user.userId,
+            ev.detail
+        );
+    }
+
+    function copyMessageUrl(ev: CustomEvent<Message>) {
+        shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
+    }
 </script>
 
 <PollBuilder
@@ -648,6 +661,8 @@
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editMessage={() => editEvent(evt)}
+                            on:shareMessage={shareMessage}
+                            on:copyMessageUrl={copyMessageUrl}
                             on:upgrade
                             on:forward
                             eventIndex={evt.index}

@@ -320,11 +320,11 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage(user.userId, me, msg);
+        dispatch("shareMessage", msg);
     }
 
     function copyMessageUrl() {
-        shareFunctions.copyMessageUrl(chatId, msg.messageIndex);
+        dispatch("copyMessageUrl", msg);
     }
 </script>
 
@@ -503,7 +503,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if publicGroup && confirmed && !inThread}
+                                {#if publicGroup && confirmed}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon

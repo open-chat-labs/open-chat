@@ -95,6 +95,8 @@
         on:editMessage={editEvent}
         on:upgrade
         on:forward
+        on:copyMessageUrl
+        on:shareMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
