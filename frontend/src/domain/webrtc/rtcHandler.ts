@@ -13,7 +13,6 @@ import type {
     RemoteUserUndeletedMessage,
     WebRtcMessage,
 } from "./webrtc";
-import type { ServiceContainer } from "../../services/serviceContainer";
 import { toggleReactionInEventList } from "../../stores/reactions";
 
 function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {

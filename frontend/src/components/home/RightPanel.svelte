@@ -172,7 +172,15 @@
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {:else if threadRootEvent !== undefined && controller !== undefined}
-        <Thread on:chatWith on:upgrade rootEvent={threadRootEvent} {controller} on:close={pop} />
+        <Thread
+            on:chatWith
+            on:upgrade
+            rootEvent={threadRootEvent}
+            focusMessageIndex={lastState.kind === "message_thread_panel"
+                ? lastState.focusThreadMessageIndex
+                : undefined}
+            {controller}
+            on:close={pop} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

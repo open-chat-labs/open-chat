@@ -56,6 +56,7 @@
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
+    import { pathParams } from "../../stores/routing";
 
     const dispatch = createEventDispatcher();
 
@@ -83,7 +84,6 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
@@ -115,6 +115,7 @@
     $: translated = $translationStore.has(Number(msg.messageId));
     $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
+    $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -167,8 +168,8 @@
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
-    function replyInThread() {
-        dispatch("replyInThread");
+    function initiateThread() {
+        dispatch("initiateThread");
     }
 
     function forward() {
@@ -320,11 +321,11 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage(user.userId, me, msg);
+        dispatch("shareMessage", msg);
     }
 
     function copyMessageUrl() {
-        shareFunctions.copyMessageUrl(chatId, msg.messageIndex);
+        dispatch("copyMessageUrl", msg);
     }
 </script>
 
@@ -503,7 +504,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if publicGroup && confirmed && !inThread}
+                                {#if publicGroup && confirmed}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
@@ -549,7 +550,7 @@
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
                                     {#if !inThread && threadsEnabled}
-                                        <MenuItem on:click={replyInThread}>
+                                        <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
                                         </MenuItem>
@@ -639,11 +640,11 @@
 
     {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
-            selected={msg.messageIndex === selectedThreadMessageIndex}
+            selected={msg.messageIndex === $pathParams.messageIndex}
             {threadSummary}
             indent={showAvatar}
             {me}
-            on:replyInThread />
+            url={msgUrl} />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}

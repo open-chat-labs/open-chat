@@ -132,8 +132,8 @@
 
         {#each data as slice, i}
             <circle
-                on:mouseenter={(e) => (hoveredIndex = i)}
-                on:mouseleave={(e) => (hoveredIndex = undefined)}
+                on:mouseenter={(_) => (hoveredIndex = i)}
+                on:mouseleave={(_) => (hoveredIndex = undefined)}
                 class={slice.cls}
                 cx={160}
                 cy={160}

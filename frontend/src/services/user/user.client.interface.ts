@@ -4,7 +4,6 @@ import type {
     CreateGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
-    ChatSummary,
     MergedUpdatesResponse,
     SendMessageResponse,
     BlockUserResponse,

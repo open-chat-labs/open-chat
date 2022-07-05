@@ -9,7 +9,6 @@
     import TrayRemove from "svelte-material-icons/TrayRemove.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher } from "svelte";
-    import type { ChatController } from "../../fsm/chat.controller";
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { MessageAction, MessageContent } from "../../domain/chat/chat";
 

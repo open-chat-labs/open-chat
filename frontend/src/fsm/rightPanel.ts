@@ -17,6 +17,7 @@ export type NoPanel = {
 export type MessageThreadPanel = {
     kind: "message_thread_panel";
     rootEvent: EventWrapper<Message>;
+    focusThreadMessageIndex?: number;
 };
 
 export type GroupDetailsPanel = {

@@ -4,26 +4,28 @@
     import Avatar from "../../Avatar.svelte";
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
+    import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
     import { TypersByChat, typing } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { createEventDispatcher } from "svelte";
     import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
     import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
+    import { push } from "svelte-spa-router";
+    import { mobileWidth } from "stores/screenDimensions";
 
     export let chatSummary: ChatSummary;
     export let rootEvent: EventWrapper<Message>;
 
-    const dispatch = createEventDispatcher();
-
     $: chat = normaliseChatSummary($now, chatSummary, $typing);
 
     function close() {
-        dispatch("close");
+        push(`/${chatSummary.chatId}`);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
@@ -72,9 +74,17 @@
             {/if}
         </div>
     </div>
-    <div title={$_("close")} class="close" on:click={close}>
+    <div class="close" on:click={close}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {#if $mobileWidth}
+                {#if $rtlStore}
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                {:else}
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                {/if}
+            {:else}
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
         </HoverIcon>
     </div>
 </SectionHeader>

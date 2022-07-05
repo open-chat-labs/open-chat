@@ -59,6 +59,7 @@
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
+    import * as shareFunctions from "../../../domain/share";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -66,6 +67,7 @@
 
     export let controller: ChatController;
     export let rootEvent: EventWrapper<Message>;
+    export let focusMessageIndex: number | undefined;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
@@ -73,7 +75,6 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
-    let focusMessageIndex: number | undefined = undefined;
     let loading = false;
     let initialised = false;
     let unconfirmed = createUnconfirmedStore();
@@ -89,7 +90,6 @@
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
-            console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
             events.set([]);
             initialised = false;
@@ -108,10 +108,6 @@
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
             ) {
-                console.log(
-                    "thread: loading new ",
-                    previousRootEvent?.event.thread?.latestEventIndex ?? 0
-                );
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
                     (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
@@ -170,6 +166,11 @@
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
+            tick().then(() => {
+                if (focusMessageIndex !== undefined) {
+                    goToMessageIndex(focusMessageIndex, false);
+                }
+            });
         }
 
         initialised = true;
@@ -533,25 +534,26 @@
         });
     }
 
-    // TODO - this is another piece of (almost) duplication that we need to get rid of
-    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        if (ev.detail.index < 0) {
+    function goToMessageIndex(index: number, preserveFocus: boolean) {
+        if (index < 0) {
             focusMessageIndex = undefined;
             return;
         }
 
-        focusMessageIndex = ev.detail.index;
-        const element = document.querySelector(
-            `.thread-messages [data-index='${ev.detail.index}']`
-        );
+        focusMessageIndex = index;
+        const element = document.querySelector(`.thread-messages [data-index='${index}']`);
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
             setTimeout(() => {
                 focusMessageIndex = undefined;
             }, 200);
         } else {
-            console.log(`message index ${ev.detail.index} not found`);
+            console.log(`message index ${index} not found`);
         }
+    }
+
+    function onGoToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function scrollBottom() {
@@ -565,6 +567,22 @@
 
     function onScroll() {
         $fromBottom = calculateFromBottom();
+    }
+
+    function shareMessage(ev: CustomEvent<Message>) {
+        shareFunctions.shareMessage(
+            controller.user.userId,
+            ev.detail.sender === controller.user.userId,
+            ev.detail
+        );
+    }
+
+    function copyMessageUrl(ev: CustomEvent<Message>) {
+        shareFunctions.copyMessageUrl(
+            controller.chatId,
+            ev.detail.messageIndex,
+            threadRootMessageIndex
+        );
     }
 </script>
 
@@ -638,9 +656,8 @@
                             canReact={canReactToMessages($chat)}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
-                            selectedThreadMessageIndex={undefined}
                             on:chatWith
-                            on:goToMessageIndex={goToMessageIndex}
+                            on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:selectReaction={onSelectReaction}
@@ -648,6 +665,8 @@
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editMessage={() => editEvent(evt)}
+                            on:shareMessage={shareMessage}
+                            on:copyMessageUrl={copyMessageUrl}
                             on:upgrade
                             on:forward
                             eventIndex={evt.index}
