@@ -361,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadUpdated = IDL.Record({
     'updated_by' : UserId,
+    'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -641,6 +642,16 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'InvalidRequest' : IDL.Text,
   });
+  const ThreadPreviewsArgs = IDL.Record({ 'threads' : IDL.Vec(MessageIndex) });
+  const ThreadPreview = IDL.Record({
+    'latest_replies' : IDL.Vec(Message),
+    'total_replies' : IDL.Nat32,
+    'root_message' : Message,
+  });
+  const ThreadPreviewsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({ 'threads' : IDL.Vec(ThreadPreview) }),
+  });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -802,6 +813,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'thread_previews' : IDL.Func(
+        [ThreadPreviewsArgs],
+        [ThreadPreviewsResponse],
+        ['query'],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],

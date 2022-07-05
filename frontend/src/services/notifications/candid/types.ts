@@ -547,8 +547,16 @@ export interface ThreadSummary {
   'reply_count' : number,
   'latest_event_index' : EventIndex,
 }
+export interface ThreadSyncDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'read_up_to' : MessageIndex,
+  'latest_event' : EventIndex,
+  'latest_message' : MessageIndex,
+}
 export interface ThreadUpdated {
   'updated_by' : UserId,
+  'new_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
