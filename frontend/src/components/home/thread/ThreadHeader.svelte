@@ -11,16 +11,25 @@
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
     import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
     import { push } from "svelte-spa-router";
     import { mobileWidth } from "stores/screenDimensions";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let chatSummary: ChatSummary;
     export let rootEvent: EventWrapper<Message>;
+    export let pollsAllowed: boolean;
 
     $: chat = normaliseChatSummary($now, chatSummary, $typing);
 
@@ -52,6 +61,10 @@
             typing: false,
         };
     }
+
+    function createPoll() {
+        dispatch("createPoll");
+    }
 </script>
 
 <SectionHeader flush={true} shadow={true}>
@@ -74,6 +87,25 @@
             {/if}
         </div>
     </div>
+    {#if pollsAllowed}
+        <div class="menu">
+            <MenuIcon>
+                <div slot="icon">
+                    <HoverIcon>
+                        <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div slot="menu">
+                    <Menu>
+                        <MenuItem on:click={createPoll}>
+                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <div slot="text">{$_("poll.create")}</div>
+                        </MenuItem>
+                    </Menu>
+                </div>
+            </MenuIcon>
+        </div>
+    {/if}
     <div class="close" on:click={close}>
         <HoverIcon>
             {#if $mobileWidth}

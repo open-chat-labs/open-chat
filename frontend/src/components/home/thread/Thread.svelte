@@ -135,6 +135,7 @@
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
+    $: pollsAllowed = canCreatePolls($chat);
 
     const dispatch = createEventDispatcher();
 
@@ -615,7 +616,7 @@
     </Fab>
 </div>
 
-<ThreadHeader on:close {rootEvent} chatSummary={$chat} />
+<ThreadHeader on:createPoll={createPoll} on:close {rootEvent} {pollsAllowed} chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}

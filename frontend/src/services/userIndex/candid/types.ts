@@ -58,7 +58,6 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
-  { 'ProposalVoteRegistered' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -97,7 +96,6 @@ export interface ChatMetrics {
   'text_messages' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
-  'proposal_votes' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
@@ -261,6 +259,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
+  'recent_proposal_votes' : Array<MessageIndex>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -273,6 +272,7 @@ export interface GroupChatSummary {
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
@@ -286,6 +286,7 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
+  'recent_proposal_votes' : Array<MessageIndex>,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -297,6 +298,7 @@ export interface GroupChatSummaryUpdates {
   'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,

@@ -420,6 +420,7 @@ export class UserClient extends CandidService implements IUserClient {
                         from: r.low,
                         to: r.high,
                     })),
+                    threads: [],
                 })),
             }),
             markReadResponse
