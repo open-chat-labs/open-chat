@@ -348,7 +348,7 @@ impl ChatMetrics {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
-    pub latest_event_index: EventIndex,
+    pub latest_message: MessageIndex,
     pub latest_message_read: MessageIndex,
     pub last_updated: TimestampMillis,
 }

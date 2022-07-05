@@ -743,11 +743,14 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
-export interface ThreadSnippet {
+export interface ThreadPreview {
   'latest_replies' : Array<Message>,
   'total_replies' : number,
   'root_message' : Message,
 }
+export interface ThreadPreviewsArgs { 'threads' : Array<MessageIndex> }
+export type ThreadPreviewsResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : { 'threads' : Array<ThreadPreview> } };
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
@@ -757,18 +760,15 @@ export interface ThreadSummary {
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
-  'latest_event_index' : EventIndex,
   'latest_message_read' : MessageIndex,
+  'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
   'updated_by' : UserId,
-  'is_message' : boolean,
+  'is_new_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface ThreadsByIndexArgs { 'threads' : Array<MessageIndex> }
-export type ThreadsResponse = { 'CallerNotInGroup' : null } |
-  { 'Success' : { 'threads' : Array<ThreadSnippet> } };
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
@@ -920,7 +920,9 @@ export interface _SERVICE {
       SelectedUpdatesResponse
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
-  'threads_by_index' : (arg_0: ThreadsByIndexArgs) => Promise<ThreadsResponse>,
+  'thread_previews' : (arg_0: ThreadPreviewsArgs) => Promise<
+      ThreadPreviewsResponse
+    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,

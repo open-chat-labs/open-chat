@@ -432,20 +432,20 @@ type MessagesByMessageIndexResponse =
         ThreadMessageNotFound;
     };
 
-type ThreadsByIndexArgs =
+type ThreadPreviewsArgs =
     record {
         threads: vec MessageIndex;
     };
 
-type ThreadsResponse =
+type ThreadPreviewsResponse =
     variant {
         Success: record {
-            threads: vec ThreadSnippet;
+            threads: vec ThreadPreview;
         };
         CallerNotInGroup;
     };
 
-type ThreadSnippet =
+type ThreadPreview =
     record {
         root_message: Message;
         latest_replies: vec Message;
@@ -525,7 +525,7 @@ service: {
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
-    threads_by_index: (ThreadsByIndexArgs) -> (ThreadsResponse) query;
+    thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
