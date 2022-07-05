@@ -247,6 +247,7 @@ type GroupChatSummary =
         recent_proposal_votes: vec MessageIndex;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
+        latest_threads: vec ThreadSyncDetails;
     };
 
 type GroupChatSummaryUpdates =
@@ -272,6 +273,7 @@ type GroupChatSummaryUpdates =
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         is_public: opt bool;
+        latest_threads: vec ThreadSyncDetails;
     };
 
 type GroupDescriptionChanged =
@@ -846,4 +848,14 @@ type ThreadUpdated =
         updated_by: UserId;
         event_index: EventIndex;
         message_index: MessageIndex;
+        new_message: bool;
+    };
+
+type ThreadSyncDetails =
+    record {
+        root_message_index: MessageIndex;
+        latest_event: EventIndex;
+        latest_message: MessageIndex;
+        read_up_to: MessageIndex;
+        last_updated: TimestampMillis;     
     };

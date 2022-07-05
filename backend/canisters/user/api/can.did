@@ -108,8 +108,14 @@ type MarkReadArgs =
 type ChatMessagesRead =
     record {
         chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
         message_ranges: vec MessageIndexRange;
+        threads: vec ThreadRead;
+    };
+
+type ThreadRead =
+    record {
+        root_message_index: MessageIndex;
+        read_up_to: MessageIndex;
     };
 
 type MarkReadResponse =

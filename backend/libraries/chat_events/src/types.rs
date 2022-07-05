@@ -316,6 +316,7 @@ pub struct UpdatedMessageInternal {
 pub struct ThreadUpdatedInternal {
     pub updated_by: UserId,
     pub message_index: MessageIndex,
+    pub new_message: bool,
 }
 
 fn incr(counter: &mut u64) {

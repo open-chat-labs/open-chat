@@ -351,6 +351,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadUpdated = IDL.Record({
     'updated_by' : UserId,
+    'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -577,10 +578,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const ThreadRead = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'read_up_to' : MessageIndex,
+  });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
+    'threads' : IDL.Vec(ThreadRead),
     'chat_id' : ChatId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MarkReadArgs = IDL.Record({
     'messages_read' : IDL.Vec(ChatMessagesRead),
@@ -873,7 +878,7 @@ export const idlFactory = ({ IDL }) => {
     'proposal_id' : IDL.Nat64,
     'governance_canister_id' : CanisterId,
     'chat_id' : ChatId,
-    'message_id' : MessageId,
+    'message_index' : MessageIndex,
   });
   const VoteOnProposalResponse = IDL.Variant({
     'ProposalNotFound' : IDL.Null,

@@ -77,6 +77,7 @@ impl GroupChat {
             metrics: None,
             my_metrics: None,
             is_public: None,
+            latest_threads: Vec::new(),
         }
     }
 }

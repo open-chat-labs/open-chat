@@ -1,7 +1,5 @@
 <script lang="ts">
     import { push } from "svelte-spa-router";
-    import { slide } from "svelte/transition";
-    import { expoInOut } from "svelte/easing";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";

@@ -6,6 +6,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
     Direct(DirectChatSummary),
@@ -47,6 +48,7 @@ impl DirectChatSummary {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
@@ -74,6 +76,7 @@ pub struct GroupChatSummary {
     pub recent_proposal_votes: Vec<MessageIndex>,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
+    pub latest_threads: Vec<ThreadSyncDetails>,
 }
 
 impl GroupChatSummary {
@@ -82,6 +85,7 @@ impl GroupChatSummary {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummaryUpdates {
     Direct(DirectChatSummaryUpdates),
@@ -101,6 +105,7 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
@@ -125,6 +130,7 @@ pub struct GroupChatSummaryUpdates {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
+    pub latest_threads: Vec<ThreadSyncDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -244,6 +250,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             recent_proposal_votes: vec![],
             metrics: s.metrics,
             my_metrics: s.my_metrics,
+            latest_threads: vec![],
         }
     }
 }
@@ -294,6 +301,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             metrics: s.metrics,
             my_metrics: s.my_metrics,
             is_public: s.is_public,
+            latest_threads: vec![],
         }
     }
 }
@@ -337,4 +345,13 @@ impl ChatMetrics {
         self.proposals += other.proposals;
         self.last_active = max(self.last_active, other.last_active);
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ThreadSyncDetails {
+    pub root_message_index: MessageIndex,
+    pub latest_event: EventIndex,
+    pub latest_message: MessageIndex,
+    pub read_up_to: MessageIndex,
+    pub last_updated: TimestampMillis,
 }

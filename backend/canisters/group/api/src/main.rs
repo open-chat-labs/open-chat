@@ -6,6 +6,7 @@ fn main() {
     generate_candid_method!(group, events_range, query);
     generate_candid_method!(group, events_window, query);
     generate_candid_method!(group, messages_by_message_index, query);
+    generate_candid_method!(group, thread_previews, query);
     generate_candid_method!(group, invite_code, query);
     generate_candid_method!(group, public_summary, query);
     generate_candid_method!(group, search_messages, query);
