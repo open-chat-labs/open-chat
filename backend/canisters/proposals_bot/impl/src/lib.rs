@@ -92,9 +92,8 @@ pub struct NervousSystemMetrics {
     pub name: String,
     pub governance_canister_id: CanisterId,
     pub chat_id: ChatId,
-    pub next_proposal_id: ProposalId,
     pub latest_successful_sync: Option<TimestampMillis>,
     pub latest_failed_sync: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
-    pub in_progress_proposal: Option<ProposalId>,
+    pub active_proposals: Vec<ProposalId>,
 }
