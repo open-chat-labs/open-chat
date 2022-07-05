@@ -68,6 +68,19 @@
 </script>
 
 <SectionHeader flush={true} shadow={true}>
+    <div class="close" on:click={close}>
+        <HoverIcon>
+            {#if $mobileWidth}
+                {#if $rtlStore}
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                {:else}
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                {/if}
+            {:else}
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </HoverIcon>
+    </div>
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
@@ -106,19 +119,6 @@
             </MenuIcon>
         </div>
     {/if}
-    <div class="close" on:click={close}>
-        <HoverIcon>
-            {#if $mobileWidth}
-                {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                {/if}
-            {:else}
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
-            {/if}
-        </HoverIcon>
-    </div>
 </SectionHeader>
 
 <style type="text/scss">
