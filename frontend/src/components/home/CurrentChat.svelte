@@ -52,7 +52,6 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
-    export let selectedThreadMessageIndex: number | undefined;
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
@@ -387,8 +386,9 @@
         on:chatWith
         on:upgrade
         on:forward
+        on:closeThread
+        on:initiateThread
         {controller}
-        {selectedThreadMessageIndex}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
         canDelete={canDeleteOtherUsersMessages($chat)}

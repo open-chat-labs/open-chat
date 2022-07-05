@@ -13,7 +13,6 @@ import type {
     CreateGroupResponse,
     DirectChatEvent,
     MergedUpdatesResponse,
-    ChatSummary,
     Message,
     SendMessageResponse,
     BlockUserResponse,

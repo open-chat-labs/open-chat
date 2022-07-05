@@ -36,7 +36,6 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;

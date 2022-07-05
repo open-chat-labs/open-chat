@@ -16,7 +16,6 @@ import type {
     MemberRole,
     SendMessageSuccess,
     TransferSuccess,
-    CryptocurrencyContent,
 } from "../domain/chat/chat";
 import {
     activeUserIdFromEvent,
@@ -50,10 +49,8 @@ import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
-import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import ts from "typescript";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
@@ -189,10 +186,6 @@ export class ChatController {
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
-                console.log(
-                    "loading chat details updated to: ",
-                    this.groupDetails.latestEventIndex
-                );
             }
         }
     }
@@ -403,7 +396,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
-                threadMessageIndex: this._focusThreadMessageIndex,
+                focusThreadMessageIndex: this._focusThreadMessageIndex,
                 messageIndex: messageIndex,
                 preserveFocus,
                 allowRecursion: false,
@@ -654,7 +647,12 @@ export class ChatController {
         return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
-    async goToMessageIndex(messageIndex: number, preserveFocus: boolean): Promise<void> {
+    async goToMessageIndex(
+        messageIndex: number,
+        preserveFocus: boolean,
+        focusThreadMessageIndex?: number
+    ): Promise<void> {
+        this._focusThreadMessageIndex = focusThreadMessageIndex;
         return this.loadEventWindow(messageIndex, preserveFocus);
     }
 
@@ -665,7 +663,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
-                threadMessageIndex: undefined,
+                focusThreadMessageIndex: undefined,
                 messageIndex: messageIndex,
                 preserveFocus: false,
                 allowRecursion: true,
@@ -812,7 +810,6 @@ export class ChatController {
 
     clearFocusMessageIndex(): void {
         this.focusMessageIndex.set(undefined);
-        replace(`/${this.chatId}`);
     }
 
     earliestLoadedIndex(): number | undefined {
@@ -1150,5 +1147,14 @@ export class ChatController {
             }
         }
         return users;
+    }
+
+    findMessageEvent(
+        events: EventWrapper<ChatEvent>[],
+        index: number
+    ): EventWrapper<Message> | undefined {
+        return events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+        ) as EventWrapper<Message> | undefined;
     }
 }

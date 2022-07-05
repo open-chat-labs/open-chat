@@ -54,7 +54,7 @@ type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
 type LoadedEventWindow = {
     kind: "loaded_event_window";
-    threadMessageIndex: number | undefined;
+    focusThreadMessageIndex: number | undefined;
     messageIndex: number;
     preserveFocus: boolean;
     allowRecursion: boolean;

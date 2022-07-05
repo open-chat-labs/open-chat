@@ -19,7 +19,6 @@ import type {
     Reaction,
     Message,
     IndexRange,
-    LocalReaction,
     GroupChatDetails,
     GroupChatDetailsUpdates,
     Mention,

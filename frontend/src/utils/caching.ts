@@ -496,7 +496,6 @@ export async function setCachedEvents<T extends ChatEvent>(
     const eventStore = tx.objectStore(store);
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
-            console.log("Setting cached message 2: ", threadRootMessageIndex, event);
             await eventStore.put(
                 makeSerialisable<T>(event, chatId),
                 createCacheKey(chatId, event.index, threadRootMessageIndex)
@@ -548,7 +547,6 @@ async function setCachedMessage(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    console.log("Setting cached message 1: ", threadRootMessageIndex, messageEvent);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
@@ -587,7 +585,6 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction(storeName, "readwrite", { durability: "relaxed" });
     const store = tx.objectStore(storeName);
-    console.log("Overwriting cached message 3: ", threadRootMessageIndex, [events]);
     await Promise.all(
         events.map((event) =>
             store.put(

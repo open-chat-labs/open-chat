@@ -56,6 +56,7 @@
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
+    import { pathParams } from "../../stores/routing";
 
     const dispatch = createEventDispatcher();
 
@@ -83,7 +84,6 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
@@ -115,6 +115,7 @@
     $: translated = $translationStore.has(Number(msg.messageId));
     $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
+    $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -639,11 +640,11 @@
 
     {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
-            selected={msg.messageIndex === selectedThreadMessageIndex}
+            selected={msg.messageIndex === $pathParams.messageIndex}
             {threadSummary}
             indent={showAvatar}
             {me}
-            on:replyInThread />
+            url={msgUrl} />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}

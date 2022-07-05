@@ -52,7 +52,6 @@
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -164,7 +163,7 @@
         index: number,
         preserveFocus: boolean,
         loadWindowIfMissing: boolean = true,
-        threadMessageIndex: number | undefined = undefined
+        focusThreadMessageIndex: number | undefined = undefined
     ) {
         if (index < 0) {
             controller.clearFocusMessageIndex();
@@ -178,8 +177,16 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            if (threadMessageIndex !== undefined) {
-                console.log("let's open the thread and ");
+            const msgEvent = controller.findMessageEvent($events, index);
+            if (msgEvent) {
+                if (msgEvent.event.thread !== undefined) {
+                    dispatch("replyInThread", {
+                        rootEvent: msgEvent,
+                        focusThreadMessageIndex,
+                    });
+                } else {
+                    dispatch("closeThread");
+                }
             }
             if (!preserveFocus) {
                 setTimeout(() => {
@@ -382,14 +389,14 @@
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
-                        const threadMessageIndex = evt.event.threadMessageIndex;
+                        const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
                         tick().then(() => {
                             expectedScrollTop = undefined;
                             scrollToMessageIndex(
                                 index,
                                 preserveFocus,
                                 allowRecursion,
-                                threadMessageIndex
+                                focusThreadMessageIndex
                             );
                         });
                         initialised = true;
@@ -530,7 +537,6 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === userGroup.length}
-                        {selectedThreadMessageIndex}
                         {preview}
                         {canPin}
                         {canBlockUser}
@@ -546,8 +552,8 @@
                         pinned={isPinned($pinned, evt)}
                         editing={$editingEvent === evt}
                         on:chatWith
+                        on:initiateThread
                         on:replyTo={replyTo}
-                        on:replyInThread
                         on:replyPrivatelyTo
                         on:deleteMessage={onDeleteMessage}
                         on:editEvent={editEvent}

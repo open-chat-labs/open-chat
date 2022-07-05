@@ -123,13 +123,11 @@ async function updateUsers(api: ServiceContainer) {
                 userStore.setUpdated(batch, usersResp.serverTimestamp);
             }
         }
-        console.log("users updated");
     } catch (err) {
         rollbar.error("Error updating users", err as Error);
     }
 }
 
 export function startUserUpdatePoller(api: ServiceContainer): Poller {
-    console.log("poll: starting chats poller");
     return new Poller(() => updateUsers(api), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
 }

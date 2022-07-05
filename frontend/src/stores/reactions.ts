@@ -15,7 +15,6 @@ import type {
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
 export let localReactions: Record<string, LocalReaction[]> = {};
-let pruneInterval: number | undefined = undefined;
 
 export function pruneLocalReactions(): void {
     const limit = Date.now() - 10000;
@@ -205,7 +204,7 @@ export function selectReaction(
 }
 
 export function startPruningLocalReactions(): void {
-    pruneInterval = window.setInterval(() => {
+    const pruneInterval = window.setInterval(() => {
         pruneLocalReactions();
     }, PRUNE_LOCAL_REACTIONS_INTERVAL);
 }

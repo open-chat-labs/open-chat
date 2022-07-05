@@ -21,6 +21,7 @@
         ScreenWidth,
     } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
+    import { pathParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -86,16 +87,6 @@
     export let user: CreatedUser;
     export let logout: () => void;
 
-    export let params: {
-        chatId: string | null;
-        messageIndex: string | undefined | null;
-        threadMessageIndex: string | undefined | null;
-    } = {
-        chatId: null,
-        messageIndex: undefined,
-        threadMessageIndex: undefined,
-    };
-
     type ConfirmAction = "leave" | "delete" | "makePrivate";
     type ConfirmActionEvent = {
         kind: ConfirmAction;
@@ -130,12 +121,7 @@
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
-    let modalMessage = "";
 
-    $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
-        (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
-        undefined
-    );
     $: userId = user.userId;
     $: wasmVersion = user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
@@ -157,7 +143,8 @@
      * T             |  F            |  F            |  T
      */
     $: showLeft =
-        !$mobileWidth || ($mobileWidth && params.chatId == null && hotGroups.kind === "idle");
+        !$mobileWidth ||
+        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind === "idle");
 
     /** SHOW MIDDLE
      * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -169,8 +156,8 @@
      */
     $: showMiddle =
         !$mobileWidth ||
-        ($mobileWidth && params.chatId != null) ||
-        ($mobileWidth && params.chatId == null && hotGroups.kind !== "idle");
+        ($mobileWidth && $pathParams.chatId !== undefined) ||
+        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
         // bootstrap anything that needs a service container here
@@ -180,10 +167,43 @@
         startPruningLocalReactions();
     });
 
+    function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
+        hotGroups = { kind: "idle" };
+        interruptRecommended = true;
+
+        // if this is an unknown chat let's preview it
+        if ($chatSummariesStore[chatId] === undefined) {
+            if (qs.get("type") === "direct") {
+                createDirectChat(chatId);
+            } else {
+                const code = qs.get("code");
+                if (code) {
+                    api.groupInvite = {
+                        chatId,
+                        code,
+                    };
+                }
+                previewChat(chatId).then((canPreview) => {
+                    if (canPreview) {
+                        setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
+                        resetRightPanel();
+                        hotGroups = { kind: "idle" };
+                    } else {
+                        replace("/");
+                    }
+                });
+            }
+        } else {
+            // if it's a known chat let's select it
+            setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
+            resetRightPanel();
+        }
+    }
+
     $: {
         // wait until we have loaded the chats
         if ($chatsInitialised) {
-            if (params.chatId === "share") {
+            if ($pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
                 const title = local_qs.get("title") ?? "";
                 const text = local_qs.get("text") ?? "";
@@ -194,85 +214,68 @@
                     url,
                     files: [],
                 };
-                params.chatId = null;
                 history.replaceState(null, "", "/#/");
                 modal = ModalType.SelectChat;
-            }
-
-            // if we have a chatid in the params then we need to select that chat
-            if (params.chatId && params.chatId !== $selectedChatStore?.chatId?.toString()) {
-                // if the chat in the param is not known to us then we need to attempt to load the
-                // chat on the assumption that it is a group we want to preview
-                // if we have an unknown chat in the param, then redirect to home
-                const chatId = params.chatId;
-                const messageIndex =
-                    params.messageIndex == null ? undefined : Number(params.messageIndex);
-                const threadMessageIndex =
-                    params.threadMessageIndex == null
-                        ? undefined
-                        : Number(params.threadMessageIndex);
-
-                if ($chatSummariesStore[chatId] === undefined) {
-                    if (qs.get("type") === "direct") {
-                        createDirectChat(chatId);
+            } else {
+                // if we have a chat in the url
+                if ($pathParams.chatId !== undefined) {
+                    // if the chat in the url is different from the chat we already have selected
+                    if ($pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
+                        newChatSelected(
+                            $pathParams.chatId,
+                            $pathParams.messageIndex,
+                            $pathParams.threadMessageIndex
+                        );
                     } else {
-                        const code = qs.get("code");
-                        if (code) {
-                            api.groupInvite = {
-                                chatId,
-                                code,
-                            };
+                        // if the chat in the url is *the same* as the selected chat
+                        // *and* if we have a messageIndex specified in the url
+                        if ($pathParams.messageIndex !== undefined) {
+                            $selectedChatStore?.goToMessageIndex(
+                                $pathParams.messageIndex,
+                                false,
+                                $pathParams.threadMessageIndex
+                            );
+                        } else {
+                            // otherwise close any open thread
+                            closeThread();
                         }
-
-                        hotGroups = { kind: "loading" };
-                        previewChat(chatId).then((canPreview) => {
-                            if (canPreview) {
-                                setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
-                                resetRightPanel();
-                                hotGroups = { kind: "idle" };
-                            } else {
-                                replace("/");
-                            }
-                        });
                     }
                 } else {
-                    hotGroups = { kind: "idle" };
-                    interruptRecommended = true;
-                    setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
-                    resetRightPanel();
+                    // we do *not* have a chat in the url
+                    if ($selectedChatStore !== undefined) {
+                        clearSelectedChat();
+                    }
+
+                    if (!$mobileWidth && hotGroups.kind === "idle") {
+                        whatsHot();
+                    }
+
+                    filterChatSpecificRightPanelStates();
+                }
+
+                // regardless of the path params, we *always* check the query string
+                const faq = qs.get("faq");
+                if (faq !== null) {
+                    faqQuestion = faq as Questions;
+                    modal = ModalType.Faq;
+                    replace(removeQueryStringParam(qs, "faq"));
                 }
             }
-
-            if (
-                params.chatId &&
-                params.messageIndex &&
-                params.chatId === $selectedChatStore?.chatId?.toString()
-            ) {
-                $selectedChatStore?.goToMessageIndex(Number(params.messageIndex), false);
-            }
-
-            const faq = qs.get("faq");
-            if (faq !== null) {
-                faqQuestion = faq as Questions;
-                modal = ModalType.Faq;
-                replace(removeQueryStringParam(qs, "faq"));
-            }
-
-            // if there is no chatId param, tell the machine to clear the selection
-            if (params.chatId === null && $selectedChatStore !== undefined) {
-                clearSelectedChat();
-            }
-
-            if (params.chatId === null && !$mobileWidth && hotGroups.kind === "idle") {
-                whatsHot();
-            }
-
-            if (params.chatId === null) {
-                rightPanelHistory = rightPanelHistory.filter(
-                    (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
-                );
-            }
         }
+    }
+
+    // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
+    // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
+    function filterChatSpecificRightPanelStates() {
+        rightPanelHistory = rightPanelHistory.filter(
+            (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
+        );
+    }
+
+    function closeThread() {
+        rightPanelHistory = rightPanelHistory.filter(
+            (panel) => panel.kind !== "message_thread_panel"
+        );
     }
 
     /**
@@ -643,7 +646,7 @@
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
-        if (ev.detail === params.chatId) {
+        if (ev.detail === $pathParams.chatId) {
             clearSelectedChat();
         }
         tick().then(() => removeChat(ev.detail));
@@ -705,12 +708,15 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function replyInThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+    function replyInThread(
+        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
+    ) {
         if ($selectedChatStore !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
                     rootEvent: ev.detail.rootEvent,
+                    focusThreadMessageIndex: ev.detail.focusThreadMessageIndex,
                 },
             ];
         }
@@ -903,10 +909,10 @@
         <MiddlePanel
             {hotGroups}
             {joining}
-            {selectedThreadMessageIndex}
             loadingChats={$chatsLoading}
             blocked={!!blocked}
             controller={$selectedChatStore}
+            on:initiateThread={replyInThread}
             on:clearSelection={clearSelectedChat}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
@@ -925,6 +931,7 @@
             on:dismissRecommendation={dismissRecommendation}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
+            on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}

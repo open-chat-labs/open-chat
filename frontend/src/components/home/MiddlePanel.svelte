@@ -14,7 +14,6 @@
     export let blocked: boolean;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
-    export let selectedThreadMessageIndex: number | undefined;
 </script>
 
 <Panel middle>
@@ -39,7 +38,7 @@
             {joining}
             {blocked}
             {controller}
-            {selectedThreadMessageIndex}
+            on:initiateThread
             on:unblockUser
             on:clearSelection
             on:blockUser
@@ -55,6 +54,7 @@
             on:showPinned
             on:replyInThread
             on:goToMessageIndex
+            on:closeThread
             on:forward />
     {/if}
 </Panel>

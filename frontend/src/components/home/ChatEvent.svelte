@@ -9,12 +9,13 @@
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper, Message, ThreadSummary } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import { push } from "svelte-spa-router";
 
     const dispatch = createEventDispatcher();
 
@@ -40,7 +41,6 @@
     export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
@@ -50,14 +50,19 @@
     }
 
     function replyInThread() {
-        dispatch("replyInThread", { rootEvent: event });
+        if (event.event.kind === "message") {
+            if (event.event.thread !== undefined) {
+                push(`/${chatId}/${event.event.messageIndex}`);
+            } else {
+                dispatch("initiateThread", { rootEvent: event });
+            }
+        }
     }
 </script>
 
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
-        {selectedThreadMessageIndex}
         {focused}
         {observer}
         {confirmed}

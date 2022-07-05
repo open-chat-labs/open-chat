@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import type { ThreadSummary } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -13,16 +12,11 @@
     export let indent: boolean;
     export let me: boolean;
     export let selected: boolean;
-
-    const dispatch = createEventDispatcher();
-
-    function replyInThread() {
-        dispatch("replyInThread");
-    }
+    export let url: string;
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
-    <div class="thread-summary" class:selected on:click={() => replyInThread()}>
+    <a href={url} class="thread-summary" class:selected>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
@@ -60,7 +54,7 @@
                 })}
                 <div class:selected class="arrow">&#8595;</div></span>
         </div>
-    </div>
+    </a>
 </div>
 
 <style type="text/scss">
