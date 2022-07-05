@@ -490,13 +490,6 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
-  const ThreadSyncDetails = IDL.Record({
-    'root_message_index' : MessageIndex,
-    'last_updated' : TimestampMillis,
-    'read_up_to' : MessageIndex,
-    'latest_event' : EventIndex,
-    'latest_message' : MessageIndex,
-  });
   const Mention = IDL.Record({
     'message_id' : MessageId,
     'event_index' : EventIndex,
@@ -525,7 +518,6 @@ export const idlFactory = ({ IDL }) => {
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
@@ -843,7 +835,6 @@ export const idlFactory = ({ IDL }) => {
     'pinned_message' : PinnedMessageUpdate,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
-    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
