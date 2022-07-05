@@ -333,7 +333,7 @@ impl ChatEvents {
             ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
                 updated_by: user_id,
                 message_index: thread_message_index,
-                is_new_message: new_reply,
+                new_message: new_reply,
             })),
             now,
         );
@@ -903,7 +903,7 @@ impl ChatEvents {
             ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
             ChatEventInternal::ThreadUpdated(m) => {
-                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index, m.is_new_message))
+                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index, m.new_message))
             }
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
