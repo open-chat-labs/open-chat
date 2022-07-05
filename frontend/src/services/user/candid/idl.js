@@ -351,6 +351,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadUpdated = IDL.Record({
     'updated_by' : UserId,
+    'is_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -489,6 +490,12 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
+  const ThreadSyncDetails = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'last_updated' : TimestampMillis,
+    'latest_event_index' : EventIndex,
+    'latest_message_read' : MessageIndex,
+  });
   const Mention = IDL.Record({
     'message_id' : MessageId,
     'event_index' : EventIndex,
@@ -517,6 +524,7 @@ export const idlFactory = ({ IDL }) => {
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
@@ -577,10 +585,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const ThreadRead = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'latest_message_read' : MessageIndex,
+  });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
+    'threads' : IDL.Vec(ThreadRead),
     'chat_id' : ChatId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MarkReadArgs = IDL.Record({
     'messages_read' : IDL.Vec(ChatMessagesRead),
@@ -830,6 +842,7 @@ export const idlFactory = ({ IDL }) => {
     'pinned_message' : PinnedMessageUpdate,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
+    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
@@ -873,7 +886,7 @@ export const idlFactory = ({ IDL }) => {
     'proposal_id' : IDL.Nat64,
     'governance_canister_id' : CanisterId,
     'chat_id' : ChatId,
-    'message_id' : MessageId,
+    'message_index' : MessageIndex,
   });
   const VoteOnProposalResponse = IDL.Variant({
     'ProposalNotFound' : IDL.Null,

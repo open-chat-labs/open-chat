@@ -333,6 +333,7 @@ impl ChatEvents {
             ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
                 updated_by: user_id,
                 message_index: thread_message_index,
+                is_message: new_reply,
             })),
             now,
         );
@@ -677,12 +678,13 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex) -> ThreadUpdated {
+    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex, is_message: bool) -> ThreadUpdated {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         ThreadUpdated {
             updated_by,
             message_index,
+            is_message,
             event_index,
         }
     }
@@ -901,7 +903,7 @@ impl ChatEvents {
             ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
             ChatEventInternal::ThreadUpdated(m) => {
-                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index))
+                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index, m.is_message))
             }
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),

@@ -95,8 +95,8 @@ export interface ChatEventWrapper {
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
   'message_ranges' : Array<MessageIndexRange>,
+  'threads' : Array<ThreadRead>,
   'chat_id' : ChatId,
-  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -328,6 +328,7 @@ export interface GroupChatSummary {
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
@@ -352,6 +353,7 @@ export interface GroupChatSummaryUpdates {
   'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -774,14 +776,25 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
+export interface ThreadRead {
+  'root_message_index' : MessageIndex,
+  'latest_message_read' : MessageIndex,
+}
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
   'reply_count' : number,
   'latest_event_index' : EventIndex,
 }
+export interface ThreadSyncDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+  'latest_message_read' : MessageIndex,
+}
 export interface ThreadUpdated {
   'updated_by' : UserId,
+  'is_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -897,7 +910,7 @@ export interface VoteOnProposalArgs {
   'proposal_id' : bigint,
   'governance_canister_id' : CanisterId,
   'chat_id' : ChatId,
-  'message_id' : MessageId,
+  'message_index' : MessageIndex,
 }
 export type VoteOnProposalResponse = { 'ProposalNotFound' : null } |
   { 'NoEligibleNeurons' : null } |

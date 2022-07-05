@@ -10,8 +10,14 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ChatMessagesRead {
     pub chat_id: ChatId,
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_ranges: Vec<MessageIndexRange>,
+    pub threads: Vec<ThreadRead>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct ThreadRead {
+    pub root_message_index: MessageIndex,
+    pub latest_message_read: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
