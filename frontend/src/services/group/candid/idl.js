@@ -361,7 +361,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadUpdated = IDL.Record({
     'updated_by' : UserId,
-    'is_new_message' : IDL.Bool,
+    'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });

@@ -17,7 +17,7 @@ pub struct ChatMessagesRead {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ThreadRead {
     pub root_message_index: MessageIndex,
-    pub latest_message_read: MessageIndex,
+    pub read_up_to: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

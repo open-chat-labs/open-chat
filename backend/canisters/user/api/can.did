@@ -115,7 +115,7 @@ type ChatMessagesRead =
 type ThreadRead =
     record {
         root_message_index: MessageIndex;
-        latest_message_read: MessageIndex;
+        read_up_to: MessageIndex;
     };
 
 type MarkReadResponse =

@@ -678,13 +678,13 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex, is_message: bool) -> ThreadUpdated {
+    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex, new_message: bool) -> ThreadUpdated {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         ThreadUpdated {
             updated_by,
             message_index,
-            is_message,
+            new_message,
             event_index,
         }
     }

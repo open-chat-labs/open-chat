@@ -554,12 +554,13 @@ export interface ThreadSummary {
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
-  'latest_message_read' : MessageIndex,
+  'read_up_to' : MessageIndex,
+  'latest_event' : EventIndex,
   'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
   'updated_by' : UserId,
-  'is_new_message' : boolean,
+  'new_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }

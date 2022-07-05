@@ -6,6 +6,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
     Direct(DirectChatSummary),
@@ -84,6 +85,7 @@ impl GroupChatSummary {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummaryUpdates {
     Direct(DirectChatSummaryUpdates),
@@ -348,7 +350,8 @@ impl ChatMetrics {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
+    pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
-    pub latest_message_read: MessageIndex,
+    pub read_up_to: MessageIndex,
     pub last_updated: TimestampMillis,
 }

@@ -208,7 +208,7 @@ pub enum GroupInviteCodeChange {
 pub struct ThreadUpdated {
     pub updated_by: UserId,
     pub message_index: MessageIndex,
-    pub is_message: bool,
+    pub new_message: bool,
     pub event_index: EventIndex,
 }
 

@@ -848,13 +848,14 @@ type ThreadUpdated =
         updated_by: UserId;
         event_index: EventIndex;
         message_index: MessageIndex;
-        is_new_message: bool;
+        new_message: bool;
     };
 
 type ThreadSyncDetails =
     record {
         root_message_index: MessageIndex;
+        latest_event: EventIndex;
         latest_message: MessageIndex;
-        latest_message_read: MessageIndex;
+        read_up_to: MessageIndex;
         last_updated: TimestampMillis;     
     };

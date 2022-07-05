@@ -351,7 +351,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadUpdated = IDL.Record({
     'updated_by' : UserId,
-    'is_new_message' : IDL.Bool,
+    'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -493,7 +493,8 @@ export const idlFactory = ({ IDL }) => {
   const ThreadSyncDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
-    'latest_message_read' : MessageIndex,
+    'read_up_to' : MessageIndex,
+    'latest_event' : EventIndex,
     'latest_message' : MessageIndex,
   });
   const Mention = IDL.Record({
@@ -587,7 +588,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
-    'latest_message_read' : MessageIndex,
+    'read_up_to' : MessageIndex,
   });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
