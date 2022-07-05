@@ -52,7 +52,7 @@
             on:upgrade
             on:cancelPreview
             on:showPinned
-            on:replyInThread
+            on:openThread
             on:goToMessageIndex
             on:closeThread
             on:forward />

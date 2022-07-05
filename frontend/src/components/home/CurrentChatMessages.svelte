@@ -180,7 +180,7 @@
             const msgEvent = controller.findMessageEvent($events, index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined) {
-                    dispatch("replyInThread", {
+                    dispatch("openThread", {
                         rootEvent: msgEvent,
                         focusThreadMessageIndex,
                     });

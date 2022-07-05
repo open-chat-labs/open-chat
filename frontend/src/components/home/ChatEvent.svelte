@@ -49,7 +49,7 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    function replyInThread() {
+    function initiateThread() {
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
                 push(`/${chatId}/${event.event.messageIndex}`);
@@ -90,7 +90,7 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:replyInThread={replyInThread}
+        on:initiateThread={initiateThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser

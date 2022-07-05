@@ -168,8 +168,8 @@
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
-    function replyInThread() {
-        dispatch("replyInThread");
+    function initiateThread() {
+        dispatch("initiateThread");
     }
 
     function forward() {
@@ -550,7 +550,7 @@
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
                                     {#if !inThread && threadsEnabled}
-                                        <MenuItem on:click={replyInThread}>
+                                        <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
                                         </MenuItem>

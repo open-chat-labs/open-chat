@@ -381,7 +381,7 @@
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:replyTo={replyTo}
-        on:replyInThread
+        on:openThread
         on:messageRead={messageRead}
         on:chatWith
         on:upgrade

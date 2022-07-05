@@ -708,7 +708,7 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function replyInThread(
+    function openThread(
         ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
     ) {
         if ($selectedChatStore !== undefined) {
@@ -912,7 +912,7 @@
             loadingChats={$chatsLoading}
             blocked={!!blocked}
             controller={$selectedChatStore}
-            on:initiateThread={replyInThread}
+            on:initiateThread={openThread}
             on:clearSelection={clearSelectedChat}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
@@ -921,7 +921,7 @@
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:addParticipants={addParticipants}
             on:showGroupDetails={showGroupDetails}
-            on:replyInThread={replyInThread}
+            on:openThread={openThread}
             on:showParticipants={showParticipants}
             on:updateChat={updateChat}
             on:joinGroup={joinGroup}
