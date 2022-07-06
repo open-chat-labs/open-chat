@@ -350,7 +350,6 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'updated_by' : UserId,
     'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -409,7 +408,6 @@ export const idlFactory = ({ IDL }) => {
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
-    'ProposalVoteRegistered' : UpdatedMessage,
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
@@ -480,7 +478,6 @@ export const idlFactory = ({ IDL }) => {
     'text_messages' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
-    'proposal_votes' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
@@ -489,6 +486,13 @@ export const idlFactory = ({ IDL }) => {
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
+  });
+  const ThreadSyncDetails = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'last_updated' : TimestampMillis,
+    'read_up_to' : MessageIndex,
+    'latest_event' : EventIndex,
+    'latest_message' : MessageIndex,
   });
   const Mention = IDL.Record({
     'message_id' : MessageId,

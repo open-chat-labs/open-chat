@@ -778,21 +778,23 @@ export class ChatController {
         draftMessages.setAttachment(this.chatId, content);
     }
 
-    startTyping(): void {
+    startTyping(threadRootMessageIndex?: number): void {
         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
             kind: "remote_user_typing",
             chatType: this.kind,
             chatId: this.chatId,
             userId: this.user.userId,
+            threadRootMessageIndex,
         });
     }
 
-    stopTyping(): void {
+    stopTyping(threadRootMessageIndex?: number): void {
         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
             kind: "remote_user_stopped_typing",
             chatType: this.kind,
             chatId: this.chatId,
             userId: this.user.userId,
+            threadRootMessageIndex,
         });
     }
 

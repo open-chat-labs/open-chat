@@ -197,7 +197,6 @@ impl ChatEventInternal {
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
-            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
@@ -205,7 +204,8 @@ impl ChatEventInternal {
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
             ChatEventInternal::DirectChatCreated(_)
             | ChatEventInternal::PollEnded(_)
-            | ChatEventInternal::ProposalsUpdated(_) => None,
+            | ChatEventInternal::ProposalsUpdated(_)
+            | ChatEventInternal::ThreadUpdated(_) => None,
         }
     }
 }
@@ -318,7 +318,6 @@ pub struct UpdatedMessageInternal {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdatedInternal {
-    pub updated_by: UserId,
     pub message_index: MessageIndex,
     pub new_message: bool,
 }

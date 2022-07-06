@@ -51,7 +51,6 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
-  { 'ProposalVoteRegistered' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -90,7 +89,6 @@ export interface ChatMetrics {
   'text_messages' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
-  'proposal_votes' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
@@ -555,7 +553,6 @@ export interface ThreadSyncDetails {
   'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
-  'updated_by' : UserId,
   'new_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
