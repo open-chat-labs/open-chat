@@ -360,7 +360,6 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'updated_by' : UserId,
     'new_message' : IDL.Bool,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,

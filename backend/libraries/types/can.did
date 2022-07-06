@@ -845,7 +845,6 @@ type ThreadSummary =
 
 type ThreadUpdated =
     record {
-        updated_by: UserId;
         event_index: EventIndex;
         message_index: MessageIndex;
         new_message: bool;
