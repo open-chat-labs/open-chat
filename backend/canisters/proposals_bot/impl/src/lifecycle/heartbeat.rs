@@ -11,6 +11,7 @@ use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
 
 #[heartbeat]
@@ -44,7 +45,7 @@ mod retrieve_proposals {
     async fn get_and_process_nns_proposals(governance_canister_id: CanisterId) {
         let response = get_nns_proposals(governance_canister_id).await;
 
-        handle_proposals_response(governance_canister_id, response);
+        handle_proposals_response(&governance_canister_id, response);
     }
 
     async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalInfo>> {
@@ -71,7 +72,7 @@ mod retrieve_proposals {
     async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
         let response = get_sns_proposals(governance_canister_id).await;
 
-        handle_proposals_response(governance_canister_id, response);
+        handle_proposals_response(&governance_canister_id, response);
     }
 
     async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalData>> {
@@ -93,22 +94,32 @@ mod retrieve_proposals {
         }
     }
 
-    fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
+    fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId, response: CallResult<Vec<R>>) {
         match response {
             Ok(raw_proposals) => {
-                let proposals = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+                let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
                 mutate_state(|state| {
+                    let previous_active_proposals = state.data.nervous_systems.active_proposals(governance_canister_id);
+                    let mut no_longer_active: HashSet<_> = previous_active_proposals.into_iter().collect();
+                    for id in proposals.iter().map(|p| p.id()) {
+                        no_longer_active.remove(&id);
+                    }
                     state
                         .data
                         .nervous_systems
-                        .process_proposals(&governance_canister_id, proposals);
+                        .mark_proposals_inactive(governance_canister_id, no_longer_active.into_iter().collect());
+
+                    state
+                        .data
+                        .nervous_systems
+                        .process_proposals(governance_canister_id, proposals);
 
                     let now = state.env.now();
                     state
                         .data
                         .nervous_systems
-                        .mark_sync_complete(&governance_canister_id, true, now);
+                        .mark_sync_complete(governance_canister_id, true, now);
                 });
             }
             Err(_) => {
@@ -117,7 +128,7 @@ mod retrieve_proposals {
                     state
                         .data
                         .nervous_systems
-                        .mark_sync_complete(&governance_canister_id, false, now);
+                        .mark_sync_complete(governance_canister_id, false, now);
                 });
             }
         }

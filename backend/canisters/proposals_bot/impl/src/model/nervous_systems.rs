@@ -4,7 +4,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{BTreeMap, HashMap};
-use types::{CanisterId, ChatId, MessageId, Milliseconds, Proposal, ProposalId, TimestampMillis};
+use types::{CanisterId, ChatId, MessageId, Milliseconds, Proposal, ProposalId, ProposalRewardStatus, TimestampMillis};
 use utils::time::MINUTE_IN_MS;
 
 const MIN_INTERVAL_BETWEEN_SYNCS: Milliseconds = MINUTE_IN_MS; // 1 minute
@@ -78,6 +78,20 @@ impl NervousSystems {
         if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
             for proposal in proposals {
                 n.process_proposal(proposal);
+            }
+        }
+    }
+
+    pub fn active_proposals(&self, governance_canister_id: &CanisterId) -> Vec<ProposalId> {
+        self.nervous_systems
+            .get(governance_canister_id)
+            .map_or(vec![], |n| n.active_proposals.keys().copied().collect())
+    }
+
+    pub fn mark_proposals_inactive(&mut self, governance_canister_id: &CanisterId, proposal_ids: Vec<ProposalId>) {
+        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+            for proposal_id in proposal_ids {
+                n.mark_proposal_inactive(&proposal_id);
             }
         }
     }
@@ -171,6 +185,17 @@ impl NervousSystem {
             self.proposals_to_be_updated.pending.push(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
+        }
+    }
+
+    pub fn mark_proposal_inactive(&mut self, proposal_id: &ProposalId) {
+        if let Some((_, message_id)) = self.active_proposals.remove(proposal_id) {
+            self.proposals_to_be_updated.pending.push(ProposalUpdate {
+                message_id,
+                status: None,
+                reward_status: Some(ProposalRewardStatus::Settled),
+                latest_tally: None,
+            })
         }
     }
 
