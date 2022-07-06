@@ -200,9 +200,9 @@ impl ChatEventInternal {
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::DirectChatCreated(_) 
-            | ChatEventInternal::PollEnded(_)
-            | ChatEventInternal::ThreadUpdated(_) => None,
+            ChatEventInternal::DirectChatCreated(_) | ChatEventInternal::ThreadUpdated(_) | ChatEventInternal::PollEnded(_) => {
+                None
+            }
         }
     }
 }
@@ -315,7 +315,6 @@ pub struct UpdatedMessageInternal {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdatedInternal {
-    pub updated_by: UserId,
     pub message_index: MessageIndex,
     pub new_message: bool,
 }
