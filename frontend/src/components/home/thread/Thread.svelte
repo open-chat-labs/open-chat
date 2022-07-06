@@ -30,6 +30,7 @@
         canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
+        canReplyInThread,
         canSendMessages,
         createMessage,
         getMessageContent,
@@ -655,6 +656,7 @@
                             canDelete={canDeleteOtherUsersMessages($chat)}
                             canSend={canSendMessages($chat, $userStore)}
                             canReact={canReactToMessages($chat)}
+                            canReplyInThread={canReplyInThread($chat)}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith
