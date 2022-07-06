@@ -52,7 +52,6 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
-    import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
@@ -86,6 +85,7 @@
     export let editing: boolean;
     export let inThread: boolean;
     export let canReplyInThread: boolean;
+    export let senderTyping: boolean;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -114,7 +114,6 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
 

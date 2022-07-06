@@ -61,6 +61,7 @@
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
+    import { isTyping, typing } from "stores/typing";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -617,7 +618,13 @@
     </Fab>
 </div>
 
-<ThreadHeader on:createPoll={createPoll} on:close {rootEvent} {pollsAllowed} chatSummary={$chat} />
+<ThreadHeader
+    {threadRootMessageIndex}
+    on:createPoll={createPoll}
+    on:close
+    {rootEvent}
+    {pollsAllowed}
+    chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -637,6 +644,12 @@
                             confirmed={!unconfirmed.contains(
                                 threadRootMessageIndex,
                                 evt.event.messageId
+                            )}
+                            senderTyping={isTyping(
+                                $typing,
+                                evt.event.sender,
+                                $chat.chatId,
+                                threadRootMessageIndex
                             )}
                             readByMe={true}
                             readByThem={true}
