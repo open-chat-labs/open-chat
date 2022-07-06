@@ -74,9 +74,18 @@ impl NervousSystems {
         None
     }
 
-    pub fn process_proposals(&mut self, governance_canister_id: &CanisterId, proposals: Vec<Proposal>) {
+    pub fn process_proposals(
+        &mut self,
+        governance_canister_id: &CanisterId,
+        active_proposals: Vec<Proposal>,
+        inactive_proposals: Vec<ProposalId>,
+    ) {
         if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            for proposal in proposals {
+            for proposal in inactive_proposals {
+                n.mark_proposal_inactive(&proposal);
+            }
+
+            for proposal in active_proposals {
                 n.process_proposal(proposal);
             }
         }
@@ -86,14 +95,6 @@ impl NervousSystems {
         self.nervous_systems
             .get(governance_canister_id)
             .map_or(vec![], |n| n.active_proposals.keys().copied().collect())
-    }
-
-    pub fn mark_proposals_inactive(&mut self, governance_canister_id: &CanisterId, proposal_ids: Vec<ProposalId>) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            for proposal_id in proposal_ids {
-                n.mark_proposal_inactive(&proposal_id);
-            }
-        }
     }
 
     pub fn mark_sync_complete(&mut self, governance_canister_id: &CanisterId, success: bool, now: TimestampMillis) {

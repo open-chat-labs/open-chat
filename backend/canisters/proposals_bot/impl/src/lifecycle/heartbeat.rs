@@ -105,15 +105,12 @@ mod retrieve_proposals {
                     for id in proposals.iter().map(|p| p.id()) {
                         no_longer_active.remove(&id);
                     }
-                    state
-                        .data
-                        .nervous_systems
-                        .mark_proposals_inactive(governance_canister_id, no_longer_active.into_iter().collect());
 
-                    state
-                        .data
-                        .nervous_systems
-                        .process_proposals(governance_canister_id, proposals);
+                    state.data.nervous_systems.process_proposals(
+                        governance_canister_id,
+                        proposals,
+                        no_longer_active.into_iter().collect(),
+                    );
 
                     let now = state.env.now();
                     state
