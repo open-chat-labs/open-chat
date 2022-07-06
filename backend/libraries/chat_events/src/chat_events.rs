@@ -931,7 +931,7 @@ impl ChatEvents {
         let affected_event_indexes = events
             .iter()
             .flat_map(|e| e.event.affected_events())
-            .filter(|e| !event_indexes_set.contains(&e))
+            .filter(|e| !event_indexes_set.contains(e))
             .unique()
             .collect();
 
