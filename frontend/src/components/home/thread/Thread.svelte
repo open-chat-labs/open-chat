@@ -383,11 +383,11 @@
     }
 
     function startTyping() {
-        controller.startTyping();
+        controller.startTyping(threadRootMessageIndex);
     }
 
     function stopTyping() {
-        controller.stopTyping();
+        controller.stopTyping(threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
