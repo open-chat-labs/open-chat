@@ -72,14 +72,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             Some(thread_message_index) => {
                 if let Some(root_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
                     let root_message_sender = root_message.event.sender;
-                    let chat_id: ChatId = runtime_state.env.canister_id().into();
 
                     let thread_events = runtime_state
                         .data
                         .events
                         .threads
                         .entry(thread_message_index)
-                        .or_insert_with(|| ChatEvents::new_thread(chat_id));
+                        .or_insert_with(|| ChatEvents::new_thread());
 
                     let message_event = thread_events.push_message(push_message_args);
 

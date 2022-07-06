@@ -195,13 +195,14 @@ impl ChatEventInternal {
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
-            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::DirectChatCreated(_) | ChatEventInternal::PollEnded(_) => None,
+            ChatEventInternal::DirectChatCreated(_) 
+            | ChatEventInternal::PollEnded(_)
+            | ChatEventInternal::ThreadUpdated(_) => None,
         }
     }
 }
