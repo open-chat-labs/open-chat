@@ -74,6 +74,11 @@ impl NervousSystems {
         None
     }
 
+    // Proposals which have not been seen before get queued up to be sent as new messages.
+    // Proposals which have already been sent as messages get queued up to have those messages
+    // updated.
+    // Proposals which are now inactive are queued up to have their messages updated to show that
+    // they are in the 'settled' state.
     pub fn process_proposals(
         &mut self,
         governance_canister_id: &CanisterId,
