@@ -630,7 +630,6 @@ export interface ThreadSyncDetails {
   'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
-  'updated_by' : UserId,
   'new_message' : boolean,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
