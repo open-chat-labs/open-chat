@@ -30,6 +30,7 @@
         canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
+        canReplyInThread,
         canSendMessages,
         createMessage,
         getMessageContent,
@@ -135,6 +136,7 @@
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
+    $: pollsAllowed = canCreatePolls($chat);
 
     const dispatch = createEventDispatcher();
 
@@ -381,11 +383,11 @@
     }
 
     function startTyping() {
-        controller.startTyping();
+        controller.startTyping(threadRootMessageIndex);
     }
 
     function stopTyping() {
-        controller.stopTyping();
+        controller.stopTyping(threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -615,7 +617,7 @@
     </Fab>
 </div>
 
-<ThreadHeader on:close {rootEvent} chatSummary={$chat} />
+<ThreadHeader on:createPoll={createPoll} on:close {rootEvent} {pollsAllowed} chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -654,6 +656,7 @@
                             canDelete={canDeleteOtherUsersMessages($chat)}
                             canSend={canSendMessages($chat, $userStore)}
                             canReact={canReactToMessages($chat)}
+                            canReplyInThread={canReplyInThread($chat)}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith

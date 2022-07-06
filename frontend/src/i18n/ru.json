@@ -392,7 +392,8 @@
             "sendMessages": "отправлять сообщения",
             "reactToMessages": "реагировать на сообщения",
             "inviteUsers": "пригласить пользователей",
-            "notPermitted": "Вам не разрешено {permission}"
+            "notPermitted": "Вам не разрешено {permission}",
+            "replyInThread": "Ответить в теме"
         },
         "advanced": "Передовой",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "Не удалось открепить чат. Повторите попытку позже.",
         "menuItem": "Закрепить чат",
         "unpinMenuItem": "Открепить чат"
-    }
+    },
+    "readOnlyThread": "Эта ветка доступна только для чтения"
 }

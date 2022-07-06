@@ -393,7 +393,8 @@
             "sendMessages": "gửi tin nhắn",
             "reactToMessages": "phản ứng với tin nhắn",
             "inviteUsers": "mời người dùng",
-            "notPermitted": "Bạn không được phép {permission}"
+            "notPermitted": "Bạn không được phép {permission}",
+            "replyInThread": "Trả lời trong chuỗi"
         },
         "advanced": "Trình độ cao",
         "invite": {
@@ -551,5 +552,6 @@
         "unpinFailed": "Không thể bỏ ghim cuộc trò chuyện - vui lòng thử lại sau",
         "menuItem": "Ghim cuộc trò chuyện",
         "unpinMenuItem": "Bỏ ghim cuộc trò chuyện"
-    }
+    },
+    "readOnlyThread": "Chủ đề này ở chế độ chỉ đọc"
 }

@@ -39,6 +39,7 @@
     export let canSend: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
+    export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
     export let inThread: boolean;
@@ -81,6 +82,7 @@
         {canDelete}
         {canSend}
         {canReact}
+        {canReplyInThread}
         {publicGroup}
         {editing}
         {inThread}

@@ -11,6 +11,7 @@
     import {
         canForward,
         canInviteUsers,
+        canReplyInThread,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         getMessageContent,
@@ -392,6 +393,7 @@
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
         canDelete={canDeleteOtherUsersMessages($chat)}
+        canReplyInThread={canReplyInThread($chat)}
         {canSend}
         canReact={canReactToMessages($chat)}
         canInvite={canInviteUsers($chat)}
