@@ -46,8 +46,7 @@ fn commit(user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .main
-                .push_event(ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(event)), now);
+                .push_event(None, ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(event)), now);
 
             handle_activity_notification(runtime_state);
             Success

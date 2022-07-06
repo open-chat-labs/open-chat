@@ -17,9 +17,9 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        let result = chat
-            .events
-            .register_poll_vote(my_user_id, args.message_index, args.poll_option, args.operation, now);
+        let result =
+            chat.events
+                .register_poll_vote(my_user_id, None, args.message_index, args.poll_option, args.operation, now);
 
         match result {
             RegisterPollVoteResult::Success(votes) | RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),

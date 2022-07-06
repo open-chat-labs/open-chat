@@ -181,8 +181,7 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
     runtime_state
         .data
         .events
-        .main
-        .push_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
+        .push_event(None, ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 

@@ -12,8 +12,8 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
 
-        let events = chat.events.get_by_index(args.events, Some(my_user_id));
-        let affected_events = chat.events.affected_events(&events, Some(my_user_id));
+        let events = chat.events.main.get_by_index(args.events, Some(my_user_id));
+        let affected_events = chat.events.main.affected_events(&events, Some(my_user_id));
 
         Success(SuccessResult { events, affected_events })
     } else {

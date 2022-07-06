@@ -25,7 +25,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .into_iter()
             .filter(|id| {
                 matches!(
-                    chat.events.delete_message(my_user_id, false, *id, now),
+                    chat.events.delete_message(my_user_id, false, None, *id, now),
                     DeleteMessageResult::Success(_)
                 )
             })

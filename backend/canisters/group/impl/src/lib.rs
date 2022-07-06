@@ -3,11 +3,10 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::{AllChatEvents, ChatEvents};
+use chat_events::AllChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
@@ -101,10 +100,9 @@ impl RuntimeState {
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted,
-            metrics: data.events.main.metrics().clone(),
+            metrics: data.events.metrics().clone(),
             my_metrics: data
                 .events
-                .main
                 .user_metrics(&participant.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
@@ -112,7 +110,7 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let chat_metrics = self.data.events.main.metrics();
+        let chat_metrics = self.data.events.metrics();
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
@@ -184,10 +182,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = AllChatEvents {
-            main: ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now),
-            threads: HashMap::new(),
-        };
+        let events = AllChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,

@@ -16,15 +16,15 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
         let messages: Vec<_> = args
             .messages
             .into_iter()
-            .filter_map(|m| chat.events.message_by_message_index(m))
+            .filter_map(|m| chat.events.main.message_by_message_index(m))
             .map(|e| EventWrapper {
                 index: e.index,
                 timestamp: e.timestamp,
-                event: chat.events.hydrate_message(e.event, Some(my_user_id)),
+                event: chat.events.main.hydrate_message(e.event, Some(my_user_id)),
             })
             .collect();
 
-        let latest_event_index = chat.events.last().index;
+        let latest_event_index = chat.events.main.last().index;
 
         Success(SuccessResult {
             messages,

@@ -66,6 +66,7 @@ pub(crate) fn c2c_send_message_impl(
     let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state);
 
     let push_message_args = PushMessageArgs {
+        thread_root_message_index: None,
         message_id: args.message_id,
         sender,
         content: args.content.new_content_into_internal(),
@@ -114,7 +115,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.get_event_index_by_message_id(message_id))
+                .and_then(|chat| chat.events.main.get_event_index_by_message_id(message_id))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
                     event_index,

@@ -13,7 +13,7 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
 
-        let events = chat.events.from_index(
+        let events = chat.events.main.from_index(
             args.start_index,
             args.ascending,
             args.max_events as usize,
@@ -21,7 +21,7 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             Some(my_user_id),
         );
 
-        let affected_events = chat.events.affected_events(&events, Some(my_user_id));
+        let affected_events = chat.events.main.affected_events(&events, Some(my_user_id));
 
         Success(SuccessResult { events, affected_events })
     } else {

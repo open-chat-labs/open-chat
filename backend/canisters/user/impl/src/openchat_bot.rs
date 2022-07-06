@@ -178,7 +178,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         .data
         .direct_chats
         .get(&OPENCHAT_BOT_USER_ID.into())
-        .and_then(|c| c.events.latest_message_index())
+        .and_then(|c| c.events.main.latest_message_index())
         .map(|i| i.incr())
         .unwrap_or_default();
 

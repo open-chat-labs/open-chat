@@ -26,7 +26,7 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         let mut files_to_delete = Vec::new();
 
         for message_id in args.message_ids {
-            if let DeleteMessageResult::Success(content) = chat.events.delete_message(caller, false, message_id, now) {
+            if let DeleteMessageResult::Success(content) = chat.events.delete_message(caller, false, None, message_id, now) {
                 files_to_delete.extend(content.blob_references());
             }
         }

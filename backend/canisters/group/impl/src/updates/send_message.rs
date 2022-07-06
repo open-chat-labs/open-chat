@@ -7,8 +7,8 @@ use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
-    CanisterId, ChatId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -52,6 +52,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
+        if let Some(thread_message_index) = args.thread_root_message_index {
+            if !runtime_state.data.events.is_message_accessible_by_index(
+                participant.min_visible_event_index(),
+                None,
+                thread_message_index,
+            ) {
+                return ThreadMessageNotFound;
+            }
+        }
+
         let sender = participant.user_id;
         let user_being_replied_to = args
             .replies_to
@@ -60,6 +70,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let push_message_args = PushMessageArgs {
             sender,
+            thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
@@ -67,52 +78,29 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             forwarded: args.forwarding,
         };
 
-        let (message_event, thread_participants, root_message_sender, first_thread_reply) = match args.thread_root_message_index
-        {
-            Some(thread_message_index) => {
-                if let Some(root_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
-                    let root_message_sender = root_message.event.sender;
-
-                    let thread_events = runtime_state
-                        .data
-                        .events
-                        .threads
-                        .entry(thread_message_index)
-                        .or_insert_with(|| ChatEvents::new_thread());
-
-                    let message_event = thread_events.push_message(push_message_args);
-
-                    let thread_summary = runtime_state.data.events.main.update_thread_summary(
-                        thread_message_index,
-                        sender,
-                        true,
-                        message_event.index,
-                        now,
-                    );
-                    (
-                        message_event,
-                        Some(thread_summary.participant_ids),
-                        Some(root_message_sender),
-                        thread_summary.reply_count == 1,
-                    )
-                } else {
-                    return ThreadMessageNotFound;
-                }
-            }
-            None => (
-                runtime_state.data.events.main.push_message(push_message_args),
-                None,
-                None,
-                false,
-            ),
-        };
-
-        let event_index = message_event.index;
-        let message_index = message_event.event.message_index;
+        let message_event = runtime_state.data.events.push_message(push_message_args);
 
         handle_activity_notification(runtime_state);
 
         register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
+
+        let event_index = message_event.index;
+        let message_index = message_event.event.message_index;
+
+        let mut thread_participants: Option<&Vec<UserId>> = None;
+        let mut root_message_sender: Option<UserId> = None;
+        let mut first_thread_reply = false;
+
+        if let Some(thread_message_index) = args.thread_root_message_index {
+            if let Some(wrapped_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
+                let root_message = wrapped_message.event;
+                if let Some(thread_summary) = &root_message.thread_summary {
+                    thread_participants = Some(&thread_summary.participant_ids);
+                    root_message_sender = Some(root_message.sender);
+                    first_thread_reply = thread_summary.reply_count == 1;
+                }
+            }
+        }
 
         // Add mentions
         let mut mentions: HashSet<UserId> = args.mentioned.iter().map(|m| m.user_id).collect();
@@ -139,7 +127,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         // Build the notification recipients list
-        let mut notification_recipients = runtime_state.data.participants.users_to_notify(thread_participants.as_ref());
+        let mut notification_recipients = runtime_state.data.participants.users_to_notify(thread_participants);
         if let Some(user_id) = root_message_sender {
             notification_recipients.insert(user_id);
         }

@@ -76,8 +76,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
                 runtime_state
                     .data
                     .events
-                    .main
-                    .push_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
+                    .push_event(None, ChatEventInternal::ParticipantJoined(Box::new(event)), now);
 
                 handle_activity_notification(runtime_state);
 

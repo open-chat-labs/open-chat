@@ -71,8 +71,7 @@ fn commit(runtime_state: &mut RuntimeState) {
     runtime_state
         .data
         .events
-        .main
-        .push_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
+        .push_event(None, ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }
