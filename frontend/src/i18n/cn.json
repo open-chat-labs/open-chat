@@ -392,7 +392,8 @@
             "sendMessages": "发送信息",
             "reactToMessages": "对消息做出反应",
             "inviteUsers": "邀请用户",
-            "notPermitted": "您无权{permission}"
+            "notPermitted": "您无权{permission}",
+            "replyInThread": "在线程中回复"
         },
         "advanced": "先进的",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "取消固定聊天失败 - 请稍后再试",
         "menuItem": "固定聊天",
         "unpinMenuItem": "取消固定聊天"
-    }
+    },
+    "readOnlyThread": "此线程是只读的"
 }

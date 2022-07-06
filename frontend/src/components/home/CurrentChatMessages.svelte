@@ -52,6 +52,7 @@
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
+    export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -544,6 +545,7 @@
                         {canSend}
                         {canReact}
                         {canInvite}
+                        {canReplyInThread}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}

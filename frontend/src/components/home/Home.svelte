@@ -121,6 +121,7 @@
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
+    let creatingThread = false;
 
     $: userId = user.userId;
     $: wasmVersion = user.wasmVersion;
@@ -273,6 +274,10 @@
     }
 
     function closeThread() {
+        if (creatingThread) {
+            creatingThread = false;
+            return;
+        }
         rightPanelHistory = rightPanelHistory.filter(
             (panel) => panel.kind !== "message_thread_panel"
         );
@@ -705,6 +710,9 @@
     }
 
     function showProfile() {
+        if ($selectedChatStore !== undefined) {
+            replace(`/${$selectedChatStore.chatId}`);
+        }
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
@@ -722,8 +730,19 @@
         }
     }
 
+    function initiateThread(
+        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
+    ) {
+        if ($selectedChatStore !== undefined) {
+            creatingThread = true;
+            replace(`/${$selectedChatStore.chatId}`);
+            openThread(ev);
+        }
+    }
+
     function showGroupDetails() {
         if ($selectedChatStore !== undefined) {
+            replace(`/${$selectedChatStore.chatId}`);
             rightPanelHistory = [
                 {
                     kind: "group_details",
@@ -738,6 +757,7 @@
 
     function showPinned() {
         if ($selectedChatStore !== undefined) {
+            replace(`/${$selectedChatStore.chatId}`);
             rightPanelHistory = [
                 {
                     kind: "show_pinned",
@@ -912,7 +932,7 @@
             loadingChats={$chatsLoading}
             blocked={!!blocked}
             controller={$selectedChatStore}
-            on:initiateThread={openThread}
+            on:initiateThread={initiateThread}
             on:clearSelection={clearSelectedChat}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}

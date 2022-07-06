@@ -452,7 +452,7 @@
         </div>
     {:else if !canSend}
         <div class="disabled">
-            {$_("readOnlyChat")}
+            {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
         </div>
     {:else}
         <MessageActions

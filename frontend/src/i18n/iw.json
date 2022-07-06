@@ -404,7 +404,8 @@
             "sendMessages": "לשלוח הודעות",
             "reactToMessages": "להגיב להודעות",
             "inviteUsers": "להזמין משתמשים",
-            "notPermitted": "אינך מורשה {permission}"
+            "notPermitted": "אינך מורשה {permission}",
+            "replyInThread": "תשובה בשרשור"
         },
         "advanced": "מִתקַדֵם",
         "invite": {
@@ -548,5 +549,6 @@
         "unpinFailed": "ביטול ההצמדה של הצ'אט נכשל - נסה מאוחר יותר",
         "menuItem": "הצמד צ'אט",
         "unpinMenuItem": "בטל את ההצמדה של הצ'אט"
-    }
+    },
+    "readOnlyThread": "השרשור הזה הוא לקריאה בלבד"
 }

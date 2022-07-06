@@ -14,7 +14,7 @@
         MessageContent,
         Participant,
     } from "../../domain/chat/chat";
-    import { canSendMessages } from "../../domain/chat/chat.utils";
+    import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
     import Loading from "../Loading.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
@@ -39,7 +39,7 @@
 
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
-    $: canSend = canSendMessages(chat, $userStore);
+    $: canSend = mode === "thread" ? canReplyInThread(chat) : canSendMessages(chat, $userStore);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {

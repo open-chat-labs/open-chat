@@ -1255,7 +1255,7 @@ export function canReplyInThread(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.replyInThread);
     } else {
-        return true;
+        return false;
     }
 }
 

@@ -392,7 +392,8 @@
             "sendMessages": "Sende Nachrichten",
             "reactToMessages": "auf Nachrichten reagieren",
             "inviteUsers": "Benutzer einladen",
-            "notPermitted": "Sie dürfen nicht {permission}"
+            "notPermitted": "Sie dürfen nicht {permission}",
+            "replyInThread": "Antwort im Thread"
         },
         "advanced": "Fortschrittlich",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "Der Chat konnte nicht gelöst werden. Versuchen Sie es später erneut",
         "menuItem": "Pin-Chat",
         "unpinMenuItem": "Chat loslösen"
-    }
+    },
+    "readOnlyThread": "Dieser Thread ist schreibgeschützt"
 }
