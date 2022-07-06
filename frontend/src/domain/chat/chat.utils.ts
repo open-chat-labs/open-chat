@@ -44,12 +44,12 @@ import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
-import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
 import { localReactions, mergeReactions } from "../../stores/reactions";
+import type { TypersByKey } from "stores/typing";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -264,10 +264,10 @@ export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message
 
 export function getTypingString(
     users: UserLookup,
-    chatSummary: ChatSummary,
-    typing: TypersByChat
+    key: string,
+    typing: TypersByKey
 ): string | undefined {
-    const typers = typing[chatSummary.chatId];
+    const typers = typing[key];
     if (typers === undefined || typers.size === 0) return undefined;
 
     const format = get(_);

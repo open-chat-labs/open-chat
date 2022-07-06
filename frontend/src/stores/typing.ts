@@ -1,22 +1,36 @@
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 
-export type TypersByChat = Record<string, Set<string>>;
+export type TypersByKey = Record<string, Set<string>>;
 
 type UserTyping = {
     chatId: string;
+    threadRootMessageIndex?: number;
     timeout: number;
 };
+type UsersTyping = Record<string, UserTyping>;
+
+export function isTyping(
+    usersTyping: UsersTyping,
+    userId: string,
+    chatId: string,
+    threadRootMessageIndex?: number
+): boolean {
+    const userTyping = usersTyping[userId];
+    if (userTyping === undefined) return false;
+    if (threadRootMessageIndex === undefined) return userTyping.chatId === chatId;
+    return (
+        userTyping.chatId === chatId && userTyping.threadRootMessageIndex === threadRootMessageIndex
+    );
+}
 
 const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-// Every user who is typing will appear once in 'store' and once in 'usersTyping'.
-const store = writable<TypersByChat>({});
-const usersTyping = new Map<string, UserTyping>();
+const usersTyping = writable<UsersTyping>({});
 
 export const typing = {
-    subscribe: store.subscribe,
-    add: (chatId: string, userId: string): void =>
-        store.update((chats) => {
+    subscribe: usersTyping.subscribe,
+    startTyping: (chatId: string, userId: string, threadRootMessageIndex?: number): void =>
+        usersTyping.update((users) => {
             // Start a timeout which will mark the user as having stopped typing if no further 'user typing' events are
             // received within MARK_TYPING_STOPPED_INTERVAL_MS.
             const timeout = window.setTimeout(
@@ -24,49 +38,55 @@ export const typing = {
                 MARK_TYPING_STOPPED_INTERVAL_MS
             );
 
-            const existingEntry = usersTyping.get(userId);
+            const existingEntry = users[userId];
             if (existingEntry) {
                 // Clear the existing timeout since it is no longer relevant.
                 window.clearTimeout(existingEntry.timeout);
-
-                // Users can only be typing in a single chat at a time, so if this user is now typing in a different
-                // chat to before, then we should mark that they have stopped typing in the previous one.
-                if (existingEntry.chatId !== chatId) {
-                    chats[existingEntry.chatId].delete(userId);
-                } else {
-                    // If the user is still typing in the same chat, then there is no change to the state of the store,
-                    // so we can set the new timeout and return the previous state as is.
-                    existingEntry.timeout = timeout;
-                    return chats;
-                }
             }
 
             // Mark that the user is typing in the new chat and include the timeout so that if subsequent events are
             // received we can clear the timeout.
-            usersTyping.set(userId, { chatId, timeout });
+            users[userId] = { chatId, timeout, threadRootMessageIndex };
 
-            if (chats[chatId] === undefined) {
-                chats[chatId] = new Set<string>();
-            }
-            chats[chatId].add(userId);
-            return {
-                ...chats,
-            };
+            return users;
         }),
-    delete: (chatId: string, userId: string): void => _delete(userId),
+    stopTyping: (userId: string): void => _delete(userId),
 };
 
-function _delete(userId: string): void {
-    const existingEntry = usersTyping.get(userId);
-    if (existingEntry) {
-        window.clearTimeout(existingEntry.timeout);
-        usersTyping.delete(userId);
+// a derived store to show users typing by chat
+export const byChat = derived([usersTyping], ([$users]) => {
+    return Object.entries($users).reduce((byChat, [userId, { chatId }]) => {
+        if (byChat[chatId] === undefined) {
+            byChat[chatId] = new Set<string>();
+        }
+        byChat[chatId].add(userId);
+        return byChat;
+    }, {} as Record<string, Set<string>>);
+});
 
-        store.update((chats) => {
-            chats[existingEntry.chatId].delete(userId);
-            return {
-                ...chats,
-            };
-        });
-    }
+// a derived store to show users typing by thread
+export const byThread = derived([usersTyping], ([$users]) => {
+    return Object.entries($users).reduce(
+        (byThread, [userId, { chatId, threadRootMessageIndex }]) => {
+            if (threadRootMessageIndex === undefined) return byThread;
+            const key = `${chatId}_${threadRootMessageIndex}`;
+            if (byThread[key] === undefined) {
+                byThread[key] = new Set<string>();
+            }
+            byThread[key].add(userId);
+            return byThread;
+        },
+        {} as Record<string, Set<string>>
+    );
+});
+
+function _delete(userId: string): void {
+    usersTyping.update((users) => {
+        const existingEntry = users[userId];
+        if (existingEntry) {
+            window.clearTimeout(existingEntry.timeout);
+            delete users[userId];
+        }
+        return users;
+    });
 }
