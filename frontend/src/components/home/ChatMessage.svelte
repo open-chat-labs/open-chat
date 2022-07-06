@@ -52,7 +52,6 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
-    import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
