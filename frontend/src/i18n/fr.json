@@ -391,7 +391,8 @@
             "sendMessages": "envoyer des messages",
             "reactToMessages": "réagir aux messages",
             "inviteUsers": "inviter des utilisateurs",
-            "notPermitted": "Vous n'êtes pas autorisé à {permission}"
+            "notPermitted": "Vous n'êtes pas autorisé à {permission}",
+            "replyInThread": "Répondre dans le fil"
         },
         "advanced": "Avancé",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "Échec de désépinglage du chat - veuillez réessayer plus tard",
         "menuItem": "Épingler le chat",
         "unpinMenuItem": "Détacher le chat"
-    }
+    },
+    "readOnlyThread": "Ce fil est en lecture seule"
 }

@@ -30,6 +30,7 @@
         canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
+        canReplyInThread,
         canSendMessages,
         createMessage,
         getMessageContent,
@@ -60,6 +61,7 @@
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
+    import { isTyping, typing } from "stores/typing";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -135,6 +137,7 @@
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
+    $: pollsAllowed = canCreatePolls($chat);
 
     const dispatch = createEventDispatcher();
 
@@ -381,11 +384,11 @@
     }
 
     function startTyping() {
-        controller.startTyping();
+        controller.startTyping(threadRootMessageIndex);
     }
 
     function stopTyping() {
-        controller.stopTyping();
+        controller.stopTyping(threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -615,7 +618,13 @@
     </Fab>
 </div>
 
-<ThreadHeader on:close {rootEvent} chatSummary={$chat} />
+<ThreadHeader
+    {threadRootMessageIndex}
+    on:createPoll={createPoll}
+    on:close
+    {rootEvent}
+    {pollsAllowed}
+    chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -636,6 +645,12 @@
                                 threadRootMessageIndex,
                                 evt.event.messageId
                             )}
+                            senderTyping={isTyping(
+                                $typing,
+                                evt.event.sender,
+                                $chat.chatId,
+                                threadRootMessageIndex
+                            )}
                             readByMe={true}
                             readByThem={true}
                             chatId={$chat.chatId}
@@ -654,6 +669,7 @@
                             canDelete={canDeleteOtherUsersMessages($chat)}
                             canSend={canSendMessages($chat, $userStore)}
                             canReact={canReactToMessages($chat)}
+                            canReplyInThread={canReplyInThread($chat)}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith

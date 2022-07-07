@@ -74,6 +74,8 @@
             } else if (resp === "challenge_failed") {
                 error.set("register.challengeAttemptFailed");
                 createChallenge();
+            } else if (resp === "internal_error") {
+                error.set("unexpectedError");
             } else if (resp === "success") {
                 error.set(undefined);
                 loadUser();

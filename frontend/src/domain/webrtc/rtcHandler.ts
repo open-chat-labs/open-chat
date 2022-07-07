@@ -148,10 +148,10 @@ export function handleWebRtcMessage(message: unknown): void {
     }
 
     if (parsedMsg.kind === "remote_user_typing") {
-        typing.add(fromChat.chatId, parsedMsg.userId);
+        typing.startTyping(fromChat.chatId, parsedMsg.userId, parsedMsg.threadRootMessageIndex);
     }
     if (parsedMsg.kind === "remote_user_stopped_typing") {
-        typing.delete(fromChat.chatId, parsedMsg.userId);
+        typing.stopTyping(parsedMsg.userId);
     }
     if (parsedMsg.kind === "remote_user_toggled_reaction") {
         remoteUserToggledReaction({

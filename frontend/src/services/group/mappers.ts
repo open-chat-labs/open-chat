@@ -888,13 +888,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("ProposalVoteRegistered" in candid) {
-        return {
-            kind: "proposal_vote_registered",
-            message: updatedMessage(candid.ProposalVoteRegistered),
-        };
-    }
-
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 

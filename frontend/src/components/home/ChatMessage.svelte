@@ -52,7 +52,6 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
-    import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
@@ -85,6 +84,8 @@
     export let publicGroup: boolean;
     export let editing: boolean;
     export let inThread: boolean;
+    export let canReplyInThread: boolean;
+    export let senderTyping: boolean;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -100,7 +101,7 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
     let threadsEnabled =
-        chatType === "group_chat" && localStorage.getItem(configKeys.threadsEnabled) === "true";
+        canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
@@ -113,7 +114,6 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
 

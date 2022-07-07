@@ -7,41 +7,52 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
-    import { TypersByChat, typing } from "../../../stores/typing";
+    import { TypersByKey, typing, byThread } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
     import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
     import { push } from "svelte-spa-router";
     import { mobileWidth } from "stores/screenDimensions";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let chatSummary: ChatSummary;
     export let rootEvent: EventWrapper<Message>;
+    export let pollsAllowed: boolean;
+    export let threadRootMessageIndex: number;
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typing);
+    $: chat = normaliseChatSummary($now, chatSummary, $byThread);
 
     function close() {
         push(`/${chatSummary.chatId}`);
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
-        const subtext = `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
-        // TODO - typing indicator is not going to work in its current form
-        // const subtext =
-        //     getTypingString($userStore, chatSummary, typing) ||
-        //          `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
-        // const someoneTyping = getTypingString($userStore, chatSummary, typing);
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+        const someoneTyping = getTypingString(
+            $userStore,
+            `${chatSummary.chatId}_${threadRootMessageIndex}`,
+            typing
+        );
+        const subtext =
+            someoneTyping ?? `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext,
-                typing: false,
+                typing: someoneTyping !== undefined,
             };
         }
         return {
@@ -49,31 +60,16 @@
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
             subtext,
-            typing: false,
+            typing: someoneTyping !== undefined,
         };
+    }
+
+    function createPoll() {
+        dispatch("createPoll");
     }
 </script>
 
 <SectionHeader flush={true} shadow={true}>
-    <div class="avatar">
-        <Avatar
-            statusBorder={"var(--section-bg)"}
-            status={chat.userStatus}
-            url={chat.avatarUrl}
-            size={AvatarSize.Small} />
-    </div>
-    <div class="chat-details">
-        <div class="chat-name" title={chat.name}>
-            {chat.name}
-        </div>
-        <div class="chat-subtext" title={chat.subtext}>
-            {#if chat.typing}
-                {chat.typing} <Typing />
-            {:else}
-                {chat.subtext}
-            {/if}
-        </div>
-    </div>
     <div class="close" on:click={close}>
         <HoverIcon>
             {#if $mobileWidth}
@@ -87,6 +83,44 @@
             {/if}
         </HoverIcon>
     </div>
+    <div class="avatar">
+        <Avatar
+            statusBorder={"var(--section-bg)"}
+            status={chat.userStatus}
+            url={chat.avatarUrl}
+            size={AvatarSize.Small} />
+    </div>
+    <div class="chat-details">
+        <div class="chat-name" title={chat.name}>
+            {chat.name}
+        </div>
+        <div class="chat-subtext" title={chat.subtext}>
+            {#if chat.typing}
+                {chat.subtext} <Typing />
+            {:else}
+                {chat.subtext}
+            {/if}
+        </div>
+    </div>
+    {#if pollsAllowed}
+        <div class="menu">
+            <MenuIcon>
+                <div slot="icon">
+                    <HoverIcon>
+                        <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div slot="menu">
+                    <Menu>
+                        <MenuItem on:click={createPoll}>
+                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <div slot="text">{$_("poll.create")}</div>
+                        </MenuItem>
+                    </Menu>
+                </div>
+            </MenuIcon>
+        </div>
+    {/if}
 </SectionHeader>
 
 <style type="text/scss">

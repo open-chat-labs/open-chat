@@ -16,6 +16,7 @@
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import { push } from "svelte-spa-router";
+    import { typing, isTyping } from "../../stores/typing";
 
     const dispatch = createEventDispatcher();
 
@@ -39,6 +40,7 @@
     export let canSend: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
+    export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
     export let inThread: boolean;
@@ -63,6 +65,7 @@
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
+        senderTyping={isTyping($typing, event.event.sender, chatId)}
         {focused}
         {observer}
         {confirmed}
@@ -81,6 +84,7 @@
         {canDelete}
         {canSend}
         {canReact}
+        {canReplyInThread}
         {publicGroup}
         {editing}
         {inThread}

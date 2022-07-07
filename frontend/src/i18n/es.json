@@ -393,7 +393,8 @@
             "sendMessages": "enviar mensajes",
             "reactToMessages": "reaccionar a los mensajes",
             "inviteUsers": "invitar a los usuarios",
-            "notPermitted": "No tienes permiso para {permission}"
+            "notPermitted": "No tienes permiso para {permission}",
+            "replyInThread": "Responder en hilo"
         },
         "advanced": "Avanzado",
         "invite": {
@@ -551,5 +552,6 @@
         "unpinFailed": "Error al desanclar el chat. Inténtalo más tarde.",
         "menuItem": "Marcar chat",
         "unpinMenuItem": "Desanclar chat"
-    }
+    },
+    "readOnlyThread": "Este hilo es de solo lectura"
 }

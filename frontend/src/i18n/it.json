@@ -392,7 +392,8 @@
             "sendMessages": "Manda messaggi",
             "reactToMessages": "reagire ai messaggi",
             "inviteUsers": "invitare gli utenti",
-            "notPermitted": "Non sei autorizzato a {permission}"
+            "notPermitted": "Non sei autorizzato a {permission}",
+            "replyInThread": "Rispondi nel thread"
         },
         "advanced": "Avanzate",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "Impossibile sbloccare la chat. Riprova più tardi",
         "menuItem": "Appunta la chat",
         "unpinMenuItem": "Sblocca la chat"
-    }
+    },
+    "readOnlyThread": "Questo thread è di sola lettura"
 }

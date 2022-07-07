@@ -416,7 +416,8 @@
             "sendMessages": "send messages",
             "reactToMessages": "react to messages",
             "inviteUsers": "invite users",
-            "notPermitted": "You are not permitted to {permission}"
+            "notPermitted": "You are not permitted to {permission}",
+            "replyInThread": "Reply in thread"
         },
         "invite": {
             "inviteWithLink": "Invite to group via link",
@@ -525,6 +526,7 @@
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
+    "readOnlyThread": "This thread is read-only",
     "accounts": "Accounts",
     "forward": "Forward",
     "thread": {

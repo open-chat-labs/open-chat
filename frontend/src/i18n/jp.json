@@ -392,7 +392,8 @@
             "sendMessages": "メッセージを送る",
             "reactToMessages": "メッセージに反応する",
             "inviteUsers": "ユーザーを招待する",
-            "notPermitted": "{permission}は許可されていません"
+            "notPermitted": "{permission}は許可されていません",
+            "replyInThread": "スレッドで返信"
         },
         "advanced": "高度",
         "invite": {
@@ -550,5 +551,6 @@
         "unpinFailed": "チャットの固定を解除できませんでした-後で試してください",
         "menuItem": "ピンチャット",
         "unpinMenuItem": "チャットの固定を解除する"
-    }
+    },
+    "readOnlyThread": "このスレッドは読み取り専用です"
 }
