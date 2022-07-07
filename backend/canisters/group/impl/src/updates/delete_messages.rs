@@ -58,14 +58,13 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let files_to_delete: Vec<_> = delete_message_results
             .into_iter()
-            .filter_map(|(_, result)| {
+            .flat_map(|(_, result)| {
                 if let DeleteMessageResult::Success(content) = result {
-                    Some(content.blob_references())
+                    content.blob_references()
                 } else {
-                    None
+                    Vec::new()
                 }
             })
-            .flatten()
             .collect();
 
         if !files_to_delete.is_empty() {
