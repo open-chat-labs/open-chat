@@ -62,7 +62,7 @@
     function onDataTransfer(data: DataTransfer): void {
         const text = data.getData("text/plain") || data.getData("text/uri-list");
         if (text) {
-            messageEntry.insertTextAtCaret(text);
+            messageEntry.replaceSelection(text);
         }
         messageContentFromDataTransferItemList([...data.items]);
     }
@@ -83,7 +83,7 @@
     }
 
     function emojiSelected(ev: CustomEvent<string>) {
-        messageEntry?.insertTextAtCaret(ev.detail);
+        messageEntry?.replaceSelection(ev.detail);
     }
 </script>
 
