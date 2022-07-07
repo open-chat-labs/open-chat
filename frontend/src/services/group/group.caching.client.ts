@@ -15,7 +15,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -254,10 +253,6 @@ export class CachingGroupClient implements IGroupClient {
             await setCachedGroupDetails(this.db, this.chatId, response);
         }
         return response;
-    }
-
-    deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.client.deleteGroup();
     }
 
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {

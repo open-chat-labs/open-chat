@@ -14,7 +14,6 @@ import type {
     ApiParticipant,
     ApiSelectedUpdatesResponse,
     ApiRole,
-    ApiDeleteGroupResponse,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
     ApiPinMessageResponse,
@@ -45,7 +44,6 @@ import type {
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
     MemberRole,
-    DeleteGroupResponse,
     Message,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -151,19 +149,6 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
 export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
