@@ -508,11 +508,10 @@ export async function setCachedEvents<T extends ChatEvent>(
 export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
-    message: Message,
     threadRootMessageIndex?: number
-): (resp: SendMessageResponse) => SendMessageResponse {
-    return (resp: SendMessageResponse) => {
-        if (resp.kind !== "success") return resp;
+): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
+    return ([resp, message]: [SendMessageResponse, Message]) => {
+        if (resp.kind !== "success") return [resp, message];
 
         const event = messageToEvent(message, resp);
 
@@ -520,7 +519,7 @@ export function setCachedMessageFromSendResponse(
             rollbar.error("Unable to write message to cache: ", err)
         );
 
-        return resp;
+        return [resp, message];
     };
 }
 

@@ -288,7 +288,7 @@
             parentWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
+            inThread ? 0.9 : $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -417,6 +417,7 @@
             class:last
             class:readByMe
             class:crypto
+            class:thread={inThread}
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
@@ -838,6 +839,10 @@
 
         @include size-above(xl) {
             max-width: 70%;
+        }
+
+        &.thread {
+            max-width: 90%;
         }
 
         .username {

@@ -318,15 +318,16 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.userId, recipientId])
             : dataClient.uploadData(message.content, [this.userId, recipientId]);
 
         return uploadContentPromise.then((content) => {
+            const newContent = content ?? message.content;
             const req: ApiSendMessageArgs = {
-                content: apiMessageContent(content ?? message.content),
+                content: apiMessageContent(newContent),
                 recipient: Principal.fromText(recipientId),
                 sender_name: sender.username,
                 message_id: message.messageId,
@@ -337,7 +338,10 @@ export class UserClient extends CandidService implements IUserClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+            return this.handleResponse(
+                this.userService.send_message(req),
+                sendMessageResponse
+            ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
 
@@ -348,7 +352,7 @@ export class UserClient extends CandidService implements IUserClient {
         sender: UserSummary,
         message: Message,
         _threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         const req: ApiTransferCryptoWithinGroupArgs = {
             content: apiPendingCryptoContent(message.content as CryptocurrencyContent),
             recipient: Principal.fromText(recipientId),
@@ -364,7 +368,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.transfer_crypto_within_group(req),
             transferWithinGroupResponse
-        );
+        ).then((resp) => [resp, message]);
     }
 
     @profile("userClient")
