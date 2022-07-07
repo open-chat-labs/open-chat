@@ -17,7 +17,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -48,7 +47,6 @@ import {
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     unblockUserResponse,
-    deleteGroupResponse,
     getMessagesByMessageIndexResponse,
     pinMessageResponse,
     unpinMessageResponse,
@@ -371,11 +369,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         }
 
         return mergeGroupChatDetails(previous, updatesResponse);
-    }
-
-    @profile("groupClient")
-    deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
     }
 
     @profile("groupClient")

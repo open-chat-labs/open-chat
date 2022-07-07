@@ -2,6 +2,7 @@ import type {
     EventsResponse,
     UpdateArgs,
     CreateGroupResponse,
+    DeleteGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
     MergedUpdatesResponse,
@@ -66,6 +67,7 @@ export interface IUserClient {
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse>;
     editMessage(
         recipientId: string,
         message: Message,
