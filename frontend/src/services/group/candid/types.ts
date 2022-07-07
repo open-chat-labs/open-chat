@@ -641,8 +641,7 @@ export interface RegisterPollVoteArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
-export type RegisterPollVoteResponse = { 'MessageNotFound' : null } |
-  { 'CallerNotInGroup' : null } |
+export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |
   { 'OptionIndexOutOfRange' : null } |

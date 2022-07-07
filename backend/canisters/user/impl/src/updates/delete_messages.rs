@@ -24,9 +24,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
-            .filter_map(
-                |(message_id, result)| if matches!(result, DeleteMessageResult::Success(_)) { Some(message_id) } else { None },
-            )
+            .filter_map(|(message_id, result)| matches!(result, DeleteMessageResult::Success(_)).then_some(message_id))
             .collect();
 
         if !deleted.is_empty() {

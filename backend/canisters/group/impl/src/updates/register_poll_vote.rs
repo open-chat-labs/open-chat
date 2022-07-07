@@ -24,7 +24,7 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             args.thread_root_message_index,
             args.message_index,
         ) {
-            return MessageNotFound;
+            return PollNotFound;
         }
 
         let result = runtime_state.data.events.register_poll_vote(
