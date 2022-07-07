@@ -160,7 +160,6 @@
         );
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            console.log("Thread events: ", eventsResponse);
             const updated = await handleEventsResponse($events, eventsResponse);
             events.set(
                 dedupe(

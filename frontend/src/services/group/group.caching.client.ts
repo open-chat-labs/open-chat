@@ -181,10 +181,6 @@ export class CachingGroupClient implements IGroupClient {
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        // TODO this sends the input message into setCachedMessageFromSendResponse. But the data client (which
-        // creates the blobReference) does not mutate the input message content, it creates a new message content.
-        // This means that we cache a message with no blobReference.
-        // Not sure why this is not a problem for the main chat
         return this.client
             .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex));
