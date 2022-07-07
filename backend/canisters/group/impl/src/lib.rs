@@ -72,7 +72,7 @@ impl RuntimeState {
 
     pub fn summary(&self, participant: &ParticipantInternal) -> GroupChatSummaryInternal {
         let data = &self.data;
-        let latest_event = data.events.main.last();
+        let latest_event = data.events.main().last();
         let min_visible_message_index = participant.min_visible_message_index();
 
         GroupChatSummaryInternal {
@@ -87,14 +87,14 @@ impl RuntimeState {
             min_visible_message_index,
             latest_message: data
                 .events
-                .main
+                .main()
                 .latest_message(Some(participant.user_id))
                 .filter(|m| m.event.message_index >= min_visible_message_index),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.get_most_recent_mentions(&data.events.main),
+            mentions: participant.get_most_recent_mentions(data.events.main()),
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,

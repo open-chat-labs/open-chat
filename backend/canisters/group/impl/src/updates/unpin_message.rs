@@ -34,8 +34,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
 
             runtime_state.data.pinned_messages.remove(index);
 
-            let event_index = runtime_state.data.events.push_event(
-                None,
+            let event_index = runtime_state.data.events.push_main_event(
                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                     message_index: args.message_index,
                     unpinned_by: participant.user_id,

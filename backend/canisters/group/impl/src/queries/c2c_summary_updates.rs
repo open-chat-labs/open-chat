@@ -78,25 +78,25 @@ fn process_events(
     participant: &ParticipantInternal,
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
-    let chat_events = &runtime_state.data.events;
+    let chat_events = &runtime_state.data.events.main();
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
-        latest_message: chat_events.main.latest_message_if_updated(since, Some(participant.user_id)),
+        latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
         ..Default::default()
     };
 
     // Iterate through events starting from most recent
     let mut lowest_message_index: MessageIndex = u32::MIN.into();
-    for event_wrapper in chat_events.main.iter().rev().take_while(|e| e.timestamp > since) {
+    for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
             updates.latest_update = Some(event_wrapper.timestamp);
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
-        if let Some(index) = chat_events.main.affected_event_index(&event_wrapper.event) {
+        if let Some(index) = chat_events.affected_event_index(&event_wrapper.event) {
             if updates.affected_events.len() < 100 {
                 updates.affected_events.insert(index);
             }
@@ -175,7 +175,7 @@ fn process_events(
         .iter()
         .rev()
         .filter(|m| m.message_index >= lowest_message_index)
-        .filter_map(|message_index| runtime_state.data.events.main.hydrate_mention(message_index))
+        .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
         .take(MAX_RETURNED_MENTIONS)
         .collect();
 

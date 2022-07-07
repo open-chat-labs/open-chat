@@ -66,7 +66,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events.main));
+            .and_then(|r| get_user_being_replied_to(r, runtime_state.data.events.main()));
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -92,7 +92,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let mut first_thread_reply = false;
 
         if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(wrapped_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
+            if let Some(wrapped_message) = runtime_state
+                .data
+                .events
+                .main()
+                .message_by_message_index(thread_message_index)
+            {
                 let root_message = wrapped_message.event;
                 if let Some(thread_summary) = &root_message.thread_summary {
                     thread_participants = Some(&thread_summary.participant_ids);

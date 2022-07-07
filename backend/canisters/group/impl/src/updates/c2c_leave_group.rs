@@ -35,7 +35,7 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     runtime_state
         .data
         .events
-        .push_event(None, ChatEventInternal::ParticipantLeft(Box::new(event)), now);
+        .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 

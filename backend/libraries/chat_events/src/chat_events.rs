@@ -1,6 +1,6 @@
 use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
 use crate::ThreadUpdatedInternal;
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use itertools::Itertools;
 use search::*;
 use serde::{Deserialize, Serialize};
@@ -13,24 +13,38 @@ use types::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct AllChatEvents {
-    pub chat_id: ChatId,
-    pub main: ChatEvents,
-    pub threads: HashMap<MessageIndex, ChatEvents>,
-    pub metrics: ChatMetrics,
-    pub per_user_metrics: HashMap<UserId, ChatMetrics>,
+    #[serde(default = "anon_chat_id")]
+    chat_id: ChatId,
+    main: ChatEvents,
+    threads: HashMap<MessageIndex, ChatEvents>,
+    #[serde(default)]
+    metrics: ChatMetrics,
+    #[serde(default)]
+    per_user_metrics: HashMap<UserId, ChatMetrics>,
+}
+
+fn anon_chat_id() -> ChatId {
+    Principal::anonymous().into()
 }
 
 impl AllChatEvents {
+    pub fn temp_wire_up_metrics(&mut self) {
+        self.chat_id = self.main.chat_id;
+        self.metrics = self.main.metrics.clone();
+        self.per_user_metrics = self.main.per_user_metrics.clone();
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
+            chat_id: them.into(),
             events_type: ChatEventsType::Direct,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
-            // metrics: ChatMetrics::default(),
-            // per_user_metrics: HashMap::new(),
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -52,14 +66,15 @@ impl AllChatEvents {
         now: TimestampMillis,
     ) -> AllChatEvents {
         let mut events = ChatEvents {
+            chat_id,
             events_type: ChatEventsType::Group,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
-            // metrics: ChatMetrics::default(),
-            // per_user_metrics: HashMap::new(),
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(
@@ -182,9 +197,6 @@ impl AllChatEvents {
                         MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
                         MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
                         _ => {
-                            // TODO: FIX THIS!
-                            //message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
-
                             message.last_updated = Some(now);
                             message.deleted_by = Some(DeletedBy {
                                 deleted_by: caller,
@@ -192,6 +204,9 @@ impl AllChatEvents {
                             });
 
                             let message_content = message.content.hydrate(Some(caller));
+                            let message_clone = message.clone();
+
+                            self.remove_from_metrics(&message_clone);
 
                             self.push_event(
                                 thread_root_message_index,
@@ -201,6 +216,7 @@ impl AllChatEvents {
                                 })),
                                 now,
                             );
+
                             DeleteMessageResult::Success(message_content)
                         }
                     };
@@ -384,18 +400,21 @@ impl AllChatEvents {
         ToggleReactionResult::MessageNotFound
     }
 
-    // Note: this method assumes that if there is some thread_root_message_index then the thread exists
-    pub fn push_event(
+    pub fn update_thread_summary(
         &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        event: ChatEventInternal,
+        thread_message_index: MessageIndex,
+        user_id: UserId,
+        new_reply: bool,
         now: TimestampMillis,
-    ) -> EventIndex {
-        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
+    ) {
+        if let Some(thread_events) = self.threads.get(&thread_message_index) {
+            self.main
+                .update_thread_summary(thread_message_index, user_id, new_reply, thread_events.last().index, now);
+        }
+    }
 
-        let event_index = self.get_mut(thread_root_message_index).unwrap().push_event(event, now);
-
-        event_index
+    pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
+        self.push_event(None, event, now)
     }
 
     pub fn reaction_exists(
@@ -498,18 +517,6 @@ impl AllChatEvents {
         }
     }
 
-    pub fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
-        if let Some(thread_message_index) = thread_message_index {
-            if let Some(thread_events) = self.threads.get(&thread_message_index) {
-                Some(thread_events)
-            } else {
-                None
-            }
-        } else {
-            Some(&self.main)
-        }
-    }
-
     pub fn get_with_min_visible_event_index(
         &self,
         thread_message_index: Option<MessageIndex>,
@@ -526,25 +533,64 @@ impl AllChatEvents {
         }
     }
 
-    pub fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
+    pub fn main(&self) -> &ChatEvents {
+        &self.main
+    }
+
+    // Note: this method assumes that if there is some thread_root_message_index then the thread exists
+    fn push_event(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        event: ChatEventInternal,
+        now: TimestampMillis,
+    ) -> EventIndex {
+        self.add_to_metrics(&event, now);
+
+        let event_index = self.get_mut(thread_root_message_index).unwrap().push_event(event, now);
+
+        event_index
+    }
+
+    fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            if let Some(thread_events) = self.threads.get(&thread_message_index) {
+                Some(thread_events)
+            } else {
+                None
+            }
+        } else {
+            Some(&self.main)
+        }
+    }
+
+    fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
         if let Some(thread_message_index) = thread_message_index {
             self.threads.get_mut(&thread_message_index)
         } else {
             Some(&mut self.main)
         }
     }
+
+    fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
+        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
+    }
+
+    fn remove_from_metrics(&mut self, message: &MessageInternal) {
+        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
+    chat_id: ChatId,
     events_type: ChatEventsType,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_index_map: HashMap<MessageIndex, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
-    // metrics: ChatMetrics,
-    // per_user_metrics: HashMap<UserId, ChatMetrics>,
+    metrics: ChatMetrics,
+    per_user_metrics: HashMap<UserId, ChatMetrics>,
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -610,14 +656,15 @@ pub enum ToggleReactionResult {
 impl ChatEvents {
     pub fn new_thread() -> ChatEvents {
         ChatEvents {
+            chat_id: anon_chat_id(),
             events_type: ChatEventsType::Thread,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
-            // metrics: ChatMetrics::default(),
-            // per_user_metrics: HashMap::new(),
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
         }
     }
 
@@ -641,7 +688,7 @@ impl ChatEvents {
             })
     }
 
-    pub fn update_thread_summary(
+    fn update_thread_summary(
         &mut self,
         thread_message_index: MessageIndex,
         user_id: UserId,
@@ -1327,8 +1374,7 @@ mod tests {
                 now: i as u64,
                 forwarded: false,
             });
-            events.push_event(
-                None,
+            events.push_main_event(
                 ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
                     updated_by: user_id,
                     message_id,

@@ -115,7 +115,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.main.get_event_index_by_message_id(message_id))
+                .and_then(|chat| chat.events.main().get_event_index_by_message_id(message_id))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
                     event_index,

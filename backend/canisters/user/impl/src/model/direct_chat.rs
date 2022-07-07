@@ -30,7 +30,7 @@ impl DirectChat {
 
     pub fn last_updated(&self) -> TimestampMillis {
         let timestamps = vec![
-            self.events.main.last().timestamp,
+            self.events.main().last().timestamp,
             self.read_by_me.timestamp,
             self.read_by_them.timestamp,
             self.notifications_muted.timestamp,

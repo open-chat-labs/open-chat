@@ -109,8 +109,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     let events = &mut runtime_state.data.events;
 
     if runtime_state.data.name != args.name {
-        events.push_event(
-            None,
+        events.push_main_event(
             ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                 new_name: args.name.clone(),
                 previous_name: runtime_state.data.name.clone(),
@@ -123,8 +122,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     }
 
     if runtime_state.data.description != args.description {
-        events.push_event(
-            None,
+        events.push_main_event(
             ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                 new_description: args.description.clone(),
                 previous_description: runtime_state.data.description.clone(),
@@ -141,8 +139,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         let new_avatar_id = Avatar::id(&avatar);
 
         if new_avatar_id != previous_avatar_id {
-            events.push_event(
-                None,
+            events.push_main_event(
                 ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
                     new_avatar: new_avatar_id,
                     previous_avatar: previous_avatar_id,
@@ -156,8 +153,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     }
 
     if let Some(permissions) = args.permissions {
-        events.push_event(
-            None,
+        events.push_main_event(
             ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
                 old_permissions: runtime_state.data.permissions.clone(),
                 new_permissions: permissions.clone(),

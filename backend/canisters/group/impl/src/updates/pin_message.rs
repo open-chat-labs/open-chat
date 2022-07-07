@@ -34,8 +34,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
             runtime_state.data.pinned_messages.insert(index, args.message_index);
 
-            let event_index = runtime_state.data.events.push_event(
-                None,
+            let event_index = runtime_state.data.events.push_main_event(
                 ChatEventInternal::MessagePinned(Box::new(MessagePinned {
                     message_index: args.message_index,
                     pinned_by: participant.user_id,

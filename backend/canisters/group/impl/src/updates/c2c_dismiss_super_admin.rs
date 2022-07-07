@@ -22,11 +22,10 @@ fn c2c_dismiss_super_admin_impl(args: Args, runtime_state: &mut RuntimeState) ->
     match runtime_state.data.participants.dismiss_super_admin(&args.user_id) {
         DismissSuperAdminResult::Success => {
             let event = ParticipantDismissedAsSuperAdmin { user_id: args.user_id };
-            runtime_state.data.events.push_event(
-                None,
-                ChatEventInternal::ParticipantDismissedAsSuperAdmin(Box::new(event)),
-                now,
-            );
+            runtime_state
+                .data
+                .events
+                .push_main_event(ChatEventInternal::ParticipantDismissedAsSuperAdmin(Box::new(event)), now);
 
             handle_activity_notification(runtime_state);
             Success

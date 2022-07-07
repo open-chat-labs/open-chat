@@ -32,13 +32,12 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         for message_id in args.message_ids {
             if args.thread_root_message_index.is_none() {
-                if let Some(message_index) = runtime_state.data.events.main.get_message_index(message_id) {
+                if let Some(message_index) = runtime_state.data.events.main().get_message_index(message_id) {
                     // If the message being deleted is pinned, unpin it
                     if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
                         runtime_state.data.pinned_messages.remove(index);
 
-                        runtime_state.data.events.push_event(
-                            None,
+                        runtime_state.data.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
                                 unpinned_by: user_id,
@@ -62,14 +61,10 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         }
 
         if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(chat_events) = runtime_state.data.events.get(args.thread_root_message_index) {
-                let latest_event = chat_events.last().index;
-                runtime_state
-                    .data
-                    .events
-                    .main
-                    .update_thread_summary(thread_message_index, user_id, false, latest_event, now);
-            }
+            runtime_state
+                .data
+                .events
+                .update_thread_summary(thread_message_index, user_id, false, now);
         }
 
         if !files_to_delete.is_empty() {
