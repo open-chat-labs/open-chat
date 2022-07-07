@@ -317,6 +317,8 @@ export class ChatController {
     ): Promise<void> {
         if (resp === "events_failed") return;
 
+        console.log("Events: ", resp);
+
         this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);

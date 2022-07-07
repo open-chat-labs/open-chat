@@ -110,6 +110,7 @@
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
             ) {
+                console.log("loading new thread messages");
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
                     (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
@@ -159,6 +160,7 @@
         );
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            console.log("Thread events: ", eventsResponse);
             const updated = await handleEventsResponse($events, eventsResponse);
             events.set(
                 dedupe(
@@ -269,7 +271,7 @@
             scrollBottom();
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
-                .then((resp) => {
+                .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {

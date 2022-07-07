@@ -60,7 +60,7 @@ export interface IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
