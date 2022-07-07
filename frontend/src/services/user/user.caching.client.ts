@@ -3,6 +3,7 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
     MergedUpdatesResponse,
     SendMessageResponse,
@@ -371,6 +372,10 @@ export class CachingUserClient implements IUserClient {
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.client.createGroup(group);
+    }
+
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
+        return this.client.deleteGroup(chatId);
     }
 
     editMessage(

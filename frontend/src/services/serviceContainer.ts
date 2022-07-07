@@ -790,7 +790,7 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
-        return this.getGroupClient(chatId).deleteGroup();
+        return this.userClient.deleteGroup(chatId);
     }
 
     makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {

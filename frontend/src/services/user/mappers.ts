@@ -3,6 +3,7 @@ import type {
     ApiEventsResponse,
     ApiUpdatesResponse,
     ApiCreateGroupResponse,
+    ApiDeleteGroupResponse,
     ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
@@ -40,6 +41,7 @@ import type {
     EventWrapper,
     ChatSummaryUpdates,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
     BlockUserResponse,
@@ -479,6 +481,19 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
+}
+
+export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
