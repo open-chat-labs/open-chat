@@ -34,6 +34,16 @@ impl AllChatEvents {
         self.per_user_metrics = self.main.per_user_metrics.clone();
     }
 
+    pub fn tmp_from_chat_events(chat_events: ChatEvents) -> AllChatEvents {
+        AllChatEvents {
+            chat_id: chat_events.chat_id,
+            threads: HashMap::new(),
+            metrics: chat_events.metrics.clone(),
+            per_user_metrics: chat_events.per_user_metrics.clone(),
+            main: chat_events,
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),

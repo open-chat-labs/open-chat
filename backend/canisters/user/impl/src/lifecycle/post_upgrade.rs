@@ -19,7 +19,6 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    data.direct_chats.temp_wire_up_metrics();
     data.direct_chats.end_overdue_polls(env.now());
 
     init_logger(data.test_mode);

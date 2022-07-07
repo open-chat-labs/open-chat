@@ -12,14 +12,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    pub fn temp_wire_up_metrics(&mut self) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.temp_wire_up_metrics();
-        }
-
-        self.aggregate_metrics();
-    }
-
     pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
         for chat in self.direct_chats.values_mut() {
             chat.events.end_overdue_polls(now);
