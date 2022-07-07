@@ -69,6 +69,7 @@ export class DataClient implements IDataClient {
                     accessorIds,
                     content.blobData
                 );
+
                 updatedContent = {
                     ...content,
                     blobReference: this.extractBlobReference(response),

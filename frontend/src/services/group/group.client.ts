@@ -231,15 +231,16 @@ export class GroupClient extends CandidService implements IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.chatId])
             : dataClient.uploadData(message.content, [this.chatId]);
 
         return uploadContentPromise.then((content) => {
+            const newContent = content ?? message.content;
             const args = {
-                content: apiMessageContent(content ?? message.content),
+                content: apiMessageContent(newContent),
                 message_id: message.messageId,
                 sender_name: senderName,
                 replies_to: apiOptional(
@@ -252,7 +253,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(this.groupService.send_message(args), sendMessageResponse);
+            return this.handleResponse(
+                this.groupService.send_message(args),
+                sendMessageResponse
+            ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
 

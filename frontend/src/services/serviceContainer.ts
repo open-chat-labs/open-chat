@@ -198,9 +198,10 @@ export class ServiceContainer implements MarkMessagesRead {
         mentioned: User[],
         msg: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
+                // TODO - this doesn't look like it's going to work in threads
                 return this.userClient.sendGroupICPTransfer(
                     chat.chatId,
                     msg.content.transfer.recipient,
@@ -240,7 +241,7 @@ export class ServiceContainer implements MarkMessagesRead {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId).sendMessage(
             senderName,
             mentioned,
@@ -263,7 +264,7 @@ export class ServiceContainer implements MarkMessagesRead {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(
             recipientId,
             sender,
