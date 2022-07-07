@@ -81,8 +81,8 @@ impl ProposalContentInternal {
             my_vote: my_user_id.and_then(|u| {
                 self.adopt_votes
                     .contains(&u)
-                    .then(|| true) // TODO use `then_some` once it is stable
-                    .or_else(|| self.reject_votes.contains(&u).then(|| false))
+                    .then_some(true)
+                    .or_else(|| self.reject_votes.contains(&u).then_some(false))
             }),
         }
     }
