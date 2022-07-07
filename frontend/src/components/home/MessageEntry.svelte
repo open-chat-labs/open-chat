@@ -4,7 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -120,7 +120,7 @@
             ? $_("dropFile")
             : $_("enterMessage");
 
-    export function insertTextAtCaret(text: string) {
+    export function replaceSelection(text: string) {
         restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
@@ -365,6 +365,8 @@
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
+        const start = rangeToReplace[0];
+
         const replaced = `${inp.textContent?.slice(
             0,
             rangeToReplace[0]
@@ -372,7 +374,11 @@
         inp.textContent = replaced;
 
         dispatch("setTextContent", inp.textContent || undefined);
-        setCaretTo(rangeToReplace[0] + replacement.length);
+
+        tick().then(() => {
+            setCaretTo(start + replacement.length);
+        });
+
         rangeToReplace = undefined;
     }
 
