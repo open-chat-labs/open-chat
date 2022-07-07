@@ -175,58 +175,32 @@ impl AllChatEvents {
         EditMessageResult::NotFound
     }
 
-    pub fn delete_message(
+    pub fn delete_messages(
         &mut self,
         caller: UserId,
         is_admin: bool,
         thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
+        message_ids: Vec<MessageId>,
         now: TimestampMillis,
-    ) -> DeleteMessageResult {
-        if let Some(chat_events) = self.get_mut(thread_root_message_index) {
-            if let Some(message) = chat_events
-                .get_event_index_by_message_id(message_id)
-                .and_then(|e| chat_events.get_mut(e))
-                .and_then(|e| e.event.as_message_mut())
-            {
-                if message.sender == caller || is_admin {
-                    if message.deleted_by.is_some() {
-                        return DeleteMessageResult::AlreadyDeleted;
-                    }
-                    return match message.content {
-                        MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
-                        MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
-                        _ => {
-                            message.last_updated = Some(now);
-                            message.deleted_by = Some(DeletedBy {
-                                deleted_by: caller,
-                                timestamp: now,
-                            });
+    ) -> Vec<(MessageId, DeleteMessageResult)> {
+        let results = message_ids
+            .into_iter()
+            .map(|message_id| {
+                (
+                    message_id,
+                    self.delete_message(caller, is_admin, thread_root_message_index, message_id, now),
+                )
+            })
+            .collect();
 
-                            let message_content = message.content.hydrate(Some(caller));
-                            let message_clone = message.clone();
-
-                            self.remove_from_metrics(&message_clone);
-
-                            self.push_event(
-                                thread_root_message_index,
-                                ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
-                                    updated_by: caller,
-                                    message_id,
-                                })),
-                                now,
-                            );
-
-                            DeleteMessageResult::Success(message_content)
-                        }
-                    };
-                } else {
-                    return DeleteMessageResult::NotAuthorized;
-                }
+        if let Some(thread_message_index) = thread_root_message_index {
+            if let Some(thread_events) = self.threads.get(&thread_message_index) {
+                self.main
+                    .update_thread_summary(thread_message_index, caller, false, thread_events.last().index, now);
             }
         }
 
-        DeleteMessageResult::NotFound
+        results
     }
 
     pub fn register_poll_vote(
@@ -494,12 +468,6 @@ impl AllChatEvents {
         self.is_message_accessible(min_visible_event_index, thread_message_index.unwrap_or(message_index))
     }
 
-    fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
-        self.main
-            .get_event_index_by_message_index(message_index)
-            .map_or(false, |event_index| event_index >= min_visible_event_index)
-    }
-
     pub fn are_messages_accessible(
         &self,
         min_visible_event_index: EventIndex,
@@ -563,6 +531,60 @@ impl AllChatEvents {
         }
     }
 
+    fn delete_message(
+        &mut self,
+        caller: UserId,
+        is_admin: bool,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> DeleteMessageResult {
+        if let Some(chat_events) = self.get_mut(thread_root_message_index) {
+            if let Some(message) = chat_events
+                .get_event_index_by_message_id(message_id)
+                .and_then(|e| chat_events.get_mut(e))
+                .and_then(|e| e.event.as_message_mut())
+            {
+                if message.sender == caller || is_admin {
+                    if message.deleted_by.is_some() {
+                        return DeleteMessageResult::AlreadyDeleted;
+                    }
+                    return match message.content {
+                        MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
+                        MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
+                        _ => {
+                            message.last_updated = Some(now);
+                            message.deleted_by = Some(DeletedBy {
+                                deleted_by: caller,
+                                timestamp: now,
+                            });
+
+                            let message_content = message.content.hydrate(Some(caller));
+                            let message_clone = message.clone();
+
+                            self.remove_from_metrics(&message_clone);
+
+                            self.push_event(
+                                thread_root_message_index,
+                                ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
+                                    updated_by: caller,
+                                    message_id,
+                                })),
+                                now,
+                            );
+
+                            DeleteMessageResult::Success(message_content)
+                        }
+                    };
+                } else {
+                    return DeleteMessageResult::NotAuthorized;
+                }
+            }
+        }
+
+        DeleteMessageResult::NotFound
+    }
+
     fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
         if let Some(thread_message_index) = thread_message_index {
             self.threads.get_mut(&thread_message_index)
@@ -577,6 +599,12 @@ impl AllChatEvents {
 
     fn remove_from_metrics(&mut self, message: &MessageInternal) {
         message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
+    }
+
+    fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
+        self.main
+            .get_event_index_by_message_index(message_index)
+            .map_or(false, |event_index| event_index >= min_visible_event_index)
     }
 }
 

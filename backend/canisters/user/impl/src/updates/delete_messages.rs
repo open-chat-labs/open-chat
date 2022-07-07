@@ -20,15 +20,13 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        let deleted: Vec<_> = args
-            .message_ids
+        let delete_message_results = chat.events.delete_messages(my_user_id, false, None, args.message_ids, now);
+
+        let deleted: Vec<_> = delete_message_results
             .into_iter()
-            .filter(|id| {
-                matches!(
-                    chat.events.delete_message(my_user_id, false, None, *id, now),
-                    DeleteMessageResult::Success(_)
-                )
-            })
+            .filter_map(
+                |(message_id, result)| if matches!(result, DeleteMessageResult::Success(_)) { Some(message_id) } else { None },
+            )
             .collect();
 
         if !deleted.is_empty() {

@@ -28,11 +28,9 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             return MessageNotFound;
         }
 
-        let mut files_to_delete = Vec::new();
-
-        for message_id in args.message_ids {
-            if args.thread_root_message_index.is_none() {
-                if let Some(message_index) = runtime_state.data.events.main().get_message_index(message_id) {
+        if args.thread_root_message_index.is_none() {
+            for message_id in args.message_ids.iter() {
+                if let Some(message_index) = runtime_state.data.events.main().get_message_index(*message_id) {
                     // If the message being deleted is pinned, unpin it
                     if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
                         runtime_state.data.pinned_messages.remove(index);
@@ -48,24 +46,27 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     }
                 }
             }
-
-            if let DeleteMessageResult::Success(content) = runtime_state.data.events.delete_message(
-                user_id,
-                participant.role.can_delete_messages(&runtime_state.data.permissions),
-                args.thread_root_message_index,
-                message_id,
-                now,
-            ) {
-                files_to_delete.extend(content.blob_references());
-            }
         }
 
-        if let Some(thread_message_index) = args.thread_root_message_index {
-            runtime_state
-                .data
-                .events
-                .update_thread_summary(thread_message_index, user_id, false, now);
-        }
+        let delete_message_results = runtime_state.data.events.delete_messages(
+            user_id,
+            participant.role.can_delete_messages(&runtime_state.data.permissions),
+            args.thread_root_message_index,
+            args.message_ids,
+            now,
+        );
+
+        let files_to_delete: Vec<_> = delete_message_results
+            .into_iter()
+            .filter_map(|(_, result)| {
+                if let DeleteMessageResult::Success(content) = result {
+                    Some(content.blob_references())
+                } else {
+                    None
+                }
+            })
+            .flatten()
+            .collect();
 
         if !files_to_delete.is_empty() {
             ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
