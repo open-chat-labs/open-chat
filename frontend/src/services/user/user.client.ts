@@ -11,6 +11,7 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
     MergedUpdatesResponse,
     Message,
@@ -36,6 +37,7 @@ import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
+    deleteGroupResponse,
     deleteMessageResponse,
     editMessageResponse,
     getEventsResponse,
@@ -132,6 +134,16 @@ export class UserClient extends CandidService implements IUserClient {
                 permissions: [apiGroupPermissions(group.permissions)],
             }),
             createGroupResponse
+        );
+    }
+
+    @profile("userClient")
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
+        return this.handleResponse(
+            this.userService.delete_group({
+                chat_id: Principal.fromText(chatId)
+            }),
+            deleteGroupResponse
         );
     }
 
