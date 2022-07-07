@@ -388,12 +388,10 @@ export class CachingUserClient implements IUserClient {
         sender: UserSummary,
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
-            .then(
-                setCachedMessageFromSendResponse(this.db, groupId, message, threadRootMessageIndex)
-            );
+            .then(setCachedMessageFromSendResponse(this.db, groupId, threadRootMessageIndex));
     }
 
     @profile("userCachingClient")
@@ -403,17 +401,10 @@ export class CachingUserClient implements IUserClient {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(
-                setCachedMessageFromSendResponse(
-                    this.db,
-                    this.userId,
-                    message,
-                    threadRootMessageIndex
-                )
-            );
+            .then(setCachedMessageFromSendResponse(this.db, this.userId, threadRootMessageIndex));
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

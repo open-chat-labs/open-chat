@@ -234,7 +234,7 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             api.sendMessage($chat, controller.user, mentioned, msg)
-                .then((resp) => {
+                .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
@@ -304,7 +304,7 @@
 
         controller.api
             .sendMessage($chat, controller.user, [], msg)
-            .then((resp) => {
+            .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     controller.confirmMessage(msg, resp);
                     trackEvent("forward_message");

@@ -77,14 +77,14 @@ export interface IUserClient {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
         sender: UserSummary,
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
