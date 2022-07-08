@@ -14,6 +14,7 @@ type WebRtcMessageCommon = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     userId: string;
+    threadRootMessageIndex?: number;
 };
 
 export type CurrentUserTyping = WebRtcMessageCommon & {
@@ -26,37 +27,31 @@ export type CurrentUserStoppedTyping = WebRtcMessageCommon & {
 
 export type RemoteUserTyping = WebRtcMessageCommon & {
     kind: "remote_user_typing";
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserStoppedTyping = WebRtcMessageCommon & {
     kind: "remote_user_stopped_typing";
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserToggledReaction = WebRtcMessageCommon & {
     kind: "remote_user_toggled_reaction";
     messageId: bigint;
     reaction: string;
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserRemovedMessage = WebRtcMessageCommon & {
     kind: "remote_user_removed_message";
     messageId: bigint;
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserDeletedMessage = WebRtcMessageCommon & {
     kind: "remote_user_deleted_message";
     messageId: bigint;
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserUndeletedMessage = WebRtcMessageCommon & {
     kind: "remote_user_undeleted_message";
     message: Message;
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserReadMessage = WebRtcMessageCommon & {
@@ -67,5 +62,4 @@ export type RemoteUserReadMessage = WebRtcMessageCommon & {
 export type RemoteUserSentMessage = WebRtcMessageCommon & {
     kind: "remote_user_sent_message";
     messageEvent: EventWrapper<Message>;
-    threadRootMessageIndex?: number;
 };
