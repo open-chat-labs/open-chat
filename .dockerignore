@@ -1,0 +1,6 @@
+# by default, ignore all hidden files and make some exceptions
+.*
+Dockerfile
+target
+frontend
+backend/integration_tests
