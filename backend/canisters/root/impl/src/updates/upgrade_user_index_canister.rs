@@ -11,13 +11,12 @@ use utils::canister::{upgrade, CanisterToUpgrade};
 async fn upgrade_user_index_canister(args: Args) -> Response {
     let canister_id = read_state(|state| state.data.user_index_canister_id);
     let wasm_version = args.user_index_canister_wasm.version;
-    let new_wasm = args.user_index_canister_wasm.decompress();
 
     match upgrade(CanisterToUpgrade {
         canister_id,
         current_wasm_version: Version::default(),
         cycles_to_deposit_if_needed: None,
-        new_wasm,
+        new_wasm: args.user_index_canister_wasm,
         args: user_index_canister::post_upgrade::Args { wasm_version },
     })
     .await
