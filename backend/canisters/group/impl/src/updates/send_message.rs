@@ -98,6 +98,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 .main()
                 .message_by_message_index(thread_message_index)
             {
+                runtime_state.data.participants.add_thread(&sender, thread_message_index);
+
                 let root_message = wrapped_message.event;
                 if let Some(thread_summary) = &root_message.thread_summary {
                     thread_participants = Some(&thread_summary.participant_ids);
