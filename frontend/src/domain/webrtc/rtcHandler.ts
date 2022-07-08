@@ -1,4 +1,4 @@
-import type { ChatSummary, DirectChatSummary } from "../chat/chat";
+import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
 import type { ChatController } from "../../fsm/chat.controller";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
 import { typing } from "../../stores/typing";
@@ -14,7 +14,6 @@ import type {
     WebRtcMessage,
 } from "./webrtc";
 import { toggleReactionInEventList } from "../../stores/reactions";
-import { hydrateBigIntsInContent } from "../../domain/chat/chat.utils";
 
 function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
     delegateToChatController(message, (chat) =>
@@ -112,6 +111,41 @@ export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     }
 
     return fromChat.chatId;
+}
+
+function hydrateBigIntsInContent(content: MessageContent): MessageContent {
+    if (content.kind === "crypto_content") {
+        if (content.transfer.kind === "pending") {
+            return {
+                ...content,
+                transfer: {
+                    ...content.transfer,
+                    amountE8s: BigInt(content.transfer.amountE8s),
+                    feeE8s:
+                        content.transfer.feeE8s !== undefined
+                            ? BigInt(content.transfer.feeE8s)
+                            : undefined,
+                    memo:
+                        content.transfer.memo !== undefined
+                            ? BigInt(content.transfer.memo)
+                            : undefined,
+                },
+            };
+        }
+        if (content.transfer.kind === "completed") {
+            return {
+                ...content,
+                transfer: {
+                    ...content.transfer,
+                    amountE8s: BigInt(content.transfer.amountE8s),
+                    feeE8s: BigInt(content.transfer.feeE8s),
+                    memo: BigInt(content.transfer.memo),
+                    blockIndex: BigInt(content.transfer.blockIndex),
+                },
+            };
+        }
+    }
+    return content;
 }
 
 /**
