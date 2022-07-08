@@ -1,4 +1,4 @@
-import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
+import type { ChatSummary, DirectChatSummary } from "../chat/chat";
 import type { ChatController } from "../../fsm/chat.controller";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
 import { typing } from "../../stores/typing";
@@ -114,39 +114,21 @@ export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     return fromChat.chatId;
 }
 
-export function handleWebRtcMessage(msg: WebRtcMessage): void {
-    const chatId = filterWebRtcMessage(msg);
-    if (chatId === undefined) return;
-
-    if (msg.kind === "remote_user_typing") {
-        typing.startTyping(chatId, msg.userId, msg.threadRootMessageIndex);
-    }
-    if (msg.kind === "remote_user_stopped_typing") {
-        typing.stopTyping(msg.userId);
-    }
-    if (msg.kind === "remote_user_toggled_reaction") {
-        remoteUserToggledReaction({
+/**
+ * This is just here to cast various bits to bigint - it sucks but it appears to be necessary
+ */
+export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMessage {
+    if (
+        msg.kind === "remote_user_read_message" ||
+        msg.kind === "remote_user_toggled_reaction" ||
+        msg.kind === "remote_user_deleted_message" ||
+        msg.kind === "remote_user_removed_message"
+    ) {
+        return {
             ...msg,
             chatId,
             messageId: BigInt(msg.messageId),
-        });
-    }
-    if (msg.kind === "remote_user_deleted_message") {
-        remoteUserDeletedMessage({
-            ...msg,
-            chatId,
-            messageId: BigInt(msg.messageId),
-        });
-    }
-    if (msg.kind === "remote_user_removed_message") {
-        remoteUserRemovedMessage({
-            ...msg,
-            chatId,
-            messageId: BigInt(msg.messageId),
-        });
-    }
-    if (msg.kind === "remote_user_undeleted_message") {
-        remoteUserUndeletedMessage(msg);
+        };
     }
     if (msg.kind === "remote_user_sent_message") {
         msg.messageEvent.event.content = hydrateBigIntsInContent(msg.messageEvent.event.content);
@@ -157,7 +139,7 @@ export function handleWebRtcMessage(msg: WebRtcMessage): void {
                 content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
             };
         }
-        remoteUserSentMessage({
+        return {
             ...msg,
             chatId,
             messageEvent: {
@@ -168,13 +150,39 @@ export function handleWebRtcMessage(msg: WebRtcMessage): void {
                 },
                 timestamp: BigInt(Date.now()),
             },
-        });
+        };
     }
-    if (msg.kind === "remote_user_read_message") {
-        remoteUserReadMessage({
-            ...msg,
-            chatId,
-            messageId: BigInt(msg.messageId),
-        });
+    return msg;
+}
+
+export function handleWebRtcMessage(msg: WebRtcMessage): void {
+    const chatId = filterWebRtcMessage(msg);
+    if (chatId === undefined) return;
+    const parsed = parseWebRtcMessage(chatId, msg);
+    const { kind } = parsed;
+
+    if (kind === "remote_user_typing") {
+        typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
+    }
+    if (kind === "remote_user_stopped_typing") {
+        typing.stopTyping(msg.userId);
+    }
+    if (kind === "remote_user_toggled_reaction") {
+        remoteUserToggledReaction(parsed);
+    }
+    if (kind === "remote_user_deleted_message") {
+        remoteUserDeletedMessage(parsed);
+    }
+    if (kind === "remote_user_removed_message") {
+        remoteUserRemovedMessage(parsed);
+    }
+    if (kind === "remote_user_undeleted_message") {
+        remoteUserUndeletedMessage(parsed);
+    }
+    if (kind === "remote_user_sent_message") {
+        remoteUserSentMessage(parsed);
+    }
+    if (kind === "remote_user_read_message") {
+        remoteUserReadMessage(parsed);
     }
 }

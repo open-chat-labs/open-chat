@@ -36,7 +36,7 @@
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
-        hydrateBigIntsInContent,
+        makeRtcConnections,
         mergeSendMessageResponse,
         replaceAffected,
         replaceLocal,
@@ -72,7 +72,7 @@
         RemoteUserToggledReaction,
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
-    import { filterWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
+    import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -178,6 +178,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
+            makeRtcConnections(currentUser.userId, $chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -218,9 +219,6 @@
         await controller.updateUserStore(userIds);
 
         return updated;
-
-        // TODO - we will need this too
-        // this.makeRtcConnections();
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -260,62 +258,29 @@
     export function handleWebRtcMessage(msg: WebRtcMessage): void {
         const chatId = filterWebRtcMessage(msg);
         if (chatId === undefined) return;
+        const parsed = parseWebRtcMessage(chatId, msg);
+        const { kind } = parsed;
 
-        if (msg.kind === "remote_user_typing") {
-            typing.startTyping(chatId, msg.userId, msg.threadRootMessageIndex);
+        if (kind === "remote_user_typing") {
+            typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
         }
-        if (msg.kind === "remote_user_stopped_typing") {
-            typing.stopTyping(msg.userId);
+        if (kind === "remote_user_stopped_typing") {
+            typing.stopTyping(parsed.userId);
         }
-        if (msg.kind === "remote_user_toggled_reaction") {
-            remoteUserToggledReaction({
-                ...msg,
-                chatId,
-                messageId: BigInt(msg.messageId),
-            });
+        if (kind === "remote_user_toggled_reaction") {
+            remoteUserToggledReaction(parsed);
         }
-        if (msg.kind === "remote_user_removed_message") {
-            remoteUserRemovedMessage({
-                ...msg,
-                chatId,
-                messageId: BigInt(msg.messageId),
-            });
+        if (kind === "remote_user_removed_message") {
+            remoteUserRemovedMessage(parsed);
         }
-        if (msg.kind === "remote_user_deleted_message") {
-            remoteUserDeletedMessage({
-                ...msg,
-                chatId,
-                messageId: BigInt(msg.messageId),
-            });
+        if (kind === "remote_user_deleted_message") {
+            remoteUserDeletedMessage(parsed);
         }
-        if (msg.kind === "remote_user_undeleted_message") {
-            replaceMessageContent(BigInt(msg.message.messageId), msg.message.content);
+        if (kind === "remote_user_undeleted_message") {
+            replaceMessageContent(parsed.message.messageId, parsed.message.content);
         }
-
-        // TODO - a bit of duplication here to clean up
-        if (msg.kind === "remote_user_sent_message") {
-            msg.messageEvent.event.content = hydrateBigIntsInContent(
-                msg.messageEvent.event.content
-            );
-            if (msg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
-                msg.messageEvent.event.repliesTo = {
-                    ...msg.messageEvent.event.repliesTo,
-                    messageId: BigInt(msg.messageEvent.event.messageId),
-                    content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
-                };
-            }
-            remoteUserSentMessage({
-                ...msg,
-                chatId,
-                messageEvent: {
-                    ...msg.messageEvent,
-                    event: {
-                        ...msg.messageEvent.event,
-                        messageId: BigInt(msg.messageEvent.event.messageId),
-                    },
-                    timestamp: BigInt(Date.now()),
-                },
-            });
+        if (kind === "remote_user_sent_message") {
+            remoteUserSentMessage(parsed);
         }
     }
 
