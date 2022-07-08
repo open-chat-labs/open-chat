@@ -19,7 +19,7 @@ fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
+        runtime_state.data.user_canister_wasm = args.user_canister_wasm;
 
         for user_id in runtime_state
             .data

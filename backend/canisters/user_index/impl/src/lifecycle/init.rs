@@ -15,13 +15,12 @@ fn init(args: Args) {
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
-    let user_canister_wasm = args.user_canister_wasm.decompress();
     let canister_pool_target_size = if args.test_mode { 3_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
     let data = Data::new(
         args.service_principals,
         args.sms_service_principals,
-        user_canister_wasm,
+        args.user_canister_wasm,
         args.group_index_canister_id,
         args.notifications_canister_ids,
         args.online_users_aggregator_canister_id,

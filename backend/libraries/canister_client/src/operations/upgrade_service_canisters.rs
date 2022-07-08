@@ -41,7 +41,7 @@ pub async fn upgrade_group_index_canister(
 
 pub async fn upgrade_user_index_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
     let agent = build_ic_agent(url, identity).await;
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, true);
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let args = root_canister::upgrade_user_index_canister::Args {
         user_index_canister_wasm,
     };
@@ -133,11 +133,10 @@ pub async fn upgrade_group_canister(
     version: Version,
 ) {
     let agent = build_ic_agent(url, identity).await;
-    let canister_wasm = get_canister_wasm(CanisterName::Group, version, true);
+    let canister_wasm = get_canister_wasm(CanisterName::Group, version);
     let args = group_index_canister::upgrade_group_canister_wasm::Args {
         group_canister_wasm: CanisterWasm {
             version,
-            compressed: canister_wasm.compressed,
             module: canister_wasm.module,
         },
     };
@@ -154,11 +153,10 @@ pub async fn upgrade_group_canister(
 
 pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_index_canister_id: CanisterId, version: Version) {
     let agent = build_ic_agent(url, identity).await;
-    let canister_wasm = get_canister_wasm(CanisterName::User, version, true);
+    let canister_wasm = get_canister_wasm(CanisterName::User, version);
     let args = user_index_canister::upgrade_user_canister_wasm::Args {
         user_canister_wasm: CanisterWasm {
             version,
-            compressed: canister_wasm.compressed,
             module: canister_wasm.module,
         },
     };
@@ -183,7 +181,7 @@ async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
-    let canister_wasm = get_canister_wasm(canister_name, version, false);
+    let canister_wasm = get_canister_wasm(canister_name, version);
 
     upgrade_wasm(&management_canister, &canister_id, &canister_wasm.module, args).await;
 }
