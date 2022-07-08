@@ -122,8 +122,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         // If this is the first message in a thread then mention the original sender/message
-        if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
-            if first_thread_reply {
+        if first_thread_reply {
+            if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
                 runtime_state
                     .data
                     .participants
