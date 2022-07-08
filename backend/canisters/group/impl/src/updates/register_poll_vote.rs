@@ -24,36 +24,27 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             args.thread_root_message_index,
             args.message_index,
         ) {
-            return MessageNotFound;
+            return PollNotFound;
         }
 
-        if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
-            let result = chat_events.register_poll_vote(user_id, args.message_index, args.poll_option, args.operation, now);
+        let result = runtime_state.data.events.register_poll_vote(
+            user_id,
+            args.thread_root_message_index,
+            args.message_index,
+            args.poll_option,
+            args.operation,
+            now,
+        );
 
-            match result {
-                RegisterPollVoteResult::Success(votes) => {
-                    let latest_event = chat_events.last().index;
-
-                    if let Some(thread_message_index) = args.thread_root_message_index {
-                        runtime_state.data.events.main.update_thread_summary(
-                            thread_message_index,
-                            user_id,
-                            false,
-                            latest_event,
-                            now,
-                        );
-                    }
-
-                    handle_activity_notification(runtime_state);
-                    Success(votes)
-                }
-                RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),
-                RegisterPollVoteResult::PollEnded => PollEnded,
-                RegisterPollVoteResult::PollNotFound => PollNotFound,
-                RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
+        match result {
+            RegisterPollVoteResult::Success(votes) => {
+                handle_activity_notification(runtime_state);
+                Success(votes)
             }
-        } else {
-            MessageNotFound
+            RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),
+            RegisterPollVoteResult::PollEnded => PollEnded,
+            RegisterPollVoteResult::PollNotFound => PollNotFound,
+            RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
         }
     } else {
         CallerNotInGroup

@@ -17,7 +17,7 @@ fn c2c_search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     let chat_id = runtime_state.env.canister_id().into();
     let query = Query::parse(&args.search_term);
 
-    let matches = runtime_state.data.events.main.search_messages(
+    let matches = runtime_state.data.events.search_messages(
         runtime_state.env.now(),
         participant.min_visible_event_index(),
         &query,

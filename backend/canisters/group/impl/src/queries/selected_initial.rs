@@ -15,7 +15,7 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
     let participants = &runtime_state.data.participants;
 
     Success(SuccessResult {
-        latest_event_index: runtime_state.data.events.main.last().index,
+        latest_event_index: runtime_state.data.events.main().last().index,
         participants: participants.iter().map(|p| p.into()).collect(),
         blocked_users: participants.blocked(),
         pinned_messages: runtime_state.data.pinned_messages.clone(),

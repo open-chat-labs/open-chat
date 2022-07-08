@@ -27,34 +27,21 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return MessageNotFound;
         }
 
-        if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
-            let edit_message_args = EditMessageArgs {
-                sender,
-                message_id: args.message_id,
-                content: args.content,
-                now,
-            };
+        let edit_message_args = EditMessageArgs {
+            sender,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            content: args.content,
+            now,
+        };
 
-            match chat_events.edit_message(edit_message_args) {
-                EditMessageResult::Success(event_index) => {
-                    if let Some(thread_message_index) = args.thread_root_message_index {
-                        runtime_state.data.events.main.update_thread_summary(
-                            thread_message_index,
-                            sender,
-                            false,
-                            event_index,
-                            now,
-                        );
-                    }
-
-                    handle_activity_notification(runtime_state);
-                    Success
-                }
-                EditMessageResult::NotAuthorized => MessageNotFound,
-                EditMessageResult::NotFound => MessageNotFound,
+        match runtime_state.data.events.edit_message(edit_message_args) {
+            EditMessageResult::Success => {
+                handle_activity_notification(runtime_state);
+                Success
             }
-        } else {
-            MessageNotFound
+            EditMessageResult::NotAuthorized => MessageNotFound,
+            EditMessageResult::NotFound => MessageNotFound,
         }
     } else {
         CallerNotInGroup

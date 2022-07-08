@@ -128,11 +128,12 @@ fn finalize(
     let my_user_id = runtime_state.env.canister_id().into();
 
     for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since)) {
+        let chat_events = direct_chat.events.main();
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
-                latest_message: direct_chat.events.latest_message(Some(my_user_id)).unwrap(),
-                latest_event_index: direct_chat.events.last().index,
+                latest_message: chat_events.latest_message(Some(my_user_id)).unwrap(),
+                latest_event_index: chat_events.last().index,
                 date_created: direct_chat.date_created,
                 read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.value.clone()),
                 read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.value.clone()),
@@ -145,8 +146,8 @@ fn finalize(
                     .unwrap_or_default(),
             }));
         } else {
-            let latest_message = direct_chat.events.latest_message_if_updated(updates_since, Some(my_user_id));
-            let latest_event = direct_chat.events.last();
+            let latest_message = chat_events.latest_message_if_updated(updates_since, Some(my_user_id));
+            let latest_event = chat_events.last();
             let has_new_events = latest_event.timestamp > updates_since;
             let latest_event_index = if has_new_events { Some(latest_event.index) } else { None };
             let metrics = if has_new_events { Some(direct_chat.events.metrics().clone()) } else { None };
@@ -164,7 +165,7 @@ fn finalize(
             };
 
             let notifications_muted = direct_chat.notifications_muted.if_set_after(updates_since).copied();
-            let affected_events = direct_chat.events.affected_event_indexes_since(updates_since, 100);
+            let affected_events = chat_events.affected_event_indexes_since(updates_since, 100);
 
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.them.into(),
