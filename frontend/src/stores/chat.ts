@@ -1,4 +1,10 @@
-import type { ChatSummary, CurrentChatState, EventWrapper, Message } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    CurrentChatState,
+    DirectChatSummary,
+    EventWrapper,
+    Message,
+} from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";

@@ -35,6 +35,7 @@
     export let rightPanelHistory: RightPanelState[];
     export let userId: string;
     export let metrics: ChatMetrics;
+    export let thread: Thread | undefined;
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -173,6 +174,7 @@
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {:else if threadRootEvent !== undefined && controller !== undefined}
         <Thread
+            bind:this={thread}
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
