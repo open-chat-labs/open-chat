@@ -4,3 +4,4 @@ Dockerfile
 target
 frontend
 backend/integration_tests
+wasms
