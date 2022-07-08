@@ -15,7 +15,7 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
-export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
+export const OPENCHAT_BOT_AVATAR_URL = "assets/bots/robot.svg";
 const openChatBotUser: PartialUserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,
@@ -27,7 +27,7 @@ const openChatBotUser: PartialUserSummary = {
 
 export const PROPOSALS_BOT_USER_ID = "process.env.PROPOSALS_BOT_CANISTER";
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
-export const PROPOSALS_BOT_AVATAR_URL = "assets/robot.svg";
+export const PROPOSALS_BOT_AVATAR_URL = "assets/bots/vote2.svg";
 const proposalsBotUser: PartialUserSummary = {
     kind: "bot",
     userId: PROPOSALS_BOT_USER_ID,

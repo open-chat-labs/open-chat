@@ -1,21 +1,27 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte";
+    import type Picker from "emoji-picker-element/picker";
     import "emoji-picker-element";
     import { getCurrentThemeName } from "../../theme/themes";
+    import { customEmojis } from "../../utils/emojis";
 
     export let mode: "message" | "reaction" | "thread" = "message";
 
     const dispatch = createEventDispatcher();
     let theme: string = getCurrentThemeName();
+    let picker: Picker;
 
     onMount(() => {
         document.querySelector("emoji-picker")?.addEventListener("emoji-click", (event) => {
-            dispatch("emojiSelected", event.detail.unicode);
+            console.log("emoji: ", event.detail);
+            dispatch("emojiSelected", event.detail.unicode ?? event.detail.name);
         });
+        picker.customEmoji = customEmojis;
     });
 </script>
 
 <emoji-picker
+    bind:this={picker}
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}
