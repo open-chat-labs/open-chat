@@ -18,7 +18,6 @@ import type {
     TransferSuccess,
 } from "../domain/chat/chat";
 import {
-    activeUserIdFromEvent,
     createMessage,
     getMinVisibleMessageIndex,
     getNextEventIndex,
@@ -33,6 +32,8 @@ import {
     indexIsInRanges,
     updateEventPollContent,
     mergeSendMessageResponse,
+    makeRtcConnections,
+    upToDate,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -51,8 +52,6 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-
-const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -303,14 +302,6 @@ export class ChatController {
         userStore.addMany(resp.users);
     }
 
-    private upToDate(): boolean {
-        const events = get(this.events);
-        return (
-            this.chatVal.latestMessage === undefined ||
-            events[events.length - 1]?.index >= this.chatVal.latestEventIndex
-        );
-    }
-
     private async handleEventsResponse(
         resp: EventsResponse<ChatEvent>,
         keepCurrentEvents = true
@@ -345,33 +336,7 @@ export class ChatController {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
         }
 
-        this.makeRtcConnections();
-    }
-
-    private makeRtcConnections(): void {
-        const userIds = this.getUsersToMakeRtcConnectionsWith();
-        if (userIds.length === 0) return;
-
-        // TODO - for groups we need to disconnect when the chat is unselected
-        const lookup = get(userStore);
-        userIds
-            .map((u) => lookup[u])
-            .filter((user) => !rtcConnectionsManager.exists(user.userId))
-            .map((user) => user.userId)
-            .forEach((userId) => {
-                rtcConnectionsManager.create(this.user.userId, userId);
-            });
-    }
-
-    private getUsersToMakeRtcConnectionsWith(): string[] {
-        if (this.chatVal.kind === "direct_chat") {
-            return [this.chatId];
-        }
-
-        const activeUsers = this.getRecentlyActiveUsers(MAX_RTC_CONNECTIONS_PER_CHAT);
-        return activeUsers.has(this.user.userId)
-            ? Array.from(activeUsers).filter((u) => u !== this.user.userId)
-            : [];
+        makeRtcConnections(this.user.userId, this.chatVal, get(this.events), get(userStore));
     }
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
@@ -492,7 +457,7 @@ export class ChatController {
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!this.upToDate()) {
+        if (!upToDate(this.chatVal, get(this.events))) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
@@ -558,7 +523,7 @@ export class ChatController {
                 affectedEvents: [],
             });
         } else {
-            if (!this.upToDate()) {
+            if (!upToDate(this.chatVal, get(this.events))) {
                 return;
             }
 
@@ -1129,28 +1094,6 @@ export class ChatController {
     }
 
     // Returns the most recently active users, only considering users who have been active within the last 10 minutes
-    private getRecentlyActiveUsers(maxUsers: number): Set<string> {
-        const users = new Set<string>();
-        if (this.upToDate()) {
-            const tenMinsAgo = Date.now() - 10 * 60 * 1000;
-            const events = get(this.events);
-
-            for (let i = events.length - 1; i >= 0; i--) {
-                const event = events[i];
-                if (event.timestamp < tenMinsAgo) break;
-
-                const activeUser = activeUserIdFromEvent(event.event);
-                if (activeUser !== undefined) {
-                    users.add(activeUser);
-                    if (users.size >= maxUsers) {
-                        break;
-                    }
-                }
-            }
-        }
-        return users;
-    }
-
     findMessageEvent(
         events: EventWrapper<ChatEvent>[],
         index: number

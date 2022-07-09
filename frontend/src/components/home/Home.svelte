@@ -82,6 +82,8 @@
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
     import { startPruningLocalReactions } from "../../stores/reactions";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
+    import type Thread from "./thread/Thread.svelte";
+    import type { WebRtcMessage } from "domain/webrtc/webrtc";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -122,6 +124,7 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
+    let threadComponent: Thread | undefined;
 
     $: userId = user.userId;
     $: wasmVersion = user.wasmVersion;
@@ -163,10 +166,18 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(user.userId);
-        rtcConnectionsManager.subscribe((msg) => handleWebRtcMessage(msg));
+        rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores(api, user.userId, (n) => notificationReceived(n));
         startPruningLocalReactions();
     });
+
+    function routeRtcMessages(msg: WebRtcMessage) {
+        if ("threadRootMessageIndex" in msg) {
+            threadComponent?.handleWebRtcMessage(msg);
+        } else {
+            handleWebRtcMessage(msg);
+        }
+    }
 
     function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
         hotGroups = { kind: "idle" };
@@ -961,6 +972,7 @@
             controller={$selectedChatStore}
             metrics={combinedMetrics}
             bind:rightPanelHistory
+            bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -987,6 +999,7 @@
                 controller={$selectedChatStore}
                 metrics={combinedMetrics}
                 bind:rightPanelHistory
+                bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
