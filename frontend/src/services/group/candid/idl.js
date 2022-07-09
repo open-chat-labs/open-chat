@@ -534,7 +534,6 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'PollEnded' : IDL.Null,
     'Success' : PollVotes,

@@ -25,8 +25,7 @@ fn c2c_dismiss_super_admin_impl(args: Args, runtime_state: &mut RuntimeState) ->
             runtime_state
                 .data
                 .events
-                .main
-                .push_event(ChatEventInternal::ParticipantDismissedAsSuperAdmin(Box::new(event)), now);
+                .push_main_event(ChatEventInternal::ParticipantDismissedAsSuperAdmin(Box::new(event)), now);
 
             handle_activity_notification(runtime_state);
             Success

@@ -11,4 +11,5 @@ fi
 ic-cdk-optimizer ./target/wasm32-unknown-unknown/release/$1.wasm -o ./target/wasm32-unknown-unknown/release/$1-opt.wasm
 
 echo Compressing wasm
-gzip -fk target/wasm32-unknown-unknown/release/$1-opt.wasm
+mkdir -p wasms
+gzip -fckn target/wasm32-unknown-unknown/release/$1-opt.wasm > ./wasms/$1.wasm.gz

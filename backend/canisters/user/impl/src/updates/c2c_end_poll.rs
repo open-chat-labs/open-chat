@@ -17,7 +17,7 @@ fn c2c_end_poll_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
         let now = runtime_state.env.now();
 
-        match chat.events.end_poll(args.message_index, now) {
+        match chat.events.end_poll(None, args.message_index, now) {
             EndPollResult::Success => Success,
             EndPollResult::PollNotFound => PollNotFound,
             EndPollResult::UnableToEndPoll => UnableToEndPoll,

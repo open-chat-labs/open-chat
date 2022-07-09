@@ -173,6 +173,8 @@ pub struct GroupChatSummaryInternal {
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
+    #[serde(default)]
+    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 
 impl GroupChatSummaryInternal {
@@ -275,6 +277,8 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
+    #[serde(default)]
+    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -353,5 +357,13 @@ pub struct ThreadSyncDetails {
     pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
     pub read_up_to: MessageIndex,
+    pub last_updated: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ThreadSyncDetailsInternal {
+    pub root_message_index: MessageIndex,
+    pub latest_event: EventIndex,
+    pub latest_message: MessageIndex,
     pub last_updated: TimestampMillis,
 }

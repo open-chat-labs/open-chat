@@ -99,7 +99,7 @@ async fn install_service_canisters_impl(
 
     let version = Version::min();
 
-    let root_canister_wasm = get_canister_wasm(CanisterName::Root, version, false);
+    let root_canister_wasm = get_canister_wasm(CanisterName::Root, version);
     let root_init_args = root_canister::init::Args {
         service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
@@ -111,8 +111,8 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, false);
-    let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min(), true);
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
+    let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min());
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
         sms_service_principals: vec![principal],
@@ -127,8 +127,8 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version, false);
-    let group_canister_wasm = get_canister_wasm(CanisterName::Group, version, true);
+    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
+    let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
@@ -139,7 +139,7 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version, false);
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
@@ -147,20 +147,20 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version, false);
+    let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version);
     let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
         wasm_version: version,
         test_mode,
     };
 
-    let callback_canister_wasm = get_canister_wasm(CanisterName::Callback, version, false);
+    let callback_canister_wasm = get_canister_wasm(CanisterName::Callback, version);
     let callback_init_args = callback_canister::init::Args {
         wasm_version: version,
         test_mode,
     };
 
-    let proposals_bot_canister_wasm = get_canister_wasm(CanisterName::ProposalsBot, version, false);
+    let proposals_bot_canister_wasm = get_canister_wasm(CanisterName::ProposalsBot, version);
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
         service_owner_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,

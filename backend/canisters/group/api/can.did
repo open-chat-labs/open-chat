@@ -69,7 +69,6 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
-        MessageNotFound;
     };
 
 type ToggleReactionArgs =

@@ -80,6 +80,7 @@ fn send_message_impl(
     let recipient = args.recipient;
 
     let push_message_args = PushMessageArgs {
+        thread_root_message_index: None,
         message_id: args.message_id,
         sender: my_user_id,
         content: args.content.clone().new_content_into_internal(),
@@ -108,7 +109,7 @@ fn send_message_impl(
                     .data
                     .direct_chats
                     .get(&args.recipient.into())
-                    .and_then(|chat| chat.events.get_message_id_by_event_index(r.event_index))
+                    .and_then(|chat| chat.events.main().get_message_id_by_event_index(r.event_index))
                     .map(C2CReplyContext::ThisChat)
             }
         }),
