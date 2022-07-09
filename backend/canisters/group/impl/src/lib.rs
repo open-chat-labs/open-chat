@@ -24,6 +24,8 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
+pub const MAX_THREADS_IN_SUMMARY: u32 = 20;
+
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
@@ -106,6 +108,7 @@ impl RuntimeState {
                 .user_metrics(&participant.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
+            latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
         }
     }
 

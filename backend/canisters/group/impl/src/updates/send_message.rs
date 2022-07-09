@@ -104,6 +104,15 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     root_message_sender = Some(root_message.sender);
                     first_thread_reply = thread_summary.reply_count == 1;
                 }
+
+                runtime_state.data.participants.add_thread(&sender, thread_message_index);
+
+                if first_thread_reply {
+                    runtime_state
+                        .data
+                        .participants
+                        .add_thread(&root_message.sender, thread_message_index);
+                }
             }
         }
 
