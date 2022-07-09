@@ -515,6 +515,36 @@ impl AllChatEvents {
         &self.main
     }
 
+    pub fn latest_threads(
+        &self,
+        from_set: &HashSet<MessageIndex>,
+        updated_since: Option<TimestampMillis>,
+        max_threads: u32,
+    ) -> Vec<ThreadSyncDetailsInternal> {
+        let mut all_matching_threads: Vec<_> = from_set
+            .iter()
+            .filter_map(|thread_message_index| {
+                self.threads.get(thread_message_index).and_then(|thread_events| {
+                    let latest_event = thread_events.last();
+                    if updated_since.map_or(true, |since| latest_event.timestamp > since) {
+                        Some(ThreadSyncDetailsInternal {
+                            root_message_index: *thread_message_index,
+                            latest_event: latest_event.index,
+                            latest_message: thread_events.latest_message_index.unwrap_or_default(),
+                            last_updated: latest_event.timestamp,
+                        })
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+
+        all_matching_threads.sort_unstable_by(|t1, t2| t2.last_updated.cmp(&t1.last_updated));
+
+        all_matching_threads.into_iter().take(max_threads as usize).collect()
+    }
+
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
     fn push_event(
         &mut self,

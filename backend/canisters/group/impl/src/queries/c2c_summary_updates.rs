@@ -1,4 +1,4 @@
-use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
+use crate::{read_state, ParticipantInternal, RuntimeState, MAX_THREADS_IN_SUMMARY, WASM_VERSION};
 use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
@@ -49,6 +49,11 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
                 .user_metrics(&participant.user_id, Some(args.updates_since))
                 .cloned(),
             is_public: updates_from_events.is_public,
+            latest_threads: runtime_state.data.events.latest_threads(
+                &participant.threads,
+                Some(args.updates_since),
+                MAX_THREADS_IN_SUMMARY,
+            ),
         };
         Success(Box::new(SuccessResult { updates }))
     } else {

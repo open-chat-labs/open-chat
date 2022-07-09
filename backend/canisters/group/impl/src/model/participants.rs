@@ -29,6 +29,7 @@ impl Participants {
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
             mentions: Vec::new(),
+            threads: HashSet::new(),
         };
 
         Participants {
@@ -62,6 +63,7 @@ impl Participants {
                         min_visible_message_index,
                         notifications_muted,
                         mentions: Vec::new(),
+                        threads: HashSet::new(),
                     };
                     e.insert(participant.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
@@ -322,6 +324,12 @@ impl Participants {
 
         false
     }
+
+    pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
+        if let Some(p) = self.get_by_user_id_mut(user_id) {
+            p.threads.insert(root_message_index);
+        }
+    }
 }
 
 pub enum AddResult {
@@ -365,6 +373,8 @@ pub struct ParticipantInternal {
     pub role: Role,
     pub notifications_muted: bool,
     pub mentions: Vec<MentionInternal>,
+    #[serde(default)]
+    pub threads: HashSet<MessageIndex>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,

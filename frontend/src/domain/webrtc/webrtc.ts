@@ -14,6 +14,7 @@ type WebRtcMessageCommon = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     userId: string;
+    threadRootMessageIndex?: number;
 };
 
 export type CurrentUserTyping = WebRtcMessageCommon & {
@@ -26,12 +27,10 @@ export type CurrentUserStoppedTyping = WebRtcMessageCommon & {
 
 export type RemoteUserTyping = WebRtcMessageCommon & {
     kind: "remote_user_typing";
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserStoppedTyping = WebRtcMessageCommon & {
     kind: "remote_user_stopped_typing";
-    threadRootMessageIndex?: number;
 };
 
 export type RemoteUserToggledReaction = WebRtcMessageCommon & {
