@@ -19,6 +19,10 @@
         breaks: !oneLine,
     };
 
+    function shouldSuppressLinks() {
+        return suppressLinks;
+    }
+
     type MentionToken = {
         type: "mention";
         raw: string;
@@ -72,11 +76,10 @@
         },
     };
 
-    marked.use({ renderer, extensions: [mention] });
-
     function render() {
         let parsed = text;
         try {
+            marked.use({ renderer, extensions: [mention] });
             parsed = marked.parseInline(text, options);
         } catch (err: any) {
             rollbar.error("Error parsing markdown: ", err);
