@@ -46,7 +46,7 @@ fn build_thread_preview(
         return Some(ThreadPreview {
             root_message: main.hydrate_message(root_message_internal.event, Some(caller_user_id)),
             latest_replies: thread_events
-                .latest_messages(MAX_PREVIEWED_REPLY_COUNT, true)
+                .latest_messages(MAX_PREVIEWED_REPLY_COUNT)
                 .iter()
                 .map(|message_internal| thread_events.hydrate_message(message_internal, Some(caller_user_id)))
                 .collect(),
