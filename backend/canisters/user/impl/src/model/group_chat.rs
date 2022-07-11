@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::HashMap;
 use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 use utils::time::WEEK_IN_MS;
@@ -13,6 +14,8 @@ pub struct GroupChat {
     pub is_super_admin: bool,
     #[serde(default)]
     recent_proposal_votes: Timestamped<RecentProposalVotes>,
+    #[serde(default)]
+    pub threads_read: HashMap<MessageIndex, MessageIndex>,
 }
 
 impl GroupChat {
@@ -35,6 +38,7 @@ impl GroupChat {
             notifications_muted: Timestamped::new(notifications_muted, now),
             is_super_admin,
             recent_proposal_votes: Timestamped::default(),
+            threads_read: HashMap::new(),
         }
     }
 
