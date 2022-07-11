@@ -33,6 +33,7 @@ import type {
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
+    ApiThreadSyncDetails,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -62,6 +63,7 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
+    ThreadSyncDetails,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -593,6 +595,7 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
 
 export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
     if ("Success" in candid) {
+        console.log("InitialState response: ", candid.Success);
         return {
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedChats: candid.Success.pinned_chats.map((u) => u.toString()),
@@ -606,6 +609,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        console.log("Updates response: ", candid.Success);
         return {
             blockedUsers: optional(
                 candid.Success.blocked_users_v2,
@@ -658,6 +662,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
+            latestThreads: candid.Group.latest_threads.map(threadSyncDetails),
         };
     }
     if ("Direct" in candid) {
@@ -769,6 +774,17 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: candid.latest_threads.map(threadSyncDetails),
+    };
+}
+
+function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: candid.latest_event,
+        latestMessageIndex: candid.latest_message,
     };
 }
 

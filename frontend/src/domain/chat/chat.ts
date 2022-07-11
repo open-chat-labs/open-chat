@@ -615,6 +615,15 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     ownerId?: string;
     permissions?: GroupPermissions;
     public?: boolean;
+    latestThreads?: ThreadSyncDetails[];
+};
+
+export type ThreadSyncDetails = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex: number;
+    latestMessageIndex: number;
 };
 
 export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -705,6 +714,7 @@ export type GroupChatSummary = DataContent &
         myRole: MemberRole;
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
+        latestThreads: ThreadSyncDetails[];
     };
 
 export type Mention = {

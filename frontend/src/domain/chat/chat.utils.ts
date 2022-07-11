@@ -32,8 +32,9 @@ import type {
     ChatMetrics,
     SendMessageSuccess,
     TransferSuccess,
+    ThreadSyncDetails,
 } from "./chat";
-import { dedupe, groupWhile } from "../../utils/list";
+import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -560,7 +561,25 @@ function mergeUpdatedGroupChat(
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
+        latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
     };
+}
+
+function mergeThreadSyncDetails(
+    updated: ThreadSyncDetails[] | undefined,
+    existing: ThreadSyncDetails[]
+) {
+    if (updated === undefined) return existing;
+
+    return Object.values(
+        updated.reduce(
+            (merged, thread) => {
+                merged[thread.threadRootMessageIndex] = thread;
+                return merged;
+            },
+            toRecord(existing, (t) => t.threadRootMessageIndex)
+        )
+    );
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
@@ -1084,6 +1103,7 @@ export function groupChatFromCandidate(
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
+        latestThreads: [],
     };
 }
 
