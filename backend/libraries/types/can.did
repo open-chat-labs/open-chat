@@ -855,6 +855,6 @@ type ThreadSyncDetails =
         root_message_index: MessageIndex;
         latest_event: EventIndex;
         latest_message: MessageIndex;
-        read_up_to: MessageIndex;
+        read_up_to: opt MessageIndex;
         last_updated: TimestampMillis;     
     };

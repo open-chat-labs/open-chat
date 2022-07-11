@@ -356,7 +356,7 @@ pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
-    pub read_up_to: MessageIndex,
+    pub read_up_to: Option<MessageIndex>,
     pub last_updated: TimestampMillis,
 }
 
