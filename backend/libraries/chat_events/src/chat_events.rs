@@ -662,16 +662,7 @@ where
 {
     let message_index_map: HashMap<MessageIndex, EventIndex> = de::Deserialize::deserialize(deserializer)?;
 
-    let mut messages: Vec<_> = message_index_map.keys().collect();
-    messages.sort_unstable();
-
-    let mut ordered_map = BTreeMap::new();
-
-    for message_index in messages {
-        ordered_map.insert(*message_index, message_index_map[message_index]);
-    }
-
-    Ok(ordered_map)
+    Ok(message_index_map.into_iter().collect())
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
