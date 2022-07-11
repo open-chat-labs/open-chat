@@ -1080,20 +1080,23 @@ impl ChatEvents {
         self.get_by_index(affected_event_indexes, my_user_id)
     }
 
-    pub fn latest_messages(&self, message_count: u32) -> Vec<&MessageInternal> {
+    pub fn latest_messages(&self, message_count: u32, exclude_deleted: bool) -> Vec<&MessageInternal> {
+        fn extract_message(e: &EventWrapper<ChatEventInternal>, exclude_deleted: bool) -> Option<&MessageInternal> {
+            if let ChatEventInternal::Message(boxed_message) = &e.event {
+                if !exclude_deleted || !matches!(boxed_message.content, MessageContentInternal::Deleted(_)) {
+                    let message = &**boxed_message;
+                    return Some(message);
+                }
+            }
+
+            None
+        }
+
         self.message_index_map
             .values()
             .rev()
-            .filter_map(|event_index| {
-                self.events.get(*event_index).and_then(|e| {
-                    if let ChatEventInternal::Message(boxed_message) = &e.event {
-                        let message = &**boxed_message;
-                        Some(message)
-                    } else {
-                        None
-                    }
-                })
-            })
+            .filter_map(|event_index| self.events.get(*event_index))
+            .filter_map(|e| extract_message(e, exclude_deleted))
             .take(message_count as usize)
             .collect()
     }
