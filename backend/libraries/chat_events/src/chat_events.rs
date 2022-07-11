@@ -954,7 +954,6 @@ impl ChatEvents {
 
         ThreadUpdated {
             message_index,
-            new_message: true,
             event_index,
             latest_thread_message_index_update,
         }
