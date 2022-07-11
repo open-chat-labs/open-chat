@@ -102,10 +102,8 @@ impl AllChatEvents {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
-        let chat_events = if let Some(thread_message_index) = args.thread_root_message_index {
-            self.threads
-                .entry(thread_message_index)
-                .or_insert_with(ChatEvents::new_thread)
+        let chat_events = if let Some(root_message_index) = args.thread_root_message_index {
+            self.threads.entry(root_message_index).or_insert_with(ChatEvents::new_thread)
         } else {
             &mut self.main
         };
@@ -132,9 +130,9 @@ impl AllChatEvents {
             args.now,
         );
 
-        if let Some(thread_message_index) = args.thread_root_message_index {
+        if let Some(root_message_index) = args.thread_root_message_index {
             self.main
-                .update_thread_summary(thread_message_index, args.sender, true, event_index, args.now);
+                .update_thread_summary(root_message_index, args.sender, Some(message_index), event_index, args.now);
         }
 
         EventWrapper {
@@ -165,9 +163,9 @@ impl AllChatEvents {
                             args.now,
                         );
 
-                        if let Some(thread_message_index) = args.thread_root_message_index {
+                        if let Some(root_message_index) = args.thread_root_message_index {
                             self.main
-                                .update_thread_summary(thread_message_index, args.sender, false, event_index, args.now);
+                                .update_thread_summary(root_message_index, args.sender, None, event_index, args.now);
                         }
 
                         return EditMessageResult::Success;
@@ -199,10 +197,10 @@ impl AllChatEvents {
             })
             .collect();
 
-        if let Some(thread_message_index) = thread_root_message_index {
-            if let Some(thread_events) = self.threads.get(&thread_message_index) {
+        if let Some(root_message_index) = thread_root_message_index {
+            if let Some(thread_events) = self.threads.get(&root_message_index) {
                 self.main
-                    .update_thread_summary(thread_message_index, caller, false, thread_events.last().index, now);
+                    .update_thread_summary(root_message_index, caller, None, thread_events.last().index, now);
             }
         }
 
@@ -246,9 +244,9 @@ impl AllChatEvents {
                             let votes = p.hydrate(Some(user_id)).votes;
                             let event_index = self.push_event(thread_root_message_index, event, now);
 
-                            if let Some(thread_message_index) = thread_root_message_index {
+                            if let Some(root_message_index) = thread_root_message_index {
                                 self.main
-                                    .update_thread_summary(thread_message_index, user_id, false, event_index, now);
+                                    .update_thread_summary(root_message_index, user_id, None, event_index, now);
                             }
 
                             RegisterPollVoteResult::Success(votes)
@@ -364,9 +362,9 @@ impl AllChatEvents {
                     now,
                 );
 
-                if let Some(thread_message_index) = thread_root_message_index {
+                if let Some(root_message_index) = thread_root_message_index {
                     self.main
-                        .update_thread_summary(thread_message_index, user_id, false, new_event_index, now);
+                        .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
                 }
 
                 return if added {
@@ -382,14 +380,19 @@ impl AllChatEvents {
 
     pub fn update_thread_summary(
         &mut self,
-        thread_message_index: MessageIndex,
+        thread_root_message_index: MessageIndex,
         user_id: UserId,
-        new_reply: bool,
+        latest_thread_message_index_if_updated: Option<MessageIndex>,
         now: TimestampMillis,
     ) {
-        if let Some(thread_events) = self.threads.get(&thread_message_index) {
-            self.main
-                .update_thread_summary(thread_message_index, user_id, new_reply, thread_events.last().index, now);
+        if let Some(thread_events) = self.threads.get(&thread_root_message_index) {
+            self.main.update_thread_summary(
+                thread_root_message_index,
+                user_id,
+                latest_thread_message_index_if_updated,
+                thread_events.last().index,
+                now,
+            );
         }
     }
 
@@ -455,10 +458,10 @@ impl AllChatEvents {
     pub fn is_message_accessible_by_id(
         &self,
         min_visible_event_index: EventIndex,
-        thread_message_index: Option<MessageIndex>,
+        thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     ) -> bool {
-        thread_message_index
+        thread_root_message_index
             .or_else(|| self.main.get_message_index(message_id))
             .map_or(false, |message_index| {
                 self.is_message_accessible(min_visible_event_index, message_index)
@@ -468,20 +471,20 @@ impl AllChatEvents {
     pub fn is_message_accessible_by_index(
         &self,
         min_visible_event_index: EventIndex,
-        thread_message_index: Option<MessageIndex>,
+        thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
     ) -> bool {
-        self.is_message_accessible(min_visible_event_index, thread_message_index.unwrap_or(message_index))
+        self.is_message_accessible(min_visible_event_index, thread_root_message_index.unwrap_or(message_index))
     }
 
     pub fn are_messages_accessible(
         &self,
         min_visible_event_index: EventIndex,
-        thread_message_index: Option<MessageIndex>,
+        thread_root_message_index: Option<MessageIndex>,
         message_ids: &[MessageId],
     ) -> bool {
-        if let Some(thread_message_index) = thread_message_index {
-            self.is_message_accessible(min_visible_event_index, thread_message_index)
+        if let Some(root_message_index) = thread_root_message_index {
+            self.is_message_accessible(min_visible_event_index, root_message_index)
         } else {
             message_ids.iter().all(|id| {
                 self.main
@@ -493,14 +496,14 @@ impl AllChatEvents {
 
     pub fn get_with_min_visible_event_index(
         &self,
-        thread_message_index: Option<MessageIndex>,
+        thread_root_message_index: Option<MessageIndex>,
         min_visible_event_index: EventIndex,
     ) -> Option<(&ChatEvents, EventIndex)> {
-        if let Some(thread_message_index) = thread_message_index {
+        if let Some(root_message_index) = thread_root_message_index {
             self.main
-                .get_event_index_by_message_index(thread_message_index)
+                .get_event_index_by_message_index(root_message_index)
                 .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
-                .and_then(|_| self.threads.get(&thread_message_index))
+                .and_then(|_| self.threads.get(&root_message_index))
                 .map(|events| (events, EventIndex::default()))
         } else {
             Some((&self.main, min_visible_event_index))
@@ -519,19 +522,17 @@ impl AllChatEvents {
     ) -> Vec<ThreadSyncDetailsInternal> {
         let mut all_matching_threads: Vec<_> = from_set
             .iter()
-            .filter_map(|thread_message_index| {
-                self.threads.get(thread_message_index).and_then(|thread_events| {
+            .filter_map(|root_message_index| {
+                self.threads.get(root_message_index).and_then(|thread_events| {
                     let latest_event = thread_events.last();
-                    if updated_since.map_or(true, |since| latest_event.timestamp > since) {
-                        Some(ThreadSyncDetailsInternal {
-                            root_message_index: *thread_message_index,
+                    updated_since
+                        .map_or(true, |since| latest_event.timestamp > since)
+                        .then_some(ThreadSyncDetailsInternal {
+                            root_message_index: *root_message_index,
                             latest_event: latest_event.index,
                             latest_message: thread_events.latest_message_index().unwrap_or_default(),
                             last_updated: latest_event.timestamp,
                         })
-                    } else {
-                        None
-                    }
                 })
             })
             .collect();
@@ -541,9 +542,9 @@ impl AllChatEvents {
         all_matching_threads.into_iter().take(max_threads as usize).collect()
     }
 
-    pub fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
-        if let Some(thread_message_index) = thread_message_index {
-            self.threads.get(&thread_message_index)
+    pub fn get(&self, thread_root_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
+        if let Some(root_message_index) = thread_root_message_index {
+            self.threads.get(&root_message_index)
         } else {
             Some(&self.main)
         }
@@ -617,9 +618,9 @@ impl AllChatEvents {
         DeleteMessageResult::NotFound
     }
 
-    fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
-        if let Some(thread_message_index) = thread_message_index {
-            self.threads.get_mut(&thread_message_index)
+    fn get_mut(&mut self, thread_root_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
+        if let Some(root_message_index) = thread_root_message_index {
+            self.threads.get_mut(&root_message_index)
         } else {
             Some(&mut self.main)
         }
@@ -756,17 +757,43 @@ impl ChatEvents {
 
     fn update_thread_summary(
         &mut self,
-        thread_message_index: MessageIndex,
+        thread_root_message_index: MessageIndex,
         user_id: UserId,
-        new_reply: bool,
+        latest_thread_message_index_if_updated: Option<MessageIndex>,
         latest_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> ThreadSummary {
+    ) {
+        // If the current latest event is a `ThreadUpdated` event for the same thread then update
+        // that existing event, else push a new event.
+        let mut push_new_event = true;
+        {
+            let latest_event = self.events.last_mut().unwrap();
+            if let ChatEventInternal::ThreadUpdated(u) = &mut latest_event.event {
+                if u.message_index == thread_root_message_index {
+                    latest_event.timestamp = now;
+                    if let Some(latest_message_index) = latest_thread_message_index_if_updated {
+                        u.latest_thread_message_index_if_updated = Some(latest_message_index);
+                    }
+                    push_new_event = false;
+                }
+            }
+        };
+
+        if push_new_event {
+            self.push_event(
+                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
+                    message_index: thread_root_message_index,
+                    latest_thread_message_index_if_updated,
+                })),
+                now,
+            );
+        }
+
         let root_message = self
-            .get_event_index_by_message_index(thread_message_index)
+            .get_event_index_by_message_index(thread_root_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
-            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
+            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_root_message_index:?}"));
 
         root_message.last_updated = Some(now);
 
@@ -774,24 +801,12 @@ impl ChatEvents {
         summary.latest_event_index = latest_event_index;
         summary.latest_event_timestamp = now;
 
-        if new_reply {
+        if latest_thread_message_index_if_updated.is_some() {
             summary.reply_count += 1;
             if !summary.participant_ids.contains(&user_id) {
                 summary.participant_ids.push(user_id);
             }
         }
-
-        let summary_clone = summary.clone();
-
-        self.push_event(
-            ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                message_index: thread_message_index,
-                new_message: new_reply,
-            })),
-            now,
-        );
-
-        summary_clone
     }
 
     fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -929,13 +944,17 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_thread_updated(&self, message_index: MessageIndex, new_message: bool) -> ThreadUpdated {
+    pub fn hydrate_thread_updated(
+        &self,
+        message_index: MessageIndex,
+        latest_thread_message_index_update: Option<MessageIndex>,
+    ) -> ThreadUpdated {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         ThreadUpdated {
             message_index,
-            new_message,
             event_index,
+            latest_thread_message_index_update,
         }
     }
 
@@ -1127,7 +1146,7 @@ impl ChatEvents {
             ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
             ChatEventInternal::ThreadUpdated(m) => {
-                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.message_index, m.new_message))
+                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.message_index, m.latest_thread_message_index_if_updated))
             }
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),

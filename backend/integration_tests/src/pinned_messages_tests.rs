@@ -4,7 +4,7 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{EventIndex, ChatEvent, MessageContent, Role, TextContent};
+use types::{ChatEvent, EventIndex, MessageContent, Role, TextContent};
 
 pub fn pinned_messages_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(pinned_messages_tests_impl(handle, ctx));
@@ -43,20 +43,24 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id]).await;
 
     let send_message_args1 = group_canister::send_message::Args {
+        thread_root_message_index: None,
         message_id: 1.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
         mentioned: Vec::new(),
+        forwarding: false,
     };
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args1).await;
 
     let send_message_args2 = group_canister::send_message::Args {
+        thread_root_message_index: None,
         message_id: 2.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "xyz".to_string() }),
         replies_to: None,
         mentioned: Vec::new(),
+        forwarding: false,
     };
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args2).await;
 
@@ -167,8 +171,10 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
 
     print!("10. Check the events were recorded correctly... ");
     let events_range_args = group_canister::events_range::Args {
+        thread_root_message_index: None,
         from_index: 0.into(),
         to_index: 10.into(),
+        invite_code: None,
     };
     match group_canister_client::events_range(&user1_agent, &chat_id.into(), &events_range_args)
         .await
