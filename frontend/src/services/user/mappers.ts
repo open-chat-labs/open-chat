@@ -29,6 +29,7 @@ import type {
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptoWithinGroupResponse,
+    ApiCryptoAccountFull,
     ApiChatMetrics,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
@@ -814,7 +815,7 @@ export function failedCryptoWithdrawal(
     return {
         kind: "failed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -828,7 +829,7 @@ export function completedCryptoWithdrawal(
     return {
         kind: "completed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -851,6 +852,30 @@ export function withdrawCryptoResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
+        candid
+    );
+}
+
+function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
+    if ("User" in candid) {
+        const [userId, _accountIdentifier] = candid.User;
+        return userId.toString();
+    }
+    if ("UserIndex" in candid) {
+        return bytesToHexString(candid.UserIndex);
+    }
+    if ("Mint" in candid) {
+        return "Minting Account";
+    }
+    if ("Named" in candid) {
+        const [_name, accountIdentifier] = candid.Named;
+        return bytesToHexString(accountIdentifier);
+    }
+    if ("Unknown" in candid) {
+        return bytesToHexString(candid.Unknown);
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCryptoAccountFull type received",
         candid
     );
 }
