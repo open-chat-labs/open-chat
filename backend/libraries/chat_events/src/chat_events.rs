@@ -765,6 +765,7 @@ impl ChatEvents {
     ) {
         // If the current latest event is a `ThreadUpdated` event for the same thread then update
         // that existing event, else push a new event.
+        let mut push_new_event = true;
         {
             let latest_event = self.events.last_mut().unwrap();
             if let ChatEventInternal::ThreadUpdated(u) = &mut latest_event.event {
@@ -773,9 +774,19 @@ impl ChatEvents {
                     if let Some(latest_message_index) = latest_thread_message_index_if_updated {
                         u.latest_thread_message_index_if_updated = Some(latest_message_index);
                     }
-                    return;
+                    push_new_event = false;
                 }
             }
+        };
+
+        if push_new_event {
+            self.push_event(
+                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
+                    message_index: thread_root_message_index,
+                    latest_thread_message_index_if_updated,
+                })),
+                now,
+            );
         }
 
         let root_message = self
@@ -796,14 +807,6 @@ impl ChatEvents {
                 summary.participant_ids.push(user_id);
             }
         }
-
-        self.push_event(
-            ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                message_index: thread_root_message_index,
-                latest_thread_message_index_if_updated,
-            })),
-            now,
-        );
     }
 
     fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
