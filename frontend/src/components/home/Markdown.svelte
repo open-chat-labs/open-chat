@@ -19,10 +19,6 @@
         breaks: !oneLine,
     };
 
-    function shouldSuppressLinks() {
-        return suppressLinks;
-    }
-
     type MentionToken = {
         type: "mention";
         raw: string;
