@@ -848,6 +848,7 @@ type ThreadUpdated =
         event_index: EventIndex;
         message_index: MessageIndex;
         new_message: bool;
+        latest_thread_message_index_if_updated: opt MessageIndex;
     };
 
 type ThreadSyncDetails =
