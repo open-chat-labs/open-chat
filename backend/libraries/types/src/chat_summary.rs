@@ -252,7 +252,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             recent_proposal_votes: vec![],
             metrics: s.metrics,
             my_metrics: s.my_metrics,
-            latest_threads: vec![],
+            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
         }
     }
 }
@@ -305,7 +305,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             metrics: s.metrics,
             my_metrics: s.my_metrics,
             is_public: s.is_public,
-            latest_threads: vec![],
+            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
         }
     }
 }
@@ -366,4 +366,16 @@ pub struct ThreadSyncDetailsInternal {
     pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
     pub last_updated: TimestampMillis,
+}
+
+impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
+    fn from(s: ThreadSyncDetailsInternal) -> Self {
+        ThreadSyncDetails {
+            root_message_index: s.root_message_index,
+            latest_event: s.latest_event,
+            latest_message: s.latest_message,
+            last_updated: s.last_updated,
+            read_up_to: None,
+        }
+    }
 }
