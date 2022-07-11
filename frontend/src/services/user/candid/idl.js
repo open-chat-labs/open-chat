@@ -350,7 +350,7 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'new_message' : IDL.Bool,
+    'latest_thread_message_index_if_updated' : IDL.Opt(MessageIndex),
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -490,7 +490,7 @@ export const idlFactory = ({ IDL }) => {
   const ThreadSyncDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
-    'read_up_to' : MessageIndex,
+    'read_up_to' : IDL.Opt(MessageIndex),
     'latest_event' : EventIndex,
     'latest_message' : MessageIndex,
   });
