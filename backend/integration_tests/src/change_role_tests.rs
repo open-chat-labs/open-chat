@@ -5,7 +5,7 @@ use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{ChatId, ChatSummary, ChatEvent, Role, UserId};
+use types::{ChatEvent, ChatId, ChatSummary, Role, UserId};
 
 pub fn change_role_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(change_role_tests_impl(handle, ctx));
@@ -136,8 +136,10 @@ async fn change_role_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("11. Confirm the events were recorded correctly... ");
         let events_range_args = group_canister::events_range::Args {
+            thread_root_message_index: None,
             from_index: 0.into(),
             to_index: 10.into(),
+            invite_code: None,
         };
         match group_canister_client::events_range(&user1_agent, &chat_id.into(), &events_range_args)
             .await

@@ -46,6 +46,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     print!("1. Create a poll... ");
     let send_message_args1 = group_canister::send_message::Args {
+        thread_root_message_index: None,
         message_id: 1.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Poll(PollContent {
@@ -65,12 +66,14 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         }),
         replies_to: None,
         mentioned: Vec::new(),
+        forwarding: false,
     };
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args1).await;
     println!("Ok");
 
     print!("2. Register a vote... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
+        thread_root_message_index: None,
         message_index: 0.into(),
         poll_option: 0,
         operation: VoteOperation::RegisterVote,
@@ -108,6 +111,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     print!("4. Register a vote for a different option... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
+        thread_root_message_index: None,
         message_index: 0.into(),
         poll_option: 1,
         operation: VoteOperation::RegisterVote,
@@ -130,6 +134,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     print!("5. Delete a vote... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
+        thread_root_message_index: None,
         message_index: 0.into(),
         poll_option: 1,
         operation: VoteOperation::DeleteVote,
@@ -151,8 +156,10 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     print!("6. Check the events were recorded correctly... ");
     let events_range_args = group_canister::events_range::Args {
+        thread_root_message_index: None,
         from_index: 0.into(),
         to_index: 10.into(),
+        invite_code: None,
     };
     match group_canister_client::events_range(&user1_agent, &chat_id.into(), &events_range_args)
         .await
