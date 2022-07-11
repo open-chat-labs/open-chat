@@ -541,6 +541,14 @@ impl AllChatEvents {
         all_matching_threads.into_iter().take(max_threads as usize).collect()
     }
 
+    pub fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.threads.get(&thread_message_index)
+        } else {
+            Some(&self.main)
+        }
+    }
+
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
     fn push_event(
         &mut self,
@@ -553,18 +561,6 @@ impl AllChatEvents {
         let event_index = self.get_mut(thread_root_message_index).unwrap().push_event(event, now);
 
         event_index
-    }
-
-    fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
-        if let Some(thread_message_index) = thread_message_index {
-            if let Some(thread_events) = self.threads.get(&thread_message_index) {
-                Some(thread_events)
-            } else {
-                None
-            }
-        } else {
-            Some(&self.main)
-        }
     }
 
     fn delete_message(
@@ -1082,6 +1078,24 @@ impl ChatEvents {
             .collect();
 
         self.get_by_index(affected_event_indexes, my_user_id)
+    }
+
+    pub fn latest_messages(&self, message_count: u32) -> Vec<&MessageInternal> {
+        self.message_index_map
+            .values()
+            .rev()
+            .filter_map(|event_index| {
+                self.events.get(*event_index).and_then(|e| {
+                    if let ChatEventInternal::Message(boxed_message) = &e.event {
+                        let message = &**boxed_message;
+                        Some(message)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .take(message_count as usize)
+            .collect()
     }
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
