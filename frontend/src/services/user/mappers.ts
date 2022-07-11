@@ -842,7 +842,7 @@ export function withdrawCryptoResponse(
 
 function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("User" in candid) {
-        const [userId, _] = candid.User;
+        const [userId, _accountIdentifier] = candid.User;
         return userId.toString();
     }
     if ("UserIndex" in candid) {
@@ -852,7 +852,7 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
         return "Minting Account";
     }
     if ("Named" in candid) {
-        const [_, accountIdentifier] = candid.Named;
+        const [_name, accountIdentifier] = candid.Named;
         return bytesToHexString(accountIdentifier);
     }
     if ("Unknown" in candid) {
