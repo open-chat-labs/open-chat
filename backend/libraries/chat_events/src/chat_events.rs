@@ -3,10 +3,10 @@ use crate::ThreadUpdatedInternal;
 use candid::{CandidType, Principal};
 use itertools::Itertools;
 use search::*;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds, RangeInclusive};
 use types::*;
@@ -50,9 +50,7 @@ impl AllChatEvents {
             events_type: ChatEventsType::Direct,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
-            message_index_map: HashMap::new(),
-            latest_message_event_index: None,
-            latest_message_index: None,
+            message_index_map: BTreeMap::new(),
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
         };
@@ -80,9 +78,7 @@ impl AllChatEvents {
             events_type: ChatEventsType::Group,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
-            message_index_map: HashMap::new(),
-            latest_message_event_index: None,
-            latest_message_index: None,
+            message_index_map: BTreeMap::new(),
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
         };
@@ -530,7 +526,7 @@ impl AllChatEvents {
                         Some(ThreadSyncDetailsInternal {
                             root_message_index: *thread_message_index,
                             latest_event: latest_event.index,
-                            latest_message: thread_events.latest_message_index.unwrap_or_default(),
+                            latest_message: thread_events.latest_message_index().unwrap_or_default(),
                             last_updated: latest_event.timestamp,
                         })
                     } else {
@@ -654,11 +650,28 @@ pub struct ChatEvents {
     events_type: ChatEventsType,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
-    message_index_map: HashMap<MessageIndex, EventIndex>,
-    latest_message_event_index: Option<EventIndex>,
-    latest_message_index: Option<MessageIndex>,
+    #[serde(deserialize_with = "deserialize_message_index_map")]
+    message_index_map: BTreeMap<MessageIndex, EventIndex>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
+}
+
+fn deserialize_message_index_map<'de, D>(deserializer: D) -> Result<BTreeMap<MessageIndex, EventIndex>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let message_index_map: HashMap<MessageIndex, EventIndex> = de::Deserialize::deserialize(deserializer)?;
+
+    let mut messages: Vec<_> = message_index_map.keys().collect();
+    messages.sort_unstable();
+
+    let mut ordered_map = BTreeMap::new();
+
+    for message_index in messages {
+        ordered_map.insert(*message_index, message_index_map[message_index]);
+    }
+
+    Ok(ordered_map)
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -728,9 +741,7 @@ impl ChatEvents {
             events_type: ChatEventsType::Thread,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
-            message_index_map: HashMap::new(),
-            latest_message_event_index: None,
-            latest_message_index: None,
+            message_index_map: BTreeMap::new(),
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
         }
@@ -814,8 +825,6 @@ impl ChatEvents {
                 _ => panic!("MessageId already used: {:?}", m.message_id),
             };
             self.message_index_map.insert(m.message_index, event_index);
-            self.latest_message_index = Some(m.message_index);
-            self.latest_message_event_index = Some(event_index);
         }
 
         self.events.push(EventWrapper {
@@ -845,7 +854,7 @@ impl ChatEvents {
         since: TimestampMillis,
         my_user_id: Option<UserId>,
     ) -> Option<EventWrapper<Message>> {
-        let event_index = self.latest_message_event_index?;
+        let event_index = self.latest_message_event_index()?;
         let event = self.get(event_index)?;
         let message = event.event.as_message()?;
 
@@ -865,11 +874,15 @@ impl ChatEvents {
     }
 
     pub fn latest_message_index(&self) -> Option<MessageIndex> {
-        self.latest_message_index
+        self.message_index_map.keys().last().copied()
+    }
+
+    pub fn latest_message_event_index(&self) -> Option<EventIndex> {
+        self.message_index_map.values().last().copied()
     }
 
     pub fn next_message_index(&self) -> MessageIndex {
-        self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
+        self.latest_message_index().map_or(MessageIndex::default(), |m| m.incr())
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = &EventWrapper<ChatEventInternal>> {
