@@ -559,7 +559,7 @@ export interface ThreadSyncDetails {
   'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
-  'new_message' : boolean,
+  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
