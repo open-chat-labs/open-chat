@@ -23,16 +23,19 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let agent = build_ic_agent(url, user1_identity).await;
 
     let send_message_args = user_canister::send_message::Args {
-        message_id: 1.into(),
         recipient: user2_id,
+        thread_root_message_index: None,
+        message_id: 1.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
+        forwarding: false,
     };
     let send_message_result = send_direct_message(&agent, user1_id, &send_message_args).await;
 
     let events_args = user_canister::events_by_index::Args {
         user_id: user2_id,
+        thread_root_message_index: None,
         events: vec![send_message_result.event_index],
     };
     let get_events_response = user_canister_client::events_by_index(&agent, &user1_id.into(), &events_args)
@@ -46,11 +49,13 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     }
 
     let send_message_args = user_canister::send_message::Args {
-        message_id: 2.into(),
         recipient: user2_id,
+        thread_root_message_index: None,
+        message_id: 2.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: String::default() }),
         replies_to: None,
+        forwarding: false,
     };
     let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
         .await
@@ -60,13 +65,15 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     }
 
     let send_message_args = user_canister::send_message::Args {
-        message_id: 3.into(),
         recipient: user2_id,
+        thread_root_message_index: None,
+        message_id: 3.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent {
             text: (0..5001).into_iter().map(|_| '1').collect(),
         }),
         replies_to: None,
+        forwarding: false,
     };
     let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
         .await

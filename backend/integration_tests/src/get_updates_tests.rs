@@ -48,38 +48,46 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
 
     let direct_message_args1 = user_canister::send_message::Args {
-        message_id: 1.into(),
         recipient: user1_id,
+        thread_root_message_index: None,
+        message_id: 1.into(),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         content: MessageContent::Text(TextContent { text: "1".to_string() }),
         replies_to: None,
+        forwarding: false,
     };
     let result1 = send_direct_message(&user2_agent, user2_id, &direct_message_args1).await;
 
     let direct_message_args2 = user_canister::send_message::Args {
-        message_id: 2.into(),
         recipient: user1_id,
+        thread_root_message_index: None,
+        message_id: 2.into(),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         content: MessageContent::Text(TextContent { text: "2".to_string() }),
         replies_to: None,
+        forwarding: false,
     };
     let _result2 = send_direct_message(&user2_agent, user2_id, &direct_message_args2).await;
 
     let group_message_args1 = group_canister::send_message::Args {
+        thread_root_message_index: None,
         message_id: 3.into(),
         content: MessageContent::Text(TextContent { text: "3".to_string() }),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
         mentioned: vec![],
+        forwarding: false,
     };
     let result3 = send_group_message(&user2_agent, chat_id1, &group_message_args1).await;
 
     let group_message_args2 = group_canister::send_message::Args {
+        thread_root_message_index: None,
         message_id: 4.into(),
         content: MessageContent::Text(TextContent { text: "4".to_string() }),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
         mentioned: vec![],
+        forwarding: false,
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
