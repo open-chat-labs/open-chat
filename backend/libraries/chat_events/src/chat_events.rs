@@ -1121,7 +1121,7 @@ impl ChatEvents {
                     Some(EventWrapper {
                         index: e.index,
                         timestamp: e.timestamp,
-                        event: self.hydrate_message(&message, my_user_id),
+                        event: self.hydrate_message(message, my_user_id),
                     })
                 } else {
                     None
