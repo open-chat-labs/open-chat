@@ -8,14 +8,14 @@
             "name": "open_chat_frontend",
             "version": "2.0.0",
             "dependencies": {
-                "@dfinity/agent": "^0.10.4",
-                "@dfinity/auth-client": "^0.10.4",
-                "@dfinity/authentication": "^0.10.4",
-                "@dfinity/candid": "^0.10.4",
-                "@dfinity/identity": "^0.10.4",
-                "@dfinity/principal": "^0.10.4",
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/auth-client": "^0.12.0",
+                "@dfinity/authentication": "^0.12.0",
+                "@dfinity/candid": "^0.12.0",
+                "@dfinity/identity": "^0.12.0",
+                "@dfinity/principal": "^0.12.0",
                 "@fortawesome/free-solid-svg-icons": "^5.15.4",
-                "@open-ic/open-storage-agent": "^0.1.3",
+                "@open-ic/open-storage-agent": "^0.1.4",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
                 "@types/dompurify": "^2.3.3",
                 "@types/marked": "^4.0.3",
@@ -1788,9 +1788,9 @@
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
         },
         "node_modules/@dfinity/agent": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.4.tgz",
-            "integrity": "sha512-/O1443GWkQ6GngrXos/ShAbnF9IgUlWclzaQn/qEsGJIey6S7tty+iOa5yZqOS1BtOTnDe+TYh8GeERZZn7vvg==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.12.0.tgz",
+            "integrity": "sha512-dYOEwo4jl5yipuGTfTG/5hIZL6E7/oWLZ1d5gfq7p4cOBE3KeTp46JymAMiKYaGtgbKhKbDfhd4JveX3m//DJg==",
             "dependencies": {
                 "base64-arraybuffer": "^0.2.0",
                 "bignumber.js": "^9.0.0",
@@ -1799,55 +1799,56 @@
                 "simple-cbor": "^0.4.1"
             },
             "peerDependencies": {
-                "@dfinity/candid": "^0.10.4",
-                "@dfinity/principal": "^0.10.4"
+                "@dfinity/candid": "^0.12.0",
+                "@dfinity/principal": "^0.12.0"
             }
         },
         "node_modules/@dfinity/auth-client": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.10.4.tgz",
-            "integrity": "sha512-SHWamx9PcD3vl21rmRCnWr4wk6Iotyd9h0UZOLFdKL0AruZ9m9BD7nxRs9u7dJ+FuRwZRkWjONaDuNZemMlQ8w==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.12.0.tgz",
+            "integrity": "sha512-juflQy3j1VNDE+IYAn8Ga/NUSMWlRKWUNAbCPfSpB1SKfVZa4DHsjepNMPEoNn9N908/FD7q1JfN7w3cSS1LKA==",
             "peerDependencies": {
-                "@dfinity/agent": "^0.10.4",
-                "@dfinity/authentication": "^0.10.4",
-                "@dfinity/identity": "^0.10.4",
-                "@dfinity/principal": "^0.10.4"
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/authentication": "^0.12.0",
+                "@dfinity/identity": "^0.12.0",
+                "@dfinity/principal": "^0.12.0"
             }
         },
         "node_modules/@dfinity/authentication": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.10.4.tgz",
-            "integrity": "sha512-IP1zepm9YnXATV6lXVMqObmETKuBtkDMbWW6rgUvEekulaxITTHJppgzdMD8E7Hh5SVajVHLJm14kDa3FXwMnA==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.12.0.tgz",
+            "integrity": "sha512-ZOe7JW8Lw1nfefeqWNxvhH2EDlwjuDGoadT571lWN4gsWPsIh+3UpPICWZZEwRm9OCv4xpDvy4zDrjLIpixfKg==",
             "peerDependencies": {
-                "@dfinity/agent": "^0.10.4",
-                "@dfinity/identity": "^0.10.4",
-                "@dfinity/principal": "^0.10.4"
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/identity": "^0.12.0",
+                "@dfinity/principal": "^0.12.0"
             }
         },
         "node_modules/@dfinity/candid": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.10.4.tgz",
-            "integrity": "sha512-Rd8uoo3jd4FLmGY9aBgTRdBCYVuG/Y7QmpDJB3eQvsU3WHhVZJWLMHcodnMIoy2bzqzCKeTdLkL565K7qx5H3Q=="
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.12.0.tgz",
+            "integrity": "sha512-TX9eL5D4F5EZPf+uKoxE0X3umg+mSA7RWrS+zTQxMRBe/1aBXVOFqChAiSupfKHI3wSWTvOImIxLRmCrAP+69w=="
         },
         "node_modules/@dfinity/identity": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.10.4.tgz",
-            "integrity": "sha512-b4WsaD70Ts75JlJcf4+E04B140hQN5u/GnCvjhaHqN2++bwWO56Paxtv0UfAc58LMwJZj4iOyZoahnT56LhC9A==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.12.0.tgz",
+            "integrity": "sha512-Hijxad41E4RAllBus0BoEycjsydFPzrRF4tUAD5LbadYur+/ad5r5l15w7UZlwujImaTeuF3xmaTB67vqQrsMA==",
             "dependencies": {
+                "@types/webappsec-credential-management": "^0.6.2",
                 "borc": "^2.1.1",
                 "js-sha256": "^0.9.0",
                 "secp256k1": "^4.0.2",
                 "tweetnacl": "^1.0.1"
             },
             "peerDependencies": {
-                "@dfinity/agent": "^0.10.4",
-                "@dfinity/principal": "^0.10.4"
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/principal": "^0.12.0"
             }
         },
         "node_modules/@dfinity/principal": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.10.4.tgz",
-            "integrity": "sha512-qwzpmq5wfyeKMBspRZmuYvTxu1dqN+IY0ThACHTRh6D58QjnVQNCD3Hq9d5eEDu0qyNcY22cJEWwzrzZaaoVmw=="
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.12.0.tgz",
+            "integrity": "sha512-kah+gxPYKagvjrFLs8+WtQzpKPaFpUU5kG6cTiYXG8MKEX+Yls3ycdla693XwZo3neW5NRnG75Skq1ZNscQSaw=="
         },
         "node_modules/@eslint/eslintrc": {
             "version": "0.4.3",
@@ -3022,16 +3023,16 @@
             }
         },
         "node_modules/@open-ic/open-storage-agent": {
-            "version": "0.1.3",
-            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.3.tgz",
-            "integrity": "sha512-6yW2vi+O+VtPsTSmDuDZfk+nu55ykO58hXdbQ4QLdrPbpGAZBso9BeWap+uU9lLrvTrolA6+6WEDTcoebb4XSA==",
+            "version": "0.1.4",
+            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.4.tgz",
+            "integrity": "sha512-QZ1hMHj0U2qPKm7ObYoj4v+aAschsUA87yNFPihHbv5qAB+3MDWsd+uB7J4nQQFZHoTRw87CBzPzYzmrqTAHvg==",
             "dependencies": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/auth-client": "^0.10.1",
-                "@dfinity/authentication": "^0.10.1",
-                "@dfinity/candid": "^0.10.1",
-                "@dfinity/identity": "^0.10.1",
-                "@dfinity/principal": "^0.10.1",
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/auth-client": "^0.12.0",
+                "@dfinity/authentication": "^0.12.0",
+                "@dfinity/candid": "^0.12.0",
+                "@dfinity/identity": "^0.12.0",
+                "@dfinity/principal": "^0.12.0",
                 "js-sha3": "^0.8.0",
                 "uuid": "^3.4.0"
             }
@@ -3757,6 +3758,11 @@
             "resolved": "https://registry.npmjs.org/@types/uuid/-/uuid-8.3.4.tgz",
             "integrity": "sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==",
             "dev": true
+        },
+        "node_modules/@types/webappsec-credential-management": {
+            "version": "0.6.2",
+            "resolved": "https://registry.npmjs.org/@types/webappsec-credential-management/-/webappsec-credential-management-0.6.2.tgz",
+            "integrity": "sha512-/6w8wmKQOFh+1CL99fcFhH7lli1/ExBdAawXsVPXFC5MBOS6ww/4cmK4crpCw51RaG6sTr477N17Y84l0G69IA=="
         },
         "node_modules/@types/yargs": {
             "version": "16.0.4",
@@ -5010,7 +5016,7 @@
         "node_modules/brorand": {
             "version": "1.1.0",
             "resolved": "https://registry.npmjs.org/brorand/-/brorand-1.1.0.tgz",
-            "integrity": "sha1-EsJe/kCkXjwyPrhnWgoM5XsiNx8="
+            "integrity": "sha512-cKV8tMCEpQs4hK/ik71d6LrPOnpkpGBR0wzxqr68g2m/LB2GxVYQroAjMJZRVM1Y4BCjCKc3vAamxSzOY2RP+w=="
         },
         "node_modules/brotli-size": {
             "version": "4.0.0",
@@ -7900,7 +7906,7 @@
         "node_modules/hmac-drbg": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/hmac-drbg/-/hmac-drbg-1.0.1.tgz",
-            "integrity": "sha1-0nRXAQJabHdabFRXk+1QL8DGSaE=",
+            "integrity": "sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==",
             "dependencies": {
                 "hash.js": "^1.0.3",
                 "minimalistic-assert": "^1.0.0",
@@ -10875,7 +10881,7 @@
         "node_modules/minimalistic-crypto-utils": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/minimalistic-crypto-utils/-/minimalistic-crypto-utils-1.0.1.tgz",
-            "integrity": "sha1-9sAMHAsIIkblxNmd+4x8CDsrWCo="
+            "integrity": "sha512-JIYlbt6g8i5jKfJ3xz7rF0LXmv2TkDxBLUkiBeZ7bAx4GnnNMr8xFpGnOxn6GhTEHx3SjRrZEoU+j04prX1ktg=="
         },
         "node_modules/minimatch": {
             "version": "3.0.4",
@@ -11136,9 +11142,9 @@
             }
         },
         "node_modules/node-gyp-build": {
-            "version": "4.4.0",
-            "resolved": "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.4.0.tgz",
-            "integrity": "sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ==",
+            "version": "4.5.0",
+            "resolved": "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.5.0.tgz",
+            "integrity": "sha512-2iGbaQBV+ITgCz76ZEjmhUKAKVf7xfY1sRl4UiKQspfZMH2h06SyhNsnSVy50cwkFQDGLyif6m/6uFXHkOZ6rg==",
             "bin": {
                 "node-gyp-build": "bin.js",
                 "node-gyp-build-optional": "optional.js",
@@ -16852,9 +16858,9 @@
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
         },
         "@dfinity/agent": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.4.tgz",
-            "integrity": "sha512-/O1443GWkQ6GngrXos/ShAbnF9IgUlWclzaQn/qEsGJIey6S7tty+iOa5yZqOS1BtOTnDe+TYh8GeERZZn7vvg==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.12.0.tgz",
+            "integrity": "sha512-dYOEwo4jl5yipuGTfTG/5hIZL6E7/oWLZ1d5gfq7p4cOBE3KeTp46JymAMiKYaGtgbKhKbDfhd4JveX3m//DJg==",
             "requires": {
                 "base64-arraybuffer": "^0.2.0",
                 "bignumber.js": "^9.0.0",
@@ -16864,27 +16870,28 @@
             }
         },
         "@dfinity/auth-client": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.10.4.tgz",
-            "integrity": "sha512-SHWamx9PcD3vl21rmRCnWr4wk6Iotyd9h0UZOLFdKL0AruZ9m9BD7nxRs9u7dJ+FuRwZRkWjONaDuNZemMlQ8w==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.12.0.tgz",
+            "integrity": "sha512-juflQy3j1VNDE+IYAn8Ga/NUSMWlRKWUNAbCPfSpB1SKfVZa4DHsjepNMPEoNn9N908/FD7q1JfN7w3cSS1LKA==",
             "requires": {}
         },
         "@dfinity/authentication": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.10.4.tgz",
-            "integrity": "sha512-IP1zepm9YnXATV6lXVMqObmETKuBtkDMbWW6rgUvEekulaxITTHJppgzdMD8E7Hh5SVajVHLJm14kDa3FXwMnA==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.12.0.tgz",
+            "integrity": "sha512-ZOe7JW8Lw1nfefeqWNxvhH2EDlwjuDGoadT571lWN4gsWPsIh+3UpPICWZZEwRm9OCv4xpDvy4zDrjLIpixfKg==",
             "requires": {}
         },
         "@dfinity/candid": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.10.4.tgz",
-            "integrity": "sha512-Rd8uoo3jd4FLmGY9aBgTRdBCYVuG/Y7QmpDJB3eQvsU3WHhVZJWLMHcodnMIoy2bzqzCKeTdLkL565K7qx5H3Q=="
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.12.0.tgz",
+            "integrity": "sha512-TX9eL5D4F5EZPf+uKoxE0X3umg+mSA7RWrS+zTQxMRBe/1aBXVOFqChAiSupfKHI3wSWTvOImIxLRmCrAP+69w=="
         },
         "@dfinity/identity": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.10.4.tgz",
-            "integrity": "sha512-b4WsaD70Ts75JlJcf4+E04B140hQN5u/GnCvjhaHqN2++bwWO56Paxtv0UfAc58LMwJZj4iOyZoahnT56LhC9A==",
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.12.0.tgz",
+            "integrity": "sha512-Hijxad41E4RAllBus0BoEycjsydFPzrRF4tUAD5LbadYur+/ad5r5l15w7UZlwujImaTeuF3xmaTB67vqQrsMA==",
             "requires": {
+                "@types/webappsec-credential-management": "^0.6.2",
                 "borc": "^2.1.1",
                 "js-sha256": "^0.9.0",
                 "secp256k1": "^4.0.2",
@@ -16892,9 +16899,9 @@
             }
         },
         "@dfinity/principal": {
-            "version": "0.10.4",
-            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.10.4.tgz",
-            "integrity": "sha512-qwzpmq5wfyeKMBspRZmuYvTxu1dqN+IY0ThACHTRh6D58QjnVQNCD3Hq9d5eEDu0qyNcY22cJEWwzrzZaaoVmw=="
+            "version": "0.12.0",
+            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.12.0.tgz",
+            "integrity": "sha512-kah+gxPYKagvjrFLs8+WtQzpKPaFpUU5kG6cTiYXG8MKEX+Yls3ycdla693XwZo3neW5NRnG75Skq1ZNscQSaw=="
         },
         "@eslint/eslintrc": {
             "version": "0.4.3",
@@ -17805,16 +17812,16 @@
             }
         },
         "@open-ic/open-storage-agent": {
-            "version": "0.1.3",
-            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.3.tgz",
-            "integrity": "sha512-6yW2vi+O+VtPsTSmDuDZfk+nu55ykO58hXdbQ4QLdrPbpGAZBso9BeWap+uU9lLrvTrolA6+6WEDTcoebb4XSA==",
+            "version": "0.1.4",
+            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.4.tgz",
+            "integrity": "sha512-QZ1hMHj0U2qPKm7ObYoj4v+aAschsUA87yNFPihHbv5qAB+3MDWsd+uB7J4nQQFZHoTRw87CBzPzYzmrqTAHvg==",
             "requires": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/auth-client": "^0.10.1",
-                "@dfinity/authentication": "^0.10.1",
-                "@dfinity/candid": "^0.10.1",
-                "@dfinity/identity": "^0.10.1",
-                "@dfinity/principal": "^0.10.1",
+                "@dfinity/agent": "^0.12.0",
+                "@dfinity/auth-client": "^0.12.0",
+                "@dfinity/authentication": "^0.12.0",
+                "@dfinity/candid": "^0.12.0",
+                "@dfinity/identity": "^0.12.0",
+                "@dfinity/principal": "^0.12.0",
                 "js-sha3": "^0.8.0",
                 "uuid": "^3.4.0"
             }
@@ -18444,6 +18451,11 @@
             "resolved": "https://registry.npmjs.org/@types/uuid/-/uuid-8.3.4.tgz",
             "integrity": "sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==",
             "dev": true
+        },
+        "@types/webappsec-credential-management": {
+            "version": "0.6.2",
+            "resolved": "https://registry.npmjs.org/@types/webappsec-credential-management/-/webappsec-credential-management-0.6.2.tgz",
+            "integrity": "sha512-/6w8wmKQOFh+1CL99fcFhH7lli1/ExBdAawXsVPXFC5MBOS6ww/4cmK4crpCw51RaG6sTr477N17Y84l0G69IA=="
         },
         "@types/yargs": {
             "version": "16.0.4",
@@ -19403,7 +19415,7 @@
         "brorand": {
             "version": "1.1.0",
             "resolved": "https://registry.npmjs.org/brorand/-/brorand-1.1.0.tgz",
-            "integrity": "sha1-EsJe/kCkXjwyPrhnWgoM5XsiNx8="
+            "integrity": "sha512-cKV8tMCEpQs4hK/ik71d6LrPOnpkpGBR0wzxqr68g2m/LB2GxVYQroAjMJZRVM1Y4BCjCKc3vAamxSzOY2RP+w=="
         },
         "brotli-size": {
             "version": "4.0.0",
@@ -21619,7 +21631,7 @@
         "hmac-drbg": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/hmac-drbg/-/hmac-drbg-1.0.1.tgz",
-            "integrity": "sha1-0nRXAQJabHdabFRXk+1QL8DGSaE=",
+            "integrity": "sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==",
             "requires": {
                 "hash.js": "^1.0.3",
                 "minimalistic-assert": "^1.0.0",
@@ -23834,7 +23846,7 @@
         "minimalistic-crypto-utils": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/minimalistic-crypto-utils/-/minimalistic-crypto-utils-1.0.1.tgz",
-            "integrity": "sha1-9sAMHAsIIkblxNmd+4x8CDsrWCo="
+            "integrity": "sha512-JIYlbt6g8i5jKfJ3xz7rF0LXmv2TkDxBLUkiBeZ7bAx4GnnNMr8xFpGnOxn6GhTEHx3SjRrZEoU+j04prX1ktg=="
         },
         "minimatch": {
             "version": "3.0.4",
@@ -24030,9 +24042,9 @@
             }
         },
         "node-gyp-build": {
-            "version": "4.4.0",
-            "resolved": "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.4.0.tgz",
-            "integrity": "sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ=="
+            "version": "4.5.0",
+            "resolved": "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.5.0.tgz",
+            "integrity": "sha512-2iGbaQBV+ITgCz76ZEjmhUKAKVf7xfY1sRl4UiKQspfZMH2h06SyhNsnSVy50cwkFQDGLyif6m/6uFXHkOZ6rg=="
         },
         "node-int64": {
             "version": "0.4.0",
