@@ -1,5 +1,9 @@
 #!/bin/sh
 
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR/..
+
 # Pass in the dfx identity name
 # eg './upgrade-canister-prod-test.sh openchat user_index 1.0.0'
 
@@ -7,11 +11,7 @@ IDENTITY=$1
 CANISTER_TO_UPGRADE=$2
 VERSION=$3
 
-./generate-wasm.sh ${CANISTER_TO_UPGRADE}_canister_impl
-
-./compress-wasm.sh group_canister_impl
-./compress-wasm.sh user_canister_impl
-./compress-wasm.sh user_index_canister_impl
+./scripts/generate-wasm.sh ${CANISTER_TO_UPGRADE}_canister_impl
 
 ROOT_CANISTER_ID=$(dfx canister --network ic_test id root)
 USER_INDEX_CANISTER_ID=$(dfx canister --network ic_test id user_index)

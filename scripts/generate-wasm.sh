@@ -1,5 +1,9 @@
 #!/bin/sh
 
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR/..
+
 echo Building package $1
 cargo build --target wasm32-unknown-unknown --release --package $1
 

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR/..
+
 # Deploys everything needed to test OpenChat locally (OpenChat, InternetIdentity and OpenStorage)
 
 IDENTITY=$1
@@ -32,14 +36,14 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id index)
 
 # Deploy OpenStorage canisters
-./deploy-local.sh $IDENTITY
+./scripts/deploy-local.sh $IDENTITY
 
 # Add user_index and group_index as OpenStorage service principals
 dfx --identity=$IDENTITY canister call index add_service_principals "(record { principals=vec { principal \"$USER_INDEX_CANISTER_ID\"; principal \"$GROUP_INDEX_CANISTER_ID\" } })"
 popd
 
 # Deploy OpenChat canisters
-./deploy-local.sh $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID
+./scripts/deploy-local.sh $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID
 
 # Send the first user 10 ICP
 dfx --identity $IDENTITY canister call ledger send_dfx '(record { memo = 0; amount = record { e8s = 1000000000 }; fee = record { e8s = 0 }; to = "496d10c35b260217613ff59523e843a8b2bc087685a6550d4837904e37e3def6" })'

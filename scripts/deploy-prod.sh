@@ -1,23 +1,24 @@
 #!/bin/sh
 
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR/..
+
 IDENTITY=$1
 OPEN_STORAGE_INDEX_CANISTER_ID=$2
 TEST_MODE=$3
 
 # Pass in the dfx identity name, the OpenStorage index canisterId, and test mode (true or false)
 # eg './deploy-local openchat rturd-qaaaa-aaaaf-aabaq-cai true'
-./generate-wasm.sh callback_canister_impl
-./generate-wasm.sh group_canister_impl
-./generate-wasm.sh group_index_canister_impl
-./generate-wasm.sh notifications_canister_impl
-./generate-wasm.sh online_users_aggregator_canister_impl
-./generate-wasm.sh proposals_bot_canister_impl
-./generate-wasm.sh root_canister_impl
-./generate-wasm.sh user_canister_impl
-./generate-wasm.sh user_index_canister_impl
-
-./compress-wasm.sh group_canister_impl
-./compress-wasm.sh user_canister_impl
+./scripts/generate-wasm.sh callback_canister_impl
+./scripts/generate-wasm.sh group_canister_impl
+./scripts/generate-wasm.sh group_index_canister_impl
+./scripts/generate-wasm.sh notifications_canister_impl
+./scripts/generate-wasm.sh online_users_aggregator_canister_impl
+./scripts/generate-wasm.sh proposals_bot_canister_impl
+./scripts/generate-wasm.sh root_canister_impl
+./scripts/generate-wasm.sh user_canister_impl
+./scripts/generate-wasm.sh user_index_canister_impl
 
 ROOT_CANISTER_ID=$(dfx canister --network ic id root)
 USER_INDEX_CANISTER_ID=$(dfx canister --network ic id user_index)
