@@ -45,7 +45,7 @@ fn build_thread_preview(
         let thread_events = all_chat_events.get(Some(root_message_index))?;
         return Some(ThreadPreview {
             root_message,
-            latest_replies: thread_events.latest_message_events(MAX_PREVIEWED_REPLY_COUNT, Some(caller_user_id)),
+            latest_replies: thread_events.latest_messages(MAX_PREVIEWED_REPLY_COUNT, Some(caller_user_id)),
             total_replies: thread_events.next_message_index().into(),
         });
     }

@@ -1111,7 +1111,7 @@ impl ChatEvents {
         self.get_by_index(affected_event_indexes, my_user_id)
     }
 
-    pub fn latest_message_events(&self, message_count: u32, my_user_id: Option<UserId>) -> Vec<EventWrapper<Message>> {
+    pub fn latest_messages(&self, message_count: u32, my_user_id: Option<UserId>) -> Vec<EventWrapper<Message>> {
         self.message_index_map
             .values()
             .rev()
