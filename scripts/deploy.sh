@@ -1,15 +1,19 @@
 #!/bin/sh
 
+# Pass in network name, IC url, identity name, OpenStorage index canisterId, Ledger canisterId, and test mode (true/false)
+# eg './deploy.sh ic https://ic0.app/ openchat rturd-qaaaa-aaaaf-aabaq-cai ryjl3-tyaaa-aaaaa-aaaba-cai false'
+
+NETWORK=$1
+IC_URL=$2
+IDENTITY=$3
+OPEN_STORAGE_INDEX_CANISTER_ID=$4
+LEDGER_CANISTER_ID=$5
+TEST_MODE=$6
+
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-IDENTITY=$1
-OPEN_STORAGE_INDEX_CANISTER_ID=$2
-TEST_MODE=$3
-
-# Pass in the dfx identity name, the OpenStorage index canisterId, and test mode (true or false)
-# eg './deploy-local openchat rturd-qaaaa-aaaaf-aabaq-cai true'
 ./scripts/generate-wasm.sh callback_canister_impl
 ./scripts/generate-wasm.sh group_canister_impl
 ./scripts/generate-wasm.sh group_index_canister_impl
@@ -20,18 +24,17 @@ TEST_MODE=$3
 ./scripts/generate-wasm.sh user_canister_impl
 ./scripts/generate-wasm.sh user_index_canister_impl
 
-ROOT_CANISTER_ID=$(dfx canister --network ic id root)
-USER_INDEX_CANISTER_ID=$(dfx canister --network ic id user_index)
-GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
-NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
-ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network ic id online_users_aggregator)
-CALLBACK_CANISTER_ID=$(dfx canister --network ic id callback)
-PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network ic id proposals_bot)
-LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
+ROOT_CANISTER_ID=$(dfx canister --network $NETWORK id root)
+USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
+GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
+NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications)
+ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network $NETWORK id online_users_aggregator)
+CALLBACK_CANISTER_ID=$(dfx canister --network $NETWORK id callback)
+PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
-  'https://ic0.app/' \
+  $IC_URL \
   $TEST_MODE \
   $IDENTITY \
   $ROOT_CANISTER_ID \

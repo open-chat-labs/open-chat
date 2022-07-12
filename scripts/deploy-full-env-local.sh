@@ -1,14 +1,14 @@
 #!/bin/sh
 
-SCRIPT=$(readlink -f "$0")
-SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR/..
-
-# Deploys everything needed to test OpenChat locally (OpenChat, InternetIdentity and OpenStorage)
+# Deploys everything needed to test OpenChat locally (OpenChat, InternetIdentity, OpenStorage and Ledger)
 
 IDENTITY=$1
 INTERNET_IDENTITY_DIR=$2
 OPEN_STORAGE_DIR=$3
+
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR/..
 
 # Deploy the Internet Identity service
 pushd $INTERNET_IDENTITY_DIR

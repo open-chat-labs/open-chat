@@ -1,36 +1,14 @@
 #!/bin/sh
 
-SCRIPT=$(readlink -f "$0")
-SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR/..
-
 # Pass in the dfx identity name
-# eg './upgrade-canister-local openchat user_index 1.0.0'
+# eg './upgrade-canister-local.sh openchat user_index 1.0.0'
 
 IDENTITY=$1
-CANISTER_TO_UPGRADE=$2
+CANISTER_NAME=$2
 VERSION=$3
 
-./scripts/generate-wasm.sh ${CANISTER_TO_UPGRADE}_canister_impl
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR
 
-ROOT_CANISTER_ID=$(dfx canister id root)
-USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
-GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
-NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications)
-ONLINE_USERS_AGGREGATOR=$(dfx canister id online_users_aggregator)
-CALLBACK_CANISTER_ID=$(dfx canister id callback)
-PROPOSALS_BOT_CANISTER_ID=$(dfx canister id proposals_bot)
-
-cargo run \
-  --manifest-path backend/canister_upgrader/Cargo.toml \
-  'http://127.0.0.1:8000/' \
-  $IDENTITY \
-  $ROOT_CANISTER_ID \
-  $USER_INDEX_CANISTER_ID \
-  $GROUP_INDEX_CANISTER_ID \
-  $NOTIFICATIONS_INDEX_CANISTER_ID \
-  $ONLINE_USERS_AGGREGATOR \
-  $CALLBACK_CANISTER_ID \
-  $PROPOSALS_BOT_CANISTER_ID \
-  $CANISTER_TO_UPGRADE \
-  $VERSION \
+./upgrade-canister.sh local http://127.0.0.1:8000/ $IDENTITY $CANISTER_NAME $VERSION
