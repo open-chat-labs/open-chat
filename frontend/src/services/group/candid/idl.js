@@ -641,9 +641,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadPreviewsArgs = IDL.Record({ 'threads' : IDL.Vec(MessageIndex) });
   const ThreadPreview = IDL.Record({
-    'latest_replies' : IDL.Vec(Message),
+    'latest_replies' : IDL.Vec(ChatEventWrapper),
     'total_replies' : IDL.Nat32,
-    'root_message' : Message,
+    'root_message' : ChatEventWrapper,
   });
   const ThreadPreviewsResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,

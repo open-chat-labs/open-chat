@@ -40,16 +40,13 @@ fn build_thread_preview(
 ) -> Option<ThreadPreview> {
     let all_chat_events = &runtime_state.data.events;
     let main = all_chat_events.main();
-    let root_message_internal = main.message_by_message_index(root_message_index)?;
-    if root_message_internal.index >= min_visible_event_index {
+    let root_message_event_index = main.get_event_index_by_message_index(root_message_index)?;
+    let root_message = main.get_hydrated_event(root_message_event_index, Some(caller_user_id))?;
+    if root_message.index >= min_visible_event_index {
         let thread_events = all_chat_events.get(Some(root_message_index))?;
         return Some(ThreadPreview {
-            root_message: main.hydrate_message(root_message_internal.event, Some(caller_user_id)),
-            latest_replies: thread_events
-                .latest_messages(MAX_PREVIEWED_REPLY_COUNT)
-                .iter()
-                .map(|message_internal| thread_events.hydrate_message(message_internal, Some(caller_user_id)))
-                .collect(),
+            root_message,
+            latest_replies: thread_events.latest_message_events(MAX_PREVIEWED_REPLY_COUNT, Some(caller_user_id)),
             total_replies: thread_events.next_message_index().into(),
         });
     }
