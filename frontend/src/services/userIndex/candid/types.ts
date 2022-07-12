@@ -623,12 +623,12 @@ export interface ThreadSummary {
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
-  'read_up_to' : MessageIndex,
+  'read_up_to' : [] | [MessageIndex],
   'latest_event' : EventIndex,
   'latest_message' : MessageIndex,
 }
 export interface ThreadUpdated {
-  'new_message' : boolean,
+  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
