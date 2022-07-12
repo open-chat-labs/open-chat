@@ -92,13 +92,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let mut first_thread_reply = false;
 
         if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(wrapped_message) = runtime_state
+            if let Some(root_message) = runtime_state
                 .data
                 .events
                 .main()
-                .message_by_message_index(thread_message_index)
+                .message_internal_by_message_index(thread_message_index)
+                .map(|e| e.event)
             {
-                let root_message = wrapped_message.event;
                 if let Some(thread_summary) = &root_message.thread_summary {
                     thread_participants = Some(&thread_summary.participant_ids);
                     root_message_sender = Some(root_message.sender);

@@ -739,9 +739,9 @@ export interface SubscriptionInfo {
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
-  'latest_replies' : Array<ChatEventWrapper>,
+  'latest_replies' : Array<MessageEventWrapper>,
   'total_replies' : number,
-  'root_message' : ChatEventWrapper,
+  'root_message' : MessageEventWrapper,
 }
 export interface ThreadPreviewsArgs { 'threads' : Array<MessageIndex> }
 export type ThreadPreviewsResponse = { 'CallerNotInGroup' : null } |

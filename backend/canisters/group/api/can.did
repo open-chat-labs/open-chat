@@ -446,8 +446,8 @@ type ThreadPreviewsResponse =
 
 type ThreadPreview =
     record {
-        root_message: ChatEventWrapper;
-        latest_replies: vec ChatEventWrapper;
+        root_message: MessageEventWrapper;
+        latest_replies: vec MessageEventWrapper;
         total_replies: nat32;
     };
 

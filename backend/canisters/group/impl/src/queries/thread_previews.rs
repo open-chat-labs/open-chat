@@ -40,8 +40,7 @@ fn build_thread_preview(
 ) -> Option<ThreadPreview> {
     let all_chat_events = &runtime_state.data.events;
     let main = all_chat_events.main();
-    let root_message_event_index = main.get_event_index_by_message_index(root_message_index)?;
-    let root_message = main.get_hydrated_event(root_message_event_index, Some(caller_user_id))?;
+    let root_message = main.message_by_message_index(root_message_index, Some(caller_user_id))?;
     if root_message.index >= min_visible_event_index {
         let thread_events = all_chat_events.get(Some(root_message_index))?;
         return Some(ThreadPreview {

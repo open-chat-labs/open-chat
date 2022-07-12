@@ -739,15 +739,23 @@ impl ChatEvents {
         self.events.get(event_index)
     }
 
-    pub fn get_hydrated_event(&self, event_index: EventIndex, my_user_id: Option<UserId>) -> Option<EventWrapper<ChatEvent>> {
-        self.events.get(event_index).map(|e| self.hydrate_event(e, my_user_id))
-    }
-
     pub fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
         self.events.get_mut(event_index)
     }
 
-    pub fn message_by_message_index(&self, message_index: MessageIndex) -> Option<EventWrapper<&MessageInternal>> {
+    pub fn message_by_message_index(
+        &self,
+        message_index: MessageIndex,
+        my_user_id: Option<UserId>,
+    ) -> Option<EventWrapper<Message>> {
+        self.message_internal_by_message_index(message_index).map(|e| EventWrapper {
+            index: e.index,
+            timestamp: e.timestamp,
+            event: self.hydrate_message(e.event, my_user_id),
+        })
+    }
+
+    pub fn message_internal_by_message_index(&self, message_index: MessageIndex) -> Option<EventWrapper<&MessageInternal>> {
         self.message_index_map
             .get(&message_index)
             .and_then(|e| self.get(*e))
@@ -1103,14 +1111,18 @@ impl ChatEvents {
         self.get_by_index(affected_event_indexes, my_user_id)
     }
 
-    pub fn latest_message_events(&self, message_count: u32, my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
+    pub fn latest_message_events(&self, message_count: u32, my_user_id: Option<UserId>) -> Vec<EventWrapper<Message>> {
         self.message_index_map
             .values()
             .rev()
             .filter_map(|event_index| self.events.get(*event_index))
             .filter_map(|e| {
-                if matches!(e.event, ChatEventInternal::Message(_)) {
-                    Some(self.hydrate_event(e, my_user_id))
+                if let ChatEventInternal::Message(message) = &e.event {
+                    Some(EventWrapper {
+                        index: e.index,
+                        timestamp: e.timestamp,
+                        event: self.hydrate_message(&message, my_user_id),
+                    })
                 } else {
                     None
                 }
