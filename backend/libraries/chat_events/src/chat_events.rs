@@ -947,14 +947,14 @@ impl ChatEvents {
     pub fn hydrate_thread_updated(
         &self,
         message_index: MessageIndex,
-        latest_thread_message_index_update: Option<MessageIndex>,
+        latest_thread_message_index_if_updated: Option<MessageIndex>,
     ) -> ThreadUpdated {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         ThreadUpdated {
             message_index,
             event_index,
-            latest_thread_message_index_update,
+            latest_thread_message_index_if_updated,
         }
     }
 
