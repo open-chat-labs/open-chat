@@ -4,55 +4,55 @@
       "type": "custom",
       "candid": "backend/canisters/root/api/can.did",
       "wasm": "wasms/root_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh root_canister_impl"
+      "build": "./scripts/generate-wasm.sh root_canister_impl"
     },
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",
       "wasm": "wasms/user_index_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh user_index_canister_impl"
+      "build": "./scripts/generate-wasm.sh user_index_canister_impl"
     },
     "group_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",
       "wasm": "wasms/group_index_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh group_index_canister_impl"
+      "build": "./scripts/generate-wasm.sh group_index_canister_impl"
     },
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/can.did",
       "wasm": "wasms/notifications_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh notifications_canister_impl"
+      "build": "./scripts/generate-wasm.sh notifications_canister_impl"
     },
     "online_users_aggregator": {
       "type": "custom",
       "candid": "backend/canisters/online_users_agg/api/can.did",
       "wasm": "wasms/online_users_aggregator_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh online_users_aggregator_canister_impl"
+      "build": "./scripts/generate-wasm.sh online_users_aggregator_canister_impl"
     },
     "callback": {
       "type": "custom",
       "candid": "backend/canisters/callback/api/can.did",
       "wasm": "wasms/callback_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh callback_canister_impl"
+      "build": "./scripts/generate-wasm.sh callback_canister_impl"
     },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",
       "wasm": "wasms/proposals_bot_canister_impl.wasm.gz",
-      "build": "./generate-wasm.sh proposals_bot_canister_impl"
+      "build": "./scripts/generate-wasm.sh proposals_bot_canister_impl"
     },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
       "wasm": "wasms/user_canister_impl.wasm",
-      "build": "./generate-wasm.sh user_canister_impl"
+      "build": "./scripts/generate-wasm.sh user_canister_impl"
     },
     "group": {
       "type": "custom",
       "candid": "backend/canisters/group/api/can.did",
       "wasm": "wasms/group_canister_impl.wasm",
-      "build": "./generate-wasm.sh group_canister_impl"
+      "build": "./scripts/generate-wasm.sh group_canister_impl"
     },
     "website": {
       "source": ["frontend/build", "frontend/public"],
