@@ -25,6 +25,8 @@ import type {
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
     ApiUpdatePermissionsResponse,
+    ApiThreadPreviewsResponse,
+    ApiThreadPreview,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -54,6 +56,8 @@ import type {
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
+    ThreadPreview,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -623,6 +627,36 @@ export function disableInviteCodeResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDisableInviteCodeResponse type received",
+        candid
+    );
+}
+
+export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
+    return {
+        chatId,
+        latestReplies: candid.latest_replies.map(message),
+        totalReplies: candid.total_replies,
+        rootMessage: message(candid.root_message),
+    };
+}
+
+export function threadPreviewsResponse(
+    chatId: string,
+    candid: ApiThreadPreviewsResponse
+): ThreadPreviewsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "thread_previews_success",
+            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
+        };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return {
+            kind: "caller_not_in_group",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected Group.ApiThreadPreviewsResponse type received",
         candid
     );
 }

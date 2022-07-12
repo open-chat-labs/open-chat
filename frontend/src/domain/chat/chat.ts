@@ -1078,6 +1078,20 @@ export type DisableInviteCodeResponse = "not_authorised" | "success";
 
 export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised;
 
+export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
+
+export type ThreadPreviewsSuccess = {
+    kind: "thread_previews_success";
+    threads: ThreadPreview[];
+};
+
+export type ThreadPreview = {
+    chatId: string;
+    latestReplies: Message[];
+    totalReplies: number;
+    rootMessage: Message;
+};
+
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;

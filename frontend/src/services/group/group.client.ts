@@ -29,6 +29,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -57,6 +58,7 @@ import {
     disableInviteCodeResponse,
     resetInviteCodeResponse,
     updatePermissionsResponse,
+    threadPreviewsResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -483,6 +485,17 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleQueryResponse(
             () => this.groupService.reset_invite_code({}),
             resetInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.groupService.thread_previews({
+                    threads: threadRootMessageIndexes,
+                }),
+            (resp) => threadPreviewsResponse(this.chatId, resp)
         );
     }
 }

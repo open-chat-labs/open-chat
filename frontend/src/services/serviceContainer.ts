@@ -69,6 +69,8 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     CurrentChatState,
+    ThreadPreview,
+    ThreadSyncDetails,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -1087,5 +1089,38 @@ export class ServiceContainer implements MarkMessagesRead {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.userClient.unpinChat(chatId);
+    }
+
+    // TODO - figure out how we order these correctly
+    threadPreviews(threadsByChat: Record<string, ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
+        const promises = Promise.all(
+            Object.entries(threadsByChat).map(([chatId, threads]) =>
+                this.getGroupClient(chatId).threadPreviews(
+                    threads.map((t) => t.threadRootMessageIndex)
+                )
+            )
+        );
+        const allThreads = promises.then((responses) =>
+            responses.flatMap((r) =>
+                r.kind === "thread_previews_success"
+                    ? r.threads.map((t) => this.rehydrateThreadPreview(t))
+                    : []
+            )
+        );
+        return allThreads;
+    }
+
+    private rehydrateThreadPreview(thread: ThreadPreview): ThreadPreview {
+        return {
+            ...thread,
+            rootMessage: {
+                ...thread.rootMessage,
+                content: this.rehydrateMessageContent(thread.rootMessage.content),
+            },
+            latestReplies: thread.latestReplies.map((r) => ({
+                ...r,
+                content: this.rehydrateMessageContent(r.content),
+            })),
+        };
     }
 }

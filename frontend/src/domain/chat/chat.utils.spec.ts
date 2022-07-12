@@ -94,6 +94,7 @@ const defaultGroupChat: GroupChatSummary = {
     },
     metrics: emptyChatMetrics(),
     myMetrics: emptyChatMetrics(),
+    latestThreads: [],
 };
 
 function directChatId(id: number): DirectChatSummary {

@@ -1,0 +1,74 @@
+<script lang="ts">
+    import { _ } from "svelte-i18n";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import { rtlStore } from "../../../stores/rtl";
+    import { iconSize } from "../../../stores/iconSize";
+    import { threadsByChatStore } from "../../../stores/chat";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import ThreadPreviewComponent from "./ThreadPreview.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import { push } from "svelte-spa-router";
+    import { getContext, onMount } from "svelte";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import type { ThreadPreview } from "../../../domain/chat/chat";
+
+    const api = getContext<ServiceContainer>(apiKey);
+
+    let threads: ThreadPreview[] = [];
+
+    $: console.log("ThreadPreviews: ", threads);
+
+    onMount(() => {
+        api.threadPreviews($threadsByChatStore).then((t) => (threads = t));
+    });
+</script>
+
+<SectionHeader shadow flush gap>
+    {#if $mobileWidth}
+        <div class="back" class:rtl={$rtlStore} on:click={() => push("/")}>
+            <HoverIcon>
+                {#if $rtlStore}
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                {:else}
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                {/if}
+            </HoverIcon>
+        </div>
+    {/if}
+
+    <div class="icon">🧵</div>
+    <div class="details" class:rtl={$rtlStore}>
+        <h4 class="title">
+            {$_("thread.previewTitle")}
+        </h4>
+    </div>
+</SectionHeader>
+
+<div class="threads">
+    {#each threads as thread, i (thread.rootMessage.messageId)}
+        <ThreadPreviewComponent {thread} />
+    {/each}
+</div>
+
+<style type="text/scss">
+    .icon {
+        @include font-size(fs-180);
+        // text-align: center;
+    }
+
+    .details {
+        flex: 1;
+
+        .title {
+            @include font(book, normal, fs-120);
+            @include ellipsis();
+            margin-bottom: $sp1;
+        }
+    }
+
+    .threads {
+        padding: $sp4 0 $sp4 0;
+    }
+</style>

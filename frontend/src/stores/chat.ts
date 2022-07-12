@@ -1,9 +1,9 @@
 import type {
     ChatSummary,
     CurrentChatState,
-    DirectChatSummary,
     EventWrapper,
     Message,
+    ThreadSyncDetails,
 } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
@@ -103,6 +103,47 @@ export const chatSummariesListStore = derived(
             .sort(compareChats);
         return pinned.concat(unpinned);
     }
+);
+
+// this gives us a list of all threads that have unread messages
+// Resolves to a Record<chatId, Set<messageIndex>>
+// TODO - we want these at some point to be ordered by lastUpdated - not sure yet whether this is the place to do it
+export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
+    return summaries.reduce((result, chat) => {
+        if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
+            result[chat.chatId] = chat.latestThreads;
+        }
+        return result;
+    }, {} as Record<string, ThreadSyncDetails[]>);
+});
+
+function countThreads<T>(things: Record<string, T[]>): number {
+    return Object.values(things)
+        .map((ts) => ts.length)
+        .reduce((total, n) => total + n, 0);
+}
+
+// this gives us a list of all thread root message indexes that have unread messages for each chat
+// Resolves to a Record<chatId, number[]>
+export const staleThreadsByChatStore = derived([threadsByChatStore], ([threads]) => {
+    return Object.entries(threads).reduce((result, [chatId, threadSyncs]) => {
+        const unreadThreadIdxs = threadSyncs
+            .filter((t) => t.readUpTo === undefined || t.readUpTo < t.latestMessageIndex)
+            .map((t) => t.threadRootMessageIndex);
+        if (unreadThreadIdxs.length > 0) {
+            result[chatId] = unreadThreadIdxs;
+        }
+        return result;
+    }, {} as Record<string, number[]>);
+});
+
+// returns the totol number of threads that we are involved in
+export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
+    countThreads(threads)
+);
+
+export const numberOfStaleThreadsStore = derived([staleThreadsByChatStore], ([threads]) =>
+    countThreads(threads)
 );
 
 export const chatsLoading = writable(false);
@@ -207,11 +248,13 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-export function clearSelectedChat(): void {
+export function clearSelectedChat(navigate = true): void {
     selectedChatStore.update((controller) => {
         if (controller !== undefined) {
             controller.destroy();
-            push("/");
+            if (navigate) {
+                push("/");
+            }
         }
         return undefined;
     });

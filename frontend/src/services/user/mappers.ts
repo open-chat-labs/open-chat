@@ -596,7 +596,6 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
 
 export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
     if ("Success" in candid) {
-        console.log("InitialState response: ", candid.Success);
         return {
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedChats: candid.Success.pinned_chats.map((u) => u.toString()),
@@ -610,7 +609,6 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
-        console.log("Updates response: ", candid.Success);
         return {
             blockedUsers: optional(
                 candid.Success.blocked_users_v2,
@@ -874,8 +872,5 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("Unknown" in candid) {
         return bytesToHexString(candid.Unknown);
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiCryptoAccountFull type received",
-        candid
-    );
+    throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
 }

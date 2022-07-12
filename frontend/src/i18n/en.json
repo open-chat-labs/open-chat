@@ -532,8 +532,10 @@
     "thread": {
         "menu": "Reply in thread",
         "title": "Thread",
+        "previewTitle": "Threads",
         "replies": "replies",
         "reply": "reply",
+        "moreMessages": "- {number} more message(s) -",
         "lastMessage": "(last message {date}) ",
         "nreplies": "{number} {replies} {message}"
     },
