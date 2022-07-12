@@ -8,19 +8,6 @@ use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use types::{CanisterId, CanisterWasm, Version};
 
-pub async fn upgrade_root_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
-    upgrade_top_level_canister(
-        identity,
-        url,
-        root_canister_id,
-        version,
-        root_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::Root,
-    )
-    .await;
-    println!("Root canister upgraded");
-}
-
 pub async fn upgrade_group_index_canister(
     identity: BasicIdentity,
     url: String,
@@ -36,18 +23,26 @@ pub async fn upgrade_group_index_canister(
         CanisterName::GroupIndex,
     )
     .await;
+
     println!("Group index canister upgraded");
 }
 
-pub async fn upgrade_user_index_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
-    let agent = build_ic_agent(url, identity).await;
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
-    let args = root_canister::upgrade_user_index_canister::Args {
-        user_index_canister_wasm,
-    };
-    root_canister_client::upgrade_user_index_canister(&agent, &root_canister_id, &args)
-        .await
-        .unwrap_or_else(|e| panic!("Failed to upgrade user_index canister. Error: {e:?}"));
+pub async fn upgrade_user_index_canister(
+    identity: BasicIdentity,
+    url: String,
+    user_index_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        user_index_canister_id,
+        version,
+        user_index_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::UserIndex,
+    )
+    .await;
+
     println!("User index canister upgraded");
 }
 
@@ -66,6 +61,7 @@ pub async fn upgrade_notifications_canister(
         CanisterName::Notifications,
     )
     .await;
+
     println!("Notifications canister upgraded");
 }
 

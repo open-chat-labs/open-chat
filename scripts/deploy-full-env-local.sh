@@ -19,7 +19,6 @@ popd
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 ledger
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
