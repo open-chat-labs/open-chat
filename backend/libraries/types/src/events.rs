@@ -208,7 +208,7 @@ pub enum GroupInviteCodeChange {
 pub struct ThreadUpdated {
     pub message_index: MessageIndex,
     pub event_index: EventIndex,
-    pub latest_thread_message_index_update: Option<MessageIndex>,
+    pub latest_thread_message_index_if_updated: Option<MessageIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
