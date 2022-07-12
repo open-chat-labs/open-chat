@@ -1,13 +1,16 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
-    import type { ThreadPreview } from "../../../domain/chat/chat";
+    import type { GroupChatSummary, Message, ThreadPreview } from "../../../domain/chat/chat";
     import { _ } from "svelte-i18n";
     import { push } from "svelte-spa-router";
     import { chatSummariesStore } from "../../../stores/chat";
     import ChatMessage from "../ChatMessage.svelte";
     import { getContext } from "svelte";
-    import type { CreatedUser, UserSummary } from "../../../domain/user/user";
+    import { CreatedUser, UserSummary, AvatarSize } from "../../../domain/user/user";
+    import Markdown from "../Markdown.svelte";
     import { currentUserKey } from "../../../stores/user";
+    import { groupAvatarUrl } from "../../../domain/user/user.utils";
+    import Avatar from "../../Avatar.svelte";
+    import { getContentAsText } from "../../../domain/chat/chat.utils";
 
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
@@ -18,7 +21,12 @@
 
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
 
-    $: chat = $chatSummariesStore[thread.chatId];
+    $: chat = $chatSummariesStore[thread.chatId] as GroupChatSummary;
+
+    $: chatData = {
+        name: chat.name,
+        avatarUrl: groupAvatarUrl(chat),
+    };
 
     $: user = {
         kind: "user",
@@ -31,21 +39,33 @@
     $: console.log("Thread Preview: ", thread);
 
     function selectThread() {
-        push(`/${thread.chatId}/${thread.rootMessage.messageIndex}`);
+        push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}`);
     }
 </script>
 
 <div class="thread" on:click={selectThread}>
-    <SectionHeader flush gap>
-        <h4 class="title">
-            {chat.kind === "group_chat" && chat.name}
-        </h4>
-    </SectionHeader>
+    <div class="header">
+        <div class="avatar">
+            <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
+        </div>
+        <div class="details">
+            <h4 class="title">
+                {chat.kind === "group_chat" && chat.name}
+            </h4>
+            <div class="root-msg">
+                <Markdown
+                    text={getContentAsText(thread.rootMessage.event.content)}
+                    oneLine={true}
+                    suppressLinks={true}
+                    inline={false} />
+            </div>
+        </div>
+    </div>
 
     <div class="body">
         <div class="root-msg">
             <ChatMessage
-                senderId={thread.rootMessage.sender}
+                senderId={thread.rootMessage.event.sender}
                 focused={false}
                 {observer}
                 confirmed={true}
@@ -55,7 +75,7 @@
                 chatId={thread.chatId}
                 chatType={chat.kind}
                 {user}
-                me={thread.rootMessage.sender === currentUser.userId}
+                me={thread.rootMessage.event.sender === currentUser.userId}
                 first={true}
                 last={true}
                 preview={true}
@@ -71,18 +91,18 @@
                 canReplyInThread={false}
                 publicGroup={chat.kind === "group_chat" && chat.public}
                 editing={false}
-                eventIndex={0}
-                timestamp={BigInt(0)}
-                msg={thread.rootMessage} />
+                eventIndex={thread.rootMessage.index}
+                timestamp={thread.rootMessage.timestamp}
+                msg={thread.rootMessage.event} />
         </div>
         {#if missingMessages > 0}
             <div class="separator">
                 {$_("thread.moreMessages", { values: { number: missingMessages.toString() } })}
             </div>
         {/if}
-        {#each thread.latestReplies.reverse() as msg, i (msg.messageId)}
+        {#each thread.latestReplies as evt, i (evt.event.messageId)}
             <ChatMessage
-                senderId={msg.sender}
+                senderId={evt.event.sender}
                 focused={false}
                 {observer}
                 confirmed={true}
@@ -92,9 +112,9 @@
                 chatId={thread.chatId}
                 chatType={chat.kind}
                 {user}
-                me={msg.sender === currentUser.userId}
-                first={true}
-                last={true}
+                me={evt.event.sender === currentUser.userId}
+                first={i === 0}
+                last={i === thread.latestReplies.length - 1}
                 preview={true}
                 inThread={true}
                 pinned={false}
@@ -108,9 +128,9 @@
                 canReplyInThread={false}
                 publicGroup={chat.kind === "group_chat" && chat.public}
                 editing={false}
-                eventIndex={0}
-                timestamp={BigInt(0)}
-                {msg} />
+                eventIndex={evt.index}
+                timestamp={evt.timestamp}
+                msg={evt.event} />
         {/each}
     </div>
 </div>
@@ -137,5 +157,36 @@
     }
     .body {
         padding: $sp4;
+    }
+    .header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: $sp3;
+        height: toRem(60);
+        margin-bottom: $sp3;
+        background-color: var(--section-bg);
+        border: 1px solid var(--section-bd);
+        color: var(--section-txt);
+        gap: $sp4;
+    }
+    .avatar {
+        flex: 0 0 40px;
+    }
+    .details {
+        flex: 1;
+        overflow: hidden;
+
+        .title {
+            @include font(book, normal, fs-100);
+            color: var(--chatSummary-txt1);
+            @include ellipsis();
+        }
+
+        .root-msg {
+            color: var(--chatSummary-txt2);
+            @include font(book, normal, fs-80);
+        }
     }
 </style>

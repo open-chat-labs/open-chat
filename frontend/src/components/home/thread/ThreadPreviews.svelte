@@ -25,31 +25,33 @@
     });
 </script>
 
-<SectionHeader shadow flush gap>
-    {#if $mobileWidth}
-        <div class="back" class:rtl={$rtlStore} on:click={() => push("/")}>
-            <HoverIcon>
-                {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                {/if}
-            </HoverIcon>
+<div class="wrapper">
+    <SectionHeader shadow flush gap>
+        {#if $mobileWidth}
+            <div class="back" class:rtl={$rtlStore} on:click={() => push("/")}>
+                <HoverIcon>
+                    {#if $rtlStore}
+                        <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                    {:else}
+                        <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                    {/if}
+                </HoverIcon>
+            </div>
+        {/if}
+
+        <div class="icon">🧵</div>
+        <div class="details" class:rtl={$rtlStore}>
+            <h4 class="title">
+                {$_("thread.previewTitle")}
+            </h4>
         </div>
-    {/if}
+    </SectionHeader>
 
-    <div class="icon">🧵</div>
-    <div class="details" class:rtl={$rtlStore}>
-        <h4 class="title">
-            {$_("thread.previewTitle")}
-        </h4>
+    <div class="threads">
+        {#each threads as thread, i (thread.rootMessage.event.messageId)}
+            <ThreadPreviewComponent {thread} />
+        {/each}
     </div>
-</SectionHeader>
-
-<div class="threads">
-    {#each threads as thread, i (thread.rootMessage.messageId)}
-        <ThreadPreviewComponent {thread} />
-    {/each}
 </div>
 
 <style type="text/scss">
@@ -69,6 +71,17 @@
     }
 
     .threads {
-        padding: $sp4 0 $sp4 0;
+        padding: $sp3 0 $sp3 0;
+        flex: auto;
+        overflow-x: hidden;
+        @include nice-scrollbar();
+    }
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        position: relative;
     }
 </style>

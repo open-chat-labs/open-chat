@@ -1087,9 +1087,9 @@ export type ThreadPreviewsSuccess = {
 
 export type ThreadPreview = {
     chatId: string;
-    latestReplies: Message[];
+    latestReplies: EventWrapper<Message>[];
     totalReplies: number;
-    rootMessage: Message;
+    rootMessage: EventWrapper<Message>;
 };
 
 export type ResetInviteCodeSuccess = {

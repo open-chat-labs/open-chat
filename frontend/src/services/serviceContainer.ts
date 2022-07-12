@@ -1115,11 +1115,17 @@ export class ServiceContainer implements MarkMessagesRead {
             ...thread,
             rootMessage: {
                 ...thread.rootMessage,
-                content: this.rehydrateMessageContent(thread.rootMessage.content),
+                event: {
+                    ...thread.rootMessage.event,
+                    content: this.rehydrateMessageContent(thread.rootMessage.event.content),
+                },
             },
             latestReplies: thread.latestReplies.map((r) => ({
                 ...r,
-                content: this.rehydrateMessageContent(r.content),
+                event: {
+                    ...r.event,
+                    content: this.rehydrateMessageContent(r.event.content),
+                },
             })),
         };
     }

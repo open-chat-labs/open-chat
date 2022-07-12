@@ -634,9 +634,19 @@ export function disableInviteCodeResponse(
 export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
     return {
         chatId,
-        latestReplies: candid.latest_replies.map(message),
+        latestReplies: candid.latest_replies
+            .map(messageEvent)
+            .sort((e1, e2) => e1.index - e2.index),
         totalReplies: candid.total_replies,
-        rootMessage: message(candid.root_message),
+        rootMessage: messageEvent(candid.root_message),
+    };
+}
+
+function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
+    return {
+        event: message(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
     };
 }
 
