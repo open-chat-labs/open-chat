@@ -28,12 +28,11 @@ RUN cargo install --version 0.3.4 ic-cdk-optimizer
 COPY . /build
 WORKDIR /build
 
-RUN sh ./generate-wasm.sh callback_canister_impl
-RUN sh ./generate-wasm.sh group_canister_impl
-RUN sh ./generate-wasm.sh group_index_canister_impl
-RUN sh ./generate-wasm.sh notifications_canister_impl
-RUN sh ./generate-wasm.sh online_users_aggregator_canister_impl
-RUN sh ./generate-wasm.sh proposals_bot_canister_impl
-RUN sh ./generate-wasm.sh root_canister_impl
-RUN sh ./generate-wasm.sh user_canister_impl
-RUN sh ./generate-wasm.sh user_index_canister_impl
+RUN sh ./scripts/generate-wasm.sh callback_canister_impl
+RUN sh ./scripts/generate-wasm.sh group_canister_impl
+RUN sh ./scripts/generate-wasm.sh group_index_canister_impl
+RUN sh ./scripts/generate-wasm.sh notifications_canister_impl
+RUN sh ./scripts/generate-wasm.sh online_users_aggregator_canister_impl
+RUN sh ./scripts/generate-wasm.sh proposals_bot_canister_impl
+RUN sh ./scripts/generate-wasm.sh user_canister_impl
+RUN sh ./scripts/generate-wasm.sh user_index_canister_impl

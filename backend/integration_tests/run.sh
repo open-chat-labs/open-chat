@@ -127,7 +127,6 @@ if [[ "$no_build" != true ]]; then
     ./generate-wasm.sh group_index_canister_impl
     ./generate-wasm.sh notifications_canister_impl
     ./generate-wasm.sh online_users_aggregator_canister_impl
-    ./generate-wasm.sh root_canister_impl
     ./generate-wasm.sh user_canister_impl
     ./generate-wasm.sh user_index_canister_impl
 
@@ -166,7 +165,6 @@ ln -fs ../../../target/wasm32-unknown-unknown/release/callback_canister_impl-opt
 ln -fs ../../../target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/online_users_aggregator_canister_impl-opt.wasm local-bin/
-ln -fs ../../../target/wasm32-unknown-unknown/release/root_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/user_index_canister_impl-opt.wasm local-bin/
 
 ln -fs ../../../target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm.xz local-bin/

@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 docker build -t openchat .
 
 container_id=$(docker create openchat)
-rm -r wasms
+rm -rf wasms
 docker cp $container_id:/build/wasms wasms
 docker rm --volumes $container_id
 
