@@ -1,5 +1,5 @@
 # To build run 'docker build . -t openchat'
-FROM ubuntu:20.04 as builder
+FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
 ARG rust_version=1.62.0
