@@ -703,8 +703,6 @@ dependencies = [
  "notifications_canister",
  "online_users_aggregator_canister",
  "proposals_bot_canister",
- "root_canister",
- "root_canister_client",
  "serde",
  "types 0.1.0",
  "user_canister",
@@ -3433,47 +3431,6 @@ dependencies = [
  "byteorder",
  "rmp",
  "serde",
-]
-
-[[package]]
-name = "root_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen 0.1.0",
- "serde",
- "types 0.1.0",
-]
-
-[[package]]
-name = "root_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client_macros 0.1.0",
- "ic-agent",
- "root_canister",
- "types 0.1.0",
-]
-
-[[package]]
-name = "root_canister_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "http_request",
- "ic-cdk 0.5.2",
- "ic-cdk-macros",
- "root_canister",
- "serde",
- "stable_memory",
- "tracing",
- "types 0.1.0",
- "user_index_canister",
- "utils",
 ]
 
 [[package]]

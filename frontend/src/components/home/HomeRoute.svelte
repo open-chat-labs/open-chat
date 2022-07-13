@@ -9,4 +9,6 @@
     $: api = $apiStore!;
 </script>
 
-<Home {user} {api} {logout} on:logout />
+{#if user !== undefined}
+    <Home {user} {api} {logout} on:logout />
+{/if}

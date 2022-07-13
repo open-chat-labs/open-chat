@@ -1,11 +1,5 @@
 {
   "canisters": {
-    "root": {
-      "type": "custom",
-      "candid": "backend/canisters/root/api/can.did",
-      "wasm": "wasms/root_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh root_canister_impl"
-    },
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",

@@ -776,8 +776,6 @@ dependencies = [
  "notifications_canister",
  "online_users_aggregator_canister",
  "proposals_bot_canister",
- "root_canister",
- "root_canister_client",
  "serde",
  "types",
  "user_canister",
@@ -6380,27 +6378,6 @@ checksum = "23d83c02c429044d58474eaf5ae31e062d0de894e21125b47437ec0edc1397e6"
 dependencies = [
  "libc",
  "librocksdb-sys",
-]
-
-[[package]]
-name = "root_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen",
- "serde",
- "types",
-]
-
-[[package]]
-name = "root_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client_macros",
- "ic-agent",
- "root_canister",
- "types",
 ]
 
 [[package]]
