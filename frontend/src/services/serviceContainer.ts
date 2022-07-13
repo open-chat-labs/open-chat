@@ -781,10 +781,6 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.setUsername(userId, username);
     }
 
-    differentIdentity(identity: Identity): boolean {
-        return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
-    }
-
     changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.getGroupClient(chatId).changeRole(userId, newRole);
     }

@@ -80,9 +80,7 @@
     }
 
     function loadUser(id: Identity) {
-        if (api === undefined || api.differentIdentity(id)) {
-            api = new ServiceContainer(id);
-        }
+        api = new ServiceContainer(id);
         api.getCurrentUser().then((user) => {
             switch (user.kind) {
                 case "unknown_user":
@@ -172,6 +170,8 @@
     }
 
     const allRoutes = routes(performLogout);
+
+    $: console.log("Identity state: ", $identityState);
 </script>
 
 <svelte:head>
