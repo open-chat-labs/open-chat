@@ -990,7 +990,13 @@ export type JoinGroupResponse =
 export type MarkReadRequest = {
     ranges: DRange;
     chatId: string;
+    threads: ThreadRead[];
 }[];
+
+export type ThreadRead = {
+    threadRootMessageIndex: number;
+    readUpTo: number;
+};
 
 export type MarkReadResponse = "success";
 

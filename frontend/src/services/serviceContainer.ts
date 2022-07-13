@@ -717,7 +717,18 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
-                messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                const threadsRead =
+                    chat.kind === "group_chat"
+                        ? chat.latestThreads
+                              .filter((t) => t.readUpTo !== undefined)
+                              .map((t) => ({
+                                  threadRootMessageIndex: t.threadRootMessageIndex,
+                                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                  readUpTo: t.readUpTo!,
+                              }))
+                        : [];
+
+                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsRead);
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";

@@ -73,6 +73,7 @@
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
+    import { messagesRead } from "stores/markRead";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -187,10 +188,28 @@
                     goToMessageIndex(focusMessageIndex, false);
                 }
             });
+            const lastLoadedMessageIdx = lastMessageIndex($events);
+            if (lastLoadedMessageIdx !== undefined) {
+                messagesRead.markThreadRead(
+                    $chat.chatId,
+                    threadRootMessageIndex,
+                    lastLoadedMessageIdx
+                );
+            }
         }
 
         initialised = true;
         loading = false;
+    }
+
+    function lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const evt = events[i].event;
+            if (evt.kind === "message") {
+                return evt.messageIndex;
+            }
+        }
+        return undefined;
     }
 
     function calculateFromBottom(): number {

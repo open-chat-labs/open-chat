@@ -27,7 +27,7 @@
 
     $: chat = $chatSummariesStore[thread.chatId] as GroupChatSummary;
 
-    $: unreadCount = thread.latestMessageIndex - (thread.readUpTo ?? 0);
+    $: unreadCount = thread.latestMessageIndex - (thread.readUpTo ?? -1);
 
     $: chatData = {
         name: chat.name,
@@ -41,8 +41,6 @@
         lastOnline: Date.now(),
         updated: BigInt(Date.now()),
     } as UserSummary;
-
-    $: console.log("Thread Preview: ", thread);
 
     function selectThread() {
         push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}`);

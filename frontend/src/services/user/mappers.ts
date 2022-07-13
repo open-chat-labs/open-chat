@@ -609,6 +609,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        console.log("Updates response: ", candid.Success);
         return {
             blockedUsers: optional(
                 candid.Success.blocked_users_v2,
