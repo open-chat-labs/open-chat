@@ -3,6 +3,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rtlStore } from "../../../stores/rtl";
     import { iconSize } from "../../../stores/iconSize";
+    import { userStore } from "../../../stores/user";
     import { threadsByChatStore } from "../../../stores/chat";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -12,7 +13,9 @@
     import { push } from "svelte-spa-router";
     import { getContext, onMount } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { ThreadPreview } from "../../../domain/chat/chat";
+    import type { EventWrapper, Message, ThreadPreview } from "../../../domain/chat/chat";
+    import { userIdsFromEvents } from "domain/chat/chat.utils";
+    import { missingUserIds } from "domain/user/user.utils";
 
     const api = getContext<ServiceContainer>(apiKey);
 
@@ -20,8 +23,31 @@
 
     $: console.log("ThreadPreviews: ", threads);
 
+    function eventsFromThreadPreviews(threads: ThreadPreview[]): EventWrapper<Message>[] {
+        return threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
+    }
+
+    function updateUserStore(userIdsFromEvents: Set<string>) {
+        api.getUsers(
+            {
+                userGroups: [
+                    {
+                        users: missingUserIds($userStore, new Set<string>(userIdsFromEvents)),
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            },
+            true
+        ).then((resp) => {
+            userStore.addMany(resp.users);
+        });
+    }
+
     onMount(() => {
-        api.threadPreviews($threadsByChatStore).then((t) => (threads = t));
+        api.threadPreviews($threadsByChatStore).then((t) => {
+            threads = t;
+            updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
+        });
     });
 </script>
 
