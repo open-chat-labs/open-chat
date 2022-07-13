@@ -10,7 +10,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications

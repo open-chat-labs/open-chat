@@ -19,7 +19,6 @@ popd
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 ledger
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
@@ -36,7 +35,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id index)
 
 # Deploy OpenStorage canisters
-./scripts/deploy-local.sh $IDENTITY
+./deploy-local.sh $IDENTITY
 
 # Add user_index and group_index as OpenStorage service principals
 dfx --identity=$IDENTITY canister call index add_service_principals "(record { principals=vec { principal \"$USER_INDEX_CANISTER_ID\"; principal \"$GROUP_INDEX_CANISTER_ID\" } })"
