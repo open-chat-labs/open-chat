@@ -71,6 +71,7 @@ import type {
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
+    EnhancedThreadPreview,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -1092,20 +1093,34 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     // TODO - figure out how we order these correctly
-    threadPreviews(threadsByChat: Record<string, ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
+    threadPreviews(
+        threadsByChat: Record<string, ThreadSyncDetails[]>
+    ): Promise<EnhancedThreadPreview[]> {
         const promises = Promise.all(
-            Object.entries(threadsByChat).map(([chatId, threads]) =>
+            Object.entries(threadsByChat).map(([chatId, threadSyncs]) =>
                 this.getGroupClient(chatId).threadPreviews(
-                    threads.map((t) => t.threadRootMessageIndex)
+                    threadSyncs.map((t) => t.threadRootMessageIndex)
                 )
             )
         );
         const allThreads = promises.then((responses) =>
-            responses.flatMap((r) =>
-                r.kind === "thread_previews_success"
-                    ? r.threads.map((t) => this.rehydrateThreadPreview(t))
-                    : []
-            )
+            responses.flatMap((r) => {
+                if (r.kind !== "thread_previews_success") return [];
+                return r.threads.map((t) => {
+                    const syncChat = threadsByChat[t.chatId];
+                    const syncThread = syncChat?.find(
+                        (s) => s.threadRootMessageIndex === t.rootMessage.event.messageIndex
+                    );
+                    if (syncThread === undefined)
+                        throw new Error(
+                            "Unable to find thread sync details that correlates with thread preview"
+                        );
+                    return {
+                        ...syncThread,
+                        ...this.rehydrateThreadPreview(t),
+                    };
+                });
+            })
         );
         return allThreads;
     }

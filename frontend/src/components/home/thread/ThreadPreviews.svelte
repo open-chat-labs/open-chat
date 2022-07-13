@@ -13,17 +13,17 @@
     import { push } from "svelte-spa-router";
     import { getContext, onMount } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { EventWrapper, Message, ThreadPreview } from "../../../domain/chat/chat";
+    import type { EnhancedThreadPreview, EventWrapper, Message } from "../../../domain/chat/chat";
     import { userIdsFromEvents } from "domain/chat/chat.utils";
     import { missingUserIds } from "domain/user/user.utils";
 
     const api = getContext<ServiceContainer>(apiKey);
 
-    let threads: ThreadPreview[] = [];
+    let threads: EnhancedThreadPreview[] = [];
 
     $: console.log("ThreadPreviews: ", threads);
 
-    function eventsFromThreadPreviews(threads: ThreadPreview[]): EventWrapper<Message>[] {
+    function eventsFromThreadPreviews(threads: EnhancedThreadPreview[]): EventWrapper<Message>[] {
         return threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
     }
 
@@ -101,6 +101,9 @@
         flex: auto;
         overflow-x: hidden;
         @include nice-scrollbar();
+        @include mobile() {
+            padding: 0;
+        }
     }
 
     .wrapper {

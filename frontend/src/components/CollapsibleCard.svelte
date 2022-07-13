@@ -11,6 +11,7 @@
     export let headerText: string;
     export let open = true;
     export let bordered = false;
+    export let transparent = false;
 
     function toggle() {
         open = !open;
@@ -19,7 +20,7 @@
     }
 </script>
 
-<div class="card" class:bordered>
+<div class="card" class:bordered class:transparent>
     <div class="header" class:open on:click={toggle}>
         <slot name="titleSlot">
             <h4>{headerText}</h4>
@@ -40,6 +41,10 @@
     .card {
         background-color: var(--collapsible-bg);
 
+        &.transparent {
+            background-color: inherit;
+        }
+
         &.bordered {
             border: var(--collapsible-header-bd);
         }
@@ -57,6 +62,10 @@
         &.open {
             // border-bottom: 1px solid #ddd;
             border-bottom: var(--collapsible-header-bd);
+        }
+
+        @include mobile() {
+            padding: $sp3;
         }
     }
 

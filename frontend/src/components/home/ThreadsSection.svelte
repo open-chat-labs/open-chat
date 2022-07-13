@@ -1,5 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { pop } from "../../utils/transition";
     import { numberOfStaleThreadsStore } from "../../stores/chat";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
@@ -18,6 +19,16 @@
             {$_("thread.previewTitle")}
         </h4>
     </div>
+    {#if $numberOfStaleThreadsStore > 0}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("thread.unread", {
+                values: { count: $numberOfStaleThreadsStore.toString() },
+            })}
+            class="unread-count">
+            {$numberOfStaleThreadsStore > 999 ? "999+" : $numberOfStaleThreadsStore}
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -68,15 +79,9 @@
                 @include font(bold, normal, fs-100);
             }
         }
+    }
 
-        // .name-date {
-        //     display: flex;
-        //     margin-bottom: $sp1;
-        // }
-
-        // .chat-msg {
-        //     color: var(--chatSummary-txt2);
-        //     @include font(book, normal, fs-80);
-        // }
+    .unread-count {
+        @include unread();
     }
 </style>

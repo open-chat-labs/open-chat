@@ -535,6 +535,8 @@
         "previewTitle": "Threads",
         "replies": "replies",
         "reply": "reply",
+        "openThread": "open thread ",
+        "unread": "{count} thread(s) with unread messages",
         "moreMessages": "- {number} more message(s) -",
         "lastMessage": "(last message {date}) ",
         "nreplies": "{number} {replies} {message}"

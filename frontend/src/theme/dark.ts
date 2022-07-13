@@ -261,5 +261,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
         toggle: {
             bg: dark45,
         },
+
+        thread: {
+            preview: {
+                bg: "transparent",
+            },
+        },
     };
 }
