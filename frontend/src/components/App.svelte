@@ -170,8 +170,6 @@
     }
 
     const allRoutes = routes(performLogout);
-
-    $: console.log("Identity state: ", $identityState);
 </script>
 
 <svelte:head>
