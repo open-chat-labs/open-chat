@@ -1,15 +1,25 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { numberOfStaleThreadsStore } from "../../stores/chat";
+    import { numberOfStaleThreadsStore, threadsByChatStore } from "../../stores/chat";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
+    import { onDestroy } from "svelte";
+    import { messagesRead } from "../../stores/markRead";
 
     $: selected = $pathParams.chatId === "threads";
+
+    let numStaleThreads = 0;
+
+    const unsub = messagesRead.subscribe(() => {
+        numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
+    });
 
     function onClick() {
         push("/threads");
     }
+
+    onDestroy(unsub);
 </script>
 
 <div role="button" class="threads" class:selected on:click={onClick}>

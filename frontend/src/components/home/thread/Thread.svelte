@@ -59,7 +59,6 @@
     import { dedupe } from "../../../utils/list";
     import { selectReaction, toggleReactionInEventList } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
-    import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
@@ -74,6 +73,7 @@
     } from "../../../domain/webrtc/webrtc";
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "stores/markRead";
+    import { unconfirmedThread } from "stores/unconfirmed";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -91,7 +91,6 @@
     let selectingGif = false;
     let loading = false;
     let initialised = false;
-    let unconfirmed = createUnconfirmedStore();
     let messagesDiv: HTMLDivElement | undefined;
     let fromBottom: Writable<number> = writable(0);
     let withinThreshold: Readable<boolean> = derived([fromBottom], ([$fromBottom]) => {
@@ -151,6 +150,7 @@
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
     $: pollsAllowed = canCreatePolls($chat);
+    $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
 
     const dispatch = createEventDispatcher();
 
@@ -304,7 +304,7 @@
     }
 
     function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-        unconfirmed.delete(threadRootMessageIndex, message.messageId);
+        unconfirmedThread.delete(unconfirmedKey, message.messageId);
         removeMessage(message.messageId, message.userId);
     }
 
@@ -354,7 +354,7 @@
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            unconfirmed.add(threadRootMessageIndex, event);
+            unconfirmedThread.add(unconfirmedKey, event);
             events.update((evts) => [...evts, event]);
             scrollBottom();
 
@@ -370,6 +370,7 @@
                         }
                         trackEvent("sent_threaded_message");
                     } else {
+                        unconfirmedThread.delete(unconfirmedKey, msg.messageId);
                         removeMessage(msg.messageId, currentUser.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
@@ -377,7 +378,7 @@
                 })
                 .catch((err) => {
                     console.log(err);
-                    unconfirmed.delete($chat.chatId, msg.messageId);
+                    unconfirmedThread.delete(unconfirmedKey, msg.messageId);
                     removeMessage(msg.messageId, currentUser.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
@@ -395,7 +396,7 @@
     }
 
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
-        if (unconfirmed.delete(threadRootMessageIndex, candidate.messageId)) {
+        if (unconfirmedThread.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = {
                 event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
@@ -780,8 +781,8 @@
                             senderId={evt.event.sender}
                             focused={evt.event.messageIndex === focusMessageIndex}
                             {observer}
-                            confirmed={!unconfirmed.contains(
-                                threadRootMessageIndex,
+                            confirmed={!unconfirmedThread.contains(
+                                unconfirmedKey,
                                 evt.event.messageId
                             )}
                             senderTyping={isTyping(

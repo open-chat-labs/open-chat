@@ -52,6 +52,7 @@ import { emptyChatMetrics } from "./chat.utils.shared";
 import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
+import type { UnconfirmedMessagesByKey } from "stores/unconfirmedFactory";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -610,10 +611,41 @@ function mentionsFromMessages(userId: string, messages: EventWrapper<Message>[])
     }, [] as Mention[]);
 }
 
+function mergeUnconfirmedThreadsIntoSummary(
+    chat: GroupChatSummary,
+    unconfirmedThread: UnconfirmedMessagesByKey<string>
+): GroupChatSummary {
+    return {
+        ...chat,
+        latestThreads: chat.latestThreads.map((t) => {
+            const unconfirmedMsgs =
+                unconfirmedThread[`${chat.chatId}_${t.threadRootMessageIndex}`]?.messages ?? [];
+            if (unconfirmedMsgs.length > 0) {
+                let msgIdx = t.latestMessageIndex;
+                let evtIdx = t.latestEventIndex;
+                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
+                }
+                if (latestUnconfirmedMessage.index > evtIdx) {
+                    evtIdx = latestUnconfirmedMessage.index;
+                }
+                return {
+                    ...t,
+                    latestEventIndex: evtIdx,
+                    latestMessageIndex: msgIdx,
+                };
+            }
+            return t;
+        }),
+    };
+}
+
 export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmedMessages?: EventWrapper<Message>[]
+    unconfirmedMessages: EventWrapper<Message>[] | undefined,
+    unconfirmedThread: UnconfirmedMessagesByKey<string>
 ): ChatSummary {
     if (unconfirmedMessages === undefined) return chatSummary;
 
@@ -637,7 +669,7 @@ export function mergeUnconfirmedIntoSummary(
 
     return chatSummary.kind === "group_chat"
         ? {
-              ...chatSummary,
+              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmedThread),
               latestMessage,
               latestEventIndex,
               mentions,

@@ -3,7 +3,7 @@ import { createSetStore } from "./setStore";
 import type { EventWrapper, Message } from "../domain/chat/chat";
 
 type KeyType = string | number | symbol;
-type UnconfirmedMessagesByKey<T extends KeyType> = Record<
+export type UnconfirmedMessagesByKey<T extends KeyType> = Record<
     T,
     { messages: EventWrapper<Message>[]; messageIds: Set<bigint> }
 >;

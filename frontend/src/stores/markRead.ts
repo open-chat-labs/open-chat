@@ -1,9 +1,16 @@
 import DRange from "drange";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
-import type { MarkReadRequest, MarkReadResponse, ThreadRead } from "../domain/chat/chat";
+import type {
+    MarkReadRequest,
+    MarkReadResponse,
+    ThreadRead,
+    ThreadSyncDetails,
+} from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";
+import { message } from "services/common/chatMappers";
+import { toRecord2 } from "utils/list";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -119,6 +126,10 @@ export class MessageReadTracker {
         });
     }
 
+    // TODO - at the moment this only gets called after we load messages from the server so we
+    // could never mark a message read that was unconfirmed. This will cause lag.
+    // we must have the ability to mark unconfirmed thread messages as read. But the indexes could be wrong?
+    // Is this just too hard?
     markThreadRead(chatId: string, threadRootMessageIndex: number, readUpTo: number): void {
         if (!this.state[chatId]) {
             this.state[chatId] = new MessagesRead();
@@ -166,6 +177,36 @@ export class MessageReadTracker {
 
     removeUnconfirmedMessage(chatId: string, messageId: bigint): boolean {
         return this.waiting[chatId] !== undefined && this.waiting[chatId].delete(messageId);
+    }
+
+    private staleThreadCountForChat(
+        lastMessageIdxs: Record<number, number>,
+        readTo: Record<number, number>
+    ): number {
+        // TODO - if the lastMessageIdx values *only* represent what we have received from the server
+        // then we are going to get the wrong result here when we enter messages ourselves
+        return 0;
+    }
+
+    private getStaleThreadCount(
+        threads: Record<string, ThreadSyncDetails[]>,
+        state: MessagesReadByChat
+    ): number {
+        return Object.entries(state).reduce((total, [chatId, messagesRead]) => {
+            const lastMessageIdxs = toRecord2(
+                threads[chatId] ?? [],
+                (s) => s.threadRootMessageIndex,
+                (s) => s.latestMessageIndex
+            );
+            return total + this.staleThreadCountForChat(lastMessageIdxs, messagesRead.threads);
+        }, 0);
+    }
+
+    staleThreadsCount(threads: Record<string, ThreadSyncDetails[]>): number {
+        return (
+            this.getStaleThreadCount(threads, this.serverState) +
+            this.getStaleThreadCount(threads, this.state)
+        );
     }
 
     unreadMessageCount(
@@ -228,6 +269,7 @@ export class MessageReadTracker {
 
             // for each thread we get from the server
             // remove the corresponding thread data from the client state unless the client state is more recent
+            // TODO - if the client state is more recent - remove the data from the *server* state
             threads.forEach((t) => {
                 const readUpTo = state.threads[t.threadRootMessageIndex];
                 if (readUpTo !== undefined && readUpTo <= t.readUpTo) {

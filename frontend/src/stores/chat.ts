@@ -5,7 +5,7 @@ import type {
     Message,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
-import { unconfirmed } from "./unconfirmed";
+import { unconfirmed, unconfirmedThread } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
@@ -73,15 +73,19 @@ export const selectedChatStore = writable<ChatController | undefined>(undefined)
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore],
-    ([summaries, unconfirmed, currentUser]) => {
+    [serverChatSummariesStore, unconfirmed, unconfirmedThread, currentUserStore],
+    ([summaries, unconfirmed, unconfirmedThread, currentUser]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
+                    // TODO - we need to *also* merge any unconfirmed thread messages (so that we can updated the thread sync details for the chat)
+                    // But the problem is that the thread level unconfirmed store does not exist outside the Thread.svelte component
+                    // FUUUUUUUCK
                     result[chatId] = mergeUnconfirmedIntoSummary(
                         currentUser.userId,
                         summary,
-                        unconfirmed[chatId]?.messages
+                        unconfirmed[chatId]?.messages,
+                        unconfirmedThread
                     );
                 }
                 return result;
@@ -105,9 +109,6 @@ export const chatSummariesListStore = derived(
     }
 );
 
-// this gives us a list of all threads that have unread messages
-// Resolves to a Record<chatId, Set<messageIndex>>
-// TODO - we want these at some point to be ordered by lastUpdated - not sure yet whether this is the place to do it
 export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
     return summaries.reduce((result, chat) => {
         if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {

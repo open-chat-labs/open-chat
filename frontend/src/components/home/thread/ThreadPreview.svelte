@@ -82,6 +82,8 @@
             {/if}
         </div>
         <div class="body">
+            <pre>ReadUpTo: {thread.readUpTo}</pre>
+            <pre>LatestMessageIndex: {thread.latestMessageIndex}</pre>
             <div class="root-msg">
                 <ChatMessage
                     senderId={thread.rootMessage.event.sender}

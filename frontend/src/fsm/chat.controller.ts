@@ -42,7 +42,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
-import { unconfirmed } from "../stores/unconfirmed";
+import { unconfirmed, unconfirmedThread } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
@@ -84,8 +84,15 @@ export class ChatController {
         private _focusThreadMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
-        this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
-            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
+        this.chat = derived(
+            [serverChatSummary, unconfirmed, unconfirmedThread],
+            ([summary, unconfirmed, unconfirmedThread]) =>
+                mergeUnconfirmedIntoSummary(
+                    user.userId,
+                    summary,
+                    unconfirmed[summary.chatId]?.messages,
+                    unconfirmedThread
+                )
         );
 
         const { chatId, kind } = get(this.chat);

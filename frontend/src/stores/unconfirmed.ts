@@ -3,3 +3,5 @@ import { createUnconfirmedReadByThemStore, createUnconfirmedStore } from "./unco
 export const unconfirmedReadByThem = createUnconfirmedReadByThemStore();
 
 export const unconfirmed = createUnconfirmedStore();
+
+export const unconfirmedThread = createUnconfirmedStore();
