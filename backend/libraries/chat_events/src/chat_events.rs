@@ -1025,6 +1025,7 @@ impl ChatEvents {
             ChatEventInternal::PollVoteRegistered(v) => self.message_id_map.get(&v.message_id).copied(),
             ChatEventInternal::PollVoteDeleted(v) => self.message_id_map.get(&v.message_id).copied(),
             ChatEventInternal::PollEnded(p) => self.message_index_map.get(p).copied(),
+            ChatEventInternal::ThreadUpdated(u) => self.message_index_map.get(&u.message_index).copied(),
             _ => None,
         }
     }
