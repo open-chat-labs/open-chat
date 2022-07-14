@@ -6,7 +6,8 @@ const shouldTrack = process.env.NODE_ENV === "production";
 export function initialiseTracking(): void {
     if (shouldTrack) {
         const apiKey = "process.env.USERGEEK_APIKEY";
-        Usergeek.init({ apiKey });
+        const host = process.env.IC_URL;
+        Usergeek.init({ apiKey, host });
         console.log("Usergeek initialised");
     }
 }
