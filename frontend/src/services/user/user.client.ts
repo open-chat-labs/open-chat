@@ -221,6 +221,8 @@ export class UserClient extends CandidService implements IUserClient {
             initialStateResponse
         );
 
+        console.log("Initial state: ", resp);
+
         return {
             wasUpdated: true,
             chatSummaries: resp.chats.sort(compareChats),
@@ -252,6 +254,8 @@ export class UserClient extends CandidService implements IUserClient {
             getUpdatesResponse,
             args
         );
+
+        console.log("Updates response: ", updatesResponse);
 
         const anyUpdates =
             updatesResponse.blockedUsers !== undefined ||

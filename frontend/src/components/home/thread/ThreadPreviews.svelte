@@ -13,17 +13,16 @@
     import { push } from "svelte-spa-router";
     import { getContext, onMount } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { EnhancedThreadPreview, EventWrapper, Message } from "../../../domain/chat/chat";
+    import type { ThreadPreview, EventWrapper, Message } from "../../../domain/chat/chat";
     import { userIdsFromEvents } from "domain/chat/chat.utils";
     import { missingUserIds } from "domain/user/user.utils";
 
     const api = getContext<ServiceContainer>(apiKey);
 
-    let threads: EnhancedThreadPreview[] = [];
+    let threads: ThreadPreview[] = [];
+    let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
-    $: console.log("ThreadPreviews: ", threads);
-
-    function eventsFromThreadPreviews(threads: EnhancedThreadPreview[]): EventWrapper<Message>[] {
+    function eventsFromThreadPreviews(threads: ThreadPreview[]): EventWrapper<Message>[] {
         return threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
     }
 
@@ -43,12 +42,16 @@
         });
     }
 
-    onMount(() => {
+    $: {
+        // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
+        // we definitely cannot get away with *just* doing it onMount though.
+        console.log("Loading thread previews", $threadsByChatStore);
+
         api.threadPreviews($threadsByChatStore).then((t) => {
             threads = t;
             updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
         });
-    });
+    }
 </script>
 
 <div class="wrapper">
@@ -75,7 +78,7 @@
 
     <div class="threads">
         {#each threads as thread, i (thread.rootMessage.event.messageId)}
-            <ThreadPreviewComponent {thread} />
+            <ThreadPreviewComponent {observer} {thread} />
         {/each}
     </div>
 </div>

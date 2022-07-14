@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { numberOfStaleThreadsStore, threadsByChatStore } from "../../stores/chat";
+    import { threadsByChatStore } from "../../stores/chat";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
     import { onDestroy } from "svelte";
@@ -9,7 +9,7 @@
 
     $: selected = $pathParams.chatId === "threads";
 
-    let numStaleThreads = 0;
+    $: numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
 
     const unsub = messagesRead.subscribe(() => {
         numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
@@ -25,18 +25,18 @@
 <div role="button" class="threads" class:selected on:click={onClick}>
     <div class="icon">🧵</div>
     <div class="details">
-        <h4 class="title" class:unread={$numberOfStaleThreadsStore > 0}>
+        <h4 class="title" class:unread={numStaleThreads > 0}>
             {$_("thread.previewTitle")}
         </h4>
     </div>
-    {#if $numberOfStaleThreadsStore > 0}
+    {#if numStaleThreads > 0}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("thread.unread", {
-                values: { count: $numberOfStaleThreadsStore.toString() },
+                values: { count: numStaleThreads.toString() },
             })}
             class="unread-count">
-            {$numberOfStaleThreadsStore > 999 ? "999+" : $numberOfStaleThreadsStore}
+            {numStaleThreads > 999 ? "999+" : numStaleThreads}
         </div>
     {/if}
 </div>

@@ -71,7 +71,6 @@ import type {
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
-    EnhancedThreadPreview,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -104,7 +103,7 @@ import type { ServiceRetryInterrupt } from "./candidService";
 import { userStore } from "../stores/user";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
-import { buildBlobUrl, buildUserAvatarUrl } from "../domain/chat/chat.utils";
+import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 
 export const apiKey = Symbol();
 
@@ -717,18 +716,7 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
-                const threadsRead =
-                    chat.kind === "group_chat"
-                        ? chat.latestThreads
-                              .filter((t) => t.readUpTo !== undefined)
-                              .map((t) => ({
-                                  threadRootMessageIndex: t.threadRootMessageIndex,
-                                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                  readUpTo: t.readUpTo!,
-                              }))
-                        : [];
-
-                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsRead);
+                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsReadFromChat(chat));
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
@@ -1099,10 +1087,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.unpinChat(chatId);
     }
 
-    // TODO - figure out how we order these correctly
-    threadPreviews(
-        threadsByChat: Record<string, ThreadSyncDetails[]>
-    ): Promise<EnhancedThreadPreview[]> {
+    threadPreviews(threadsByChat: Record<string, ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
         const promises = Promise.all(
             Object.entries(threadsByChat).map(([chatId, threadSyncs]) =>
                 this.getGroupClient(chatId).threadPreviews(
@@ -1122,10 +1107,7 @@ export class ServiceContainer implements MarkMessagesRead {
                         throw new Error(
                             "Unable to find thread sync details that correlates with thread preview"
                         );
-                    return {
-                        ...syncThread,
-                        ...this.rehydrateThreadPreview(t),
-                    };
+                    return this.rehydrateThreadPreview(t);
                 });
             })
         );

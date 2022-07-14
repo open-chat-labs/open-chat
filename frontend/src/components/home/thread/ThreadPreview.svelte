@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedThreadPreview, GroupChatSummary } from "../../../domain/chat/chat";
+    import type { ThreadPreview, GroupChatSummary } from "../../../domain/chat/chat";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
     import { push } from "svelte-spa-router";
@@ -7,7 +7,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChatMessage from "../ChatMessage.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import { CreatedUser, UserSummary, AvatarSize } from "../../../domain/user/user";
     import Markdown from "../Markdown.svelte";
     import { currentUserKey } from "../../../stores/user";
@@ -15,25 +15,30 @@
     import Avatar from "../../Avatar.svelte";
     import { getContentAsText } from "../../../domain/chat/chat.utils";
     import LinkButton from "../../LinkButton.svelte";
+    import { messagesRead } from "../../../stores/markRead";
 
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
-    export let thread: EnhancedThreadPreview;
-
-    // TODO - we can pass this in from the top since it doesn't do anything
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
+    export let thread: ThreadPreview;
+    export let observer: IntersectionObserver;
 
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
-
+    $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
     $: chat = $chatSummariesStore[thread.chatId] as GroupChatSummary;
-
-    $: unreadCount = thread.latestMessageIndex - (thread.readUpTo ?? -1);
-
+    $: syncDetails = chat?.latestThreads?.find(
+        (t) => t.threadRootMessageIndex === threadRootMessageIndex
+    );
+    $: unreadCount = syncDetails
+        ? messagesRead.unreadThreadMessageCount(
+              thread.chatId,
+              threadRootMessageIndex,
+              syncDetails.latestMessageIndex
+          )
+        : 0;
     $: chatData = {
         name: chat.name,
         avatarUrl: groupAvatarUrl(chat),
     };
-
     $: user = {
         kind: "user",
         userId: currentUser.userId,
@@ -42,11 +47,23 @@
         updated: BigInt(Date.now()),
     } as UserSummary;
 
+    let open = false;
+
+    const unsub = messagesRead.subscribe(() => {
+        if (syncDetails !== undefined) {
+            unreadCount = messagesRead.unreadThreadMessageCount(
+                thread.chatId,
+                threadRootMessageIndex,
+                syncDetails.latestMessageIndex
+            );
+        }
+    });
+
     function selectThread() {
         push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}`);
     }
 
-    let open = false;
+    onDestroy(unsub);
 </script>
 
 <div class="wrapper">
@@ -82,8 +99,6 @@
             {/if}
         </div>
         <div class="body">
-            <pre>ReadUpTo: {thread.readUpTo}</pre>
-            <pre>LatestMessageIndex: {thread.latestMessageIndex}</pre>
             <div class="root-msg">
                 <ChatMessage
                     senderId={thread.rootMessage.event.sender}

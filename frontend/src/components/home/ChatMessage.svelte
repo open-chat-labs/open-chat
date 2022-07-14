@@ -54,7 +54,6 @@
     import { translationStore } from "../../stores/translation";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { configKeys } from "../../utils/config";
     import { pathParams } from "../../stores/routing";
 
     const dispatch = createEventDispatcher();
@@ -100,8 +99,9 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
-    let threadsEnabled =
-        canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
+    // let threadsEnabled =
+    //     canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
+    let threadsEnabled = canReplyInThread;
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
@@ -641,6 +641,8 @@
 
     {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
+            {chatId}
+            threadRootMessageIndex={msg.messageIndex}
             selected={msg.messageIndex === $pathParams.messageIndex}
             {threadSummary}
             indent={showAvatar}

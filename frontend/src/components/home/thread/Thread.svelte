@@ -73,7 +73,7 @@
     } from "../../../domain/webrtc/webrtc";
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "stores/markRead";
-    import { unconfirmedThread } from "stores/unconfirmed";
+    import { unconfirmed } from "stores/unconfirmed";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -229,7 +229,7 @@
                 $chat.readByMe,
                 events,
                 resp.events,
-                true
+                threadRootMessageIndex
             ),
             resp.affectedEvents
         );
@@ -304,7 +304,7 @@
     }
 
     function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-        unconfirmedThread.delete(unconfirmedKey, message.messageId);
+        unconfirmed.delete(unconfirmedKey, message.messageId);
         removeMessage(message.messageId, message.userId);
     }
 
@@ -333,6 +333,14 @@
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
         appendMessage(message.messageEvent);
+
+        // since we will only get here if we actually have the thread open
+        // we should mark read up to this message too
+        messagesRead.markThreadRead(
+            $chat.chatId,
+            threadRootMessageIndex,
+            message.messageEvent.event.messageIndex
+        );
     }
 
     function sendMessageWithAttachment(
@@ -354,9 +362,10 @@
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            unconfirmedThread.add(unconfirmedKey, event);
+            unconfirmed.add(unconfirmedKey, event);
             events.update((evts) => [...evts, event]);
             scrollBottom();
+            messagesRead.markThreadRead($chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
@@ -370,7 +379,7 @@
                         }
                         trackEvent("sent_threaded_message");
                     } else {
-                        unconfirmedThread.delete(unconfirmedKey, msg.messageId);
+                        unconfirmed.delete(unconfirmedKey, msg.messageId);
                         removeMessage(msg.messageId, currentUser.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
@@ -378,7 +387,7 @@
                 })
                 .catch((err) => {
                     console.log(err);
-                    unconfirmedThread.delete(unconfirmedKey, msg.messageId);
+                    unconfirmed.delete(unconfirmedKey, msg.messageId);
                     removeMessage(msg.messageId, currentUser.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
@@ -396,7 +405,7 @@
     }
 
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
-        if (unconfirmedThread.delete(unconfirmedKey, candidate.messageId)) {
+        if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = {
                 event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
@@ -781,10 +790,7 @@
                             senderId={evt.event.sender}
                             focused={evt.event.messageIndex === focusMessageIndex}
                             {observer}
-                            confirmed={!unconfirmedThread.contains(
-                                unconfirmedKey,
-                                evt.event.messageId
-                            )}
+                            confirmed={!unconfirmed.contains(unconfirmedKey, evt.event.messageId)}
                             senderTyping={isTyping(
                                 $typing,
                                 evt.event.sender,

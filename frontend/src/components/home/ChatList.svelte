@@ -27,7 +27,6 @@
         chatsLoading,
         chatSummariesListStore,
         chatSummariesStore,
-        numberOfStaleThreadsStore,
         numberOfThreadsStore,
         selectedChatStore,
     } from "../../stores/chat";
@@ -148,9 +147,6 @@
             chatListScroll.set(chatScrollTop);
         };
     });
-
-    $: console.log("No Stale threads: ", $numberOfStaleThreadsStore);
-    $: console.log("No threads: ", $numberOfThreadsStore);
 </script>
 
 {#if user}

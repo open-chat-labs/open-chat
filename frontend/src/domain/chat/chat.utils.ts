@@ -33,6 +33,7 @@ import type {
     SendMessageSuccess,
     TransferSuccess,
     ThreadSyncDetails,
+    ThreadRead,
 } from "./chat";
 import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -52,7 +53,7 @@ import { emptyChatMetrics } from "./chat.utils.shared";
 import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-import type { UnconfirmedMessagesByKey } from "stores/unconfirmedFactory";
+import type { UnconfirmedMessages } from "../../stores/unconfirmed";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -611,15 +612,15 @@ function mentionsFromMessages(userId: string, messages: EventWrapper<Message>[])
     }, [] as Mention[]);
 }
 
-function mergeUnconfirmedThreadsIntoSummary(
+export function mergeUnconfirmedThreadsIntoSummary(
     chat: GroupChatSummary,
-    unconfirmedThread: UnconfirmedMessagesByKey<string>
+    unconfirmed: UnconfirmedMessages
 ): GroupChatSummary {
     return {
         ...chat,
         latestThreads: chat.latestThreads.map((t) => {
             const unconfirmedMsgs =
-                unconfirmedThread[`${chat.chatId}_${t.threadRootMessageIndex}`]?.messages ?? [];
+                unconfirmed[`${chat.chatId}_${t.threadRootMessageIndex}`]?.messages ?? [];
             if (unconfirmedMsgs.length > 0) {
                 let msgIdx = t.latestMessageIndex;
                 let evtIdx = t.latestEventIndex;
@@ -644,9 +645,10 @@ function mergeUnconfirmedThreadsIntoSummary(
 export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[] | undefined,
-    unconfirmedThread: UnconfirmedMessagesByKey<string>
+    unconfirmed: UnconfirmedMessages
 ): ChatSummary {
+    const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
+
     if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
@@ -669,7 +671,7 @@ export function mergeUnconfirmedIntoSummary(
 
     return chatSummary.kind === "group_chat"
         ? {
-              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmedThread),
+              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed),
               latestMessage,
               latestEventIndex,
               mentions,
@@ -955,7 +957,7 @@ export function replaceLocal(
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[],
-    inThread = false // from threads, we should not mark messages as read
+    threadRootMessageIndex?: number
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);
@@ -967,8 +969,11 @@ export function replaceLocal(
     Object.entries(serverMsgs).forEach(([id, e]) => {
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
-            if (!inThread) {
-                const idNum = BigInt(id);
+            const idNum = BigInt(id);
+            if (threadRootMessageIndex !== undefined) {
+                const key = `${chatId}_${threadRootMessageIndex}`;
+                unconfirmed.delete(key, idNum);
+            } else {
                 if (unconfirmed.delete(chatId, idNum)) {
                     messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
                 } else if (
@@ -1572,4 +1577,16 @@ export function mergeSendMessageResponse(
                 ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
                 : msg.content,
     };
+}
+
+export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
+    return chat.kind === "group_chat"
+        ? chat.latestThreads
+              .filter((t) => t.readUpTo !== undefined)
+              .map((t) => ({
+                  threadRootMessageIndex: t.threadRootMessageIndex,
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  readUpTo: t.readUpTo!,
+              }))
+        : [];
 }

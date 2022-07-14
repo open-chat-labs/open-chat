@@ -1098,8 +1098,6 @@ export type ThreadPreview = {
     rootMessage: EventWrapper<Message>;
 };
 
-export type EnhancedThreadPreview = ThreadSyncDetails & ThreadPreview;
-
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;

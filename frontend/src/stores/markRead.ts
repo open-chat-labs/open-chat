@@ -9,8 +9,7 @@ import type {
 } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";
-import { message } from "services/common/chatMappers";
-import { toRecord2 } from "utils/list";
+import { toRecord2 } from "../utils/list";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -18,7 +17,7 @@ export interface MarkMessagesRead {
     markMessagesRead: (request: MarkReadRequest) => Promise<MarkReadResponse>;
 }
 
-class MessagesRead {
+export class MessagesRead {
     public ranges: DRange;
     public threads: Record<number, number>;
 
@@ -42,8 +41,8 @@ class MessagesRead {
         this.ranges.add(from, to);
     }
 
-    updateThread(root: number, readUpTo: number): void {
-        this.threads[root] = readUpTo;
+    updateThread(rootIndex: number, readUpTo: number): void {
+        this.threads[rootIndex] = readUpTo;
     }
 
     setThreads(threads: ThreadRead[]) {
@@ -65,6 +64,11 @@ export type MessageReadState = {
 export class MessageReadTracker {
     private interval: number | undefined;
     public serverState: MessagesReadByChat = {};
+
+    /**
+     * The waiting structure is either keyed on chatId for normal chat messages or
+     * of chatId_threadRootMessageIndex for thread messages
+     */
     public waiting: Record<string, Map<bigint, number>> = {}; // The map is messageId -> (unconfirmed) messageIndex
     public state: MessagesReadByChat = {};
     private subscribers: Subscriber<MessageReadState>[] = [];
@@ -179,34 +183,42 @@ export class MessageReadTracker {
         return this.waiting[chatId] !== undefined && this.waiting[chatId].delete(messageId);
     }
 
-    private staleThreadCountForChat(
-        lastMessageIdxs: Record<number, number>,
-        readTo: Record<number, number>
-    ): number {
-        // TODO - if the lastMessageIdx values *only* represent what we have received from the server
-        // then we are going to get the wrong result here when we enter messages ourselves
-        return 0;
+    staleThreadCountForChat(chatId: string, threads: ThreadSyncDetails[]): number {
+        return threads
+            .map<number>((thread) => {
+                return this.threadReadUpTo(chatId, thread.threadRootMessageIndex) <
+                    thread.latestMessageIndex
+                    ? 1
+                    : 0;
+            })
+            .reduce((total, n) => total + n, 0);
     }
 
-    private getStaleThreadCount(
-        threads: Record<string, ThreadSyncDetails[]>,
-        state: MessagesReadByChat
-    ): number {
-        return Object.entries(state).reduce((total, [chatId, messagesRead]) => {
-            const lastMessageIdxs = toRecord2(
-                threads[chatId] ?? [],
-                (s) => s.threadRootMessageIndex,
-                (s) => s.latestMessageIndex
-            );
-            return total + this.staleThreadCountForChat(lastMessageIdxs, messagesRead.threads);
-        }, 0);
+    threadReadUpTo(chatId: string, threadRootMessageIndex: number): number {
+        const local = this.state[chatId]?.threads[threadRootMessageIndex];
+        const server = this.serverState[chatId]?.threads[threadRootMessageIndex];
+        if (server === undefined) {
+            return local ?? -1;
+        }
+        if (local === undefined) {
+            return server ?? -1;
+        }
+        return Math.max(local, server);
     }
 
     staleThreadsCount(threads: Record<string, ThreadSyncDetails[]>): number {
-        return (
-            this.getStaleThreadCount(threads, this.serverState) +
-            this.getStaleThreadCount(threads, this.state)
-        );
+        return Object.entries(threads).reduce((total, [chatId, threads]) => {
+            const forChat = this.staleThreadCountForChat(chatId, threads);
+            return forChat > 0 ? total + forChat : total;
+        }, 0);
+    }
+
+    unreadThreadMessageCount(
+        chatId: string,
+        threadRootMessageIndex: number,
+        latestMessageIndex: number
+    ): number {
+        return latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex);
     }
 
     unreadMessageCount(
@@ -269,7 +281,6 @@ export class MessageReadTracker {
 
             // for each thread we get from the server
             // remove the corresponding thread data from the client state unless the client state is more recent
-            // TODO - if the client state is more recent - remove the data from the *server* state
             threads.forEach((t) => {
                 const readUpTo = state.threads[t.threadRootMessageIndex];
                 if (readUpTo !== undefined && readUpTo <= t.readUpTo) {

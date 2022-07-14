@@ -46,6 +46,7 @@ import {
     getFirstUnreadMessageIndex,
     indexRangeForChat,
     MAX_MISSING,
+    threadsReadFromChat,
     updateArgsFromChats,
     userIdsFromEvents,
 } from "../../domain/chat/chat.utils";
@@ -241,10 +242,13 @@ export class CachingUserClient implements IUserClient {
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
                 let targetMessageIndex: number | undefined = undefined;
-
                 if (currentScrollStrategy !== "latestMessage") {
                     // horrible having to do this but if we don't the message read tracker will not be in the right state
-                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                    messagesRead.syncWithServer(
+                        chat.chatId,
+                        chat.readByMe,
+                        threadsReadFromChat(chat)
+                    );
                 }
 
                 if (currentScrollStrategy === "firstMention") {

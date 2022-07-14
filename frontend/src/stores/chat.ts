@@ -5,7 +5,7 @@ import type {
     Message,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
-import { unconfirmed, unconfirmedThread } from "./unconfirmed";
+import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
@@ -73,19 +73,15 @@ export const selectedChatStore = writable<ChatController | undefined>(undefined)
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, unconfirmedThread, currentUserStore],
-    ([summaries, unconfirmed, unconfirmedThread, currentUser]) => {
+    [serverChatSummariesStore, unconfirmed, currentUserStore],
+    ([summaries, unconfirmed, currentUser]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
-                    // TODO - we need to *also* merge any unconfirmed thread messages (so that we can updated the thread sync details for the chat)
-                    // But the problem is that the thread level unconfirmed store does not exist outside the Thread.svelte component
-                    // FUUUUUUUCK
                     result[chatId] = mergeUnconfirmedIntoSummary(
                         currentUser.userId,
                         summary,
-                        unconfirmed[chatId]?.messages,
-                        unconfirmedThread
+                        unconfirmed
                     );
                 }
                 return result;
@@ -124,26 +120,8 @@ function countThreads<T>(things: Record<string, T[]>): number {
         .reduce((total, n) => total + n, 0);
 }
 
-// this gives us a list of all thread root message indexes that have unread messages for each chat
-// Resolves to a Record<chatId, number[]>
-export const staleThreadsByChatStore = derived([threadsByChatStore], ([threads]) => {
-    return Object.entries(threads).reduce((result, [chatId, threadSyncs]) => {
-        const unreadThreadIdxs = threadSyncs
-            .filter((t) => t.readUpTo === undefined || t.readUpTo < t.latestMessageIndex)
-            .map((t) => t.threadRootMessageIndex);
-        if (unreadThreadIdxs.length > 0) {
-            result[chatId] = unreadThreadIdxs;
-        }
-        return result;
-    }, {} as Record<string, number[]>);
-});
-
 // returns the totol number of threads that we are involved in
 export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
-    countThreads(threads)
-);
-
-export const numberOfStaleThreadsStore = derived([staleThreadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
