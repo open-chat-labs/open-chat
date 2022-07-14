@@ -30,6 +30,7 @@ export function login(): Promise<Identity> {
             c.login({
                 identityProvider: IDENTITY_URL,
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
+                derivationOrigin: process.env.II_DERIVATION_ORIGIN,
                 onSuccess: () => resolve(c.getIdentity()),
                 onError: (err) => reject(err),
             });
