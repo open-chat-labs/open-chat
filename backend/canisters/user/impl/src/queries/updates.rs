@@ -102,10 +102,6 @@ fn finalize(
             summary.notifications_muted = group_chat.notifications_muted.value;
             summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
             summary.recent_proposal_votes = group_chat.recent_proposal_votes(None, now);
-
-            for thread_sync_details in summary.latest_threads.iter_mut() {
-                thread_sync_details.read_up_to = group_chat.threads_read.get(&thread_sync_details.root_message_index).copied();
-            }
         } else {
             group_chats_updated
                 .entry(group_chat.chat_id)
@@ -121,15 +117,16 @@ fn finalize(
                         None
                     };
                     su.recent_proposal_votes = group_chat.recent_proposal_votes(Some(updates_since), now);
-
-                    for thread_sync_details in su.latest_threads.iter_mut() {
-                        thread_sync_details.read_up_to =
-                            group_chat.threads_read.get(&thread_sync_details.root_message_index).copied();
-                    }
                 })
                 .or_insert_with(|| group_chat.to_updates(now));
         }
     }
+
+    populate_thread_read_up_to_values(
+        group_chats_added.values_mut(),
+        group_chats_updated.values_mut(),
+        runtime_state,
+    );
 
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
     let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
@@ -222,6 +219,28 @@ fn finalize(
         user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),
         blocked_users_v2,
         pinned_chats,
+    }
+}
+
+fn populate_thread_read_up_to_values<'a>(
+    group_chats_added: impl Iterator<Item = &'a mut GroupChatSummary>,
+    group_chats_updated: impl Iterator<Item = &'a mut GroupChatSummaryUpdates>,
+    runtime_state: &RuntimeState,
+) {
+    for (group_chat, threads) in group_chats_added
+        .map(|s| (s.chat_id, &mut s.latest_threads))
+        .chain(group_chats_updated.map(|su| (su.chat_id, &mut su.latest_threads)))
+        .filter_map(|(chat_id, threads)| {
+            runtime_state
+                .data
+                .group_chats
+                .get(&chat_id)
+                .map(|group_chat| (group_chat, threads))
+        })
+    {
+        for thread in threads.iter_mut() {
+            thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).copied();
+        }
     }
 }
 
