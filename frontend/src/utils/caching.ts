@@ -222,6 +222,8 @@ export async function setCachedChats(
     const chatsStore = tx.objectStore("chats");
     const eventStore = tx.objectStore("chat_events");
 
+    console.log("Deleting affected events: ", data.affectedEvents);
+
     const promises: Promise<string | void>[] = [
         chatsStore.put(
             {
