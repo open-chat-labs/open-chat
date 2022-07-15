@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Pass in DFX identity name and website version
+# eg './deploy-website-prod.sh openchat 2.0.305'
+
 IDENTITY=$1
 VERSION=$2
 
