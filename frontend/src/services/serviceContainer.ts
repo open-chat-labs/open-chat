@@ -1112,23 +1112,32 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     private async rehydrateThreadPreview(thread: ThreadPreview): Promise<ThreadPreview> {
-        const missing = await this.resolveMissingIndexes(
+        const threadMissing = await this.resolveMissingIndexes(
             "group",
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex
         );
 
-        let replies = this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, missing);
-        replies = this.reydrateEventList(replies);
+        const rootMissing = await this.resolveMissingIndexes("group", thread.chatId, [
+            thread.rootMessage,
+        ]);
+
+        const replies = this.reydrateEventList(
+            this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, threadMissing)
+        );
+
+        const [rootMsg] = this.reydrateEventList(
+            this.rehydrateMissingReplies(thread.chatId, [thread.rootMessage], rootMissing)
+        );
 
         return {
             ...thread,
             rootMessage: {
-                ...thread.rootMessage,
+                ...rootMsg,
                 event: {
-                    ...thread.rootMessage.event,
-                    content: this.rehydrateMessageContent(thread.rootMessage.event.content),
+                    ...rootMsg.event,
+                    content: this.rehydrateMessageContent(rootMsg.event.content),
                 },
             },
             latestReplies: replies.map((r) => ({
