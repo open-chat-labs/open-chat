@@ -185,7 +185,7 @@
             }
             tick().then(() => {
                 if (focusMessageIndex !== undefined) {
-                    goToMessageIndex(focusMessageIndex, false);
+                    goToMessageIndex(focusMessageIndex);
                 }
             });
             const lastLoadedMessageIdx = lastMessageIndex($events);
