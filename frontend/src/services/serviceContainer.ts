@@ -465,6 +465,10 @@ export class ServiceContainer implements MarkMessagesRead {
         });
     }
 
+    /**
+     * Given a list of events, identify all eventIndexes which we may need to look up
+     * In practice this means the event indexes of embedded reply contexts
+     */
     private findMissingEventIndexesByChat<T extends ChatEvent>(
         defaultChatId: string,
         events: EventWrapper<T>[]
@@ -1087,34 +1091,37 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.unpinChat(chatId);
     }
 
-    threadPreviews(threadsByChat: Record<string, ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
-        const promises = Promise.all(
+    async threadPreviews(
+        threadsByChat: Record<string, ThreadSyncDetails[]>
+    ): Promise<ThreadPreview[]> {
+        return Promise.all(
             Object.entries(threadsByChat).map(([chatId, threadSyncs]) =>
                 this.getGroupClient(chatId).threadPreviews(
                     threadSyncs.map((t) => t.threadRootMessageIndex)
                 )
             )
+        ).then((responses) =>
+            Promise.all(
+                responses.map((r) => {
+                    return r.kind === "thread_previews_success"
+                        ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t)))
+                        : [];
+                })
+            ).then((threads) => threads.flat())
         );
-        const allThreads = promises.then((responses) =>
-            responses.flatMap((r) => {
-                if (r.kind !== "thread_previews_success") return [];
-                return r.threads.map((t) => {
-                    const syncChat = threadsByChat[t.chatId];
-                    const syncThread = syncChat?.find(
-                        (s) => s.threadRootMessageIndex === t.rootMessage.event.messageIndex
-                    );
-                    if (syncThread === undefined)
-                        throw new Error(
-                            "Unable to find thread sync details that correlates with thread preview"
-                        );
-                    return this.rehydrateThreadPreview(t);
-                });
-            })
-        );
-        return allThreads;
     }
 
-    private rehydrateThreadPreview(thread: ThreadPreview): ThreadPreview {
+    private async rehydrateThreadPreview(thread: ThreadPreview): Promise<ThreadPreview> {
+        const missing = await this.resolveMissingIndexes(
+            "group",
+            thread.chatId,
+            thread.latestReplies,
+            thread.rootMessage.event.messageIndex
+        );
+
+        let replies = this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, missing);
+        replies = this.reydrateEventList(replies);
+
         return {
             ...thread,
             rootMessage: {
@@ -1124,7 +1131,7 @@ export class ServiceContainer implements MarkMessagesRead {
                     content: this.rehydrateMessageContent(thread.rootMessage.event.content),
                 },
             },
-            latestReplies: thread.latestReplies.map((r) => ({
+            latestReplies: replies.map((r) => ({
                 ...r,
                 event: {
                     ...r.event,

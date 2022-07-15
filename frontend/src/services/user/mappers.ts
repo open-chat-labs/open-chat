@@ -657,7 +657,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
-            affectedEvents: candid.Group.affected_events,
+            affectedEvents: [...candid.Group.affected_events],
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),

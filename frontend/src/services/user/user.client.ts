@@ -255,8 +255,6 @@ export class UserClient extends CandidService implements IUserClient {
             args
         );
 
-        console.log("Updates response: ", updatesResponse);
-
         const anyUpdates =
             updatesResponse.blockedUsers !== undefined ||
             updatesResponse.pinnedChats !== undefined ||

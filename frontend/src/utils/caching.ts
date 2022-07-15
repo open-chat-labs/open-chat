@@ -18,7 +18,7 @@ import type {
 } from "../domain/chat/chat";
 import type { DirectNotification, GroupNotification } from "../domain/notifications";
 import type { UserSummary } from "../domain/user/user";
-import { rollbar } from "./logging";
+import { debug, rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
 const CACHE_VERSION = 31;
@@ -216,13 +216,9 @@ export async function setCachedChats(
             throw new UnsupportedValueError("Unrecognised chat type", c);
         });
 
-    const tx = (await db).transaction(["chats", "chat_events"], "readwrite", {
-        durability: "relaxed",
-    });
+    const tx = (await db).transaction(["chats", "chat_events"], "readwrite");
     const chatsStore = tx.objectStore("chats");
     const eventStore = tx.objectStore("chat_events");
-
-    console.log("Deleting affected events: ", data.affectedEvents);
 
     const promises: Promise<string | void>[] = [
         chatsStore.put(
@@ -378,14 +374,14 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     const missing = new Set<number>();
     const returnedEvents = await Promise.all(
-        eventIndexes.map((idx) =>
-            getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
+        eventIndexes.map((idx) => {
+            return getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
                 if (evt === undefined) {
                     missing.add(idx);
                 }
                 return evt;
-            })
-        )
+            });
+        })
     );
     const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
     return [{ events, affectedEvents: [] }, missing];
