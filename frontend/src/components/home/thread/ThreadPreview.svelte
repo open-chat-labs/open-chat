@@ -8,7 +8,7 @@
     import ChatMessage from "../ChatMessage.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { getContext, onDestroy } from "svelte";
-    import { CreatedUser, UserSummary, AvatarSize } from "../../../domain/user/user";
+    import { CreatedUser, AvatarSize } from "../../../domain/user/user";
     import Markdown from "../Markdown.svelte";
     import { currentUserKey } from "../../../stores/user";
     import { groupAvatarUrl } from "../../../domain/user/user.utils";
@@ -40,12 +40,12 @@
         avatarUrl: groupAvatarUrl(chat),
     };
     $: user = {
-        kind: "user",
+        kind: "user" as "user",
         userId: currentUser.userId,
         username: currentUser.username,
         lastOnline: Date.now(),
         updated: BigInt(Date.now()),
-    } as UserSummary;
+    };
 
     let open = false;
 

@@ -11,7 +11,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { push } from "svelte-spa-router";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { ThreadPreview, EventWrapper, Message } from "../../../domain/chat/chat";
     import { userIdsFromEvents } from "domain/chat/chat.utils";
@@ -75,7 +75,7 @@
     </SectionHeader>
 
     <div class="threads">
-        {#each threads as thread, i (thread.rootMessage.event.messageId)}
+        {#each threads as thread, _i (thread.rootMessage.event.messageId)}
             <ThreadPreviewComponent {observer} {thread} />
         {/each}
     </div>

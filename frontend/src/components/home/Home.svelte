@@ -84,7 +84,6 @@
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
-    import { messagesRead } from "stores/markRead";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;

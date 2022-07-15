@@ -686,7 +686,7 @@
         });
     }
 
-    function goToMessageIndex(index: number, preserveFocus: boolean) {
+    function goToMessageIndex(index: number) {
         if (index < 0) {
             focusMessageIndex = undefined;
             return;
@@ -705,7 +705,7 @@
     }
 
     function onGoToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        goToMessageIndex(ev.detail.index);
     }
 
     function scrollBottom() {

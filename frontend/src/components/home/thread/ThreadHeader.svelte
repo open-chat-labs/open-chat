@@ -7,7 +7,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
-    import { TypersByKey, typing, byThread } from "../../../stores/typing";
+    import { TypersByKey, byThread } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
