@@ -491,8 +491,8 @@ export const idlFactory = ({ IDL }) => {
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
     'read_up_to' : IDL.Opt(MessageIndex),
-    'latest_event' : EventIndex,
-    'latest_message' : MessageIndex,
+    'latest_event' : IDL.Opt(EventIndex),
+    'latest_message' : IDL.Opt(MessageIndex),
   });
   const Mention = IDL.Record({
     'message_id' : MessageId,

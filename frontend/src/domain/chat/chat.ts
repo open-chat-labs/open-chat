@@ -615,7 +615,15 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     ownerId?: string;
     permissions?: GroupPermissions;
     public?: boolean;
-    latestThreads?: ThreadSyncDetails[];
+    latestThreads?: ThreadSyncDetailsUpdates[];
+};
+
+export type ThreadSyncDetailsUpdates = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
 };
 
 export type ThreadSyncDetails = {

@@ -555,8 +555,8 @@ export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
   'read_up_to' : [] | [MessageIndex],
-  'latest_event' : EventIndex,
-  'latest_message' : MessageIndex,
+  'latest_event' : [] | [EventIndex],
+  'latest_message' : [] | [MessageIndex],
 }
 export interface ThreadUpdated {
   'latest_thread_message_index_if_updated' : [] | [MessageIndex],

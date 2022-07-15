@@ -130,10 +130,6 @@ export class MessageReadTracker {
         });
     }
 
-    // TODO - at the moment this only gets called after we load messages from the server so we
-    // could never mark a message read that was unconfirmed. This will cause lag.
-    // we must have the ability to mark unconfirmed thread messages as read. But the indexes could be wrong?
-    // Is this just too hard?
     markThreadRead(chatId: string, threadRootMessageIndex: number, readUpTo: number): void {
         if (!this.state[chatId]) {
             this.state[chatId] = new MessagesRead();

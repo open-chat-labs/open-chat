@@ -18,10 +18,10 @@ import type {
 } from "../domain/chat/chat";
 import type { DirectNotification, GroupNotification } from "../domain/notifications";
 import type { UserSummary } from "../domain/user/user";
-import { debug, rollbar } from "./logging";
+import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 31;
+const CACHE_VERSION = 32;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 

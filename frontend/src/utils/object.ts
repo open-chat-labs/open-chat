@@ -33,3 +33,11 @@ export function mergeKeepingOnlyChanged<T>(orig: T, updated: T): Partial<T> {
         {}
     );
 }
+
+// Takes an object and a potential property value but only sets the value if it is defined
+export function setPropIfDefined<T>(obj: T, prop: keyof T, val: T[keyof T] | undefined): T {
+    if (val !== undefined) {
+        obj[prop] = val;
+    }
+    return obj;
+}

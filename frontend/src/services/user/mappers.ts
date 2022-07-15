@@ -65,6 +65,7 @@ import type {
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
     ThreadSyncDetails,
+    ThreadSyncDetailsUpdates,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -661,7 +662,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
-            latestThreads: candid.Group.latest_threads.map(threadSyncDetails),
+            latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
         };
     }
     if ("Direct" in candid) {
@@ -782,8 +783,18 @@ function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
         threadRootMessageIndex: candid.root_message_index,
         lastUpdated: candid.last_updated,
         readUpTo: optional(candid.read_up_to, identity),
-        latestEventIndex: candid.latest_event,
-        latestMessageIndex: candid.latest_message,
+        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
+        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
+    };
+}
+
+function threadSyncDetailsUpdates(candid: ApiThreadSyncDetails): ThreadSyncDetailsUpdates {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: optional(candid.latest_event, identity),
+        latestMessageIndex: optional(candid.latest_message, identity),
     };
 }
 
