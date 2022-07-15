@@ -770,7 +770,7 @@
 <ThreadHeader
     {threadRootMessageIndex}
     on:createPoll={createPoll}
-    on:close
+    on:closeThread
     {rootEvent}
     {pollsAllowed}
     chatSummary={$chat} />
