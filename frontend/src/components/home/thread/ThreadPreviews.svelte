@@ -45,8 +45,6 @@
     $: {
         // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
         // we definitely cannot get away with *just* doing it onMount though.
-        console.log("Loading thread previews", $threadsByChatStore);
-
         api.threadPreviews($threadsByChatStore).then((t) => {
             threads = t;
             updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
