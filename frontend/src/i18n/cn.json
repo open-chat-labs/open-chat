@@ -538,7 +538,11 @@
         "replies": "回复",
         "reply": "回复",
         "lastMessage": "（最后一条消息 {date}）",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "线程",
+        "openThread": "打开线程",
+        "unread": "{count} 个有未读消息的线程",
+        "moreMessages": "- {number} 更多消息 -"
     },
     "noChatsAvailable": "没有可用的聊天！",
     "invitedUsers": "受邀用户",

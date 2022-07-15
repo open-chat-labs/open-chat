@@ -538,7 +538,11 @@
         "replies": "返信",
         "reply": "返事",
         "lastMessage": "（最後のメッセージ{date}）",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "スレッド",
+        "openThread": "オープンスレッド",
+        "unread": "未読メッセージを含む{count}スレッド",
+        "moreMessages": "-{number}その他のメッセージ-"
     },
     "noChatsAvailable": "チャットはありません！",
     "invitedUsers": "招待されたユーザー",

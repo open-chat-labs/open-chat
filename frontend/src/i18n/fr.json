@@ -538,7 +538,11 @@
         "replies": "réponses",
         "reply": "Réponse",
         "lastMessage": "(dernier message {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Fils",
+        "openThread": "fil ouvert",
+        "unread": "{count} fils de discussion avec des messages non lus",
+        "moreMessages": "- {number} autre(s) message(s) -"
     },
     "noChatsAvailable": "Aucun chat disponible !",
     "invitedUsers": "Utilisateurs invités",

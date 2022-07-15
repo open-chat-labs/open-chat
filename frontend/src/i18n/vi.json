@@ -539,7 +539,11 @@
         "replies": "trả lời",
         "reply": "Đáp lại",
         "lastMessage": "(tin nhắn cuối cùng {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Chủ đề",
+        "openThread": "mở chủ đề",
+        "unread": "{count} chuỗi có tin nhắn chưa đọc",
+        "moreMessages": "- {number} tin nhắn khác -"
     },
     "noChatsAvailable": "Không có cuộc trò chuyện nào!",
     "invitedUsers": "Người dùng được mời",
