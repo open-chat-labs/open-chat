@@ -26,7 +26,9 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 group_chat.read_by_me.timestamp = now;
             }
             for thread in chat_messages_read.threads {
-                group_chat.threads_read.insert(thread.root_message_index, thread.read_up_to);
+                group_chat
+                    .threads_read
+                    .insert(thread.root_message_index, thread.read_up_to, now);
             }
         } else if let Some(direct_chat) = runtime_state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
             let added = insert_ranges(&mut direct_chat.read_by_me.value, &chat_messages_read.message_ranges);
