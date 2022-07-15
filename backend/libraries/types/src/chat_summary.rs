@@ -354,8 +354,8 @@ impl ChatMetrics {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
-    pub latest_event: EventIndex,
-    pub latest_message: MessageIndex,
+    pub latest_event: Option<EventIndex>,
+    pub latest_message: Option<MessageIndex>,
     pub read_up_to: Option<MessageIndex>,
     pub last_updated: TimestampMillis,
 }
@@ -372,8 +372,8 @@ impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
     fn from(s: ThreadSyncDetailsInternal) -> Self {
         ThreadSyncDetails {
             root_message_index: s.root_message_index,
-            latest_event: s.latest_event,
-            latest_message: s.latest_message,
+            latest_event: Some(s.latest_event),
+            latest_message: Some(s.latest_message),
             last_updated: s.last_updated,
             read_up_to: None,
         }

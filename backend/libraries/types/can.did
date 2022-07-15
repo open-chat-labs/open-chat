@@ -853,8 +853,8 @@ type ThreadUpdated =
 type ThreadSyncDetails =
     record {
         root_message_index: MessageIndex;
-        latest_event: EventIndex;
-        latest_message: MessageIndex;
+        latest_event: opt EventIndex;
+        latest_message: opt MessageIndex;
         read_up_to: opt MessageIndex;
         last_updated: TimestampMillis;     
     };
