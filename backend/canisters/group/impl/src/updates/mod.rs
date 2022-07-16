@@ -78,7 +78,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
             }
         };
 
-        for event in data.events.main.iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
+        for event in data.events.main().iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
             match &event.event {

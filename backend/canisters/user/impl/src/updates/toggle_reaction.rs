@@ -26,7 +26,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         match chat
             .events
-            .toggle_reaction(my_user_id, args.message_id, args.reaction.clone(), now)
+            .toggle_reaction(my_user_id, None, args.message_id, args.reaction.clone(), now)
         {
             ToggleReactionResult::Added(e) => {
                 ic_cdk::spawn(toggle_reaction_on_recipients_canister(

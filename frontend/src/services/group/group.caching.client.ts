@@ -15,7 +15,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -180,17 +179,10 @@ export class CachingGroupClient implements IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
-            .then(
-                setCachedMessageFromSendResponse(
-                    this.db,
-                    this.chatId,
-                    message,
-                    threadRootMessageIndex
-                )
-            );
+            .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex));
     }
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
@@ -261,10 +253,6 @@ export class CachingGroupClient implements IGroupClient {
             await setCachedGroupDetails(this.db, this.chatId, response);
         }
         return response;
-    }
-
-    deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.client.deleteGroup();
     }
 
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, TimestampMillis, Timestamped};
+use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 use utils::time::WEEK_IN_MS;
+use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChat {
@@ -13,6 +13,8 @@ pub struct GroupChat {
     pub is_super_admin: bool,
     #[serde(default)]
     recent_proposal_votes: Timestamped<RecentProposalVotes>,
+    #[serde(default)]
+    pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
 
 impl GroupChat {
@@ -35,14 +37,21 @@ impl GroupChat {
             notifications_muted: Timestamped::new(notifications_muted, now),
             is_super_admin,
             recent_proposal_votes: Timestamped::default(),
+            threads_read: TimestampedMap::default(),
         }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        max(
+        [
             self.read_by_me.timestamp,
-            max(self.notifications_muted.timestamp, self.recent_proposal_votes.timestamp),
-        )
+            self.notifications_muted.timestamp,
+            self.recent_proposal_votes.timestamp,
+            self.threads_read.last_updated().unwrap_or_default(),
+        ]
+        .iter()
+        .max()
+        .copied()
+        .unwrap()
     }
 
     pub fn record_proposal_vote(&mut self, message_index: MessageIndex, now: TimestampMillis) {
@@ -54,7 +63,7 @@ impl GroupChat {
         self.recent_proposal_votes.get(since, now)
     }
 
-    pub fn to_updates(&self, now: TimestampMillis) -> GroupChatSummaryUpdates {
+    pub fn to_updates(&self, now: TimestampMillis, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
         GroupChatSummaryUpdates {
             chat_id: self.chat_id,
             last_updated: self.last_updated(),
@@ -77,7 +86,17 @@ impl GroupChat {
             metrics: None,
             my_metrics: None,
             is_public: None,
-            latest_threads: Vec::new(),
+            latest_threads: self
+                .threads_read
+                .updated_since(updates_since)
+                .map(|(&root_message_index, read_up_to)| ThreadSyncDetails {
+                    root_message_index,
+                    latest_event: None,
+                    latest_message: None,
+                    read_up_to: Some(read_up_to.value),
+                    last_updated: read_up_to.last_updated,
+                })
+                .collect(),
         }
     }
 }

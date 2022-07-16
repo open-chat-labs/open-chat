@@ -3,6 +3,7 @@ import type {
     ApiEventsResponse,
     ApiUpdatesResponse,
     ApiCreateGroupResponse,
+    ApiDeleteGroupResponse,
     ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
@@ -28,6 +29,7 @@ import type {
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptoWithinGroupResponse,
+    ApiCryptoAccountFull,
     ApiChatMetrics,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
@@ -40,6 +42,7 @@ import type {
     EventWrapper,
     ChatSummaryUpdates,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
     BlockUserResponse,
@@ -481,6 +484,19 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
+export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
+}
+
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
@@ -639,7 +655,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
-            affectedEvents: candid.Group.affected_events,
+            affectedEvents: [...candid.Group.affected_events],
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
@@ -659,7 +675,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
-            affectedEvents: candid.Direct.affected_events,
+            affectedEvents: [...candid.Direct.affected_events],
             metrics: optional(candid.Direct.metrics, chatMetrics),
             myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
         };
@@ -783,7 +799,7 @@ export function failedCryptoWithdrawal(
     return {
         kind: "failed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -797,7 +813,7 @@ export function completedCryptoWithdrawal(
     return {
         kind: "completed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -820,6 +836,30 @@ export function withdrawCryptoResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
+        candid
+    );
+}
+
+function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
+    if ("User" in candid) {
+        const [userId] = candid.User;
+        return userId.toString();
+    }
+    if ("UserIndex" in candid) {
+        return bytesToHexString(candid.UserIndex);
+    }
+    if ("Mint" in candid) {
+        return "Minting Account";
+    }
+    if ("Named" in candid) {
+        const [, accountIdentifier] = candid.Named;
+        return bytesToHexString(accountIdentifier);
+    }
+    if ("Unknown" in candid) {
+        return bytesToHexString(candid.Unknown);
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCryptoAccountFull type received",
         candid
     );
 }

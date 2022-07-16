@@ -17,16 +17,16 @@ async fn c2c_end_poll(args: Args) -> Response {
 fn c2c_end_poll_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
-        match chat_events.end_poll(args.message_index, now) {
-            EndPollResult::Success => {
-                handle_activity_notification(runtime_state);
-                Success
-            }
-            EndPollResult::PollNotFound => PollNotFound,
-            EndPollResult::UnableToEndPoll => UnableToEndPoll,
+    match runtime_state
+        .data
+        .events
+        .end_poll(args.thread_root_message_index, args.message_index, now)
+    {
+        EndPollResult::Success => {
+            handle_activity_notification(runtime_state);
+            Success
         }
-    } else {
-        PollNotFound
+        EndPollResult::PollNotFound => PollNotFound,
+        EndPollResult::UnableToEndPoll => UnableToEndPoll,
     }
 }

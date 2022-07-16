@@ -131,18 +131,15 @@ export function toggleReactionInEventList(
             );
 
             if (userId === currentUserId) {
-                rtcConnectionsManager.sendMessage(
-                    [...chatUserIds],
-                    {
-                        kind: "remote_user_toggled_reaction",
-                        chatType: chat.kind,
-                        chatId: chat.chatId,
-                        messageId,
-                        userId: userId,
-                        reaction,
-                    },
-                    threadRootMessageIndex
-                );
+                rtcConnectionsManager.sendMessage([...chatUserIds], {
+                    kind: "remote_user_toggled_reaction",
+                    chatType: chat.kind,
+                    chatId: chat.chatId,
+                    messageId,
+                    userId: userId,
+                    reaction,
+                    threadRootMessageIndex,
+                });
             }
             return updatedEvent;
         }

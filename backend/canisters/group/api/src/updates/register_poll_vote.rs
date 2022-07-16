@@ -17,5 +17,4 @@ pub enum Response {
     PollEnded,
     OptionIndexOutOfRange,
     CallerNotInGroup,
-    MessageNotFound,
 }

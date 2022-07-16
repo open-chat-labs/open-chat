@@ -1048,7 +1048,6 @@ export type RegisterPollVoteResponse =
     | "success"
     | "out_of_range"
     | "poll_not_found"
-    | "message_not_found"
     | "chat_not_found";
 
 export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;

@@ -69,7 +69,6 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
-        MessageNotFound;
     };
 
 type ToggleReactionArgs =
@@ -447,8 +446,8 @@ type ThreadPreviewsResponse =
 
 type ThreadPreview =
     record {
-        root_message: Message;
-        latest_replies: vec Message;
+        root_message: MessageEventWrapper;
+        latest_replies: vec MessageEventWrapper;
         total_replies: nat32;
     };
 

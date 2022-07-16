@@ -24,13 +24,14 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let edit_message_args = EditMessageArgs {
             sender: my_user_id,
+            thread_root_message_index: None,
             message_id: args.message_id,
             content: args.content.clone(),
             now,
         };
 
         match chat.events.edit_message(edit_message_args) {
-            EditMessageResult::Success(_) => {
+            EditMessageResult::Success => {
                 ic_cdk::spawn(edit_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,

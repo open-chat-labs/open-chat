@@ -360,7 +360,7 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'new_message' : IDL.Bool,
+    'latest_thread_message_index_if_updated' : IDL.Opt(MessageIndex),
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -534,7 +534,6 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'PollEnded' : IDL.Null,
     'Success' : PollVotes,
@@ -642,9 +641,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const ThreadPreviewsArgs = IDL.Record({ 'threads' : IDL.Vec(MessageIndex) });
   const ThreadPreview = IDL.Record({
-    'latest_replies' : IDL.Vec(Message),
+    'latest_replies' : IDL.Vec(MessageEventWrapper),
     'total_replies' : IDL.Nat32,
-    'root_message' : Message,
+    'root_message' : MessageEventWrapper,
   });
   const ThreadPreviewsResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,

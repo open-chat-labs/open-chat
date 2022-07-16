@@ -14,7 +14,6 @@ const PRUNE_UNCONFIRMED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS *
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserMap {
-    #[serde(alias = "users_by_principal", deserialize_with = "deserialize_users")]
     users: HashMap<UserId, User>,
     #[serde(skip)]
     phone_number_to_user_id: HashMap<PhoneNumber, UserId>,
@@ -29,12 +28,6 @@ pub struct UserMap {
     reserved_usernames: HashSet<String>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
-}
-
-fn deserialize_users<'de, D: serde::de::Deserializer<'de>>(de: D) -> Result<HashMap<UserId, User>, D::Error> {
-    let map: HashMap<Principal, User> = HashMap::deserialize(de)?;
-
-    Ok(map.into_values().map(|u| (u.user_id, u)).collect())
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]

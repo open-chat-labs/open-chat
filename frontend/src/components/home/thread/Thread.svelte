@@ -36,9 +36,11 @@
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
+        makeRtcConnections,
         mergeSendMessageResponse,
         replaceAffected,
         replaceLocal,
+        serialiseMessageForRtc,
         updateEventPollContent,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
@@ -55,12 +57,22 @@
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
-    import { selectReaction } from "../../../stores/reactions";
+    import { selectReaction, toggleReactionInEventList } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
     import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
+    import { isTyping, typing } from "stores/typing";
+    import { rtcConnectionsManager } from "../../../domain/webrtc/RtcConnectionsManager";
+    import type {
+        RemoteUserDeletedMessage,
+        RemoteUserRemovedMessage,
+        RemoteUserSentMessage,
+        RemoteUserToggledReaction,
+        WebRtcMessage,
+    } from "../../../domain/webrtc/webrtc";
+    import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -109,6 +121,7 @@
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
             ) {
+                console.log("loading new thread messages");
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
                     (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
@@ -165,6 +178,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
+            makeRtcConnections(currentUser.userId, $chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -205,9 +219,6 @@
         await controller.updateUserStore(userIds);
 
         return updated;
-
-        // TODO - we will need this too
-        // this.makeRtcConnections();
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -244,6 +255,67 @@
         );
     }
 
+    export function handleWebRtcMessage(msg: WebRtcMessage): void {
+        const chatId = filterWebRtcMessage(msg);
+        if (chatId === undefined) return;
+        const parsed = parseWebRtcMessage(chatId, msg);
+        const { kind } = parsed;
+
+        if (kind === "remote_user_typing") {
+            typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
+        }
+        if (kind === "remote_user_stopped_typing") {
+            typing.stopTyping(parsed.userId);
+        }
+        if (kind === "remote_user_toggled_reaction") {
+            remoteUserToggledReaction(parsed);
+        }
+        if (kind === "remote_user_removed_message") {
+            remoteUserRemovedMessage(parsed);
+        }
+        if (kind === "remote_user_deleted_message") {
+            remoteUserDeletedMessage(parsed);
+        }
+        if (kind === "remote_user_undeleted_message") {
+            replaceMessageContent(parsed.message.messageId, parsed.message.content);
+        }
+        if (kind === "remote_user_sent_message") {
+            remoteUserSentMessage(parsed);
+        }
+    }
+
+    function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
+        unconfirmed.delete(threadRootMessageIndex, message.messageId);
+        removeMessage(message.messageId, message.userId);
+    }
+
+    function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
+        replaceMessageContent(message.messageId, {
+            kind: "deleted_content",
+            deletedBy: currentUser.userId,
+            timestamp: BigInt(Date.now()),
+        });
+    }
+
+    function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
+        events.update((events) =>
+            toggleReactionInEventList(
+                $chat,
+                message.userId,
+                events,
+                message.messageId,
+                message.reaction,
+                controller.chatUserIds,
+                currentUser.userId,
+                threadRootMessageIndex
+            )
+        );
+    }
+
+    function remoteUserSentMessage(message: RemoteUserSentMessage) {
+        appendMessage(message.messageEvent);
+    }
+
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
@@ -268,7 +340,7 @@
             scrollBottom();
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
-                .then((resp) => {
+                .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
@@ -279,7 +351,7 @@
                         }
                         trackEvent("sent_threaded_message");
                     } else {
-                        removeMessage(msg);
+                        removeMessage(msg.messageId, currentUser.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
@@ -287,10 +359,19 @@
                 .catch((err) => {
                     console.log(err);
                     unconfirmed.delete($chat.chatId, msg.messageId);
-                    removeMessage(msg);
+                    removeMessage(msg.messageId, currentUser.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
                 });
+
+            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+                kind: "remote_user_sent_message",
+                chatType: $chat.kind,
+                chatId: $chat.chatId,
+                messageEvent: serialiseMessageForRtc(event),
+                userId: currentUser.userId,
+                threadRootMessageIndex,
+            });
         }
     }
 
@@ -312,10 +393,20 @@
         }
     }
 
-    function removeMessage(msg: Message) {
+    function removeMessage(messageId: bigint, userId: string) {
         events.update((evts) =>
-            evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId)
+            evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
         );
+        if (userId === currentUser.userId) {
+            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+                kind: "remote_user_removed_message",
+                chatType: $chat.kind,
+                chatId: $chat.chatId,
+                messageId: messageId,
+                userId: userId,
+                threadRootMessageIndex,
+            });
+        }
     }
 
     function editMessageWithAttachment(
@@ -457,39 +548,58 @@
             });
     }
 
-    function deleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail === rootEvent.event) {
-            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
-            return;
-        }
+    function undeleteMessage(message: Message): void {
+        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+            kind: "remote_user_undeleted_message",
+            chatType: $chat.kind,
+            chatId: $chat.chatId,
+            message: message,
+            userId: currentUser.userId,
+            threadRootMessageIndex,
+        });
+        replaceMessageContent(BigInt(message.messageId), message.content);
+    }
 
-        replaceMessageContent(ev.detail.messageId, {
+    function deleteMessage(ev: CustomEvent<Message>): void {
+        const messageId = ev.detail.messageId;
+
+        replaceMessageContent(messageId, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
         });
 
-        api.deleteMessage($chat, ev.detail.messageId, threadRootMessageIndex)
+        api.deleteMessage($chat, messageId, threadRootMessageIndex)
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    replaceMessageContent(ev.detail.messageId, ev.detail.content);
+                    undeleteMessage(ev.detail);
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                replaceMessageContent(ev.detail.messageId, ev.detail.content);
+                undeleteMessage(ev.detail);
             });
+
+        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+            kind: "remote_user_deleted_message",
+            chatType: $chat.kind,
+            chatId: $chat.chatId,
+            messageId: messageId,
+            userId: currentUser.userId,
+            threadRootMessageIndex,
+        });
     }
 
     function replaceMessageContent(messageId: unknown, content: MessageContent) {
         events.update((evts) =>
-            evts.map((e) =>
-                e.event.kind === "message" && e.event.messageId === messageId
-                    ? { ...e, event: { ...e.event, content } }
-                    : e
-            )
+            evts.map((e) => {
+                if (e.event.kind === "message" && e.event.messageId === messageId) {
+                    return { ...e, event: { ...e.event, content } };
+                }
+                return e;
+            })
         );
     }
 
@@ -505,6 +615,17 @@
             })
         );
         return original;
+    }
+
+    function appendMessage(message: EventWrapper<Message>): boolean {
+        const existing = $events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+        );
+
+        if (existing !== undefined) return false;
+
+        events.update((events) => [...events, message]);
+        return true;
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -617,7 +738,13 @@
     </Fab>
 </div>
 
-<ThreadHeader on:createPoll={createPoll} on:close {rootEvent} {pollsAllowed} chatSummary={$chat} />
+<ThreadHeader
+    {threadRootMessageIndex}
+    on:createPoll={createPoll}
+    on:close
+    {rootEvent}
+    {pollsAllowed}
+    chatSummary={$chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -637,6 +764,12 @@
                             confirmed={!unconfirmed.contains(
                                 threadRootMessageIndex,
                                 evt.event.messageId
+                            )}
+                            senderTyping={isTyping(
+                                $typing,
+                                evt.event.sender,
+                                $chat.chatId,
+                                threadRootMessageIndex
                             )}
                             readByMe={true}
                             readByThem={true}

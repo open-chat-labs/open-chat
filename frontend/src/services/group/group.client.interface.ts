@@ -16,7 +16,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -60,7 +59,7 @@ export interface IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
@@ -79,7 +78,6 @@ export interface IGroupClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
-    deleteGroup(): Promise<DeleteGroupResponse>;
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>>;

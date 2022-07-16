@@ -44,13 +44,15 @@ import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
-import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
 import { localReactions, mergeReactions } from "../../stores/reactions";
+import type { TypersByKey } from "../../stores/typing";
+import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 
+const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
 export const MAX_MISSING = 30;
@@ -187,6 +189,69 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
+export function upToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
+    return (
+        chat.latestMessage === undefined ||
+        events[events.length - 1]?.index >= chat.latestEventIndex
+    );
+}
+
+export function getRecentlyActiveUsers(
+    chat: ChatSummary,
+    events: EventWrapper<ChatEvent>[],
+    maxUsers: number
+): Set<string> {
+    const users = new Set<string>();
+    if (upToDate(chat, events)) {
+        const tenMinsAgo = Date.now() - 10 * 60 * 1000;
+
+        for (let i = events.length - 1; i >= 0; i--) {
+            const event = events[i];
+            if (event.timestamp < tenMinsAgo) break;
+
+            const activeUser = activeUserIdFromEvent(event.event);
+            if (activeUser !== undefined) {
+                users.add(activeUser);
+                if (users.size >= maxUsers) {
+                    break;
+                }
+            }
+        }
+    }
+    return users;
+}
+
+export function getUsersToMakeRtcConnectionsWith(
+    userId: string,
+    chat: ChatSummary,
+    events: EventWrapper<ChatEvent>[]
+): string[] {
+    if (chat.kind === "direct_chat") {
+        return [chat.chatId];
+    }
+
+    const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
+    return activeUsers.has(userId) ? Array.from(activeUsers).filter((u) => u !== userId) : [];
+}
+
+export function makeRtcConnections(
+    userId: string,
+    chat: ChatSummary,
+    events: EventWrapper<ChatEvent>[],
+    lookup: UserLookup
+): void {
+    const userIds = getUsersToMakeRtcConnectionsWith(userId, chat, events);
+    if (userIds.length === 0) return;
+
+    userIds
+        .map((u) => lookup[u])
+        .filter((user) => !rtcConnectionsManager.exists(user.userId))
+        .map((user) => user.userId)
+        .forEach((userId) => {
+            rtcConnectionsManager.create(userId, userId);
+        });
+}
+
 // Returns the userId of the user who triggered the event
 export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
     switch (event.kind) {
@@ -264,10 +329,10 @@ export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message
 
 export function getTypingString(
     users: UserLookup,
-    chatSummary: ChatSummary,
-    typing: TypersByChat
+    key: string,
+    typing: TypersByKey
 ): string | undefined {
-    const typers = typing[chatSummary.chatId];
+    const typers = typing[key];
     if (typers === undefined || typers.size === 0) return undefined;
 
     const format = get(_);

@@ -52,7 +52,6 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
-    import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { configKeys } from "../../utils/config";
@@ -86,6 +85,7 @@
     export let editing: boolean;
     export let inThread: boolean;
     export let canReplyInThread: boolean;
+    export let senderTyping: boolean;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -114,7 +114,6 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = !inThread && $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
 
@@ -289,7 +288,7 @@
             parentWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
+            inThread ? 0.9 : $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -418,6 +417,7 @@
             class:last
             class:readByMe
             class:crypto
+            class:thread={inThread}
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
@@ -839,6 +839,10 @@
 
         @include size-above(xl) {
             max-width: 70%;
+        }
+
+        &.thread {
+            max-width: 90%;
         }
 
         .username {

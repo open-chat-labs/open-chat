@@ -33,7 +33,7 @@
         getTypingString,
     } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
-    import { TypersByChat, typing } from "../../stores/typing";
+    import { byChat, TypersByKey } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { Readable } from "svelte/store";
     import Link from "../Link.svelte";
@@ -108,14 +108,14 @@
         dispatch("leaveGroup", { kind: "leave", chatId: $selectedChatSummary.chatId });
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext: isBot ? "" : formatLastOnlineDate(now, $userStore[chatSummary.them]),
-                typing: getTypingString($userStore, chatSummary, typing),
+                typing: getTypingString($userStore, chatSummary.chatId, typing),
             };
         }
         return {
@@ -125,7 +125,7 @@
             subtext: chatSummary.public
                 ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
                 : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
-            typing: getTypingString($userStore, chatSummary, typing),
+            typing: getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
 
@@ -143,7 +143,7 @@
         dispatch("showPinned");
     }
 
-    $: chat = normaliseChatSummary($now, $selectedChatSummary, $typing);
+    $: chat = normaliseChatSummary($now, $selectedChatSummary, $byChat);
 </script>
 
 <SectionHeader shadow flush>

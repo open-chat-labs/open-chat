@@ -2,6 +2,7 @@ import type {
     EventsResponse,
     UpdateArgs,
     CreateGroupResponse,
+    DeleteGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
     MergedUpdatesResponse,
@@ -66,6 +67,7 @@ export interface IUserClient {
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse>;
     editMessage(
         recipientId: string,
         message: Message,
@@ -77,14 +79,14 @@ export interface IUserClient {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
         sender: UserSummary,
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
+    ): Promise<[SendMessageResponse, Message]>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;

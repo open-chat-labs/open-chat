@@ -198,9 +198,10 @@ export class ServiceContainer implements MarkMessagesRead {
         mentioned: User[],
         msg: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
+                // TODO - this doesn't look like it's going to work in threads
                 return this.userClient.sendGroupICPTransfer(
                     chat.chatId,
                     msg.content.transfer.recipient,
@@ -240,7 +241,7 @@ export class ServiceContainer implements MarkMessagesRead {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId).sendMessage(
             senderName,
             mentioned,
@@ -263,7 +264,7 @@ export class ServiceContainer implements MarkMessagesRead {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(
             recipientId,
             sender,
@@ -780,16 +781,12 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.setUsername(userId, username);
     }
 
-    differentIdentity(identity: Identity): boolean {
-        return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
-    }
-
     changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.getGroupClient(chatId).changeRole(userId, newRole);
     }
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
-        return this.getGroupClient(chatId).deleteGroup();
+        return this.userClient.deleteGroup(chatId);
     }
 
     makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {

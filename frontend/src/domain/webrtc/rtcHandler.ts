@@ -15,22 +15,6 @@ import type {
 } from "./webrtc";
 import { toggleReactionInEventList } from "../../stores/reactions";
 
-function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
-    return get(chatSummariesListStore).find(
-        (c) => c.kind === "direct_chat" && c.them === userId
-    ) as DirectChatSummary | undefined;
-}
-
-function findChatById(chatId: string): ChatSummary | undefined {
-    return get(chatSummariesStore)[chatId];
-}
-
-function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
-    return msg.chatType === "group_chat"
-        ? findChatById(msg.chatId)
-        : findDirectChatByUserId(msg.userId);
-}
-
 function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
     delegateToChatController(message, (chat) =>
         chat.events.update((events) =>
@@ -79,6 +63,56 @@ function remoteUserReadMessage(message: RemoteUserReadMessage): void {
     unconfirmedReadByThem.add(BigInt(message.messageId));
 }
 
+function delegateToChatController(
+    msg: WebRtcMessage,
+    fn: (selectedChat: ChatController) => void
+): boolean {
+    const chat = findChatByChatType(msg);
+    if (chat === undefined) return false;
+    const selectedChat = get(selectedChatStore);
+    if (selectedChat === undefined) return false;
+    if (chat.chatId !== selectedChat.chatId) return false;
+    fn(selectedChat);
+    return true;
+}
+
+function findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
+    return get(chatSummariesListStore).find(
+        (c) => c.kind === "direct_chat" && c.them === userId
+    ) as DirectChatSummary | undefined;
+}
+
+function findChatById(chatId: string): ChatSummary | undefined {
+    return get(chatSummariesStore)[chatId];
+}
+
+function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
+    return msg.chatType === "group_chat"
+        ? findChatById(msg.chatId)
+        : findDirectChatByUserId(msg.userId);
+}
+
+export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
+    const fromChat = findChatByChatType(msg);
+    const selectedChat = get(selectedChatStore);
+
+    // if the chat can't be found - ignore
+    if (fromChat === undefined) {
+        return undefined;
+    }
+
+    if (
+        fromChat.chatId === selectedChat?.chatId &&
+        selectedChat?.isDirectChatWith(msg.userId) &&
+        selectedChat?.isBlockedUser()
+    ) {
+        console.log("ignoring webrtc message from blocked user");
+        return undefined;
+    }
+
+    return fromChat.chatId;
+}
+
 function hydrateBigIntsInContent(content: MessageContent): MessageContent {
     if (content.kind === "crypto_content") {
         if (content.transfer.kind === "pending") {
@@ -114,98 +148,75 @@ function hydrateBigIntsInContent(content: MessageContent): MessageContent {
     return content;
 }
 
-function delegateToChatController(
-    msg: WebRtcMessage,
-    fn: (selectedChat: ChatController) => void
-): boolean {
-    const chat = findChatByChatType(msg);
-    if (chat === undefined) return false;
-    const selectedChat = get(selectedChatStore);
-    if (selectedChat === undefined) return false;
-    if (chat.chatId !== selectedChat.chatId) return false;
-    fn(selectedChat);
-    return true;
-}
-
-export function handleWebRtcMessage(message: unknown): void {
-    const parsedMsg = message as WebRtcMessage;
-
-    const fromChat = findChatByChatType(parsedMsg);
-    const selectedChat = get(selectedChatStore);
-
-    // if the chat can't be found - ignore
-    if (fromChat === undefined) {
-        return;
-    }
-
+/**
+ * This is just here to cast various bits to bigint - it sucks but it appears to be necessary
+ */
+export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMessage {
     if (
-        fromChat.chatId === selectedChat?.chatId &&
-        selectedChat?.isDirectChatWith(parsedMsg.userId) &&
-        selectedChat?.isBlockedUser()
+        msg.kind === "remote_user_read_message" ||
+        msg.kind === "remote_user_toggled_reaction" ||
+        msg.kind === "remote_user_deleted_message" ||
+        msg.kind === "remote_user_removed_message"
     ) {
-        console.log("ignoring webrtc message from blocked user");
-        return;
+        return {
+            ...msg,
+            chatId,
+            messageId: BigInt(msg.messageId),
+        };
     }
-
-    if (parsedMsg.kind === "remote_user_typing") {
-        typing.add(fromChat.chatId, parsedMsg.userId);
-    }
-    if (parsedMsg.kind === "remote_user_stopped_typing") {
-        typing.delete(fromChat.chatId, parsedMsg.userId);
-    }
-    if (parsedMsg.kind === "remote_user_toggled_reaction") {
-        remoteUserToggledReaction({
-            ...parsedMsg,
-            chatId: fromChat.chatId,
-            messageId: BigInt(parsedMsg.messageId),
-        });
-    }
-    if (parsedMsg.kind === "remote_user_deleted_message") {
-        remoteUserDeletedMessage({
-            ...parsedMsg,
-            chatId: fromChat.chatId,
-            messageId: BigInt(parsedMsg.messageId),
-        });
-    }
-    if (parsedMsg.kind === "remote_user_removed_message") {
-        remoteUserRemovedMessage({
-            ...parsedMsg,
-            chatId: fromChat.chatId,
-            messageId: BigInt(parsedMsg.messageId),
-        });
-    }
-    if (parsedMsg.kind === "remote_user_undeleted_message") {
-        remoteUserUndeletedMessage(parsedMsg);
-    }
-    if (parsedMsg.kind === "remote_user_sent_message") {
-        parsedMsg.messageEvent.event.content = hydrateBigIntsInContent(
-            parsedMsg.messageEvent.event.content
-        );
-        if (parsedMsg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
-            parsedMsg.messageEvent.event.repliesTo = {
-                ...parsedMsg.messageEvent.event.repliesTo,
-                messageId: BigInt(parsedMsg.messageEvent.event.messageId),
-                content: hydrateBigIntsInContent(parsedMsg.messageEvent.event.repliesTo.content),
+    if (msg.kind === "remote_user_sent_message") {
+        msg.messageEvent.event.content = hydrateBigIntsInContent(msg.messageEvent.event.content);
+        if (msg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
+            msg.messageEvent.event.repliesTo = {
+                ...msg.messageEvent.event.repliesTo,
+                messageId: BigInt(msg.messageEvent.event.messageId),
+                content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
             };
         }
-        remoteUserSentMessage({
-            ...parsedMsg,
-            chatId: fromChat.chatId,
+        return {
+            ...msg,
+            chatId,
             messageEvent: {
-                ...parsedMsg.messageEvent,
+                ...msg.messageEvent,
                 event: {
-                    ...parsedMsg.messageEvent.event,
-                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                    ...msg.messageEvent.event,
+                    messageId: BigInt(msg.messageEvent.event.messageId),
                 },
                 timestamp: BigInt(Date.now()),
             },
-        });
+        };
     }
-    if (parsedMsg.kind === "remote_user_read_message") {
-        remoteUserReadMessage({
-            ...parsedMsg,
-            chatId: fromChat.chatId,
-            messageId: BigInt(parsedMsg.messageId),
-        });
+    return msg;
+}
+
+export function handleWebRtcMessage(msg: WebRtcMessage): void {
+    const chatId = filterWebRtcMessage(msg);
+    if (chatId === undefined) return;
+    const parsed = parseWebRtcMessage(chatId, msg);
+    const { kind } = parsed;
+
+    if (kind === "remote_user_typing") {
+        typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
+    }
+    if (kind === "remote_user_stopped_typing") {
+        typing.stopTyping(msg.userId);
+    }
+    if (kind === "remote_user_toggled_reaction") {
+        remoteUserToggledReaction(parsed);
+    }
+    if (kind === "remote_user_deleted_message") {
+        remoteUserDeletedMessage(parsed);
+    }
+    if (kind === "remote_user_removed_message") {
+        remoteUserRemovedMessage(parsed);
+    }
+    if (kind === "remote_user_undeleted_message") {
+        remoteUserUndeletedMessage(parsed);
+    }
+    if (kind === "remote_user_sent_message") {
+        remoteUserSentMessage(parsed);
+    }
+    if (kind === "remote_user_read_message") {
+        remoteUserReadMessage(parsed);
     }
 }

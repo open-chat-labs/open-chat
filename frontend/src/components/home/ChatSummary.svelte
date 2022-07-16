@@ -23,7 +23,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { TypersByChat, typing } from "../../stores/typing";
+    import { TypersByKey, byChat } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
@@ -47,20 +47,20 @@
     let unreadMessages: number;
     let unreadMentions: number;
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                typing: getTypingString($userStore, chatSummary, typing),
+                typing: getTypingString($userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
-            typing: getTypingString($userStore, chatSummary, typing),
+            typing: getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
 
@@ -109,7 +109,7 @@
         delOffset = -50;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typing);
+    $: chat = normaliseChatSummary($now, chatSummary, $byChat);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {

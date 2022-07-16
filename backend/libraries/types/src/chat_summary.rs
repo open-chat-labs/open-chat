@@ -173,6 +173,8 @@ pub struct GroupChatSummaryInternal {
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
+    #[serde(default)]
+    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 
 impl GroupChatSummaryInternal {
@@ -250,7 +252,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             recent_proposal_votes: vec![],
             metrics: s.metrics,
             my_metrics: s.my_metrics,
-            latest_threads: vec![],
+            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
         }
     }
 }
@@ -275,6 +277,8 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
+    #[serde(default)]
+    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -301,7 +305,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             metrics: s.metrics,
             my_metrics: s.my_metrics,
             is_public: s.is_public,
-            latest_threads: vec![],
+            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
         }
     }
 }
@@ -350,8 +354,28 @@ impl ChatMetrics {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
+    pub latest_event: Option<EventIndex>,
+    pub latest_message: Option<MessageIndex>,
+    pub read_up_to: Option<MessageIndex>,
+    pub last_updated: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ThreadSyncDetailsInternal {
+    pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
-    pub read_up_to: MessageIndex,
     pub last_updated: TimestampMillis,
+}
+
+impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
+    fn from(s: ThreadSyncDetailsInternal) -> Self {
+        ThreadSyncDetails {
+            root_message_index: s.root_message_index,
+            latest_event: Some(s.latest_event),
+            latest_message: Some(s.latest_message),
+            last_updated: s.last_updated,
+            read_up_to: None,
+        }
+    }
 }

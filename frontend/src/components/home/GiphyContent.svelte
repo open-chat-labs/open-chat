@@ -15,12 +15,10 @@
     export let intersecting: boolean = true;
     export let edited: boolean;
 
-    let withCaption = content.caption !== undefined && content.caption !== "";
-    let image = $mobileWidth ? content.mobile : content.desktop;
-    let landscape = image.height < image.width;
-    let style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${
-        image.width
-    }px;`;
+    $: withCaption = content.caption !== undefined && content.caption !== "";
+    $: image = $mobileWidth ? content.mobile : content.desktop;
+    $: landscape = image.height < image.width;
+    $: style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`;
 </script>
 
 <div class="img-wrapper">

@@ -26,16 +26,13 @@ fn update_permissions_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         let new_permissions = merge_permissions(args, &old_permissions);
         runtime_state.data.permissions = new_permissions.clone();
 
-        let now = runtime_state.env.now();
-        let events = &mut runtime_state.data.events.main;
-
-        events.push_event(
+        runtime_state.data.events.push_main_event(
             ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
                 old_permissions,
                 new_permissions,
                 changed_by: participant.user_id,
             })),
-            now,
+            runtime_state.env.now(),
         );
 
         handle_activity_notification(runtime_state);

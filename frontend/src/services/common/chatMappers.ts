@@ -211,7 +211,7 @@ function pollConfig(candid: ApiPollConfig): PollConfig {
 function pollVotes(candid: ApiPollVotes): PollVotes {
     return {
         total: totalPollVotes(candid.total),
-        user: candid.user,
+        user: [...candid.user],
     };
 }
 
@@ -564,7 +564,7 @@ function apiPollConfig(domain: PollConfig): ApiPollConfig {
 function apiPollVotes(domain: PollVotes): ApiPollVotes {
     return {
         total: apiTotalPollVotes(domain.total),
-        user: [...domain.user],
+        user: new Uint32Array(domain.user),
     };
 }
 
@@ -778,9 +778,6 @@ export function registerPollVoteResponse(
     }
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
     }
     throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }

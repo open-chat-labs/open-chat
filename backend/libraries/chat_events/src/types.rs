@@ -319,7 +319,8 @@ pub struct UpdatedMessageInternal {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdatedInternal {
     pub message_index: MessageIndex,
-    pub new_message: bool,
+    #[serde(default)]
+    pub latest_thread_message_index_if_updated: Option<MessageIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

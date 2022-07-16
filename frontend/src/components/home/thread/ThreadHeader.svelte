@@ -7,7 +7,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
-    import { TypersByChat, typing } from "../../../stores/typing";
+    import { TypersByKey, typing, byThread } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -30,27 +30,29 @@
     export let chatSummary: ChatSummary;
     export let rootEvent: EventWrapper<Message>;
     export let pollsAllowed: boolean;
+    export let threadRootMessageIndex: number;
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typing);
+    $: chat = normaliseChatSummary($now, chatSummary, $byThread);
 
     function close() {
         push(`/${chatSummary.chatId}`);
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
-        const subtext = `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
-        // TODO - typing indicator is not going to work in its current form
-        // const subtext =
-        //     getTypingString($userStore, chatSummary, typing) ||
-        //          `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
-        // const someoneTyping = getTypingString($userStore, chatSummary, typing);
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+        const someoneTyping = getTypingString(
+            $userStore,
+            `${chatSummary.chatId}_${threadRootMessageIndex}`,
+            typing
+        );
+        const subtext =
+            someoneTyping ?? `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext,
-                typing: false,
+                typing: someoneTyping !== undefined,
             };
         }
         return {
@@ -58,7 +60,7 @@
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
             subtext,
-            typing: false,
+            typing: someoneTyping !== undefined,
         };
     }
 
@@ -94,7 +96,7 @@
         </div>
         <div class="chat-subtext" title={chat.subtext}>
             {#if chat.typing}
-                {chat.typing} <Typing />
+                {chat.subtext} <Typing />
             {:else}
                 {chat.subtext}
             {/if}
