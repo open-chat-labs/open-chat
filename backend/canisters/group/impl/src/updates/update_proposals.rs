@@ -18,7 +18,6 @@ fn update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
-        let events = &mut runtime_state.data.events.main;
 
         let updates = args
             .proposals
@@ -35,7 +34,7 @@ fn update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             })
             .collect();
 
-        events.update_proposals(participant.user_id, updates, now);
+        runtime_state.data.events.update_proposals(participant.user_id, updates, now);
 
         handle_activity_notification(runtime_state);
 
