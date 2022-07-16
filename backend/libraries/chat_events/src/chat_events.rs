@@ -897,7 +897,7 @@ impl ChatEvents {
         event_index
     }
 
-    pub fn reaction_exists(&self, added_by: UserId, message_id: MessageId, reaction: &Reaction) -> bool {
+    fn reaction_exists(&self, added_by: UserId, message_id: MessageId, reaction: &Reaction) -> bool {
         self.get_event_index_by_message_id(message_id)
             .and_then(|e| self.events.get(e))
             .and_then(|e| e.event.as_message())
