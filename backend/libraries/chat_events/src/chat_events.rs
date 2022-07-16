@@ -1034,39 +1034,6 @@ impl ChatEvents {
         ProposalsUpdated { proposals }
     }
 
-    pub fn search_messages(
-        &self,
-        now: TimestampMillis,
-        min_visible_event_index: EventIndex,
-        query: &Query,
-        max_results: u8,
-        my_user_id: UserId,
-    ) -> Vec<MessageMatch> {
-        self.events
-            .since(min_visible_event_index)
-            .iter()
-            .filter_map(|e| e.event.as_message().map(|m| (e, m)))
-            .filter_map(|(e, m)| {
-                let mut document: Document = (&m.content).into();
-                document.set_age(now - e.timestamp);
-                match document.calculate_score(query) {
-                    0 => None,
-                    n => Some((n, m)),
-                }
-            })
-            .sorted_unstable_by_key(|(score, _)| *score)
-            .rev()
-            .take(max_results as usize)
-            .map(|(score, message)| MessageMatch {
-                chat_id: self.chat_id,
-                message_index: message.message_index,
-                sender: message.sender,
-                content: message.content.hydrate(Some(my_user_id)),
-                score,
-            })
-            .collect()
-    }
-
     pub fn get_event_index_by_message_index(&self, message_index: MessageIndex) -> Option<EventIndex> {
         self.message_index_map.get(&message_index).copied()
     }
