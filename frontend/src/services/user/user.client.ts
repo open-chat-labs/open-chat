@@ -127,7 +127,7 @@ export class UserClient extends CandidService implements IUserClient {
                 avatar: apiOptional((data) => {
                     return {
                         id: DataClient.newBlobId(),
-                        data: Array.from(data),
+                        data,
                         mime_type: "image/jpg",
                     };
                 }, group.avatar?.blobData),
@@ -156,7 +156,7 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
-            events: eventIndexes,
+            events: new Uint32Array(eventIndexes),
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
@@ -288,7 +288,7 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.set_avatar({
                 avatar: apiOptional(identity, {
                     id: blobId,
-                    data: Array.from(bytes),
+                    data: bytes,
                     mime_type: "image/jpg",
                 }),
             }),

@@ -197,7 +197,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -289,7 +289,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,

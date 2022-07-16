@@ -212,7 +212,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -246,7 +246,7 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'user_id' : UserId,
-  'events' : Array<EventIndex>,
+  'events' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -344,7 +344,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -524,7 +524,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
-  'messages' : Array<MessageIndex>,
+  'messages' : Uint32Array,
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
 }

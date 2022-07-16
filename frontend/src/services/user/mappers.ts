@@ -655,7 +655,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
-            affectedEvents: candid.Group.affected_events,
+            affectedEvents: [...candid.Group.affected_events],
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
@@ -675,7 +675,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
-            affectedEvents: candid.Direct.affected_events,
+            affectedEvents: [...candid.Direct.affected_events],
             metrics: optional(candid.Direct.metrics, chatMetrics),
             myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
         };
@@ -842,7 +842,7 @@ export function withdrawCryptoResponse(
 
 function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("User" in candid) {
-        const [userId, _accountIdentifier] = candid.User;
+        const [userId] = candid.User;
         return userId.toString();
     }
     if ("UserIndex" in candid) {
@@ -852,7 +852,7 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
         return "Minting Account";
     }
     if ("Named" in candid) {
-        const [_name, accountIdentifier] = candid.Named;
+        const [, accountIdentifier] = candid.Named;
         return bytesToHexString(accountIdentifier);
     }
     if ("Unknown" in candid) {

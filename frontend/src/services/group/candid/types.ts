@@ -213,7 +213,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -251,7 +251,7 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'invite_code' : [] | [bigint],
-  'events' : Array<EventIndex>,
+  'events' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -351,7 +351,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -500,7 +500,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
-  'messages' : Array<MessageIndex>,
+  'messages' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {
@@ -691,7 +691,7 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'blocked_users' : Array<UserId>,
-  'pinned_messages' : Array<MessageIndex>,
+  'pinned_messages' : Uint32Array,
   'latest_event_index' : EventIndex,
 }
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
@@ -701,9 +701,9 @@ export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
-  'pinned_messages_removed' : Array<MessageIndex>,
+  'pinned_messages_removed' : Uint32Array,
   'participants_removed' : Array<UserId>,
-  'pinned_messages_added' : Array<MessageIndex>,
+  'pinned_messages_added' : Uint32Array,
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
@@ -745,7 +745,7 @@ export interface ThreadPreview {
   'total_replies' : number,
   'root_message' : MessageEventWrapper,
 }
-export interface ThreadPreviewsArgs { 'threads' : Array<MessageIndex> }
+export interface ThreadPreviewsArgs { 'threads' : Uint32Array }
 export type ThreadPreviewsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'threads' : Array<ThreadPreview> } };
 export interface ThreadSummary {
