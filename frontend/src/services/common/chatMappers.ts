@@ -564,7 +564,7 @@ function apiPollConfig(domain: PollConfig): ApiPollConfig {
 function apiPollVotes(domain: PollVotes): ApiPollVotes {
     return {
         total: apiTotalPollVotes(domain.total),
-        user: [...domain.user],
+        user: domain.user,
     };
 }
 

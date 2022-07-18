@@ -9,7 +9,6 @@ import type {
 } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";
-import { toRecord2 } from "../utils/list";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -33,7 +32,7 @@ export class MessagesRead {
         }));
     }
 
-    empty() {
+    empty(): boolean {
         return this.ranges.length === 0 && Object.keys(this.threads).length === 0;
     }
 
@@ -45,7 +44,7 @@ export class MessagesRead {
         this.threads[rootIndex] = readUpTo;
     }
 
-    setThreads(threads: ThreadRead[]) {
+    setThreads(threads: ThreadRead[]): void {
         this.threads = threads.reduce((rec, t) => {
             rec[t.threadRootMessageIndex] = t.readUpTo;
             return rec;
