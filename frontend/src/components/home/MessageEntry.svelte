@@ -73,7 +73,6 @@
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
-        // TODO this is not good enough - we need to actually check if the editing event has *changed*
         if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
             if (editingEvent.event.content.kind === "text_content") {
                 inp.textContent = formatMentions(editingEvent.event.content.text);
