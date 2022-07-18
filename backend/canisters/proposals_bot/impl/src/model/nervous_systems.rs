@@ -23,6 +23,14 @@ impl NervousSystems {
         );
     }
 
+    pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<ChatId> {
+        self.nervous_systems.get(governance_canister_id).map(|ns| ns.chat_id)
+    }
+
+    pub fn remove(&mut self, governance_canister_id: &CanisterId) -> bool {
+        self.nervous_systems.remove(governance_canister_id).is_some()
+    }
+
     pub fn exists(&self, governance_canister_id: &CanisterId) -> bool {
         self.nervous_systems.contains_key(governance_canister_id)
     }
