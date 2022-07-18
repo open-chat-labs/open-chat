@@ -12,11 +12,7 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
 
-const authClient = AuthClient.create({
-    idleOptions: {
-        disableIdle: true
-    }
-});
+const authClient = AuthClient.create();
 
 initialiseTracking();
 
@@ -34,7 +30,7 @@ export function login(): Promise<Identity> {
             c.login({
                 identityProvider: IDENTITY_URL,
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
-                derivationOrigin: process.env.II_DERIVATION_ORIGIN,
+                // derivationOrigin: process.env.II_DERIVATION_ORIGIN,
                 onSuccess: () => resolve(c.getIdentity()),
                 onError: (err) => reject(err),
             });
