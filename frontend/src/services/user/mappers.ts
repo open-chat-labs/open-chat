@@ -655,7 +655,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
-            affectedEvents: candid.Group.affected_events,
+            affectedEvents: [...candid.Group.affected_events],
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
@@ -675,7 +675,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
-            affectedEvents: candid.Direct.affected_events,
+            affectedEvents: [...candid.Direct.affected_events],
             metrics: optional(candid.Direct.metrics, chatMetrics),
             myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
         };
@@ -858,5 +858,8 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("Unknown" in candid) {
         return bytesToHexString(candid.Unknown);
     }
-    throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiCryptoAccountFull type received",
+        candid
+    );
 }
