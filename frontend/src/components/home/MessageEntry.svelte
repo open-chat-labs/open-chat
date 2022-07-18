@@ -58,7 +58,7 @@
     let dragging: boolean = false;
     let recording: boolean = false;
     let percentRecorded: number = 0;
-    let initialisedEdit: boolean = false;
+    let previousEditingEvent: EventWrapper<Message> | undefined;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
@@ -73,18 +73,18 @@
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
-        if (editingEvent && !initialisedEdit) {
+        // TODO this is not good enough - we need to actually check if the editing event has *changed*
+        if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
             if (editingEvent.event.content.kind === "text_content") {
                 inp.textContent = formatMentions(editingEvent.event.content.text);
                 selectedRange = undefined;
                 restoreSelection();
-                initialisedEdit = true;
             } else if ("caption" in editingEvent.event.content) {
                 inp.textContent = editingEvent.event.content.caption ?? "";
                 selectedRange = undefined;
                 restoreSelection();
-                initialisedEdit = true;
             }
+            previousEditingEvent = editingEvent;
         } else if (inp) {
             const text = textContent ?? "";
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
@@ -96,7 +96,7 @@
             }
         }
         if (editingEvent === undefined) {
-            initialisedEdit = false;
+            previousEditingEvent = undefined;
         }
     }
 
