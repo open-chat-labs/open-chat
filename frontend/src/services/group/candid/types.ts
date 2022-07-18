@@ -1,4 +1,6 @@
 import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
+
 export type AccountIdentifier = Array<number>;
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
@@ -107,6 +109,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -321,6 +324,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
+  'recent_proposal_votes' : Array<MessageIndex>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -333,6 +337,7 @@ export interface GroupChatSummary {
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
@@ -346,6 +351,7 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
+  'recent_proposal_votes' : Array<MessageIndex>,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -357,6 +363,7 @@ export interface GroupChatSummaryUpdates {
   'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -513,6 +520,18 @@ export type MessagesByMessageIndexResponse = {
   };
 export type Milliseconds = bigint;
 export type NeuronId = bigint;
+export interface NnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'topic' : number,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -604,19 +623,28 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export type Proposal = { 'NNS' : NnsProposal } |
+  { 'SNS' : SnsProposal };
 export interface ProposalContent {
-  'url' : string,
-  'title' : string,
-  'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
   'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
+  'proposal' : Proposal,
 }
+export type ProposalDecisionStatus = { 'Failed' : null } |
+  { 'Open' : null } |
+  { 'Rejected' : null } |
+  { 'Executed' : null } |
+  { 'Adopted' : null } |
+  { 'Unspecified' : null };
 export type ProposalId = bigint;
+export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
+  { 'AcceptVotes' : null } |
+  { 'Unspecified' : null } |
+  { 'Settled' : null };
+export interface ProposalUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
+export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -728,6 +756,18 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'InvalidRequest' : string };
+export interface SnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'action' : bigint,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -737,6 +777,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface Tally { 'no' : bigint, 'yes' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
   'latest_replies' : Array<MessageEventWrapper>,
@@ -867,64 +908,64 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
-      AddParticipantsResponse
-    >,
-  'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
-  'change_role' : (arg_0: ChangeRoleArgs) => Promise<ChangeRoleResponse>,
-  'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
-  'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
-      DeleteMessagesResponse
-    >,
-  'disable_invite_code' : (arg_0: DisableInviteCodeArgs) => Promise<
-      DisableInviteCodeResponse
-    >,
-  'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
-  'enable_invite_code' : (arg_0: EnableInviteCodeArgs) => Promise<
-      EnableInviteCodeResponse
-    >,
-  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
-  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
-  'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
-  'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
-  'invite_code' : (arg_0: InviteCodeArgs) => Promise<InviteCodeResponse>,
-  'make_private' : (arg_0: MakePrivateArgs) => Promise<MakePrivateResponse>,
-  'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
-      MessagesByMessageIndexResponse
-    >,
-  'pin_message' : (arg_0: PinMessageArgs) => Promise<PinMessageResponse>,
-  'public_summary' : (arg_0: PublicSummaryArgs) => Promise<
-      PublicSummaryResponse
-    >,
-  'register_poll_vote' : (arg_0: RegisterPollVoteArgs) => Promise<
-      RegisterPollVoteResponse
-    >,
-  'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
-      RemoveParticipantResponse
-    >,
-  'reset_invite_code' : (arg_0: ResetInviteCodeArgs) => Promise<
-      ResetInviteCodeResponse
-    >,
-  'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
-      SearchMessagesResponse
-    >,
-  'selected_initial' : (arg_0: SelectedInitialArgs) => Promise<
-      SelectedInitialResponse
-    >,
-  'selected_updates' : (arg_0: SelectedUpdatesArgs) => Promise<
-      SelectedUpdatesResponse
-    >,
-  'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
-  'thread_previews' : (arg_0: ThreadPreviewsArgs) => Promise<
-      ThreadPreviewsResponse
-    >,
-  'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
-      ToggleReactionResponse
-    >,
-  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
-  'unpin_message' : (arg_0: UnpinMessageArgs) => Promise<UnpinMessageResponse>,
-  'update_group' : (arg_0: UpdateGroupArgs) => Promise<UpdateGroupResponse>,
-  'update_permissions' : (arg_0: UpdatePermissionsArgs) => Promise<
-      UpdatePermissionsResponse
-    >,
+  'add_participants' : ActorMethod<
+    [AddParticipantsArgs],
+    AddParticipantsResponse,
+  >,
+  'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
+  'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
+  'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'disable_invite_code' : ActorMethod<
+    [DisableInviteCodeArgs],
+    DisableInviteCodeResponse,
+  >,
+  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'enable_invite_code' : ActorMethod<
+    [EnableInviteCodeArgs],
+    EnableInviteCodeResponse,
+  >,
+  'events' : ActorMethod<[EventsArgs], EventsResponse>,
+  'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
+  'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
+  'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
+  'make_private' : ActorMethod<[MakePrivateArgs], MakePrivateResponse>,
+  'messages_by_message_index' : ActorMethod<
+    [MessagesByMessageIndexArgs],
+    MessagesByMessageIndexResponse,
+  >,
+  'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
+  'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
+  'register_poll_vote' : ActorMethod<
+    [RegisterPollVoteArgs],
+    RegisterPollVoteResponse,
+  >,
+  'remove_participant' : ActorMethod<
+    [RemoveParticipantArgs],
+    RemoveParticipantResponse,
+  >,
+  'reset_invite_code' : ActorMethod<
+    [ResetInviteCodeArgs],
+    ResetInviteCodeResponse,
+  >,
+  'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
+  'selected_initial' : ActorMethod<
+    [SelectedInitialArgs],
+    SelectedInitialResponse,
+  >,
+  'selected_updates' : ActorMethod<
+    [SelectedUpdatesArgs],
+    SelectedUpdatesResponse,
+  >,
+  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
+  'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
+  'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
+  'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
+  'update_group' : ActorMethod<[UpdateGroupArgs], UpdateGroupResponse>,
+  'update_permissions' : ActorMethod<
+    [UpdatePermissionsArgs],
+    UpdatePermissionsResponse,
+  >,
 }

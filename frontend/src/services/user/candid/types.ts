@@ -1,4 +1,6 @@
 import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
+
 export type AccountIdentifier = Array<number>;
 export interface AddRecommendedGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
@@ -81,6 +83,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -314,6 +317,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
+  'recent_proposal_votes' : Array<MessageIndex>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -326,6 +330,7 @@ export interface GroupChatSummary {
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
@@ -339,6 +344,7 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
+  'recent_proposal_votes' : Array<MessageIndex>,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -350,6 +356,7 @@ export interface GroupChatSummaryUpdates {
   'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -538,6 +545,18 @@ export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
 export type NeuronId = bigint;
+export interface NnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'topic' : number,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -625,19 +644,28 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export type Proposal = { 'NNS' : NnsProposal } |
+  { 'SNS' : SnsProposal };
 export interface ProposalContent {
-  'url' : string,
-  'title' : string,
-  'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
   'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
+  'proposal' : Proposal,
 }
+export type ProposalDecisionStatus = { 'Failed' : null } |
+  { 'Open' : null } |
+  { 'Rejected' : null } |
+  { 'Executed' : null } |
+  { 'Adopted' : null } |
+  { 'Unspecified' : null };
 export type ProposalId = bigint;
+export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
+  { 'AcceptVotes' : null } |
+  { 'Unspecified' : null } |
+  { 'Settled' : null };
+export interface ProposalUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
+export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -762,6 +790,18 @@ export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
 export interface SetBioArgs { 'text' : string }
 export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
   { 'Success' : null };
+export interface SnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'action' : bigint,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -771,6 +811,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface Tally { 'no' : bigint, 'yes' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadRead {
   'root_message_index' : MessageIndex,
@@ -923,72 +964,76 @@ export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
-  'add_recommended_group_exclusions' : (
-      arg_0: AddRecommendedGroupExclusionsArgs,
-    ) => Promise<AddRecommendedGroupExclusionsResponse>,
-  'assume_group_super_admin' : (arg_0: AssumeGroupSuperAdminArgs) => Promise<
-      AssumeGroupSuperAdminResponse
-    >,
-  'bio' : (arg_0: BioArgs) => Promise<BioResponse>,
-  'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
-  'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
-  'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
-  'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
-      DeleteMessagesResponse
-    >,
-  'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
-  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
-  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
-  'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
-  'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
-  'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
-  'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
-  'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
-  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
-  'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
-      MessagesByMessageIndexResponse
-    >,
-  'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
-      MuteNotificationsResponse
-    >,
-  'pin_chat' : (arg_0: PinChatRequest) => Promise<PinChatResponse>,
-  'public_profile' : (arg_0: PublicProfileArgs) => Promise<
-      PublicProfileResponse
-    >,
-  'recommended_groups' : (arg_0: RecommendedGroupsArgs) => Promise<
-      RecommendedGroupsResponse
-    >,
-  'register_poll_vote' : (arg_0: RegisterPollVoteArgs) => Promise<
-      RegisterPollVoteResponse
-    >,
-  'relinquish_group_super_admin' : (
-      arg_0: RelinquishGroupSuperAdminArgs,
-    ) => Promise<RelinquishGroupSuperAdminResponse>,
-  'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
-      SearchAllMessagesResponse
-    >,
-  'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
-      SearchMessagesResponse
-    >,
-  'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
-  'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
-  'set_bio' : (arg_0: SetBioArgs) => Promise<SetBioResponse>,
-  'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
-      ToggleReactionResponse
-    >,
-  'transfer_crypto_within_group' : (
-      arg_0: TransferCryptoWithinGroupArgs,
-    ) => Promise<TransferCryptoWithinGroupResponse>,
-  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
-  'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
-      UnmuteNotificationsResponse
-    >,
-  'unpin_chat' : (arg_0: UnpinChatRequest) => Promise<UnpinChatResponse>,
-  'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
-  'vote_on_proposal' : (arg_0: VoteOnProposalArgs) => Promise<
-      VoteOnProposalResponse
-    >,
-  'withdraw_crypto' : (arg_0: WithdrawCryptoRequest) => Promise<
-      WithdrawCryptoResponse
-    >,
+  'add_recommended_group_exclusions' : ActorMethod<
+    [AddRecommendedGroupExclusionsArgs],
+    AddRecommendedGroupExclusionsResponse,
+  >,
+  'assume_group_super_admin' : ActorMethod<
+    [AssumeGroupSuperAdminArgs],
+    AssumeGroupSuperAdminResponse,
+  >,
+  'bio' : ActorMethod<[BioArgs], BioResponse>,
+  'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
+  'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
+  'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'events' : ActorMethod<[EventsArgs], EventsResponse>,
+  'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
+  'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
+  'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
+  'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
+  'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
+  'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
+  'messages_by_message_index' : ActorMethod<
+    [MessagesByMessageIndexArgs],
+    MessagesByMessageIndexResponse,
+  >,
+  'mute_notifications' : ActorMethod<
+    [MuteNotificationsArgs],
+    MuteNotificationsResponse,
+  >,
+  'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
+  'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
+  'recommended_groups' : ActorMethod<
+    [RecommendedGroupsArgs],
+    RecommendedGroupsResponse,
+  >,
+  'register_poll_vote' : ActorMethod<
+    [RegisterPollVoteArgs],
+    RegisterPollVoteResponse,
+  >,
+  'relinquish_group_super_admin' : ActorMethod<
+    [RelinquishGroupSuperAdminArgs],
+    RelinquishGroupSuperAdminResponse,
+  >,
+  'search_all_messages' : ActorMethod<
+    [SearchAllMessagesArgs],
+    SearchAllMessagesResponse,
+  >,
+  'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
+  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
+  'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
+  'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
+  'transfer_crypto_within_group' : ActorMethod<
+    [TransferCryptoWithinGroupArgs],
+    TransferCryptoWithinGroupResponse,
+  >,
+  'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
+  'unmute_notifications' : ActorMethod<
+    [UnmuteNotificationsArgs],
+    UnmuteNotificationsResponse,
+  >,
+  'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
+  'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
+  'vote_on_proposal' : ActorMethod<
+    [VoteOnProposalArgs],
+    VoteOnProposalResponse,
+  >,
+  'withdraw_crypto' : ActorMethod<
+    [WithdrawCryptoRequest],
+    WithdrawCryptoResponse,
+  >,
 }
