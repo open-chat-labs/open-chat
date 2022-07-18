@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Array<number>;
+export type AccountIdentifier = Uint8Array;
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
@@ -42,7 +42,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Array<number>,
+  'data' : Uint8Array,
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -76,7 +76,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Array<number>,
+  'module' : Uint8Array,
 }
 export interface ChangeRoleArgs { 'user_id' : UserId, 'new_role' : Role }
 export type ChangeRoleResponse = { 'Invalid' : null } |
@@ -214,7 +214,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -252,7 +252,7 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'invite_code' : [] | [bigint],
-  'events' : Array<EventIndex>,
+  'events' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -324,7 +324,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
-  'recent_proposal_votes' : Array<MessageIndex>,
+  'recent_proposal_votes' : Uint32Array,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -351,11 +351,11 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
-  'recent_proposal_votes' : Array<MessageIndex>,
+  'recent_proposal_votes' : Uint32Array,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -505,7 +505,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
-  'messages' : Array<MessageIndex>,
+  'messages' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {
@@ -622,7 +622,7 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -717,7 +717,7 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'blocked_users' : Array<UserId>,
-  'pinned_messages' : Array<MessageIndex>,
+  'pinned_messages' : Uint32Array,
   'latest_event_index' : EventIndex,
 }
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
@@ -727,9 +727,9 @@ export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
-  'pinned_messages_removed' : Array<MessageIndex>,
+  'pinned_messages_removed' : Uint32Array,
   'participants_removed' : Array<UserId>,
-  'pinned_messages_added' : Array<MessageIndex>,
+  'pinned_messages_added' : Uint32Array,
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
@@ -784,7 +784,7 @@ export interface ThreadPreview {
   'total_replies' : number,
   'root_message' : MessageEventWrapper,
 }
-export interface ThreadPreviewsArgs { 'threads' : Array<MessageIndex> }
+export interface ThreadPreviewsArgs { 'threads' : Uint32Array }
 export type ThreadPreviewsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'threads' : Array<ThreadPreview> } };
 export interface ThreadSummary {
@@ -822,7 +822,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Array<number>;
+export type TransactionHash = Uint8Array;
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
