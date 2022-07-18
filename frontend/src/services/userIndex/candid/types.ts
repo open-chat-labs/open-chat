@@ -1,7 +1,5 @@
 import type { Principal } from '@dfinity/principal';
-import type { ActorMethod } from '@dfinity/agent';
-
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Array<number>;
 export interface AddSuperAdminArgs { 'user_id' : UserId }
 export type AddSuperAdminResponse = { 'Success' : null } |
   { 'InternalError' : string } |
@@ -19,7 +17,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Array<number>,
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -44,7 +42,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Array<number>,
 }
 export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
 export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
@@ -197,7 +195,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -289,7 +287,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -518,7 +516,7 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
 export interface ProposalContent {
   'url' : string,
   'title' : string,
@@ -640,7 +638,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Array<number>;
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,
@@ -719,31 +717,33 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'add_super_admin' : ActorMethod<[AddSuperAdminArgs], AddSuperAdminResponse>,
-  'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'confirm_phone_number' : ActorMethod<
-    [ConfirmPhoneNumberArgs],
-    ConfirmPhoneNumberResponse,
-  >,
-  'create_challenge' : ActorMethod<
-    [CreateChallengeArgs],
-    CreateChallengeResponse,
-  >,
-  'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
-  'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
-  'remove_super_admin' : ActorMethod<
-    [RemoveSuperAdminArgs],
-    RemoveSuperAdminResponse,
-  >,
-  'resend_code' : ActorMethod<[ResendCodeArgs], ResendCodeResponse>,
-  'search' : ActorMethod<[SearchArgs], SearchResponse>,
-  'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
-  'submit_phone_number' : ActorMethod<
-    [SubmitPhoneNumberArgs],
-    SubmitPhoneNumberResponse,
-  >,
-  'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
-  'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,
-  'user' : ActorMethod<[UserArgs], UserResponse>,
-  'users' : ActorMethod<[UsersArgs], UsersResponse>,
+  'add_super_admin' : (arg_0: AddSuperAdminArgs) => Promise<
+      AddSuperAdminResponse
+    >,
+  'check_username' : (arg_0: CheckUsernameArgs) => Promise<
+      CheckUsernameResponse
+    >,
+  'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
+      ConfirmPhoneNumberResponse
+    >,
+  'create_challenge' : (arg_0: CreateChallengeArgs) => Promise<
+      CreateChallengeResponse
+    >,
+  'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
+  'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,
+  'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
+      RemoveSuperAdminResponse
+    >,
+  'resend_code' : (arg_0: ResendCodeArgs) => Promise<ResendCodeResponse>,
+  'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
+  'set_username' : (arg_0: SetUsernameArgs) => Promise<SetUsernameResponse>,
+  'submit_phone_number' : (arg_0: SubmitPhoneNumberArgs) => Promise<
+      SubmitPhoneNumberResponse
+    >,
+  'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
+  'upgrade_storage' : (arg_0: UpgradeStorageArgs) => Promise<
+      UpgradeStorageResponse
+    >,
+  'user' : (arg_0: UserArgs) => Promise<UserResponse>,
+  'users' : (arg_0: UsersArgs) => Promise<UsersResponse>,
 }

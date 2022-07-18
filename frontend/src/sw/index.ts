@@ -36,7 +36,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const bytes = toUint8Array(event.data.text());
 
     // Try to extract the typed notification from the event
-    const candid = IDL.decode([NotificationIdl], Buffer.from(bytes))[0] as unknown as ApiNotification;
+    const candid = IDL.decode([NotificationIdl], bytes)[0] as unknown as ApiNotification;
+
     if (!candid) {
         return;
     }
