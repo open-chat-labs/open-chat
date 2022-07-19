@@ -153,7 +153,7 @@ mod push_proposals {
     async fn push_proposal(governance_canister_id: CanisterId, chat_id: ChatId, proposal: Proposal) {
         let message_id = generate_message_id(governance_canister_id, proposal.id());
         let send_message_args = group_canister::send_message::Args {
-            message_id: mutate_state(|state| MessageId::generate(|| state.env.random_u32())),
+            message_id,
             thread_root_message_index: None,
             content: MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id,
