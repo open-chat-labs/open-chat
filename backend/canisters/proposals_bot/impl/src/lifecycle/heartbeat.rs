@@ -62,12 +62,15 @@ mod retrieve_proposals {
             };
 
             let response = governance_clients::nns::list_proposals(governance_canister_id, &list_proposals_args).await?;
-            if response.len() < BATCH_SIZE_LIMIT as usize {
-                return Ok(response);
-            }
-
+            let finished = response.len() < BATCH_SIZE_LIMIT as usize;
             proposals.extend(response);
+
+            if finished {
+                break;
+            }
         }
+
+        Ok(proposals)
     }
 
     async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
