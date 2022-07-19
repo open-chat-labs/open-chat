@@ -45,15 +45,15 @@ impl NervousSystems {
 
         self.nervous_systems
             .values()
-            .filter(|n| {
-                n.proposals_to_be_pushed.queue.is_empty()
-                    && !n.proposals_to_be_pushed.in_progress
-                    && n.latest_sync().unwrap_or_default() < latest_sync_filter
+            .filter(|ns| {
+                ns.proposals_to_be_pushed.queue.is_empty()
+                    && !ns.proposals_to_be_pushed.in_progress
+                    && ns.latest_sync().unwrap_or_default() < latest_sync_filter
             })
-            .min_by_key(|n| n.latest_sync())
-            .map(|n| {
-                self.sync_in_progress = Some(n.governance_canister_id);
-                n.governance_canister_id
+            .min_by_key(|ns| ns.latest_sync())
+            .map(|ns| {
+                self.sync_in_progress = Some(ns.governance_canister_id);
+                ns.governance_canister_id
             })
     }
 
@@ -113,13 +113,13 @@ impl NervousSystems {
         active_proposals: Vec<Proposal>,
         inactive_proposals: Vec<ProposalId>,
     ) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             for proposal in inactive_proposals {
-                n.mark_proposal_inactive(proposal);
+                ns.mark_proposal_inactive(proposal);
             }
 
             for proposal in active_proposals {
-                n.process_proposal(proposal);
+                ns.process_proposal(proposal);
             }
         }
     }
@@ -127,47 +127,54 @@ impl NervousSystems {
     pub fn active_proposals(&self, governance_canister_id: &CanisterId) -> Vec<ProposalId> {
         self.nervous_systems
             .get(governance_canister_id)
-            .map_or(vec![], |n| n.active_proposals.keys().copied().collect())
+            .map_or(vec![], |ns| ns.active_proposals.keys().copied().collect())
     }
 
     pub fn mark_sync_complete(&mut self, governance_canister_id: &CanisterId, success: bool, now: TimestampMillis) {
         self.sync_in_progress = None;
 
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             if success {
-                n.latest_successful_sync = Some(now);
+                ns.latest_successful_sync = Some(now);
             } else {
-                n.latest_failed_sync = Some(now);
+                ns.latest_failed_sync = Some(now);
             }
         }
     }
 
     pub fn mark_proposal_pushed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, message_id: MessageId) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            n.active_proposals.insert(proposal.id(), (proposal, message_id));
-            n.proposals_to_be_pushed.in_progress = false;
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.active_proposals.insert(proposal.id(), (proposal, message_id));
+            ns.proposals_to_be_pushed.in_progress = false;
         }
     }
 
     pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            n.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
-            n.proposals_to_be_pushed.in_progress = false;
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
+            ns.proposals_to_be_pushed.in_progress = false;
         }
     }
 
-    pub fn mark_proposals_updated(&mut self, governance_canister_id: &CanisterId) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            n.proposals_to_be_updated.in_progress = false;
+    pub fn mark_proposals_updated(&mut self, governance_canister_id: &CanisterId, now: TimestampMillis) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.proposals_to_be_updated.in_progress = false;
+            ns.latest_successful_proposals_update = Some(now);
         }
     }
 
-    pub fn mark_proposals_update_failed(&mut self, governance_canister_id: &CanisterId, updates: Vec<ProposalUpdate>) {
-        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+    pub fn mark_proposals_update_failed(
+        &mut self,
+        governance_canister_id: &CanisterId,
+        updates: Vec<ProposalUpdate>,
+        now: TimestampMillis,
+    ) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             for update in updates {
-                n.proposals_to_be_updated.pending.entry(update.message_id).or_insert(update);
+                ns.proposals_to_be_updated.pending.entry(update.message_id).or_insert(update);
             }
-            n.proposals_to_be_updated.in_progress = false;
+            ns.proposals_to_be_updated.in_progress = false;
+            ns.latest_failed_proposals_update = Some(now);
         }
     }
 
@@ -187,6 +194,8 @@ struct NervousSystem {
     pub chat_id: ChatId,
     pub latest_successful_sync: Option<TimestampMillis>,
     pub latest_failed_sync: Option<TimestampMillis>,
+    pub latest_successful_proposals_update: Option<TimestampMillis>,
+    pub latest_failed_proposals_update: Option<TimestampMillis>,
     pub proposals_to_be_pushed: ProposalsToBePushed,
     pub proposals_to_be_updated: ProposalsToBeUpdated,
     pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
@@ -212,6 +221,8 @@ impl NervousSystem {
             chat_id,
             latest_successful_sync: None,
             latest_failed_sync: None,
+            latest_successful_proposals_update: None,
+            latest_failed_proposals_update: None,
             proposals_to_be_pushed: ProposalsToBePushed::default(),
             proposals_to_be_updated: ProposalsToBeUpdated::default(),
             active_proposals: BTreeMap::default(),
@@ -283,6 +294,8 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             chat_id: ns.chat_id,
             latest_successful_sync: ns.latest_successful_sync,
             latest_failed_sync: ns.latest_failed_sync,
+            latest_successful_proposals_update: ns.latest_successful_proposals_update,
+            latest_failed_proposals_update: ns.latest_failed_proposals_update,
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
         }

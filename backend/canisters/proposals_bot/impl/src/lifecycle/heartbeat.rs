@@ -214,14 +214,19 @@ mod update_proposals {
         match group_canister_c2c_client::update_proposals(chat_id.into(), &update_proposals_args).await {
             Ok(_) => {
                 mutate_state(|state| {
-                    state.data.nervous_systems.mark_proposals_updated(&governance_canister_id);
+                    let now = state.env.now();
+                    state
+                        .data
+                        .nervous_systems
+                        .mark_proposals_updated(&governance_canister_id, now);
                 });
             }
             _ => mutate_state(|state| {
+                let now = state.env.now();
                 state
                     .data
                     .nervous_systems
-                    .mark_proposals_update_failed(&governance_canister_id, proposals);
+                    .mark_proposals_update_failed(&governance_canister_id, proposals, now);
             }),
         }
     }
