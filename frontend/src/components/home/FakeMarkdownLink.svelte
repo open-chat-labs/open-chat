@@ -7,6 +7,6 @@
 
 <style type="text/scss">
     .fake-link {
-        text-decoration: none;
+        text-decoration: underline;
     }
 </style>
