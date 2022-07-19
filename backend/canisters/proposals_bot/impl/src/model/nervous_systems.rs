@@ -1,5 +1,5 @@
 use crate::NervousSystemMetrics;
-use group_canister::update_proposals::ProposalUpdate;
+use group_canister::c2c_update_proposals::ProposalUpdate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;

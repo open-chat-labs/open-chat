@@ -1,11 +1,11 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use group_canister::update_proposals::{Response::*, *};
+use group_canister::c2c_update_proposals::{Response::*, *};
 use types::ProposalStatusUpdate;
 
-#[update_candid_and_msgpack]
+#[update_msgpack]
 #[trace]
 async fn update_proposals(args: Args) -> Response {
     run_regular_jobs();

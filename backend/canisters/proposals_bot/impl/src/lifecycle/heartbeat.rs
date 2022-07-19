@@ -197,7 +197,7 @@ mod push_proposals {
 
 mod update_proposals {
     use super::*;
-    use group_canister::update_proposals::ProposalUpdate;
+    use group_canister::c2c_update_proposals::ProposalUpdate;
 
     pub fn run() {
         if let Some(ProposalsToUpdate {
@@ -211,10 +211,10 @@ mod update_proposals {
     }
 
     async fn update_proposals(governance_canister_id: CanisterId, chat_id: ChatId, proposals: Vec<ProposalUpdate>) {
-        let update_proposals_args = group_canister::update_proposals::Args {
+        let update_proposals_args = group_canister::c2c_update_proposals::Args {
             proposals: proposals.clone(),
         };
-        match group_canister_c2c_client::update_proposals(chat_id.into(), &update_proposals_args).await {
+        match group_canister_c2c_client::c2c_update_proposals(chat_id.into(), &update_proposals_args).await {
             Ok(_) => {
                 mutate_state(|state| {
                     let now = state.env.now();
