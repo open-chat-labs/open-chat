@@ -88,6 +88,7 @@ pub mod governance_response_types {
         }
 
         fn is_accepted(&self) -> bool {
+            // https://github.com/dfinity/ic/blob/17f0bb9bbbde697ebc3675c9d09e69b803d70bf9/rs/sns/governance/src/proposal.rs#L37
             const MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO: f64 = 0.03;
 
             if let Some(tally) = self.latest_tally.as_ref() {
