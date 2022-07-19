@@ -34,22 +34,20 @@ pub enum ChatEvent {
     GroupVisibilityChanged(GroupVisibilityChanged),
     GroupInviteCodeChanged(GroupInviteCodeChanged),
     ThreadUpdated(ThreadUpdated),
-    ProposalsUpdated(ProposalsUpdated),
 }
 
 impl ChatEvent {
-    pub fn affected_events(&self) -> Vec<EventIndex> {
+    pub fn affected_event(&self) -> Option<EventIndex> {
         match self {
-            ChatEvent::MessageEdited(m) => vec![m.event_index],
-            ChatEvent::MessageDeleted(m) => vec![m.event_index],
-            ChatEvent::MessageReactionAdded(r) => vec![r.event_index],
-            ChatEvent::MessageReactionRemoved(r) => vec![r.event_index],
-            ChatEvent::PollVoteRegistered(v) => vec![v.event_index],
-            ChatEvent::PollVoteDeleted(v) => vec![v.event_index],
-            ChatEvent::PollEnded(p) => vec![p.event_index],
-            ChatEvent::ThreadUpdated(t) => vec![t.event_index],
-            ChatEvent::ProposalsUpdated(pu) => pu.proposals.iter().map(|p| p.event_index).collect(),
-            _ => vec![],
+            ChatEvent::MessageEdited(m) => Some(m.event_index),
+            ChatEvent::MessageDeleted(m) => Some(m.event_index),
+            ChatEvent::MessageReactionAdded(r) => Some(r.event_index),
+            ChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            ChatEvent::PollVoteRegistered(v) => Some(v.event_index),
+            ChatEvent::PollVoteDeleted(v) => Some(v.event_index),
+            ChatEvent::PollEnded(p) => Some(p.event_index),
+            ChatEvent::ThreadUpdated(t) => Some(t.event_index),
+            _ => None,
         }
     }
 }
@@ -211,17 +209,6 @@ pub struct ThreadUpdated {
     pub message_index: MessageIndex,
     pub event_index: EventIndex,
     pub latest_thread_message_index_if_updated: Option<MessageIndex>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalsUpdated {
-    pub proposals: Vec<ProposalUpdated>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalUpdated {
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

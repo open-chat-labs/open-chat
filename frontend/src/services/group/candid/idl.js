@@ -135,50 +135,18 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const ProposalId = IDL.Nat64;
-  const ProposalDecisionStatus = IDL.Variant({
-    'Failed' : IDL.Null,
-    'Open' : IDL.Null,
-    'Rejected' : IDL.Null,
-    'Executed' : IDL.Null,
-    'Adopted' : IDL.Null,
-    'Unspecified' : IDL.Null,
-  });
-  const Tally = IDL.Record({ 'no' : IDL.Nat64, 'yes' : IDL.Nat64 });
-  const ProposalRewardStatus = IDL.Variant({
-    'ReadyToSettle' : IDL.Null,
-    'AcceptVotes' : IDL.Null,
-    'Unspecified' : IDL.Null,
-    'Settled' : IDL.Null,
-  });
   const NeuronId = IDL.Nat64;
-  const NnsProposal = IDL.Record({
-    'id' : ProposalId,
-    'url' : IDL.Text,
-    'status' : ProposalDecisionStatus,
-    'tally' : Tally,
-    'title' : IDL.Text,
-    'topic' : IDL.Int32,
-    'last_updated' : TimestampMillis,
-    'reward_status' : ProposalRewardStatus,
-    'summary' : IDL.Text,
-    'proposer' : NeuronId,
-  });
-  const SnsProposal = IDL.Record({
-    'id' : ProposalId,
-    'url' : IDL.Text,
-    'status' : ProposalDecisionStatus,
-    'tally' : Tally,
-    'title' : IDL.Text,
-    'action' : IDL.Nat64,
-    'last_updated' : TimestampMillis,
-    'reward_status' : ProposalRewardStatus,
-    'summary' : IDL.Text,
-    'proposer' : NeuronId,
-  });
-  const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
+    'url' : IDL.Text,
+    'title' : IDL.Text,
+    'my_vote' : IDL.Opt(IDL.Bool),
+    'reject_votes' : IDL.Nat32,
+    'deadline' : TimestampMillis,
+    'adopt_votes' : IDL.Nat32,
+    'summary' : IDL.Text,
+    'proposal_id' : ProposalId,
     'governance_canister_id' : CanisterId,
-    'proposal' : Proposal,
+    'proposer' : NeuronId,
   });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
@@ -413,13 +381,6 @@ export const idlFactory = ({ IDL }) => {
     'old_role' : Role,
     'new_role' : Role,
   });
-  const ProposalUpdated = IDL.Record({
-    'event_index' : EventIndex,
-    'message_index' : MessageIndex,
-  });
-  const ProposalsUpdated = IDL.Record({
-    'proposals' : IDL.Vec(ProposalUpdated),
-  });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
     'new_owner' : UserId,
@@ -461,7 +422,6 @@ export const idlFactory = ({ IDL }) => {
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
-    'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,

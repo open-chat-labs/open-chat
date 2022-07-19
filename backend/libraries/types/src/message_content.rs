@@ -3,7 +3,7 @@ use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal, ProposalContent,
-    TimestampMillis, TotalVotes, UserId, VoteOperation,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -41,7 +41,7 @@ pub enum MessageContentInternal {
     Cryptocurrency(CryptocurrencyContentInternal),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
-    GovernanceProposal(ProposalContent),
+    GovernanceProposal(ProposalContentInternal),
 }
 
 pub enum ContentValidationError {
@@ -123,7 +123,9 @@ impl MessageContent {
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p),
+            MessageContent::GovernanceProposal(p) => {
+                MessageContentInternal::GovernanceProposal(ProposalContentInternal::new(p))
+            }
         }
     }
 
@@ -176,7 +178,7 @@ impl MessageContent {
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContent::GovernanceProposal(p) => p.summary.len(),
         }
     }
 }
@@ -210,7 +212,7 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.clone()),
+            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.hydrate(my_user_id)),
         }
     }
 }

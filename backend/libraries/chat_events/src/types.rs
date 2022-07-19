@@ -44,7 +44,6 @@ pub enum ChatEventInternal {
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
     ThreadUpdated(Box<ThreadUpdatedInternal>),
-    ProposalsUpdated(Box<ProposalsUpdatedInternal>),
 }
 
 impl ChatEventInternal {
@@ -96,7 +95,6 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupVisibilityChanged(_)
                 | ChatEventInternal::GroupInviteCodeChanged(_)
                 | ChatEventInternal::ThreadUpdated(_)
-                | ChatEventInternal::ProposalsUpdated(_)
         )
     }
 
@@ -202,10 +200,9 @@ impl ChatEventInternal {
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::DirectChatCreated(_)
-            | ChatEventInternal::PollEnded(_)
-            | ChatEventInternal::ProposalsUpdated(_)
-            | ChatEventInternal::ThreadUpdated(_) => None,
+            ChatEventInternal::DirectChatCreated(_) | ChatEventInternal::ThreadUpdated(_) | ChatEventInternal::PollEnded(_) => {
+                None
+            }
         }
     }
 }
@@ -321,11 +318,6 @@ pub struct ThreadUpdatedInternal {
     pub message_index: MessageIndex,
     #[serde(default)]
     pub latest_thread_message_index_if_updated: Option<MessageIndex>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalsUpdatedInternal {
-    pub proposals: Vec<MessageIndex>,
 }
 
 fn incr(counter: &mut u64) {
