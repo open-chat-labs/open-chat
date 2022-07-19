@@ -3,6 +3,7 @@ use group_canister::update_proposals::ProposalUpdate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use types::{CanisterId, ChatId, MessageId, Milliseconds, Proposal, ProposalId, ProposalRewardStatus, TimestampMillis};
 use utils::time::MINUTE_IN_MS;
@@ -56,7 +57,7 @@ impl NervousSystems {
             })
     }
 
-    pub fn dequeue_next_proposal(&mut self) -> Option<ProposalToPush> {
+    pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
         for ns in self
             .nervous_systems
             .values_mut()
@@ -82,6 +83,25 @@ impl NervousSystems {
         None
     }
 
+    pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
+        self.nervous_systems
+            .values_mut()
+            .filter(|ns| !ns.proposals_to_be_updated.in_progress && !ns.proposals_to_be_updated.pending.is_empty())
+            .next()
+            .map(|ns| {
+                ns.proposals_to_be_updated.in_progress = true;
+                let proposals = std::mem::take(&mut ns.proposals_to_be_updated.pending)
+                    .into_values()
+                    .collect();
+
+                ProposalsToUpdate {
+                    governance_canister_id: ns.governance_canister_id,
+                    chat_id: ns.chat_id,
+                    proposals,
+                }
+            })
+    }
+
     // Proposals which have not been seen before get queued up to be sent as new messages.
     // Proposals which have already been sent as messages get queued up to have those messages
     // updated.
@@ -95,7 +115,7 @@ impl NervousSystems {
     ) {
         if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
             for proposal in inactive_proposals {
-                n.mark_proposal_inactive(&proposal);
+                n.mark_proposal_inactive(proposal);
             }
 
             for proposal in active_proposals {
@@ -124,15 +144,30 @@ impl NervousSystems {
 
     pub fn mark_proposal_pushed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, message_id: MessageId) {
         if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            n.proposals_to_be_pushed.in_progress = false;
             n.active_proposals.insert(proposal.id(), (proposal, message_id));
+            n.proposals_to_be_pushed.in_progress = false;
         }
     }
 
     pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
         if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
-            n.proposals_to_be_pushed.in_progress = false;
             n.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
+            n.proposals_to_be_pushed.in_progress = false;
+        }
+    }
+
+    pub fn mark_proposals_updated(&mut self, governance_canister_id: &CanisterId) {
+        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+            n.proposals_to_be_updated.in_progress = false;
+        }
+    }
+
+    pub fn mark_proposals_update_failed(&mut self, governance_canister_id: &CanisterId, updates: Vec<ProposalUpdate>) {
+        if let Some(n) = self.nervous_systems.get_mut(governance_canister_id) {
+            for update in updates {
+                n.proposals_to_be_updated.pending.entry(update.message_id).or_insert(update);
+            }
+            n.proposals_to_be_updated.in_progress = false;
         }
     }
 
@@ -165,7 +200,7 @@ struct ProposalsToBePushed {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 struct ProposalsToBeUpdated {
-    pub pending: Vec<ProposalUpdate>,
+    pub pending: HashMap<MessageId, ProposalUpdate>,
     pub in_progress: bool,
 }
 
@@ -184,7 +219,9 @@ impl NervousSystem {
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal) {
-        if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal.id()) {
+        let proposal_id = proposal.id();
+
+        if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
             let status = proposal.status();
             let reward_status = proposal.reward_status();
             let latest_tally = proposal.tally();
@@ -196,15 +233,15 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then(|| latest_tally),
             };
 
-            self.proposals_to_be_updated.pending.push(update);
+            self.upsert_proposal_update(update);
         } else {
-            self.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
+            self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
         }
     }
 
-    pub fn mark_proposal_inactive(&mut self, proposal_id: &ProposalId) {
-        if let Some((_, message_id)) = self.active_proposals.remove(proposal_id) {
-            self.proposals_to_be_updated.pending.push(ProposalUpdate {
+    pub fn mark_proposal_inactive(&mut self, proposal_id: ProposalId) {
+        if let Some((_, message_id)) = self.active_proposals.remove(&proposal_id) {
+            self.upsert_proposal_update(ProposalUpdate {
                 message_id,
                 status: None,
                 reward_status: Some(ProposalRewardStatus::Settled),
@@ -215,6 +252,26 @@ impl NervousSystem {
 
     pub fn latest_sync(&self) -> Option<TimestampMillis> {
         max(self.latest_successful_sync, self.latest_failed_sync)
+    }
+
+    fn upsert_proposal_update(&mut self, update: ProposalUpdate) {
+        match self.proposals_to_be_updated.pending.entry(update.message_id) {
+            Occupied(mut e) => {
+                let current = e.get_mut();
+                if let Some(s) = update.status {
+                    current.status = Some(s);
+                }
+                if let Some(s) = update.reward_status {
+                    current.reward_status = Some(s);
+                }
+                if let Some(t) = update.latest_tally {
+                    current.latest_tally = Some(t);
+                }
+            }
+            Vacant(e) => {
+                e.insert(update);
+            }
+        };
     }
 }
 
@@ -236,4 +293,10 @@ pub struct ProposalToPush {
     pub governance_canister_id: CanisterId,
     pub chat_id: ChatId,
     pub proposal: Proposal,
+}
+
+pub struct ProposalsToUpdate {
+    pub governance_canister_id: CanisterId,
+    pub chat_id: ChatId,
+    pub proposals: Vec<ProposalUpdate>,
 }

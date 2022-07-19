@@ -6,7 +6,7 @@ use crate::governance_clients::nns::{
 };
 use crate::governance_clients::sns::governance_response_types::ProposalData;
 use crate::governance_clients::sns::ListProposals;
-use crate::model::nervous_systems::ProposalToPush;
+use crate::model::nervous_systems::{ProposalToPush, ProposalsToUpdate};
 use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
@@ -18,6 +18,7 @@ use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalCon
 fn heartbeat() {
     retrieve_proposals::run();
     push_proposals::run();
+    update_proposals::run();
 }
 
 mod retrieve_proposals {
@@ -140,7 +141,7 @@ mod push_proposals {
             governance_canister_id,
             chat_id,
             proposal,
-        }) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal())
+        }) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push())
         {
             ic_cdk::spawn(push_proposal(governance_canister_id, chat_id, proposal));
         }
@@ -188,5 +189,40 @@ mod push_proposals {
         let array32: [u8; 32] = hash.finalize().try_into().unwrap();
         let array16: [u8; 16] = array32[..16].try_into().unwrap();
         u128::from_ne_bytes(array16).into()
+    }
+}
+
+mod update_proposals {
+    use super::*;
+    use group_canister::update_proposals::ProposalUpdate;
+
+    pub fn run() {
+        if let Some(ProposalsToUpdate {
+            governance_canister_id,
+            chat_id,
+            proposals,
+        }) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposals_to_update())
+        {
+            ic_cdk::spawn(update_proposals(governance_canister_id, chat_id, proposals));
+        }
+    }
+
+    async fn update_proposals(governance_canister_id: CanisterId, chat_id: ChatId, proposals: Vec<ProposalUpdate>) {
+        let update_proposals_args = group_canister::update_proposals::Args {
+            proposals: proposals.clone(),
+        };
+        match group_canister_c2c_client::update_proposals(chat_id.into(), &update_proposals_args).await {
+            Ok(_) => {
+                mutate_state(|state| {
+                    state.data.nervous_systems.mark_proposals_updated(&governance_canister_id);
+                });
+            }
+            _ => mutate_state(|state| {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposals_update_failed(&governance_canister_id, proposals);
+            }),
+        }
     }
 }

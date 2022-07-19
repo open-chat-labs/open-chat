@@ -7,7 +7,7 @@ pub struct Args {
     pub proposals: Vec<ProposalUpdate>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalUpdate {
     pub message_id: MessageId,
     pub status: Option<ProposalDecisionStatus>,
