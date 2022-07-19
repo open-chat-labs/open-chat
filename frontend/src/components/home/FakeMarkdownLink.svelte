@@ -3,7 +3,7 @@
     export let text: string;
 </script>
 
-<span class="fake-link" {title}>{text}</span>
+<span class="fake-link" title={title ? title : ""}>{text}</span>
 
 <style type="text/scss">
     .fake-link {

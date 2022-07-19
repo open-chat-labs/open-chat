@@ -25,5 +25,5 @@
 {#if !href}
     <FakeMarkdownLink {title} {text} />
 {:else}
-    <a {href} {title} {target}>{text}</a>
+    <a {href} title={title ? title : ""} {target}>{text}</a>
 {/if}
