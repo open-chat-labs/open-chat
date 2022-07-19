@@ -1,4 +1,6 @@
 node_modules
 dist
-openStorage
+build
+public/*
+**/candid/*.ts
 **/*.js
