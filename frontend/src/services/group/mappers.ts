@@ -873,6 +873,16 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("ProposalsUpdated" in candid) {
+        return {
+            kind: "proposals_updated",
+            proposals: candid.ProposalsUpdated.proposals.map((p) => ({
+                messageIndex: p.message_index,
+                eventIndex: p.event_index,
+            }))
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 

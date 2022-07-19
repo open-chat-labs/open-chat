@@ -1,5 +1,5 @@
 use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
-use crate::ThreadUpdatedInternal;
+use crate::{ProposalsUpdatedInternal, ThreadUpdatedInternal};
 use candid::{CandidType, Principal};
 use itertools::Itertools;
 use search::*;
@@ -393,6 +393,53 @@ impl AllChatEvents {
                 thread_events.last().index,
                 now,
             );
+        }
+    }
+
+    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<(MessageId, ProposalStatusUpdate)>, now: TimestampMillis) {
+        let mut message_indexes = Vec::new();
+
+        let chat_events = &mut self.main;
+
+        for (message_id, update) in updates {
+            if let Some(message) = chat_events
+                .get_event_index_by_message_id(message_id)
+                .and_then(|e| chat_events.events.get_mut(e))
+                .and_then(|e| e.event.as_message_mut())
+            {
+                if message.sender == user_id {
+                    if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
+                        p.proposal.update_status(update, now);
+                        message_indexes.push(message.message_index);
+                    }
+                }
+            }
+        }
+        if !message_indexes.is_empty() {
+            message_indexes.sort_unstable();
+
+            let mut last_event = chat_events.events.last_mut().unwrap();
+            let matches_last_event = if let ChatEventInternal::ProposalsUpdated(p) = &last_event.event {
+                p.proposals == message_indexes
+            } else {
+                false
+            };
+
+            // Active proposals are updated roughly every minute, so in order to avoid adding
+            // thousands of duplicate events, we first check if the current last event matches the
+            // event being added, and if so we simply bump the timestamp of the existing event, else
+            // we add a new event.
+            if matches_last_event {
+                last_event.timestamp = now;
+            } else {
+                self.push_event(
+                    None,
+                    ChatEventInternal::ProposalsUpdated(Box::new(ProposalsUpdatedInternal {
+                        proposals: message_indexes,
+                    })),
+                    now,
+                );
+            }
         }
     }
 
@@ -970,6 +1017,23 @@ impl ChatEvents {
         }
     }
 
+    pub fn hydrate_proposals_updated(&self, updates: &ProposalsUpdatedInternal) -> ProposalsUpdated {
+        let proposals = updates
+            .proposals
+            .iter()
+            .map(|&message_index| {
+                let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
+
+                ProposalUpdated {
+                    event_index,
+                    message_index,
+                }
+            })
+            .collect();
+
+        ProposalsUpdated { proposals }
+    }
+
     pub fn get_event_index_by_message_index(&self, message_index: MessageIndex) -> Option<EventIndex> {
         self.message_index_map.get(&message_index).copied()
     }
@@ -1006,7 +1070,7 @@ impl ChatEvents {
         let mut affected_events = HashSet::new();
 
         for EventWrapper { event, .. } in self.events.iter().rev().take_while(|e| e.timestamp > since) {
-            if let Some(index) = self.affected_event_index(event) {
+            for index in self.affected_event_indexes(event) {
                 if affected_events.insert(index) && affected_events.len() == max_results {
                     break;
                 }
@@ -1016,17 +1080,27 @@ impl ChatEvents {
         affected_events.into_iter().collect()
     }
 
-    pub fn affected_event_index(&self, event: &ChatEventInternal) -> Option<EventIndex> {
+    pub fn affected_event_indexes(&self, event: &ChatEventInternal) -> Vec<EventIndex> {
+        fn option_to_vec<T>(option: Option<T>) -> Vec<T> {
+            option.map_or(vec![], |v| vec![v])
+        }
+
         match event {
-            ChatEventInternal::MessageEdited(m) => self.message_id_map.get(&m.message_id).copied(),
-            ChatEventInternal::MessageDeleted(m) => self.message_id_map.get(&m.message_id).copied(),
-            ChatEventInternal::MessageReactionAdded(r) => self.message_id_map.get(&r.message_id).copied(),
-            ChatEventInternal::MessageReactionRemoved(r) => self.message_id_map.get(&r.message_id).copied(),
-            ChatEventInternal::PollVoteRegistered(v) => self.message_id_map.get(&v.message_id).copied(),
-            ChatEventInternal::PollVoteDeleted(v) => self.message_id_map.get(&v.message_id).copied(),
-            ChatEventInternal::PollEnded(p) => self.message_index_map.get(p).copied(),
-            ChatEventInternal::ThreadUpdated(u) => self.message_index_map.get(&u.message_index).copied(),
-            _ => None,
+            ChatEventInternal::MessageEdited(m) => option_to_vec(self.message_id_map.get(&m.message_id).copied()),
+            ChatEventInternal::MessageDeleted(m) => option_to_vec(self.message_id_map.get(&m.message_id).copied()),
+            ChatEventInternal::MessageReactionAdded(r) => option_to_vec(self.message_id_map.get(&r.message_id).copied()),
+            ChatEventInternal::MessageReactionRemoved(r) => option_to_vec(self.message_id_map.get(&r.message_id).copied()),
+            ChatEventInternal::PollVoteRegistered(v) => option_to_vec(self.message_id_map.get(&v.message_id).copied()),
+            ChatEventInternal::PollVoteDeleted(v) => option_to_vec(self.message_id_map.get(&v.message_id).copied()),
+            ChatEventInternal::PollEnded(p) => option_to_vec(self.message_index_map.get(p).copied()),
+            ChatEventInternal::ThreadUpdated(u) => option_to_vec(self.message_index_map.get(&u.message_index).copied()),
+            ChatEventInternal::ProposalsUpdated(p) => p
+                .proposals
+                .iter()
+                .filter_map(|p| self.message_index_map.get(p))
+                .copied()
+                .collect(),
+            _ => vec![],
         }
     }
 
@@ -1098,14 +1172,8 @@ impl ChatEvents {
 
         let affected_event_indexes = events
             .iter()
-            .filter_map(|e| {
-                if let Some(affected_event_index) = e.event.affected_event() {
-                    if !event_indexes_set.contains(&affected_event_index) {
-                        return Some(affected_event_index);
-                    }
-                }
-                None
-            })
+            .flat_map(|e| e.event.affected_events())
+            .filter(|e| !event_indexes_set.contains(e))
             .unique()
             .collect();
 
@@ -1164,6 +1232,7 @@ impl ChatEvents {
             ChatEventInternal::ThreadUpdated(m) => {
                 ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.message_index, m.latest_thread_message_index_if_updated))
             }
+            ChatEventInternal::ProposalsUpdated(p) => ChatEvent::ProposalsUpdated(self.hydrate_proposals_updated(p)),
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
         };

@@ -33,6 +33,7 @@ import type {
     GiphyImage,
     ThreadSummary,
     ProposalContent,
+    Proposal,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -69,10 +70,19 @@ import type {
     ApiCryptocurrency,
     ApiThreadSummary,
     ApiProposalContent,
+    ApiProposal,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
+import {
+    NeuronId,
+    ProposalDecisionStatus,
+    ProposalId,
+    ProposalRewardStatus,
+    Tally,
+    TimestampMillis
+} from "services/user/candid/types";
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -141,7 +151,7 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return giphyContent(candid.Giphy);
     }
     if ("GovernanceProposal" in candid) {
-        return governanceProposal(candid.GovernanceProposal);
+        return proposalContent(candid.GovernanceProposal);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
@@ -153,20 +163,47 @@ export function apiUser(domain: User): ApiUser {
     };
 }
 
-function governanceProposal(candid: ApiProposalContent): ProposalContent {
+function proposalContent(candid: ApiProposalContent): ProposalContent {
     return {
         kind: "proposal_content",
-        url: candid.url,
-        title: candid.title,
-        myVote: optional(candid.my_vote, identity),
-        rejectVotes: candid.reject_votes,
-        deadline: candid.deadline,
-        adoptVotes: candid.adopt_votes,
-        summary: candid.summary,
-        proposalId: candid.proposal_id,
         governanceCanisterId: candid.governance_canister_id.toString(),
-        proposer: candid.proposer,
+        proposal: proposal(candid.proposal)
     };
+}
+
+function proposal(candid: ApiProposal): Proposal {
+    if ("NNS" in candid) {
+        const p = candid.NNS;
+        return {
+            kind: "nns",
+            id: p.id,
+            topic: p.topic,
+            proposer: p.proposer,
+            title: p.title,
+            summary: p.summary,
+            url: p.url,
+            status: p.status,
+            rewardStatus: p.reward_status,
+            tally: p.tally,
+            lastUpdated: p.last_updated,
+        }
+    } else if ("SNS" in candid) {
+        const p = candid.SNS;
+        return {
+            kind: "sns",
+            id: p.id,
+            action: p.action,
+            proposer: p.proposer,
+            title: p.title,
+            summary: p.summary,
+            url: p.url,
+            status: p.status,
+            rewardStatus: p.reward_status,
+            tally: p.tally,
+            lastUpdated: p.last_updated,
+        }
+    }
+    throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);
 }
 
 function giphyContent(candid: ApiGiphyContent): GiphyContent {
@@ -509,19 +546,8 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
     }
 }
 
-function apiProposalContent(domain: ProposalContent): ApiProposalContent {
-    return {
-        url: domain.url,
-        title: domain.title,
-        my_vote: apiOptional(identity, domain.myVote),
-        reject_votes: domain.rejectVotes,
-        deadline: domain.deadline,
-        adopt_votes: domain.adoptVotes,
-        summary: domain.summary,
-        proposal_id: domain.proposalId,
-        governance_canister_id: Principal.fromText(domain.governanceCanisterId),
-        proposer: domain.proposer,
-    };
+function apiProposalContent(_: ProposalContent): ApiProposalContent {
+    throw new Error("Sending messages of type 'GovernanceProposal' is not currently supported");
 }
 
 function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
