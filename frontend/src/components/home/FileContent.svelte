@@ -4,10 +4,9 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
-    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import format from "../../utils/fileSize";
+    import ContentCaption from "./ContentCaption.svelte";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
-    import Markdown from "./Markdown.svelte";
 
     export let content: FileContent;
     export let me: boolean = false;
@@ -39,9 +38,7 @@
     </div>
 {/if}
 
-{#if content.caption !== undefined && content.caption !== ""}
-    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
-{/if}
+<ContentCaption caption={content.caption} {edited} {reply} />
 
 <style type="text/scss">
     .file-content {

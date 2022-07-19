@@ -3,10 +3,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { AudioContent } from "../../domain/chat/chat";
-    import { addEditedSuffix } from "../../domain/chat/chat.utils";
+    import ContentCaption from "./ContentCaption.svelte";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
-    import Markdown from "./Markdown.svelte";
 
     export let content: AudioContent;
     export let edited: boolean;
@@ -64,9 +63,7 @@
     </div>
 </div>
 
-{#if content.caption !== undefined && content.caption !== ""}
-    <Markdown text={addEditedSuffix(content.caption, edited)} />
-{/if}
+<ContentCaption caption={content.caption} {edited} />
 
 <style type="text/scss">
     $size: 80px;
