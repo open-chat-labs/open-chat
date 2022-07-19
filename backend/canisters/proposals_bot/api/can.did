@@ -4,7 +4,6 @@ type AddGovernanceCanisterArgs =
     record {
         governance_canister_id: CanisterId;
         name: text;
-        description: opt text;
         avatar: opt Avatar;
     };
 
@@ -15,20 +14,6 @@ type AddGovernanceCanisterResponse =
         InternalError: text;
     };
 
-type RemoveGovernanceCanisterArgs =
-    record {
-        governance_canister_id: CanisterId;
-        delete_group: bool;
-    };
-
-type RemoveGovernanceCanisterResponse =
-    variant {
-        Success;
-        NotFound;
-        InternalError: text;
-    };
-
 service : {
     add_governance_canister: (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
-    remove_governance_canister: (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
 }

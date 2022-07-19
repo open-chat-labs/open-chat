@@ -28,7 +28,6 @@ import {
     GiphyContent,
     GiphyImageVariant,
     ProposalContent,
-    Proposal,
     PollContent,
     PollVotes,
     PollConfig,
@@ -189,7 +188,6 @@ export {
     PublicProfileResponse as ApiPublicProfileResponse,
     ThreadSummary as ApiThreadSummary,
     ProposalContent as ApiProposalContent,
-    Proposal as ApiProposal,
     PinChatResponse as ApiPinChatResponse,
     UnpinChatResponse as ApiUnpinChatResponse,
 };

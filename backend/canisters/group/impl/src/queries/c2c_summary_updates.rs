@@ -101,7 +101,7 @@ fn process_events(
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
-        for index in chat_events.affected_event_indexes(&event_wrapper.event) {
+        if let Some(index) = chat_events.affected_event_index(&event_wrapper.event) {
             if updates.affected_events.len() < 100 {
                 updates.affected_events.insert(index);
             }

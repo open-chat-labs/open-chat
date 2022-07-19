@@ -212,7 +212,6 @@ type ChatEvent =
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
         ThreadUpdated: ThreadUpdated;
-        ProposalsUpdated: ProposalsUpdated;
     };
 
 type ChatEventWrapper =
@@ -615,65 +614,15 @@ type ParticipantsRemoved =
 type ProposalContent =
     record {
         governance_canister_id: CanisterId;
-        proposal: Proposal;
-    };
-
-type Proposal =
-    variant {
-        NNS: NnsProposal;
-        SNS: SnsProposal;
-    };
-
-type NnsProposal =
-    record {
-        id: ProposalId;
-        topic: int32;
+        proposal_id: ProposalId;
         proposer: NeuronId;
         title: text;
         summary: text;
         url: text;
-        status: ProposalDecisionStatus;
-        reward_status: ProposalRewardStatus;
-        tally: Tally;
-        last_updated: TimestampMillis;
-    };
-
-type SnsProposal =
-    record {
-        id: ProposalId;
-        action: nat64;
-        proposer: NeuronId;
-        title: text;
-        summary: text;
-        url: text;
-        status: ProposalDecisionStatus;
-        reward_status: ProposalRewardStatus;
-        tally: Tally;
-        last_updated: TimestampMillis;
-    };
-
-type ProposalDecisionStatus =
-    variant {
-        Unspecified;
-        Open;
-        Rejected;
-        Adopted;
-        Executed;
-        Failed;
-    };
-
-type ProposalRewardStatus =
-    variant {
-        Unspecified;
-        AcceptVotes;
-        ReadyToSettle;
-        Settled;
-    };
-
-type Tally =
-    record {
-        yes: nat64;
-        no: nat64;
+        deadline: TimestampMillis;
+        adopt_votes: nat32;
+        reject_votes: nat32;
+        my_vote: opt bool;
     };
 
 type TotalPollVotes =
@@ -908,15 +857,4 @@ type ThreadSyncDetails =
         latest_message: opt MessageIndex;
         read_up_to: opt MessageIndex;
         last_updated: TimestampMillis;     
-    };
-
-type ProposalsUpdated =
-    record {
-        proposals: vec ProposalUpdated;
-    };
-
-type ProposalUpdated =
-    record {
-        event_index: EventIndex;
-        message_index: MessageIndex;
     };

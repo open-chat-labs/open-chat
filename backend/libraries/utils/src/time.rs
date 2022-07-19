@@ -9,7 +9,7 @@ pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
 const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 
 pub fn now_millis() -> TimestampMillis {
-    now_nanos() / NANOS_PER_MILLISECOND
+    ic_cdk::api::time() as u64 / NANOS_PER_MILLISECOND
 }
 
 pub fn now_nanos() -> TimestampNanos {

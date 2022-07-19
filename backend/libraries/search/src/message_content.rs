@@ -37,8 +37,8 @@ impl From<&MessageContentInternal> for Document {
                 }
             }
             MessageContentInternal::GovernanceProposal(p) => {
-                document.add_field(p.proposal.title().to_string(), 1.0);
-                document.add_field(p.proposal.summary().to_string(), 1.0);
+                document.add_field(p.title.clone(), 1.0);
+                document.add_field(p.summary.clone(), 1.0);
             }
             MessageContentInternal::Deleted(_) => {}
         }
