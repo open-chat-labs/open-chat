@@ -114,7 +114,9 @@
     let confirmed = false;
     let saving = false;
     let viewProfile = false;
-    let postConfirmation = () => dispatch("close");
+    let postConfirmation = () => { 
+        dispatch("close");
+    }
     let inviteComponent: InviteUsers;
 
     // capture a snapshot of the chat as it is right now
@@ -148,7 +150,9 @@
     }
 
     function clickClose() {
-        postConfirmation = () => dispatch("close");
+        postConfirmation = () => { 
+            dispatch("close");
+        }
         close();
     }
 
