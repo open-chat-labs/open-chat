@@ -28,6 +28,7 @@ itertools = "0.10.3"
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 serde = "1.0.137"
+sha2 = "0.10.2"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 tracing = "0.1.33"
 types = { path = "../../../libraries/types" }
