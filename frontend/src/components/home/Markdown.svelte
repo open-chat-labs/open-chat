@@ -72,10 +72,12 @@
         },
     };
 
+    marked.use({ renderer, extensions: [mention] });
+
     function render() {
         let parsed = text;
         try {
-            marked.use({ renderer, extensions: [mention] });
+            console.log("Rendering markdown: ", oneLine, suppressLinks, text)
             parsed = marked.parseInline(text, options);
         } catch (err: any) {
             rollbar.error("Error parsing markdown: ", err);
