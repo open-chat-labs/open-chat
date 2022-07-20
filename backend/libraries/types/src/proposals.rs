@@ -156,12 +156,7 @@ pub struct ProposalStatusUpdate {
 pub struct Tally {
     pub yes: u64,
     pub no: u64,
-}
-
-impl Tally {
-    pub fn total(&self) -> u64 {
-        self.yes.checked_add(self.no).expect("Overflow in Tally::total()")
-    }
+    pub total: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
