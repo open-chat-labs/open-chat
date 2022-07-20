@@ -493,7 +493,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleQueryResponse(
             () =>
                 this.groupService.thread_previews({
-                    threads: threadRootMessageIndexes,
+                    threads: new Uint32Array(threadRootMessageIndexes),
                 }),
             (resp) => threadPreviewsResponse(this.chatId, resp)
         );
