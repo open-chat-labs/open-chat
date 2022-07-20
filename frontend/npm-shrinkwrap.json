@@ -31,7 +31,7 @@
                 "svelte-easy-crop": "^1.0.7",
                 "svelte-i18n": "^3.4.0",
                 "svelte-jester": "^2.3.2",
-                "svelte-markdown": "^0.2.2",
+                "svelte-markdown": "github:open-ic/svelte-markdown",
                 "svelte-material-icons": "^1.0.3",
                 "svelte-qr": "^1.0.0",
                 "svelte-spa-router": "^3.2.0",
@@ -97,6 +97,39 @@
                 "tslib": "^2.3.1",
                 "typescript": "^4.6.3",
                 "util": "0.12.3"
+            }
+        },
+        "../../svelte-markdown": {
+            "version": "0.2.2",
+            "extraneous": true,
+            "license": "MIT",
+            "dependencies": {
+                "@types/marked": "^4.0.1",
+                "marked": "^4.0.10"
+            },
+            "devDependencies": {
+                "@babel/core": "^7.12.16",
+                "@babel/preset-env": "^7.12.16",
+                "@rollup/plugin-commonjs": "17.1.0",
+                "@rollup/plugin-node-resolve": "^11.2.0",
+                "@testing-library/jest-dom": "^5.16.1",
+                "@testing-library/svelte": "^3.0.3",
+                "babel-jest": "^27.4.5",
+                "eslint": "^7.20.0",
+                "eslint-plugin-svelte3": "^3.1.0",
+                "jest": "^27.4.5",
+                "prettier": "^2.2.1",
+                "rollup": "^2.39.0",
+                "rollup-plugin-analyzer": "^4.0.0",
+                "rollup-plugin-bundle-size": "^1.0.3",
+                "rollup-plugin-svelte": "^7.1.0",
+                "rollup-plugin-terser": "^7.0.2",
+                "sirv-cli": "^1.0.11",
+                "svelte": "^3.32.3",
+                "svelte-jester": "^1.3.0"
+            },
+            "peerDependencies": {
+                "svelte": "^3.0.0"
             }
         },
         "node_modules/@ampproject/remapping": {
@@ -10741,9 +10774,9 @@
             }
         },
         "node_modules/marked": {
-            "version": "4.0.14",
-            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.14.tgz",
-            "integrity": "sha512-HL5sSPE/LP6U9qKgngIIPTthuxC0jrfxpYMZ3LdGDD3vTnLs59m2Z7r6+LNDR3ToqEQdkKd6YaaEfJhodJmijQ==",
+            "version": "4.0.18",
+            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.18.tgz",
+            "integrity": "sha512-wbLDJ7Zh0sqA0Vdg6aqlbT+yPxqLblpAZh1mK2+AO2twQkPywvvqQNfEPVwSSRjZ7dZcdeVBIAgiO7MMp3Dszw==",
             "bin": {
                 "marked": "bin/marked.js"
             },
@@ -14348,8 +14381,8 @@
         },
         "node_modules/svelte-markdown": {
             "version": "0.2.2",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.2.tgz",
-            "integrity": "sha512-bNxpG3gRbC2UjAFakIMcLEzVq5db2Md57aeU4wKCuffSfD6f7RkvtYDqbrAk2ycC55t3wykOy0E7KDuvVKyDYA==",
+            "resolved": "git+ssh://git@github.com/open-ic/svelte-markdown.git#01f832344f8b3c5c40c9859205a87644083659df",
+            "license": "MIT",
             "dependencies": {
                 "@types/marked": "^4.0.1",
                 "marked": "^4.0.10"
@@ -14651,9 +14684,9 @@
             }
         },
         "node_modules/terser": {
-            "version": "5.14.1",
-            "resolved": "https://registry.npmjs.org/terser/-/terser-5.14.1.tgz",
-            "integrity": "sha512-+ahUAE+iheqBTDxXhTisdA8hgvbEG1hHOQ9xmNjeUJSoi6DU/gMrKNcfZjHkyY6Alnuyc+ikYJaxxfHkT3+WuQ==",
+            "version": "5.14.2",
+            "resolved": "https://registry.npmjs.org/terser/-/terser-5.14.2.tgz",
+            "integrity": "sha512-oL0rGeM/WFQCUd0y2QrWxYnq7tfSuKBiqTjRPWrRgB46WD/kiwHwF8T23z78H6Q6kGCuuHcPB+KULHRdxvVGQA==",
             "dev": true,
             "dependencies": {
                 "@jridgewell/source-map": "^0.3.2",
@@ -23705,9 +23738,9 @@
             }
         },
         "marked": {
-            "version": "4.0.14",
-            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.14.tgz",
-            "integrity": "sha512-HL5sSPE/LP6U9qKgngIIPTthuxC0jrfxpYMZ3LdGDD3vTnLs59m2Z7r6+LNDR3ToqEQdkKd6YaaEfJhodJmijQ=="
+            "version": "4.0.18",
+            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.18.tgz",
+            "integrity": "sha512-wbLDJ7Zh0sqA0Vdg6aqlbT+yPxqLblpAZh1mK2+AO2twQkPywvvqQNfEPVwSSRjZ7dZcdeVBIAgiO7MMp3Dszw=="
         },
         "md5": {
             "version": "2.3.0",
@@ -26370,9 +26403,8 @@
             "requires": {}
         },
         "svelte-markdown": {
-            "version": "0.2.2",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.2.tgz",
-            "integrity": "sha512-bNxpG3gRbC2UjAFakIMcLEzVq5db2Md57aeU4wKCuffSfD6f7RkvtYDqbrAk2ycC55t3wykOy0E7KDuvVKyDYA==",
+            "version": "git+ssh://git@github.com/open-ic/svelte-markdown.git#01f832344f8b3c5c40c9859205a87644083659df",
+            "from": "svelte-markdown@github:open-ic/svelte-markdown",
             "requires": {
                 "@types/marked": "^4.0.1",
                 "marked": "^4.0.10"
@@ -26571,9 +26603,9 @@
             }
         },
         "terser": {
-            "version": "5.14.1",
-            "resolved": "https://registry.npmjs.org/terser/-/terser-5.14.1.tgz",
-            "integrity": "sha512-+ahUAE+iheqBTDxXhTisdA8hgvbEG1hHOQ9xmNjeUJSoi6DU/gMrKNcfZjHkyY6Alnuyc+ikYJaxxfHkT3+WuQ==",
+            "version": "5.14.2",
+            "resolved": "https://registry.npmjs.org/terser/-/terser-5.14.2.tgz",
+            "integrity": "sha512-oL0rGeM/WFQCUd0y2QrWxYnq7tfSuKBiqTjRPWrRgB46WD/kiwHwF8T23z78H6Q6kGCuuHcPB+KULHRdxvVGQA==",
             "dev": true,
             "requires": {
                 "@jridgewell/source-map": "^0.3.2",
