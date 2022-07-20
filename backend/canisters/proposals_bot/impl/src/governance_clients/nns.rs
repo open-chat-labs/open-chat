@@ -47,6 +47,7 @@ pub mod governance_response_types {
         pub proposer: Option<WrappedNeuronId>,
         pub reject_cost_e8s: u64,
         pub proposal: Option<Proposal>,
+        pub proposal_timestamp_seconds: u64,
         pub latest_tally: Option<Tally>,
         pub decided_timestamp_seconds: u64,
         pub executed_timestamp_seconds: u64,
@@ -55,7 +56,7 @@ pub mod governance_response_types {
         pub topic: i32,
         pub status: i32,
         pub reward_status: i32,
-        pub deadline_timestamp_seconds: ::core::option::Option<u64>,
+        pub deadline_timestamp_seconds: Option<u64>,
     }
 
     impl RawProposal for ProposalInfo {
@@ -81,9 +82,10 @@ pub mod governance_response_types {
 
             Ok(types::NnsProposal {
                 id: p.id.ok_or("id not set")?.id,
-                proposer: p.proposer.ok_or("proposer not set")?.id,
-                title: proposal.title.ok_or("title not set")?,
                 topic: p.topic,
+                proposer: p.proposer.ok_or("proposer not set")?.id,
+                created: p.proposal_timestamp_seconds * 1000,
+                title: proposal.title.ok_or("title not set")?,
                 summary: proposal.summary,
                 url: proposal.url,
                 status: p.status.try_into().unwrap(),

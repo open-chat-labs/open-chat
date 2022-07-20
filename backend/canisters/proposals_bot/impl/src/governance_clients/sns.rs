@@ -141,6 +141,7 @@ pub mod governance_response_types {
                 id: p.id.ok_or("id not set")?.id,
                 action: p.action,
                 proposer: p.proposer.ok_or("proposer not set")?.id,
+                created: p.proposal_creation_timestamp_seconds * 1000,
                 title: proposal.title,
                 summary: proposal.summary,
                 url: proposal.url,

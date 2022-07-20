@@ -629,6 +629,7 @@ type NnsProposal =
         id: ProposalId;
         topic: int32;
         proposer: NeuronId;
+        created: TimestampMillis;
         title: text;
         summary: text;
         url: text;
@@ -644,6 +645,7 @@ type SnsProposal =
         id: ProposalId;
         action: nat64;
         proposer: NeuronId;
+        created: TimestampMillis;
         title: text;
         summary: text;
         url: text;
