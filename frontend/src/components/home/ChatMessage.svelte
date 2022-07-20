@@ -54,8 +54,8 @@
     import { translationStore } from "../../stores/translation";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { configKeys } from "../../utils/config";
     import { pathParams } from "../../stores/routing";
+    import { configKeys } from "../../utils/config";
 
     const dispatch = createEventDispatcher();
 
@@ -641,6 +641,8 @@
 
     {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
+            {chatId}
+            threadRootMessageIndex={msg.messageIndex}
             selected={msg.messageIndex === $pathParams.messageIndex}
             {threadSummary}
             indent={showAvatar}

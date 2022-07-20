@@ -100,7 +100,7 @@
         "svelte-easy-crop": "^1.0.7",
         "svelte-i18n": "^3.4.0",
         "svelte-jester": "^2.3.2",
-        "svelte-markdown": "^0.2.2",
+        "svelte-markdown": "github:open-ic/svelte-markdown",
         "svelte-material-icons": "^1.0.3",
         "svelte-qr": "^1.0.0",
         "svelte-spa-router": "^3.2.0",
@@ -109,6 +109,7 @@
         "uuid": "^3.4.0"
     },
     "jest": {
+        "testEnvironment": "jsdom",
         "timers": "fake",
         "transform": {
             "^.+\\.svelte$": [

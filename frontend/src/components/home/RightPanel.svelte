@@ -29,6 +29,7 @@
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
+    import { push } from "svelte-spa-router";
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController | undefined;
@@ -108,6 +109,11 @@
         }
     }
 
+    function closeThread(ev: CustomEvent<string>) {
+        pop();
+        push(`/${ev.detail}`);
+    }
+
     function findMessage(
         events: EventWrapper<ChatEvent>[],
         messageId: bigint
@@ -182,7 +188,7 @@
                 ? lastState.focusThreadMessageIndex
                 : undefined}
             {controller}
-            on:close={pop} />
+            on:closeThread={closeThread} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

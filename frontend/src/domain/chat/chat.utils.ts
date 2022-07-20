@@ -32,8 +32,11 @@ import type {
     ChatMetrics,
     SendMessageSuccess,
     TransferSuccess,
+    ThreadSyncDetails,
+    ThreadRead,
+    ThreadSyncDetailsUpdates,
 } from "./chat";
-import { dedupe, groupWhile } from "../../utils/list";
+import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -51,6 +54,8 @@ import { emptyChatMetrics } from "./chat.utils.shared";
 import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
+import type { UnconfirmedMessages } from "../../stores/unconfirmed";
+import { setPropIfDefined } from "../../utils/object";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -562,7 +567,36 @@ function mergeUpdatedGroupChat(
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
+        latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
     };
+}
+
+function mergeThreadSyncDetails(
+    updated: ThreadSyncDetailsUpdates[] | undefined,
+    existing: ThreadSyncDetails[]
+) {
+    if (updated === undefined) return existing;
+
+    return Object.values(
+        updated.reduce(
+            (merged, thread) => {
+                const existing = merged[thread.threadRootMessageIndex];
+                if (existing !== undefined) {
+                    const copy = {
+                        ...existing,
+                    };
+                    copy.lastUpdated = thread.lastUpdated;
+                    setPropIfDefined(copy, "readUpTo", thread.readUpTo);
+                    setPropIfDefined(copy, "latestEventIndex", thread.latestEventIndex);
+                    setPropIfDefined(copy, "latestMessageIndex", thread.latestMessageIndex);
+                    setPropIfDefined(copy, "readUpTo", thread.readUpTo);
+                    merged[thread.threadRootMessageIndex] = copy;
+                }
+                return merged;
+            },
+            toRecord(existing, (t) => t.threadRootMessageIndex)
+        )
+    );
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
@@ -593,11 +627,43 @@ function mentionsFromMessages(userId: string, messages: EventWrapper<Message>[])
     }, [] as Mention[]);
 }
 
+export function mergeUnconfirmedThreadsIntoSummary(
+    chat: GroupChatSummary,
+    unconfirmed: UnconfirmedMessages
+): GroupChatSummary {
+    return {
+        ...chat,
+        latestThreads: chat.latestThreads.map((t) => {
+            const unconfirmedMsgs =
+                unconfirmed[`${chat.chatId}_${t.threadRootMessageIndex}`]?.messages ?? [];
+            if (unconfirmedMsgs.length > 0) {
+                let msgIdx = t.latestMessageIndex;
+                let evtIdx = t.latestEventIndex;
+                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
+                }
+                if (latestUnconfirmedMessage.index > evtIdx) {
+                    evtIdx = latestUnconfirmedMessage.index;
+                }
+                return {
+                    ...t,
+                    latestEventIndex: evtIdx,
+                    latestMessageIndex: msgIdx,
+                };
+            }
+            return t;
+        }),
+    };
+}
+
 export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmedMessages?: EventWrapper<Message>[]
+    unconfirmed: UnconfirmedMessages
 ): ChatSummary {
+    const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
+
     if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
@@ -620,7 +686,7 @@ export function mergeUnconfirmedIntoSummary(
 
     return chatSummary.kind === "group_chat"
         ? {
-              ...chatSummary,
+              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed),
               latestMessage,
               latestEventIndex,
               mentions,
@@ -907,7 +973,7 @@ export function replaceLocal(
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[],
-    inThread = false // from threads, we should not mark messages as read
+    threadRootMessageIndex?: number
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);
@@ -919,8 +985,11 @@ export function replaceLocal(
     Object.entries(serverMsgs).forEach(([id, e]) => {
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
-            if (!inThread) {
-                const idNum = BigInt(id);
+            const idNum = BigInt(id);
+            if (threadRootMessageIndex !== undefined) {
+                const key = `${chatId}_${threadRootMessageIndex}`;
+                unconfirmed.delete(key, idNum);
+            } else {
                 if (unconfirmed.delete(chatId, idNum)) {
                     messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
                 } else if (
@@ -1087,6 +1156,7 @@ export function groupChatFromCandidate(
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
+        latestThreads: [],
     };
 }
 
@@ -1471,11 +1541,6 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefine
     );
 }
 
-export function addEditedSuffix(txt: string | undefined, edited: boolean): string {
-    if (txt === undefined || txt === "") return "";
-    return edited ? `${txt} <span class="edited-msg">(${get(_)("edited")})</span>` : txt;
-}
-
 export function canForward(content: MessageContent): boolean {
     return (
         content.kind !== "crypto_content" &&
@@ -1523,4 +1588,16 @@ export function mergeSendMessageResponse(
                 ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
                 : msg.content,
     };
+}
+
+export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
+    return chat.kind === "group_chat"
+        ? chat.latestThreads
+              .filter((t) => t.readUpTo !== undefined)
+              .map((t) => ({
+                  threadRootMessageIndex: t.threadRootMessageIndex,
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  readUpTo: t.readUpTo!,
+              }))
+        : [];
 }

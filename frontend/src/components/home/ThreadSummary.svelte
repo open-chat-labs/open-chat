@@ -1,21 +1,52 @@
 <script lang="ts">
     import type { ThreadSummary } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
+    import { pop } from "../../utils/transition";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import { userAvatarUrl } from "../../domain/user/user.utils";
     import { userStore } from "../../stores/user";
     import { formatMessageDate } from "../../utils/date";
+    import { messagesRead } from "../../stores/markRead";
+    import { onDestroy } from "svelte";
 
     export let threadSummary: ThreadSummary;
     export let indent: boolean;
     export let me: boolean;
     export let selected: boolean;
     export let url: string;
+    export let chatId: string;
+    export let threadRootMessageIndex: number;
+
+    $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now
+
+    $: unreadCount = messagesRead.unreadThreadMessageCount(
+        chatId,
+        threadRootMessageIndex,
+        lastMessageIndex
+    );
+
+    const unsub = messagesRead.subscribe(() => {
+        unreadCount = messagesRead.unreadThreadMessageCount(
+            chatId,
+            threadRootMessageIndex,
+            lastMessageIndex
+        );
+    });
+
+    onDestroy(unsub);
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
+    {#if unreadCount > 0 && me}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}
+            class="unread-count">
+            {unreadCount > 999 ? "999+" : unreadCount}
+        </div>
+    {/if}
     <a href={url} class="thread-summary" class:selected>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
@@ -55,16 +86,31 @@
                 <div class:selected class="arrow">&#8595;</div></span>
         </div>
     </a>
+    {#if unreadCount > 0 && !me}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}
+            class="unread-count">
+            {unreadCount > 999 ? "999+" : unreadCount}
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
     $avatar-width: 53px;
     $avatar-width-mob: 43px;
 
+    .unread-count {
+        @include unread();
+    }
+
     .thread-summary-wrapper {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
+        align-items: center;
+        gap: $sp3;
+        margin-bottom: $sp2;
 
         &.me {
             justify-content: flex-end;
@@ -94,7 +140,6 @@
         gap: $sp2;
         padding: $sp2 $sp3;
         border-radius: $sp3;
-        margin-bottom: $sp2;
         cursor: pointer;
         transition: background 200ms ease-in-out;
         border: 1px solid rgba(255, 255, 255, 0.2);

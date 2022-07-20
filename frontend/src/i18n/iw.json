@@ -536,7 +536,11 @@
         "replies": "עונה",
         "reply": "תשובה",
         "lastMessage": "(הודעה אחרונה {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "חוטים",
+        "openThread": "חוט פתוח",
+        "unread": "{count} שרשור(ים) עם הודעות שלא נקראו",
+        "moreMessages": "- {number} הודעות נוספות -"
     },
     "noChatsAvailable": "אין צ'אטים זמינים!",
     "invitedUsers": "משתמשים מוזמנים",

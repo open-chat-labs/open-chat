@@ -773,6 +773,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         },
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
+        latestThreads: [],
     };
 }
 

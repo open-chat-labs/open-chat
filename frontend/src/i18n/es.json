@@ -539,7 +539,11 @@
         "replies": "respuestas",
         "reply": "respuesta",
         "lastMessage": "(último mensaje {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Hilos",
+        "openThread": "hilo abierto",
+        "unread": "{count} hilo(s) con mensajes no leídos",
+        "moreMessages": "- {number} mensaje(s) más -"
     },
     "noChatsAvailable": "¡No hay chats disponibles!",
     "invitedUsers": "Usuarios invitados",

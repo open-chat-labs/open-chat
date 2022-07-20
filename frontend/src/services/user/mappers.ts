@@ -34,6 +34,7 @@ import type {
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
+    ApiThreadSyncDetails,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -63,6 +64,8 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
+    ThreadSyncDetails,
+    ThreadSyncDetailsUpdates,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -659,6 +662,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
+            latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
         };
     }
     if ("Direct" in candid) {
@@ -770,6 +774,27 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: candid.latest_threads.map(threadSyncDetails),
+    };
+}
+
+function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
+        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
+    };
+}
+
+function threadSyncDetailsUpdates(candid: ApiThreadSyncDetails): ThreadSyncDetailsUpdates {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: optional(candid.latest_event, identity),
+        latestMessageIndex: optional(candid.latest_message, identity),
     };
 }
 

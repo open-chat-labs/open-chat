@@ -416,20 +416,9 @@
     }
 
     .notification {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--accent);
-        text-shadow: 1px 1px 1px var(--accentDarker);
-        border-radius: 12px;
-        @include font(bold, normal, fs-50);
-        color: #ffffff;
-        min-width: $sp5;
-        padding: 0 $sp2;
-        height: $sp5;
+        @include unread();
         margin-top: 18px;
         margin-left: 2px;
-
         &:not(.rtl) {
             right: $sp3;
         }

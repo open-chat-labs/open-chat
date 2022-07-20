@@ -268,5 +268,11 @@ export function lightTheme(): Theme {
         toggle: {
             bg: "#cccccc",
         },
+
+        thread: {
+            preview: {
+                bg: "rgba(255, 255, 255, 0.05)",
+            },
+        },
     };
 }

@@ -221,6 +221,8 @@ export class UserClient extends CandidService implements IUserClient {
             initialStateResponse
         );
 
+        console.log("Initial state: ", resp);
+
         return {
             wasUpdated: true,
             chatSummaries: resp.chats.sort(compareChats),
@@ -429,14 +431,16 @@ export class UserClient extends CandidService implements IUserClient {
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read({
-                messages_read: request.map(({ chatId, ranges }) => ({
+                messages_read: request.map(({ chatId, ranges, threads }) => ({
                     chat_id: Principal.fromText(chatId),
-                    thread_root_message_index: [],
                     message_ranges: ranges.subranges().map((r) => ({
                         from: r.low,
                         to: r.high,
                     })),
-                    threads: [],
+                    threads: threads.map((t) => ({
+                        root_message_index: t.threadRootMessageIndex,
+                        read_up_to: t.readUpTo,
+                    })),
                 })),
             }),
             markReadResponse

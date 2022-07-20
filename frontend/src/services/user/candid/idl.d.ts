@@ -95,6 +95,7 @@ import {
     ThreadSummary,
     PinChatResponse,
     UnpinChatResponse,
+    ThreadSyncDetails,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -192,6 +193,7 @@ export {
     Proposal as ApiProposal,
     PinChatResponse as ApiPinChatResponse,
     UnpinChatResponse as ApiUnpinChatResponse,
+    ThreadSyncDetails as ApiThreadSyncDetails,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -648,6 +648,23 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     ownerId?: string;
     permissions?: GroupPermissions;
     public?: boolean;
+    latestThreads?: ThreadSyncDetailsUpdates[];
+};
+
+export type ThreadSyncDetailsUpdates = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
+};
+
+export type ThreadSyncDetails = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex: number;
+    latestMessageIndex: number;
 };
 
 export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -738,6 +755,7 @@ export type GroupChatSummary = DataContent &
         myRole: MemberRole;
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
+        latestThreads: ThreadSyncDetails[];
     };
 
 export type Mention = {
@@ -1013,7 +1031,13 @@ export type JoinGroupResponse =
 export type MarkReadRequest = {
     ranges: DRange;
     chatId: string;
+    threads: ThreadRead[];
 }[];
+
+export type ThreadRead = {
+    threadRootMessageIndex: number;
+    readUpTo: number;
+};
 
 export type MarkReadResponse = "success";
 
@@ -1100,6 +1124,20 @@ export type EnableInviteCodeSuccess = {
 export type DisableInviteCodeResponse = "not_authorised" | "success";
 
 export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised;
+
+export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
+
+export type ThreadPreviewsSuccess = {
+    kind: "thread_previews_success";
+    threads: ThreadPreview[];
+};
+
+export type ThreadPreview = {
+    chatId: string;
+    latestReplies: EventWrapper<Message>[];
+    totalReplies: number;
+    rootMessage: EventWrapper<Message>;
+};
 
 export type ResetInviteCodeSuccess = {
     kind: "success";

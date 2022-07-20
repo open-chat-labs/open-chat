@@ -1,9 +1,9 @@
 import type {
     ChatSummary,
     CurrentChatState,
-    DirectChatSummary,
     EventWrapper,
     Message,
+    ThreadSyncDetails,
 } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
@@ -81,7 +81,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                     result[chatId] = mergeUnconfirmedIntoSummary(
                         currentUser.userId,
                         summary,
-                        unconfirmed[chatId]?.messages
+                        unconfirmed
                     );
                 }
                 return result;
@@ -103,6 +103,26 @@ export const chatSummariesListStore = derived(
             .sort(compareChats);
         return pinned.concat(unpinned);
     }
+);
+
+export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
+    return summaries.reduce((result, chat) => {
+        if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
+            result[chat.chatId] = chat.latestThreads;
+        }
+        return result;
+    }, {} as Record<string, ThreadSyncDetails[]>);
+});
+
+function countThreads<T>(things: Record<string, T[]>): number {
+    return Object.values(things)
+        .map((ts) => ts.length)
+        .reduce((total, n) => total + n, 0);
+}
+
+// returns the totol number of threads that we are involved in
+export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
+    countThreads(threads)
 );
 
 export const chatsLoading = writable(false);
@@ -207,11 +227,13 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-export function clearSelectedChat(): void {
+export function clearSelectedChat(navigate = true): void {
     selectedChatStore.update((controller) => {
         if (controller !== undefined) {
             controller.destroy();
-            push("/");
+            if (navigate) {
+                push("/");
+            }
         }
         return undefined;
     });

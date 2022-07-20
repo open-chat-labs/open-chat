@@ -94,3 +94,14 @@ export function toRecord<T, K extends string | number | symbol>(
         return rec;
     }, {} as Record<K, T>);
 }
+
+export function toRecord2<T, K extends string | number | symbol, V>(
+    xs: T[],
+    keyFn: (x: T) => K,
+    valFn: (x: T) => V
+): Record<K, V> {
+    return xs.reduce((rec, x) => {
+        rec[keyFn(x)] = valFn(x);
+        return rec;
+    }, {} as Record<K, V>);
+}

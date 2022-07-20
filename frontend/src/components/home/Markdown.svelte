@@ -13,6 +13,11 @@
     export let suppressLinks: boolean = false;
 
     $: parsed = replaceUserIds(text);
+    $: options = {
+        breaks: !oneLine,
+        mangle: false,
+        silent: true,
+    };
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
@@ -33,9 +38,7 @@
             }}
             isInline={true}
             source={parsed}
-            options={{
-                breaks: !oneLine,
-            }} />
+            {options} />
     {:else}
         <SvelteMarkdown
             renderers={{
@@ -43,9 +46,7 @@
             }}
             isInline={true}
             source={parsed}
-            options={{
-                breaks: !oneLine,
-            }} />
+            {options} />
     {/if}
 </p>
 

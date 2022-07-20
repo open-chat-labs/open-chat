@@ -59,7 +59,6 @@
     import { dedupe } from "../../../utils/list";
     import { selectReaction, toggleReactionInEventList } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
-    import { createUnconfirmedStore } from "../../../stores/unconfirmedFactory";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
@@ -73,6 +72,8 @@
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
+    import { messagesRead } from "stores/markRead";
+    import { unconfirmed } from "stores/unconfirmed";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -90,7 +91,6 @@
     let selectingGif = false;
     let loading = false;
     let initialised = false;
-    let unconfirmed = createUnconfirmedStore();
     let messagesDiv: HTMLDivElement | undefined;
     let fromBottom: Writable<number> = writable(0);
     let withinThreshold: Readable<boolean> = derived([fromBottom], ([$fromBottom]) => {
@@ -150,6 +150,7 @@
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
     $: pollsAllowed = canCreatePolls($chat);
+    $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
 
     const dispatch = createEventDispatcher();
 
@@ -184,13 +185,31 @@
             }
             tick().then(() => {
                 if (focusMessageIndex !== undefined) {
-                    goToMessageIndex(focusMessageIndex, false);
+                    goToMessageIndex(focusMessageIndex);
                 }
             });
+            const lastLoadedMessageIdx = lastMessageIndex($events);
+            if (lastLoadedMessageIdx !== undefined) {
+                messagesRead.markThreadRead(
+                    $chat.chatId,
+                    threadRootMessageIndex,
+                    lastLoadedMessageIdx
+                );
+            }
         }
 
         initialised = true;
         loading = false;
+    }
+
+    function lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const evt = events[i].event;
+            if (evt.kind === "message") {
+                return evt.messageIndex;
+            }
+        }
+        return undefined;
     }
 
     function calculateFromBottom(): number {
@@ -210,7 +229,7 @@
                 $chat.readByMe,
                 events,
                 resp.events,
-                true
+                threadRootMessageIndex
             ),
             resp.affectedEvents
         );
@@ -285,7 +304,7 @@
     }
 
     function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-        unconfirmed.delete(threadRootMessageIndex, message.messageId);
+        unconfirmed.delete(unconfirmedKey, message.messageId);
         removeMessage(message.messageId, message.userId);
     }
 
@@ -314,6 +333,14 @@
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
         appendMessage(message.messageEvent);
+
+        // since we will only get here if we actually have the thread open
+        // we should mark read up to this message too
+        messagesRead.markThreadRead(
+            $chat.chatId,
+            threadRootMessageIndex,
+            message.messageEvent.event.messageIndex
+        );
     }
 
     function sendMessageWithAttachment(
@@ -335,9 +362,10 @@
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            unconfirmed.add(threadRootMessageIndex, event);
+            unconfirmed.add(unconfirmedKey, event);
             events.update((evts) => [...evts, event]);
             scrollBottom();
+            messagesRead.markThreadRead($chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
@@ -351,6 +379,7 @@
                         }
                         trackEvent("sent_threaded_message");
                     } else {
+                        unconfirmed.delete(unconfirmedKey, msg.messageId);
                         removeMessage(msg.messageId, currentUser.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
@@ -358,7 +387,7 @@
                 })
                 .catch((err) => {
                     console.log(err);
-                    unconfirmed.delete($chat.chatId, msg.messageId);
+                    unconfirmed.delete(unconfirmedKey, msg.messageId);
                     removeMessage(msg.messageId, currentUser.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
@@ -376,7 +405,7 @@
     }
 
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
-        if (unconfirmed.delete(threadRootMessageIndex, candidate.messageId)) {
+        if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = {
                 event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
@@ -657,7 +686,7 @@
         });
     }
 
-    function goToMessageIndex(index: number, preserveFocus: boolean) {
+    function goToMessageIndex(index: number) {
         if (index < 0) {
             focusMessageIndex = undefined;
             return;
@@ -676,7 +705,7 @@
     }
 
     function onGoToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        goToMessageIndex(ev.detail.index);
     }
 
     function scrollBottom() {
@@ -741,7 +770,7 @@
 <ThreadHeader
     {threadRootMessageIndex}
     on:createPoll={createPoll}
-    on:close
+    on:closeThread
     {rootEvent}
     {pollsAllowed}
     chatSummary={$chat} />
@@ -761,10 +790,7 @@
                             senderId={evt.event.sender}
                             focused={evt.event.messageIndex === focusMessageIndex}
                             {observer}
-                            confirmed={!unconfirmed.contains(
-                                threadRootMessageIndex,
-                                evt.event.messageId
-                            )}
+                            confirmed={!unconfirmed.contains(unconfirmedKey, evt.event.messageId)}
                             senderTyping={isTyping(
                                 $typing,
                                 evt.event.sender,

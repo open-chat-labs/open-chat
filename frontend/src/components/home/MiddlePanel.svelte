@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import Panel from "../Panel.svelte";
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
@@ -8,17 +9,22 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary } from "../../domain/chat/chat";
+    import { pathParams } from "../../stores/routing";
 
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
+
+    $: showThreads = $pathParams.chatId === "threads";
 </script>
 
 <Panel middle>
     {#if loadingChats || hotGroups.kind === "loading"}
         <Loading />
+    {:else if showThreads}
+        <ThreadPreviews />
     {:else if controller === undefined}
         {#if hotGroups.kind === "success"}
             <RecommendedGroups
