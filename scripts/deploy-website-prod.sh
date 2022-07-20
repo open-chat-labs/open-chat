@@ -20,4 +20,7 @@ OPENCHAT_WEBSITE_VERSION=$VERSION npm run --prefix frontend build:prod
 dfx --identity $IDENTITY deploy --network ic --no-wallet website
 icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload 6hsbt-vqaaa-aaaaf-aaafq-cai /.well-known/ii-alternative-origins=frontend/build/.well-known/ii-alternative-origins
 
-git tag v$VERSION-website HEAD
+TAG=v$VERSION-website
+
+git tag $TAG HEAD
+git push origin tag $TAG
