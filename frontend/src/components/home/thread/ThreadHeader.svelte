@@ -7,7 +7,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
-    import { TypersByKey, typing, byThread } from "../../../stores/typing";
+    import { TypersByKey, byThread } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -21,7 +21,6 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
     import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
-    import { push } from "svelte-spa-router";
     import { mobileWidth } from "stores/screenDimensions";
     import { createEventDispatcher } from "svelte";
 
@@ -35,7 +34,7 @@
     $: chat = normaliseChatSummary($now, chatSummary, $byThread);
 
     function close() {
-        push(`/${chatSummary.chatId}`);
+        dispatch("closeThread", chatSummary.chatId);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {

@@ -538,7 +538,11 @@
         "replies": "antwortet",
         "reply": "Antwort",
         "lastMessage": "(letzte Nachricht {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Fäden",
+        "openThread": "Thread öffnen",
+        "unread": "{count} Thread(s) mit ungelesenen Nachrichten",
+        "moreMessages": "- {number} weitere Nachricht(en) -"
     },
     "noChatsAvailable": "Keine Chats verfügbar!",
     "invitedUsers": "Eingeladene Benutzer",

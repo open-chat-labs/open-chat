@@ -69,6 +69,8 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     CurrentChatState,
+    ThreadPreview,
+    ThreadSyncDetails,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -101,7 +103,7 @@ import type { ServiceRetryInterrupt } from "./candidService";
 import { userStore } from "../stores/user";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
-import { buildBlobUrl, buildUserAvatarUrl } from "../domain/chat/chat.utils";
+import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 
 export const apiKey = Symbol();
 
@@ -463,6 +465,10 @@ export class ServiceContainer implements MarkMessagesRead {
         });
     }
 
+    /**
+     * Given a list of events, identify all eventIndexes which we may need to look up
+     * In practice this means the event indexes of embedded reply contexts
+     */
     private findMissingEventIndexesByChat<T extends ChatEvent>(
         defaultChatId: string,
         events: EventWrapper<T>[]
@@ -714,7 +720,7 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
-                messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsReadFromChat(chat));
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
@@ -1083,5 +1089,64 @@ export class ServiceContainer implements MarkMessagesRead {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.userClient.unpinChat(chatId);
+    }
+
+    async threadPreviews(
+        threadsByChat: Record<string, ThreadSyncDetails[]>
+    ): Promise<ThreadPreview[]> {
+        return Promise.all(
+            Object.entries(threadsByChat).map(([chatId, threadSyncs]) =>
+                this.getGroupClient(chatId).threadPreviews(
+                    threadSyncs.map((t) => t.threadRootMessageIndex)
+                )
+            )
+        ).then((responses) =>
+            Promise.all(
+                responses.map((r) => {
+                    return r.kind === "thread_previews_success"
+                        ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t)))
+                        : [];
+                })
+            ).then((threads) => threads.flat())
+        );
+    }
+
+    private async rehydrateThreadPreview(thread: ThreadPreview): Promise<ThreadPreview> {
+        const threadMissing = await this.resolveMissingIndexes(
+            "group",
+            thread.chatId,
+            thread.latestReplies,
+            thread.rootMessage.event.messageIndex
+        );
+
+        const rootMissing = await this.resolveMissingIndexes("group", thread.chatId, [
+            thread.rootMessage,
+        ]);
+
+        const replies = this.reydrateEventList(
+            this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, threadMissing)
+        );
+
+        const [rootMsg] = this.reydrateEventList(
+            this.rehydrateMissingReplies(thread.chatId, [thread.rootMessage], rootMissing)
+        );
+
+        return {
+            ...thread,
+            rootMessage: {
+                ...rootMsg,
+                event: {
+                    ...rootMsg.event,
+                    content: this.rehydrateMessageContent(rootMsg.event.content),
+                },
+            },
+            latestReplies: replies.map((r) => ({
+                ...r,
+                event: {
+                    ...r.event,
+                    content: this.rehydrateMessageContent(r.event.content),
+                },
+            })),
+        };
     }
 }

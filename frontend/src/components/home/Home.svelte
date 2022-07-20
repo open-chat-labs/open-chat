@@ -215,7 +215,10 @@
     $: {
         // wait until we have loaded the chats
         if ($chatsInitialised) {
-            if ($pathParams.chatId === "share") {
+            if ($pathParams.chatId === "threads") {
+                clearSelectedChat(false);
+                hotGroups = { kind: "idle" };
+            } else if ($pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
                 const title = local_qs.get("title") ?? "";
                 const text = local_qs.get("text") ?? "";
@@ -229,7 +232,7 @@
                 history.replaceState(null, "", "/#/");
                 modal = ModalType.SelectChat;
             } else {
-                // if we have a chat in the url
+                // if we have something in the chatId url param
                 if ($pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if ($pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
@@ -833,6 +836,9 @@
                 .then((resp) => (hotGroups = { kind: "success", data: resp }))
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
+        if ($pathParams.chatId === "threads") {
+            push("/");
+        }
     }
 
     function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
@@ -944,7 +950,7 @@
             blocked={!!blocked}
             controller={$selectedChatStore}
             on:initiateThread={initiateThread}
-            on:clearSelection={clearSelectedChat}
+            on:clearSelection={() => clearSelectedChat(true)}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}

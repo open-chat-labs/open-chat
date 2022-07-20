@@ -85,7 +85,7 @@ export class ChatController {
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
-            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
+            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed)
         );
 
         const { chatId, kind } = get(this.chat);

@@ -273,6 +273,12 @@ export interface Theme {
     toggle: {
         bg: string;
     };
+
+    thread: {
+        preview: {
+            bg: string;
+        };
+    };
 }
 
 export type Themes = {

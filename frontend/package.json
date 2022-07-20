@@ -109,6 +109,7 @@
         "uuid": "^3.4.0"
     },
     "jest": {
+        "testEnvironment": "jsdom",
         "timers": "fake",
         "transform": {
             "^.+\\.svelte$": [

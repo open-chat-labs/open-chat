@@ -538,7 +538,11 @@
         "replies": "ответы",
         "reply": "Ответить",
         "lastMessage": "(последнее сообщение {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Потоки",
+        "openThread": "открыть тему",
+        "unread": "{count} тредов с непрочитанными сообщениями",
+        "moreMessages": "- Еще {number} сообщений -"
     },
     "noChatsAvailable": "Нет доступных чатов!",
     "invitedUsers": "Приглашенные пользователи",

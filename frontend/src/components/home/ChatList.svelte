@@ -3,6 +3,7 @@
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
+    import ThreadsSection from "./ThreadsSection.svelte";
     import { _ } from "svelte-i18n";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
@@ -26,6 +27,7 @@
         chatsLoading,
         chatSummariesListStore,
         chatSummariesStore,
+        numberOfThreadsStore,
         selectedChatStore,
     } from "../../stores/chat";
     import { messagesRead } from "../../stores/markRead";
@@ -168,6 +170,9 @@
             <div class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                {/if}
+                {#if $numberOfThreadsStore > 0}
+                    <ThreadsSection />
                 {/if}
                 {#each chats as chatSummary, i (chatSummary.chatId)}
                     <ChatSummary

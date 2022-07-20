@@ -29,6 +29,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -329,5 +330,9 @@ export class CachingGroupClient implements IGroupClient {
 
     resetInviteCode(): Promise<ResetInviteCodeResponse> {
         return this.client.resetInviteCode();
+    }
+
+    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
+        return this.client.threadPreviews(threadRootMessageIndexes);
     }
 }
