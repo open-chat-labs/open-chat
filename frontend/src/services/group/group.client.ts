@@ -110,7 +110,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            events: eventIndexes,
+            events: new Uint32Array(eventIndexes),
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
         return this.handleQueryResponse(
@@ -273,7 +273,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                               SetToSome: {
                                   id: DataClient.newBlobId(),
                                   mime_type: "image/jpg",
-                                  data: Array.from(avatar),
+                                  data: avatar,
                               },
                           },
                 permissions: [],
@@ -396,7 +396,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
-            messages: [...messageIndexes],
+            messages: new Uint32Array(messageIndexes),
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),

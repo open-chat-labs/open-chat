@@ -1538,11 +1538,6 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefine
     );
 }
 
-export function addEditedSuffix(txt: string | undefined, edited: boolean): string {
-    if (txt === undefined || txt === "") return "";
-    return edited ? `${txt} <span class="edited-msg">(${get(_)("edited")})</span>` : txt;
-}
-
 export function canForward(content: MessageContent): boolean {
     return (
         content.kind !== "crypto_content" &&

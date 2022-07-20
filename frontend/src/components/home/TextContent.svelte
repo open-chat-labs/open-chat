@@ -5,7 +5,6 @@
     import { translationStore } from "../../stores/translation";
     import { _ } from "svelte-i18n";
     import type { TextContent } from "../../domain/chat/chat";
-    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import { youtubeRegex } from "../../utils/media";
 
     const SIZE_LIMIT = 1000;
@@ -23,8 +22,7 @@
         if (truncate && text.length > SIZE_LIMIT) {
             text = text.slice(0, SIZE_LIMIT) + "...";
         }
-
-        return addEditedSuffix(text, edited);
+        return text;
     }
 
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
@@ -33,6 +31,9 @@
 
 {#if !socialVideoMatch}
     <Markdown suppressLinks={pinned} {text} />
+    {#if edited}
+        <span class="edited-msg">({$_("edited")})</span>
+    {/if}
 {:else}
     <div class="social-video">
         {#if socialVideoMatch[0] !== content.text}

@@ -43,12 +43,8 @@ pub(crate) fn send_group_deleted_message(
     public: bool,
     runtime_state: &mut RuntimeState,
 ) {
-    let visibility = if public { "Public" } else { "Private" };
-
-    let text = format!(
-        "The group _{} ({})_ was deleted by @UserId({})",
-        group_name, visibility, deleted_by
-    );
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
 
     send_text_message(text, runtime_state);
 }
@@ -60,9 +56,9 @@ pub(crate) fn send_removed_from_group_message(
     blocked: bool,
     runtime_state: &mut RuntimeState,
 ) {
-    let visibility = if public { "Public" } else { "Private" };
+    let visibility = if public { "public" } else { "private" };
     let action = if blocked { "blocked" } else { "removed" };
-    let text = format!("You were {action} from the group _{group_name} ({visibility})_ by @UserId({removed_by})");
+    let text = format!("You were {action} from the {visibility} group \"{group_name}\" by @UserId({removed_by})");
 
     send_text_message(text, runtime_state);
 }
