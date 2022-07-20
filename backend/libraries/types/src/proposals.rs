@@ -16,6 +16,13 @@ impl Proposal {
         }
     }
 
+    pub fn created(&self) -> TimestampMillis {
+        match self {
+            Proposal::NNS(p) => p.created,
+            Proposal::SNS(p) => p.created,
+        }
+    }
+
     pub fn title(&self) -> &str {
         match self {
             Proposal::NNS(p) => &p.title,
@@ -71,6 +78,7 @@ pub struct NnsProposal {
     pub id: ProposalId,
     pub topic: i32,
     pub proposer: NeuronId,
+    pub created: TimestampMillis,
     pub title: String,
     pub summary: String,
     pub url: String,
@@ -101,6 +109,7 @@ pub struct SnsProposal {
     pub id: ProposalId,
     pub action: u64,
     pub proposer: NeuronId,
+    pub created: TimestampMillis,
     pub title: String,
     pub summary: String,
     pub url: String,
