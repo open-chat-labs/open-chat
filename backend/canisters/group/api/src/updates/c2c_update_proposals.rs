@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{MessageId, ProposalDecisionStatus, ProposalRewardStatus, Tally};
+use types::{MessageId, ProposalDecisionStatus, ProposalRewardStatus, Tally, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,6 +13,7 @@ pub struct ProposalUpdate {
     pub status: Option<ProposalDecisionStatus>,
     pub reward_status: Option<ProposalRewardStatus>,
     pub latest_tally: Option<Tally>,
+    pub deadline: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

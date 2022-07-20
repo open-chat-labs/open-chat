@@ -51,6 +51,13 @@ impl Proposal {
         }
     }
 
+    pub fn deadline(&self) -> TimestampMillis {
+        match self {
+            Proposal::NNS(p) => p.deadline,
+            Proposal::SNS(p) => p.deadline,
+        }
+    }
+
     pub fn update_status(&mut self, update: ProposalStatusUpdate, now: TimestampMillis) {
         match self {
             Proposal::NNS(p) => p.update_status(update, now),
@@ -70,6 +77,7 @@ pub struct NnsProposal {
     pub status: ProposalDecisionStatus,
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
+    pub deadline: TimestampMillis,
     pub last_updated: TimestampMillis,
 }
 
@@ -99,6 +107,7 @@ pub struct SnsProposal {
     pub status: ProposalDecisionStatus,
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
+    pub deadline: TimestampMillis,
     pub last_updated: TimestampMillis,
 }
 
@@ -112,6 +121,9 @@ impl SnsProposal {
         }
         if let Some(latest_tally) = update.latest_tally {
             self.tally = latest_tally;
+        }
+        if let Some(deadline) = update.deadline {
+            self.deadline = deadline;
         }
         self.last_updated = now;
     }
@@ -128,6 +140,7 @@ pub struct ProposalStatusUpdate {
     pub status: Option<ProposalDecisionStatus>,
     pub reward_status: Option<ProposalRewardStatus>,
     pub latest_tally: Option<Tally>,
+    pub deadline: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]

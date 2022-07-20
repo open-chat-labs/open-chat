@@ -235,12 +235,14 @@ impl NervousSystem {
             let status = proposal.status();
             let reward_status = proposal.reward_status();
             let latest_tally = proposal.tally();
+            let deadline = proposal.deadline();
 
             let update = ProposalUpdate {
                 message_id: *message_id,
-                status: (status != previous.status()).then(|| status),
-                reward_status: (reward_status != previous.reward_status()).then(|| reward_status),
-                latest_tally: (latest_tally != previous.tally()).then(|| latest_tally),
+                status: (status != previous.status()).then_some(status),
+                reward_status: (reward_status != previous.reward_status()).then_some(reward_status),
+                latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
+                deadline: (deadline != previous.deadline()).then_some(deadline),
             };
 
             self.upsert_proposal_update(update);
@@ -256,6 +258,7 @@ impl NervousSystem {
                 status: None,
                 reward_status: Some(ProposalRewardStatus::Settled),
                 latest_tally: None,
+                deadline: None,
             })
         }
     }

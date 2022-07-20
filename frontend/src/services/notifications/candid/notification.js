@@ -82,6 +82,7 @@ export const Notification = IDL.Variant({
                 'title' : IDL.Text,
                 'topic' : IDL.Int32,
                 'last_updated' : IDL.Nat64,
+                'deadline' : IDL.Nat64,
                 'reward_status' : IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
@@ -106,6 +107,7 @@ export const Notification = IDL.Variant({
                 'title' : IDL.Text,
                 'action' : IDL.Nat64,
                 'last_updated' : IDL.Nat64,
+                'deadline' : IDL.Nat64,
                 'reward_status' : IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
@@ -315,6 +317,7 @@ export const Notification = IDL.Variant({
                 'title' : IDL.Text,
                 'topic' : IDL.Int32,
                 'last_updated' : IDL.Nat64,
+                'deadline' : IDL.Nat64,
                 'reward_status' : IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
@@ -339,6 +342,7 @@ export const Notification = IDL.Variant({
                 'title' : IDL.Text,
                 'action' : IDL.Nat64,
                 'last_updated' : IDL.Nat64,
+                'deadline' : IDL.Nat64,
                 'reward_status' : IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
