@@ -3158,6 +3158,7 @@ dependencies = [
  "msgpack",
  "proposals_bot_canister",
  "serde",
+ "sha2 0.10.2",
  "stable_memory",
  "tracing",
  "types 0.1.0",
