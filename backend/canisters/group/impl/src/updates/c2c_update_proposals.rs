@@ -29,6 +29,7 @@ fn update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                         status: p.status,
                         reward_status: p.reward_status,
                         latest_tally: p.latest_tally,
+                        deadline: p.deadline,
                     },
                 )
             })

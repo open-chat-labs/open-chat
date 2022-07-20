@@ -133,6 +133,7 @@ pub mod governance_response_types {
             let now_seconds = now / 1000;
             let status = p.status();
             let reward_status = p.reward_status(now_seconds);
+            let deadline = p.get_deadline_timestamp_seconds() * 1000;
 
             let proposal = p.proposal.ok_or("proposal not set")?;
 
@@ -146,6 +147,7 @@ pub mod governance_response_types {
                 status,
                 reward_status,
                 tally: p.latest_tally.unwrap_or_default(),
+                deadline,
                 last_updated: now,
             })
         }

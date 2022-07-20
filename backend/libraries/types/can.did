@@ -635,6 +635,7 @@ type NnsProposal =
         status: ProposalDecisionStatus;
         reward_status: ProposalRewardStatus;
         tally: Tally;
+        deadline: TimestampMillis;
         last_updated: TimestampMillis;
     };
 
@@ -649,6 +650,7 @@ type SnsProposal =
         status: ProposalDecisionStatus;
         reward_status: ProposalRewardStatus;
         tally: Tally;
+        deadline: TimestampMillis;
         last_updated: TimestampMillis;
     };
 

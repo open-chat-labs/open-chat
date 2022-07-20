@@ -89,6 +89,7 @@ pub mod governance_response_types {
                 status: p.status.try_into().unwrap(),
                 reward_status: p.reward_status.try_into().unwrap(),
                 tally: p.latest_tally.unwrap_or_default(),
+                deadline: p.deadline_timestamp_seconds.ok_or("deadline not set")? * 1000,
                 last_updated: now,
             })
         }
