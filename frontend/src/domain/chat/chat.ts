@@ -3,6 +3,14 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
+import type {
+    NeuronId,
+    ProposalDecisionStatus,
+    ProposalId,
+    ProposalRewardStatus,
+    Tally,
+    TimestampMillis
+} from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -140,16 +148,32 @@ export interface GiphyContent {
 
 export interface ProposalContent {
     kind: "proposal_content";
-    url: string;
-    title: string;
-    myVote?: boolean;
-    rejectVotes: number;
-    deadline: bigint;
-    adoptVotes: number;
-    summary: string;
-    proposalId: bigint;
     governanceCanisterId: string;
-    proposer: bigint;
+    proposal: Proposal;
+}
+
+export type Proposal = NnsProposal | SnsProposal;
+
+export interface ProposalCommon {
+    id: ProposalId,
+    url: string,
+    status: ProposalDecisionStatus,
+    tally: Tally,
+    title: string,
+    lastUpdated: TimestampMillis,
+    rewardStatus: ProposalRewardStatus,
+    summary: string,
+    proposer: NeuronId,
+}
+
+export interface NnsProposal extends ProposalCommon {
+    kind: "nns",
+    topic: number,
+}
+
+export interface SnsProposal extends ProposalCommon {
+    kind: "sns",
+    action: bigint,
 }
 
 export interface ImageContent extends DataContent {
@@ -338,7 +362,8 @@ export type GroupChatEvent =
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
     | DirectChatCreated
-    | ThreadUpdated;
+    | ThreadUpdated
+    | ProposalsUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -464,6 +489,14 @@ export type ThreadUpdated = {
     kind: "thread_updated";
     messageIndex: number;
     eventIndex: number;
+};
+
+export type ProposalsUpdated = {
+    kind: "proposals_updated";
+    proposals: {
+        messageIndex: number;
+        eventIndex: number;
+    }[]
 };
 
 export type PermissionsChanged = {

@@ -74,6 +74,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -435,6 +436,18 @@ export interface MessageUnpinned {
 }
 export type Milliseconds = bigint;
 export type NeuronId = bigint;
+export interface NnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'topic' : number,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -523,19 +536,28 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export type Proposal = { 'NNS' : NnsProposal } |
+  { 'SNS' : SnsProposal };
 export interface ProposalContent {
-  'url' : string,
-  'title' : string,
-  'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
   'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
+  'proposal' : Proposal,
 }
+export type ProposalDecisionStatus = { 'Failed' : null } |
+  { 'Open' : null } |
+  { 'Rejected' : null } |
+  { 'Executed' : null } |
+  { 'Adopted' : null } |
+  { 'Unspecified' : null };
 export type ProposalId = bigint;
+export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
+  { 'AcceptVotes' : null } |
+  { 'Unspecified' : null } |
+  { 'Settled' : null };
+export interface ProposalUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
+export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -601,6 +623,18 @@ export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
+export interface SnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'action' : bigint,
+  'last_updated' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
@@ -619,6 +653,7 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
+export interface Tally { 'no' : bigint, 'yes' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,

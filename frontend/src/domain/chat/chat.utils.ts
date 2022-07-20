@@ -185,6 +185,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "direct_chat_created":
             case "poll_ended":
             case "thread_updated":
+            case "proposals_updated":
             case "aggregate_participants_joined_left":
                 break;
             default:
@@ -301,6 +302,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "aggregate_participants_joined_left":
         case "poll_ended":
         case "thread_updated":
+        case "proposals_updated":
         case "participant_dismissed_as_super_admin":
         case "participant_left": // We exclude participant_left events since the user is no longer in the group
             return undefined;
@@ -888,7 +890,8 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
         ew.event.kind !== "poll_vote_registered" &&
         ew.event.kind !== "poll_vote_deleted" &&
         ew.event.kind !== "poll_ended" &&
-        ew.event.kind !== "thread_updated"
+        ew.event.kind !== "thread_updated" &&
+        ew.event.kind !== "proposals_updated"
     );
 }
 
