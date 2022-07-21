@@ -590,6 +590,11 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
+        if (ev.detail.messageId === rootEvent.event.messageId) {
+            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
+            return;
+        }
+
         const messageId = ev.detail.messageId;
 
         replaceMessageContent(messageId, {
