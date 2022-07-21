@@ -96,7 +96,7 @@ export class MessageReadTracker {
     stop(): void {
         if (this.timeout !== undefined) {
             console.log("stopping the mark read poller");
-            clearInterval(this.timeout);
+            window.clearTimeout(this.timeout);
         }
     }
 
