@@ -84,9 +84,13 @@ export class MessageReadTracker {
         };
     }
 
+    private triggerLoop(api: ServiceContainer): void {
+        this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
+    }
+
     start(api: ServiceContainer): void {
         if (process.env.NODE_ENV !== "test") {
-            this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
+            this.triggerLoop(api);
         }
         if (process.env.NODE_ENV !== "test") {
             window.onbeforeunload = () => this.sendToServer(api);
@@ -114,11 +118,9 @@ export class MessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            api.markMessagesRead(req).finally(() => {
-                this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
-            });
+            api.markMessagesRead(req).finally(() => this.triggerLoop(api));
         } else {
-            this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
+            this.triggerLoop(api);
         }
     }
 
