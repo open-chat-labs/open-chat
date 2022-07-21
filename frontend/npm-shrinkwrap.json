@@ -14381,7 +14381,7 @@
         },
         "node_modules/svelte-markdown": {
             "version": "0.2.2",
-            "resolved": "git+ssh://git@github.com/open-ic/svelte-markdown.git#01f832344f8b3c5c40c9859205a87644083659df",
+            "resolved": "git+ssh://git@github.com/open-ic/svelte-markdown.git#7ffcfea141cd2e667242c7b284113f027650ff34",
             "license": "MIT",
             "dependencies": {
                 "@types/marked": "^4.0.1",
@@ -26403,8 +26403,8 @@
             "requires": {}
         },
         "svelte-markdown": {
-            "version": "git+ssh://git@github.com/open-ic/svelte-markdown.git#01f832344f8b3c5c40c9859205a87644083659df",
-            "from": "svelte-markdown@github:open-ic/svelte-markdown",
+            "version": "git+ssh://git@github.com/open-ic/svelte-markdown.git#7ffcfea141cd2e667242c7b284113f027650ff34",
+            "from": "svelte-markdown@https://github.com/open-ic/svelte-markdown",
             "requires": {
                 "@types/marked": "^4.0.1",
                 "marked": "^4.0.10"
