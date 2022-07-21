@@ -61,7 +61,7 @@ export type MessageReadState = {
 };
 
 export class MessageReadTracker {
-    private interval: number | undefined;
+    private timeout: number | undefined;
     public serverState: MessagesReadByChat = {};
 
     /**
@@ -86,7 +86,7 @@ export class MessageReadTracker {
 
     start(api: ServiceContainer): void {
         if (process.env.NODE_ENV !== "test") {
-            this.interval = window.setInterval(() => this.sendToServer(api), MARK_READ_INTERVAL);
+            this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
         }
         if (process.env.NODE_ENV !== "test") {
             window.onbeforeunload = () => this.sendToServer(api);
@@ -94,9 +94,9 @@ export class MessageReadTracker {
     }
 
     stop(): void {
-        if (this.interval !== undefined) {
+        if (this.timeout !== undefined) {
             console.log("stopping the mark read poller");
-            clearInterval(this.interval);
+            clearInterval(this.timeout);
         }
     }
 
@@ -114,7 +114,11 @@ export class MessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            api.markMessagesRead(req);
+            api.markMessagesRead(req).finally(() => {
+                this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
+            });
+        } else {
+            this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
         }
     }
 
