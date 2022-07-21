@@ -5,7 +5,7 @@ import type {
     ApiPublicSummaryResponse,
     ApiUpdatePermissionsArgs,
 } from "../group/candid/idl";
-import type {
+import {
     FileContent,
     ImageContent,
     AudioContent,
@@ -34,7 +34,9 @@ import type {
     ThreadSummary,
     ProposalContent,
     Proposal,
+    NnsProposalTopic,
 } from "../../domain/chat/chat";
+import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
 import { UnsupportedValueError } from "../../utils/error";
@@ -71,18 +73,12 @@ import type {
     ApiThreadSummary,
     ApiProposalContent,
     ApiProposal,
+    ApiProposalDecisionStatus,
+    ApiProposalRewardStatus,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
-import {
-    NeuronId,
-    ProposalDecisionStatus,
-    ProposalId,
-    ProposalRewardStatus,
-    Tally,
-    TimestampMillis
-} from "services/user/candid/types";
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -167,7 +163,7 @@ function proposalContent(candid: ApiProposalContent): ProposalContent {
     return {
         kind: "proposal_content",
         governanceCanisterId: candid.governance_canister_id.toString(),
-        proposal: proposal(candid.proposal)
+        proposal: proposal(candid.proposal),
     };
 }
 
@@ -182,28 +178,48 @@ function proposal(candid: ApiProposal): Proposal {
             title: p.title,
             summary: p.summary,
             url: p.url,
-            status: p.status,
-            rewardStatus: p.reward_status,
+            status: proposalDecisionStatus(p.status),
+            rewardStatus: proposalRewardStatus(p.reward_status),
             tally: p.tally,
-            lastUpdated: p.last_updated,
-        }
+            lastUpdated: Number(p.last_updated),
+            created: Number(p.created),
+            deadline: Number(p.deadline),
+        };
     } else if ("SNS" in candid) {
         const p = candid.SNS;
         return {
             kind: "sns",
             id: p.id,
-            action: p.action,
+            action: Number(p.action),
             proposer: p.proposer,
             title: p.title,
             summary: p.summary,
             url: p.url,
-            status: p.status,
-            rewardStatus: p.reward_status,
+            status: proposalDecisionStatus(p.status),
+            rewardStatus: proposalRewardStatus(p.reward_status),
             tally: p.tally,
-            lastUpdated: p.last_updated,
-        }
+            lastUpdated: Number(p.last_updated),
+            created: Number(p.created),
+            deadline: Number(p.deadline),
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);
+}
+
+function proposalDecisionStatus(candid: ApiProposalDecisionStatus): ProposalDecisionStatus {
+    if ("Failed" in candid) return ProposalDecisionStatus.Failed;
+    if ("Open" in candid) return ProposalDecisionStatus.Open;
+    if ("Rejected" in candid) return ProposalDecisionStatus.Rejected;
+    if ("Executed" in candid) return ProposalDecisionStatus.Executed;
+    if ("Adopted" in candid) return ProposalDecisionStatus.Adopted;
+    return ProposalDecisionStatus.Unspecified;
+}
+
+function proposalRewardStatus(candid: ApiProposalRewardStatus): ProposalRewardStatus {
+    if ("AcceptVotes" in candid) return ProposalRewardStatus.AcceptVotes;
+    if ("ReadyToSettle" in candid) return ProposalRewardStatus.ReadyToSettle;
+    if ("Settled" in candid) return ProposalRewardStatus.Settled;
+    return ProposalRewardStatus.Unspecified;
 }
 
 function giphyContent(candid: ApiGiphyContent): GiphyContent {
@@ -386,7 +402,72 @@ function audioContent(candid: ApiAudioContent): AudioContent {
     };
 }
 
-function textContent(candid: ApiTextContent): TextContent {
+function textContent(candid: ApiTextContent): MessageContent {
+    if (candid.text === "Hi") {
+        return {
+            kind: "proposal_content",
+            governanceCanisterId: "123-456",
+            proposal: {
+                kind: "nns",
+                topic: NnsProposalTopic.Governance,
+                id: BigInt(70015),
+                url: "https://forum.dfinity.org/t/way-forward-on-spam-proposal-for-tactical-fix/14275",
+                status: ProposalDecisionStatus.Executed,
+                tally: {
+                    no: BigInt(43),
+                    yes: BigInt(87),
+                },
+                title: "Tactical fix for spam",
+                proposer: BigInt(54),
+                summary: `
+## Background
+
+Over the last few weeks there were growing concerns within the community and the DFINITY team regarding the current spam situation.
+In particular, with respect to introducing new developers and users to the Internet Computer, spam is considered quite confusing.
+
+## Proposal
+
+As a temporary fix, DFINITY suggests to reconsider the (earlier rejected) proposal to temporarily revert voting rewards weights for governance proposals back to 1.
+Given the current situation and engineering capacity, we believe that temporarily reverting voting rewards weights for governance proposals back to 1 is the most pragmatic solution for a short-term reduction of the incentives for spam.
+Once the SNS functionality has been delivered, DFINITY will take on the task of proposing a more long-term and permanent solution to the problem.
+
+## Analysis
+
+The proposed tactical fix reduces but does not completely remove the incentive to submit spam proposals.
+This is because approximately half of the total voting power is not voting on governance proposals after the reset of default following of all neurons in Q1’22.
+For further details please see the [forum post](https://forum.dfinity.org/t/way-forward-on-spam-proposal-for-tactical-fix/14275).
+                    `,
+                rewardStatus: ProposalRewardStatus.Settled,
+                lastUpdated: 1658394134000,
+                created: 1658094134000,
+                deadline: 1658384134000,
+            },
+        };
+    } else if (candid.text.startsWith("Wordle")) {
+        return {
+            kind: "proposal_content",
+            governanceCanisterId: "123-456",
+            proposal: {
+                kind: "nns",
+                topic: NnsProposalTopic.SubnetManagement,
+                id: BigInt(71106),
+                url: "",
+                status: ProposalDecisionStatus.Open,
+                tally: {
+                    no: BigInt(406443015),
+                    yes: BigInt(2435),
+                },
+                title: "Update configuration of subnet: fuqsr",
+                proposer: BigInt(50),
+                summary: `Resume syncing Bitcoin mainnet on subnet fuqsr. The syncing was paused on June 3rd due to degraded performance due to a high volume of writes to disk. Since then, improvements have been introduced to make the subnet cope with higher volume of writes, and we've tested a full Butcoin mainnet sync on a testnet.`,
+                rewardStatus: ProposalRewardStatus.AcceptVotes,
+                lastUpdated: 1658394134000,
+                created: 1658094134000,
+                deadline: 1658594134000,
+            },
+        };
+    }
+
     return {
         kind: "text_content",
         text: candid.text,
