@@ -678,6 +678,7 @@ type Tally =
     record {
         yes: nat64;
         no: nat64;
+        total: nat64;
     };
 
 type TotalPollVotes =

@@ -92,7 +92,7 @@ pub mod governance_response_types {
             const MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO: f64 = 0.03;
 
             if let Some(tally) = self.latest_tally.as_ref() {
-                (tally.yes as f64 >= tally.total() as f64 * MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO) && tally.yes > tally.no
+                (tally.yes as f64 >= tally.total as f64 * MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO) && tally.yes > tally.no
             } else {
                 false
             }

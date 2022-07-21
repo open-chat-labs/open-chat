@@ -781,7 +781,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export interface Tally { 'no' : bigint, 'yes' : bigint }
+export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
   'latest_replies' : Array<MessageEventWrapper>,

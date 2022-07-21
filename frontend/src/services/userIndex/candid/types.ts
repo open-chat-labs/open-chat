@@ -657,7 +657,7 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
-export interface Tally { 'no' : bigint, 'yes' : bigint }
+export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,

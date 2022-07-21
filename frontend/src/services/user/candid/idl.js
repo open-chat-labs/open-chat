@@ -157,7 +157,11 @@ export const idlFactory = ({ IDL }) => {
     'Adopted' : IDL.Null,
     'Unspecified' : IDL.Null,
   });
-  const Tally = IDL.Record({ 'no' : IDL.Nat64, 'yes' : IDL.Nat64 });
+  const Tally = IDL.Record({
+    'no' : IDL.Nat64,
+    'yes' : IDL.Nat64,
+    'total' : IDL.Nat64,
+  });
   const ProposalRewardStatus = IDL.Variant({
     'ReadyToSettle' : IDL.Null,
     'AcceptVotes' : IDL.Null,
