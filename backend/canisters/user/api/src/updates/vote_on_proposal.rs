@@ -1,12 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, ChatId, MessageIndex};
+use types::{CanisterId, ChatId, MessageIndex, Vote};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub governance_canister_id: CanisterId,
     pub proposal_id: u64,
-    pub adopt: bool,
+    pub vote: Vote,
     pub chat_id: ChatId,
     pub message_index: MessageIndex,
 }

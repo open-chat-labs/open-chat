@@ -138,6 +138,12 @@ impl SnsProposal {
     }
 }
 
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+pub enum Vote {
+    Yes,
+    No,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,

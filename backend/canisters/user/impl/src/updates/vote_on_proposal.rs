@@ -6,7 +6,7 @@ use crate::{mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, NeuronId, ProposalId};
+use types::{CanisterId, NeuronId, ProposalId, Vote};
 use user_canister::vote_on_proposal::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -28,7 +28,7 @@ async fn vote_on_proposal(args: Args) -> Response {
     let vote_futures: Vec<_> = ballots
         .into_iter()
         .filter(|(_, vote)| vote.is_none())
-        .map(|(neuron_id, _)| register_vote(args.governance_canister_id, neuron_id, args.proposal_id, args.adopt))
+        .map(|(neuron_id, _)| register_vote(args.governance_canister_id, neuron_id, args.proposal_id, args.vote))
         .collect();
 
     let vote_results = futures::future::join_all(vote_futures).await;
@@ -48,7 +48,7 @@ async fn vote_on_proposal(args: Args) -> Response {
         send_voted_on_proposal_message(
             args.governance_canister_id,
             args.proposal_id,
-            args.adopt,
+            args.vote,
             &voted,
             &unable_to_vote,
             &errors,
@@ -70,8 +70,8 @@ async fn register_vote(
     governance_canister_id: CanisterId,
     neuron_id: NeuronId,
     proposal_id: ProposalId,
-    adopt: bool,
+    vote: Vote,
 ) -> (NeuronId, CallResult<Result<(), nns::GovernanceError>>) {
-    let response = nns::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await;
+    let response = nns::register_vote(governance_canister_id, neuron_id, proposal_id, vote).await;
     (neuron_id, response)
 }

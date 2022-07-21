@@ -700,6 +700,12 @@ type UsersUnblocked =
         unblocked_by: UserId;
     };
 
+type Vote =
+    variant {
+        Yes;
+        No;
+    };
+
 type VoteOperation =
     variant {
         RegisterVote;

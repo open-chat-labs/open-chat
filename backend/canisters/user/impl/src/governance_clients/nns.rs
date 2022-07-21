@@ -3,7 +3,7 @@ use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use std::collections::HashMap;
-use types::{CanisterId, NeuronId, ProposalId};
+use types::{CanisterId, NeuronId, ProposalId, Vote};
 
 const REWARD_STATUS_ACCEPTING_VOTES: i32 = 1;
 
@@ -33,8 +33,8 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
                         (
                             n,
                             match b.vote {
-                                1 => Some(true),
-                                2 => Some(false),
+                                1 => Some(Vote::Yes),
+                                2 => Some(Vote::No),
                                 _ => None,
                             },
                         )
@@ -49,7 +49,7 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
 }
 
 pub enum GetBallotsResult {
-    Success(Vec<(NeuronId, Option<bool>)>),
+    Success(Vec<(NeuronId, Option<Vote>)>),
     ProposalNotAcceptingVotes,
     ProposalNotFound,
 }
@@ -58,13 +58,13 @@ pub async fn register_vote(
     governance_canister_id: CanisterId,
     neuron_id: u64,
     proposal_id: u64,
-    adopt: bool,
+    vote: Vote,
 ) -> CallResult<Result<(), GovernanceError>> {
     let args = ManageNeuron {
         neuron_id_or_subaccount: Some(manage_neuron::NeuronIdOrSubaccount::NeuronId(neuron_id.into())),
         command: Some(manage_neuron::Command::RegisterVote(RegisterVote {
             proposal: Some(proposal_id.into()),
-            vote: if adopt { 1 } else { 2 },
+            vote: if matches!(vote, Vote::Yes) { 1 } else { 2 },
         })),
     };
     let (response,): (ManageNeuronResponse,) = ic_cdk::call(governance_canister_id, "manage_neuron", (&args,)).await?;

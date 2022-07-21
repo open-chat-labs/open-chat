@@ -367,7 +367,7 @@ type VoteOnProposalArgs =
     record {
         governance_canister_id: CanisterId;
         proposal_id: nat64;
-        adopt: bool;
+        vote: Vote;
         chat_id: ChatId;
         message_index: MessageIndex;
     };

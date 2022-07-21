@@ -5,7 +5,7 @@ use ic_ledger_types::Tokens;
 use std::fmt::Write;
 use types::{
     CanisterId, MessageContent, MessageId, NeuronId, PhoneNumberConfirmed, ProposalId, ReferredUserRegistered, StorageUpgraded,
-    TextContent, UserId,
+    TextContent, UserId, Vote,
 };
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
@@ -100,7 +100,7 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 pub(crate) fn send_voted_on_proposal_message(
     governance_canister_id: CanisterId,
     proposal_id: ProposalId,
-    adopt: bool,
+    vote: Vote,
     voted: &[NeuronId],
     unable_to_vote: &[(NeuronId, String)],
     errors: &[(NeuronId, String)],
@@ -115,7 +115,12 @@ pub(crate) fn send_voted_on_proposal_message(
     writeln!(&mut text).unwrap();
     writeln!(&mut text, "Governance canister Id: {governance_canister_id}").unwrap();
     writeln!(&mut text, "Proposal Id: {proposal_id}").unwrap();
-    writeln!(&mut text, "Adopt: {}", if adopt { "Yes" } else { "No" }).unwrap();
+    writeln!(
+        &mut text,
+        "Your vote: {}",
+        if matches!(vote, Vote::Yes) { "YES" } else { "NO" }
+    )
+    .unwrap();
     writeln!(&mut text).unwrap();
     if voted.is_empty() && unable_to_vote.is_empty() && errors.is_empty() {
         writeln!(&mut text).unwrap();
