@@ -4,7 +4,7 @@ use candid::{CandidType, Principal};
 use itertools::Itertools;
 use search::*;
 use serde::{de, Deserialize, Serialize};
-use std::cmp::{max, min};
+use std::cmp::{max, min, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
@@ -565,9 +565,9 @@ impl AllChatEvents {
         &self,
         from_set: &HashSet<MessageIndex>,
         updated_since: Option<TimestampMillis>,
-        max_threads: u32,
+        max_threads: usize,
     ) -> Vec<ThreadSyncDetailsInternal> {
-        let mut all_matching_threads: Vec<_> = from_set
+        from_set
             .iter()
             .filter_map(|root_message_index| {
                 self.threads.get(root_message_index).and_then(|thread_events| {
@@ -582,11 +582,9 @@ impl AllChatEvents {
                         })
                 })
             })
-            .collect();
-
-        all_matching_threads.sort_unstable_by(|t1, t2| t2.last_updated.cmp(&t1.last_updated));
-
-        all_matching_threads.into_iter().take(max_threads as usize).collect()
+            .sorted_unstable_by_key(|t| Reverse(t.last_updated))
+            .take(max_threads)
+            .collect()
     }
 
     pub fn get(&self, thread_root_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {

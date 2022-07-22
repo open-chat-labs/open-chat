@@ -6,6 +6,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 
+pub const MAX_THREADS_IN_SUMMARY: usize = 20;
+
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
@@ -178,7 +180,7 @@ pub struct GroupChatSummaryInternal {
 }
 
 impl GroupChatSummaryInternal {
-    pub fn merge_updates(&mut self, updates: GroupChatSummaryUpdatesInternal) {
+    pub fn merge(self, updates: GroupChatSummaryUpdatesInternal) -> Self {
         if self.chat_id != updates.chat_id {
             panic!(
                 "Updates are not from the same chat. Original: {}. Updates: {}",
@@ -186,41 +188,53 @@ impl GroupChatSummaryInternal {
             );
         }
 
-        self.last_updated = updates.last_updated;
-        Self::update_if_some(&mut self.name, updates.name);
-        Self::update_if_some(&mut self.description, updates.description);
-        Self::update_option_if_some(&mut self.latest_message, updates.latest_message);
-        Self::update_if_some(&mut self.latest_event_index, updates.latest_event_index);
-        Self::update_if_some(&mut self.participant_count, updates.participant_count);
-        Self::update_if_some(&mut self.role, updates.role);
-        Self::update_if_some(&mut self.wasm_version, updates.wasm_version);
-        Self::update_if_some(&mut self.owner_id, updates.owner_id);
-        Self::update_if_some(&mut self.permissions, updates.permissions);
-        Self::update_if_some(&mut self.metrics, updates.metrics);
-        Self::update_if_some(&mut self.my_metrics, updates.my_metrics);
-
-        match updates.avatar_id {
-            OptionUpdate::SetToSome(avatar_id) => self.avatar_id = Some(avatar_id),
-            OptionUpdate::SetToNone => self.avatar_id = None,
-            OptionUpdate::NoChange => {}
+        let avatar_id = match updates.avatar_id {
+            OptionUpdate::SetToSome(avatar_id) => Some(avatar_id),
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::NoChange => self.avatar_id,
         };
 
-        self.mentions.extend(updates.mentions);
-        let mentions_to_remove = self.mentions.len().saturating_sub(MAX_RETURNED_MENTIONS);
-        if mentions_to_remove > 0 {
-            self.mentions.drain(..mentions_to_remove);
-        }
-    }
+        // Mentions are ordered in ascending order of MessageIndex
+        let mentions_to_skip = (self.mentions.len() + updates.mentions.len()).saturating_sub(MAX_RETURNED_MENTIONS);
+        let mentions: Vec<_> = self
+            .mentions
+            .into_iter()
+            .chain(updates.mentions)
+            .skip(mentions_to_skip)
+            .collect();
 
-    fn update_if_some<T>(current: &mut T, update: Option<T>) {
-        if let Some(updated) = update {
-            *current = updated;
-        }
-    }
+        // Threads are ordered in descending chronological order
+        let latest_threads = updates
+            .latest_threads
+            .into_iter()
+            .chain(self.latest_threads)
+            .take(MAX_THREADS_IN_SUMMARY)
+            .collect();
 
-    fn update_option_if_some<T>(current: &mut Option<T>, update: Option<T>) {
-        if let Some(updated) = update {
-            *current = Some(updated);
+        GroupChatSummaryInternal {
+            chat_id: self.chat_id,
+            last_updated: updates.last_updated,
+            name: updates.name.unwrap_or(self.name),
+            description: updates.description.unwrap_or(self.description),
+            avatar_id,
+            is_public: updates.is_public.unwrap_or(self.is_public),
+            history_visible_to_new_joiners: self.history_visible_to_new_joiners,
+            min_visible_event_index: self.min_visible_event_index,
+            min_visible_message_index: self.min_visible_message_index,
+            latest_message: updates.latest_message.or(self.latest_message),
+            latest_event_index: updates.latest_event_index.unwrap_or(self.latest_event_index),
+            joined: self.joined,
+            participant_count: updates.participant_count.unwrap_or(self.participant_count),
+            role: updates.role.unwrap_or(self.role),
+            mentions,
+            pinned_message: self.pinned_message,
+            wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
+            owner_id: updates.owner_id.unwrap_or(self.owner_id),
+            permissions: updates.permissions.unwrap_or(self.permissions),
+            notifications_muted: self.notifications_muted,
+            metrics: updates.metrics.unwrap_or(self.metrics),
+            my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
+            latest_threads,
         }
     }
 }
