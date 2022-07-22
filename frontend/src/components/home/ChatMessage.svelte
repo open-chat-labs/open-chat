@@ -56,6 +56,7 @@
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
     import { configKeys } from "../../utils/config";
+    import { toShortTimeString } from "../../utils/date";
 
     const dispatch = createEventDispatcher();
 
@@ -86,6 +87,7 @@
     export let inThread: boolean;
     export let canReplyInThread: boolean;
     export let senderTyping: boolean;
+    export let dateFormatter: (date: Date) => string = toShortTimeString;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -480,7 +482,8 @@
                     {confirmed}
                     {readByThem}
                     {crypto}
-                    {chatType} />
+                    {chatType}
+                    {dateFormatter} />
             {/if}
 
             {#if debug}

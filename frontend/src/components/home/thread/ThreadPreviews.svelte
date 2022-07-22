@@ -23,6 +23,7 @@
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let loading = false;
+    let initialised = false;
 
     function eventsFromThreadPreviews(threads: ThreadPreview[]): EventWrapper<Message>[] {
         return threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
@@ -53,7 +54,10 @@
                 threads = t;
                 updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
             })
-            .finally(() => (loading = false));
+            .finally(() => {
+                loading = false;
+                initialised = true;
+            });
     }
 </script>
 
@@ -80,7 +84,7 @@
     </SectionHeader>
 
     <div class="threads">
-        {#if loading}
+        {#if loading && !initialised}
             <Loading />
         {:else}
             {#each threads as thread, _i (thread.rootMessage.event.messageId)}

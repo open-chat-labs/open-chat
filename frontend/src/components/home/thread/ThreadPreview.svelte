@@ -16,6 +16,7 @@
     import { getContentAsText } from "../../../domain/chat/chat.utils";
     import LinkButton from "../../LinkButton.svelte";
     import { messagesRead } from "../../../stores/markRead";
+    import { toDatetimeString } from "../../../utils/date";
 
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
@@ -129,6 +130,7 @@
                     editing={false}
                     eventIndex={thread.rootMessage.index}
                     timestamp={thread.rootMessage.timestamp}
+                    dateFormatter={toDatetimeString}
                     msg={thread.rootMessage.event} />
             </div>
             {#if missingMessages > 0}
@@ -166,6 +168,7 @@
                     editing={false}
                     eventIndex={evt.index}
                     timestamp={evt.timestamp}
+                    dateFormatter={toDatetimeString}
                     msg={evt.event} />
             {/each}
             <LinkButton underline="hover" on:click={selectThread}
