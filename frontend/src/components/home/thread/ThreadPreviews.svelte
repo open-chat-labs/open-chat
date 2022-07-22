@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import Loading from "../../Loading.svelte";
     import { rtlStore } from "../../../stores/rtl";
     import { iconSize } from "../../../stores/iconSize";
     import { userStore } from "../../../stores/user";
@@ -21,6 +22,7 @@
 
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
+    let loading = false;
 
     function eventsFromThreadPreviews(threads: ThreadPreview[]): EventWrapper<Message>[] {
         return threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
@@ -45,10 +47,13 @@
     $: {
         // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
         // we definitely cannot get away with *just* doing it onMount though.
-        api.threadPreviews($threadsByChatStore).then((t) => {
-            threads = t;
-            updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
-        });
+        loading = true;
+        api.threadPreviews($threadsByChatStore)
+            .then((t) => {
+                threads = t;
+                updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
+            })
+            .finally(() => (loading = false));
     }
 </script>
 
@@ -75,9 +80,13 @@
     </SectionHeader>
 
     <div class="threads">
-        {#each threads as thread, _i (thread.rootMessage.event.messageId)}
-            <ThreadPreviewComponent {observer} {thread} />
-        {/each}
+        {#if loading}
+            <Loading />
+        {:else}
+            {#each threads as thread, _i (thread.rootMessage.event.messageId)}
+                <ThreadPreviewComponent {observer} {thread} />
+            {/each}
+        {/if}
     </div>
 </div>
 

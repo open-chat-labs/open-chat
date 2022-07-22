@@ -186,6 +186,11 @@
         padding: $sp3;
     }
 
+    :global(.threads .card.bordered) {
+        border: none;
+        border-top: var(--collapsible-header-bd);
+    }
+
     .wrapper {
         background-color: var(--thread-preview-bg);
         margin-bottom: $sp3;
