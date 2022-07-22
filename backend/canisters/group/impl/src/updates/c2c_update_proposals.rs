@@ -7,13 +7,13 @@ use types::ProposalStatusUpdate;
 
 #[update_msgpack]
 #[trace]
-async fn update_proposals(args: Args) -> Response {
+async fn c2c_update_proposals(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| update_proposals_impl(args, state))
+    mutate_state(|state| c2c_update_proposals_impl(args, state))
 }
 
-fn update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
     if let Some(participant) = runtime_state.data.participants.get(caller) {
