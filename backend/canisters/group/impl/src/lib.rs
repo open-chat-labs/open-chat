@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
-    Notification, TimestampMillis, Timestamped, UserId, Version,
+    Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -23,8 +23,6 @@ mod model;
 mod queries;
 mod regular_jobs;
 mod updates;
-
-pub const MAX_THREADS_IN_SUMMARY: u32 = 20;
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
