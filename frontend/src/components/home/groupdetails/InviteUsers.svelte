@@ -210,7 +210,7 @@
         .spinner {
             top: -12px;
             left: -16px;
-            @include loading-spinner(1.5em, 0.5em, false, var(--button-spinner));
+            @include loading-spinner(1.5em, 0.5em, var(--button-spinner));
         }
     }
 

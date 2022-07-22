@@ -168,9 +168,8 @@ $sp11: 192px;
 @mixin loading-spinner(
     $size: 1.2em,
     $offset: 0.6em,
-    $block: false,
     $spinner-color: #191919,
-    $background-color: #efefef
+    $background-image: "../assets/spinner.svg"
 ) {
     position: relative;
 
@@ -182,29 +181,13 @@ $sp11: 192px;
         position: absolute;
         // border: 3px solid;
         opacity: 0.5;
-        background-image: url("../assets/spinner.svg");
+        background-image: url($background-image);
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
-        // border-color: transparent transparent currentColor currentColor;
-        // border-radius: 50%;
         transform-origin: 50% 50%;
         @include spin();
         color: $spinner-color;
         z-index: 10;
-    }
-
-    @if $block {
-        &::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            height: 100%;
-            width: 100%;
-            pointer-events: none;
-            background-color: $background-color;
-            z-index: 9;
-            opacity: 0.4;
-        }
     }
 }
 
