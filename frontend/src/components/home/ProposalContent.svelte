@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { ProposalContent, ProposalDecisionStatus } from "../../domain/chat/chat";
+    import { rtlStore } from "../../stores/rtl";
+    import {
+        NnsProposalTopic,
+        ProposalContent,
+        ProposalDecisionStatus,
+        SnsProposalAction,
+    } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
     import { formatTimeRemaining } from "../../utils/time";
@@ -11,8 +17,10 @@
 
     export let content: ProposalContent;
 
+    const dashboardUrl = "https://dashboard.internetcomputer.org";
+
     let expanded = false;
-    let voting = false;
+    let voting: boolean | undefined = undefined;
     let myVote: boolean | undefined = undefined;
 
     $: proposal = content.proposal;
@@ -23,56 +31,53 @@
         proposal.status == ProposalDecisionStatus.Failed ||
         proposal.status == ProposalDecisionStatus.Rejected ||
         proposal.status == ProposalDecisionStatus.Unspecified;
-    $: neutral = proposal.status == ProposalDecisionStatus.Open;
-    $: dashboardUrl = `https://dashboard.internetcomputer.org/proposal/${proposal.id}`;
-    $: adoptPercent = 20;
-    $: rejectPercent = 10;
+    $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
+    $: dashboardProposerUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
+    $: adoptPercent = (100 * proposal.tally.yes) / proposal.tally.total;
+    $: rejectPercent = (100 * proposal.tally.no) / proposal.tally.total;
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
+    $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
+    $: typeLabel = proposal.kind === "nns" ? "topic" : "action";
+    $: typeValue =
+        proposal.kind === "nns"
+            ? NnsProposalTopic[proposal.topic]
+            : SnsProposalAction[proposal.action];
 
     function toggleSummary() {
         expanded = !expanded;
     }
 
     function onVote(adopt: boolean) {
-        if (myVote !== undefined) {
+        if (votingDisabled) {
             return;
         }
 
-        voting = true;
-        myVote = adopt;
+        voting = adopt;
         setTimeout(() => {
-            voting = false;
+            voting = undefined;
+            myVote = adopt;
         }, 2000);
     }
-
-    // TODO
-    // 1. left/right
-    // 2. define colors
-    // 3. translate text
-    // 4. Expand/contract transition
-    // 5. Expand/contract icon
-    // 6. Expand/contract faded overlay on bottom of summary
-    // 7. Vertical lines on progress bar
-    // 8. Chevrons on progress bar
-    // 9. Popup with more details
-    // * 10. If voted - grey out other button and disable both
-    // 11. Check this component scales down ok
-    // 11.1 Limit to 4 decimal places on yes/no percent
-    // 12. Wire up votes properly
-    // 13. Wire up voting properly
-    // 14. Wire up my vote properly
 </script>
 
 <div class="header">
-    <span class="title">{proposal.title}</span>
-    <span class="status" class:positive class:negative class:neutral
-        >{ProposalDecisionStatus[proposal.status]}</span>
+    <div class="title-block">
+        <div class="title">{proposal.title}</div>
+        <div class="subtitle">
+            {typeLabel}: {typeValue} | proposed by:
+            <a target="_blank" href={dashboardProposerUrl}>{proposal.proposer}</a>
+        </div>
+    </div>
+    <div class="status" class:positive class:negative>
+        {ProposalDecisionStatus[proposal.status]}
+    </div>
 </div>
 
 {#if proposal.summary.length > 0}
     <div class="summary" class:expanded on:click={toggleSummary}>
         <Markdown text={proposal.summary} isInline={false} />
+        <div class="expand" />
     </div>
 {/if}
 
@@ -106,37 +111,35 @@
     </div>
 </div>
 
-{#if !votingEnded}
-    <div class="vote">
-        <button
-            class="adopt"
-            class:voting={voting && myVote === true}
-            class:disabled={myVote !== undefined}
-            class:gray={myVote === false}
-            on:click={() => onVote(true)}>
-            <div>
-                <div>Adopt</div>
-                <div class="icon-wrapper"><div class="icon"><ThumbUp color="#fff" /></div></div>
-            </div>
-        </button>
-        <button
-            class="reject"
-            class:voting={voting && myVote === false}
-            class:disabled={myVote !== undefined}
-            class:gray={myVote === true}
-            on:click={() => onVote(false)}>
-            <div>
-                <div>Reject</div>
-                <div class="icon-wrapper"><div class="icon"><ThumbDown color="#fff" /></div></div>
-            </div>
-        </button>
-    </div>
-{/if}
+<div class="vote">
+    <button
+        class="adopt"
+        class:voting={voting === true}
+        class:disabled={votingDisabled}
+        class:gray={myVote === false || votingEnded}
+        on:click={() => onVote(true)}>
+        <div class="contents">
+            <div>{myVote === true ? "You voted adopt!" : "Adopt"}</div>
+            <div class="icon"><ThumbUp /></div>
+        </div>
+    </button>
+    <button
+        class="reject"
+        class:voting={voting === false}
+        class:disabled={votingDisabled}
+        class:gray={myVote === true || votingEnded}
+        on:click={() => onVote(false)}>
+        <div class="contents">
+            <div>{myVote === false ? "You voted reject!" : "Reject"}</div>
+            <div class="icon"><ThumbDown /></div>
+        </div>
+    </button>
+</div>
 
 <div class="more">
     {#if proposal.url.length > 0}
         <a href={proposal.url} target="_blank">additional content</a>&nbsp;|&nbsp;{/if}<a
-        href={dashboardUrl}
+        href={dashboardProposalUrl}
         target="_blank">view on dashboard</a>
 </div>
 
@@ -157,49 +160,65 @@
         display: flex;
         justify-content: space-between;
         gap: $sp3;
-        align-items: baseline;
         margin-bottom: $sp3;
+        // border-bottom: 1px solid var(--chatSummary-bg-selected);
+        // padding-bottom: $sp1;
 
-        .title {
-            @include font(bold, normal, fs-120);
+        .title-block {
+            .title {
+                @include font-size(fs-120);
+                margin-bottom: 0.25em;
+                text-decoration: underline;
+                text-decoration-thickness: 1px;
+            }
+
+            .subtitle {
+                @include font-size(fs-70);
+            }
+            margin-bottom: $sp2;
         }
 
         .status {
-            display: inline-block;
             border-width: 2px;
             border-style: solid;
             border-radius: $sp4;
             padding: $sp2 $sp3;
+            height: fit-content;
 
             &.positive {
-                // color: lightgreen;
-                // border-color: lightgreen;
-                color: #22a7f2;
-                border-color: #22a7f2;
+                color: var(--vote-yes);
+                border-color: var(--vote-yes);
             }
 
             &.negative {
-                // color: red;
-                // border-color: red;
-                color: var(--accent);
-                border-color: var(--accent);
-            }
-
-            &.neutral {
-                // color: orange;
-                // border-color: orange;
+                color: var(--vote-no);
+                border-color: var(--vote-no);
             }
         }
     }
 
     .summary {
+        transition: max-height ease-in 200ms;
         max-height: 4.5em;
-        overflow: hidden;
+        @include nice-scrollbar();
+        overflow-y: auto;
         cursor: pointer;
+        position: relative;
 
         &.expanded {
-            max-height: none;
-            overflow: none;
+            max-height: 22.5em;
+        }
+
+        .expand {
+            position: absolute;
+            width: 100%;
+            background: linear-gradient(transparent, var(--currentChat-msg-bg));
+            height: 1.5em;
+            bottom: 0;
+        }
+
+        &.expanded .expand {
+            background: rgba(69, 69, 69, 0);
         }
     }
 
@@ -230,14 +249,14 @@
             .yes {
                 align-items: flex-start;
                 .value {
-                    color: #22a7f2;
+                    color: var(--vote-yes);
                 }
             }
 
             .no {
                 align-items: flex-end;
                 .value {
-                    color: var(--accent);
+                    color: var(--vote-no);
                 }
             }
 
@@ -256,7 +275,7 @@
                 top: 0;
                 left: 0;
                 bottom: 0;
-                background: #22a7f2;
+                background: var(--vote-yes);
             }
 
             .reject {
@@ -264,7 +283,7 @@
                 top: 0;
                 right: 0;
                 bottom: 0;
-                background: var(--accent);
+                background: var(--vote-no);
             }
 
             .vertical-line {
@@ -293,13 +312,13 @@
 
         button {
             @include font-size(fs-120);
-            padding: 0.8em;
+            padding: 0.8em 0.4em;
             color: white;
             cursor: pointer;
             border: 0;
-            flex: auto;
+            flex: 1;
 
-            > div {
+            .contents {
                 display: flex;
                 justify-content: center;
                 gap: $sp3;
@@ -307,19 +326,20 @@
 
             .icon {
                 position: relative;
+                color: white;
             }
 
             &.adopt {
-                background-color: #22a7f2;
+                background-color: var(--vote-yes);
                 .icon {
-                    top: 1px;
+                    top: 0.0625em;
                 }
             }
 
             &.reject {
-                background-color: var(--accent);
+                background-color: var(--vote-no);
                 .icon {
-                    top: 4px;
+                    top: 0.25em;
                 }
             }
 
@@ -329,6 +349,7 @@
 
             &.disabled {
                 cursor: default;
+                filter: none;
             }
 
             &.gray {
@@ -336,12 +357,16 @@
             }
 
             &.voting {
-                .icon-wrapper {
-                    .icon {
-                        visibility: hidden;
-                    }
-                    @include loading-spinner(1.2em, 0.6em, false, var(--button-spinner));
+                .contents {
+                    visibility: hidden;
                 }
+
+                @include loading-spinner(
+                    1.2em,
+                    0.6em,
+                    var(--button-spinner),
+                    "../assets/plain-spinner.svg"
+                );
             }
         }
     }

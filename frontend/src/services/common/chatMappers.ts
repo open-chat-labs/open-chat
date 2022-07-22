@@ -80,6 +80,8 @@ import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } 
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
 
+const E8S_AS_BIGINT = BigInt(100_000_000);
+
 export function message(candid: ApiMessage): Message {
     return {
         kind: "message",
@@ -180,7 +182,11 @@ function proposal(candid: ApiProposal): Proposal {
             url: p.url,
             status: proposalDecisionStatus(p.status),
             rewardStatus: proposalRewardStatus(p.reward_status),
-            tally: p.tally,
+            tally: {
+                yes: Number(p.tally.yes / E8S_AS_BIGINT),
+                no: Number(p.tally.no / E8S_AS_BIGINT),
+                total: Number(p.tally.total / E8S_AS_BIGINT),
+            },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
@@ -197,7 +203,11 @@ function proposal(candid: ApiProposal): Proposal {
             url: p.url,
             status: proposalDecisionStatus(p.status),
             rewardStatus: proposalRewardStatus(p.reward_status),
-            tally: p.tally,
+            tally: {
+                yes: Number(p.tally.yes / E8S_AS_BIGINT),
+                no: Number(p.tally.no / E8S_AS_BIGINT),
+                total: Number(p.tally.total / E8S_AS_BIGINT),
+            },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
@@ -414,8 +424,9 @@ function textContent(candid: ApiTextContent): MessageContent {
                 url: "https://forum.dfinity.org/t/way-forward-on-spam-proposal-for-tactical-fix/14275",
                 status: ProposalDecisionStatus.Executed,
                 tally: {
-                    no: BigInt(43),
-                    yes: BigInt(87),
+                    no: 43,
+                    yes: 87,
+                    total: 200,
                 },
                 title: "Tactical fix for spam",
                 proposer: BigInt(54),
@@ -454,8 +465,9 @@ For further details please see the [forum post](https://forum.dfinity.org/t/way-
                 url: "",
                 status: ProposalDecisionStatus.Open,
                 tally: {
-                    no: BigInt(406443015),
-                    yes: BigInt(2435),
+                    no: 406443015,
+                    yes: 2435,
+                    total: 500000000,
                 },
                 title: "Update configuration of subnet: fuqsr",
                 proposer: BigInt(50),

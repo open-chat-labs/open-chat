@@ -279,6 +279,11 @@ export interface Theme {
             bg: string;
         };
     };
+
+    vote: {
+        yes: string;
+        no: string;
+    };
 }
 
 export type Themes = {

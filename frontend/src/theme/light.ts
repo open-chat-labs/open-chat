@@ -274,5 +274,14 @@ export function lightTheme(): Theme {
                 bg: "rgba(255, 255, 255, 0.05)",
             },
         },
+
+        vote: {
+            yes: blueAccent,
+            no: pinkAccent,
+            // yes: "lightgreen",
+            // no: "red",
+            // yes: "#2fb953",
+            // no: "#B92F2F",
+        },
     };
 }
