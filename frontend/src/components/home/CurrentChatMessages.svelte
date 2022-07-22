@@ -32,6 +32,7 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
+    import { configKeys } from "../../utils/config";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -391,26 +392,36 @@
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
                         const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
-                        tick().then(() => {
-                            expectedScrollTop = undefined;
-                            scrollToMessageIndex(
-                                index,
-                                preserveFocus,
-                                allowRecursion,
-                                focusThreadMessageIndex
-                            );
-                        });
+                        tick()
+                            .then(() => {
+                                expectedScrollTop = undefined;
+                                scrollToMessageIndex(
+                                    index,
+                                    preserveFocus,
+                                    allowRecursion,
+                                    focusThreadMessageIndex
+                                );
+                            })
+                            .then(expandWindowIfNecessary);
                         initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
-                        tick().then(() => {
-                            setIfInsideFromBottomThreshold();
-                            if (insideFromBottomThreshold) {
-                                // only scroll if we are now within threshold from the bottom
-                                scrollBottom("smooth");
-                            }
-                        });
+                        tick()
+                            .then(() => {
+                                setIfInsideFromBottomThreshold();
+                                if (insideFromBottomThreshold) {
+                                    // only scroll if we are now within threshold from the bottom
+                                    scrollBottom("smooth");
+                                }
+                            })
+                            .then(() => {
+                                // there is a possibility here we will not have loaded enough *visible* events
+                                // after grouping of certain events. In that case we may need to immediately go and load more
+                                if (shouldLoadNewMessages()) {
+                                    controller.loadNewMessages();
+                                }
+                            });
                         break;
                     case "sending_message":
                         // smooth scroll doesn't work here when we are leaping from the top
@@ -440,6 +451,25 @@
             return evt.event.created_by === controller.user?.userId;
         }
         return false;
+    }
+
+    /**
+     * When we load an event window, it is possible that there are not enough *visible* events
+     * either above the focus message or below the focus message to allow scrolling. If that is the case
+     * we must trigger the loading of more messages (either previous messages or subsequent messages or both)
+     *
+     * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
+     * there *still* are not enough visible events 🤯
+     */
+    function expandWindowIfNecessary() {
+        if (localStorage.getItem(configKeys.expandWindow) === "true") {
+            if (shouldLoadNewMessages()) {
+                controller.loadNewMessages();
+            }
+            if (shouldLoadPreviousMessages()) {
+                controller.loadPreviousMessages();
+            }
+        }
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
