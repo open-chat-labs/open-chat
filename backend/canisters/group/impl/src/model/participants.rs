@@ -313,7 +313,7 @@ impl Participants {
         message_index: MessageIndex,
     ) -> bool {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.is_empty() || (message_index > p.mentions.last().unwrap().message_index) {
+            if p.mentions.last().map_or(true, |m| m.message_index < message_index) {
                 p.mentions.push(MentionInternal {
                     thread_root_message_index,
                     message_index,
