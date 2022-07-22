@@ -7,27 +7,18 @@ export type CountdownData = {
 };
 
 export function startsInFromSeconds(totalSeconds: number): CountdownData {
-    const total = totalSeconds * 1000;
-    const seconds = Math.floor((total / 1000) % 60);
-    const minutes = Math.floor((total / 1000 / 60) % 60);
-    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
-    const days = Math.floor(total / (1000 * 60 * 60 * 24));
-    return {
-        total,
-        days,
-        hours,
-        minutes,
-        seconds,
-    };
+    return startsInFromMilliseconds(totalSeconds * 1000);
 }
 
 export function startsIn(now: number, time: number): CountdownData {
-    const total = time - now;
+    return startsInFromMilliseconds(time - now);
+}
+
+function startsInFromMilliseconds(total: number): CountdownData {
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
     const days = Math.floor(total / (1000 * 60 * 60 * 24));
-
     return {
         total,
         days,
