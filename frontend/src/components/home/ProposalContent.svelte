@@ -6,6 +6,8 @@
     import { toDateString, toShortTimeString } from "../../utils/date";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import MenuDown from "svelte-material-icons/MenuDown.svelte";
 
     export let content: ProposalContent;
 
@@ -97,6 +99,10 @@
     <div class="progress">
         <div class="adopt" style="width: {adoptPercent}%" />
         <div class="reject" style="width: {rejectPercent}%" />
+        <div class="vertical-line" style="left: 3%" />
+        <div class="vertical-line" style="left: 50%" />
+        <div class="icon" style="left: calc(3% - 0.49em)"><ChevronDown /></div>
+        <div class="icon" style="left: calc(50% - 0.56em)"><MenuDown size="1.2em" /></div>
     </div>
 </div>
 
@@ -203,7 +209,7 @@
         .data {
             display: flex;
             justify-content: space-between;
-            margin-bottom: $sp2;
+            margin-bottom: 0.625em;
 
             > div {
                 display: flex;
@@ -260,6 +266,21 @@
                 bottom: 0;
                 background: var(--accent);
             }
+
+            .vertical-line {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background-color: var(--currentChat-msg-txt);
+                filter: brightness(1.5);
+            }
+
+            .icon {
+                position: absolute;
+                top: -1em;
+                filter: brightness(1.5);
+            }
         }
     }
 
@@ -304,10 +325,6 @@
 
             &:hover {
                 filter: brightness(0.7);
-            }
-
-            &.disabled:hover {
-                filter: brightness(1);
             }
 
             &.disabled {
