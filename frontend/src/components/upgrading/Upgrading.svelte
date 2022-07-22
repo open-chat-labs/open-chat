@@ -27,6 +27,6 @@
     .spinner {
         height: 80px;
         width: 100%;
-        @include loading-spinner(3em, 1.5em, false, var(--button-bg));
+        @include loading-spinner(3em, 1.5em, var(--button-bg));
     }
 </style>

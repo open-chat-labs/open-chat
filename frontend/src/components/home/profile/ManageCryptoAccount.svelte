@@ -232,7 +232,7 @@
             }
 
             &.withdrawing {
-                @include loading-spinner(1em, 0.5em, false, var(--button-spinner));
+                @include loading-spinner(1em, 0.5em, var(--button-spinner));
                 top: 21px;
                 right: -16px;
             }

@@ -52,7 +52,12 @@
         }
 
         &.loading {
-            @include loading-spinner(1em, 0.5em, false, var(--button-spinner));
+            @include loading-spinner(
+                1em,
+                0.5em,
+                var(--button-spinner),
+                "../assets/plain-spinner.svg"
+            );
         }
 
         &.disabled {
