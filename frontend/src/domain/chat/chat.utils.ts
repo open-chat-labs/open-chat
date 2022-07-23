@@ -580,12 +580,14 @@ function mergeThreadSyncDetails(
         updated.reduce(
             (merged, thread) => {
                 const existing = merged[thread.threadRootMessageIndex];
-                merged[thread.threadRootMessageIndex] = {
-                    threadRootMessageIndex: thread.threadRootMessageIndex,
-                    lastUpdated: thread.lastUpdated,
-                    readUpTo: thread.readUpTo ?? existing?.readUpTo,
-                    latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
-                    latestMessageIndex: thread.latestMessageIndex ?? existing!.latestMessageIndex
+                if (existing !== undefined || thread.latestEventIndex !== undefined) {
+                    merged[thread.threadRootMessageIndex] = {
+                        threadRootMessageIndex: thread.threadRootMessageIndex,
+                        lastUpdated: thread.lastUpdated,
+                        readUpTo: thread.readUpTo ?? existing?.readUpTo,
+                        latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
+                        latestMessageIndex: thread.latestMessageIndex ?? existing!.latestMessageIndex
+                    }
                 }
                 return merged;
             },
