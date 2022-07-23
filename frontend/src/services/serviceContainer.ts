@@ -1095,7 +1095,7 @@ export class ServiceContainer implements MarkMessagesRead {
         threadsByChat: Record<string, ThreadSyncDetails[]>
     ): Promise<ThreadPreview[]> {
         function latestMessageTimestamp(messages: EventWrapper<Message>[]): bigint {
-            return messages[messages.length - 1].timestamp;
+            return messages[messages.length - 1]?.timestamp ?? BigInt(0);
         }
 
         return Promise.all(
