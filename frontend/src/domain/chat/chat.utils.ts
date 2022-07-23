@@ -55,7 +55,6 @@ import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import type { UnconfirmedMessages } from "../../stores/unconfirmed";
-import { setPropIfDefined } from "../../utils/object";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -581,16 +580,12 @@ function mergeThreadSyncDetails(
         updated.reduce(
             (merged, thread) => {
                 const existing = merged[thread.threadRootMessageIndex];
-                if (existing !== undefined) {
-                    const copy = {
-                        ...existing,
-                    };
-                    copy.lastUpdated = thread.lastUpdated;
-                    setPropIfDefined(copy, "readUpTo", thread.readUpTo);
-                    setPropIfDefined(copy, "latestEventIndex", thread.latestEventIndex);
-                    setPropIfDefined(copy, "latestMessageIndex", thread.latestMessageIndex);
-                    setPropIfDefined(copy, "readUpTo", thread.readUpTo);
-                    merged[thread.threadRootMessageIndex] = copy;
+                merged[thread.threadRootMessageIndex] = {
+                    threadRootMessageIndex: thread.threadRootMessageIndex,
+                    lastUpdated: thread.lastUpdated,
+                    readUpTo: thread.readUpTo ?? existing?.readUpTo,
+                    latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
+                    latestMessageIndex: thread.latestMessageIndex ?? existing!.latestMessageIndex
                 }
                 return merged;
             },
