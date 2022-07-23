@@ -1094,6 +1094,10 @@ export class ServiceContainer implements MarkMessagesRead {
     async threadPreviews(
         threadsByChat: Record<string, ThreadSyncDetails[]>
     ): Promise<ThreadPreview[]> {
+        function latestMessageTimestamp(messages: EventWrapper<Message>[]): bigint {
+            return messages[messages.length - 1].timestamp;
+        }
+
         return Promise.all(
             Object.entries(threadsByChat).map(([chatId, threadSyncs]) =>
                 this.getGroupClient(chatId).threadPreviews(
@@ -1107,7 +1111,9 @@ export class ServiceContainer implements MarkMessagesRead {
                         ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t)))
                         : [];
                 })
-            ).then((threads) => threads.flat())
+            ).then((threads) => threads
+                .flat()
+                .sort((a, b) => Number(latestMessageTimestamp(b.latestReplies) - latestMessageTimestamp(a.latestReplies))))
         );
     }
 
