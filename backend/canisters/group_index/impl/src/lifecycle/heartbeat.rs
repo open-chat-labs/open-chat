@@ -6,8 +6,6 @@ use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE};
 use utils::cycles::can_spend_cycles;
 
-const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 2;
-
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
@@ -30,7 +28,9 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
+        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades;
+
+        (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
             .collect()
     }

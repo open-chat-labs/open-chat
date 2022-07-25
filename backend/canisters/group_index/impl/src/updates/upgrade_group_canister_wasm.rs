@@ -1,23 +1,17 @@
+use crate::guards::caller_is_controller;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::info;
 
-#[update]
+#[update(guard = "caller_is_controller")]
 #[trace]
 fn upgrade_group_canister_wasm(args: Args) -> Response {
     mutate_state(|state| upgrade_group_canister_wasm_impl(args, state))
 }
 
 fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let permitted_callers = &runtime_state.data.service_principals;
-
-    if !permitted_callers.contains(&caller) {
-        return NotAuthorized;
-    }
-
     let version = args.group_canister_wasm.version;
 
     if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm.version {
