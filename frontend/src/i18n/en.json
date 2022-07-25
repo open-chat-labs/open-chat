@@ -539,7 +539,8 @@
         "unread": "{count} thread(s) with unread messages",
         "moreMessages": "- {number} more message(s) -",
         "lastMessage": "(last message {date}) ",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewFailure": "Unable to load thread previews"
     },
     "linkCopiedToClipboard": "Link copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",

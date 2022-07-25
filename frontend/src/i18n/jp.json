@@ -542,7 +542,8 @@
         "previewTitle": "スレッド",
         "openThread": "オープンスレッド",
         "unread": "未読メッセージを含む{count}スレッド",
-        "moreMessages": "-{number}その他のメッセージ-"
+        "moreMessages": "-{number}その他のメッセージ-",
+        "previewFailure": "スレッドプレビューを読み込めません"
     },
     "noChatsAvailable": "チャットはありません！",
     "invitedUsers": "招待されたユーザー",
