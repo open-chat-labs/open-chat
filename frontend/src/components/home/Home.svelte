@@ -138,6 +138,10 @@
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
+    $: {
+        console.log("Thread component: ", threadComponent?.messageId());
+    }
+
     /** SHOW LEFT
      * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
      * ==========================================================
@@ -172,7 +176,8 @@
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
-        if ("threadRootMessageIndex" in msg) {
+        if (msg.threadRootMessageIndex !== undefined) {
+            // do we have the thread window open for this thread
             threadComponent?.handleWebRtcMessage(msg);
         } else {
             handleWebRtcMessage(msg);

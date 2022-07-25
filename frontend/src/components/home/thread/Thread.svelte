@@ -62,7 +62,7 @@
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../domain/share";
-    import { isTyping, typing } from "stores/typing";
+    import { isTyping, typing } from "../../../stores/typing";
     import { rtcConnectionsManager } from "../../../domain/webrtc/RtcConnectionsManager";
     import type {
         RemoteUserDeletedMessage,
@@ -72,8 +72,8 @@
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
-    import { messagesRead } from "stores/markRead";
-    import { unconfirmed } from "stores/unconfirmed";
+    import { messagesRead } from "../../../stores/markRead";
+    import { unconfirmed } from "../../../stores/unconfirmed";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -104,15 +104,14 @@
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
             previousRootEvent = rootEvent;
-            events.set([]);
             initialised = false;
-
             if (thread !== undefined) {
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
                     thread.latestEventIndex,
                     false,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
+                    true
                 );
             }
         } else {
@@ -121,12 +120,12 @@
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
             ) {
-                console.log("loading new thread messages");
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
                     (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
                     true,
-                    threadRootMessageIndex
+                    threadRootMessageIndex,
+                    false
                 );
             }
         }
@@ -158,7 +157,8 @@
         range: [number, number],
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex: number
+        threadRootMessageIndex: number,
+        clearEvents: boolean
     ): Promise<void> {
         if (thread === undefined || controller.chatVal === undefined) return;
         loading = true;
@@ -172,6 +172,9 @@
         );
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            if (clearEvents) {
+                events.set([]);
+            }
             const updated = await handleEventsResponse($events, eventsResponse);
             events.set(
                 dedupe(
@@ -274,9 +277,20 @@
         );
     }
 
+    export function messageId(): bigint {
+        return rootEvent.event.messageId;
+    }
+
     export function handleWebRtcMessage(msg: WebRtcMessage): void {
         const chatId = filterWebRtcMessage(msg);
         if (chatId === undefined) return;
+
+        // make sure the chatId matches
+        if (chatId !== controller.chatId) return;
+
+        // make sure that the root message index matches
+        if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
+
         const parsed = parseWebRtcMessage(chatId, msg);
         const { kind } = parsed;
 
@@ -401,7 +415,6 @@
                 userId: currentUser.userId,
                 threadRootMessageIndex,
             });
-            stopTyping();
         }
     }
 
