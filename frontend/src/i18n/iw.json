@@ -540,7 +540,8 @@
         "previewTitle": "חוטים",
         "openThread": "חוט פתוח",
         "unread": "{count} שרשור(ים) עם הודעות שלא נקראו",
-        "moreMessages": "- {number} הודעות נוספות -"
+        "moreMessages": "- {number} הודעות נוספות -",
+        "previewFailure": "לא ניתן לטעון תצוגות מקדימות של שרשור"
     },
     "noChatsAvailable": "אין צ'אטים זמינים!",
     "invitedUsers": "משתמשים מוזמנים",

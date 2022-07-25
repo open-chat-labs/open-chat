@@ -542,7 +542,8 @@
         "previewTitle": "Fils",
         "openThread": "fil ouvert",
         "unread": "{count} fils de discussion avec des messages non lus",
-        "moreMessages": "- {number} autre(s) message(s) -"
+        "moreMessages": "- {number} autre(s) message(s) -",
+        "previewFailure": "Impossible de charger les aperçus des fils de discussion"
     },
     "noChatsAvailable": "Aucun chat disponible !",
     "invitedUsers": "Utilisateurs invités",

@@ -543,7 +543,8 @@
         "previewTitle": "Hilos",
         "openThread": "hilo abierto",
         "unread": "{count} hilo(s) con mensajes no leídos",
-        "moreMessages": "- {number} mensaje(s) más -"
+        "moreMessages": "- {number} mensaje(s) más -",
+        "previewFailure": "No se pueden cargar las vistas previas del hilo"
     },
     "noChatsAvailable": "¡No hay chats disponibles!",
     "invitedUsers": "Usuarios invitados",

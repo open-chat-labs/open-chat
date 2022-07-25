@@ -542,7 +542,8 @@
         "previewTitle": "Потоки",
         "openThread": "открыть тему",
         "unread": "{count} тредов с непрочитанными сообщениями",
-        "moreMessages": "- Еще {number} сообщений -"
+        "moreMessages": "- Еще {number} сообщений -",
+        "previewFailure": "Не удалось загрузить предварительный просмотр темы"
     },
     "noChatsAvailable": "Нет доступных чатов!",
     "invitedUsers": "Приглашенные пользователи",
