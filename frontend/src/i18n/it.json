@@ -542,7 +542,8 @@
         "previewTitle": "Fili",
         "openThread": "filo aperto",
         "unread": "{count} thread con messaggi non letti",
-        "moreMessages": "- {number} più messaggi -"
+        "moreMessages": "- {number} più messaggi -",
+        "previewFailure": "Impossibile caricare le anteprime dei thread"
     },
     "noChatsAvailable": "Nessuna chat disponibile!",
     "invitedUsers": "Utenti invitati",

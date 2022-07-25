@@ -16,6 +16,7 @@
     export let fill: boolean;
     export let pinned: boolean;
     export let crypto: boolean;
+    export let dateFormatter: (date: Date) => string = toShortTimeString;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
     let pinnedColor = crypto
@@ -29,7 +30,7 @@
 
 <div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
     <span class="time">
-        {toShortTimeString(new Date(Number(timestamp)))}
+        {dateFormatter(new Date(Number(timestamp)))}
     </span>
     {#if me}
         {#if confirmed}

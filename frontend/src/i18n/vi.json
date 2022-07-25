@@ -543,7 +543,8 @@
         "previewTitle": "Chủ đề",
         "openThread": "mở chủ đề",
         "unread": "{count} chuỗi có tin nhắn chưa đọc",
-        "moreMessages": "- {number} tin nhắn khác -"
+        "moreMessages": "- {number} tin nhắn khác -",
+        "previewFailure": "Không thể tải bản xem trước chuỗi"
     },
     "noChatsAvailable": "Không có cuộc trò chuyện nào!",
     "invitedUsers": "Người dùng được mời",

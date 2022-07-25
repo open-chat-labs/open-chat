@@ -542,7 +542,8 @@
         "previewTitle": "Fäden",
         "openThread": "Thread öffnen",
         "unread": "{count} Thread(s) mit ungelesenen Nachrichten",
-        "moreMessages": "- {number} weitere Nachricht(en) -"
+        "moreMessages": "- {number} weitere Nachricht(en) -",
+        "previewFailure": "Thread-Vorschauen können nicht geladen werden"
     },
     "noChatsAvailable": "Keine Chats verfügbar!",
     "invitedUsers": "Eingeladene Benutzer",

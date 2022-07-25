@@ -542,7 +542,8 @@
         "previewTitle": "线程",
         "openThread": "打开线程",
         "unread": "{count} 个有未读消息的线程",
-        "moreMessages": "- {number} 更多消息 -"
+        "moreMessages": "- {number} 更多消息 -",
+        "previewFailure": "无法加载线程预览"
     },
     "noChatsAvailable": "没有可用的聊天！",
     "invitedUsers": "受邀用户",
