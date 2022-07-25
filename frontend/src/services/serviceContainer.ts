@@ -20,7 +20,6 @@ import type {
     PublicProfile,
     PinChatResponse,
     UnpinChatResponse,
-    VoteOnProposalResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -72,6 +71,7 @@ import type {
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
+    RegisterProposalVoteResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -1092,20 +1092,12 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.unpinChat(chatId);
     }
 
-    voteOnProposal(
-        governanceCanisterId: string,
-        proposalId: bigint,
-        adopt: boolean,
+    registerProposalVote(
         chatId: string,
-        messageIndex: number
-    ): Promise<VoteOnProposalResponse> {
-        return this.userClient.voteOnProposal(
-            governanceCanisterId,
-            proposalId,
-            adopt,
-            chatId,
-            messageIndex
-        );
+        messageIndex: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.getGroupClient(chatId).registerProposalVote(messageIndex, adopt);
     }
 
     async threadPreviews(
@@ -1128,9 +1120,16 @@ export class ServiceContainer implements MarkMessagesRead {
                         ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t)))
                         : [];
                 })
-            ).then((threads) => threads
-                .flat()
-                .sort((a, b) => Number(latestMessageTimestamp(b.latestReplies) - latestMessageTimestamp(a.latestReplies))))
+            ).then((threads) =>
+                threads
+                    .flat()
+                    .sort((a, b) =>
+                        Number(
+                            latestMessageTimestamp(b.latestReplies) -
+                                latestMessageTimestamp(a.latestReplies)
+                        )
+                    )
+            )
         );
     }
 

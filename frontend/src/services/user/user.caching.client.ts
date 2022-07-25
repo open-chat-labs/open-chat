@@ -57,7 +57,6 @@ import type {
     SetBioResponse,
     UnpinChatResponse,
     UserSummary,
-    VoteOnProposalResponse,
 } from "../../domain/user/user";
 import type {
     SearchDirectChatResponse,
@@ -528,21 +527,5 @@ export class CachingUserClient implements IUserClient {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.client.unpinChat(chatId);
-    }
-
-    voteOnProposal(
-        governanceCanisterId: string,
-        proposalId: bigint,
-        adopt: boolean,
-        chatId: string,
-        messageIndex: number
-    ): Promise<VoteOnProposalResponse> {
-        return this.client.voteOnProposal(
-            governanceCanisterId,
-            proposalId,
-            adopt,
-            chatId,
-            messageIndex
-        );
     }
 }

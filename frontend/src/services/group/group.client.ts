@@ -30,6 +30,7 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -59,6 +60,7 @@ import {
     resetInviteCodeResponse,
     updatePermissionsResponse,
     threadPreviewsResponse,
+    registerProposalVoteResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -496,6 +498,20 @@ export class GroupClient extends CandidService implements IGroupClient {
                     threads: new Uint32Array(threadRootMessageIndexes),
                 }),
             (resp) => threadPreviewsResponse(this.chatId, resp)
+        );
+    }
+
+    @profile("groupClient")
+    registerProposalVote(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.handleResponse(
+            this.groupService.register_proposal_vote({
+                adopt,
+                message_index: messageIdx,
+            }),
+            registerProposalVoteResponse
         );
     }
 }

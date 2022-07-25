@@ -143,6 +143,7 @@ export interface ProposalContent {
     kind: "proposal_content";
     governanceCanisterId: string;
     proposal: Proposal;
+    myVote?: boolean;
 }
 
 export type Proposal = NnsProposal | SnsProposal;
@@ -1207,3 +1208,13 @@ export type ChatMetrics = {
     polls: number;
     reactions: number;
 };
+
+export type RegisterProposalVoteResponse =
+    | "success"
+    | "already_voted"
+    | "caller_not_in_group"
+    | "no_eligible_neurons"
+    | "proposal_message_not_found"
+    | "proposal_not_found"
+    | "proposal_not_accepting_votes"
+    | "internal_error";

@@ -98,7 +98,6 @@ import {
     ProposalDecisionStatus,
     ProposalRewardStatus,
     ThreadSyncDetails,
-    VoteOnProposalResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -199,7 +198,6 @@ export {
     ProposalDecisionStatus as ApiProposalDecisionStatus,
     ProposalRewardStatus as ApiProposalRewardStatus,
     ThreadSyncDetails as ApiThreadSyncDetails,
-    VoteOnProposalResponse as ApiVoteOnProposalResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -35,7 +35,6 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
-    ApiVoteOnProposalResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -90,7 +89,6 @@ import type {
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
-    VoteOnProposalResponse,
 } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
@@ -886,26 +884,4 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
         return bytesToHexString(candid.Unknown);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
-}
-
-export function voteOnProposalResponse(candid: ApiVoteOnProposalResponse): VoteOnProposalResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NoEligibleNeurons" in candid) {
-        return "no_eligible_neurons";
-    }
-    if ("ProposalNotAcceptingVotes" in candid) {
-        return "proposal_not_accepting_votes";
-    }
-    if ("ProposalNotFound" in candid) {
-        return "proposal_not_found";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }

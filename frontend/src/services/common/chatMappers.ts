@@ -166,6 +166,7 @@ function proposalContent(candid: ApiProposalContent): ProposalContent {
         kind: "proposal_content",
         governanceCanisterId: candid.governance_canister_id.toString(),
         proposal: proposal(candid.proposal),
+        myVote: optional(candid.my_vote, identity),
     };
 }
 

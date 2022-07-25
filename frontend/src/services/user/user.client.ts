@@ -59,7 +59,6 @@ import {
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
-    voteOnProposalResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -83,7 +82,6 @@ import type {
     SetBioResponse,
     UnpinChatResponse,
     UserSummary,
-    VoteOnProposalResponse,
 } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
@@ -628,26 +626,6 @@ export class UserClient extends CandidService implements IUserClient {
                 chat_id: Principal.fromText(chatId),
             }),
             unpinChatResponse
-        );
-    }
-
-    @profile("userClient")
-    voteOnProposal(
-        governanceCanisterId: string,
-        proposalId: bigint,
-        adopt: boolean,
-        chatId: string,
-        messageIndex: number
-    ): Promise<VoteOnProposalResponse> {
-        return this.handleResponse(
-            this.userService.vote_on_proposal({
-                governance_canister_id: Principal.fromText(governanceCanisterId),
-                chat_id: Principal.fromText(chatId),
-                proposal_id: proposalId,
-                adopt,
-                message_index: messageIndex,
-            }),
-            voteOnProposalResponse
         );
     }
 }

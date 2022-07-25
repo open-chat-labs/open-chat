@@ -27,6 +27,7 @@ import type {
     ApiUpdatePermissionsResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
+    ApiRegisterProposalVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -58,6 +59,7 @@ import type {
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     ThreadPreview,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -923,7 +925,7 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             proposals: candid.ProposalsUpdated.proposals.map((p) => ({
                 messageIndex: p.message_index,
                 eventIndex: p.event_index,
-            }))
+            })),
         };
     }
 
@@ -936,4 +938,34 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         index: candid.index,
         timestamp: candid.timestamp,
     };
+}
+
+export function registerProposalVoteResponse(
+    candid: ApiRegisterProposalVoteResponse
+): RegisterProposalVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyVoted" in candid) {
+        return "already_voted";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NoEligibleNeurons" in candid) {
+        return "no_eligible_neurons";
+    }
+    if ("ProposalNotAcceptingVotes" in candid) {
+        return "proposal_not_accepting_votes";
+    }
+    if ("ProposalNotFound" in candid) {
+        return "proposal_not_found";
+    }
+    if ("ProposalMessageNotFound" in candid) {
+        return "proposal_message_not_found";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }
