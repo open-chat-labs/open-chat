@@ -4,7 +4,10 @@ use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROU
 use candid::Principal;
 use chat_events::{ChatEventInternal, EditMessageArgs};
 use ic_ledger_types::Tokens;
-use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use types::{
+    MessageContent, MessageContentInternal, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
+    TextContent, UserId,
+};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
