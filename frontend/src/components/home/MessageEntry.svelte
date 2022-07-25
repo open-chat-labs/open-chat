@@ -203,7 +203,6 @@
         if (e.key === "Enter" && $enterSend && !e.shiftKey) {
             if (!messageIsEmpty) {
                 sendMessage();
-                dispatch("stopTyping");
             }
             e.preventDefault();
         }
@@ -314,6 +313,7 @@
 
         inp.focus();
         messageActions.close();
+        dispatch("stopTyping");
     }
 
     export function saveSelection() {
