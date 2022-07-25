@@ -1,5 +1,3 @@
-<svelte:options immutable={true} />
-
 <script lang="ts">
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";

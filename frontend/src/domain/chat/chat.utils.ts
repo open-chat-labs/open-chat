@@ -586,8 +586,9 @@ function mergeThreadSyncDetails(
                         lastUpdated: thread.lastUpdated,
                         readUpTo: thread.readUpTo ?? existing?.readUpTo,
                         latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
-                        latestMessageIndex: thread.latestMessageIndex ?? existing!.latestMessageIndex
-                    }
+                        latestMessageIndex:
+                            thread.latestMessageIndex ?? existing!.latestMessageIndex,
+                    };
                 }
                 return merged;
             },

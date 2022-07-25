@@ -172,7 +172,8 @@
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
-        if ("threadRootMessageIndex" in msg) {
+        if (msg.threadRootMessageIndex !== undefined) {
+            // do we have the thread window open for this thread
             threadComponent?.handleWebRtcMessage(msg);
         } else {
             handleWebRtcMessage(msg);

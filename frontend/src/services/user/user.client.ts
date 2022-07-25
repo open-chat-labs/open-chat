@@ -141,7 +141,7 @@ export class UserClient extends CandidService implements IUserClient {
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
         return this.handleResponse(
             this.userService.delete_group({
-                chat_id: Principal.fromText(chatId)
+                chat_id: Principal.fromText(chatId),
             }),
             deleteGroupResponse
         );
@@ -220,8 +220,6 @@ export class UserClient extends CandidService implements IUserClient {
             () => this.userService.initial_state({}),
             initialStateResponse
         );
-
-        console.log("Initial state: ", resp);
 
         return {
             wasUpdated: true,
