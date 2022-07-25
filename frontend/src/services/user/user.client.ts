@@ -221,8 +221,6 @@ export class UserClient extends CandidService implements IUserClient {
             initialStateResponse
         );
 
-        console.log("Initial state: ", resp);
-
         return {
             wasUpdated: true,
             chatSummaries: resp.chats.sort(compareChats),

@@ -586,8 +586,9 @@ function mergeThreadSyncDetails(
                         lastUpdated: thread.lastUpdated,
                         readUpTo: thread.readUpTo ?? existing?.readUpTo,
                         latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
-                        latestMessageIndex: thread.latestMessageIndex ?? existing!.latestMessageIndex
-                    }
+                        latestMessageIndex:
+                            thread.latestMessageIndex ?? existing!.latestMessageIndex,
+                    };
                 }
                 return merged;
             },
@@ -930,20 +931,21 @@ function mergeMessageEvents(
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
-    if (existing.event.kind === "message") {
-        if (incoming.event.kind === "message") {
-            const key = existing.event.messageId.toString();
-            const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
-            return {
-                ...existing,
-                event: {
-                    ...existing.event,
-                    content: incoming.event.content,
-                    reactions: merged,
-                    thread: incoming.event.thread,
-                },
-            };
-        }
+    if (existing.event.kind === "message" &&
+        incoming.event.kind === "message" &&
+        existing.event.messageId === incoming.event.messageId)
+    {
+        const key = existing.event.messageId.toString();
+        const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
+        return {
+            ...existing,
+            event: {
+                ...existing.event,
+                content: incoming.event.content,
+                reactions: merged,
+                thread: incoming.event.thread,
+            },
+        };
     }
     return existing;
 }
