@@ -199,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
+    'my_vote' : IDL.Opt(IDL.Bool),
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
@@ -558,7 +559,6 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
-    'recent_proposal_votes' : IDL.Vec(MessageIndex),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -878,7 +878,6 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
-    'recent_proposal_votes' : IDL.Vec(MessageIndex),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
@@ -927,21 +926,6 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
     }),
-    'InternalError' : IDL.Text,
-  });
-  const VoteOnProposalArgs = IDL.Record({
-    'adopt' : IDL.Bool,
-    'proposal_id' : IDL.Nat64,
-    'governance_canister_id' : CanisterId,
-    'chat_id' : ChatId,
-    'message_index' : MessageIndex,
-  });
-  const VoteOnProposalResponse = IDL.Variant({
-    'ProposalNotFound' : IDL.Null,
-    'NoEligibleNeurons' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Null,
-    'ProposalNotAcceptingVotes' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const WithdrawCryptoRequest = IDL.Record({
@@ -1051,11 +1035,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
-    'vote_on_proposal' : IDL.Func(
-        [VoteOnProposalArgs],
-        [VoteOnProposalResponse],
-        [],
-      ),
     'withdraw_crypto' : IDL.Func(
         [WithdrawCryptoRequest],
         [WithdrawCryptoResponse],

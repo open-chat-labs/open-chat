@@ -185,6 +185,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
+    'my_vote' : IDL.Opt(IDL.Bool),
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
@@ -588,6 +589,20 @@ export const idlFactory = ({ IDL }) => {
     'OptionIndexOutOfRange' : IDL.Null,
     'PollNotFound' : IDL.Null,
   });
+  const RegisterProposalVoteArgs = IDL.Record({
+    'adopt' : IDL.Bool,
+    'message_index' : MessageIndex,
+  });
+  const RegisterProposalVoteResponse = IDL.Variant({
+    'AlreadyVoted' : IDL.Bool,
+    'ProposalNotFound' : IDL.Null,
+    'ProposalMessageNotFound' : IDL.Null,
+    'NoEligibleNeurons' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'ProposalNotAcceptingVotes' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
@@ -830,6 +845,11 @@ export const idlFactory = ({ IDL }) => {
     'register_poll_vote' : IDL.Func(
         [RegisterPollVoteArgs],
         [RegisterPollVoteResponse],
+        [],
+      ),
+    'register_proposal_vote' : IDL.Func(
+        [RegisterProposalVoteArgs],
+        [RegisterProposalVoteResponse],
         [],
       ),
     'remove_participant' : IDL.Func(

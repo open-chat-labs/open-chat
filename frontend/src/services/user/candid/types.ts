@@ -317,7 +317,6 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
-  'recent_proposal_votes' : Uint32Array,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -344,7 +343,6 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
-  'recent_proposal_votes' : Uint32Array,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -649,6 +647,7 @@ export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
+  'my_vote' : [] | [boolean],
   'governance_canister_id' : CanisterId,
   'proposal' : Proposal,
 }
@@ -946,19 +945,6 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
-export interface VoteOnProposalArgs {
-  'adopt' : boolean,
-  'proposal_id' : bigint,
-  'governance_canister_id' : CanisterId,
-  'chat_id' : ChatId,
-  'message_index' : MessageIndex,
-}
-export type VoteOnProposalResponse = { 'ProposalNotFound' : null } |
-  { 'NoEligibleNeurons' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'Success' : null } |
-  { 'ProposalNotAcceptingVotes' : null } |
-  { 'InternalError' : string };
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface WithdrawCryptoRequest {
@@ -1032,10 +1018,6 @@ export interface _SERVICE {
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
-  'vote_on_proposal' : ActorMethod<
-    [VoteOnProposalArgs],
-    VoteOnProposalResponse,
-  >,
   'withdraw_crypto' : ActorMethod<
     [WithdrawCryptoRequest],
     WithdrawCryptoResponse,

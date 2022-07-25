@@ -262,7 +262,6 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
-  'recent_proposal_votes' : Uint32Array,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -289,7 +288,6 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
-  'recent_proposal_votes' : Uint32Array,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -541,6 +539,7 @@ export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
+  'my_vote' : [] | [boolean],
   'governance_canister_id' : CanisterId,
   'proposal' : Proposal,
 }

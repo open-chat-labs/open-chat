@@ -65,6 +65,7 @@ export const Notification = IDL.Variant({
             'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
+            'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
             'proposal' : IDL.Variant({
               'NNS' : IDL.Record({
@@ -310,6 +311,7 @@ export const Notification = IDL.Variant({
             'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
+            'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
             'proposal' : IDL.Variant({
               'NNS' : IDL.Record({
