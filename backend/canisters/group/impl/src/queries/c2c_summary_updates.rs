@@ -90,7 +90,7 @@ fn process_events(
         .iter()
         .rev()
         .take_while(|(&t, _)| t > since)
-        .flat_map(|(_, m)| m.into_iter().copied())
+        .flat_map(|(_, m)| m.iter().copied())
         .filter_map(|m| chat_events.get_event_index_by_message_index(m))
         .collect();
 
