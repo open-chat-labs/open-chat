@@ -176,3 +176,11 @@ export type UpgradeStorageResponse =
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 
 export type UnpinChatResponse = "success";
+
+export type VoteOnProposalResponse =
+    | "success"
+    | "caller_not_in_group"
+    | "no_eligible_neurons"
+    | "proposal_not_found"
+    | "proposal_not_accepting_votes"
+    | "internal_error";

@@ -20,6 +20,7 @@ import type {
     PublicProfile,
     PinChatResponse,
     UnpinChatResponse,
+    VoteOnProposalResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -1089,6 +1090,22 @@ export class ServiceContainer implements MarkMessagesRead {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.userClient.unpinChat(chatId);
+    }
+
+    voteOnProposal(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        adopt: boolean,
+        chatId: string,
+        messageIndex: number
+    ): Promise<VoteOnProposalResponse> {
+        return this.userClient.voteOnProposal(
+            governanceCanisterId,
+            proposalId,
+            adopt,
+            chatId,
+            messageIndex
+        );
     }
 
     async threadPreviews(

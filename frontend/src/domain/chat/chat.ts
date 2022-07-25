@@ -148,7 +148,7 @@ export interface ProposalContent {
 export type Proposal = NnsProposal | SnsProposal;
 
 export interface ProposalCommon {
-    id: ProposalId;
+    id: bigint;
     url: string;
     status: ProposalDecisionStatus;
     tally: Tally;

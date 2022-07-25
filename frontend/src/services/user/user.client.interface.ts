@@ -36,6 +36,7 @@ import type {
     SetBioResponse,
     UnpinChatResponse,
     UserSummary,
+    VoteOnProposalResponse,
 } from "../../domain/user/user";
 import type { ServiceRetryInterrupt } from "services/candidService";
 
@@ -131,4 +132,11 @@ export interface IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse>;
     pinChat(chatId: string): Promise<PinChatResponse>;
     unpinChat(chatId: string): Promise<UnpinChatResponse>;
+    voteOnProposal(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        adopt: boolean,
+        chatId: string,
+        messageIndex: number
+    ): Promise<VoteOnProposalResponse>;
 }

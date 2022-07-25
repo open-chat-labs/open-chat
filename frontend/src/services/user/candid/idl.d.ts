@@ -97,7 +97,8 @@ import {
     UnpinChatResponse,
     ProposalDecisionStatus,
     ProposalRewardStatus,
-	ThreadSyncDetails,
+    ThreadSyncDetails,
+    VoteOnProposalResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -197,7 +198,8 @@ export {
     UnpinChatResponse as ApiUnpinChatResponse,
     ProposalDecisionStatus as ApiProposalDecisionStatus,
     ProposalRewardStatus as ApiProposalRewardStatus,
-	ThreadSyncDetails as ApiThreadSyncDetails,
+    ThreadSyncDetails as ApiThreadSyncDetails,
+    VoteOnProposalResponse as ApiVoteOnProposalResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

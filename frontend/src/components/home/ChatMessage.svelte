@@ -464,6 +464,8 @@
                 {first}
                 {groupChat}
                 {senderId}
+                {chatId}
+                messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}

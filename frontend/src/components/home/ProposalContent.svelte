@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
         NnsProposalTopic,
@@ -6,6 +7,7 @@
         ProposalDecisionStatus,
         SnsProposalAction,
     } from "../../domain/chat/chat";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
     import { formatTimeRemaining } from "../../utils/time";
@@ -14,8 +16,13 @@
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
+    import type { VoteOnProposalResponse } from "../../domain/user/user";
 
     export let content: ProposalContent;
+    export let chatId: string;
+    export let messageIndex: number;
+
+    const api: ServiceContainer = getContext(apiKey);
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
@@ -54,11 +61,52 @@
         }
 
         voting = adopt;
+
+        // api.voteOnProposal(
+        //     content.governanceCanisterId,
+        //     content.proposal.id,
+        //     adopt,
+        //     chatId,
+        //     messageIndex)
+        //     .then((resp) => {
+        //         // if (resp.kind !== "success") {
+        //         //     const err = groupCreationErrorMessage(resp);
+        //         //     if (err) toastStore.showFailureToast(err);
+        //         //     newGroupState = "group_form";
+        //         // } else {
+        //         //     return optionallyAddParticipants(resp.canisterId)
+        //         //         .then(() => {
+        //         //             onGroupCreated(resp.canisterId);
+        //         //         })
+        //         //         .catch((err) => {
+        //         //             rollbar.error("Unable to add participants to group", err);
+        //         //             toastStore.showFailureToast("addParticipantsFailed");
+        //         //             newGroupState = "group_form";
+        //         //         });
+        //         // }
+        //     })
+        //     .catch((err) => {
+        //         // rollbar.error("Unable to vote on proposal", err);
+        //         // toastStore.showFailureToast("groupCreationFailed");
+        //         // newGroupState = "group_form";
+        //     })
+        //     .finally(() => (voting = undefined));
+
         setTimeout(() => {
             voting = undefined;
             myVote = adopt;
         }, 2000);
     }
+
+    function voteResponseErrorMessage(resp: VoteOnProposalResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "no_eligible_neurons") return "noEligibleNeurons";
+        if (resp === "proposal_not_accepting_votes") return "proposalNotAceptingVotes";
+        if (resp === "caller_not_in_group") return "voteFailed";
+        if (resp === "proposal_not_found") return "voteFailed";
+        if (resp === "internal_error") return "voteFailed";
+    }
+
     function round2(num: number): number {
         return Math.round((num + Number.EPSILON) * 100) / 100;
     }
