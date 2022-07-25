@@ -1,8 +1,13 @@
+use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
+use chat_events::{ChatEventInternal, EditMessageArgs};
 use ic_ledger_types::Tokens;
-use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use types::{
+    MessageContent, MessageContentInternal, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
+    TextContent, UserId,
+};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -21,7 +26,7 @@ const WELCOME_MESSAGES: &[&str] = &[
 
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
-        if !bot_chat_exists(state) {
+        if bot_chat(state).is_none() {
             for message in WELCOME_MESSAGES.iter() {
                 let content = MessageContent::Text(TextContent {
                     text: message.to_string(),
@@ -93,6 +98,40 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     send_text_message(text, runtime_state);
 }
 
+pub(crate) fn make_links_relative(runtime_state: &mut RuntimeState) {
+    if let Some(bot_chat) = runtime_state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
+        let pattern = "https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app";
+
+        let edits_required: Vec<_> = bot_chat
+            .events
+            .main()
+            .iter()
+            .filter_map(|e| if let ChatEventInternal::Message(m) = &e.event { Some(m) } else { None })
+            .filter_map(|m| {
+                if let MessageContentInternal::Text(t) = &m.content {
+                    if t.text.contains(pattern) {
+                        return Some((m.message_id, t.text.clone().replace(pattern, "")));
+                    }
+                }
+                None
+            })
+            .collect();
+
+        if !edits_required.is_empty() {
+            let now = runtime_state.env.now();
+            for (message_id, text) in edits_required {
+                bot_chat.events.edit_message(EditMessageArgs {
+                    sender: OPENCHAT_BOT_USER_ID,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContent::Text(TextContent { text }),
+                    now,
+                });
+            }
+        }
+    }
+}
+
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
@@ -131,6 +170,6 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
-fn bot_chat_exists(runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into()).is_some()
+fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
+    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into())
 }
