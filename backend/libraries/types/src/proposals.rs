@@ -1,6 +1,7 @@
-use crate::{CanisterId, NeuronId, ProposalId, TimestampMillis};
+use crate::{CanisterId, NeuronId, ProposalId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Proposal {
@@ -139,9 +140,17 @@ impl SnsProposal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ProposalContentInternal {
+    pub governance_canister_id: CanisterId,
+    pub proposal: Proposal,
+    pub votes: HashMap<UserId, bool>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
+    pub my_vote: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

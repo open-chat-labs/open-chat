@@ -158,6 +158,7 @@ mod push_proposals {
             content: MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id,
                 proposal: proposal.clone(),
+                my_vote: None,
             }),
             sender_name: "ProposalsBot".to_string(),
             replies_to: None,

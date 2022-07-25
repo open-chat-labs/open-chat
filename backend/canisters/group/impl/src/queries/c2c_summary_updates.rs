@@ -85,11 +85,21 @@ fn process_events(
 ) -> UpdatesFromEvents {
     let chat_events = &runtime_state.data.events.main();
 
+    let new_proposal_votes: HashSet<_> = participant
+        .proposal_votes
+        .iter()
+        .rev()
+        .take_while(|(&t, _)| t > since)
+        .flat_map(|(_, m)| m.iter().copied())
+        .filter_map(|m| chat_events.get_event_index_by_message_index(m))
+        .collect();
+
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
+        affected_events: new_proposal_votes,
         ..Default::default()
     };
 
