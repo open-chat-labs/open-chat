@@ -16,7 +16,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "upgrade_group_canister_wasm" => runtime_state.is_caller_service_principal(),
+        "set_max_concurrent_canister_upgrades" | "upgrade_group_canister_wasm" => runtime_state.is_caller_service_principal(),
         _ => false,
     };
 
