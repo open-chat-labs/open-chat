@@ -3,7 +3,7 @@ use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal, ProposalContent,
-    TimestampMillis, TotalVotes, UserId, VoteOperation,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -41,7 +41,7 @@ pub enum MessageContentInternal {
     Cryptocurrency(CryptocurrencyContentInternal),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
-    GovernanceProposal(ProposalContent),
+    GovernanceProposal(ProposalContentInternal),
 }
 
 pub enum ContentValidationError {
@@ -123,7 +123,11 @@ impl MessageContent {
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p),
+            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+                governance_canister_id: p.governance_canister_id,
+                proposal: p.proposal,
+                votes: HashMap::new(),
+            }),
         }
     }
 
@@ -210,7 +214,11 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.clone()),
+            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
+                governance_canister_id: p.governance_canister_id,
+                proposal: p.proposal.clone(),
+                my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
+            }),
         }
     }
 }

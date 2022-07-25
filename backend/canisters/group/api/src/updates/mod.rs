@@ -18,6 +18,7 @@ pub mod enable_invite_code;
 pub mod make_private;
 pub mod pin_message;
 pub mod register_poll_vote;
+pub mod register_proposal_vote;
 pub mod remove_participant;
 pub mod reset_invite_code;
 pub mod send_message;

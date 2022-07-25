@@ -67,6 +67,11 @@ impl RuntimeState {
         self.env.caller() == self.data.callback_canister_id
     }
 
+    pub fn is_caller_known_group_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.group_chats.get(&caller.into()).is_some()
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
