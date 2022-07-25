@@ -33,8 +33,8 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
     $: dashboardProposerUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
-    $: adoptPercent = (100 * proposal.tally.yes) / proposal.tally.total;
-    $: rejectPercent = (100 * proposal.tally.no) / proposal.tally.total;
+    $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
+    $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
     $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
@@ -58,6 +58,9 @@
             voting = undefined;
             myVote = adopt;
         }, 2000);
+    }
+    function round2(num: number): number {
+        return Math.round((num + Number.EPSILON) * 100) / 100;
     }
 </script>
 
