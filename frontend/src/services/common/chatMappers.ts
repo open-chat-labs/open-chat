@@ -125,7 +125,11 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return fileContent(candid.File);
     }
     if ("Text" in candid) {
-        return textContent(candid.Text);
+        if (process.env.ENABLE_PROPOSAL_TESTING) {
+            return fakeProposalContentForTesting(candid.Text);
+        } else {
+            return textContent(candid.Text);
+        }
     }
     if ("Image" in candid) {
         return imageContent(candid.Image);
@@ -413,7 +417,7 @@ function audioContent(candid: ApiAudioContent): AudioContent {
     };
 }
 
-function textContent(candid: ApiTextContent): MessageContent {
+function fakeProposalContentForTesting(candid: ApiTextContent): MessageContent {
     if (candid.text === "Hi") {
         return {
             kind: "proposal_content",
@@ -481,6 +485,10 @@ For further details please see the [forum post](https://forum.dfinity.org/t/way-
         };
     }
 
+    return textContent(candid);
+}
+
+function textContent(candid: ApiTextContent): TextContent {
     return {
         kind: "text_content",
         text: candid.text,

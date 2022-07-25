@@ -5,6 +5,7 @@
         NnsProposalTopic,
         ProposalContent,
         ProposalDecisionStatus,
+        RegisterProposalVoteResponse,
         SnsProposalAction,
     } from "../../domain/chat/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
@@ -16,7 +17,8 @@
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
-    import type { VoteOnProposalResponse } from "../../domain/user/user";
+    import { toastStore } from "../../stores/toast";
+    import { rollbar } from "../../utils/logging";
 
     export let content: ProposalContent;
     export let chatId: string;
@@ -28,7 +30,6 @@
 
     let expanded = false;
     let voting: boolean | undefined = undefined;
-    let myVote: boolean | undefined = undefined;
 
     $: proposal = content.proposal;
     $: positive =
@@ -44,7 +45,7 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
+    $: votingDisabled = content.myVote !== undefined || voting !== undefined || votingEnded;
     $: typeLabel = proposal.kind === "nns" ? "topic" : "action";
     $: typeValue =
         proposal.kind === "nns"
@@ -63,48 +64,39 @@
 
         voting = adopt;
 
-        // api.voteOnProposal(
-        //     content.governanceCanisterId,
-        //     content.proposal.id,
-        //     adopt,
-        //     chatId,
-        //     messageIndex)
-        //     .then((resp) => {
-        //         // if (resp.kind !== "success") {
-        //         //     const err = groupCreationErrorMessage(resp);
-        //         //     if (err) toastStore.showFailureToast(err);
-        //         //     newGroupState = "group_form";
-        //         // } else {
-        //         //     return optionallyAddParticipants(resp.canisterId)
-        //         //         .then(() => {
-        //         //             onGroupCreated(resp.canisterId);
-        //         //         })
-        //         //         .catch((err) => {
-        //         //             rollbar.error("Unable to add participants to group", err);
-        //         //             toastStore.showFailureToast("addParticipantsFailed");
-        //         //             newGroupState = "group_form";
-        //         //         });
-        //         // }
-        //     })
-        //     .catch((err) => {
-        //         // rollbar.error("Unable to vote on proposal", err);
-        //         // toastStore.showFailureToast("groupCreationFailed");
-        //         // newGroupState = "group_form";
-        //     })
-        //     .finally(() => (voting = undefined));
-
-        setTimeout(() => {
-            voting = undefined;
-            myVote = adopt;
-        }, 2000);
+        if (process.env.ENABLE_PROPOSAL_TESTING) {
+            setTimeout(() => {
+                voting = undefined;
+                content.myVote = adopt;
+            }, 2000);
+        } else {
+            api.registerProposalVote(chatId, messageIndex, adopt)
+                .then((resp) => {
+                    if (resp === "success") {
+                        content.myVote = adopt;
+                    } else {
+                        const err = registerProposalVoteErrorMessage(resp);
+                        if (err) toastStore.showFailureToast(err);
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Unable to vote on proposal", err);
+                    toastStore.showFailureToast("proposalVoteFailed");
+                })
+                .finally(() => (voting = undefined));
+        }
     }
 
-    function voteResponseErrorMessage(resp: VoteOnProposalResponse): string | undefined {
+    function registerProposalVoteErrorMessage(
+        resp: RegisterProposalVoteResponse
+    ): string | undefined {
         if (resp === "success") return undefined;
+        if (resp === "already_voted") return "alreadyVoted";
         if (resp === "no_eligible_neurons") return "noEligibleNeurons";
         if (resp === "proposal_not_accepting_votes") return "proposalNotAceptingVotes";
         if (resp === "caller_not_in_group") return "voteFailed";
         if (resp === "proposal_not_found") return "voteFailed";
+        if (resp === "proposal_message_not_found") return "voteFailed";
         if (resp === "internal_error") return "voteFailed";
     }
 
@@ -167,15 +159,15 @@
     </div>
 </div>
 
-<div class="vote" class:voted={myVote !== undefined}>
+<div class="vote" class:voted={content.myVote !== undefined}>
     <button
         class="adopt"
         class:voting={voting === true}
         class:disabled={votingDisabled}
-        class:gray={myVote === false || votingEnded}
+        class:gray={content.myVote === false || votingEnded}
         on:click={() => onVote(true)}>
         <div class="contents">
-            <div>{myVote === true ? "You voted adopt!" : "Adopt"}</div>
+            <div>{content.myVote === true ? "You voted adopt!" : "Adopt"}</div>
             <div class="icon"><ThumbUp /></div>
         </div>
     </button>
@@ -183,10 +175,10 @@
         class="reject"
         class:voting={voting === false}
         class:disabled={votingDisabled}
-        class:gray={myVote === true || votingEnded}
+        class:gray={content.myVote === true || votingEnded}
         on:click={() => onVote(false)}>
         <div class="contents">
-            <div>{myVote === false ? "You voted reject!" : "Reject"}</div>
+            <div>{content.myVote === false ? "You voted reject!" : "Reject"}</div>
             <div class="icon"><ThumbDown /></div>
         </div>
     </button>

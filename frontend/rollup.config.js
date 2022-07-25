@@ -102,9 +102,12 @@ if (version) {
 const iiAlternativeOrigin = process.env.II_ALTERNATIVE_ORIGIN;
 if (iiAlternativeOrigin !== undefined) {
     fs.mkdirSync("build/.well-known");
-    fs.writeFileSync("build/.well-known/ii-alternative-origins", JSON.stringify({
-        alternativeOrigins: [iiAlternativeOrigin]
-    }));
+    fs.writeFileSync(
+        "build/.well-known/ii-alternative-origins",
+        JSON.stringify({
+            alternativeOrigins: [iiAlternativeOrigin],
+        })
+    );
 }
 
 export default [
@@ -187,7 +190,9 @@ export default [
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.IC_URL": maybeStringify(process.env.IC_URL),
-                "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
+                "process.env.II_DERIVATION_ORIGIN": maybeStringify(
+                    process.env.II_DERIVATION_ORIGIN
+                ),
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
                 "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
                 "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
@@ -198,6 +203,7 @@ export default [
                 "process.env.LEDGER_CANISTER_BTC": process.env.LEDGER_CANISTER_BTC,
                 "process.env.LEDGER_CANISTER_CHAT": process.env.LEDGER_CANISTER_CHAT,
                 "process.env.ENABLE_MULTI_CRYPTO": process.env.ENABLE_MULTI_CRYPTO,
+                "process.env.ENABLE_PROPOSAL_TESTING": process.env.ENABLE_PROPOSAL_TESTING,
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
@@ -301,7 +307,5 @@ export default [
 ];
 
 function maybeStringify(value) {
-    return value !== undefined
-        ? JSON.stringify(value)
-        : undefined;
+    return value !== undefined ? JSON.stringify(value) : undefined;
 }
