@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
-use utils::time::WEEK_IN_MS;
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
@@ -11,8 +10,6 @@ pub struct GroupChat {
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
     pub is_super_admin: bool,
-    #[serde(default)]
-    recent_proposal_votes: Timestamped<RecentProposalVotes>,
     #[serde(default)]
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
@@ -36,7 +33,6 @@ impl GroupChat {
             read_by_me: Timestamped::new(read_by_me, now),
             notifications_muted: Timestamped::new(notifications_muted, now),
             is_super_admin,
-            recent_proposal_votes: Timestamped::default(),
             threads_read: TimestampedMap::default(),
         }
     }
@@ -45,7 +41,6 @@ impl GroupChat {
         [
             self.read_by_me.timestamp,
             self.notifications_muted.timestamp,
-            self.recent_proposal_votes.timestamp,
             self.threads_read.last_updated().unwrap_or_default(),
         ]
         .iter()
@@ -54,16 +49,7 @@ impl GroupChat {
         .unwrap()
     }
 
-    pub fn record_proposal_vote(&mut self, message_index: MessageIndex, now: TimestampMillis) {
-        self.recent_proposal_votes.value.add(message_index, now);
-        self.recent_proposal_votes.timestamp = now;
-    }
-
-    pub fn recent_proposal_votes(&self, since: Option<TimestampMillis>, now: TimestampMillis) -> Vec<MessageIndex> {
-        self.recent_proposal_votes.get(since, now)
-    }
-
-    pub fn to_updates(&self, now: TimestampMillis, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
+    pub fn to_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
         GroupChatSummaryUpdates {
             chat_id: self.chat_id,
             last_updated: self.last_updated(),
@@ -81,7 +67,6 @@ impl GroupChat {
             wasm_version: None,
             owner_id: None,
             permissions: None,
-            recent_proposal_votes: self.recent_proposal_votes.get(None, now),
             affected_events: Vec::new(),
             metrics: None,
             my_metrics: None,
@@ -98,27 +83,5 @@ impl GroupChat {
                 })
                 .collect(),
         }
-    }
-}
-
-#[derive(Serialize, Deserialize, Default)]
-struct RecentProposalVotes(Vec<(MessageIndex, TimestampMillis)>);
-
-impl RecentProposalVotes {
-    pub fn add(&mut self, message_index: MessageIndex, now: TimestampMillis) {
-        self.0.retain(|(_, t)| !Self::is_expired(*t, now));
-        self.0.push((message_index, now));
-    }
-
-    pub fn get(&self, since: Option<TimestampMillis>, now: TimestampMillis) -> Vec<MessageIndex> {
-        self.0
-            .iter()
-            .filter(|(_, t)| !Self::is_expired(*t, now) && since.map_or(true, |s| *t > s))
-            .map(|(m, _)| *m)
-            .collect()
-    }
-
-    fn is_expired(vote_timestamp: TimestampMillis, now: TimestampMillis) -> bool {
-        now.saturating_sub(vote_timestamp) > WEEK_IN_MS
     }
 }

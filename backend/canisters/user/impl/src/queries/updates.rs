@@ -101,7 +101,6 @@ fn finalize(
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
             summary.notifications_muted = group_chat.notifications_muted.value;
             summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
-            summary.recent_proposal_votes = group_chat.recent_proposal_votes(None, now);
 
             for thread in summary.latest_threads.iter_mut() {
                 thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -120,13 +119,12 @@ fn finalize(
                     } else {
                         None
                     };
-                    su.recent_proposal_votes = group_chat.recent_proposal_votes(Some(updates_since), now);
 
                     for thread in su.latest_threads.iter_mut() {
                         thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
                     }
                 })
-                .or_insert_with(|| group_chat.to_updates(now, updates_since));
+                .or_insert_with(|| group_chat.to_updates(updates_since));
         }
     }
 
