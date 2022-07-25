@@ -109,8 +109,8 @@
         <div class="reject" style="width: {rejectPercent}%" />
         <div class="vertical-line" style="left: 3%" />
         <div class="vertical-line" style="left: 50%" />
-        <div class="icon" style="left: calc(3% - 0.49em)"><ChevronDown /></div>
-        <div class="icon" style="left: calc(50% - 0.56em)"><MenuDown size="1.2em" /></div>
+        <div class="icon" style="left: calc(3% - 0.5em)"><ChevronDown viewBox="-1 0 24 24" /></div>
+        <div class="icon" style="left: calc(50% - 0.6em)"><MenuDown size="1.2em" /></div>
     </div>
 </div>
 
