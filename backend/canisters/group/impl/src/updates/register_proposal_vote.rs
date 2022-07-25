@@ -8,7 +8,7 @@ use types::{CanisterId, MessageContentInternal, ProposalId, UserId};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_register_proposal_vote(args: Args) -> Response {
+async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
 
     let PrepareResult {
