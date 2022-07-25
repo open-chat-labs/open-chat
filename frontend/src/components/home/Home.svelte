@@ -138,10 +138,6 @@
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
-    $: {
-        console.log("Thread component: ", threadComponent?.messageId());
-    }
-
     /** SHOW LEFT
      * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
      * ==========================================================

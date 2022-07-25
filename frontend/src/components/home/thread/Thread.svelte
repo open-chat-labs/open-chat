@@ -277,10 +277,6 @@
         );
     }
 
-    export function messageId(): bigint {
-        return rootEvent.event.messageId;
-    }
-
     export function handleWebRtcMessage(msg: WebRtcMessage): void {
         const chatId = filterWebRtcMessage(msg);
         if (chatId === undefined) return;
