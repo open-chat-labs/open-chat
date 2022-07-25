@@ -15,8 +15,10 @@
     import { getContext } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { ThreadPreview, EventWrapper, Message } from "../../../domain/chat/chat";
-    import { userIdsFromEvents } from "domain/chat/chat.utils";
-    import { missingUserIds } from "domain/user/user.utils";
+    import { userIdsFromEvents } from "../../../domain/chat/chat.utils";
+    import { missingUserIds } from "../../../domain/user/user.utils";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
 
     const api = getContext<ServiceContainer>(apiKey);
 
@@ -53,11 +55,13 @@
             .then((t) => {
                 threads = t;
                 updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
-            })
-            .finally(() => {
-                loading = false;
                 initialised = true;
-            });
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("thread.previewFailure");
+                rollbar.error("Unable to load thread previews: ", err);
+            })
+            .finally(() => (loading = false));
     }
 </script>
 
