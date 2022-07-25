@@ -305,6 +305,24 @@ type UnpinMessageResponse =
         MessageNotFound;
     };
 
+type RegisterProposalVoteArgs =
+    record {
+        message_index: MessageIndex;
+        adopt: bool;
+    };
+
+type RegisterProposalVoteResponse =
+    variant {
+        Success;
+        AlreadyVoted: bool;
+        CallerNotInGroup;
+        NoEligibleNeurons;
+        ProposalMessageNotFound;
+        ProposalNotFound;
+        ProposalNotAcceptingVotes;
+        InternalError: text;
+    };
+
 type DeleteGroupArgs =
     record {
     };
@@ -515,6 +533,7 @@ service: {
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
+    register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;

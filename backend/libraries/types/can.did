@@ -245,7 +245,6 @@ type GroupChatSummary =
         wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
-        recent_proposal_votes: vec MessageIndex;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
         latest_threads: vec ThreadSyncDetails;
@@ -269,7 +268,6 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
-        recent_proposal_votes: vec MessageIndex;
         affected_events: vec EventIndex;
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
@@ -616,6 +614,7 @@ type ProposalContent =
     record {
         governance_canister_id: CanisterId;
         proposal: Proposal;
+        my_vote: opt bool;
     };
 
 type Proposal =

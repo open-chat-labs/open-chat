@@ -36,7 +36,6 @@ fn main() {
     generate_candid_method!(user, unblock_user, update);
     generate_candid_method!(user, unmute_notifications, update);
     generate_candid_method!(user, unpin_chat, update);
-    generate_candid_method!(user, vote_on_proposal, update);
     generate_candid_method!(user, withdraw_crypto, update);
 
     candid::export_service!();

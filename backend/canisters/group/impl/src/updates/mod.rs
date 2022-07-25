@@ -24,6 +24,7 @@ mod enable_invite_code;
 mod make_private;
 mod pin_message;
 mod register_poll_vote;
+mod register_proposal_vote;
 mod remove_participant;
 mod send_message;
 mod toggle_reaction;

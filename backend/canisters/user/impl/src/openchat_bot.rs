@@ -2,11 +2,7 @@ use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use std::fmt::Write;
-use types::{
-    CanisterId, MessageContent, MessageId, NeuronId, PhoneNumberConfirmed, ProposalId, ReferredUserRegistered, StorageUpgraded,
-    TextContent, UserId,
-};
+use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -93,63 +89,6 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     let user_id = event.user_id;
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
-
-    send_text_message(text, runtime_state);
-}
-
-pub(crate) fn send_voted_on_proposal_message(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-    adopt: bool,
-    voted: &[NeuronId],
-    unable_to_vote: &[(NeuronId, String)],
-    errors: &[(NeuronId, String)],
-    runtime_state: &mut RuntimeState,
-) {
-    let mut text = String::new();
-    if !voted.is_empty() {
-        writeln!(&mut text, "Vote recorded.").unwrap();
-    } else {
-        writeln!(&mut text, "Failed to record vote").unwrap();
-    }
-    writeln!(&mut text).unwrap();
-    writeln!(&mut text, "Governance canister Id: {governance_canister_id}").unwrap();
-    writeln!(&mut text, "Proposal Id: {proposal_id}").unwrap();
-    writeln!(&mut text, "Adopt: {}", if adopt { "Yes" } else { "No" }).unwrap();
-    writeln!(&mut text).unwrap();
-    if voted.is_empty() && unable_to_vote.is_empty() && errors.is_empty() {
-        writeln!(&mut text).unwrap();
-        writeln!(&mut text, "No linked neurons found").unwrap();
-        writeln!(&mut text, "In order to vote on proposals from within OpenChat, you must first add your OpenChat UserId as a hotkey to any neurons you wish to vote with").unwrap();
-        writeln!(&mut text, "Your OpenChat UserId is {}", runtime_state.env.canister_id()).unwrap();
-    } else {
-        if !voted.is_empty() {
-            writeln!(&mut text, "The following neurons voted:").unwrap();
-            for n in voted {
-                writeln!(&mut text, "{n}").unwrap();
-            }
-        }
-
-        if !unable_to_vote.is_empty() {
-            writeln!(&mut text).unwrap();
-            writeln!(&mut text, "The following neurons were unable to vote:").unwrap();
-            for (n, e) in unable_to_vote {
-                writeln!(&mut text, "{n} - {e}").unwrap();
-            }
-        }
-
-        if !errors.is_empty() {
-            writeln!(&mut text).unwrap();
-            writeln!(
-                &mut text,
-                "An error occurred while trying to vote with the following neurons:"
-            )
-            .unwrap();
-            for (n, e) in errors {
-                writeln!(&mut text, "{n} - {e}").unwrap();
-            }
-        }
-    }
 
     send_text_message(text, runtime_state);
 }

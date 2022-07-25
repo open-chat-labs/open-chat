@@ -5,7 +5,7 @@ use itertools::Itertools;
 use search::*;
 use serde::{de, Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::hash_map::Entry::Vacant;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds, RangeInclusive};
@@ -308,6 +308,31 @@ impl AllChatEvents {
 
         for message_index in overdue_polls {
             self.end_poll(None, message_index, now);
+        }
+    }
+
+    pub fn record_proposal_vote(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        adopt: bool,
+    ) -> RecordProposalVoteResult {
+        if let Some(proposal) = self
+            .main
+            .get_event_index_by_message_index(message_index)
+            .and_then(|e| self.main.events.get_mut(e))
+            .and_then(|e| e.event.as_message_mut())
+            .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &mut m.content { Some(p) } else { None })
+        {
+            match proposal.votes.entry(user_id) {
+                Vacant(e) => {
+                    e.insert(adopt);
+                    RecordProposalVoteResult::Success
+                }
+                Occupied(e) => RecordProposalVoteResult::AlreadyVoted(*e.get()),
+            }
+        } else {
+            RecordProposalVoteResult::ProposalNotFound
         }
     }
 
@@ -759,6 +784,12 @@ pub enum EndPollResult {
     Success,
     PollNotFound,
     UnableToEndPoll,
+}
+
+pub enum RecordProposalVoteResult {
+    Success,
+    AlreadyVoted(bool),
+    ProposalNotFound,
 }
 
 pub enum ToggleReactionResult {
