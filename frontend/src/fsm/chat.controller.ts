@@ -483,6 +483,8 @@ export class ChatController {
                 messageEvent: serialiseMessageForRtc(messageEvent),
                 userId: this.user.userId,
             });
+            this.stopTyping();
+
             // mark our own messages as read manually since we will not be observing them
             messagesRead.markMessageRead(
                 this.chatId,

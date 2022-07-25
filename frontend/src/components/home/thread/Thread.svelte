@@ -401,6 +401,7 @@
                 userId: currentUser.userId,
                 threadRootMessageIndex,
             });
+            stopTyping();
         }
     }
 
