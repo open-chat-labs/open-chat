@@ -50,6 +50,7 @@
         proposal.kind === "nns"
             ? NnsProposalTopic[proposal.topic]
             : SnsProposalAction[proposal.action];
+    $: rtl = $rtlStore ? "right" : "left";
 
     function toggleSummary() {
         expanded = !expanded;
@@ -132,7 +133,7 @@
     </div>
 {/if}
 
-<div class="votes">
+<div class="votes" class:rtl={$rtlStore}>
     <div class="data">
         <div class="yes">
             <span class="label">Yes</span>
@@ -155,14 +156,18 @@
     <div class="progress">
         <div class="adopt" style="width: {adoptPercent}%" />
         <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="left: 3%" />
-        <div class="vertical-line" style="left: 50%" />
-        <div class="icon" style="left: calc(3% - 0.5em)"><ChevronDown viewBox="-1 0 24 24" /></div>
-        <div class="icon" style="left: calc(50% - 0.6em)"><MenuDown size="1.2em" /></div>
+        <div class="vertical-line" style="{rtl}: 3%" />
+        <div class="vertical-line" style="{rtl}: 50%" />
+        <div class="icon" style="{rtl}: calc(3% - 0.5em)">
+            <ChevronDown viewBox="-1 0 24 24" />
+        </div>
+        <div class="icon" style="{rtl}: calc(50% - 0.6em)">
+            <MenuDown size="1.2em" />
+        </div>
     </div>
 </div>
 
-<div class="vote">
+<div class="vote" class:voted={myVote !== undefined}>
     <button
         class="adopt"
         class:voting={voting === true}
@@ -187,7 +192,7 @@
     </button>
 </div>
 
-<div class="more">
+<div class="more" class:rtl={$rtlStore}>
     {#if proposal.url.length > 0}
         <a href={proposal.url} target="_blank">additional content</a>&nbsp;|&nbsp;{/if}<a
         href={dashboardProposalUrl}
@@ -352,14 +357,44 @@
                 filter: brightness(1.5);
             }
         }
+
+        &.rtl {
+            .progress {
+                .adopt {
+                    left: auto;
+                    right: 0;
+                }
+
+                .reject {
+                    right: auto;
+                    left: 0;
+                }
+            }
+        }
     }
 
     .vote {
         margin: $sp4 0 $sp3 0;
         display: flex;
         gap: $sp4;
-        align-items: center;
         justify-content: space-between;
+
+        @include size-below(xs) {
+            &.voted {
+                flex-direction: column;
+                align-items: stretch;
+                gap: $sp3;
+            }
+        }
+        @include size-below(xxs) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: $sp3;
+        }
+
+        &.voted button {
+            flex: auto;
+        }
 
         button {
             @include font-size(fs-120);
@@ -383,14 +418,28 @@
             &.adopt {
                 background-color: var(--vote-yes);
                 .icon {
+                    height: 1em;
                     top: 0.0625em;
+                    @include size-below(sm) {
+                        top: 0;
+                    }
+                    @include size-below(xs) {
+                        top: -0.0625em;
+                    }
                 }
             }
 
             &.reject {
                 background-color: var(--vote-no);
                 .icon {
+                    height: 1em;
                     top: 0.25em;
+                    @include size-below(sm) {
+                        top: 0.2em;
+                    }
+                    @include size-below(xs) {
+                        top: 0.1em;
+                    }
                 }
             }
 
@@ -426,5 +475,8 @@
         margin-top: $sp2;
         @include font-size(fs-70);
         float: left;
+        &.rtl {
+            float: right;
+        }
     }
 </style>

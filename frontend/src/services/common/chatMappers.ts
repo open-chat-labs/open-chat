@@ -475,7 +475,7 @@ For further details please see the [forum post](https://forum.dfinity.org/t/way-
                 rewardStatus: ProposalRewardStatus.AcceptVotes,
                 lastUpdated: 1658394134000,
                 created: 1658094134000,
-                deadline: 1658594134000,
+                deadline: 1658894134000,
             },
         };
     }
