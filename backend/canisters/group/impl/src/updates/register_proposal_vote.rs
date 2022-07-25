@@ -88,7 +88,10 @@ fn commit(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Resp
     {
         RecordProposalVoteResult::Success => {
             let now = runtime_state.env.now();
-            participant.proposal_votes.entry(now).or_default().insert(args.message_index);
+            let votes = participant.proposal_votes.entry(now).or_default();
+            if !votes.contains(&args.message_index) {
+                votes.push(args.message_index);
+            }
             handle_activity_notification(runtime_state);
             Success
         }

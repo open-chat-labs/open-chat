@@ -378,7 +378,7 @@ pub struct ParticipantInternal {
     #[serde(default)]
     pub threads: HashSet<MessageIndex>,
     #[serde(default)]
-    pub proposal_votes: BTreeMap<TimestampMillis, HashSet<MessageIndex>>,
+    pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
