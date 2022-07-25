@@ -1,6 +1,6 @@
 use crate::governance_clients::nns;
 use crate::governance_clients::nns::GetBallotsResult;
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_known_group_canister;
 use crate::run_regular_jobs;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -8,7 +8,7 @@ use ic_cdk::api::call::CallResult;
 use types::{CanisterId, NeuronId, ProposalId};
 use user_canister::c2c_vote_on_proposal::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_owner")]
+#[update_msgpack(guard = "caller_is_known_group_canister")]
 #[trace]
 async fn c2c_vote_on_proposal(args: Args) -> Response {
     run_regular_jobs();
