@@ -4,13 +4,13 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::Hash;
 use types::TimestampMillis;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct TimestampedMap<K: Hash + Eq, V> {
     map: HashMap<K, ValueLastUpdated<V>>,
     by_last_updated: BTreeMap<TimestampMillis, HashSet<K>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ValueLastUpdated<V> {
     pub value: V,
     pub last_updated: TimestampMillis,

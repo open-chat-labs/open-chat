@@ -19,6 +19,7 @@ pub mod c2c_revoke_super_admin;
 pub mod c2c_send_message;
 pub mod c2c_toggle_reaction;
 pub mod c2c_try_add_to_group;
+pub mod c2c_vote_on_proposal;
 pub mod create_group;
 pub mod delete_group;
 pub mod delete_messages;
@@ -37,7 +38,6 @@ pub mod toggle_reaction;
 pub mod transfer_crypto_within_group;
 pub mod unblock_user;
 pub mod unpin_chat;
-pub mod vote_on_proposal;
 pub mod wallet_receive;
 pub mod withdraw_crypto;
 
