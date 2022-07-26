@@ -2,6 +2,7 @@ use candid::CandidType;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
+use tracing::info;
 use types::{CanisterId, Version};
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -35,17 +36,17 @@ impl CanistersRequiringUpgrade {
     }
 
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
-        self.in_progress.remove(canister_id);
+        self.mark_upgrade_no_longer_in_progress(canister_id);
         self.completed += 1;
     }
 
     pub fn mark_failure(&mut self, failed_upgrade: FailedUpgrade) {
-        self.in_progress.remove(&failed_upgrade.canister_id);
+        self.mark_upgrade_no_longer_in_progress(&failed_upgrade.canister_id);
         self.failed.push_back(failed_upgrade);
     }
 
     pub fn mark_skipped(&mut self, canister_id: &CanisterId) {
-        self.in_progress.remove(canister_id);
+        self.mark_upgrade_no_longer_in_progress(canister_id);
     }
 
     pub fn is_in_progress(&self, canister_id: &CanisterId) -> bool {
@@ -76,6 +77,12 @@ impl CanistersRequiringUpgrade {
             in_progress: self.in_progress.len(),
             failed,
             completed: self.completed,
+        }
+    }
+
+    fn mark_upgrade_no_longer_in_progress(&mut self, canister_id: &CanisterId) {
+        if self.in_progress.remove(canister_id) && self.pending.is_empty() && self.in_progress.is_empty() {
+            info!("Canister upgrade queue is now empty");
         }
     }
 }
