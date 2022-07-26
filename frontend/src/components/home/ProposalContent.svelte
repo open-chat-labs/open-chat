@@ -34,7 +34,7 @@
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
     let expanded = false;
-    let voting: boolean | undefined = undefined;
+    let voting: "idle" | "adopting" | "rejecting" = "idle";
     let showNeuronInfo = false;
 
     $: myVote = content.myVote;
@@ -52,7 +52,7 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
+    $: votingDisabled = myVote !== undefined || voting !== "idle" || votingEnded;
     $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
@@ -70,11 +70,11 @@
             return;
         }
 
-        voting = adopt;
+        voting = adopt ? "adopting" : "rejecting";
 
         if (process.env.ENABLE_PROPOSAL_TESTING) {
             setTimeout(() => {
-                voting = undefined;
+                voting = "idle";
                 myVote = adopt;
             }, 2000);
         } else {
@@ -93,7 +93,7 @@
                     rollbar.error("Unable to vote on proposal", err);
                     toastStore.showFailureToast("proposal.voteFailed");
                 })
-                .finally(() => (voting = undefined));
+                .finally(() => (voting = "idle"));
         }
     }
 
@@ -174,7 +174,7 @@
 <div class="vote" class:voted={myVote !== undefined}>
     <button
         class="adopt"
-        class:voting={voting === true}
+        class:voting={voting === "adopting"}
         class:disabled={votingDisabled}
         class:gray={myVote === false || votingEnded}
         on:click={() => onVote(true)}>
@@ -185,7 +185,7 @@
     </button>
     <button
         class="reject"
-        class:voting={voting === false}
+        class:voting={voting === "rejecting"}
         class:disabled={votingDisabled}
         class:gray={myVote === true || votingEnded}
         on:click={() => onVote(false)}>
