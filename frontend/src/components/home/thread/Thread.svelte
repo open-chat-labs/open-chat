@@ -175,7 +175,7 @@
             if (clearEvents) {
                 events.set([]);
             }
-            const updated = await handleEventsResponse($events, eventsResponse);
+            const [updated, userIds] = await handleEventsResponse($events, eventsResponse);
             events.set(
                 dedupe(
                     (a, b) => a.index === b.index,
@@ -191,13 +191,16 @@
                     goToMessageIndex(focusMessageIndex);
                 }
             });
-            const lastLoadedMessageIdx = lastMessageIndex($events);
-            if (lastLoadedMessageIdx !== undefined) {
-                messagesRead.markThreadRead(
-                    $chat.chatId,
-                    threadRootMessageIndex,
-                    lastLoadedMessageIdx
-                );
+
+            if (userIds.has(currentUser.userId)) {
+                const lastLoadedMessageIdx = lastMessageIndex($events);
+                if (lastLoadedMessageIdx !== undefined) {
+                    messagesRead.markThreadRead(
+                        $chat.chatId,
+                        threadRootMessageIndex,
+                        lastLoadedMessageIdx
+                    );
+                }
             }
         }
 
@@ -222,8 +225,8 @@
     async function handleEventsResponse(
         events: EventWrapper<ChatEvent>[],
         resp: EventsResponse<ChatEvent>
-    ): Promise<EventWrapper<ChatEvent>[]> {
-        if (resp === "events_failed") return [];
+    ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
+        if (resp === "events_failed") return [[], new Set()];
 
         const updated = replaceAffected(
             replaceLocal(
@@ -240,7 +243,7 @@
         const userIds = userIdsFromEvents(updated);
         await controller.updateUserStore(userIds);
 
-        return updated;
+        return [updated, userIds];
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
