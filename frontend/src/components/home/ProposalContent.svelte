@@ -101,10 +101,7 @@
     ): string | undefined {
         if (resp === "already_voted") return "alreadyVoted";
         if (resp === "proposal_not_accepting_votes") return "proposalNotAceptingVotes";
-        if (resp === "caller_not_in_group") return "voteFailed";
-        if (resp === "proposal_not_found") return "voteFailed";
-        if (resp === "proposal_message_not_found") return "voteFailed";
-        if (resp === "internal_error") return "voteFailed";
+        return "voteFailed";
     }
 
     function round2(num: number): number {
