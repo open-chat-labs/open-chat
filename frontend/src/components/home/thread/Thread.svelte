@@ -570,7 +570,7 @@
         );
 
         api.registerPollVote(
-            $chat,
+            $chat.chatId,
             ev.detail.messageIndex,
             ev.detail.answerIndex,
             ev.detail.type,

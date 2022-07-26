@@ -19,7 +19,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
-    RegisterPollVoteResponse,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
     ChatEvent,
@@ -497,22 +496,6 @@ export class CachingUserClient implements IUserClient {
 
     setBio(bio: string): Promise<SetBioResponse> {
         return this.client.setBio(bio);
-    }
-
-    registerPollVote(
-        otherUser: string,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(
-            otherUser,
-            messageIdx,
-            answerIdx,
-            voteType,
-            threadRootMessageIndex
-        );
     }
 
     withdrawCryptocurrency(

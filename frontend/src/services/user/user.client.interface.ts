@@ -19,7 +19,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
-    RegisterPollVoteResponse,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
     CurrentChatState,
@@ -119,13 +118,6 @@ export interface IUserClient {
     getBio(): Promise<string>;
     getPublicProfile(): Promise<PublicProfile>;
     setBio(bio: string): Promise<SetBioResponse>;
-    registerPollVote(
-        otherUser: string,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse>;
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse>;

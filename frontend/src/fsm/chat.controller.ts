@@ -222,7 +222,7 @@ export class ChatController {
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
         this.findAndUpdatePollContent(messageIndex, answerIndex, type);
         this.api
-            .registerPollVote(this.chatVal, messageIndex, answerIndex, type)
+            .registerPollVote(this.chatVal.chatId, messageIndex, answerIndex, type)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
