@@ -37,7 +37,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "unpin_message" => role.can_pin_messages(permissions),
             "update_group" => role.can_update_group(permissions),
             "update_permissions" => role.can_change_permissions(permissions),
-            "delete_messages" | "edit_message" | "put_chunk" | "register_poll_vote" => true,
+            "delete_messages" | "edit_message" | "put_chunk" | "register_poll_vote" | "register_proposal_vote" => true,
             _ => false,
         };
 
