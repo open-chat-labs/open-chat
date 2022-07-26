@@ -58,7 +58,7 @@
     $: isGroup = $selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
-    $: pollsAllowed = !isBot && canCreatePolls($selectedChatSummary);
+    $: pollsAllowed = isGroup && !isBot && canCreatePolls($selectedChatSummary);
 
     function clearSelection() {
         dispatch("clearSelection");
