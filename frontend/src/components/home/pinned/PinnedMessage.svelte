@@ -91,7 +91,9 @@
             pinned={true}
             {senderId}
             {fill}
+            {chatId}
             edited={msg.edited}
+            messageIndex={msg.messageIndex}
             messageId={msg.messageId}
             first={true}
             groupChat={true}

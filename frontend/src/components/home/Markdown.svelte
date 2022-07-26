@@ -11,6 +11,7 @@
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
+    export let isInline: boolean = true;
 
     $: parsed = replaceUserIds(text);
     $: options = {
@@ -36,7 +37,7 @@
             renderers={{
                 link: FakeMarkdownLink,
             }}
-            isInline={true}
+            {isInline}
             source={parsed}
             {options} />
     {:else}
@@ -44,7 +45,7 @@
             renderers={{
                 link: MarkdownLink,
             }}
-            isInline={true}
+            {isInline}
             source={parsed}
             {options} />
     {/if}

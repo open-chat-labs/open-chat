@@ -3,14 +3,7 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type {
-    NeuronId,
-    ProposalDecisionStatus,
-    ProposalId,
-    ProposalRewardStatus,
-    Tally,
-    TimestampMillis
-} from "services/user/candid/types";
+import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -150,30 +143,83 @@ export interface ProposalContent {
     kind: "proposal_content";
     governanceCanisterId: string;
     proposal: Proposal;
+    myVote?: boolean;
 }
 
 export type Proposal = NnsProposal | SnsProposal;
 
 export interface ProposalCommon {
-    id: ProposalId,
-    url: string,
-    status: ProposalDecisionStatus,
-    tally: Tally,
-    title: string,
-    lastUpdated: TimestampMillis,
-    rewardStatus: ProposalRewardStatus,
-    summary: string,
-    proposer: NeuronId,
+    id: bigint;
+    url: string;
+    status: ProposalDecisionStatus;
+    tally: Tally;
+    title: string;
+    created: number;
+    deadline: number;
+    lastUpdated: number;
+    rewardStatus: ProposalRewardStatus;
+    summary: string;
+    proposer: NeuronId;
+}
+
+export interface Tally {
+    yes: number;
+    no: number;
+    total: number;
 }
 
 export interface NnsProposal extends ProposalCommon {
-    kind: "nns",
-    topic: number,
+    kind: "nns";
+    topic: NnsProposalTopic;
+}
+
+export enum ProposalDecisionStatus {
+    Unspecified,
+    Failed,
+    Open,
+    Rejected,
+    Executed,
+    Adopted,
+}
+
+export enum ProposalRewardStatus {
+    Unspecified,
+    AcceptVotes,
+    ReadyToSettle,
+    Settled,
+}
+
+export enum NnsProposalTopic {
+    Unspecified,
+    NeuronManagement,
+    ExchangeRate,
+    NetworkEconomics,
+    Governance,
+    NodeAdmin,
+    ParticipantManagement,
+    SubnetManagement,
+    NetworkCanisterManagement,
+    KYC,
+    NodeProviderRewards,
+    SnsDecentralizationSale,
+}
+
+export enum SnsProposalAction {
+    Unspecified = 0,
+    Motion = 1,
+    SetParameters = 2,
+    UpgradeCanister = 3,
+    AddCustom = 4,
+    RemoveCustom = 5,
+    TransferTokens = 1000,
+    BurnChat = 1001,
+    TopupCycles = 1002,
+    SwapTokens = 1003,
 }
 
 export interface SnsProposal extends ProposalCommon {
-    kind: "sns",
-    action: bigint,
+    kind: "sns";
+    action: SnsProposalAction;
 }
 
 export interface ImageContent extends DataContent {
@@ -496,7 +542,7 @@ export type ProposalsUpdated = {
     proposals: {
         messageIndex: number;
         eventIndex: number;
-    }[]
+    }[];
 };
 
 export type PermissionsChanged = {
@@ -1163,3 +1209,13 @@ export type ChatMetrics = {
     polls: number;
     reactions: number;
 };
+
+export type RegisterProposalVoteResponse =
+    | "success"
+    | "already_voted"
+    | "caller_not_in_group"
+    | "no_eligible_neurons"
+    | "proposal_message_not_found"
+    | "proposal_not_found"
+    | "proposal_not_accepting_votes"
+    | "internal_error";

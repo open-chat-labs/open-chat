@@ -279,6 +279,17 @@ export interface Theme {
             bg: string;
         };
     };
+
+    vote: {
+        yes: {
+            color: string;
+            hv: string;
+        };
+        no: {
+            color: string;
+            hv: string;
+        };
+    };
 }
 
 export type Themes = {

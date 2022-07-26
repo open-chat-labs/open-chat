@@ -29,6 +29,7 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import type { ServiceRetryInterrupt } from "services/candidService";
@@ -96,4 +97,5 @@ export interface IGroupClient {
     disableInviteCode(): Promise<DisableInviteCodeResponse>;
     resetInviteCode(): Promise<ResetInviteCodeResponse>;
     threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse>;
+    registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
 }
