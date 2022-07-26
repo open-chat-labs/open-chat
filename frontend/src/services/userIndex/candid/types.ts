@@ -377,7 +377,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
-  { 'EndDateInThePast' : null };
+  { 'EndDateInThePast' : null } |
+  { 'PollsNotValidForDirectChats' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,

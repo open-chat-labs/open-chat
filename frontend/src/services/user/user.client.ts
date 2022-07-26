@@ -27,7 +27,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
-    RegisterPollVoteResponse,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
@@ -72,7 +71,6 @@ import {
     apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
-    registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
@@ -575,26 +573,6 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     setBio(bio: string): Promise<SetBioResponse> {
         return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
-    }
-
-    @profile("userClient")
-    registerPollVote(
-        otherUser: string,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse> {
-        return this.handleResponse(
-            this.userService.register_poll_vote({
-                user_id: Principal.fromText(otherUser),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                poll_option: answerIdx,
-                operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
-                message_index: messageIdx,
-            }),
-            registerPollVoteResponse
-        );
     }
 
     @profile("userClient")

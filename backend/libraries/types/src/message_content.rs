@@ -56,7 +56,12 @@ pub enum ContentValidationError {
 impl MessageContent {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
-    pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
+    pub fn validate_for_new_message(
+        &self,
+        is_direct_chat: bool,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
                 MessageContent::Poll(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {
@@ -68,7 +73,7 @@ impl MessageContent {
 
         match self {
             MessageContent::Poll(p) => {
-                if let Err(reason) = p.config.validate(now) {
+                if let Err(reason) = p.config.validate(is_direct_chat, now) {
                     return Err(InvalidPoll(reason));
                 }
             }

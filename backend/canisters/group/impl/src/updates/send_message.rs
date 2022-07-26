@@ -24,7 +24,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
 
-        if let Err(error) = args.content.validate_for_new_message(args.forwarding, now) {
+        if let Err(error) = args.content.validate_for_new_message(false, args.forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),

@@ -20,9 +20,11 @@ pub struct PollVotes {
 }
 
 impl PollConfig {
-    pub fn validate(&self, now: TimestampMillis) -> Result<(), InvalidPollReason> {
+    pub fn validate(&self, is_direct_chat: bool, now: TimestampMillis) -> Result<(), InvalidPollReason> {
         let options = self.options.len();
-        if options < MIN_POLL_OPTIONS {
+        if is_direct_chat {
+            Err(InvalidPollReason::PollsNotValidForDirectChats)
+        } else if options < MIN_POLL_OPTIONS {
             Err(InvalidPollReason::TooFewOptions(MIN_POLL_OPTIONS as u32))
         } else if options > MAX_POLL_OPTIONS {
             Err(InvalidPollReason::TooManyOptions(MAX_POLL_OPTIONS as u32))
@@ -67,4 +69,5 @@ pub enum InvalidPollReason {
     OptionTooLong(u32),
     DuplicateOptions,
     EndDateInThePast,
+    PollsNotValidForDirectChats,
 }

@@ -26,7 +26,6 @@ fn main() {
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat, update);
-    generate_candid_method!(user, register_poll_vote, update);
     generate_candid_method!(user, relinquish_group_super_admin, update);
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);

@@ -672,6 +672,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyOptions' : IDL.Nat32,
     'OptionTooLong' : IDL.Nat32,
     'EndDateInThePast' : IDL.Null,
+    'PollsNotValidForDirectChats' : IDL.Null,
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,

@@ -436,6 +436,7 @@ type InvalidPollReason =
         OptionTooLong: nat32;
         DuplicateOptions;
         EndDateInThePast;
+        PollsNotValidForDirectChats;
     };
 
 type MessageContent =

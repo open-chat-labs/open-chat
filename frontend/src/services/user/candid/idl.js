@@ -699,24 +699,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : RecommendedGroupsSuccessResult,
     'InternalError' : IDL.Text,
   });
-  const VoteOperation = IDL.Variant({
-    'RegisterVote' : IDL.Null,
-    'DeleteVote' : IDL.Null,
-  });
-  const RegisterPollVoteArgs = IDL.Record({
-    'user_id' : UserId,
-    'poll_option' : IDL.Nat32,
-    'operation' : VoteOperation,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'message_index' : MessageIndex,
-  });
-  const RegisterPollVoteResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'PollEnded' : IDL.Null,
-    'Success' : PollVotes,
-    'OptionIndexOutOfRange' : IDL.Null,
-    'PollNotFound' : IDL.Null,
-  });
   const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -771,6 +753,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyOptions' : IDL.Nat32,
     'OptionTooLong' : IDL.Nat32,
     'EndDateInThePast' : IDL.Null,
+    'PollsNotValidForDirectChats' : IDL.Null,
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
@@ -1009,11 +992,6 @@ export const idlFactory = ({ IDL }) => {
         [RecommendedGroupsArgs],
         [RecommendedGroupsResponse],
         ['query'],
-      ),
-    'register_poll_vote' : IDL.Func(
-        [RegisterPollVoteArgs],
-        [RegisterPollVoteResponse],
-        [],
       ),
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],

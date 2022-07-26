@@ -62,7 +62,6 @@ import type {
     ApiPollVotes,
     ApiTotalPollVotes,
     ApiPollConfig,
-    ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
     ApiGiphyContent,
@@ -72,7 +71,6 @@ import type {
     ApiProposalContent,
     ApiProposal,
 } from "../user/candid/idl";
-import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
 import {
@@ -783,28 +781,4 @@ export function publicSummaryResponse(
     if ("Success" in candid) {
         return publicGroupSummary(candid.Success.summary);
     }
-}
-
-export function registerPollVoteResponse(
-    candid: ApiRegisterUserPollVoteResponse | ApiRegisterGroupPollVoteResponse
-): RegisterPollVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("PollEnded" in candid) {
-        return "poll_ended";
-    }
-    if ("OptionIndexOutOfRange" in candid) {
-        return "out_of_range";
-    }
-    if ("PollNotFound" in candid) {
-        return "poll_not_found";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
