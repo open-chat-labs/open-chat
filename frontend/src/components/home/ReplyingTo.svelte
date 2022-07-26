@@ -16,6 +16,7 @@
     export let user: UserSummary;
     export let preview: boolean;
     export let groupChat: boolean;
+    export let chatId: string;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -42,10 +43,12 @@
     <ChatMessageContent
         {preview}
         {groupChat}
+        {chatId}
         fill={false}
         first={true}
         {me}
         messageId={replyingTo.messageId}
+        messageIndex={replyingTo.messageIndex}
         senderId={replyingTo.senderId}
         truncate={true}
         edited={replyingTo.edited}

@@ -555,5 +555,25 @@
         "unpinFailed": "Failed to unpin chat - please try later",
         "menuItem": "Pin chat",
         "unpinMenuItem": "Unpin chat"
-    }
+    },
+    "proposal": {
+        "voteFailed": "Failed to cast vote - please try later",
+        "alreadyVoted": "You have already voted - try reloading the page",
+        "noEligibleNeurons": "No eligible neurons found",
+        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. Your OpenChat user id is:",
+        "proposalNotAceptingVotes": "This proposal is not accepting votes - try reloading the page",
+        "proposedBy": "proposed by",
+        "topic": "topic",
+        "action": "action",
+        "votingPeriodRemaining": "Voting period remaining",
+        "votingPeriodEnded": "Voting period ended",
+        "adopt": "Adopt",
+        "reject": "Reject",
+        "youVotedAdopt": "You voted adopt!",
+        "youVotedReject": "You voted reject!",
+        "additionalContent": "addtional content",
+        "viewOnDashboard": "view on dashboard"
+    },
+    "yes": "Yes",
+    "no": "No"
 }

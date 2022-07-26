@@ -71,6 +71,7 @@ import type {
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
+    RegisterProposalVoteResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -1051,6 +1052,14 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.unpinChat(chatId);
     }
 
+    registerProposalVote(
+        chatId: string,
+        messageIndex: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.getGroupClient(chatId).registerProposalVote(messageIndex, adopt);
+    }
+
     async threadPreviews(
         threadsByChat: Record<string, ThreadSyncDetails[]>
     ): Promise<ThreadPreview[]> {
@@ -1071,9 +1080,16 @@ export class ServiceContainer implements MarkMessagesRead {
                         ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t)))
                         : [];
                 })
-            ).then((threads) => threads
-                .flat()
-                .sort((a, b) => Number(latestMessageTimestamp(b.latestReplies) - latestMessageTimestamp(a.latestReplies))))
+            ).then((threads) =>
+                threads
+                    .flat()
+                    .sort((a, b) =>
+                        Number(
+                            latestMessageTimestamp(b.latestReplies) -
+                                latestMessageTimestamp(a.latestReplies)
+                        )
+                    )
+            )
         );
     }
 

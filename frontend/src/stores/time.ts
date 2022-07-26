@@ -1,14 +1,19 @@
 import { readable } from "svelte/store";
 
+function intervalStore(duration: number) {
+    return readable(Date.now(), (set) => {
+        const interval = window.setInterval(() => {
+            set(Date.now());
+        }, duration);
+
+        return function stop() {
+            window.clearInterval(interval);
+        };
+    });
+}
+
 // this is a fairly arbitrary interval but it seems about right
-const INTERVAL = 5000;
+export const now = intervalStore(5000);
 
-export const now = readable(Date.now(), (set) => {
-    const interval = window.setInterval(() => {
-        set(Date.now());
-    }, INTERVAL);
-
-    return function stop() {
-        window.clearInterval(interval);
-    };
-});
+// a more fine-grained "now" used for updating a seconds counter
+export const now500 = intervalStore(500);

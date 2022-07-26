@@ -883,8 +883,5 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("Unknown" in candid) {
         return bytesToHexString(candid.Unknown);
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiCryptoAccountFull type received",
-        candid
-    );
+    throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
 }

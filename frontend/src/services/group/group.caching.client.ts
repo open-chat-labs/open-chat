@@ -30,6 +30,7 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -334,5 +335,12 @@ export class CachingGroupClient implements IGroupClient {
 
     threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
         return this.client.threadPreviews(threadRootMessageIndexes);
+    }
+
+    registerProposalVote(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.client.registerProposalVote(messageIdx, adopt);
     }
 }

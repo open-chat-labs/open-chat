@@ -421,7 +421,7 @@
             class:crypto
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat}
+            {#if first && !me && groupChat && msg.content.kind !== "proposal_content"}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -466,6 +466,8 @@
                 {first}
                 {groupChat}
                 {senderId}
+                {chatId}
+                messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}

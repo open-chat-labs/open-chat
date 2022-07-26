@@ -54,6 +54,7 @@ import {
     UpdatePermissionsArgs,
     ThreadPreviewsResponse,
     ThreadPreview,
+    RegisterProposalVoteResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -109,6 +110,7 @@ export {
     UpdatePermissionsArgs as ApiUpdatePermissionsArgs,
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
     ThreadPreview as ApiThreadPreview,
+    RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

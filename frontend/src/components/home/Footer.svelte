@@ -94,6 +94,7 @@
                 {#if replyingTo}
                     <ReplyingTo
                         groupChat={chat.kind === "group_chat"}
+                        chatId={chat.chatId}
                         preview={true}
                         on:cancelReply
                         {user}

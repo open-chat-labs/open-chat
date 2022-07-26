@@ -94,6 +94,8 @@ import {
     ThreadSummary,
     PinChatResponse,
     UnpinChatResponse,
+    ProposalDecisionStatus,
+    ProposalRewardStatus,
     ThreadSyncDetails,
 } from "./types";
 export {
@@ -191,6 +193,8 @@ export {
     Proposal as ApiProposal,
     PinChatResponse as ApiPinChatResponse,
     UnpinChatResponse as ApiUnpinChatResponse,
+    ProposalDecisionStatus as ApiProposalDecisionStatus,
+    ProposalRewardStatus as ApiProposalRewardStatus,
     ThreadSyncDetails as ApiThreadSyncDetails,
 };
 
