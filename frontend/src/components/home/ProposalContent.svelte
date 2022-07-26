@@ -235,9 +235,10 @@
         .title-block {
             .title {
                 @include font-size(fs-120);
-                margin-bottom: 0.25em;
+                margin-bottom: toRem(4);
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
+
                 a {
                     display: flex;
                     gap: $sp2;
@@ -271,23 +272,23 @@
     }
 
     .summary {
-        max-height: 4.5em;
         transition: none;
+        max-height: toRem(72);
         @include nice-scrollbar();
         overflow-y: auto;
         cursor: pointer;
         position: relative;
 
         &.expanded {
-            max-height: 22.5em;
             transition: max-height ease-in 200ms;
+            max-height: toRem(360);
         }
 
         .gradient {
             position: sticky;
             width: 100%;
             background: linear-gradient(transparent, var(--currentChat-msg-bg));
-            height: 1.5em;
+            height: toRem(24);
             bottom: 0;
         }
 
@@ -309,7 +310,7 @@
         .data {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.625em;
+            margin-bottom: toRem(10);
 
             > div {
                 display: flex;
@@ -341,7 +342,7 @@
         }
 
         .progress {
-            height: 1em;
+            height: toRem(16);
             position: relative;
             background: var(--chatSummary-bg-selected);
 
@@ -372,7 +373,7 @@
 
             .icon {
                 position: absolute;
-                top: -1em;
+                top: toRem(-16);
                 filter: brightness(1.5);
             }
         }
@@ -410,7 +411,7 @@
 
         button {
             @include font-size(fs-120);
-            padding: 0.8em 0.4em;
+            padding: toRem(12) toRem(6);
             color: white;
             cursor: pointer;
             border: 0;
@@ -430,13 +431,13 @@
             &.adopt {
                 background-color: var(--vote-yes);
                 .icon {
-                    height: 1em;
-                    top: 0.0625em;
+                    height: toRem(16);
+                    top: toRem(1);
                     @include size-below(sm) {
                         top: 0;
                     }
                     @include size-below(xs) {
-                        top: -0.0625em;
+                        top: toRem(-1);
                     }
                 }
             }
@@ -444,13 +445,13 @@
             &.reject {
                 background-color: var(--vote-no);
                 .icon {
-                    height: 1em;
-                    top: 0.25em;
+                    height: toRem(16);
+                    top: toRem(4);
                     @include size-below(sm) {
-                        top: 0.2em;
+                        top: toRem(3);
                     }
                     @include size-below(xs) {
-                        top: 0.1em;
+                        top: toRem(2);
                     }
                 }
             }
@@ -475,8 +476,8 @@
                 }
 
                 @include loading-spinner(
-                    1.2em,
-                    0.6em,
+                    toRem(20),
+                    toRem(10),
                     var(--button-spinner),
                     "../assets/plain-spinner.svg"
                 );
