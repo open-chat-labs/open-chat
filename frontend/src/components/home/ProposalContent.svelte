@@ -17,7 +17,6 @@
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import MenuDown from "svelte-material-icons/MenuDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
@@ -165,8 +164,10 @@
         <div class="icon" style="{rtl}: calc(3% - 0.5em)">
             <ChevronDown viewBox="-1 0 24 24" />
         </div>
-        <div class="icon" style="{rtl}: calc(50% - 0.625em)">
-            <MenuDown size="1.25em" viewBox="-1 0 24 24" />
+        <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
+            <svg viewBox="-1 0 24 24">
+                <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
+            </svg>
         </div>
     </div>
 </div>
@@ -238,6 +239,7 @@
                 margin-bottom: toRem(4);
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
+                text-underline-offset: 2px;
 
                 a {
                     display: flex;
@@ -368,13 +370,17 @@
                 bottom: 0;
                 width: 1px;
                 background-color: var(--currentChat-msg-txt);
-                filter: brightness(1.5);
             }
 
             .icon {
                 position: absolute;
                 top: toRem(-16);
-                filter: brightness(1.5);
+                color: var(--currentChat-msg-txt);
+
+                &.solid {
+                    width: 1em;
+                    height: 1em;
+                }
             }
         }
 
@@ -416,6 +422,7 @@
             cursor: pointer;
             border: 0;
             flex: 1;
+            transition: background-color ease-in-out 200ms;
 
             .contents {
                 display: flex;
@@ -426,6 +433,7 @@
             .icon {
                 position: relative;
                 color: white;
+                transition: transform ease-in-out 200ms;
             }
 
             &.adopt {
@@ -456,14 +464,15 @@
                 }
             }
 
-            &:hover {
-                &:not(.disabled) {
-                    &.adopt {
-                        background-color: var(--vote-yes-hv);
-                    }
-                    &.reject {
-                        background-color: var(--vote-no-hv);
-                    }
+            &:not(.disabled):hover {
+                &.adopt {
+                    background-color: var(--vote-yes-hv);
+                }
+                &.reject {
+                    background-color: var(--vote-no-hv);
+                }
+                .icon {
+                    transform: rotate(-8deg) scale(1.2);
                 }
             }
 
