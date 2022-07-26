@@ -20,6 +20,9 @@
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
+    import Overlay from "../Overlay.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import { currentUserStore } from "../../stores/chat";
 
     export let content: ProposalContent;
     export let chatId: string;
@@ -31,6 +34,7 @@
 
     let expanded = false;
     let voting: boolean | undefined = undefined;
+    let showNeuronInfo = false;
 
     $: myVote = content.myVote;
     $: proposal = content.proposal;
@@ -54,6 +58,7 @@
             ? NnsProposalTopic[proposal.topic]
             : SnsProposalAction[proposal.action];
     $: rtl = $rtlStore ? "right" : "left";
+    $: user = $currentUserStore!;
 
     function toggleSummary() {
         expanded = !expanded;
@@ -76,6 +81,8 @@
                 .then((resp) => {
                     if (resp === "success") {
                         myVote = adopt;
+                    } else if (resp === "no_eligible_neurons") {
+                        showNeuronInfo = true;
                     } else {
                         const err = registerProposalVoteErrorMessage(resp);
                         if (err) toastStore.showFailureToast("proposal." + err);
@@ -92,9 +99,7 @@
     function registerProposalVoteErrorMessage(
         resp: RegisterProposalVoteResponse
     ): string | undefined {
-        if (resp === "success") return undefined;
         if (resp === "already_voted") return "alreadyVoted";
-        if (resp === "no_eligible_neurons") return "noEligibleNeurons";
         if (resp === "proposal_not_accepting_votes") return "proposalNotAceptingVotes";
         if (resp === "caller_not_in_group") return "voteFailed";
         if (resp === "proposal_not_found") return "voteFailed";
@@ -193,6 +198,19 @@
         >{$_("proposal.viewOnDashboard")}</a>
 </div>
 
+{#if showNeuronInfo}
+    <Overlay dismissible>
+        <ModalContent compactFooter on:close={() => (showNeuronInfo = false)}>
+            <div slot="header">{$_("proposal.noEligibleNeurons")}</div>
+            <div slot="body">
+                {$_("proposal.noEligibleNeuronsMessage")}
+                <br /><br />
+                <div class="value">{user.userId}</div>
+            </div>
+        </ModalContent>
+    </Overlay>
+{/if}
+
 <style type="text/scss">
     :global(.summary .markdown-wrapper h2) {
         @include font(bold, normal, fs-90);
@@ -258,7 +276,7 @@
         }
 
         .expand {
-            position: absolute;
+            position: sticky;
             width: 100%;
             background: linear-gradient(transparent, var(--currentChat-msg-bg));
             height: 1.5em;
@@ -268,6 +286,12 @@
         &.expanded .expand {
             background: rgba(69, 69, 69, 0);
         }
+    }
+
+    .value {
+        @include font-size(fs-120);
+        font-feature-settings: "tnum";
+        font-variant-numeric: tabular-nums;
     }
 
     .votes {
@@ -286,12 +310,6 @@
 
             .label {
                 @include font(light, normal, fs-70);
-            }
-
-            .value {
-                @include font-size(fs-120);
-                font-feature-settings: "tnum";
-                font-variant-numeric: tabular-nums;
             }
 
             .yes {
@@ -372,13 +390,6 @@
         justify-content: space-between;
 
         @include size-below(xs) {
-            &.voted {
-                flex-direction: column;
-                align-items: stretch;
-                gap: $sp3;
-            }
-        }
-        @include size-below(xxs) {
             flex-direction: column;
             align-items: stretch;
             gap: $sp3;

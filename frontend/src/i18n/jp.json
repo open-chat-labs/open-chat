@@ -561,7 +561,8 @@
     "proposal": {
         "voteFailed": "投票に失敗しました-後で試してください",
         "alreadyVoted": "すでに投票しています-ページをリロードしてみてください",
-        "noEligibleNeurons": "リンクされたニューロンが見つかりません。 OpenChat内から提案に投票するには、最初にOpenChatユーザーIDをホットキーとして投票したいニューロンに追加する必要があります。 OpenChatユーザーIDは{userId}です",
+        "noEligibleNeurons": "適格なニューロンが見つかりません",
+        "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat内から提案に投票するには、最初にOpenChatユーザーIDをホットキーとして投票したいニューロンに追加する必要があります。 OpenChatユーザーIDは次のとおりです。",
         "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
         "proposedBy": "によって提案されました",
         "topic": "トピック",
@@ -572,9 +573,8 @@
         "reject": "拒絶",
         "youVotedAdopt": "あなたは養子縁組に投票しました！",
         "youVotedReject": "あなたは拒否に投票しました！",
-        "addtionalContent": "追加コンテンツ",
-        "viewOnDashboard": "ダッシュボードに表示",
-        "additionalContent": "追加コンテンツ"
+        "additionalContent": "追加コンテンツ",
+        "viewOnDashboard": "ダッシュボードに表示"
     },
     "yes": "はい",
     "no": "いいえ"

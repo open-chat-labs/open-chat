@@ -558,10 +558,13 @@
         "unpinMenuItem": "Chat loslösen"
     },
     "readOnlyThread": "Dieser Thread ist schreibgeschützt",
+    "yes": "Ja",
+    "no": "Nein",
     "proposal": {
         "voteFailed": "Stimmabgabe fehlgeschlagen - bitte versuchen Sie es später erneut",
         "alreadyVoted": "Sie haben bereits abgestimmt - versuchen Sie, die Seite neu zu laden",
-        "noEligibleNeurons": "Keine verknüpften Neuronen gefunden. Um über Vorschläge innerhalb von OpenChat abzustimmen, müssen Sie zuerst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten. Ihre OpenChat-Benutzer-ID ist {userId}",
+        "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
+        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge innerhalb von OpenChat abzustimmen, müssen Sie zuerst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten. Ihre OpenChat-Benutzer-ID lautet:",
         "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
         "proposedBy": "vorgeschlagen von",
         "topic": "Thema",
@@ -572,10 +575,7 @@
         "reject": "Ablehnen",
         "youVotedAdopt": "Sie haben für adoptiert gestimmt!",
         "youVotedReject": "Sie haben für ablehnen gestimmt!",
-        "addtionalContent": "zusätzlicher Inhalt",
-        "viewOnDashboard": "auf dem Armaturenbrett anzeigen",
-        "additionalContent": "zusätzlicher Inhalt"
-    },
-    "yes": "Ja",
-    "no": "Nein"
+        "additionalContent": "zusätzlicher Inhalt",
+        "viewOnDashboard": "auf dem Armaturenbrett anzeigen"
+    }
 }

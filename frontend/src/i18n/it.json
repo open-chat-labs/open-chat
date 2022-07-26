@@ -561,7 +561,8 @@
     "proposal": {
         "voteFailed": "Impossibile esprimere il voto. Riprova più tardi",
         "alreadyVoted": "Hai già votato: prova a ricaricare la pagina",
-        "noEligibleNeurons": "Nessun neurone collegato trovato. Per votare le proposte da OpenChat, devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida per tutti i neuroni con cui desideri votare. Il tuo ID utente OpenChat è {userId}",
+        "noEligibleNeurons": "Nessun neurone idoneo trovato",
+        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare le proposte da OpenChat, devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida per tutti i neuroni con cui desideri votare. Il tuo ID utente OpenChat è:",
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposedBy": "proposto da",
         "topic": "argomento",
@@ -572,9 +573,8 @@
         "reject": "Rifiutare",
         "youVotedAdopt": "Hai votato adottare!",
         "youVotedReject": "Hai votato rifiuto!",
-        "addtionalContent": "contenuto aggiuntivo",
-        "viewOnDashboard": "vista sul cruscotto",
-        "additionalContent": "contenuto aggiuntivo"
+        "additionalContent": "contenuto aggiuntivo",
+        "viewOnDashboard": "vista sul cruscotto"
     },
     "yes": "sì",
     "no": "No"

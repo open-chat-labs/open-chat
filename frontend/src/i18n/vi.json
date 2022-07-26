@@ -562,7 +562,8 @@
     "proposal": {
         "voteFailed": "Không thể bỏ phiếu - vui lòng thử lại sau",
         "alreadyVoted": "Bạn đã bình chọn - hãy thử tải lại trang",
-        "noEligibleNeurons": "Không tìm thấy tế bào thần kinh liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ tế bào thần kinh nào mà bạn muốn bỏ phiếu. Id người dùng OpenChat của bạn là {userId}",
+        "noEligibleNeurons": "Không tìm thấy tế bào thần kinh đủ điều kiện",
+        "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ tế bào thần kinh nào mà bạn muốn bỏ phiếu. Id người dùng OpenChat của bạn là:",
         "proposalNotAceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
         "proposedBy": "đề nghị bởi",
         "topic": "chủ đề",
@@ -573,9 +574,8 @@
         "reject": "Từ chối",
         "youVotedAdopt": "Bạn đã bỏ phiếu nhận con nuôi!",
         "youVotedReject": "Bạn đã bỏ phiếu từ chối!",
-        "addtionalContent": "nội dung bổ sung",
-        "viewOnDashboard": "xem trên trang tổng quan",
-        "additionalContent": "nội dung bổ sung"
+        "additionalContent": "nội dung bổ sung",
+        "viewOnDashboard": "xem trên trang tổng quan"
     },
     "yes": "Đúng",
     "no": "Không"

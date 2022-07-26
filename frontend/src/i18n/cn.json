@@ -558,10 +558,13 @@
         "unpinMenuItem": "取消固定聊天"
     },
     "readOnlyThread": "此线程是只读的",
+    "yes": "是的",
+    "no": "不",
     "proposal": {
         "voteFailed": "投票失败 - 请稍后再试",
         "alreadyVoted": "您已经投票 - 尝试重新加载页面",
-        "noEligibleNeurons": "没有发现链接的神经元。为了在 OpenChat 中对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您希望与之投票的任何神经元。您的 OpenChat 用户 ID 是 {userId}",
+        "noEligibleNeurons": "未找到符合条件的神经元",
+        "noEligibleNeuronsMessage": "未找到符合条件或关联的神经元。为了在 OpenChat 中对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您希望与之投票的任何神经元。您的 OpenChat 用户 ID 是：",
         "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
         "proposedBy": "提议者",
         "topic": "话题",
@@ -572,10 +575,7 @@
         "reject": "拒绝",
         "youVotedAdopt": "你投了赞成票！",
         "youVotedReject": "你投了反对票！",
-        "addtionalContent": "附加内容",
-        "viewOnDashboard": "在仪表板上查看",
-        "additionalContent": "附加内容"
-    },
-    "yes": "是的",
-    "no": "不"
+        "additionalContent": "附加内容",
+        "viewOnDashboard": "在仪表板上查看"
+    }
 }
