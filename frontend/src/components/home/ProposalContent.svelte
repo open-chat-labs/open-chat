@@ -1,5 +1,6 @@
 <script lang="ts">
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import {
         NnsProposalTopic,
@@ -47,7 +48,7 @@
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
     $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
-    $: typeLabel = proposal.kind === "nns" ? "topic" : "action";
+    $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
             ? NnsProposalTopic[proposal.topic]
@@ -77,12 +78,12 @@
                         myVote = adopt;
                     } else {
                         const err = registerProposalVoteErrorMessage(resp);
-                        if (err) toastStore.showFailureToast(err);
+                        if (err) toastStore.showFailureToast("proposal." + err);
                     }
                 })
                 .catch((err) => {
                     rollbar.error("Unable to vote on proposal", err);
-                    toastStore.showFailureToast("proposalVoteFailed");
+                    toastStore.showFailureToast("proposal.voteFailed");
                 })
                 .finally(() => (voting = undefined));
         }
@@ -110,7 +111,7 @@
     <div class="title-block">
         <div class="title">{proposal.title}</div>
         <div class="subtitle">
-            {typeLabel}: {typeValue} | proposed by:
+            {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
             <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
         </div>
     </div>
@@ -129,20 +130,20 @@
 <div class="votes" class:rtl={$rtlStore}>
     <div class="data">
         <div class="yes">
-            <span class="label">Yes</span>
+            <span class="label">{$_("yes")}</span>
             <span class="value">{adoptPercent}%</span>
         </div>
         <div class="remaining">
             {#if !votingEnded}
-                <span class="label">Voting period remaining</span>
+                <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
                 <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
             {:else}
-                <span class="label">Voting period ended</span>
+                <span class="label">{$_("proposal.votingPeriodEnded")}</span>
                 <span class="value">{toDateString(deadline)} {toShortTimeString(deadline)}</span>
             {/if}
         </div>
         <div class="no">
-            <span class="label">No</span>
+            <span class="label">{$_("no")}</span>
             <span class="value">{rejectPercent}%</span>
         </div>
     </div>
@@ -168,7 +169,7 @@
         class:gray={myVote === false || votingEnded}
         on:click={() => onVote(true)}>
         <div class="contents">
-            <div>{myVote === true ? "You voted adopt!" : "Adopt"}</div>
+            <div>{$_("proposal." + (myVote === true ? "youVotedAdopt" : "adopt"))}</div>
             <div class="icon"><ThumbUp /></div>
         </div>
     </button>
@@ -179,7 +180,7 @@
         class:gray={myVote === true || votingEnded}
         on:click={() => onVote(false)}>
         <div class="contents">
-            <div>{myVote === false ? "You voted reject!" : "Reject"}</div>
+            <div>{$_("proposal." + (myVote === false ? "youVotedReject" : "reject"))}</div>
             <div class="icon"><ThumbDown /></div>
         </div>
     </button>
@@ -210,8 +211,6 @@
         justify-content: space-between;
         gap: $sp3;
         margin-bottom: $sp3;
-        // border-bottom: 1px solid var(--chatSummary-bg-selected);
-        // padding-bottom: $sp1;
 
         .title-block {
             .title {
