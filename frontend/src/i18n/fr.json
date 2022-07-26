@@ -573,7 +573,8 @@
         "youVotedAdopt": "Vous avez voté adopter !",
         "youVotedReject": "Vous avez voté rejet !",
         "addtionalContent": "contenu additionnel",
-        "viewOnDashboard": "vue sur tableau de bord"
+        "viewOnDashboard": "vue sur tableau de bord",
+        "additionalContent": "contenu additionnel"
     },
     "yes": "Oui",
     "no": "Non"

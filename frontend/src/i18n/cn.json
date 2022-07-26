@@ -573,7 +573,8 @@
         "youVotedAdopt": "你投了赞成票！",
         "youVotedReject": "你投了反对票！",
         "addtionalContent": "附加内容",
-        "viewOnDashboard": "在仪表板上查看"
+        "viewOnDashboard": "在仪表板上查看",
+        "additionalContent": "附加内容"
     },
     "yes": "是的",
     "no": "不"

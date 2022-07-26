@@ -573,7 +573,8 @@
         "youVotedAdopt": "Вы проголосовали за принятие!",
         "youVotedReject": "Вы проголосовали за отказ!",
         "addtionalContent": "дополнительный контент",
-        "viewOnDashboard": "посмотреть на приборной панели"
+        "viewOnDashboard": "посмотреть на приборной панели",
+        "additionalContent": "дополнительный контент"
     },
     "yes": "Да",
     "no": "Нет"

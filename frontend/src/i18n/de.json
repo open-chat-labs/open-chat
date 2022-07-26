@@ -573,7 +573,8 @@
         "youVotedAdopt": "Sie haben für adoptiert gestimmt!",
         "youVotedReject": "Sie haben für ablehnen gestimmt!",
         "addtionalContent": "zusätzlicher Inhalt",
-        "viewOnDashboard": "auf dem Armaturenbrett anzeigen"
+        "viewOnDashboard": "auf dem Armaturenbrett anzeigen",
+        "additionalContent": "zusätzlicher Inhalt"
     },
     "yes": "Ja",
     "no": "Nein"

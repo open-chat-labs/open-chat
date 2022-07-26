@@ -573,7 +573,8 @@
         "youVotedAdopt": "Hai votato adottare!",
         "youVotedReject": "Hai votato rifiuto!",
         "addtionalContent": "contenuto aggiuntivo",
-        "viewOnDashboard": "vista sul cruscotto"
+        "viewOnDashboard": "vista sul cruscotto",
+        "additionalContent": "contenuto aggiuntivo"
     },
     "yes": "sì",
     "no": "No"

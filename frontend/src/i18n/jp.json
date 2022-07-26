@@ -573,7 +573,8 @@
         "youVotedAdopt": "あなたは養子縁組に投票しました！",
         "youVotedReject": "あなたは拒否に投票しました！",
         "addtionalContent": "追加コンテンツ",
-        "viewOnDashboard": "ダッシュボードに表示"
+        "viewOnDashboard": "ダッシュボードに表示",
+        "additionalContent": "追加コンテンツ"
     },
     "yes": "はい",
     "no": "いいえ"

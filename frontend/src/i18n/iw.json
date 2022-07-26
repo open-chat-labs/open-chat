@@ -571,7 +571,8 @@
         "youVotedAdopt": "הצבעת לאמץ!",
         "youVotedReject": "הצבעת לדחות!",
         "addtionalContent": "תוכן נוסף",
-        "viewOnDashboard": "הצגה בלוח המחוונים"
+        "viewOnDashboard": "הצגה בלוח המחוונים",
+        "additionalContent": "תוכן נוסף"
     },
     "yes": "כן",
     "no": "לא"

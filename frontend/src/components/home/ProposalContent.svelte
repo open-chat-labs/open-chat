@@ -188,9 +188,9 @@
 
 <div class="more" class:rtl={$rtlStore}>
     {#if proposal.url.length > 0}
-        <a href={proposal.url} target="_blank">additional content</a>&nbsp;|&nbsp;{/if}<a
-        href={dashboardProposalUrl}
-        target="_blank">view on dashboard</a>
+        <a href={proposal.url} target="_blank">{$_("proposal.additionalContent")}</a
+        >&nbsp;|&nbsp;{/if}<a href={dashboardProposalUrl} target="_blank"
+        >{$_("proposal.viewOnDashboard")}</a>
 </div>
 
 <style type="text/scss">

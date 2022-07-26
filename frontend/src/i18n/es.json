@@ -574,7 +574,8 @@
         "youVotedAdopt": "Votaste adoptar!",
         "youVotedReject": "Votaste rechazar!",
         "addtionalContent": "contenido adicional",
-        "viewOnDashboard": "ver en el tablero"
+        "viewOnDashboard": "ver en el tablero",
+        "additionalContent": "contenido adicional"
     },
     "yes": "Sí",
     "no": "No"
