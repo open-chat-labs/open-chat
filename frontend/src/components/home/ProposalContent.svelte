@@ -18,6 +18,7 @@
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
+    import Launch from "svelte-material-icons/Launch.svelte";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
     import Overlay from "../Overlay.svelte";
@@ -111,7 +112,14 @@
 
 <div class="header">
     <div class="title-block">
-        <div class="title">{proposal.title}</div>
+        <div class="title">
+            {#if proposal.url.length > 0}
+                <a href={proposal.url} target="_blank"
+                    >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
+            {:else}
+                {proposal.title}
+            {/if}
+        </div>
         <div class="subtitle">
             {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
             <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
@@ -189,10 +197,7 @@
 </div>
 
 <div class="more" class:rtl={$rtlStore}>
-    {#if proposal.url.length > 0}
-        <a href={proposal.url} target="_blank">{$_("proposal.additionalContent")}</a
-        >&nbsp;|&nbsp;{/if}<a href={dashboardProposalUrl} target="_blank"
-        >{$_("proposal.viewOnDashboard")}</a>
+    <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
 </div>
 
 {#if showNeuronInfo}
@@ -233,6 +238,11 @@
                 margin-bottom: 0.25em;
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
+                a {
+                    display: flex;
+                    gap: $sp2;
+                    align-items: center;
+                }
             }
 
             .subtitle {
