@@ -6,6 +6,7 @@ use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use std::fmt::Write;
 use types::{ChatId, GroupPermissions, PermissionRole};
 
+// dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
 #[update(guard = "caller_is_service_owner")]
 #[trace]
 async fn add_governance_canister(args: Args) -> Response {
