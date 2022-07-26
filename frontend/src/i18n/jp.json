@@ -557,5 +557,24 @@
         "menuItem": "ピンチャット",
         "unpinMenuItem": "チャットの固定を解除する"
     },
-    "readOnlyThread": "このスレッドは読み取り専用です"
+    "readOnlyThread": "このスレッドは読み取り専用です",
+    "proposal": {
+        "voteFailed": "投票に失敗しました-後で試してください",
+        "alreadyVoted": "すでに投票しています-ページをリロードしてみてください",
+        "noEligibleNeurons": "リンクされたニューロンが見つかりません。 OpenChat内から提案に投票するには、最初にOpenChatユーザーIDをホットキーとして投票したいニューロンに追加する必要があります。 OpenChatユーザーIDは{userId}です",
+        "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
+        "proposedBy": "によって提案されました",
+        "topic": "トピック",
+        "action": "アクション",
+        "votingPeriodRemaining": "残りの投票期間",
+        "votingPeriodEnded": "投票期間が終了しました",
+        "adopt": "採用",
+        "reject": "拒絶",
+        "youVotedAdopt": "あなたは養子縁組に投票しました！",
+        "youVotedReject": "あなたは拒否に投票しました！",
+        "addtionalContent": "追加コンテンツ",
+        "viewOnDashboard": "ダッシュボードに表示"
+    },
+    "yes": "はい",
+    "no": "いいえ"
 }

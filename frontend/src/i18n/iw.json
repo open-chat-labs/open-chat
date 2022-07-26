@@ -555,5 +555,24 @@
         "menuItem": "הצמד צ'אט",
         "unpinMenuItem": "בטל את ההצמדה של הצ'אט"
     },
-    "readOnlyThread": "השרשור הזה הוא לקריאה בלבד"
+    "readOnlyThread": "השרשור הזה הוא לקריאה בלבד",
+    "proposal": {
+        "voteFailed": "ההצבעה נכשלה - אנא נסה מאוחר יותר",
+        "alreadyVoted": "כבר הצבעת - נסה לטעון מחדש את העמוד",
+        "noEligibleNeurons": "לא נמצאו נוירונים מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם. מזהה המשתמש שלך ב-OpenChat הוא {userId}",
+        "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
+        "proposedBy": "הוצע על ידי",
+        "topic": "נוֹשֵׂא",
+        "action": "פעולה",
+        "votingPeriodRemaining": "נותרה תקופת הצבעה",
+        "votingPeriodEnded": "תקופת ההצבעה הסתיימה",
+        "adopt": "לְאַמֵץ",
+        "reject": "לִדחוֹת",
+        "youVotedAdopt": "הצבעת לאמץ!",
+        "youVotedReject": "הצבעת לדחות!",
+        "addtionalContent": "תוכן נוסף",
+        "viewOnDashboard": "הצגה בלוח המחוונים"
+    },
+    "yes": "כן",
+    "no": "לא"
 }
