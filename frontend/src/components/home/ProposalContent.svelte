@@ -133,7 +133,7 @@
 {#if proposal.summary.length > 0}
     <div class="summary" class:expanded on:click={toggleSummary}>
         <Markdown text={proposal.summary} isInline={false} />
-        <div class="expand" />
+        <div class="gradient" />
     </div>
 {/if}
 
@@ -271,8 +271,8 @@
     }
 
     .summary {
-        transition: max-height ease-in 200ms;
         max-height: 4.5em;
+        transition: none;
         @include nice-scrollbar();
         overflow-y: auto;
         cursor: pointer;
@@ -280,9 +280,10 @@
 
         &.expanded {
             max-height: 22.5em;
+            transition: max-height ease-in 200ms;
         }
 
-        .expand {
+        .gradient {
             position: sticky;
             width: 100%;
             background: linear-gradient(transparent, var(--currentChat-msg-bg));
@@ -290,8 +291,9 @@
             bottom: 0;
         }
 
-        &.expanded .expand {
-            background: rgba(69, 69, 69, 0);
+        &.expanded .gradient {
+            background: none;
+            height: 0;
         }
     }
 
