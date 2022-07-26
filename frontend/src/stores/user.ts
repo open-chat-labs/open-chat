@@ -27,7 +27,7 @@ const openChatBotUser: PartialUserSummary = {
 
 export const PROPOSALS_BOT_USER_ID = "process.env.PROPOSALS_BOT_CANISTER";
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
-export const PROPOSALS_BOT_AVATAR_URL = "assets/robot.svg";
+export const PROPOSALS_BOT_AVATAR_URL = "assets/proposal-robot.svg";
 const proposalsBotUser: PartialUserSummary = {
     kind: "bot",
     userId: PROPOSALS_BOT_USER_ID,
