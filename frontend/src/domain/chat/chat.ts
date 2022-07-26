@@ -3,7 +3,7 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { NeuronId, ProposalId } from "services/user/candid/types";
+import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 

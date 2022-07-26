@@ -30,6 +30,8 @@
     export let myUserId: string | undefined;
     export let messageId: bigint;
     export let edited: boolean;
+    export let chatId: string;
+    export let messageIndex: number;
 </script>
 
 {#if content.kind === "text_content"}
@@ -57,5 +59,5 @@
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
     </ImageObserver>
 {:else if content.kind === "proposal_content"}
-    <ProposalContent {content} />
+    <ProposalContent {content} {chatId} {messageIndex} />
 {/if}
