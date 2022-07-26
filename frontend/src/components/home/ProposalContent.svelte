@@ -155,8 +155,8 @@
         <div class="icon" style="{rtl}: calc(3% - 0.5em)">
             <ChevronDown viewBox="-1 0 24 24" />
         </div>
-        <div class="icon" style="{rtl}: calc(50% - 0.6em)">
-            <MenuDown size="1.2em" />
+        <div class="icon" style="{rtl}: calc(50% - 0.625em)">
+            <MenuDown size="1.25em" viewBox="-1 0 24 24" />
         </div>
     </div>
 </div>
