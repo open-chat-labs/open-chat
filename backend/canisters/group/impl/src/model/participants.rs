@@ -143,7 +143,7 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, thread_participants: Option<&Vec<UserId>>) -> HashSet<UserId> {
+    pub fn users_to_notify(&self, thread_participants: Option<&[UserId]>) -> HashSet<UserId> {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()

@@ -52,11 +52,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
-        if let Some(thread_message_index) = args.thread_root_message_index {
+        if let Some(root_message_index) = args.thread_root_message_index {
             if !runtime_state.data.events.is_message_accessible_by_index(
                 participant.min_visible_event_index(),
                 None,
-                thread_message_index,
+                root_message_index,
             ) {
                 return ThreadMessageNotFound;
             }
@@ -80,49 +80,52 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let message_event = runtime_state.data.events.push_message(push_message_args);
 
-        handle_activity_notification(runtime_state);
-
         register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
 
-        let mut thread_participants: Option<&Vec<UserId>> = None;
-        let mut root_message_sender: Option<UserId> = None;
-        let mut first_thread_reply = false;
+        let mut mentions: HashSet<_> = args
+            .mentioned
+            .iter()
+            .map(|m| m.user_id)
+            .chain(user_being_replied_to)
+            .collect();
 
-        if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(root_message) = runtime_state
-                .data
-                .events
-                .main()
-                .message_internal_by_message_index(thread_message_index)
-                .map(|e| e.event)
-            {
-                if let Some(thread_summary) = &root_message.thread_summary {
-                    thread_participants = Some(&thread_summary.participant_ids);
-                    root_message_sender = Some(root_message.sender);
-                    first_thread_reply = thread_summary.reply_count == 1;
+        let mut notification_recipients = HashSet::new();
+        let mut thread_participants = None;
+
+        if let Some(thread_root_message) = args
+            .thread_root_message_index
+            .and_then(|root_message_index| {
+                runtime_state
+                    .data
+                    .events
+                    .main()
+                    .message_internal_by_message_index(root_message_index)
+            })
+            .map(|e| e.event)
+        {
+            notification_recipients.insert(thread_root_message.sender);
+
+            if let Some(thread_summary) = &thread_root_message.thread_summary {
+                thread_participants = Some(thread_summary.participant_ids.as_slice());
+
+                let is_first_reply = thread_summary.reply_count == 1;
+                if is_first_reply {
+                    mentions.insert(thread_root_message.sender);
                 }
+            }
 
-                runtime_state.data.participants.add_thread(&sender, thread_message_index);
-
-                if first_thread_reply {
-                    runtime_state
-                        .data
-                        .participants
-                        .add_thread(&root_message.sender, thread_message_index);
-                }
+            for user_id in mentions.iter().copied().chain([sender]) {
+                runtime_state
+                    .data
+                    .participants
+                    .add_thread(&user_id, thread_root_message.message_index);
             }
         }
 
-        // Add mentions
-        let mut mentions: HashSet<UserId> = args.mentioned.iter().map(|m| m.user_id).collect();
-        if let Some(user_id) = user_being_replied_to {
-            mentions.insert(user_id);
-        }
         mentions.remove(&sender);
-
         for user_id in mentions.iter() {
             runtime_state
                 .data
@@ -130,21 +133,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 .add_mention(user_id, args.thread_root_message_index, message_index);
         }
 
-        // If this is the first message in a thread then mention the original sender/message
-        if first_thread_reply {
-            if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
-                runtime_state
-                    .data
-                    .participants
-                    .add_mention(&user_id, None, root_message_index);
-            }
-        }
-
-        // Build the notification recipients list
-        let mut notification_recipients = runtime_state.data.participants.users_to_notify(thread_participants);
-        if let Some(user_id) = root_message_sender {
-            notification_recipients.insert(user_id);
-        }
+        notification_recipients.extend(runtime_state.data.participants.users_to_notify(thread_participants));
         notification_recipients.extend(&mentions);
         notification_recipients.remove(&sender);
         let notification_recipients: Vec<UserId> = notification_recipients.into_iter().collect();
@@ -161,6 +150,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         });
 
         runtime_state.push_notification(notification_recipients, notification);
+
+        handle_activity_notification(runtime_state);
 
         Success(SuccessResult {
             event_index,
