@@ -478,7 +478,6 @@
 
             &.disabled {
                 cursor: default;
-                filter: none;
             }
 
             &.gray {
