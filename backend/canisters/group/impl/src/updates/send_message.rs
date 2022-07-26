@@ -106,7 +106,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             })
             .map(|e| e.event)
         {
-            let mut thread_subscriptions: HashSet<_> = mentions.iter().copied().chain([sender]).collect();
             notification_recipients.insert(thread_root_message.sender);
 
             if let Some(thread_summary) = &thread_root_message.thread_summary {
@@ -115,11 +114,10 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
                     mentions.insert(thread_root_message.sender);
-                    thread_subscriptions.insert(thread_root_message.sender);
                 }
             }
 
-            for user_id in thread_subscriptions {
+            for user_id in mentions.iter().copied().chain([sender]) {
                 runtime_state
                     .data
                     .participants
