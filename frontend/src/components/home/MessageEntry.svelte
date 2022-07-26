@@ -70,6 +70,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
+    $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
@@ -251,7 +252,7 @@
      * * !details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (/^\/poll$/.test(txt)) {
+        if (isGroup && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }
