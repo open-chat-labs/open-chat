@@ -457,17 +457,18 @@
             }
 
             &:hover {
-                &.adopt {
-                    background-color: var(--vote-yes-hv);
-                }
-                &.reject {
-                    background-color: var(--vote-no-hv);
+                &:not(.disabled) {
+                    &.adopt {
+                        background-color: var(--vote-yes-hv);
+                    }
+                    &.reject {
+                        background-color: var(--vote-no-hv);
+                    }
                 }
             }
 
             &.disabled {
                 cursor: default;
-                filter: none;
             }
 
             &.gray {
