@@ -447,7 +447,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
-  { 'EndDateInThePast' : null };
+  { 'EndDateInThePast' : null } |
+  { 'PollsNotValidForDirectChats' : null };
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
   'as_super_admin' : boolean,
@@ -699,18 +700,6 @@ export type RecommendedGroupsResponse = {
 export interface RecommendedGroupsSuccessResult {
   'groups' : Array<PublicGroupSummary>,
 }
-export interface RegisterPollVoteArgs {
-  'user_id' : UserId,
-  'poll_option' : number,
-  'operation' : VoteOperation,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'message_index' : MessageIndex,
-}
-export type RegisterPollVoteResponse = { 'ChatNotFound' : null } |
-  { 'PollEnded' : null } |
-  { 'Success' : PollVotes } |
-  { 'OptionIndexOutOfRange' : null } |
-  { 'PollNotFound' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
@@ -989,10 +978,6 @@ export interface _SERVICE {
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
     RecommendedGroupsResponse,
-  >,
-  'register_poll_vote' : ActorMethod<
-    [RegisterPollVoteArgs],
-    RegisterPollVoteResponse,
   >,
   'relinquish_group_super_admin' : ActorMethod<
     [RelinquishGroupSuperAdminArgs],

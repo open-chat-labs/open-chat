@@ -1,7 +1,6 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
-use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
@@ -54,7 +53,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
 
     let now = runtime_state.env.now();
 
-    if let Err(error) = args.content.validate_for_new_message(args.forwarding, now) {
+    if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
         Err(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -93,8 +92,6 @@ fn send_message_impl(
         .data
         .direct_chats
         .push_message(true, recipient, None, push_message_args);
-
-    register_callbacks_if_required(recipient, &message_event, runtime_state);
 
     let c2c_args = c2c_send_message::Args {
         message_id: args.message_id,

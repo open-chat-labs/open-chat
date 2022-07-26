@@ -27,7 +27,8 @@ import type {
     ApiUpdatePermissionsResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
-    ApiRegisterProposalVoteResponse,
+    ApiRegisterPollVoteResponse,
+	ApiRegisterProposalVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -59,7 +60,8 @@ import type {
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     ThreadPreview,
-    RegisterProposalVoteResponse,
+    RegisterPollVoteResponse,
+	RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -691,6 +693,33 @@ export function resetInviteCodeResponse(
         "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
     );
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("PollEnded" in candid) {
+        return "poll_ended";
+    }
+    if ("OptionIndexOutOfRange" in candid) {
+        return "out_of_range";
+    }
+    if ("PollNotFound" in candid) {
+        return "poll_not_found";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("PollsNotValidForDirectChats" in candid) {
+        return "polls_not_valid_for_direct_chats";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {

@@ -1008,30 +1008,6 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     registerPollVote(
-        chat: ChatSummary,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse> {
-        return chat.kind === "group_chat"
-            ? this.registerGroupChatPollVote(
-                  chat.chatId,
-                  messageIdx,
-                  answerIdx,
-                  voteType,
-                  threadRootMessageIndex
-              )
-            : this.registerDirectChatPollVote(
-                  chat.them,
-                  messageIdx,
-                  answerIdx,
-                  voteType,
-                  threadRootMessageIndex
-              );
-    }
-
-    private registerGroupChatPollVote(
         chatId: string,
         messageIdx: number,
         answerIdx: number,
@@ -1039,22 +1015,6 @@ export class ServiceContainer implements MarkMessagesRead {
         threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
         return this.getGroupClient(chatId).registerPollVote(
-            messageIdx,
-            answerIdx,
-            voteType,
-            threadRootMessageIndex
-        );
-    }
-
-    private registerDirectChatPollVote(
-        otherUser: string,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse> {
-        return this.userClient.registerPollVote(
-            otherUser,
             messageIdx,
             answerIdx,
             voteType,

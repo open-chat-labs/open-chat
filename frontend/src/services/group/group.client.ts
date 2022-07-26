@@ -60,7 +60,8 @@ import {
     resetInviteCodeResponse,
     updatePermissionsResponse,
     threadPreviewsResponse,
-    registerProposalVoteResponse,
+    registerPollVoteResponse,
+	registerProposalVoteResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -72,7 +73,6 @@ import {
     apiUpdatePermissions,
     apiUser,
     publicSummaryResponse,
-    registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";

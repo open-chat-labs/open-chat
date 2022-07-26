@@ -437,7 +437,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
-  { 'EndDateInThePast' : null };
+  { 'EndDateInThePast' : null } |
+  { 'PollsNotValidForDirectChats' : null };
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
