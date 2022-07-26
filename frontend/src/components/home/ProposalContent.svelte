@@ -31,6 +31,7 @@
     let expanded = false;
     let voting: boolean | undefined = undefined;
 
+    $: myVote = content.myVote;
     $: proposal = content.proposal;
     $: positive =
         proposal.status == ProposalDecisionStatus.Adopted ||
@@ -40,12 +41,12 @@
         proposal.status == ProposalDecisionStatus.Rejected ||
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
-    $: dashboardProposerUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
+    $: dashboardNeuronUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = content.myVote !== undefined || voting !== undefined || votingEnded;
+    $: votingDisabled = myVote !== undefined || voting !== undefined || votingEnded;
     $: typeLabel = proposal.kind === "nns" ? "topic" : "action";
     $: typeValue =
         proposal.kind === "nns"
@@ -67,13 +68,13 @@
         if (process.env.ENABLE_PROPOSAL_TESTING) {
             setTimeout(() => {
                 voting = undefined;
-                content.myVote = adopt;
+                myVote = adopt;
             }, 2000);
         } else {
             api.registerProposalVote(chatId, messageIndex, adopt)
                 .then((resp) => {
                     if (resp === "success") {
-                        content.myVote = adopt;
+                        myVote = adopt;
                     } else {
                         const err = registerProposalVoteErrorMessage(resp);
                         if (err) toastStore.showFailureToast(err);
@@ -110,7 +111,7 @@
         <div class="title">{proposal.title}</div>
         <div class="subtitle">
             {typeLabel}: {typeValue} | proposed by:
-            <a target="_blank" href={dashboardProposerUrl}>{proposal.proposer}</a>
+            <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
         </div>
     </div>
     <div class="status" class:positive class:negative>
@@ -159,15 +160,15 @@
     </div>
 </div>
 
-<div class="vote" class:voted={content.myVote !== undefined}>
+<div class="vote" class:voted={myVote !== undefined}>
     <button
         class="adopt"
         class:voting={voting === true}
         class:disabled={votingDisabled}
-        class:gray={content.myVote === false || votingEnded}
+        class:gray={myVote === false || votingEnded}
         on:click={() => onVote(true)}>
         <div class="contents">
-            <div>{content.myVote === true ? "You voted adopt!" : "Adopt"}</div>
+            <div>{myVote === true ? "You voted adopt!" : "Adopt"}</div>
             <div class="icon"><ThumbUp /></div>
         </div>
     </button>
@@ -175,10 +176,10 @@
         class="reject"
         class:voting={voting === false}
         class:disabled={votingDisabled}
-        class:gray={content.myVote === true || votingEnded}
+        class:gray={myVote === true || votingEnded}
         on:click={() => onVote(false)}>
         <div class="contents">
-            <div>{content.myVote === false ? "You voted reject!" : "Reject"}</div>
+            <div>{myVote === false ? "You voted reject!" : "Reject"}</div>
             <div class="icon"><ThumbDown /></div>
         </div>
     </button>
