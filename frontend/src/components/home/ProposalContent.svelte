@@ -465,7 +465,8 @@
             }
 
             &.gray {
-                background-color: gray;
+                background: var(--button-disabled);
+                border: 1px solid var(--button-disabled-bd);
             }
 
             &.voting {
