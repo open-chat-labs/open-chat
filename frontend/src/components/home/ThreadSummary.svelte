@@ -9,6 +9,7 @@
     import { userStore } from "../../stores/user";
     import { formatMessageDate } from "../../utils/date";
     import { messagesRead } from "../../stores/markRead";
+    import { threadsByChatStore } from "../../stores/chat";
     import { onDestroy } from "svelte";
 
     export let threadSummary: ThreadSummary;
@@ -18,6 +19,11 @@
     export let url: string;
     export let chatId: string;
     export let threadRootMessageIndex: number;
+
+    $: involvesMe =
+        $threadsByChatStore[chatId]?.find(
+            (t) => t.threadRootMessageIndex === threadRootMessageIndex
+        ) !== undefined;
 
     $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now
 
@@ -39,7 +45,7 @@
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
-    {#if unreadCount > 0 && me}
+    {#if involvesMe && unreadCount > 0 && me}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}
@@ -86,7 +92,7 @@
                 <div class:selected class="arrow">&#8595;</div></span>
         </div>
     </a>
-    {#if unreadCount > 0 && !me}
+    {#if involvesMe && unreadCount > 0 && !me}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}

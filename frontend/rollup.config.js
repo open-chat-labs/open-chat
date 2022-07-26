@@ -21,6 +21,7 @@ import replace from "@rollup/plugin-replace";
 import * as fs from "fs";
 import * as path from "path";
 import * as rimraf from "rimraf";
+import assetHeaders from "./.ic-assets.json";
 
 dotenv.config();
 
@@ -98,6 +99,8 @@ fs.mkdirSync("build");
 if (version) {
     fs.writeFileSync("build/version", JSON.stringify({ version }));
 }
+
+fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
 
 const iiAlternativeOrigin = process.env.II_ALTERNATIVE_ORIGIN;
 if (iiAlternativeOrigin !== undefined) {
