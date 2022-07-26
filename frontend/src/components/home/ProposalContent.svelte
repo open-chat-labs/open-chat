@@ -260,13 +260,13 @@
             height: fit-content;
 
             &.positive {
-                color: var(--vote-yes);
-                border-color: var(--vote-yes);
+                color: var(--vote-yes-color);
+                border-color: var(--vote-yes-color);
             }
 
             &.negative {
-                color: var(--vote-no);
-                border-color: var(--vote-no);
+                color: var(--vote-no-color);
+                border-color: var(--vote-no-color);
             }
         }
     }
@@ -325,14 +325,14 @@
             .yes {
                 align-items: flex-start;
                 .value {
-                    color: var(--vote-yes);
+                    color: var(--vote-yes-color);
                 }
             }
 
             .no {
                 align-items: flex-end;
                 .value {
-                    color: var(--vote-no);
+                    color: var(--vote-no-color);
                 }
             }
 
@@ -351,7 +351,7 @@
                 top: 0;
                 left: 0;
                 bottom: 0;
-                background: var(--vote-yes);
+                background: var(--vote-yes-color);
             }
 
             .reject {
@@ -359,7 +359,7 @@
                 top: 0;
                 right: 0;
                 bottom: 0;
-                background: var(--vote-no);
+                background: var(--vote-no-color);
             }
 
             .vertical-line {
@@ -429,7 +429,7 @@
             }
 
             &.adopt {
-                background-color: var(--vote-yes);
+                background-color: var(--vote-yes-color);
                 .icon {
                     height: toRem(16);
                     top: toRem(1);
@@ -443,7 +443,7 @@
             }
 
             &.reject {
-                background-color: var(--vote-no);
+                background-color: var(--vote-no-color);
                 .icon {
                     height: toRem(16);
                     top: toRem(4);
@@ -457,7 +457,12 @@
             }
 
             &:hover {
-                filter: brightness(0.7);
+                &.adopt {
+                    background-color: var(--vote-yes-hv);
+                }
+                &.reject {
+                    background-color: var(--vote-no-hv);
+                }
             }
 
             &.disabled {

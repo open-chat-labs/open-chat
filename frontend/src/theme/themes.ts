@@ -281,8 +281,14 @@ export interface Theme {
     };
 
     vote: {
-        yes: string;
-        no: string;
+        yes: {
+            color: string;
+            hv: string;
+        };
+        no: {
+            color: string;
+            hv: string;
+        };
     };
 }
 

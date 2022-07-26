@@ -276,8 +276,14 @@ export function lightTheme(): Theme {
         },
 
         vote: {
-            yes: blueAccent,
-            no: pinkAccent,
+            yes: {
+                color: blueAccent,
+                hv: "#0d8cd4",
+            },
+            no: {
+                color: pinkAccent,
+                hv: "#ff4fa7",
+            },
             // yes: "lightgreen",
             // no: "red",
             // yes: "#2fb953",
