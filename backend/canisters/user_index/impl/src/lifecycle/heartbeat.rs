@@ -57,10 +57,6 @@ mod upgrade_canisters {
         let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
 
-        if current_wasm_version >= user_canister_wasm.version {
-            return None;
-        }
-
         user.set_canister_upgrade_status(true, None);
 
         let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
