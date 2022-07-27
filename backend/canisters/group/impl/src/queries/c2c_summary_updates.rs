@@ -14,8 +14,8 @@ fn c2c_summary_updates(args: Args) -> Response {
 }
 
 fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let participant = match runtime_state.data.participants.get(caller) {
+    let caller = runtime_state.env.caller().into();
+    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
@@ -85,12 +85,18 @@ fn process_events(
 ) -> UpdatesFromEvents {
     let chat_events = &runtime_state.data.events.main();
 
+    let mut latest_update = None;
     let new_proposal_votes: HashSet<_> = participant
         .proposal_votes
         .iter()
         .rev()
         .take_while(|(&t, _)| t > since)
-        .flat_map(|(_, m)| m.iter().copied())
+        .flat_map(|(&t, m)| {
+            if latest_update.is_none() {
+                latest_update = Some(t);
+            }
+            m.iter().copied()
+        })
         .filter_map(|m| chat_events.get_event_index_by_message_index(m))
         .collect();
 
@@ -99,6 +105,7 @@ fn process_events(
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
+        latest_update,
         affected_events: new_proposal_votes,
         ..Default::default()
     };
@@ -107,7 +114,9 @@ fn process_events(
     let mut lowest_message_index: MessageIndex = u32::MIN.into();
     for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
-            updates.latest_update = Some(event_wrapper.timestamp);
+            if updates.latest_update.map_or(true, |t| t < event_wrapper.timestamp) {
+                updates.latest_update = Some(event_wrapper.timestamp);
+            }
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
