@@ -289,5 +289,16 @@ export function lightTheme(): Theme {
             // yes: "#2fb953",
             // no: "#B92F2F",
         },
+
+        markdown: {
+            fg: {
+                color: "#3a3a3a",
+                bright: "#000",
+                muted: "#777",
+            },
+            bg: {
+                dark: "#eeeeee",
+            },
+        },
     };
 }

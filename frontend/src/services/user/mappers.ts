@@ -91,6 +91,7 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
+import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -742,6 +743,7 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+    const ownerId = candid.owner_id.toString();
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
@@ -775,6 +777,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
         latestThreads: candid.latest_threads.map(threadSyncDetails),
+        isProposalGroup: ownerId === PROPOSALS_BOT_USER_ID,
     };
 }
 

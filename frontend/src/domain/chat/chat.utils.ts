@@ -46,7 +46,12 @@ import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
+import {
+    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
+    PROPOSALS_BOT_USER_ID,
+    userStore,
+} from "../../stores/user";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -931,10 +936,11 @@ function mergeMessageEvents(
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
-    if (existing.event.kind === "message" &&
+    if (
+        existing.event.kind === "message" &&
         incoming.event.kind === "message" &&
-        existing.event.messageId === incoming.event.messageId)
-    {
+        existing.event.messageId === incoming.event.messageId
+    ) {
         const key = existing.event.messageId.toString();
         const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
         return {
@@ -1156,6 +1162,7 @@ export function groupChatFromCandidate(
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
+        isProposalGroup: userId === PROPOSALS_BOT_USER_ID,
     };
 }
 
