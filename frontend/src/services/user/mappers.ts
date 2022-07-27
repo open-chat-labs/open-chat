@@ -91,7 +91,6 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
-import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;

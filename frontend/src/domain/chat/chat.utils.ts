@@ -46,12 +46,7 @@ import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
-import {
-    OPENCHAT_BOT_AVATAR_URL,
-    OPENCHAT_BOT_USER_ID,
-    PROPOSALS_BOT_USER_ID,
-    userStore,
-} from "../../stores/user";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
