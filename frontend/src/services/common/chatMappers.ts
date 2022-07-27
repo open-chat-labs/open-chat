@@ -25,7 +25,6 @@ import {
     PollVotes,
     TotalPollVotes,
     PollConfig,
-    RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
     PendingCryptocurrencyWithdrawal,
@@ -475,6 +474,78 @@ For further details please see the [forum post](https://forum.dfinity.org/t/way-
                 title: "Update configuration of subnet: fuqsr",
                 proposer: BigInt(50),
                 summary: `Resume syncing Bitcoin mainnet on subnet fuqsr. The syncing was paused on June 3rd due to degraded performance due to a high volume of writes to disk. Since then, improvements have been introduced to make the subnet cope with higher volume of writes, and we've tested a full Butcoin mainnet sync on a testnet.`,
+                rewardStatus: ProposalRewardStatus.AcceptVotes,
+                lastUpdated: 1658394134000,
+                created: 1658094134000,
+                deadline: 1658894134000,
+            },
+        };
+    } else if (candid.text.startsWith("Hello")) {
+        return {
+            kind: "proposal_content",
+            governanceCanisterId: "123-456",
+            proposal: {
+                kind: "nns",
+                topic: NnsProposalTopic.SubnetManagement,
+                id: BigInt(71108),
+                url: "",
+                status: ProposalDecisionStatus.Open,
+                tally: {
+                    no: 406443015,
+                    yes: 2435,
+                    total: 500000000,
+                },
+                title: "Update configuration of subnet: fuqsr",
+                proposer: BigInt(50),
+                summary: `
+# Modest
+
+[Modest](https://github.com/markdowncss/modest) is the fourth of many stylesheets to make HTML generated from markdown look beautiful. A list of all available stylesheets can be found [here](https://github.com/markdowncss).
+
+#### A markdown theme that is rather modest.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vehicula pharetra ultricies. Cras magna turpis, vestibulum ut arcu et, rutrum porta velit. Curabitur luctus erat a velit tincidunt, vel malesuada nibh tempor.
+Mauris condimentum quam lorem, in finibus eros faucibus id. Nunc erat metus, fringilla dignissim faucibus id, malesuada quis justo.
+
+  > Vestibulum erat augue, feugiat vitae porttitor vel, condimentum quis ipsum. Etiam sagittis eros et dolor semper congue.
+
+Curabitur ac euismod turpis. Maecenas gravida viverra augue quis scelerisque. Vivamus quis massa elementum odio pharetra efficitur at eget nibh. Donec varius purus quis nisi gravida tristique. Quisque dictum justo nec nulla hendrerit aliquet.
+
+<div>
+  <img src="https://cloud.githubusercontent.com/assets/1424573/4785631/dc5ddcd2-5d82-11e4-88a2-06fdabbe4fb8.png">
+</div>
+
+Duis ac ultrices nunc. Proin elit augue, fringilla at varius at, interdum ut justo. Sed sed eros a leo molestie bibendum. Nullam ac justo malesuada, euismod dui at, finibus purus. Sed mi risus, porta ac sem ac, commodo semper risus.
+
+#### Some example code:
+
+\`\`\`js
+gulp.task('watch', function() {
+  gulp.watch('*.md', function() {
+    gulp.start('md', 'html');
+  });
+
+  gulp.watch('*.css', function() {
+    gulp.start('css');
+  });
+});
+\`\`\`
+
+#### Lists
+
+  * Apples
+  * Citrus
+    * Oranges
+    * Grapefruit
+  * Potatoes
+  * Milk
+
+  1. Mow the lawn
+  2. Feed the dog
+  3. Dance
+
+Crafted with <3 by [John Otander](http://johnotander.com) ([@4lpine](https://twitter.com/4lpine)).                
+                `,
                 rewardStatus: ProposalRewardStatus.AcceptVotes,
                 lastUpdated: 1658394134000,
                 created: 1658094134000,

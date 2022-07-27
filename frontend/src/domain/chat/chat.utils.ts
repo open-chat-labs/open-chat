@@ -931,10 +931,11 @@ function mergeMessageEvents(
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
-    if (existing.event.kind === "message" &&
+    if (
+        existing.event.kind === "message" &&
         incoming.event.kind === "message" &&
-        existing.event.messageId === incoming.event.messageId)
-    {
+        existing.event.messageId === incoming.event.messageId
+    ) {
         const key = existing.event.messageId.toString();
         const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
         return {

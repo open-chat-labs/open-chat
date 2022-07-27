@@ -222,18 +222,6 @@
 {/if}
 
 <style type="text/scss">
-    :global(.summary .markdown-wrapper h2) {
-        @include font(bold, normal, fs-90);
-    }
-
-    :global(.summary .markdown-wrapper p) {
-        margin-bottom: $sp3;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-
     .header {
         display: flex;
         justify-content: space-between;
@@ -242,11 +230,12 @@
 
         .title-block {
             .title {
-                @include font-size(fs-120);
+                @include font-size(fs-140);
                 margin-bottom: toRem(4);
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
                 text-underline-offset: 2px;
+                word-break: break-all;
 
                 a {
                     display: flex;
@@ -287,6 +276,8 @@
         overflow-y: auto;
         cursor: pointer;
         position: relative;
+        overflow-x: hidden;
+        color: var(--markdown-fg-color);
 
         &.expanded {
             transition: max-height ease-in 200ms;
