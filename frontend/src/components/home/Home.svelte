@@ -217,6 +217,7 @@
         // wait until we have loaded the chats
         if ($chatsInitialised) {
             if ($pathParams.chatId === "threads") {
+                closeThread();
                 clearSelectedChat(false);
                 hotGroups = { kind: "idle" };
             } else if ($pathParams.chatId === "share") {
