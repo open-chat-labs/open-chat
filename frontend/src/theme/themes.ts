@@ -290,6 +290,17 @@ export interface Theme {
             hv: string;
         };
     };
+
+    markdown: {
+        fg: {
+            color: string;
+            bright: string;
+            muted: string;
+        };
+        bg: {
+            dark: string;
+        };
+    };
 }
 
 export type Themes = {

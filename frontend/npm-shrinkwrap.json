@@ -26404,7 +26404,7 @@
         },
         "svelte-markdown": {
             "version": "git+ssh://git@github.com/open-ic/svelte-markdown.git#7ffcfea141cd2e667242c7b284113f027650ff34",
-            "from": "svelte-markdown@https://github.com/open-ic/svelte-markdown",
+            "from": "svelte-markdown@github:open-ic/svelte-markdown",
             "requires": {
                 "@types/marked": "^4.0.1",
                 "marked": "^4.0.10"

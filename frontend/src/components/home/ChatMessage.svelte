@@ -118,6 +118,9 @@
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
+    $: isProposal = msg.content.kind === "proposal_content";
+    $: isFirst = first || isProposal;
+    $: isLast = last || isProposal;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -372,7 +375,7 @@
         on:close={closeUserProfile} />
 {/if}
 
-<div class="message-wrapper" class:last>
+<div class="message-wrapper" class:last={isLast}>
     <div
         bind:this={msgElement}
         class="message"
@@ -392,7 +395,7 @@
 
         {#if showAvatar}
             <div class="avatar-col">
-                {#if first}
+                {#if isFirst}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
                             url={userAvatarUrl(sender)}
@@ -409,19 +412,20 @@
                 : undefined}
             on:dblclick={editMessage}
             class="message-bubble"
-            class:bot={isBot}
+            class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
             class:fill={fill && !deleted}
             class:me
             class:deleted
-            class:first
-            class:last
+            class:first={isFirst}
+            class:last={isLast}
             class:readByMe
             class:crypto
+            class:full-width={isProposal}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && msg.content.kind !== "proposal_content"}
+            {#if isFirst && !me && groupChat && msg.content.kind !== "proposal_content"}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -463,10 +467,10 @@
                 {preview}
                 {fill}
                 {me}
-                {first}
                 {groupChat}
                 {senderId}
                 {chatId}
+                first={isFirst}
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
@@ -852,6 +856,11 @@
             max-width: 90%;
         }
 
+        &.full-width {
+            max-width: none;
+            width: 100%;
+        }
+
         .username {
             color: inherit;
             color: var(--accent);
@@ -946,7 +955,7 @@
             opacity: 0.8;
         }
 
-        &.bot {
+        &.bot-font {
             font-family: courier;
         }
 
