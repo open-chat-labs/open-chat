@@ -1,12 +1,12 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
 use group_canister::register_proposal_vote::{Response::*, *};
+use ic_cdk_macros::update;
 use types::{CanisterId, MessageContentInternal, ProposalId, UserId};
 
-#[update_msgpack]
+#[update]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
