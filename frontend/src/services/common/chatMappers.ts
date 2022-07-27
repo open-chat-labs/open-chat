@@ -76,7 +76,6 @@ import type {
 } from "../user/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
-import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -901,7 +900,6 @@ function apiICP(amountE8s: bigint): ApiICP {
 }
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
-    const ownerId = candid.owner_id.toString();
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
@@ -928,7 +926,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
-        ownerId,
+        ownerId: candid.owner_id.toString(),
         permissions: {
             changePermissions: "owner",
             changeRoles: "owner",
@@ -947,7 +945,6 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: ownerId === PROPOSALS_BOT_USER_ID,
     };
 }
 

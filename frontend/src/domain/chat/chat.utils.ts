@@ -1162,7 +1162,6 @@ export function groupChatFromCandidate(
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: userId === PROPOSALS_BOT_USER_ID,
     };
 }
 

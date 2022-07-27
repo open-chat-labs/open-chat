@@ -802,7 +802,6 @@ export type GroupChatSummary = DataContent &
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
-        isProposalGroup: boolean;
     };
 
 export type Mention = {
