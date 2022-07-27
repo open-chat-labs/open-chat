@@ -145,6 +145,16 @@
             a {
                 text-decoration: underline;
             }
+
+            img,
+            canvas,
+            iframe,
+            video,
+            svg,
+            select,
+            textarea {
+                max-width: 100%;
+            }
         }
     }
 
