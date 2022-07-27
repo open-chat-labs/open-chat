@@ -23,7 +23,7 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { currentUserStore } from "../../stores/chat";
-    import { proposalVotes, ProposalVoteStatus } from "../../stores/proposalVotes";
+    import { proposalVotes } from "../../stores/proposalVotes";
 
     export let content: ProposalContent;
     export let chatId: string;
@@ -65,32 +65,25 @@
         expanded = !expanded;
     }
 
-    function setVoteStatus(status: ProposalVoteStatus) {
-        proposalVotes.insert(messageId, status);
-    }
-
-    function setVotingIdle() {
-        if (voteStatus === "adopting" || voteStatus === "rejecting") {
-            proposalVotes.delete(messageId);
-        }
-    }
-
     function onVote(adopt: boolean) {
         if (votingDisabled) {
             return;
         }
 
-        setVoteStatus(adopt ? "adopting" : "rejecting");
+        const mId = messageId;
+        proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
         if (process.env.ENABLE_PROPOSAL_TESTING) {
             setTimeout(() => {
-                setVoteStatus(adopt ? "adopted" : "rejected");
+                proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
             }, 2000);
         } else {
+            let success = false;
             api.registerProposalVote(chatId, messageIndex, adopt)
                 .then((resp) => {
                     if (resp === "success") {
-                        setVoteStatus(adopt ? "adopted" : "rejected");
+                        success = true;
+                        proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
                     } else if (resp === "no_eligible_neurons") {
                         showNeuronInfo = true;
                     } else {
@@ -102,7 +95,11 @@
                     rollbar.error("Unable to vote on proposal", err);
                     toastStore.showFailureToast("proposal.voteFailed");
                 })
-                .finally(() => setVotingIdle());
+                .finally(() => {
+                    if (!success) {
+                        proposalVotes.delete(mId);
+                    }
+                });
         }
     }
 
