@@ -326,6 +326,9 @@ impl AllChatEvents {
         {
             match proposal.votes.entry(user_id) {
                 Vacant(e) => {
+                    // We choose not to update the `last_updated` field on the message here because
+                    // the update is private, only visible to the current user, and updating the
+                    // field would cause the message to be returned to all users unnecessarily.
                     e.insert(adopt);
                     RecordProposalVoteResult::Success
                 }
