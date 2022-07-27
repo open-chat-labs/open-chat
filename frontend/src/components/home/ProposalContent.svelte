@@ -23,20 +23,21 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { currentUserStore } from "../../stores/chat";
+    import { proposalVotes } from "../../stores/proposalVotes";
 
     export let content: ProposalContent;
     export let chatId: string;
     export let messageIndex: number;
+    export let messageId: bigint;
 
     const api: ServiceContainer = getContext(apiKey);
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
     let expanded = false;
-    let voting: "idle" | "adopting" | "rejecting" = "idle";
     let showNeuronInfo = false;
 
-    $: myVote = content.myVote;
+    $: voteStatus = $proposalVotes.get(messageId) ?? (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
     $: proposal = content.proposal;
     $: positive =
         proposal.status == ProposalDecisionStatus.Adopted ||
@@ -51,7 +52,7 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = myVote !== undefined || voting !== "idle" || votingEnded;
+    $: votingDisabled = voteStatus !== undefined || votingEnded;
     $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
@@ -69,18 +70,20 @@
             return;
         }
 
-        voting = adopt ? "adopting" : "rejecting";
+        const mId = messageId;
+        proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
         if (process.env.ENABLE_PROPOSAL_TESTING) {
             setTimeout(() => {
-                voting = "idle";
-                myVote = adopt;
+                proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
             }, 2000);
         } else {
+            let success = false;
             api.registerProposalVote(chatId, messageIndex, adopt)
                 .then((resp) => {
                     if (resp === "success") {
-                        myVote = adopt;
+                        success = true;
+                        proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
                     } else if (resp === "no_eligible_neurons") {
                         showNeuronInfo = true;
                     } else {
@@ -92,7 +95,11 @@
                     rollbar.error("Unable to vote on proposal", err);
                     toastStore.showFailureToast("proposal.voteFailed");
                 })
-                .finally(() => (voting = "idle"));
+                .finally(() => {
+                    if (!success) {
+                        proposalVotes.delete(mId);
+                    }
+                });
         }
     }
 
@@ -100,7 +107,7 @@
         resp: RegisterProposalVoteResponse
     ): string | undefined {
         if (resp === "already_voted") return "alreadyVoted";
-        if (resp === "proposal_not_accepting_votes") return "proposalNotAceptingVotes";
+        if (resp === "proposal_not_accepting_votes") return "proposalNotAcceptingVotes";
         return "voteFailed";
     }
 
@@ -172,26 +179,26 @@
     </div>
 </div>
 
-<div class="vote" class:voted={myVote !== undefined}>
+<div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
     <button
         class="adopt"
-        class:voting={voting === "adopting"}
+        class:voting={voteStatus === "adopting"}
         class:disabled={votingDisabled}
-        class:gray={myVote === false || votingEnded}
+        class:gray={voteStatus === "rejected" || votingEnded}
         on:click={() => onVote(true)}>
         <div class="contents">
-            <div>{$_("proposal." + (myVote === true ? "youVotedAdopt" : "adopt"))}</div>
+            <div>{$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}</div>
             <div class="icon"><ThumbUp /></div>
         </div>
     </button>
     <button
         class="reject"
-        class:voting={voting === "rejecting"}
+        class:voting={voteStatus === "rejecting"}
         class:disabled={votingDisabled}
-        class:gray={myVote === true || votingEnded}
+        class:gray={voteStatus === "adopted" || votingEnded}
         on:click={() => onVote(false)}>
         <div class="contents">
-            <div>{$_("proposal." + (myVote === false ? "youVotedReject" : "reject"))}</div>
+            <div>{$_("proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject"))}</div>
             <div class="icon"><ThumbDown /></div>
         </div>
     </button>
