@@ -422,7 +422,7 @@
             class:last={isLast}
             class:readByMe
             class:crypto
-            class:full-width={isProposal && !inThread}
+            class:full-width={isProposal}
             class:thread={inThread}
             class:rtl={$rtlStore}>
             {#if isFirst && !me && groupChat && msg.content.kind !== "proposal_content"}
