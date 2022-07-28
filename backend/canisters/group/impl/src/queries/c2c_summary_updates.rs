@@ -4,7 +4,7 @@ use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use std::collections::HashSet;
 use types::{
-    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate,
+    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, OptionUpdate,
     TimestampMillis, UserId, MAX_RETURNED_MENTIONS, MAX_THREADS_IN_SUMMARY,
 };
 
