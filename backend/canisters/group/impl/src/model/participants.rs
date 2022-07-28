@@ -1,11 +1,12 @@
+use crate::model::mentions::Mentions;
 use candid::Principal;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::mem;
 use types::{
-    EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
-    UserId, MAX_RETURNED_MENTIONS,
+    EventIndex, FallbackRole, GroupPermissions, MentionInternal, MessageIndex, Participant, Role, TimestampMillis, UserId,
 };
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
@@ -20,6 +21,21 @@ pub struct Participants {
 
 #[allow(clippy::too_many_arguments)]
 impl Participants {
+    pub fn migrate_mentions(&mut self, chat_events: &ChatEvents) {
+        for participant in self.by_principal.values_mut() {
+            for mention in mem::take(&mut participant.mentions)
+                .into_iter()
+                .filter(|m| m.thread_root_message_index.is_none())
+            {
+                let timestamp = chat_events
+                    .message_internal_by_message_index(mention.message_index)
+                    .unwrap()
+                    .timestamp;
+                participant.mentions_v2.add(mention, timestamp);
+            }
+        }
+    }
+
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
         let participant = ParticipantInternal {
             user_id: creator_user_id,
@@ -29,6 +45,7 @@ impl Participants {
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
             mentions: Vec::new(),
+            mentions_v2: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
         };
@@ -64,6 +81,7 @@ impl Participants {
                         min_visible_message_index,
                         notifications_muted,
                         mentions: Vec::new(),
+                        mentions_v2: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                     };
@@ -308,25 +326,6 @@ impl Participants {
         self.admin_count
     }
 
-    pub fn add_mention(
-        &mut self,
-        user_id: &UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-    ) -> bool {
-        if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.last().map_or(true, |m| m.message_index < message_index) {
-                p.mentions.push(MentionInternal {
-                    thread_root_message_index,
-                    message_index,
-                });
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
             p.threads.insert(root_message_index);
@@ -375,6 +374,8 @@ pub struct ParticipantInternal {
     pub role: Role,
     pub notifications_muted: bool,
     pub mentions: Vec<MentionInternal>,
+    #[serde(default)]
+    pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
@@ -397,15 +398,6 @@ impl ParticipantInternal {
         } else {
             self.min_visible_message_index
         }
-    }
-
-    pub fn get_most_recent_mentions(&self, events: &ChatEvents) -> Vec<Mention> {
-        self.mentions
-            .iter()
-            .rev()
-            .filter_map(|message_index| events.hydrate_mention(message_index))
-            .take(MAX_RETURNED_MENTIONS)
-            .collect()
     }
 }
 

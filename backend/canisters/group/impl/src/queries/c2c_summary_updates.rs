@@ -100,6 +100,13 @@ fn process_events(
         .filter_map(|m| chat_events.get_event_index_by_message_index(m))
         .collect();
 
+    let mentions = participant
+        .mentions_v2
+        .iter_most_recent(Some(since))
+        .filter_map(|m| runtime_state.data.events.hydrate_mention(m))
+        .take(MAX_RETURNED_MENTIONS)
+        .collect();
+
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
@@ -107,11 +114,11 @@ fn process_events(
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
         latest_update,
         affected_events: new_proposal_votes,
+        mentions,
         ..Default::default()
     };
 
     // Iterate through events starting from most recent
-    let mut lowest_message_index = None;
     for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
             if updates.latest_update.map_or(true, |t| t < event_wrapper.timestamp) {
@@ -170,9 +177,6 @@ fn process_events(
             | ChatEventInternal::UsersUnblocked(_) => {
                 updates.participants_changed = true;
             }
-            ChatEventInternal::Message(message) => {
-                lowest_message_index = Some(message.message_index);
-            }
             ChatEventInternal::OwnershipTransferred(ownership) => {
                 let caller = runtime_state.env.caller().into();
                 if ownership.new_owner == caller || ownership.old_owner == caller {
@@ -192,19 +196,6 @@ fn process_events(
             }
             _ => {}
         }
-    }
-
-    if let Some(lowest_message_index) = lowest_message_index {
-        updates.mentions = participant
-            .mentions
-            .iter()
-            .rev()
-            .take_while(|m| m.message_index >= lowest_message_index)
-            .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
-            .take(MAX_RETURNED_MENTIONS)
-            .collect();
-
-        updates.mentions.reverse();
     }
 
     updates
