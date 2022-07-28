@@ -1048,15 +1048,18 @@ impl ChatEvents {
     }
 
     pub fn hydrate_mention(&self, message_index: &MessageIndex) -> Option<Mention> {
-        let event_index = *self.message_index_map.get(&message_index)?;
-
-        self.get(event_index).and_then(|e| e.event.as_message()).map(|m| Mention {
-            thread_root_message_index: self.thread_root_message_index,
-            message_id: m.message_id,
-            message_index: m.message_index,
-            event_index,
-            mentioned_by: m.sender,
-        })
+        self.message_index_map
+            .get(message_index)
+            .and_then(|event_index| self.get(*event_index))
+            .and_then(|e| {
+                e.event.as_message().map(|m| Mention {
+                    thread_root_message_index: self.thread_root_message_index,
+                    message_id: m.message_id,
+                    message_index: m.message_index,
+                    event_index: e.index,
+                    mentioned_by: m.sender,
+                })
+            })
     }
 
     pub fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
