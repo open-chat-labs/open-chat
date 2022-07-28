@@ -654,7 +654,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
-            mentions: candid.Group.mentions.map(mention),
+            mentions: candid.Group.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
             ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
@@ -771,7 +771,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         notificationsMuted: candid.notifications_muted,
         participantCount: candid.participant_count,
         myRole: participantRole(candid.role),
-        mentions: candid.mentions.map(mention),
+        mentions: candid.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
         ownerId,
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
