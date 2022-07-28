@@ -111,7 +111,7 @@ fn process_events(
     };
 
     // Iterate through events starting from most recent
-    let mut lowest_message_index: MessageIndex = u32::MIN.into();
+    let mut lowest_message_index = None;
     for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
             if updates.latest_update.map_or(true, |t| t < event_wrapper.timestamp) {
@@ -171,7 +171,7 @@ fn process_events(
                 updates.participants_changed = true;
             }
             ChatEventInternal::Message(message) => {
-                lowest_message_index = message.message_index;
+                lowest_message_index = Some(message.message_index);
             }
             ChatEventInternal::OwnershipTransferred(ownership) => {
                 let caller = runtime_state.env.caller().into();
@@ -194,16 +194,18 @@ fn process_events(
         }
     }
 
-    updates.mentions = participant
-        .mentions
-        .iter()
-        .rev()
-        .take_while(|m| m.message_index >= lowest_message_index)
-        .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
-        .take(MAX_RETURNED_MENTIONS)
-        .collect();
+    if let Some(lowest_message_index) = lowest_message_index {
+        updates.mentions = participant
+            .mentions
+            .iter()
+            .rev()
+            .take_while(|m| m.message_index >= lowest_message_index)
+            .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
+            .take(MAX_RETURNED_MENTIONS)
+            .collect();
 
-    updates.mentions.reverse();
+        updates.mentions.reverse();
+    }
 
     updates
 }
