@@ -557,7 +557,7 @@
                                             size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("reply")}</div>
+                                        <div slot="text">{$_("quoteReply")}</div>
                                     </MenuItem>
                                     {#if !inThread && threadsEnabled}
                                         <MenuItem on:click={initiateThread}>

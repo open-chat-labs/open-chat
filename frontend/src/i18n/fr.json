@@ -577,5 +577,6 @@
         "viewOnDashboard": "vue sur tableau de bord"
     },
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "quoteReply": "Citer la réponse"
 }
