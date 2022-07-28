@@ -393,7 +393,7 @@
             "reactToMessages": "reagire ai messaggi",
             "inviteUsers": "invitare gli utenti",
             "notPermitted": "Non sei autorizzato a {permission}",
-            "replyInThread": "Rispondi nel thread"
+            "replyInThread": "rispondi nel thread"
         },
         "advanced": "Avanzate",
         "invite": {
@@ -577,5 +577,6 @@
         "viewOnDashboard": "vista sul cruscotto"
     },
     "yes": "sì",
-    "no": "No"
+    "no": "No",
+    "quoteReply": "Citare la risposta"
 }

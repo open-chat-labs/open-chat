@@ -393,7 +393,7 @@
             "reactToMessages": "реагировать на сообщения",
             "inviteUsers": "пригласить пользователей",
             "notPermitted": "Вам не разрешено {permission}",
-            "replyInThread": "Ответить в теме"
+            "replyInThread": "ответ в теме"
         },
         "advanced": "Передовой",
         "invite": {
@@ -577,5 +577,6 @@
         "viewOnDashboard": "посмотреть на приборной панели"
     },
     "yes": "Да",
-    "no": "Нет"
+    "no": "Нет",
+    "quoteReply": "Цитировать ответ"
 }
