@@ -551,14 +551,16 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed && canSend && supportsReply}
-                                    <MenuItem on:click={reply}>
-                                        <Reply
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("quoteReply")}</div>
-                                    </MenuItem>
+                                {#if confirmed && supportsReply}
+                                    {#if canSend}
+                                        <MenuItem on:click={reply}>
+                                            <Reply
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("quoteReply")}</div>
+                                        </MenuItem>
+                                    {/if}
                                     {#if !inThread && threadsEnabled}
                                         <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
