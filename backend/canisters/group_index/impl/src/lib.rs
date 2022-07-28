@@ -91,7 +91,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-    #[serde(default)]
     pub max_concurrent_canister_upgrades: usize,
 }
 

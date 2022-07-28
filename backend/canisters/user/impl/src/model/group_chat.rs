@@ -10,7 +10,6 @@ pub struct GroupChat {
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
     pub is_super_admin: bool,
-    #[serde(default)]
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
 
