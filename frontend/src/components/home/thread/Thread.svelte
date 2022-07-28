@@ -241,6 +241,7 @@
         );
 
         const userIds = userIdsFromEvents(updated);
+        userIds.add(rootEvent.event.sender);
         await controller.updateUserStore(userIds);
 
         return [updated, userIds];
