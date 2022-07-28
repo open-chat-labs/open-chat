@@ -135,7 +135,6 @@ struct Data {
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
-    #[serde(default)]
     pub max_concurrent_canister_upgrades: usize,
 }
 

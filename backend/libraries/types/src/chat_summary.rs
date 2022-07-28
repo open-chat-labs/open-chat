@@ -171,7 +171,6 @@ pub struct GroupChatSummaryInternal {
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
-    #[serde(default)]
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 
@@ -286,7 +285,6 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
-    #[serde(default)]
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
 }
 

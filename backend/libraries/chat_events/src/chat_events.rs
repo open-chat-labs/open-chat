@@ -3,7 +3,7 @@ use crate::{ProposalsUpdatedInternal, ThreadUpdatedInternal};
 use candid::{CandidType, Principal};
 use itertools::Itertools;
 use search::*;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
@@ -13,37 +13,14 @@ use types::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct AllChatEvents {
-    #[serde(default = "anon_chat_id")]
     chat_id: ChatId,
     main: ChatEvents,
     threads: HashMap<MessageIndex, ChatEvents>,
-    #[serde(default)]
     metrics: ChatMetrics,
-    #[serde(default)]
     per_user_metrics: HashMap<UserId, ChatMetrics>,
 }
 
-fn anon_chat_id() -> ChatId {
-    Principal::anonymous().into()
-}
-
 impl AllChatEvents {
-    pub fn temp_wire_up_metrics(&mut self) {
-        self.chat_id = self.main.chat_id;
-        self.metrics = self.main.metrics.clone();
-        self.per_user_metrics = self.main.per_user_metrics.clone();
-    }
-
-    pub fn tmp_from_chat_events(chat_events: ChatEvents) -> AllChatEvents {
-        AllChatEvents {
-            chat_id: chat_events.chat_id,
-            threads: HashMap::new(),
-            metrics: chat_events.metrics.clone(),
-            per_user_metrics: chat_events.per_user_metrics.clone(),
-            main: chat_events,
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
@@ -51,8 +28,6 @@ impl AllChatEvents {
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: BTreeMap::new(),
-            metrics: ChatMetrics::default(),
-            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -79,8 +54,6 @@ impl AllChatEvents {
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: BTreeMap::new(),
-            metrics: ChatMetrics::default(),
-            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(
@@ -290,25 +263,6 @@ impl AllChatEvents {
             }
         }
         EndPollResult::PollNotFound
-    }
-
-    // Note: tmp method - delete after next user + group deployment
-    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
-        let mut overdue_polls = Vec::new();
-
-        for message in self.main.iter().filter_map(|e| e.event.as_message()) {
-            if let MessageContentInternal::Poll(p) = &message.content {
-                if let Some(end_date) = p.config.end_date {
-                    if end_date < now {
-                        overdue_polls.push(message.message_index);
-                    }
-                }
-            }
-        }
-
-        for message_index in overdue_polls {
-            self.end_poll(None, message_index, now);
-        }
     }
 
     pub fn record_proposal_vote(
@@ -720,19 +674,7 @@ pub struct ChatEvents {
     events_type: ChatEventsType,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
-    #[serde(deserialize_with = "deserialize_message_index_map")]
     message_index_map: BTreeMap<MessageIndex, EventIndex>,
-    metrics: ChatMetrics,
-    per_user_metrics: HashMap<UserId, ChatMetrics>,
-}
-
-fn deserialize_message_index_map<'de, D>(deserializer: D) -> Result<BTreeMap<MessageIndex, EventIndex>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let message_index_map: HashMap<MessageIndex, EventIndex> = de::Deserialize::deserialize(deserializer)?;
-
-    Ok(message_index_map.into_iter().collect())
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -804,13 +746,11 @@ pub enum ToggleReactionResult {
 impl ChatEvents {
     pub fn new_thread() -> ChatEvents {
         ChatEvents {
-            chat_id: anon_chat_id(),
+            chat_id: Principal::anonymous().into(),
             events_type: ChatEventsType::Thread,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: BTreeMap::new(),
-            metrics: ChatMetrics::default(),
-            per_user_metrics: HashMap::new(),
         }
     }
 

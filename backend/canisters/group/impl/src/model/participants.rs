@@ -375,9 +375,7 @@ pub struct ParticipantInternal {
     pub role: Role,
     pub notifications_muted: bool,
     pub mentions: Vec<MentionInternal>,
-    #[serde(default)]
     pub threads: HashSet<MessageIndex>,
-    #[serde(default)]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
     min_visible_event_index: EventIndex,

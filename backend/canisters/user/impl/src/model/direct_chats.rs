@@ -12,12 +12,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.end_overdue_polls(now);
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }
