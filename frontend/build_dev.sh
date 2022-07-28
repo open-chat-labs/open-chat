@@ -10,6 +10,5 @@ export LEDGER_CANISTER_BTC=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_CHAT=ryjl3-tyaaa-aaaaa-aaaba-cai
 export BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/{blobType}/
 export ENABLE_MULTI_CRYPTO=true
-export ENABLE_PROPOSAL_TESTING=true
 
 npx rollup -c $WATCH

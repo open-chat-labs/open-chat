@@ -37,7 +37,9 @@
     let expanded = false;
     let showNeuronInfo = false;
 
-    $: voteStatus = $proposalVotes.get(messageId) ?? (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
+    $: voteStatus =
+        $proposalVotes.get(messageId) ??
+        (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
     $: proposal = content.proposal;
     $: positive =
         proposal.status == ProposalDecisionStatus.Adopted ||
@@ -73,34 +75,28 @@
         const mId = messageId;
         proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
-        if (process.env.ENABLE_PROPOSAL_TESTING) {
-            setTimeout(() => {
-                proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-            }, 2000);
-        } else {
-            let success = false;
-            api.registerProposalVote(chatId, messageIndex, adopt)
-                .then((resp) => {
-                    if (resp === "success") {
-                        success = true;
-                        proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-                    } else if (resp === "no_eligible_neurons") {
-                        showNeuronInfo = true;
-                    } else {
-                        const err = registerProposalVoteErrorMessage(resp);
-                        if (err) toastStore.showFailureToast("proposal." + err);
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Unable to vote on proposal", err);
-                    toastStore.showFailureToast("proposal.voteFailed");
-                })
-                .finally(() => {
-                    if (!success) {
-                        proposalVotes.delete(mId);
-                    }
-                });
-        }
+        let success = false;
+        api.registerProposalVote(chatId, messageIndex, adopt)
+            .then((resp) => {
+                if (resp === "success") {
+                    success = true;
+                    proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
+                } else if (resp === "no_eligible_neurons") {
+                    showNeuronInfo = true;
+                } else {
+                    const err = registerProposalVoteErrorMessage(resp);
+                    if (err) toastStore.showFailureToast("proposal." + err);
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to vote on proposal", err);
+                toastStore.showFailureToast("proposal.voteFailed");
+            })
+            .finally(() => {
+                if (!success) {
+                    proposalVotes.delete(mId);
+                }
+            });
     }
 
     function registerProposalVoteErrorMessage(
