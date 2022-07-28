@@ -417,7 +417,7 @@
             "reactToMessages": "react to messages",
             "inviteUsers": "invite users",
             "notPermitted": "You are not permitted to {permission}",
-            "replyInThread": "Reply in thread"
+            "replyInThread": "reply in thread"
         },
         "invite": {
             "inviteWithLink": "Invite to group via link",

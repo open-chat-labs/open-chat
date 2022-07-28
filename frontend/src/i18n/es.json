@@ -394,7 +394,7 @@
             "reactToMessages": "reaccionar a los mensajes",
             "inviteUsers": "invitar a los usuarios",
             "notPermitted": "No tienes permiso para {permission}",
-            "replyInThread": "Responder en hilo"
+            "replyInThread": "responder en el hilo"
         },
         "advanced": "Avanzado",
         "invite": {

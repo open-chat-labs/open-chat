@@ -394,7 +394,7 @@
             "reactToMessages": "phản ứng với tin nhắn",
             "inviteUsers": "mời người dùng",
             "notPermitted": "Bạn không được phép {permission}",
-            "replyInThread": "Trả lời trong chuỗi"
+            "replyInThread": "trả lời trong chuỗi"
         },
         "advanced": "Trình độ cao",
         "invite": {

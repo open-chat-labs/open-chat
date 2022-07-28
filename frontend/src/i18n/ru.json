@@ -393,7 +393,7 @@
             "reactToMessages": "реагировать на сообщения",
             "inviteUsers": "пригласить пользователей",
             "notPermitted": "Вам не разрешено {permission}",
-            "replyInThread": "Ответить в теме"
+            "replyInThread": "ответ в теме"
         },
         "advanced": "Передовой",
         "invite": {
