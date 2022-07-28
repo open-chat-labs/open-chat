@@ -61,7 +61,7 @@ import {
     updatePermissionsResponse,
     threadPreviewsResponse,
     registerPollVoteResponse,
-	registerProposalVoteResponse,
+    registerProposalVoteResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -72,7 +72,6 @@ import {
     apiOptional,
     apiUpdatePermissions,
     apiUser,
-    publicSummaryResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
@@ -81,6 +80,7 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { base64ToBigint } from "../../utils/base64";
+import { publicSummaryResponse } from "../common/publicSummaryMapper";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;

@@ -1,10 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
-import type {
-    ApiPublicGroupSummary,
-    ApiPublicSummaryResponse,
-    ApiUpdatePermissionsArgs,
-} from "../group/candid/idl";
+import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
 import {
     FileContent,
     ImageContent,
@@ -20,7 +16,6 @@ import {
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     CompletedCryptocurrencyTransfer,
-    GroupChatSummary,
     PollContent,
     PollVotes,
     TotalPollVotes,
@@ -74,7 +69,6 @@ import type {
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
 } from "../user/candid/idl";
-import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -897,61 +891,4 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
-}
-
-export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
-    return {
-        kind: "group_chat",
-        chatId: candid.chat_id.toString(),
-        readByMe: new DRange(),
-        latestEventIndex: candid.latest_event_index,
-        latestMessage: optional(candid.latest_message, (ev) => ({
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        })),
-        notificationsMuted: true,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisibleToNewJoiners: false,
-        joined: BigInt(Date.now()),
-        minVisibleEventIndex: 0,
-        minVisibleMessageIndex: 0,
-        lastUpdated: candid.last_updated,
-        participantCount: candid.participant_count,
-        myRole: "previewer",
-        mentions: [],
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.chat_id.toString(),
-        })),
-        ownerId: candid.owner_id.toString(),
-        permissions: {
-            changePermissions: "owner",
-            changeRoles: "owner",
-            addMembers: "owner",
-            removeMembers: "owner",
-            blockUsers: "owner",
-            deleteMessages: "owner",
-            updateGroup: "owner",
-            pinMessages: "owner",
-            inviteUsers: "owner",
-            createPolls: "owner",
-            sendMessages: "owner",
-            reactToMessages: "owner",
-            replyInThread: "owner",
-        },
-        metrics: emptyChatMetrics(),
-        myMetrics: emptyChatMetrics(),
-        latestThreads: [],
-    };
-}
-
-export function publicSummaryResponse(
-    candid: ApiPublicSummaryResponse
-): GroupChatSummary | undefined {
-    if ("Success" in candid) {
-        return publicGroupSummary(candid.Success.summary);
-    }
 }
