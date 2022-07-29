@@ -831,9 +831,9 @@ export type CandidateGroupChat = {
 export type CreateGroupResponse =
     | CreateGroupSuccess
     | CreateGroupInternalError
-    | CreateGroupInvalidName
-    | CreateGroupNameTooLong
     | CreateGroupNameTooShort
+    | CreateGroupNameTooLong
+    | CreateGroupNameReserved
     | CreateGroupDescriptionTooLong
     | GroupNameTaken
     | AvatarTooBig
@@ -858,6 +858,10 @@ export type CreateGroupNameTooLong = {
 export type CreateGroupNameTooShort = {
     kind: "name_too_short";
 };
+
+export type CreateGroupNameReserved = {
+    kind: "name_reserved";
+}
 
 export type CreateGroupDescriptionTooLong = {
     kind: "description_too_long";
@@ -1091,8 +1095,9 @@ export type MarkReadResponse = "success";
 export type UpdateGroupResponse =
     | "success"
     | "not_authorised"
-    | "name_too_long"
     | "name_too_short"
+    | "name_too_long"
+    | "name_reserved"
     | "desc_too_long"
     | "unchanged"
     | "name_taken"

@@ -10,6 +10,7 @@
     import { createEventDispatcher, getContext, tick } from "svelte";
     import { groupChatFromCandidate } from "domain/chat/chat.utils";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { UnsupportedValueError } from "utils/error";
 
     const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
@@ -53,13 +54,16 @@
 
     function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
         if (resp.kind === "success") return undefined;
-        if (resp.kind === "description_too_long") return "groupDescTooLong";
         if (resp.kind === "internal_error") return "groupCreationFailed";
-        if (resp.kind === "invalid_name") return "groupNameInvalid";
+        if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
+        if (resp.kind === "name_reserved") return "groupNameReserved";
+        if (resp.kind === "description_too_long") return "groupDescTooLong";
         if (resp.kind === "group_name_taken") return "groupAlreadyExists";
-        if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
+        if (resp.kind === "throttled") return "groupCreationFailed";
+        throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
     function createGroup() {
