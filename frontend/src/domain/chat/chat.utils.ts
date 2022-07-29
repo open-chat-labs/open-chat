@@ -250,7 +250,7 @@ export function makeRtcConnections(
 
     userIds
         .map((u) => lookup[u])
-        .filter((user) => !rtcConnectionsManager.exists(user.userId))
+        .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
         .map((user) => user.userId)
         .forEach((userId) => {
             rtcConnectionsManager.create(userId, userId);
