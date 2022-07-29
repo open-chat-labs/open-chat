@@ -15,7 +15,7 @@ pub fn validate_name(name: &str, is_public: bool) -> Result<(), NameValidationEr
             length_provided: length as u32,
             max_length: MAX_GROUP_NAME_LENGTH as u32,
         }))
-    } else if is_public && name.to_lowercase().ends_with(" proposals") {
+    } else if is_public && name.to_lowercase().contains("proposals") {
         Err(NameValidationError::Reserved)
     } else {
         Ok(())
