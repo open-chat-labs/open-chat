@@ -1,12 +1,13 @@
 use crate::model::mentions::Mentions;
 use candid::Principal;
-use chat_events::ChatEvents;
+use chat_events::{AllChatEvents, ChatEvents};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use types::{
-    EventIndex, FallbackRole, GroupPermissions, MentionInternal, MessageIndex, Participant, Role, TimestampMillis, UserId,
+    EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
+    UserId, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
@@ -398,6 +399,14 @@ impl ParticipantInternal {
         } else {
             self.min_visible_message_index
         }
+    }
+
+    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &AllChatEvents) -> Vec<Mention> {
+        self.mentions_v2
+            .iter_most_recent(since)
+            .filter_map(|m| chat_events.hydrate_mention(m))
+            .take(MAX_RETURNED_MENTIONS)
+            .collect()
     }
 }
 

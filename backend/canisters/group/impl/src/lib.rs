@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
-    Notification, TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS, MAX_THREADS_IN_SUMMARY,
+    Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -94,12 +94,7 @@ impl RuntimeState {
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant
-                .mentions_v2
-                .iter_most_recent(None)
-                .filter_map(|m| data.events.hydrate_mention(m))
-                .take(MAX_RETURNED_MENTIONS)
-                .collect(),
+            mentions: participant.most_recent_mentions(None, &data.events),
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,

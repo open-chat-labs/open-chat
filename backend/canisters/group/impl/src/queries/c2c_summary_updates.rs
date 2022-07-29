@@ -5,7 +5,7 @@ use group_canister::c2c_summary_updates::{Response::*, *};
 use std::collections::HashSet;
 use types::{
     EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, OptionUpdate,
-    TimestampMillis, UserId, MAX_RETURNED_MENTIONS, MAX_THREADS_IN_SUMMARY,
+    TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query_msgpack]
@@ -100,13 +100,6 @@ fn process_events(
         .filter_map(|m| chat_events.get_event_index_by_message_index(m))
         .collect();
 
-    let mentions = participant
-        .mentions_v2
-        .iter_most_recent(Some(since))
-        .filter_map(|m| runtime_state.data.events.hydrate_mention(m))
-        .take(MAX_RETURNED_MENTIONS)
-        .collect();
-
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
@@ -114,7 +107,7 @@ fn process_events(
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
         latest_update,
         affected_events: new_proposal_votes,
-        mentions,
+        mentions: participant.most_recent_mentions(Some(since), &runtime_state.data.events),
         ..Default::default()
     };
 
