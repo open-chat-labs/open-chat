@@ -1,26 +1,25 @@
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use types::{MentionInternal, MessageIndex, PushIfNotContains, TimestampMillis};
 
+type MainMessageIndex = MessageIndex;
 type ThreadMessageIndex = MessageIndex;
 
 #[derive(Deserialize, Serialize, Default, Clone)]
 pub struct Mentions {
-    by_message_index: BTreeMap<MessageIndex, Vec<Option<ThreadMessageIndex>>>,
+    mentions: BTreeSet<(MainMessageIndex, Option<ThreadMessageIndex>)>,
     by_timestamp: BTreeMap<TimestampMillis, Vec<MentionInternal>>,
 }
 
 impl Mentions {
     pub fn add(&mut self, mention: MentionInternal, now: TimestampMillis) -> bool {
-        let message_index = mention.thread_root_message_index.unwrap_or(mention.message_index);
+        let (main_message_index, thread_message_index) = if let Some(root_message_index) = mention.thread_root_message_index {
+            (root_message_index, Some(mention.message_index))
+        } else {
+            (mention.message_index, None)
+        };
 
-        let thread_message_index = mention.thread_root_message_index.is_some().then_some(mention.message_index);
-        if self
-            .by_message_index
-            .entry(message_index)
-            .or_default()
-            .push_if_not_contains(thread_message_index)
-        {
+        if self.mentions.insert((main_message_index, thread_message_index)) {
             self.by_timestamp.entry(now).or_default().push_if_not_contains(mention);
             true
         } else {
