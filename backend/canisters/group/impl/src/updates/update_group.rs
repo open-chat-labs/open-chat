@@ -65,7 +65,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     let avatar_update = args.avatar.as_ref().expand();
     let avatar_update_size = avatar_update.flatten().map_or(0, |a| a.data.len() as u32);
 
-    if let Err(error) = validate_name(&args.name) {
+    if let Err(error) = validate_name(&args.name, runtime_state.data.is_public) {
         Err(match error {
             NameValidationError::TooShort(s) => NameTooShort(s),
             NameValidationError::TooLong(l) => NameTooLong(l),

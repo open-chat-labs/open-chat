@@ -3,7 +3,7 @@ use types::{FieldTooLongResult, FieldTooShortResult};
 const MIN_GROUP_NAME_LENGTH: usize = 4;
 const MAX_GROUP_NAME_LENGTH: usize = 25;
 
-pub fn validate_name(name: &str) -> Result<(), NameValidationError> {
+pub fn validate_name(name: &str, is_public: bool) -> Result<(), NameValidationError> {
     let length = name.len();
     if length < MIN_GROUP_NAME_LENGTH {
         Err(NameValidationError::TooShort(FieldTooShortResult {
@@ -15,7 +15,7 @@ pub fn validate_name(name: &str) -> Result<(), NameValidationError> {
             length_provided: length as u32,
             max_length: MAX_GROUP_NAME_LENGTH as u32,
         }))
-    } else if name.to_lowercase().ends_with(" proposals") {
+    } else if is_public && name.to_lowercase().ends_with(" proposals") {
         Err(NameValidationError::Reserved)
     } else {
         Ok(())

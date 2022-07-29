@@ -58,7 +58,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         Err(MaxGroupsCreated(max))
     } else if is_throttled() {
         Err(Throttled)
-    } else if let Err(error) = validate_name(&args.name) {
+    } else if let Err(error) = validate_name(&args.name, args.is_public) {
         Err(match error {
             NameValidationError::TooShort(s) => NameTooShort(s),
             NameValidationError::TooLong(l) => NameTooLong(l),
