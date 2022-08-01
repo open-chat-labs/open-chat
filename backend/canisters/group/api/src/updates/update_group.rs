@@ -17,6 +17,7 @@ pub enum Response {
     CallerNotInGroup,
     NameTooShort(FieldTooShortResult),
     NameTooLong(FieldTooLongResult),
+    NameReserved,
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
     NameTaken,

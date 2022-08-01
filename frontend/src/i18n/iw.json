@@ -576,5 +576,7 @@
     },
     "yes": "כן",
     "no": "לא",
-    "quoteReply": "תשובת ציטוט"
+    "quoteReply": "תשובת ציטוט",
+    "groupNameTooShort": "שם הקבוצה קצר מדי",
+    "groupNameReserved": "שם הקבוצה שמור"
 }

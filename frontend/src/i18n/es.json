@@ -579,5 +579,7 @@
     },
     "yes": "Sí",
     "no": "No",
-    "quoteReply": "Citar respuesta"
+    "quoteReply": "Citar respuesta",
+    "groupNameTooShort": "El nombre del grupo es demasiado corto.",
+    "groupNameReserved": "El nombre del grupo está reservado."
 }

@@ -578,5 +578,7 @@
         "additionalContent": "zusätzlicher Inhalt",
         "viewOnDashboard": "auf dem Armaturenbrett anzeigen"
     },
-    "quoteReply": "Antwort zitieren"
+    "quoteReply": "Antwort zitieren",
+    "groupNameTooShort": "Der Gruppenname ist zu kurz",
+    "groupNameReserved": "Der Gruppenname ist reserviert"
 }
