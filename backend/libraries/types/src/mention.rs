@@ -13,7 +13,7 @@ pub struct Mention {
     pub mentioned_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct MentionInternal {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
