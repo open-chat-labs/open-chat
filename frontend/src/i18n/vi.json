@@ -579,5 +579,7 @@
     },
     "yes": "Đúng",
     "no": "Không",
-    "quoteReply": "Trích dẫn câu trả lời"
+    "quoteReply": "Trích dẫn câu trả lời",
+    "groupNameTooShort": "Tên nhóm quá ngắn",
+    "groupNameReserved": "Tên nhóm đã được bảo lưu"
 }

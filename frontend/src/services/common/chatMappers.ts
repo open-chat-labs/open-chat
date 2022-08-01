@@ -1,7 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
 import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
-import {
+import type {
     FileContent,
     ImageContent,
     AudioContent,
@@ -28,7 +28,6 @@ import {
     ThreadSummary,
     ProposalContent,
     Proposal,
-    NnsProposalTopic,
 } from "../../domain/chat/chat";
 import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
