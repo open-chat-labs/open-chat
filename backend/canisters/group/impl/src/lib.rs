@@ -94,7 +94,7 @@ impl RuntimeState {
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.get_most_recent_mentions(data.events.main()),
+            mentions: participant.most_recent_mentions(None, &data.events),
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
