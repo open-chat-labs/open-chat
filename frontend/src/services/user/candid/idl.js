@@ -507,6 +507,12 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const InitUserPrincipalMigrationArgs = IDL.Record({
+    'new_principal' : IDL.Principal,
+  });
+  const InitUserPrincipalMigrationResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const InitialStateArgs = IDL.Record({});
   const Cycles = IDL.Nat;
   const Version = IDL.Record({
@@ -656,6 +662,14 @@ export const idlFactory = ({ IDL }) => {
       'messages' : IDL.Vec(MessageEventWrapper),
       'latest_event_index' : EventIndex,
     }),
+  });
+  const MigrateUserPrincipalArgs = IDL.Record({});
+  const MigrateUserPrincipalResponse = IDL.Variant({
+    'PrincipalAlreadyInUse' : IDL.Null,
+    'MigrationAlreadyInProgress' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'MigrationNotInitialized' : IDL.Null,
   });
   const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const MuteNotificationsResponse = IDL.Variant({
@@ -948,6 +962,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'init_user_principal_migration' : IDL.Func(
+        [InitUserPrincipalMigrationArgs],
+        [InitUserPrincipalMigrationResponse],
+        [],
+      ),
     'initial_state' : IDL.Func(
         [InitialStateArgs],
         [InitialStateResponse],
@@ -960,6 +979,11 @@ export const idlFactory = ({ IDL }) => {
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
         ['query'],
+      ),
+    'migrate_user_principal' : IDL.Func(
+        [MigrateUserPrincipalArgs],
+        [MigrateUserPrincipalResponse],
+        [],
       ),
     'mute_notifications' : IDL.Func(
         [MuteNotificationsArgs],
