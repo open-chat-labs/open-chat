@@ -102,8 +102,7 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
-    let threadsEnabled =
-        canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
+    let threadsEnabled = canReplyInThread;
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
