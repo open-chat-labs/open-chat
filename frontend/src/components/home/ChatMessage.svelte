@@ -102,7 +102,6 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
-    let threadsEnabled = canReplyInThread;
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
@@ -560,7 +559,7 @@
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
                                     {/if}
-                                    {#if !inThread && threadsEnabled}
+                                    {#if !inThread && canReplyInThread}
                                         <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
