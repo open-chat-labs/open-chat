@@ -857,9 +857,8 @@ export interface UpdateGroupArgs {
   'description' : string,
   'avatar' : AvatarUpdate,
 }
-export type UpdateGroupResponse = {
-    'DescriptionTooLong' : FieldTooLongResult
-  } |
+export type UpdateGroupResponse = { 'NameReserved' : null } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |

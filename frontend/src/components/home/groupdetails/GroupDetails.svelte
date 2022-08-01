@@ -47,6 +47,7 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { currentUserKey } from "../../../stores/user";
+    import { UnsupportedValueError } from "utils/error";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -198,12 +199,16 @@
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
         if (resp === "unchanged") return undefined;
+        if (resp === "name_too_short") return "groupNameTooShort";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_reserved") return "groupNameReserved";
         if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
+        if (resp === "not_in_group") return "userNotInGroup";
         if (resp === "internal_error") return "groupUpdateFailed";
         if (resp === "not_authorised") return "groupUpdateFailed";
-        if (resp === "name_too_long") return "groupNameTooLong";
-        if (resp === "name_taken") return "groupAlreadyExists";
-        if (resp === "avatar_too_big") return "avatagTooBig";
+        if (resp === "avatar_too_big") return "avatarTooBig";
+        throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     function doUpdateInfo(): Promise<void> {

@@ -578,5 +578,7 @@
         "additionalContent": "附加内容",
         "viewOnDashboard": "在仪表板上查看"
     },
-    "quoteReply": "报价回复"
+    "quoteReply": "报价回复",
+    "groupNameTooShort": "组名太短",
+    "groupNameReserved": "保留组名"
 }
