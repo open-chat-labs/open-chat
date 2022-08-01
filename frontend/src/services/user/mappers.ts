@@ -453,17 +453,17 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     if ("NameTaken" in candid) {
         return { kind: "group_name_taken" };
     }
-
-    if ("InvalidName" in candid) {
-        return { kind: "invalid_name" };
-    }
-
+    
     if ("NameTooLong" in candid) {
         return { kind: "name_too_long" };
     }
 
     if ("NameTooShort" in candid) {
         return { kind: "name_too_short" };
+    }
+
+    if ("NameReserved" in candid) {
+        return { kind: "name_reserved" };
     }
 
     if ("DescriptionTooLong" in candid) {

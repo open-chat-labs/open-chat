@@ -66,6 +66,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'Throttled' : IDL.Null,

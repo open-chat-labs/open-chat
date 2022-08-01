@@ -145,9 +145,8 @@ export interface CreateGroupArgs {
   'history_visible_to_new_joiners' : boolean,
   'avatar' : [] | [Avatar],
 }
-export type CreateGroupResponse = {
-    'DescriptionTooLong' : FieldTooLongResult
-  } |
+export type CreateGroupResponse = { 'NameReserved' : null } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |

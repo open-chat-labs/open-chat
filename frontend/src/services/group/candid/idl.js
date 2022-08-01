@@ -767,6 +767,7 @@ export const idlFactory = ({ IDL }) => {
     'min_length' : IDL.Nat32,
   });
   const UpdateGroupResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'CallerNotInGroup' : IDL.Null,

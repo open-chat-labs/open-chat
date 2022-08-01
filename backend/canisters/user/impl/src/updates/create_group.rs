@@ -1,11 +1,12 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH, MIN_GROUP_NAME_LENGTH};
+use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH};
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
+use utils::group_validation::{validate_name, NameValidationError};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -57,16 +58,12 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         Err(MaxGroupsCreated(max))
     } else if is_throttled() {
         Err(Throttled)
-    } else if args.name.len() < MIN_GROUP_NAME_LENGTH as usize {
-        Err(NameTooShort(FieldTooShortResult {
-            length_provided: args.name.len() as u32,
-            min_length: MIN_GROUP_NAME_LENGTH,
-        }))
-    } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
-        Err(NameTooLong(FieldTooLongResult {
-            length_provided: args.name.len() as u32,
-            max_length: MAX_GROUP_NAME_LENGTH,
-        }))
+    } else if let Err(error) = validate_name(&args.name, args.is_public) {
+        Err(match error {
+            NameValidationError::TooShort(s) => NameTooShort(s),
+            NameValidationError::TooLong(l) => NameTooLong(l),
+            NameValidationError::Reserved => NameReserved,
+        })
     } else if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
         Err(DescriptionTooLong(FieldTooLongResult {
             length_provided: args.description.len() as u32,
