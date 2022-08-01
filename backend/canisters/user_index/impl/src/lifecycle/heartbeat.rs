@@ -25,8 +25,6 @@ mod upgrade_canisters {
     use super::*;
     type CanisterToUpgrade = utils::canister::CanisterToUpgrade<user_canister::post_upgrade::Args>;
 
-    const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 2;
-
     pub fn run() {
         let canisters_to_upgrade = mutate_state(next_batch);
         if !canisters_to_upgrade.is_empty() {
