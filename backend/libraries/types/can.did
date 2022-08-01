@@ -241,7 +241,6 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
@@ -264,7 +263,6 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
@@ -385,7 +383,6 @@ type PublicGroupSummary =
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         participant_count: nat32;
-        pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
         is_public: bool;

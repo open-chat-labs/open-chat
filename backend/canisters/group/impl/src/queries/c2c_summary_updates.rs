@@ -37,7 +37,6 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
-            pinned_message: OptionUpdate::NoChange,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
             owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,

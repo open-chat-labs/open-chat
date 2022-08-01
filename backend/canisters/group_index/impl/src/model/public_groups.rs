@@ -104,7 +104,6 @@ impl PublicGroups {
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
             participant_count: summary.participant_count,
-            pinned_message: summary.pinned_message,
             wasm_version: group.wasm_version,
             owner_id: summary.owner_id,
             is_public: true,
