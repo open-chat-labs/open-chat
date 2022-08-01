@@ -69,7 +69,6 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
-        MessageNotFound;
     };
 
 type ToggleReactionArgs =
@@ -306,6 +305,24 @@ type UnpinMessageResponse =
         MessageNotFound;
     };
 
+type RegisterProposalVoteArgs =
+    record {
+        message_index: MessageIndex;
+        adopt: bool;
+    };
+
+type RegisterProposalVoteResponse =
+    variant {
+        Success;
+        AlreadyVoted: bool;
+        CallerNotInGroup;
+        NoEligibleNeurons;
+        ProposalMessageNotFound;
+        ProposalNotFound;
+        ProposalNotAcceptingVotes;
+        InternalError: text;
+    };
+
 type DeleteGroupArgs =
     record {
     };
@@ -432,6 +449,26 @@ type MessagesByMessageIndexResponse =
         ThreadMessageNotFound;
     };
 
+type ThreadPreviewsArgs =
+    record {
+        threads: vec MessageIndex;
+    };
+
+type ThreadPreviewsResponse =
+    variant {
+        Success: record {
+            threads: vec ThreadPreview;
+        };
+        CallerNotInGroup;
+    };
+
+type ThreadPreview =
+    record {
+        root_message: MessageEventWrapper;
+        latest_replies: vec MessageEventWrapper;
+        total_replies: nat32;
+    };
+
 type SearchMessagesArgs =
     record {
         search_term: text;
@@ -496,6 +533,7 @@ service: {
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
+    register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
@@ -505,6 +543,7 @@ service: {
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 

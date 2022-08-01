@@ -40,8 +40,12 @@ const permittedMimeTypes: Record<string, string> = {
     "video/webm": "webm",
 };
 
-export function copyMessageUrl(chatId: string, messageIndex: number): void {
-    const url = buildMessageUrl(chatId, messageIndex);
+export function copyMessageUrl(
+    chatId: string,
+    messageIndex: number,
+    threadRootMessageIndex?: number
+): void {
+    const url = buildMessageUrl(chatId, messageIndex, threadRootMessageIndex);
 
     navigator.clipboard.writeText(url).then(
         () => {
@@ -237,6 +241,13 @@ function buildDummyFilename(mimeType: string, title?: string): string {
     return filename;
 }
 
-function buildMessageUrl(chatId: string, messageIndex: number): string {
-    return `${window.location.origin}/#/${chatId}/${messageIndex}`;
+export function buildMessageUrl(
+    chatId: string,
+    messageIndex: number,
+    threadRootMessageIndex?: number
+): string {
+    const chatUrl = `${window.location.origin}/#/${chatId}/`;
+    return threadRootMessageIndex === undefined
+        ? `${chatUrl}${messageIndex}`
+        : `${chatUrl}${threadRootMessageIndex}/${messageIndex}`;
 }

@@ -4,8 +4,8 @@ use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use std::collections::HashSet;
 use types::{
-    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate,
-    TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, OptionUpdate,
+    TimestampMillis, UserId, MAX_RETURNED_MENTIONS, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query_msgpack]
@@ -14,8 +14,8 @@ fn c2c_summary_updates(args: Args) -> Response {
 }
 
 fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let participant = match runtime_state.data.participants.get(caller) {
+    let caller = runtime_state.env.caller().into();
+    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
@@ -42,14 +42,18 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,
             affected_events: updates_from_events.affected_events.into_iter().collect(),
-            metrics: Some(runtime_state.data.events.main.metrics().clone()),
+            metrics: Some(runtime_state.data.events.metrics().clone()),
             my_metrics: runtime_state
                 .data
                 .events
-                .main
                 .user_metrics(&participant.user_id, Some(args.updates_since))
                 .cloned(),
             is_public: updates_from_events.is_public,
+            latest_threads: runtime_state.data.events.latest_threads(
+                &participant.threads,
+                Some(args.updates_since),
+                MAX_THREADS_IN_SUMMARY,
+            ),
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -79,25 +83,44 @@ fn process_events(
     participant: &ParticipantInternal,
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
-    let chat_events = &runtime_state.data.events;
+    let chat_events = &runtime_state.data.events.main();
+
+    let mut latest_update = None;
+    let new_proposal_votes: HashSet<_> = participant
+        .proposal_votes
+        .iter()
+        .rev()
+        .take_while(|(&t, _)| t > since)
+        .flat_map(|(&t, m)| {
+            if latest_update.is_none() {
+                latest_update = Some(t);
+            }
+            m.iter().copied()
+        })
+        .filter_map(|m| chat_events.get_event_index_by_message_index(m))
+        .collect();
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
-        latest_message: chat_events.main.latest_message_if_updated(since, Some(participant.user_id)),
+        latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
+        latest_update,
+        affected_events: new_proposal_votes,
         ..Default::default()
     };
 
     // Iterate through events starting from most recent
-    let mut lowest_message_index: MessageIndex = u32::MIN.into();
-    for event_wrapper in chat_events.main.iter().rev().take_while(|e| e.timestamp > since) {
+    let mut lowest_message_index = None;
+    for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
-            updates.latest_update = Some(event_wrapper.timestamp);
+            if updates.latest_update.map_or(true, |t| t < event_wrapper.timestamp) {
+                updates.latest_update = Some(event_wrapper.timestamp);
+            }
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
-        if let Some(index) = chat_events.main.affected_event_index(&event_wrapper.event) {
+        for index in chat_events.affected_event_indexes(&event_wrapper.event) {
             if updates.affected_events.len() < 100 {
                 updates.affected_events.insert(index);
             }
@@ -148,7 +171,7 @@ fn process_events(
                 updates.participants_changed = true;
             }
             ChatEventInternal::Message(message) => {
-                lowest_message_index = message.message_index;
+                lowest_message_index = Some(message.message_index);
             }
             ChatEventInternal::OwnershipTransferred(ownership) => {
                 let caller = runtime_state.env.caller().into();
@@ -171,16 +194,18 @@ fn process_events(
         }
     }
 
-    updates.mentions = participant
-        .mentions
-        .iter()
-        .rev()
-        .filter(|m| m.message_index >= lowest_message_index)
-        .filter_map(|message_index| runtime_state.data.events.main.hydrate_mention(message_index))
-        .take(MAX_RETURNED_MENTIONS)
-        .collect();
+    if let Some(lowest_message_index) = lowest_message_index {
+        updates.mentions = participant
+            .mentions
+            .iter()
+            .rev()
+            .take_while(|m| m.message_index >= lowest_message_index)
+            .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
+            .take(MAX_RETURNED_MENTIONS)
+            .collect();
 
-    updates.mentions.reverse();
+        updates.mentions.reverse();
+    }
 
     updates
 }

@@ -53,6 +53,10 @@ export function toDateString(date: Date): string {
     return date.toLocaleDateString();
 }
 
+export function toDatetimeString(date: Date): string {
+    return `${date.toLocaleDateString()} ${toShortTimeString(date)}`;
+}
+
 export function toLongDateString(date: Date): string {
     const weekday = date.toLocaleDateString("en", { weekday: "long" });
     const dayOfMonth = date.getDate();

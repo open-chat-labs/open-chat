@@ -392,7 +392,8 @@
             "sendMessages": "メッセージを送る",
             "reactToMessages": "メッセージに反応する",
             "inviteUsers": "ユーザーを招待する",
-            "notPermitted": "{permission}は許可されていません"
+            "notPermitted": "{permission}は許可されていません",
+            "replyInThread": "スレッドで返信"
         },
         "advanced": "高度",
         "invite": {
@@ -537,7 +538,12 @@
         "replies": "返信",
         "reply": "返事",
         "lastMessage": "（最後のメッセージ{date}）",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "スレッド",
+        "openThread": "オープンスレッド",
+        "unread": "未読メッセージを含む{count}スレッド",
+        "moreMessages": "-{number}その他のメッセージ-",
+        "previewFailure": "スレッドプレビューを読み込めません"
     },
     "noChatsAvailable": "チャットはありません！",
     "invitedUsers": "招待されたユーザー",
@@ -550,5 +556,27 @@
         "unpinFailed": "チャットの固定を解除できませんでした-後で試してください",
         "menuItem": "ピンチャット",
         "unpinMenuItem": "チャットの固定を解除する"
-    }
+    },
+    "readOnlyThread": "このスレッドは読み取り専用です",
+    "proposal": {
+        "voteFailed": "投票に失敗しました-後で試してください",
+        "alreadyVoted": "すでに投票しています-ページをリロードしてみてください",
+        "noEligibleNeurons": "適格なニューロンが見つかりません",
+        "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat内から提案に投票するには、最初にOpenChatユーザーIDをホットキーとして投票したいニューロンに追加する必要があります。 OpenChatユーザーIDは次のとおりです。",
+        "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
+        "proposedBy": "によって提案されました",
+        "topic": "トピック",
+        "action": "アクション",
+        "votingPeriodRemaining": "残りの投票期間",
+        "votingPeriodEnded": "投票期間が終了しました",
+        "adopt": "採用",
+        "reject": "拒絶",
+        "youVotedAdopt": "あなたは養子縁組に投票しました！",
+        "youVotedReject": "あなたは拒否に投票しました！",
+        "additionalContent": "追加コンテンツ",
+        "viewOnDashboard": "ダッシュボードに表示"
+    },
+    "yes": "はい",
+    "no": "いいえ",
+    "quoteReply": "引用返信"
 }

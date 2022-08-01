@@ -1,8 +1,8 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
     EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
     UserId, MAX_RETURNED_MENTIONS,
@@ -10,7 +10,7 @@ use types::{
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
@@ -29,6 +29,8 @@ impl Participants {
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
             mentions: Vec::new(),
+            threads: HashSet::new(),
+            proposal_votes: BTreeMap::default(),
         };
 
         Participants {
@@ -62,6 +64,8 @@ impl Participants {
                         min_visible_message_index,
                         notifications_muted,
                         mentions: Vec::new(),
+                        threads: HashSet::new(),
+                        proposal_votes: BTreeMap::default(),
                     };
                     e.insert(participant.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
@@ -139,7 +143,7 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, thread_participants: Option<&Vec<UserId>>) -> HashSet<UserId> {
+    pub fn users_to_notify(&self, thread_participants: Option<&[UserId]>) -> HashSet<UserId> {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()
@@ -325,7 +329,7 @@ impl Participants {
         message_index: MessageIndex,
     ) -> bool {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.is_empty() || (message_index > p.mentions.last().unwrap().message_index) {
+            if p.mentions.last().map_or(true, |m| m.message_index < message_index) {
                 p.mentions.push(MentionInternal {
                     thread_root_message_index,
                     message_index,
@@ -335,6 +339,12 @@ impl Participants {
         }
 
         false
+    }
+
+    pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
+        if let Some(p) = self.get_by_user_id_mut(user_id) {
+            p.threads.insert(root_message_index);
+        }
     }
 }
 
@@ -372,13 +382,15 @@ pub enum DismissSuperAdminResult {
     NotSuperAdmin,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
     pub notifications_muted: bool,
     pub mentions: Vec<MentionInternal>,
+    pub threads: HashSet<MessageIndex>,
+    pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,

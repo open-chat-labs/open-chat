@@ -14,7 +14,6 @@ import type {
     ApiParticipant,
     ApiSelectedUpdatesResponse,
     ApiRole,
-    ApiDeleteGroupResponse,
     ApiMessagesByMessageIndexResponse,
     ApiMessageEventWrapper,
     ApiPinMessageResponse,
@@ -26,6 +25,10 @@ import type {
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
     ApiUpdatePermissionsResponse,
+    ApiThreadPreviewsResponse,
+    ApiThreadPreview,
+    ApiRegisterPollVoteResponse,
+	ApiRegisterProposalVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -45,7 +48,6 @@ import type {
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
     MemberRole,
-    DeleteGroupResponse,
     Message,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -56,6 +58,10 @@ import type {
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
+    ThreadPreview,
+    RegisterPollVoteResponse,
+	RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -151,19 +157,6 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-}
-
-export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
 export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
@@ -642,6 +635,46 @@ export function disableInviteCodeResponse(
     );
 }
 
+export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
+    return {
+        chatId,
+        latestReplies: candid.latest_replies
+            .map(messageEvent)
+            .sort((e1, e2) => e1.index - e2.index),
+        totalReplies: candid.total_replies,
+        rootMessage: messageEvent(candid.root_message),
+    };
+}
+
+function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
+    return {
+        event: message(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
+export function threadPreviewsResponse(
+    chatId: string,
+    candid: ApiThreadPreviewsResponse
+): ThreadPreviewsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "thread_previews_success",
+            threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
+        };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return {
+            kind: "caller_not_in_group",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected Group.ApiThreadPreviewsResponse type received",
+        candid
+    );
+}
+
 export function resetInviteCodeResponse(
     candid: ApiResetInviteCodeResponse
 ): ResetInviteCodeResponse {
@@ -660,6 +693,33 @@ export function resetInviteCodeResponse(
         "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
     );
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("PollEnded" in candid) {
+        return "poll_ended";
+    }
+    if ("OptionIndexOutOfRange" in candid) {
+        return "out_of_range";
+    }
+    if ("PollNotFound" in candid) {
+        return "poll_not_found";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("PollsNotValidForDirectChats" in candid) {
+        return "polls_not_valid_for_direct_chats";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
@@ -888,6 +948,16 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("ProposalsUpdated" in candid) {
+        return {
+            kind: "proposals_updated",
+            proposals: candid.ProposalsUpdated.proposals.map((p) => ({
+                messageIndex: p.message_index,
+                eventIndex: p.event_index,
+            })),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
@@ -897,4 +967,34 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         index: candid.index,
         timestamp: candid.timestamp,
     };
+}
+
+export function registerProposalVoteResponse(
+    candid: ApiRegisterProposalVoteResponse
+): RegisterProposalVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyVoted" in candid) {
+        return "already_voted";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NoEligibleNeurons" in candid) {
+        return "no_eligible_neurons";
+    }
+    if ("ProposalNotAcceptingVotes" in candid) {
+        return "proposal_not_accepting_votes";
+    }
+    if ("ProposalNotFound" in candid) {
+        return "proposal_not_found";
+    }
+    if ("ProposalMessageNotFound" in candid) {
+        return "proposal_message_not_found";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }

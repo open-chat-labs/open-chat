@@ -58,8 +58,10 @@
                 {me}
                 {preview}
                 {groupChat}
+                {chatId}
                 first={true}
                 messageId={repliesTo.messageId}
+                messageIndex={repliesTo.messageIndex}
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}

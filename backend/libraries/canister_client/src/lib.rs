@@ -25,7 +25,6 @@ pub enum CanisterName {
     Notifications,
     OnlineUsersAggregator,
     ProposalsBot,
-    Root,
     User,
     UserIndex,
 }
@@ -41,7 +40,6 @@ impl FromStr for CanisterName {
             "notifications" => Ok(CanisterName::Notifications),
             "online_users_aggregator" => Ok(CanisterName::OnlineUsersAggregator),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
-            "root" => Ok(CanisterName::Root),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
@@ -58,7 +56,6 @@ impl Display for CanisterName {
             CanisterName::Notifications => "notifications",
             CanisterName::OnlineUsersAggregator => "online_users_aggregator",
             CanisterName::ProposalsBot => "proposals_bot",
-            CanisterName::Root => "root",
             CanisterName::User => "user",
             CanisterName::UserIndex => "user_index",
         };
@@ -69,7 +66,6 @@ impl Display for CanisterName {
 
 #[derive(Debug)]
 pub struct CanisterIds {
-    pub root: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications: CanisterId,

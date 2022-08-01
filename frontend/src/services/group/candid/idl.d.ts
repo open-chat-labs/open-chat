@@ -38,7 +38,6 @@ import {
     SelectedUpdatesResponse,
     Participant,
     Role,
-    DeleteGroupResponse,
     MakePrivateResponse,
     PublicGroupSummary,
     PublicSummaryResponse,
@@ -53,6 +52,9 @@ import {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsArgs,
+    ThreadPreviewsResponse,
+    ThreadPreview,
+    RegisterProposalVoteResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -92,7 +94,6 @@ export {
     SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
     Participant as ApiParticipant,
     Role as ApiRole,
-    DeleteGroupResponse as ApiDeleteGroupResponse,
     MakePrivateResponse as ApiMakePrivateResponse,
     PublicGroupSummary as ApiPublicGroupSummary,
     PublicSummaryResponse as ApiPublicSummaryResponse,
@@ -107,6 +108,9 @@ export {
     DisableInviteCodeResponse as ApiDisableInviteCodeResponse,
     ResetInviteCodeResponse as ApiResetInviteCodeResponse,
     UpdatePermissionsArgs as ApiUpdatePermissionsArgs,
+    ThreadPreviewsResponse as ApiThreadPreviewsResponse,
+    ThreadPreview as ApiThreadPreview,
+    RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

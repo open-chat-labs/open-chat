@@ -4,7 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -58,7 +58,7 @@
     let dragging: boolean = false;
     let recording: boolean = false;
     let percentRecorded: number = 0;
-    let initialisedEdit: boolean = false;
+    let previousEditingEvent: EventWrapper<Message> | undefined;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
@@ -70,32 +70,33 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
+    $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
-        if (editingEvent && !initialisedEdit) {
+        if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
             if (editingEvent.event.content.kind === "text_content") {
                 inp.textContent = formatMentions(editingEvent.event.content.text);
                 selectedRange = undefined;
                 restoreSelection();
-                initialisedEdit = true;
             } else if ("caption" in editingEvent.event.content) {
                 inp.textContent = editingEvent.event.content.caption ?? "";
                 selectedRange = undefined;
                 restoreSelection();
-                initialisedEdit = true;
             }
+            previousEditingEvent = editingEvent;
         } else if (inp) {
             const text = textContent ?? "";
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
                 inp.textContent = text;
-                setCaretToEnd();
+                // TODO - figure this out
+                // setCaretToEnd();
             }
         }
         if (editingEvent === undefined) {
-            initialisedEdit = false;
+            previousEditingEvent = undefined;
         }
     }
 
@@ -119,7 +120,7 @@
             ? $_("dropFile")
             : $_("enterMessage");
 
-    export function insertTextAtCaret(text: string) {
+    export function replaceSelection(text: string) {
         restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
@@ -203,7 +204,6 @@
         if (e.key === "Enter" && $enterSend && !e.shiftKey) {
             if (!messageIsEmpty) {
                 sendMessage();
-                dispatch("stopTyping");
             }
             e.preventDefault();
         }
@@ -252,7 +252,7 @@
      * * !details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (/^\/poll$/.test(txt)) {
+        if (isGroup && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }
@@ -314,9 +314,10 @@
 
         inp.focus();
         messageActions.close();
+        dispatch("stopTyping");
     }
 
-    function saveSelection() {
+    export function saveSelection() {
         try {
             // seeing errors in the logs to do with this
             selectedRange = window.getSelection()?.getRangeAt(0);
@@ -364,6 +365,8 @@
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
+        const start = rangeToReplace[0];
+
         const replaced = `${inp.textContent?.slice(
             0,
             rangeToReplace[0]
@@ -371,7 +374,11 @@
         inp.textContent = replaced;
 
         dispatch("setTextContent", inp.textContent || undefined);
-        setCaretTo(rangeToReplace[0] + replacement.length);
+
+        tick().then(() => {
+            setCaretTo(start + replacement.length);
+        });
+
         rangeToReplace = undefined;
     }
 
@@ -451,7 +458,7 @@
         </div>
     {:else if !canSend}
         <div class="disabled">
-            {$_("readOnlyChat")}
+            {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
         </div>
     {:else}
         <MessageActions

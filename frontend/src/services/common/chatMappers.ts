@@ -1,11 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
-import type {
-    ApiPublicGroupSummary,
-    ApiPublicSummaryResponse,
-    ApiUpdatePermissionsArgs,
-} from "../group/candid/idl";
-import type {
+import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
+import {
     FileContent,
     ImageContent,
     AudioContent,
@@ -20,12 +16,10 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     CompletedCryptocurrencyTransfer,
-    GroupChatSummary,
     PollContent,
     PollVotes,
     TotalPollVotes,
     PollConfig,
-    RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
     PendingCryptocurrencyWithdrawal,
@@ -33,7 +27,10 @@ import type {
     GiphyImage,
     ThreadSummary,
     ProposalContent,
+    Proposal,
+    NnsProposalTopic,
 } from "../../domain/chat/chat";
+import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
 import { UnsupportedValueError } from "../../utils/error";
@@ -61,7 +58,6 @@ import type {
     ApiPollVotes,
     ApiTotalPollVotes,
     ApiPollConfig,
-    ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
     ApiGiphyContent,
@@ -69,10 +65,13 @@ import type {
     ApiCryptocurrency,
     ApiThreadSummary,
     ApiProposalContent,
+    ApiProposal,
+    ApiProposalDecisionStatus,
+    ApiProposalRewardStatus,
 } from "../user/candid/idl";
-import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
-import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
+
+const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -141,7 +140,7 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return giphyContent(candid.Giphy);
     }
     if ("GovernanceProposal" in candid) {
-        return governanceProposal(candid.GovernanceProposal);
+        return proposalContent(candid.GovernanceProposal);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
@@ -153,20 +152,76 @@ export function apiUser(domain: User): ApiUser {
     };
 }
 
-function governanceProposal(candid: ApiProposalContent): ProposalContent {
+function proposalContent(candid: ApiProposalContent): ProposalContent {
     return {
         kind: "proposal_content",
-        url: candid.url,
-        title: candid.title,
-        myVote: optional(candid.my_vote, identity),
-        rejectVotes: candid.reject_votes,
-        deadline: candid.deadline,
-        adoptVotes: candid.adopt_votes,
-        summary: candid.summary,
-        proposalId: candid.proposal_id,
         governanceCanisterId: candid.governance_canister_id.toString(),
-        proposer: candid.proposer,
+        proposal: proposal(candid.proposal),
+        myVote: optional(candid.my_vote, identity),
     };
+}
+
+function proposal(candid: ApiProposal): Proposal {
+    if ("NNS" in candid) {
+        const p = candid.NNS;
+        return {
+            kind: "nns",
+            id: p.id,
+            topic: p.topic,
+            proposer: p.proposer,
+            title: p.title,
+            summary: p.summary,
+            url: p.url,
+            status: proposalDecisionStatus(p.status),
+            rewardStatus: proposalRewardStatus(p.reward_status),
+            tally: {
+                yes: Number(p.tally.yes / E8S_AS_BIGINT),
+                no: Number(p.tally.no / E8S_AS_BIGINT),
+                total: Number(p.tally.total / E8S_AS_BIGINT),
+            },
+            lastUpdated: Number(p.last_updated),
+            created: Number(p.created),
+            deadline: Number(p.deadline),
+        };
+    } else if ("SNS" in candid) {
+        const p = candid.SNS;
+        return {
+            kind: "sns",
+            id: p.id,
+            action: Number(p.action),
+            proposer: p.proposer,
+            title: p.title,
+            summary: p.summary,
+            url: p.url,
+            status: proposalDecisionStatus(p.status),
+            rewardStatus: proposalRewardStatus(p.reward_status),
+            tally: {
+                yes: Number(p.tally.yes / E8S_AS_BIGINT),
+                no: Number(p.tally.no / E8S_AS_BIGINT),
+                total: Number(p.tally.total / E8S_AS_BIGINT),
+            },
+            lastUpdated: Number(p.last_updated),
+            created: Number(p.created),
+            deadline: Number(p.deadline),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);
+}
+
+function proposalDecisionStatus(candid: ApiProposalDecisionStatus): ProposalDecisionStatus {
+    if ("Failed" in candid) return ProposalDecisionStatus.Failed;
+    if ("Open" in candid) return ProposalDecisionStatus.Open;
+    if ("Rejected" in candid) return ProposalDecisionStatus.Rejected;
+    if ("Executed" in candid) return ProposalDecisionStatus.Executed;
+    if ("Adopted" in candid) return ProposalDecisionStatus.Adopted;
+    return ProposalDecisionStatus.Unspecified;
+}
+
+function proposalRewardStatus(candid: ApiProposalRewardStatus): ProposalRewardStatus {
+    if ("AcceptVotes" in candid) return ProposalRewardStatus.AcceptVotes;
+    if ("ReadyToSettle" in candid) return ProposalRewardStatus.ReadyToSettle;
+    if ("Settled" in candid) return ProposalRewardStatus.Settled;
+    return ProposalRewardStatus.Unspecified;
 }
 
 function giphyContent(candid: ApiGiphyContent): GiphyContent {
@@ -211,7 +266,7 @@ function pollConfig(candid: ApiPollConfig): PollConfig {
 function pollVotes(candid: ApiPollVotes): PollVotes {
     return {
         total: totalPollVotes(candid.total),
-        user: candid.user,
+        user: [...candid.user],
     };
 }
 
@@ -509,19 +564,8 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
     }
 }
 
-function apiProposalContent(domain: ProposalContent): ApiProposalContent {
-    return {
-        url: domain.url,
-        title: domain.title,
-        my_vote: apiOptional(identity, domain.myVote),
-        reject_votes: domain.rejectVotes,
-        deadline: domain.deadline,
-        adopt_votes: domain.adoptVotes,
-        summary: domain.summary,
-        proposal_id: domain.proposalId,
-        governance_canister_id: Principal.fromText(domain.governanceCanisterId),
-        proposer: domain.proposer,
-    };
+function apiProposalContent(_: ProposalContent): ApiProposalContent {
+    throw new Error("Sending messages of type 'GovernanceProposal' is not currently supported");
 }
 
 function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
@@ -564,7 +608,7 @@ function apiPollConfig(domain: PollConfig): ApiPollConfig {
 function apiPollVotes(domain: PollVotes): ApiPollVotes {
     return {
         total: apiTotalPollVotes(domain.total),
-        user: [...domain.user],
+        user: new Uint32Array(domain.user),
     };
 }
 
@@ -700,87 +744,4 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
-}
-
-export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
-    return {
-        kind: "group_chat",
-        chatId: candid.chat_id.toString(),
-        readByMe: new DRange(),
-        latestEventIndex: candid.latest_event_index,
-        latestMessage: optional(candid.latest_message, (ev) => ({
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        })),
-        notificationsMuted: true,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisibleToNewJoiners: false,
-        joined: BigInt(Date.now()),
-        minVisibleEventIndex: 0,
-        minVisibleMessageIndex: 0,
-        lastUpdated: candid.last_updated,
-        participantCount: candid.participant_count,
-        myRole: "previewer",
-        mentions: [],
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.chat_id.toString(),
-        })),
-        ownerId: candid.owner_id.toString(),
-        permissions: {
-            changePermissions: "owner",
-            changeRoles: "owner",
-            addMembers: "owner",
-            removeMembers: "owner",
-            blockUsers: "owner",
-            deleteMessages: "owner",
-            updateGroup: "owner",
-            pinMessages: "owner",
-            inviteUsers: "owner",
-            createPolls: "owner",
-            sendMessages: "owner",
-            reactToMessages: "owner",
-            replyInThread: "owner",
-        },
-        metrics: emptyChatMetrics(),
-        myMetrics: emptyChatMetrics(),
-    };
-}
-
-export function publicSummaryResponse(
-    candid: ApiPublicSummaryResponse
-): GroupChatSummary | undefined {
-    if ("Success" in candid) {
-        return publicGroupSummary(candid.Success.summary);
-    }
-}
-
-export function registerPollVoteResponse(
-    candid: ApiRegisterUserPollVoteResponse | ApiRegisterGroupPollVoteResponse
-): RegisterPollVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("PollEnded" in candid) {
-        return "poll_ended";
-    }
-    if ("OptionIndexOutOfRange" in candid) {
-        return "out_of_range";
-    }
-    if ("PollNotFound" in candid) {
-        return "poll_not_found";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("MessageNotFound" in candid) {
-        return "message_not_found";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }

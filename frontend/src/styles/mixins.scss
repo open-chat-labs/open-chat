@@ -168,9 +168,8 @@ $sp11: 192px;
 @mixin loading-spinner(
     $size: 1.2em,
     $offset: 0.6em,
-    $block: false,
     $spinner-color: #191919,
-    $background-color: #efefef
+    $background-image: "../assets/spinner.svg"
 ) {
     position: relative;
 
@@ -182,29 +181,13 @@ $sp11: 192px;
         position: absolute;
         // border: 3px solid;
         opacity: 0.5;
-        background-image: url("../assets/spinner.svg");
+        background-image: url($background-image);
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
-        // border-color: transparent transparent currentColor currentColor;
-        // border-radius: 50%;
         transform-origin: 50% 50%;
         @include spin();
         color: $spinner-color;
         z-index: 10;
-    }
-
-    @if $block {
-        &::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            height: 100%;
-            width: 100%;
-            pointer-events: none;
-            background-color: $background-color;
-            z-index: 9;
-            opacity: 0.4;
-        }
     }
 }
 
@@ -393,4 +376,18 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     overflow-y: overlay;
     scrollbar-color: var(--scrollbar-bg) transparent;
     scrollbar-width: thin;
+}
+
+@mixin unread() {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent);
+    text-shadow: 1px 1px 1px var(--accentDarker);
+    border-radius: 12px;
+    @include font(bold, normal, fs-50);
+    color: #ffffff;
+    min-width: $sp5;
+    padding: 0 $sp2;
+    height: $sp5;
 }

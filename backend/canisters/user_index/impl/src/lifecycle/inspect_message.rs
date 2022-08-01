@@ -15,9 +15,6 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         return;
     }
 
-    let caller = runtime_state.env.caller();
-    let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
-
     let is_valid = match method_name.as_str() {
         "confirm_phone_number"
         | "create_canister"
@@ -25,8 +22,14 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "resend_code"
         | "set_username"
         | "upgrade_canister"
-        | "upgrade_storage" => is_user,
-        "add_super_admin" | "remove_super_admin" | "upgrade_user_canister_wasm" => runtime_state.is_caller_service_principal(),
+        | "upgrade_storage" => {
+            let caller = runtime_state.env.caller();
+            let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
+            is_user
+        }
+        "add_super_admin" | "remove_super_admin" | "set_max_concurrent_canister_upgrades" | "upgrade_user_canister_wasm" => {
+            runtime_state.is_caller_service_principal()
+        }
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "create_challenge"
         | "generate_registration_fee"

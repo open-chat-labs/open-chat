@@ -21,7 +21,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 30;
+const CACHE_VERSION = 35;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -216,9 +216,7 @@ export async function setCachedChats(
             throw new UnsupportedValueError("Unrecognised chat type", c);
         });
 
-    const tx = (await db).transaction(["chats", "chat_events"], "readwrite", {
-        durability: "relaxed",
-    });
+    const tx = (await db).transaction(["chats", "chat_events"], "readwrite");
     const chatsStore = tx.objectStore("chats");
     const eventStore = tx.objectStore("chat_events");
 
@@ -364,7 +362,7 @@ export async function getCachedMessageByIndex<T extends ChatEvent>(
     threadRootMessageIndex?: number
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, eventIndex, threadRootMessageIndex);
-    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     return (await db).get(store, key) as Promise<EventWrapper<T> | undefined>;
 }
 
@@ -376,14 +374,14 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     const missing = new Set<number>();
     const returnedEvents = await Promise.all(
-        eventIndexes.map((idx) =>
-            getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
+        eventIndexes.map((idx) => {
+            return getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
                 if (evt === undefined) {
                     missing.add(idx);
                 }
                 return evt;
-            })
-        )
+            });
+        })
     );
     const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
     return [{ events, affectedEvents: [] }, missing];
@@ -488,7 +486,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     threadRootMessageIndex?: number
 ): Promise<void> {
     if (resp === "events_failed") return;
-    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
 
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
@@ -508,11 +506,10 @@ export async function setCachedEvents<T extends ChatEvent>(
 export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
-    message: Message,
     threadRootMessageIndex?: number
-): (resp: SendMessageResponse) => SendMessageResponse {
-    return (resp: SendMessageResponse) => {
-        if (resp.kind !== "success") return resp;
+): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
+    return ([resp, message]: [SendMessageResponse, Message]) => {
+        if (resp.kind !== "success") return [resp, message];
 
         const event = messageToEvent(message, resp);
 
@@ -520,7 +517,7 @@ export function setCachedMessageFromSendResponse(
             rollbar.error("Unable to write message to cache: ", err)
         );
 
-        return resp;
+        return [resp, message];
     };
 }
 
@@ -547,7 +544,7 @@ async function setCachedMessage(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
@@ -582,7 +579,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot overwrite cache entries");
     }
-    const storeName = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction(storeName, "readwrite", { durability: "relaxed" });
     const store = tx.objectStore(storeName);
     await Promise.all(

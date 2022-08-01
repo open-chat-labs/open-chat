@@ -1,5 +1,3 @@
-<svelte:options immutable={true} />
-
 <script lang="ts">
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
@@ -9,12 +7,14 @@
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper, Message, ThreadSummary } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import { push } from "svelte-spa-router";
+    import { typing, isTyping } from "../../stores/typing";
 
     const dispatch = createEventDispatcher();
 
@@ -38,24 +38,32 @@
     export let canSend: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
+    export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
+    export let supportsEdit: boolean;
+    export let supportsReply: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    function replyInThread() {
-        dispatch("replyInThread", { rootEvent: event });
+    function initiateThread() {
+        if (event.event.kind === "message") {
+            if (event.event.thread !== undefined) {
+                push(`/${chatId}/${event.event.messageIndex}`);
+            } else {
+                dispatch("initiateThread", { rootEvent: event });
+            }
+        }
     }
 </script>
 
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
-        {selectedThreadMessageIndex}
+        senderTyping={isTyping($typing, event.event.sender, chatId)}
         {focused}
         {observer}
         {confirmed}
@@ -74,14 +82,17 @@
         {canDelete}
         {canSend}
         {canReact}
+        {canReplyInThread}
         {publicGroup}
         {editing}
         {inThread}
+        {supportsEdit}
+        {supportsReply}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:replyInThread={replyInThread}
+        on:initiateThread={initiateThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser
@@ -91,6 +102,8 @@
         on:editMessage={editEvent}
         on:upgrade
         on:forward
+        on:copyMessageUrl
+        on:shareMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

@@ -129,7 +129,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
         Ok(PrepareResult {
             added_by: participant.user_id,
-            latest_message_index: runtime_state.data.events.main.latest_message_index(),
+            latest_message_index: runtime_state.data.events.main().latest_message_index(),
             users_to_add,
             users_already_in_group,
             users_blocked_from_group,
@@ -147,9 +147,10 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
     if !runtime_state.data.history_visible_to_new_joiners {
         // If there is only an initial "group created" event then allow these initial
         // participants to see the "group created" event by starting min_visible_* at zero
-        if runtime_state.data.events.main.len() > 1 {
-            min_visible_event_index = runtime_state.data.events.main.last().index.incr();
-            min_visible_message_index = runtime_state.data.events.main.next_message_index();
+        let chat_events = runtime_state.data.events.main();
+        if chat_events.len() > 1 {
+            min_visible_event_index = chat_events.last().index.incr();
+            min_visible_message_index = chat_events.next_message_index();
         }
     };
 
@@ -181,8 +182,7 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
     runtime_state
         .data
         .events
-        .main
-        .push_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
+        .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 

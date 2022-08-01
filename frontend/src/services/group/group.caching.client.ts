@@ -15,7 +15,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -30,6 +29,8 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -180,17 +181,10 @@ export class CachingGroupClient implements IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
-            .then(
-                setCachedMessageFromSendResponse(
-                    this.db,
-                    this.chatId,
-                    message,
-                    threadRootMessageIndex
-                )
-            );
+            .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex));
     }
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
@@ -263,10 +257,6 @@ export class CachingGroupClient implements IGroupClient {
         return response;
     }
 
-    deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.client.deleteGroup();
-    }
-
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
         return this.client.makeGroupPrivate();
     }
@@ -275,6 +265,9 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.getPublicSummary();
     }
 
+    /**
+     * This is only called to populate pinned messages which is why we don't need to care about threadRootMessageIndex
+     */
     @profile("groupCachingClient")
     async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
@@ -338,5 +331,16 @@ export class CachingGroupClient implements IGroupClient {
 
     resetInviteCode(): Promise<ResetInviteCodeResponse> {
         return this.client.resetInviteCode();
+    }
+
+    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
+        return this.client.threadPreviews(threadRootMessageIndexes);
+    }
+
+    registerProposalVote(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.client.registerProposalVote(messageIdx, adopt);
     }
 }

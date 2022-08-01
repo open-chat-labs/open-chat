@@ -114,7 +114,9 @@
     let confirmed = false;
     let saving = false;
     let viewProfile = false;
-    let postConfirmation = () => dispatch("close");
+    let postConfirmation = () => {
+        dispatch("close");
+    };
     let inviteComponent: InviteUsers;
 
     // capture a snapshot of the chat as it is right now
@@ -148,7 +150,9 @@
     }
 
     function clickClose() {
-        postConfirmation = () => dispatch("close");
+        postConfirmation = () => {
+            dispatch("close");
+        };
         close();
     }
 
@@ -268,6 +272,16 @@
             dispatch("close");
         }
     }
+
+    function description(): string {
+        let description = originalGroup.description;
+
+        if (originalGroup.isProposalGroup) {
+            description = description.replace("{userId}", currentUser.userId);
+        }
+
+        return description;
+    }
 </script>
 
 {#if viewProfile}
@@ -339,7 +353,7 @@
                     <legend>
                         <Legend>{$_("groupDesc")}</Legend>
                     </legend>
-                    <Markdown text={originalGroup.description} />
+                    <Markdown text={description()} />
                 </fieldset>
             {/if}
         </CollapsibleCard>

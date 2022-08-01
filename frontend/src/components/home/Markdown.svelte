@@ -1,120 +1,161 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { marked } from "marked";
-    import DOMPurify from "dompurify";
-    import { afterUpdate } from "svelte";
-    import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import { isAbsoluteUrl, synonymousUrlRegex } from "../../utils/urls";
+    import MarkdownLink from "./MarkdownLink.svelte";
+    import FakeMarkdownLink from "./FakeMarkdownLink.svelte";
+    import SvelteMarkdown from "svelte-markdown";
 
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
+    export let isInline: boolean = true;
 
-    let sanitized = "unsafe";
-    const options = {
+    $: parsed = replaceUserIds(text);
+    $: options = {
         breaks: !oneLine,
+        mangle: false,
+        silent: true,
     };
 
-    type MentionToken = {
-        type: "mention";
-        raw: string;
-        username: string;
-        userId: string;
-    };
-
-    const mention = {
-        name: "mention",
-        level: "inline" as "inline",
-        start: (src: string) => {
-            return src.match(/@/)?.index ?? -1;
-        },
-        tokenizer: (src: string) => {
-            const rule = /^@UserId\(([\d\w-]+)\)/;
-            const match = rule.exec(src);
-            if (match) {
-                const username = $userStore[match[1]]?.username ?? $_("unknown");
-                return {
-                    type: "mention",
-                    raw: match[0],
-                    username,
-                    userId: match[1],
-                };
+    function replaceUserIds(text: string): string {
+        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+            const u = $userStore[p1];
+            if (u !== undefined) {
+                return `**[@${u.username}](#/${u.userId}?type=direct)**`;
             }
-        },
-        renderer: (token: MentionToken) => {
-            return `<a href="#/${token.userId}?type=direct"><strong>@${token.username}</strong></a>`;
-        },
-        childTokens: ["strong"],
-    };
-
-    const renderer = {
-        link(href: string | null, title: string | null, text: string) {
-            if (suppressLinks || href === null) {
-                return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
-            } else {
-                let target = "";
-                // Check if the link is to a synonymous url (eg. https://oc.app), if so, convert it to a relative link
-                if (synonymousUrlRegex.test(href)) {
-                    href = href.replace(synonymousUrlRegex, "");
-                    if (href === "" || href === "/") {
-                        href = "/#";
-                    }
-                } else if (isAbsoluteUrl(href)) {
-                    target = 'target="_blank"';
-                }
-
-                return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
-            }
-        },
-    };
-
-    marked.use({ renderer, extensions: [mention] });
-
-    function render() {
-        let parsed = text;
-        try {
-            parsed = marked.parseInline(text, options);
-        } catch (err: any) {
-            rollbar.error("Error parsing markdown: ", err);
-        }
-
-        try {
-            sanitized = DOMPurify.sanitize(parsed, {
-                ALLOWED_ATTR: ["target", "href", "class"],
-            });
-        } catch (err: any) {
-            rollbar.error("Error sanitzing message content: ", err);
-        }
+            return match;
+        });
     }
-
-    afterUpdate(render);
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
-    {@html sanitized}
+    {#if suppressLinks}
+        <SvelteMarkdown
+            renderers={{
+                link: FakeMarkdownLink,
+            }}
+            {isInline}
+            source={parsed}
+            {options} />
+    {:else}
+        <SvelteMarkdown
+            renderers={{
+                link: MarkdownLink,
+            }}
+            {isInline}
+            source={parsed}
+            {options} />
+    {/if}
 </p>
 
 <style type="text/scss">
-    :global(.markdown-wrapper a) {
-        text-decoration: underline;
-    }
+    :global {
+        .markdown-wrapper {
+            h1 {
+                @include font-size(fs-140);
+            }
 
-    :global(.markdown-wrapper .fake-link) {
-        text-decoration: underline;
-    }
+            h2 {
+                @include font-size(fs-120);
+            }
 
-    :global(.markdown-wrapper code) {
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        background-color: rgba(255, 255, 255, 0.1);
-        padding: 0 $sp2;
-    }
+            h3 {
+                @include font-size(fs-110);
+            }
 
-    .markdown-wrapper {
-        word-wrap: break-word;
+            h1,
+            h2,
+            h3,
+            h4 {
+                font-weight: normal;
+                color: var(--markdown-fg-bright);
+            }
+
+            h1,
+            h2,
+            h3,
+            h4 {
+                margin-top: toRem(24);
+                margin-bottom: toRem(16);
+                &:first-child {
+                    margin-top: 0;
+                }
+            }
+
+            p,
+            ol,
+            ul,
+            hr,
+            blockquote {
+                margin-bottom: toRem(16);
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+
+            ul,
+            ol {
+                padding-left: toRem(32);
+            }
+
+            ul li {
+                list-style-type: disc;
+            }
+
+            ul li li {
+                list-style-type: circle;
+            }
+
+            ul li li li {
+                list-style-type: square;
+            }
+
+            ol li {
+                list-style-type: decimal;
+            }
+
+            ol li li {
+                list-style-type: lower-alpha;
+            }
+
+            ol li li li {
+                list-style-type: lower-greek;
+            }
+
+            pre,
+            code {
+                font-family: Menlo, Monaco, "Courier New", monospace;
+            }
+
+            pre {
+                padding: toRem(12);
+                background-color: var(--markdown-bg-dark);
+                overflow-x: auto;
+            }
+
+            blockquote {
+                padding: 0 toRem(16);
+                border-left: toRem(4) solid var(--markdown-fg-muted);
+                color: var(--markdown-fg-muted);
+            }
+
+            a {
+                text-decoration: underline;
+            }
+
+            img,
+            canvas,
+            iframe,
+            video,
+            svg,
+            select,
+            textarea {
+                max-width: 100%;
+            }
+        }
     }
 
     .markdown-wrapper:not(:empty) {
@@ -127,6 +168,7 @@
         &.oneLine {
             display: block;
             @include ellipsis();
+            word-wrap: break-word;
         }
     }
 </style>

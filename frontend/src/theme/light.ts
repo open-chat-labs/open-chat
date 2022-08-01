@@ -268,5 +268,37 @@ export function lightTheme(): Theme {
         toggle: {
             bg: "#cccccc",
         },
+
+        thread: {
+            preview: {
+                bg: "rgba(255, 255, 255, 0.05)",
+            },
+        },
+
+        vote: {
+            yes: {
+                color: blueAccent,
+                hv: "#0d8cd4",
+            },
+            no: {
+                color: pinkAccent,
+                hv: "#ff4fa7",
+            },
+            // yes: "lightgreen",
+            // no: "red",
+            // yes: "#2fb953",
+            // no: "#B92F2F",
+        },
+
+        markdown: {
+            fg: {
+                color: "#3a3a3a",
+                bright: "#000",
+                muted: "#777",
+            },
+            bg: {
+                dark: "#eeeeee",
+            },
+        },
     };
 }

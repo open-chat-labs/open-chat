@@ -6,8 +6,8 @@ use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
 use types::{
-    CanisterId, ChatSummary, ChatSummaryUpdates, ChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys,
-    TextContent, User, UserId,
+    CanisterId, ChatEvent, ChatSummary, ChatSummaryUpdates, MessageContent, SubscriptionInfo, SubscriptionKeys, TextContent,
+    User, UserId,
 };
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
@@ -79,6 +79,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("3. User2 sends a group message... ");
         let args = group_canister::send_message::Args {
+            thread_root_message_index: None,
             message_id: 3546125412536152673_u128.into(),
             content: MessageContent::Text(TextContent {
                 text: "Hello world".to_owned(),
@@ -86,6 +87,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             sender_name: "user2".to_owned(),
             replies_to: None,
             mentioned: vec![],
+            forwarding: false,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -108,6 +110,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("5. User2 sends a group message mentioning user1... ");
         let args = group_canister::send_message::Args {
+            thread_root_message_index: None,
             message_id: 734979238479237_u128.into(),
             content: MessageContent::Text(TextContent {
                 text: format!("Hello @UserId({user1_id})"),
@@ -118,6 +121,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 user_id: user1_id,
                 username: "Matt".to_owned(),
             }],
+            forwarding: false,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -165,6 +169,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("8. User2 sends another group message mentioning user1... ");
         let args = group_canister::send_message::Args {
+            thread_root_message_index: None,
             message_id: 9723892378497238947_u128.into(),
             content: MessageContent::Text(TextContent {
                 text: format!("Hello again @UserId({user1_id})"),
@@ -175,6 +180,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 user_id: user1_id,
                 username: "Matt".to_owned(),
             }],
+            forwarding: false,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -214,8 +220,10 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("10. Confirm group events were recorded correctly... ");
         let args = group_canister::events_range::Args {
+            thread_root_message_index: None,
             from_index: 0.into(),
             to_index: 10.into(),
+            invite_code: None,
         };
         match group_canister_client::events_range(&user1_agent, &chat_id.into(), &args)
             .await

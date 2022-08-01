@@ -23,13 +23,18 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
 
-        let mut files_to_delete = Vec::new();
+        let delete_message_results = chat.events.delete_messages(caller, false, None, args.message_ids, now);
 
-        for message_id in args.message_ids {
-            if let DeleteMessageResult::Success(content) = chat.events.delete_message(caller, false, message_id, now) {
-                files_to_delete.extend(content.blob_references());
-            }
-        }
+        let files_to_delete: Vec<_> = delete_message_results
+            .into_iter()
+            .flat_map(|(_, result)| {
+                if let DeleteMessageResult::Success(content) = result {
+                    content.blob_references()
+                } else {
+                    Vec::new()
+                }
+            })
+            .collect();
 
         if !files_to_delete.is_empty() {
             ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));

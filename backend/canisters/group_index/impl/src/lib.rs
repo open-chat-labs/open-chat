@@ -15,6 +15,7 @@ use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;
 
+mod guards;
 mod lifecycle;
 mod model;
 mod queries;
@@ -69,6 +70,7 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
+            max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
         }
     }
 }
@@ -89,6 +91,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
+    pub max_concurrent_canister_upgrades: usize,
 }
 
 impl Data {
@@ -116,6 +119,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
+            max_concurrent_canister_upgrades: 2,
         }
     }
 
@@ -168,6 +172,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
+            max_concurrent_canister_upgrades: 2,
         }
     }
 }
@@ -191,6 +196,7 @@ pub struct Metrics {
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
+    pub max_concurrent_canister_upgrades: usize,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]

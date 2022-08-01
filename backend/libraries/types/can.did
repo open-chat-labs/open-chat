@@ -75,7 +75,6 @@ type ChatMetrics =
         edits: nat64;
         reactions: nat64;
         proposals: nat64;
-        proposal_votes: nat64;
         last_active: TimestampMillis;
     };
 
@@ -209,11 +208,11 @@ type ChatEvent =
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
-        ProposalVoteRegistered: UpdatedMessage;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
         ThreadUpdated: ThreadUpdated;
+        ProposalsUpdated: ProposalsUpdated;
     };
 
 type ChatEventWrapper =
@@ -248,6 +247,7 @@ type GroupChatSummary =
         permissions: GroupPermissions;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
+        latest_threads: vec ThreadSyncDetails;
     };
 
 type GroupChatSummaryUpdates =
@@ -272,6 +272,7 @@ type GroupChatSummaryUpdates =
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         is_public: opt bool;
+        latest_threads: vec ThreadSyncDetails;
     };
 
 type GroupDescriptionChanged =
@@ -435,6 +436,7 @@ type InvalidPollReason =
         OptionTooLong: nat32;
         DuplicateOptions;
         EndDateInThePast;
+        PollsNotValidForDirectChats;
     };
 
 type MessageContent =
@@ -612,15 +614,71 @@ type ParticipantsRemoved =
 type ProposalContent =
     record {
         governance_canister_id: CanisterId;
-        proposal_id: ProposalId;
+        proposal: Proposal;
+        my_vote: opt bool;
+    };
+
+type Proposal =
+    variant {
+        NNS: NnsProposal;
+        SNS: SnsProposal;
+    };
+
+type NnsProposal =
+    record {
+        id: ProposalId;
+        topic: int32;
         proposer: NeuronId;
+        created: TimestampMillis;
         title: text;
         summary: text;
         url: text;
+        status: ProposalDecisionStatus;
+        reward_status: ProposalRewardStatus;
+        tally: Tally;
         deadline: TimestampMillis;
-        adopt_votes: nat32;
-        reject_votes: nat32;
-        my_vote: opt bool;
+        last_updated: TimestampMillis;
+    };
+
+type SnsProposal =
+    record {
+        id: ProposalId;
+        action: nat64;
+        proposer: NeuronId;
+        created: TimestampMillis;
+        title: text;
+        summary: text;
+        url: text;
+        status: ProposalDecisionStatus;
+        reward_status: ProposalRewardStatus;
+        tally: Tally;
+        deadline: TimestampMillis;
+        last_updated: TimestampMillis;
+    };
+
+type ProposalDecisionStatus =
+    variant {
+        Unspecified;
+        Open;
+        Rejected;
+        Adopted;
+        Executed;
+        Failed;
+    };
+
+type ProposalRewardStatus =
+    variant {
+        Unspecified;
+        AcceptVotes;
+        ReadyToSettle;
+        Settled;
+    };
+
+type Tally =
+    record {
+        yes: nat64;
+        no: nat64;
+        total: nat64;
     };
 
 type TotalPollVotes =
@@ -843,7 +901,27 @@ type ThreadSummary =
 
 type ThreadUpdated =
     record {
-        updated_by: UserId;
+        event_index: EventIndex;
+        message_index: MessageIndex;
+        latest_thread_message_index_if_updated: opt MessageIndex;
+    };
+
+type ThreadSyncDetails =
+    record {
+        root_message_index: MessageIndex;
+        latest_event: opt EventIndex;
+        latest_message: opt MessageIndex;
+        read_up_to: opt MessageIndex;
+        last_updated: TimestampMillis;     
+    };
+
+type ProposalsUpdated =
+    record {
+        proposals: vec ProposalUpdated;
+    };
+
+type ProposalUpdated =
+    record {
         event_index: EventIndex;
         message_index: MessageIndex;
     };

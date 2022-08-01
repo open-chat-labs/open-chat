@@ -21,6 +21,7 @@ import replace from "@rollup/plugin-replace";
 import * as fs from "fs";
 import * as path from "path";
 import * as rimraf from "rimraf";
+import assetHeaders from "./.ic-assets.json";
 
 dotenv.config();
 
@@ -97,6 +98,19 @@ fs.mkdirSync("build");
 
 if (version) {
     fs.writeFileSync("build/version", JSON.stringify({ version }));
+}
+
+fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
+
+const iiAlternativeOrigin = process.env.II_ALTERNATIVE_ORIGIN;
+if (iiAlternativeOrigin !== undefined) {
+    fs.mkdirSync("build/.well-known");
+    fs.writeFileSync(
+        "build/.well-known/ii-alternative-origins",
+        JSON.stringify({
+            alternativeOrigins: [iiAlternativeOrigin],
+        })
+    );
 }
 
 export default [
@@ -178,6 +192,10 @@ export default [
                 "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
+                "process.env.IC_URL": maybeStringify(process.env.IC_URL),
+                "process.env.II_DERIVATION_ORIGIN": maybeStringify(
+                    process.env.II_DERIVATION_ORIGIN
+                ),
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
                 "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
                 "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
@@ -289,3 +307,7 @@ export default [
         },
     },
 ];
+
+function maybeStringify(value) {
+    return value !== undefined ? JSON.stringify(value) : undefined;
+}

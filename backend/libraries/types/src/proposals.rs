@@ -1,89 +1,219 @@
 use crate::{CanisterId, NeuronId, ProposalId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct Proposal {
-    pub id: ProposalId,
-    pub proposer: NeuronId,
-    pub title: String,
-    pub summary: String,
-    pub url: String,
-    pub deadline: TimestampMillis,
+pub enum Proposal {
+    NNS(NnsProposal),
+    SNS(SnsProposal),
+}
+
+impl Proposal {
+    pub fn id(&self) -> ProposalId {
+        match self {
+            Proposal::NNS(p) => p.id,
+            Proposal::SNS(p) => p.id,
+        }
+    }
+
+    pub fn created(&self) -> TimestampMillis {
+        match self {
+            Proposal::NNS(p) => p.created,
+            Proposal::SNS(p) => p.created,
+        }
+    }
+
+    pub fn title(&self) -> &str {
+        match self {
+            Proposal::NNS(p) => &p.title,
+            Proposal::SNS(p) => &p.title,
+        }
+    }
+
+    pub fn summary(&self) -> &str {
+        match self {
+            Proposal::NNS(p) => &p.summary,
+            Proposal::SNS(p) => &p.summary,
+        }
+    }
+
+    pub fn status(&self) -> ProposalDecisionStatus {
+        match self {
+            Proposal::NNS(p) => p.status,
+            Proposal::SNS(p) => p.status,
+        }
+    }
+
+    pub fn reward_status(&self) -> ProposalRewardStatus {
+        match self {
+            Proposal::NNS(p) => p.reward_status,
+            Proposal::SNS(p) => p.reward_status,
+        }
+    }
+
+    pub fn tally(&self) -> Tally {
+        match self {
+            Proposal::NNS(p) => p.tally.clone(),
+            Proposal::SNS(p) => p.tally.clone(),
+        }
+    }
+
+    pub fn deadline(&self) -> TimestampMillis {
+        match self {
+            Proposal::NNS(p) => p.deadline,
+            Proposal::SNS(p) => p.deadline,
+        }
+    }
+
+    pub fn update_status(&mut self, update: ProposalStatusUpdate, now: TimestampMillis) {
+        match self {
+            Proposal::NNS(p) => p.update_status(update, now),
+            Proposal::SNS(p) => p.update_status(update, now),
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalContent {
-    pub governance_canister_id: CanisterId,
-    pub proposal_id: ProposalId,
+pub struct NnsProposal {
+    pub id: ProposalId,
+    pub topic: i32,
     pub proposer: NeuronId,
+    pub created: TimestampMillis,
     pub title: String,
     pub summary: String,
     pub url: String,
+    pub status: ProposalDecisionStatus,
+    pub reward_status: ProposalRewardStatus,
+    pub tally: Tally,
     pub deadline: TimestampMillis,
-    pub adopt_votes: u32,
-    pub reject_votes: u32,
-    pub my_vote: Option<bool>,
+    pub last_updated: TimestampMillis,
+}
+
+impl NnsProposal {
+    pub fn update_status(&mut self, update: ProposalStatusUpdate, now: TimestampMillis) {
+        if let Some(status) = update.status {
+            self.status = status;
+        }
+        if let Some(reward_status) = update.reward_status {
+            self.reward_status = reward_status;
+        }
+        if let Some(latest_tally) = update.latest_tally {
+            self.tally = latest_tally;
+        }
+        self.last_updated = now;
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SnsProposal {
+    pub id: ProposalId,
+    pub action: u64,
+    pub proposer: NeuronId,
+    pub created: TimestampMillis,
+    pub title: String,
+    pub summary: String,
+    pub url: String,
+    pub status: ProposalDecisionStatus,
+    pub reward_status: ProposalRewardStatus,
+    pub tally: Tally,
+    pub deadline: TimestampMillis,
+    pub last_updated: TimestampMillis,
+}
+
+impl SnsProposal {
+    pub fn update_status(&mut self, update: ProposalStatusUpdate, now: TimestampMillis) {
+        if let Some(status) = update.status {
+            self.status = status;
+        }
+        if let Some(reward_status) = update.reward_status {
+            self.reward_status = reward_status;
+        }
+        if let Some(latest_tally) = update.latest_tally {
+            self.tally = latest_tally;
+        }
+        if let Some(deadline) = update.deadline {
+            self.deadline = deadline;
+        }
+        self.last_updated = now;
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
-    pub proposal_id: ProposalId,
-    pub proposer: NeuronId,
-    pub title: String,
-    pub summary: String,
-    pub url: String,
-    pub deadline: TimestampMillis,
-    pub adopt_votes: HashSet<UserId>,
-    pub reject_votes: HashSet<UserId>,
+    pub proposal: Proposal,
+    pub votes: HashMap<UserId, bool>,
 }
 
-impl ProposalContentInternal {
-    pub fn new(content: ProposalContent) -> ProposalContentInternal {
-        ProposalContentInternal {
-            governance_canister_id: content.governance_canister_id,
-            proposal_id: content.proposal_id,
-            proposer: content.proposer,
-            title: content.title,
-            summary: content.summary,
-            url: content.url,
-            deadline: content.deadline,
-            adopt_votes: HashSet::new(),
-            reject_votes: HashSet::new(),
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ProposalContent {
+    pub governance_canister_id: CanisterId,
+    pub proposal: Proposal,
+    pub my_vote: Option<bool>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct ProposalStatusUpdate {
+    pub status: Option<ProposalDecisionStatus>,
+    pub reward_status: Option<ProposalRewardStatus>,
+    pub latest_tally: Option<Tally>,
+    pub deadline: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
+pub struct Tally {
+    pub yes: u64,
+    pub no: u64,
+    pub total: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum ProposalDecisionStatus {
+    Unspecified = 0,
+    Open = 1,
+    Rejected = 2,
+    Adopted = 3,
+    Executed = 4,
+    Failed = 5,
+}
+
+impl TryFrom<i32> for ProposalDecisionStatus {
+    type Error = i32;
+
+    fn try_from(value: i32) -> Result<ProposalDecisionStatus, i32> {
+        match value {
+            0 => Ok(ProposalDecisionStatus::Unspecified),
+            1 => Ok(ProposalDecisionStatus::Open),
+            2 => Ok(ProposalDecisionStatus::Rejected),
+            3 => Ok(ProposalDecisionStatus::Adopted),
+            4 => Ok(ProposalDecisionStatus::Executed),
+            5 => Ok(ProposalDecisionStatus::Failed),
+            _ => Err(value),
         }
     }
+}
 
-    pub fn register_vote(&mut self, user_id: UserId, adopt: bool) -> Result<(), bool> {
-        if self.adopt_votes.contains(&user_id) {
-            Err(true)
-        } else if self.reject_votes.contains(&user_id) {
-            Err(false)
-        } else {
-            let set = if adopt { &mut self.adopt_votes } else { &mut self.reject_votes };
-            set.insert(user_id);
-            Ok(())
-        }
-    }
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum ProposalRewardStatus {
+    Unspecified = 0,
+    AcceptVotes = 1,
+    ReadyToSettle = 2,
+    Settled = 3,
+}
 
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> ProposalContent {
-        ProposalContent {
-            governance_canister_id: self.governance_canister_id,
-            proposal_id: self.proposal_id,
-            proposer: self.proposer,
-            title: self.title.clone(),
-            summary: self.summary.clone(),
-            url: self.url.clone(),
-            deadline: self.deadline,
-            adopt_votes: self.adopt_votes.len() as u32,
-            reject_votes: self.reject_votes.len() as u32,
-            my_vote: my_user_id.and_then(|u| {
-                self.adopt_votes
-                    .contains(&u)
-                    .then(|| true) // TODO use `then_some` once it is stable
-                    .or_else(|| self.reject_votes.contains(&u).then(|| false))
-            }),
+impl TryFrom<i32> for ProposalRewardStatus {
+    type Error = i32;
+
+    fn try_from(value: i32) -> Result<ProposalRewardStatus, i32> {
+        match value {
+            0 => Ok(ProposalRewardStatus::Unspecified),
+            1 => Ok(ProposalRewardStatus::AcceptVotes),
+            2 => Ok(ProposalRewardStatus::ReadyToSettle),
+            3 => Ok(ProposalRewardStatus::Settled),
+            _ => Err(value),
         }
     }
 }

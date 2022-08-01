@@ -40,11 +40,11 @@ pub enum ChatEventInternal {
     PollVoteRegistered(Box<PollVoteRegistered>),
     PollVoteDeleted(Box<UpdatedMessageInternal>),
     PollEnded(Box<MessageIndex>),
-    ProposalVoteRegistered(Box<UpdatedMessageInternal>),
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
     ThreadUpdated(Box<ThreadUpdatedInternal>),
+    ProposalsUpdated(Box<ProposalsUpdatedInternal>),
 }
 
 impl ChatEventInternal {
@@ -92,11 +92,11 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollVoteRegistered(_)
                 | ChatEventInternal::PollVoteDeleted(_)
                 | ChatEventInternal::PollEnded(_)
-                | ChatEventInternal::ProposalVoteRegistered(_)
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
                 | ChatEventInternal::GroupInviteCodeChanged(_)
                 | ChatEventInternal::ThreadUpdated(_)
+                | ChatEventInternal::ProposalsUpdated(_)
         )
     }
 
@@ -162,10 +162,6 @@ impl ChatEventInternal {
                 decr(&mut metrics.poll_votes);
                 decr(&mut per_user_metrics.entry(v.updated_by).or_default().poll_votes);
             }
-            ChatEventInternal::ProposalVoteRegistered(v) => {
-                incr(&mut metrics.proposal_votes);
-                incr(&mut per_user_metrics.entry(v.updated_by).or_default().proposal_votes);
-            }
             _ => {}
         }
 
@@ -201,14 +197,15 @@ impl ChatEventInternal {
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
-            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
-            | ChatEventInternal::PollVoteDeleted(e)
-            | ChatEventInternal::ProposalVoteRegistered(e) => Some(e.updated_by),
-            ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) => None,
+            | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
+            ChatEventInternal::DirectChatCreated(_)
+            | ChatEventInternal::PollEnded(_)
+            | ChatEventInternal::ProposalsUpdated(_)
+            | ChatEventInternal::ThreadUpdated(_) => None,
         }
     }
 }
@@ -321,8 +318,13 @@ pub struct UpdatedMessageInternal {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdatedInternal {
-    pub updated_by: UserId,
     pub message_index: MessageIndex,
+    pub latest_thread_message_index_if_updated: Option<MessageIndex>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ProposalsUpdatedInternal {
+    pub proposals: Vec<MessageIndex>,
 }
 
 fn incr(counter: &mut u64) {

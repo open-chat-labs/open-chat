@@ -1,7 +1,5 @@
 <script lang="ts">
     import { push } from "svelte-spa-router";
-    import { slide } from "svelte/transition";
-    import { expoInOut } from "svelte/easing";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
@@ -25,7 +23,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { TypersByChat, typing } from "../../stores/typing";
+    import { TypersByKey, byChat } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
@@ -49,20 +47,20 @@
     let unreadMessages: number;
     let unreadMentions: number;
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                typing: getTypingString($userStore, chatSummary, typing),
+                typing: getTypingString($userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
-            typing: getTypingString($userStore, chatSummary, typing),
+            typing: getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
 
@@ -111,7 +109,7 @@
         delOffset = -50;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typing);
+    $: chat = normaliseChatSummary($now, chatSummary, $byChat);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {
@@ -247,7 +245,7 @@
         <div class="menu">
             <MenuIcon>
                 <div class="menu-icon" slot="icon">
-                    <ChevronDown size="1.6em" color="var(--icon-txt" />
+                    <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
                 </div>
                 <div slot="menu">
                     <Menu>
@@ -348,9 +346,9 @@
 
         .menu-icon {
             width: 0;
-            transition: width 200ms;
-            visibility: hidden;
+            transition: width 200ms ease-in-out, opacity 200ms;
             height: 0;
+            opacity: 0;
             position: relative;
             bottom: 0.4em;
         }
@@ -362,8 +360,9 @@
 
         &:hover {
             .menu-icon {
+                transition-delay: 200ms;
                 width: 1.2em;
-                visibility: visible;
+                opacity: 1;
             }
         }
     }
@@ -417,20 +416,9 @@
     }
 
     .notification {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--accent);
-        text-shadow: 1px 1px 1px var(--accentDarker);
-        border-radius: 12px;
-        @include font(bold, normal, fs-50);
-        color: #ffffff;
-        min-width: $sp5;
-        padding: 0 $sp2;
-        height: $sp5;
+        @include unread();
         margin-top: 18px;
         margin-left: 2px;
-
         &:not(.rtl) {
             right: $sp3;
         }

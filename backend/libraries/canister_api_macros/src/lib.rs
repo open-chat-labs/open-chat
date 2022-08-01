@@ -56,7 +56,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let name = input.name.unwrap_or_else(|| item.sig.ident.to_string());
     let guard = input.guard.map(|g| quote! { guard = #g, });
-    let manual_reply = input.manual_reply.then(|| quote! { manual_reply = "true", });
+    let manual_reply = input.manual_reply.then_some(quote! { manual_reply = "true", });
 
     let msgpack_name = format!("{name}_msgpack");
 

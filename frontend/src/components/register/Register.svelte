@@ -74,6 +74,8 @@
             } else if (resp === "challenge_failed") {
                 error.set("register.challengeAttemptFailed");
                 createChallenge();
+            } else if (resp === "internal_error") {
+                error.set("unexpectedError");
             } else if (resp === "success") {
                 error.set(undefined);
                 loadUser();
@@ -191,7 +193,7 @@
         margin-top: auto;
         margin-bottom: auto;
         width: 100%;
-        @include loading-spinner(5em, 2.5em, false, var(--button-bg));
+        @include loading-spinner(5em, 2.5em, var(--button-bg));
     }
 
     .logout {

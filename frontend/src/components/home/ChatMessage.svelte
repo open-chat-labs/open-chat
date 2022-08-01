@@ -52,9 +52,11 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
-    import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
+    import { pathParams } from "../../stores/routing";
+    import { configKeys } from "../../utils/config";
+    import { toShortTimeString } from "../../utils/date";
 
     const dispatch = createEventDispatcher();
 
@@ -82,8 +84,14 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
+    export let canReplyInThread: boolean;
+    export let senderTyping: boolean;
+    export let dateFormatter: (date: Date) => string = toShortTimeString;
+
+    // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
+    export let supportsEdit: boolean;
+    export let supportsReply: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -94,8 +102,10 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let threadsEnabled =
+        canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
 
-    $: canEdit = !crypto && !poll && me;
+    $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
@@ -106,14 +116,17 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
-    $: senderTyping = $typing[chatId]?.has(senderId);
     $: threadSummary = msg.thread;
+    $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
+    $: isProposal = msg.content.kind === "proposal_content";
+    $: isFirst = first || isProposal;
+    $: isLast = last || isProposal;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
 
-        if (readByMe) {
-            observer?.unobserve(msgElement);
+        if (readByMe && observer && msgElement) {
+            observer.unobserve(msgElement);
         }
     });
 
@@ -160,8 +173,8 @@
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
-    function replyInThread() {
-        dispatch("replyInThread");
+    function initiateThread() {
+        dispatch("initiateThread");
     }
 
     function forward() {
@@ -280,7 +293,7 @@
             parentWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
+            inThread ? 0.9 : $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -313,11 +326,11 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage(user.userId, me, msg);
+        dispatch("shareMessage", msg);
     }
 
     function copyMessageUrl() {
-        shareFunctions.copyMessageUrl(chatId, msg.messageIndex);
+        dispatch("copyMessageUrl", msg);
     }
 </script>
 
@@ -362,7 +375,7 @@
         on:close={closeUserProfile} />
 {/if}
 
-<div class="message-wrapper" class:last>
+<div class="message-wrapper" class:last={isLast}>
     <div
         bind:this={msgElement}
         class="message"
@@ -382,7 +395,7 @@
 
         {#if showAvatar}
             <div class="avatar-col">
-                {#if first}
+                {#if isFirst}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
                             url={userAvatarUrl(sender)}
@@ -399,18 +412,20 @@
                 : undefined}
             on:dblclick={editMessage}
             class="message-bubble"
-            class:bot={isBot}
+            class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
             class:fill={fill && !deleted}
             class:me
             class:deleted
-            class:first
-            class:last
+            class:first={isFirst}
+            class:last={isLast}
             class:readByMe
             class:crypto
+            class:full-width={isProposal}
+            class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat}
+            {#if isFirst && !me && groupChat && msg.content.kind !== "proposal_content"}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -452,9 +467,11 @@
                 {preview}
                 {fill}
                 {me}
-                {first}
                 {groupChat}
                 {senderId}
+                {chatId}
+                first={isFirst}
+                messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}
@@ -471,7 +488,8 @@
                     {confirmed}
                     {readByThem}
                     {crypto}
-                    {chatType} />
+                    {chatType}
+                    {dateFormatter} />
             {/if}
 
             {#if debug}
@@ -496,7 +514,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if publicGroup && confirmed && !inThread}
+                                {#if publicGroup && confirmed}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
@@ -533,20 +551,22 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed && canSend}
-                                    <MenuItem on:click={reply}>
-                                        <Reply
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("reply")}</div>
-                                    </MenuItem>
-                                    <!-- {#if !inThread}
-                                        <MenuItem on:click={replyInThread}>
+                                {#if confirmed && supportsReply}
+                                    {#if canSend}
+                                        <MenuItem on:click={reply}>
+                                            <Reply
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("quoteReply")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                    {#if !inThread && threadsEnabled}
+                                        <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
                                         </MenuItem>
-                                    {/if} -->
+                                    {/if}
                                 {/if}
                                 {#if canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
@@ -557,7 +577,7 @@
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && groupChat && !me}
+                                {#if confirmed && groupChat && !me && !inThread}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}
@@ -632,11 +652,13 @@
 
     {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
-            selected={msg.messageIndex === selectedThreadMessageIndex}
+            {chatId}
+            threadRootMessageIndex={msg.messageIndex}
+            selected={msg.messageIndex === $pathParams.messageIndex}
             {threadSummary}
             indent={showAvatar}
             {me}
-            on:replyInThread />
+            url={msgUrl} />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
@@ -832,6 +854,15 @@
             max-width: 70%;
         }
 
+        &.thread {
+            max-width: 90%;
+        }
+
+        &.full-width {
+            max-width: none;
+            width: 100%;
+        }
+
         .username {
             color: inherit;
             color: var(--accent);
@@ -926,7 +957,7 @@
             opacity: 0.8;
         }
 
-        &.bot {
+        &.bot-font {
             font-family: courier;
         }
 

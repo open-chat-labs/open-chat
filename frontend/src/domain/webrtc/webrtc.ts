@@ -14,6 +14,7 @@ type WebRtcMessageCommon = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     userId: string;
+    threadRootMessageIndex?: number;
 };
 
 export type CurrentUserTyping = WebRtcMessageCommon & {

@@ -3,8 +3,8 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
-    ChatSummary,
     MergedUpdatesResponse,
     SendMessageResponse,
     BlockUserResponse,
@@ -19,7 +19,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
-    RegisterPollVoteResponse,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
     ChatEvent,
@@ -46,6 +45,7 @@ import {
     getFirstUnreadMessageIndex,
     indexRangeForChat,
     MAX_MISSING,
+    threadsReadFromChat,
     updateArgsFromChats,
     userIdsFromEvents,
 } from "../../domain/chat/chat.utils";
@@ -241,10 +241,13 @@ export class CachingUserClient implements IUserClient {
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
                 let targetMessageIndex: number | undefined = undefined;
-
                 if (currentScrollStrategy !== "latestMessage") {
                     // horrible having to do this but if we don't the message read tracker will not be in the right state
-                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                    messagesRead.syncWithServer(
+                        chat.chatId,
+                        chat.readByMe,
+                        threadsReadFromChat(chat)
+                    );
                 }
 
                 if (currentScrollStrategy === "firstMention") {
@@ -374,6 +377,10 @@ export class CachingUserClient implements IUserClient {
         return this.client.createGroup(group);
     }
 
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
+        return this.client.deleteGroup(chatId);
+    }
+
     editMessage(
         recipientId: string,
         message: Message,
@@ -387,11 +394,12 @@ export class CachingUserClient implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: UserSummary,
-        message: Message
-    ): Promise<SendMessageResponse> {
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, message)
-            .then(setCachedMessageFromSendResponse(this.db, groupId, message));
+            .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
+            .then(setCachedMessageFromSendResponse(this.db, groupId, threadRootMessageIndex));
     }
 
     @profile("userCachingClient")
@@ -401,17 +409,10 @@ export class CachingUserClient implements IUserClient {
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(
-                setCachedMessageFromSendResponse(
-                    this.db,
-                    this.userId,
-                    message,
-                    threadRootMessageIndex
-                )
-            );
+            .then(setCachedMessageFromSendResponse(this.db, this.userId, threadRootMessageIndex));
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -495,22 +496,6 @@ export class CachingUserClient implements IUserClient {
 
     setBio(bio: string): Promise<SetBioResponse> {
         return this.client.setBio(bio);
-    }
-
-    registerPollVote(
-        otherUser: string,
-        messageIdx: number,
-        answerIdx: number,
-        voteType: "register" | "delete",
-        threadRootMessageIndex?: number
-    ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(
-            otherUser,
-            messageIdx,
-            answerIdx,
-            voteType,
-            threadRootMessageIndex
-        );
     }
 
     withdrawCryptocurrency(

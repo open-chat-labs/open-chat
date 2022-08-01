@@ -38,13 +38,13 @@ export function toVoid(_x: unknown): void {
 }
 
 // Convert a hex string to a byte array
-export function hexStringToBytes(hex: string): number[] {
+export function hexStringToBytes(hex: string): Uint8Array {
     const bytes: number[] = [];
     for (let c = 0; c < hex.length; c += 2) bytes.push(parseInt(hex.substr(c, 2), 16));
-    return bytes;
+    return new Uint8Array(bytes);
 }
 
 // Convert a byte array to a hex string
-export function bytesToHexString(bytes: number[]): string {
+export function bytesToHexString(bytes: Uint8Array): string {
     return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }

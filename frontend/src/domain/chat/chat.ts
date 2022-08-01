@@ -3,6 +3,7 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
+import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -140,16 +141,85 @@ export interface GiphyContent {
 
 export interface ProposalContent {
     kind: "proposal_content";
-    url: string;
-    title: string;
-    myVote?: boolean;
-    rejectVotes: number;
-    deadline: bigint;
-    adoptVotes: number;
-    summary: string;
-    proposalId: bigint;
     governanceCanisterId: string;
-    proposer: bigint;
+    proposal: Proposal;
+    myVote?: boolean;
+}
+
+export type Proposal = NnsProposal | SnsProposal;
+
+export interface ProposalCommon {
+    id: bigint;
+    url: string;
+    status: ProposalDecisionStatus;
+    tally: Tally;
+    title: string;
+    created: number;
+    deadline: number;
+    lastUpdated: number;
+    rewardStatus: ProposalRewardStatus;
+    summary: string;
+    proposer: NeuronId;
+}
+
+export interface Tally {
+    yes: number;
+    no: number;
+    total: number;
+}
+
+export interface NnsProposal extends ProposalCommon {
+    kind: "nns";
+    topic: NnsProposalTopic;
+}
+
+export enum ProposalDecisionStatus {
+    Unspecified,
+    Failed,
+    Open,
+    Rejected,
+    Executed,
+    Adopted,
+}
+
+export enum ProposalRewardStatus {
+    Unspecified,
+    AcceptVotes,
+    ReadyToSettle,
+    Settled,
+}
+
+export enum NnsProposalTopic {
+    Unspecified,
+    NeuronManagement,
+    ExchangeRate,
+    NetworkEconomics,
+    Governance,
+    NodeAdmin,
+    ParticipantManagement,
+    SubnetManagement,
+    NetworkCanisterManagement,
+    KYC,
+    NodeProviderRewards,
+    SnsDecentralizationSale,
+}
+
+export enum SnsProposalAction {
+    Unspecified = 0,
+    Motion = 1,
+    SetParameters = 2,
+    UpgradeCanister = 3,
+    AddCustom = 4,
+    RemoveCustom = 5,
+    TransferTokens = 1000,
+    BurnChat = 1001,
+    TopupCycles = 1002,
+    SwapTokens = 1003,
+}
+
+export interface SnsProposal extends ProposalCommon {
+    kind: "sns";
+    action: SnsProposalAction;
 }
 
 export interface ImageContent extends DataContent {
@@ -338,7 +408,8 @@ export type GroupChatEvent =
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
     | DirectChatCreated
-    | ThreadUpdated;
+    | ThreadUpdated
+    | ProposalsUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -464,6 +535,14 @@ export type ThreadUpdated = {
     kind: "thread_updated";
     messageIndex: number;
     eventIndex: number;
+};
+
+export type ProposalsUpdated = {
+    kind: "proposals_updated";
+    proposals: {
+        messageIndex: number;
+        eventIndex: number;
+    }[];
 };
 
 export type PermissionsChanged = {
@@ -615,6 +694,23 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     ownerId?: string;
     permissions?: GroupPermissions;
     public?: boolean;
+    latestThreads?: ThreadSyncDetailsUpdates[];
+};
+
+export type ThreadSyncDetailsUpdates = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
+};
+
+export type ThreadSyncDetails = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    readUpTo?: number;
+    latestEventIndex: number;
+    latestMessageIndex: number;
 };
 
 export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -705,6 +801,8 @@ export type GroupChatSummary = DataContent &
         myRole: MemberRole;
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
+        latestThreads: ThreadSyncDetails[];
+        isProposalGroup: boolean;
     };
 
 export type Mention = {
@@ -980,7 +1078,13 @@ export type JoinGroupResponse =
 export type MarkReadRequest = {
     ranges: DRange;
     chatId: string;
+    threads: ThreadRead[];
 }[];
+
+export type ThreadRead = {
+    threadRootMessageIndex: number;
+    readUpTo: number;
+};
 
 export type MarkReadResponse = "success";
 
@@ -1048,8 +1152,8 @@ export type RegisterPollVoteResponse =
     | "success"
     | "out_of_range"
     | "poll_not_found"
-    | "message_not_found"
-    | "chat_not_found";
+    | "chat_not_found"
+    | "polls_not_valid_for_direct_chats";
 
 export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
 
@@ -1068,6 +1172,20 @@ export type EnableInviteCodeSuccess = {
 export type DisableInviteCodeResponse = "not_authorised" | "success";
 
 export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised;
+
+export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
+
+export type ThreadPreviewsSuccess = {
+    kind: "thread_previews_success";
+    threads: ThreadPreview[];
+};
+
+export type ThreadPreview = {
+    chatId: string;
+    latestReplies: EventWrapper<Message>[];
+    totalReplies: number;
+    rootMessage: EventWrapper<Message>;
+};
 
 export type ResetInviteCodeSuccess = {
     kind: "success";
@@ -1092,3 +1210,13 @@ export type ChatMetrics = {
     polls: number;
     reactions: number;
 };
+
+export type RegisterProposalVoteResponse =
+    | "success"
+    | "already_voted"
+    | "caller_not_in_group"
+    | "no_eligible_neurons"
+    | "proposal_message_not_found"
+    | "proposal_not_found"
+    | "proposal_not_accepting_votes"
+    | "internal_error";

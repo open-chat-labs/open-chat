@@ -27,7 +27,7 @@ const openChatBotUser: PartialUserSummary = {
 
 export const PROPOSALS_BOT_USER_ID = "process.env.PROPOSALS_BOT_CANISTER";
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
-export const PROPOSALS_BOT_AVATAR_URL = "assets/robot.svg";
+export const PROPOSALS_BOT_AVATAR_URL = "assets/proposal-robot.svg";
 const proposalsBotUser: PartialUserSummary = {
     kind: "bot",
     userId: PROPOSALS_BOT_USER_ID,
@@ -123,13 +123,11 @@ async function updateUsers(api: ServiceContainer) {
                 userStore.setUpdated(batch, usersResp.serverTimestamp);
             }
         }
-        console.log("users updated");
     } catch (err) {
         rollbar.error("Error updating users", err as Error);
     }
 }
 
 export function startUserUpdatePoller(api: ServiceContainer): Poller {
-    console.log("poll: starting chats poller");
     return new Poller(() => updateUsers(api), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
 }

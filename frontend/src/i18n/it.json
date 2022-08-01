@@ -392,7 +392,8 @@
             "sendMessages": "Manda messaggi",
             "reactToMessages": "reagire ai messaggi",
             "inviteUsers": "invitare gli utenti",
-            "notPermitted": "Non sei autorizzato a {permission}"
+            "notPermitted": "Non sei autorizzato a {permission}",
+            "replyInThread": "rispondi nel thread"
         },
         "advanced": "Avanzate",
         "invite": {
@@ -537,7 +538,12 @@
         "replies": "risposte",
         "reply": "rispondere",
         "lastMessage": "(ultimo messaggio {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Fili",
+        "openThread": "filo aperto",
+        "unread": "{count} thread con messaggi non letti",
+        "moreMessages": "- {number} più messaggi -",
+        "previewFailure": "Impossibile caricare le anteprime dei thread"
     },
     "noChatsAvailable": "Nessuna chat disponibile!",
     "invitedUsers": "Utenti invitati",
@@ -550,5 +556,27 @@
         "unpinFailed": "Impossibile sbloccare la chat. Riprova più tardi",
         "menuItem": "Appunta la chat",
         "unpinMenuItem": "Sblocca la chat"
-    }
+    },
+    "readOnlyThread": "Questo thread è di sola lettura",
+    "proposal": {
+        "voteFailed": "Impossibile esprimere il voto. Riprova più tardi",
+        "alreadyVoted": "Hai già votato: prova a ricaricare la pagina",
+        "noEligibleNeurons": "Nessun neurone idoneo trovato",
+        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare le proposte da OpenChat, devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida per tutti i neuroni con cui desideri votare. Il tuo ID utente OpenChat è:",
+        "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
+        "proposedBy": "proposto da",
+        "topic": "argomento",
+        "action": "azione",
+        "votingPeriodRemaining": "Periodo di votazione rimanente",
+        "votingPeriodEnded": "Il periodo di votazione è terminato",
+        "adopt": "Adottare",
+        "reject": "Rifiutare",
+        "youVotedAdopt": "Hai votato adottare!",
+        "youVotedReject": "Hai votato rifiuto!",
+        "additionalContent": "contenuto aggiuntivo",
+        "viewOnDashboard": "vista sul cruscotto"
+    },
+    "yes": "sì",
+    "no": "No",
+    "quoteReply": "Citare la risposta"
 }

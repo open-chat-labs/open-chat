@@ -149,18 +149,59 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const ProposalId = IDL.Nat64;
+  const ProposalDecisionStatus = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Open' : IDL.Null,
+    'Rejected' : IDL.Null,
+    'Executed' : IDL.Null,
+    'Adopted' : IDL.Null,
+    'Unspecified' : IDL.Null,
+  });
+  const Tally = IDL.Record({
+    'no' : IDL.Nat64,
+    'yes' : IDL.Nat64,
+    'total' : IDL.Nat64,
+  });
+  const ProposalRewardStatus = IDL.Variant({
+    'ReadyToSettle' : IDL.Null,
+    'AcceptVotes' : IDL.Null,
+    'Unspecified' : IDL.Null,
+    'Settled' : IDL.Null,
+  });
   const NeuronId = IDL.Nat64;
-  const ProposalContent = IDL.Record({
+  const NnsProposal = IDL.Record({
+    'id' : ProposalId,
     'url' : IDL.Text,
+    'status' : ProposalDecisionStatus,
+    'tally' : Tally,
     'title' : IDL.Text,
-    'my_vote' : IDL.Opt(IDL.Bool),
-    'reject_votes' : IDL.Nat32,
+    'created' : TimestampMillis,
+    'topic' : IDL.Int32,
+    'last_updated' : TimestampMillis,
     'deadline' : TimestampMillis,
-    'adopt_votes' : IDL.Nat32,
+    'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposal_id' : ProposalId,
-    'governance_canister_id' : CanisterId,
     'proposer' : NeuronId,
+  });
+  const SnsProposal = IDL.Record({
+    'id' : ProposalId,
+    'url' : IDL.Text,
+    'status' : ProposalDecisionStatus,
+    'tally' : Tally,
+    'title' : IDL.Text,
+    'created' : TimestampMillis,
+    'action' : IDL.Nat64,
+    'last_updated' : TimestampMillis,
+    'deadline' : TimestampMillis,
+    'reward_status' : ProposalRewardStatus,
+    'summary' : IDL.Text,
+    'proposer' : NeuronId,
+  });
+  const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
+  const ProposalContent = IDL.Record({
+    'my_vote' : IDL.Opt(IDL.Bool),
+    'governance_canister_id' : CanisterId,
+    'proposal' : Proposal,
   });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
@@ -350,7 +391,7 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'updated_by' : UserId,
+    'latest_thread_message_index_if_updated' : IDL.Opt(MessageIndex),
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -380,6 +421,13 @@ export const idlFactory = ({ IDL }) => {
     'changed_by' : UserId,
     'old_role' : Role,
     'new_role' : Role,
+  });
+  const ProposalUpdated = IDL.Record({
+    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
+  });
+  const ProposalsUpdated = IDL.Record({
+    'proposals' : IDL.Vec(ProposalUpdated),
   });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
@@ -422,6 +470,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
+    'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
@@ -487,6 +536,13 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
+  const ThreadSyncDetails = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'last_updated' : TimestampMillis,
+    'read_up_to' : IDL.Opt(MessageIndex),
+    'latest_event' : IDL.Opt(EventIndex),
+    'latest_message' : IDL.Opt(MessageIndex),
+  });
   const Mention = IDL.Record({
     'message_id' : MessageId,
     'event_index' : EventIndex,
@@ -515,6 +571,7 @@ export const idlFactory = ({ IDL }) => {
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
@@ -575,10 +632,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const ThreadRead = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'read_up_to' : MessageIndex,
+  });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
+    'threads' : IDL.Vec(ThreadRead),
     'chat_id' : ChatId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MarkReadArgs = IDL.Record({
     'messages_read' : IDL.Vec(ChatMessagesRead),
@@ -638,24 +699,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : RecommendedGroupsSuccessResult,
     'InternalError' : IDL.Text,
   });
-  const VoteOperation = IDL.Variant({
-    'RegisterVote' : IDL.Null,
-    'DeleteVote' : IDL.Null,
-  });
-  const RegisterPollVoteArgs = IDL.Record({
-    'user_id' : UserId,
-    'poll_option' : IDL.Nat32,
-    'operation' : VoteOperation,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'message_index' : MessageIndex,
-  });
-  const RegisterPollVoteResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'PollEnded' : IDL.Null,
-    'Success' : PollVotes,
-    'OptionIndexOutOfRange' : IDL.Null,
-    'PollNotFound' : IDL.Null,
-  });
   const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -710,6 +753,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyOptions' : IDL.Nat32,
     'OptionTooLong' : IDL.Nat32,
     'EndDateInThePast' : IDL.Null,
+    'PollsNotValidForDirectChats' : IDL.Null,
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
@@ -828,6 +872,7 @@ export const idlFactory = ({ IDL }) => {
     'pinned_message' : PinnedMessageUpdate,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
+    'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
@@ -931,11 +976,6 @@ export const idlFactory = ({ IDL }) => {
         [RecommendedGroupsArgs],
         [RecommendedGroupsResponse],
         ['query'],
-      ),
-    'register_poll_vote' : IDL.Func(
-        [RegisterPollVoteArgs],
-        [RegisterPollVoteResponse],
-        [],
       ),
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],

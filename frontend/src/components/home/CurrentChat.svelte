@@ -11,6 +11,7 @@
     import {
         canForward,
         canInviteUsers,
+        canReplyInThread,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         getMessageContent,
@@ -52,7 +53,6 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
-    export let selectedThreadMessageIndex: number | undefined;
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
@@ -234,7 +234,7 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             api.sendMessage($chat, controller.user, mentioned, msg)
-                .then((resp) => {
+                .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
@@ -304,7 +304,7 @@
 
         controller.api
             .sendMessage($chat, controller.user, [], msg)
-            .then((resp) => {
+            .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     controller.confirmMessage(msg, resp);
                     trackEvent("forward_message");
@@ -382,16 +382,18 @@
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:replyTo={replyTo}
-        on:replyInThread
+        on:openThread
         on:messageRead={messageRead}
         on:chatWith
         on:upgrade
         on:forward
+        on:closeThread
+        on:initiateThread
         {controller}
-        {selectedThreadMessageIndex}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
         canDelete={canDeleteOtherUsersMessages($chat)}
+        canReplyInThread={canReplyInThread($chat)}
         {canSend}
         canReact={canReactToMessages($chat)}
         canInvite={canInviteUsers($chat)}

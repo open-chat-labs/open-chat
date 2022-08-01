@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, TimestampMillis, Timestamped};
+use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
+use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChat {
@@ -10,6 +10,7 @@ pub struct GroupChat {
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
     pub is_super_admin: bool,
+    pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
 
 impl GroupChat {
@@ -31,19 +32,26 @@ impl GroupChat {
             read_by_me: Timestamped::new(read_by_me, now),
             notifications_muted: Timestamped::new(notifications_muted, now),
             is_super_admin,
+            threads_read: TimestampedMap::default(),
         }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        max(self.read_by_me.timestamp, self.notifications_muted.timestamp)
+        [
+            self.read_by_me.timestamp,
+            self.notifications_muted.timestamp,
+            self.threads_read.last_updated().unwrap_or_default(),
+        ]
+        .iter()
+        .max()
+        .copied()
+        .unwrap()
     }
-}
 
-impl From<&GroupChat> for GroupChatSummaryUpdates {
-    fn from(s: &GroupChat) -> Self {
+    pub fn to_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
         GroupChatSummaryUpdates {
-            chat_id: s.chat_id,
-            last_updated: s.last_updated(),
+            chat_id: self.chat_id,
+            last_updated: self.last_updated(),
             name: None,
             description: None,
             avatar_id: OptionUpdate::NoChange,
@@ -51,8 +59,8 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             latest_event_index: None,
             participant_count: None,
             role: None,
-            read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),
-            notifications_muted: Some(s.notifications_muted.value),
+            read_by_me: Some(convert_to_message_index_ranges(self.read_by_me.value.clone())),
+            notifications_muted: Some(self.notifications_muted.value),
             mentions: Vec::new(),
             pinned_message: OptionUpdate::NoChange,
             wasm_version: None,
@@ -62,6 +70,17 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             metrics: None,
             my_metrics: None,
             is_public: None,
+            latest_threads: self
+                .threads_read
+                .updated_since(updates_since)
+                .map(|(&root_message_index, read_up_to)| ThreadSyncDetails {
+                    root_message_index,
+                    latest_event: None,
+                    latest_message: None,
+                    read_up_to: Some(read_up_to.value),
+                    last_updated: read_up_to.last_updated,
+                })
+                .collect(),
         }
     }
 }

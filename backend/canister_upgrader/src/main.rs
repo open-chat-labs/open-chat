@@ -23,9 +23,8 @@ async fn main() {
         CanisterName::ProposalsBot => {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
-        CanisterName::Root => upgrade_root_canister(identity, opts.url, opts.root, opts.version).await,
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
-        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.root, opts.version).await,
+        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
     };
 }
 
@@ -33,7 +32,6 @@ async fn main() {
 struct Opts {
     url: String,
     controller: String,
-    root: CanisterId,
     user_index: CanisterId,
     group_index: CanisterId,
     notifications: CanisterId,

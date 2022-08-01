@@ -392,7 +392,8 @@
             "sendMessages": "Sende Nachrichten",
             "reactToMessages": "auf Nachrichten reagieren",
             "inviteUsers": "Benutzer einladen",
-            "notPermitted": "Sie dürfen nicht {permission}"
+            "notPermitted": "Sie dürfen nicht {permission}",
+            "replyInThread": "Antwort im Thread"
         },
         "advanced": "Fortschrittlich",
         "invite": {
@@ -537,7 +538,12 @@
         "replies": "antwortet",
         "reply": "Antwort",
         "lastMessage": "(letzte Nachricht {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Fäden",
+        "openThread": "Thread öffnen",
+        "unread": "{count} Thread(s) mit ungelesenen Nachrichten",
+        "moreMessages": "- {number} weitere Nachricht(en) -",
+        "previewFailure": "Thread-Vorschauen können nicht geladen werden"
     },
     "noChatsAvailable": "Keine Chats verfügbar!",
     "invitedUsers": "Eingeladene Benutzer",
@@ -550,5 +556,27 @@
         "unpinFailed": "Der Chat konnte nicht gelöst werden. Versuchen Sie es später erneut",
         "menuItem": "Pin-Chat",
         "unpinMenuItem": "Chat loslösen"
-    }
+    },
+    "readOnlyThread": "Dieser Thread ist schreibgeschützt",
+    "yes": "Ja",
+    "no": "Nein",
+    "proposal": {
+        "voteFailed": "Stimmabgabe fehlgeschlagen - bitte versuchen Sie es später erneut",
+        "alreadyVoted": "Sie haben bereits abgestimmt - versuchen Sie, die Seite neu zu laden",
+        "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
+        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge innerhalb von OpenChat abzustimmen, müssen Sie zuerst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten. Ihre OpenChat-Benutzer-ID lautet:",
+        "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
+        "proposedBy": "vorgeschlagen von",
+        "topic": "Thema",
+        "action": "Aktion",
+        "votingPeriodRemaining": "Verbleibende Abstimmungsperiode",
+        "votingPeriodEnded": "Abstimmungszeitraum beendet",
+        "adopt": "Adoptieren",
+        "reject": "Ablehnen",
+        "youVotedAdopt": "Sie haben für adoptiert gestimmt!",
+        "youVotedReject": "Sie haben für ablehnen gestimmt!",
+        "additionalContent": "zusätzlicher Inhalt",
+        "viewOnDashboard": "auf dem Armaturenbrett anzeigen"
+    },
+    "quoteReply": "Antwort zitieren"
 }

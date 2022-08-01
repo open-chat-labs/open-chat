@@ -150,19 +150,19 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
 }
 
 fn merge_updates(
-    mut summaries: Vec<GroupChatSummaryInternal>,
+    summaries: Vec<GroupChatSummaryInternal>,
     updates: Vec<GroupChatSummaryUpdatesInternal>,
 ) -> Vec<GroupChatSummaryInternal> {
-    if !updates.is_empty() {
-        let mut map: HashMap<_, _> = summaries.iter_mut().map(|s| (s.chat_id, s)).collect();
+    if updates.is_empty() {
+        summaries
+    } else {
+        let mut updates_map: HashMap<_, _> = updates.into_iter().map(|s| (s.chat_id, s)).collect();
 
-        for group_updates in updates {
-            if let Some(summary) = map.get_mut(&group_updates.chat_id) {
-                summary.merge_updates(group_updates);
-            }
-        }
+        summaries
+            .into_iter()
+            .map(|s| if let Some(u) = updates_map.remove(&s.chat_id) { s.merge(u) } else { s })
+            .collect()
     }
-    summaries
 }
 
 fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {

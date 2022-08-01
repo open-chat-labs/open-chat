@@ -17,7 +17,6 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    DeleteGroupResponse,
     GroupChatSummary,
     MemberRole,
     PinMessageResponse,
@@ -30,6 +29,8 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    ThreadPreviewsResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -48,7 +49,6 @@ import {
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     unblockUserResponse,
-    deleteGroupResponse,
     getMessagesByMessageIndexResponse,
     pinMessageResponse,
     unpinMessageResponse,
@@ -59,6 +59,9 @@ import {
     disableInviteCodeResponse,
     resetInviteCodeResponse,
     updatePermissionsResponse,
+    threadPreviewsResponse,
+    registerPollVoteResponse,
+    registerProposalVoteResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -69,8 +72,6 @@ import {
     apiOptional,
     apiUpdatePermissions,
     apiUser,
-    publicSummaryResponse,
-    registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
@@ -79,6 +80,7 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { base64ToBigint } from "../../utils/base64";
+import { publicSummaryResponse } from "../common/publicSummaryMapper";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -110,7 +112,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            events: eventIndexes,
+            events: new Uint32Array(eventIndexes),
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
         return this.handleQueryResponse(
@@ -231,15 +233,16 @@ export class GroupClient extends CandidService implements IGroupClient {
         mentioned: User[],
         message: Message,
         threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
+    ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.chatId])
             : dataClient.uploadData(message.content, [this.chatId]);
 
         return uploadContentPromise.then((content) => {
+            const newContent = content ?? message.content;
             const args = {
-                content: apiMessageContent(content ?? message.content),
+                content: apiMessageContent(newContent),
                 message_id: message.messageId,
                 sender_name: senderName,
                 replies_to: apiOptional(
@@ -252,7 +255,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(this.groupService.send_message(args), sendMessageResponse);
+            return this.handleResponse(
+                this.groupService.send_message(args),
+                sendMessageResponse
+            ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
 
@@ -269,7 +275,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                               SetToSome: {
                                   id: DataClient.newBlobId(),
                                   mime_type: "image/jpg",
-                                  data: Array.from(avatar),
+                                  data: avatar,
                               },
                           },
                 permissions: [],
@@ -370,11 +376,6 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
-    }
-
-    @profile("groupClient")
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
         return this.handleResponse(this.groupService.make_private({}), makeGroupPrivateResponse);
     }
@@ -397,7 +398,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
-            messages: [...messageIndexes],
+            messages: new Uint32Array(messageIndexes),
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
@@ -486,6 +487,31 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleQueryResponse(
             () => this.groupService.reset_invite_code({}),
             resetInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.groupService.thread_previews({
+                    threads: new Uint32Array(threadRootMessageIndexes),
+                }),
+            (resp) => threadPreviewsResponse(this.chatId, resp)
+        );
+    }
+
+    @profile("groupClient")
+    registerProposalVote(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.handleResponse(
+            this.groupService.register_proposal_vote({
+                adopt,
+                message_index: messageIdx,
+            }),
+            registerProposalVoteResponse
         );
     }
 }

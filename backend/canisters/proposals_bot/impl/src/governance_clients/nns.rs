@@ -4,7 +4,13 @@ use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, ProposalId};
+use types::{CanisterId, ProposalId, Tally};
+
+pub const TOPIC_NEURON_MANAGEMENT: i32 = 1;
+pub const TOPIC_EXCHANGE_RATE: i32 = 2;
+
+pub const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
+pub const REWARD_STATUS_READ_TO_SETTLE: i32 = 2;
 
 pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListProposalInfo) -> CallResult<Vec<ProposalInfo>> {
     let method_name = "list_proposals";
@@ -30,8 +36,6 @@ pub struct ListProposalInfo {
 pub mod governance_response_types {
     use super::*;
 
-    const EXCHANGE_RATE_TOPIC: i32 = 2;
-
     #[derive(CandidType, Deserialize)]
     pub struct ListProposalInfoResponse {
         pub proposal_info: Vec<ProposalInfo>,
@@ -40,10 +44,18 @@ pub mod governance_response_types {
     #[derive(CandidType, Deserialize)]
     pub struct ProposalInfo {
         pub id: Option<WrappedProposalId>,
-        pub topic: i32,
         pub proposer: Option<WrappedNeuronId>,
+        pub reject_cost_e8s: u64,
         pub proposal: Option<Proposal>,
         pub proposal_timestamp_seconds: u64,
+        pub latest_tally: Option<Tally>,
+        pub decided_timestamp_seconds: u64,
+        pub executed_timestamp_seconds: u64,
+        pub failed_timestamp_seconds: u64,
+        pub reward_event_round: u64,
+        pub topic: i32,
+        pub status: i32,
+        pub reward_status: i32,
         pub deadline_timestamp_seconds: Option<u64>,
     }
 
@@ -51,25 +63,36 @@ pub mod governance_response_types {
         fn id(&self) -> ProposalId {
             self.id.as_ref().map_or(ProposalId::default(), |p| p.id)
         }
-
-        fn is_excluded(&self) -> bool {
-            self.topic == EXCHANGE_RATE_TOPIC
-        }
     }
 
     impl TryFrom<ProposalInfo> for types::Proposal {
         type Error = &'static str;
 
+        fn try_from(value: ProposalInfo) -> Result<Self, Self::Error> {
+            types::NnsProposal::try_from(value).map(types::Proposal::NNS)
+        }
+    }
+
+    impl TryFrom<ProposalInfo> for types::NnsProposal {
+        type Error = &'static str;
+
         fn try_from(p: ProposalInfo) -> Result<Self, Self::Error> {
             let proposal = p.proposal.ok_or("proposal not set")?;
+            let now = utils::time::now_millis();
 
-            Ok(types::Proposal {
+            Ok(types::NnsProposal {
                 id: p.id.ok_or("id not set")?.id,
+                topic: p.topic,
                 proposer: p.proposer.ok_or("proposer not set")?.id,
+                created: p.proposal_timestamp_seconds * 1000,
                 title: proposal.title.ok_or("title not set")?,
                 summary: proposal.summary,
                 url: proposal.url,
-                deadline: p.deadline_timestamp_seconds.ok_or("deadline_timestamp_seconds not set")? * 1000,
+                status: p.status.try_into().unwrap(),
+                reward_status: p.reward_status.try_into().unwrap(),
+                tally: p.latest_tally.unwrap_or_default(),
+                deadline: p.deadline_timestamp_seconds.ok_or("deadline not set")? * 1000,
+                last_updated: now,
             })
         }
     }

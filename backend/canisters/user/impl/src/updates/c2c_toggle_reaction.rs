@@ -27,13 +27,13 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
 
-        let exists = chat.events.reaction_exists(caller, args.message_id, &args.reaction);
+        let exists = chat.events.reaction_exists(caller, None, args.message_id, &args.reaction);
 
         if exists == args.added {
             return if args.added { Added } else { Removed };
         }
 
-        match chat.events.toggle_reaction(caller, args.message_id, args.reaction, now) {
+        match chat.events.toggle_reaction(caller, None, args.message_id, args.reaction, now) {
             ToggleReactionResult::Added(_) => Added,
             ToggleReactionResult::Removed(_) => Removed,
             ToggleReactionResult::MessageNotFound => MessageNotFound,

@@ -25,13 +25,14 @@ fn c2c_edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
         let edit_message_args = EditMessageArgs {
             sender: caller,
+            thread_root_message_index: None,
             message_id: args.message_id,
             content: args.content,
             now,
         };
 
         match chat.events.edit_message(edit_message_args) {
-            EditMessageResult::Success(_) => Success,
+            EditMessageResult::Success => Success,
             EditMessageResult::NotAuthorized => MessageNotFound,
             EditMessageResult::NotFound => MessageNotFound,
         }

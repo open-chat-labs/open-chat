@@ -36,7 +36,9 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
+        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades;
+
+        (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
             .collect()
     }
@@ -55,10 +57,6 @@ mod upgrade_canisters {
         let mut user = runtime_state.data.users.get_by_user_id(&user_id).cloned()?;
         let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
-
-        if current_wasm_version >= user_canister_wasm.version {
-            return None;
-        }
 
         user.set_canister_upgrade_status(true, None);
 

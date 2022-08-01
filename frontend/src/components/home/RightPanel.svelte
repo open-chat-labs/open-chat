@@ -29,12 +29,14 @@
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
+    import { push } from "svelte-spa-router";
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController | undefined;
     export let rightPanelHistory: RightPanelState[];
     export let userId: string;
     export let metrics: ChatMetrics;
+    export let thread: Thread | undefined;
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -107,6 +109,11 @@
         }
     }
 
+    function closeThread(ev: CustomEvent<string>) {
+        pop();
+        push(`/${ev.detail}`);
+    }
+
     function findMessage(
         events: EventWrapper<ChatEvent>[],
         messageId: bigint
@@ -172,7 +179,16 @@
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {:else if threadRootEvent !== undefined && controller !== undefined}
-        <Thread rootEvent={threadRootEvent} {controller} on:close={pop} />
+        <Thread
+            bind:this={thread}
+            on:chatWith
+            on:upgrade
+            rootEvent={threadRootEvent}
+            focusMessageIndex={lastState.kind === "message_thread_panel"
+                ? lastState.focusThreadMessageIndex
+                : undefined}
+            {controller}
+            on:closeThread={closeThread} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

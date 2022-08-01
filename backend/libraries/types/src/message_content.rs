@@ -56,7 +56,12 @@ pub enum ContentValidationError {
 impl MessageContent {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
-    pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
+    pub fn validate_for_new_message(
+        &self,
+        is_direct_chat: bool,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
                 MessageContent::Poll(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {
@@ -68,7 +73,7 @@ impl MessageContent {
 
         match self {
             MessageContent::Poll(p) => {
-                if let Err(reason) = p.config.validate(now) {
+                if let Err(reason) = p.config.validate(is_direct_chat, now) {
                     return Err(InvalidPoll(reason));
                 }
             }
@@ -123,9 +128,11 @@ impl MessageContent {
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContent::GovernanceProposal(p) => {
-                MessageContentInternal::GovernanceProposal(ProposalContentInternal::new(p))
-            }
+            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+                governance_canister_id: p.governance_canister_id,
+                proposal: p.proposal,
+                votes: HashMap::new(),
+            }),
         }
     }
 
@@ -178,7 +185,7 @@ impl MessageContent {
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::GovernanceProposal(p) => p.summary.len(),
+            MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
         }
     }
 }
@@ -212,7 +219,11 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.hydrate(my_user_id)),
+            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
+                governance_canister_id: p.governance_canister_id,
+                proposal: p.proposal.clone(),
+                my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
+            }),
         }
     }
 }

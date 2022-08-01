@@ -8,6 +8,7 @@ const dark20 = "#454545";
 const dark25 = "#525252";
 const dark45 = "#666666";
 const dark50 = "#777777";
+const dark55 = "#888888";
 const dark60 = "#ababab";
 
 const blueAccent = "#085d8c";
@@ -260,6 +261,23 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         toggle: {
             bg: dark45,
+        },
+
+        thread: {
+            preview: {
+                bg: "transparent",
+            },
+        },
+
+        markdown: {
+            fg: {
+                color: dark60,
+                bright: "#cacaca",
+                muted: dark55,
+            },
+            bg: {
+                dark: dark15,
+            },
         },
     };
 }

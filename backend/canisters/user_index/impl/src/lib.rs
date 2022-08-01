@@ -23,7 +23,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 25_000;
+pub const USER_LIMIT: usize = 30_000;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -102,10 +102,11 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            user_wasm_version: self.data.user_canister_wasm.version,
+            max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             sms_messages_in_queue: self.data.sms_messages.len() as u32,
             super_admins: self.data.super_admins.len() as u8,
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
-            user_wasm_version: self.data.user_canister_wasm.version,
             inflight_challenges: self.data.challenges.count(),
             user_events_queue_length: self.data.user_event_sync_queue.len(),
         }
@@ -136,6 +137,7 @@ struct Data {
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
+    pub max_concurrent_canister_upgrades: usize,
 }
 
 impl Data {
@@ -176,6 +178,7 @@ impl Data {
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
+            max_concurrent_canister_upgrades: 2,
         }
     }
 }
@@ -206,6 +209,7 @@ impl Default for Data {
             super_admins_to_dismiss: VecDeque::new(),
             test_mode: true,
             challenges: Challenges::new(true),
+            max_concurrent_canister_upgrades: 2,
         }
     }
 }
@@ -228,6 +232,7 @@ pub struct Metrics {
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: Version,
+    pub max_concurrent_canister_upgrades: usize,
     pub sms_messages_in_queue: u32,
     pub super_admins: u8,
     pub super_admins_to_dismiss: u32,

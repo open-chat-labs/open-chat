@@ -1,7 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_canister::messages_by_message_index::{Response::*, *};
 use ic_cdk_macros::query;
-use types::EventWrapper;
 
 #[query]
 fn messages_by_message_index(args: Args) -> Response {
@@ -21,13 +20,8 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
             let messages: Vec<_> = args
                 .messages
                 .into_iter()
-                .filter_map(|m| chat_events.message_by_message_index(m))
+                .filter_map(|m| chat_events.message_by_message_index(m, Some(participant.user_id)))
                 .filter(|m| m.index >= min_visible_event_index)
-                .map(|e| EventWrapper {
-                    index: e.index,
-                    timestamp: e.timestamp,
-                    event: chat_events.hydrate_message(e.event, Some(participant.user_id)),
-                })
                 .collect();
 
             let latest_event_index = chat_events.last().index;

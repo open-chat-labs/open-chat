@@ -49,6 +49,9 @@
     <SelectPermissionRole
         label={$_("group.permissions.reactToMessages")}
         bind:rolePermission={permissions.reactToMessages} />
+    <SelectPermissionRole
+        label={$_("group.permissions.replyInThread")}
+        bind:rolePermission={permissions.replyInThread} />
 </ul>
 
 <style type="text/scss">

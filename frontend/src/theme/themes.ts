@@ -273,6 +273,34 @@ export interface Theme {
     toggle: {
         bg: string;
     };
+
+    thread: {
+        preview: {
+            bg: string;
+        };
+    };
+
+    vote: {
+        yes: {
+            color: string;
+            hv: string;
+        };
+        no: {
+            color: string;
+            hv: string;
+        };
+    };
+
+    markdown: {
+        fg: {
+            color: string;
+            bright: string;
+            muted: string;
+        };
+        bg: {
+            dark: string;
+        };
+    };
 }
 
 export type Themes = {

@@ -1,4 +1,10 @@
-import type { ChatSummary, CurrentChatState, EventWrapper, Message } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    CurrentChatState,
+    EventWrapper,
+    Message,
+    ThreadSyncDetails,
+} from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
@@ -54,6 +60,7 @@ type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
 type LoadedEventWindow = {
     kind: "loaded_event_window";
+    focusThreadMessageIndex: number | undefined;
     messageIndex: number;
     preserveFocus: boolean;
     allowRecursion: boolean;
@@ -74,7 +81,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                     result[chatId] = mergeUnconfirmedIntoSummary(
                         currentUser.userId,
                         summary,
-                        unconfirmed[chatId]?.messages
+                        unconfirmed
                     );
                 }
                 return result;
@@ -98,13 +105,34 @@ export const chatSummariesListStore = derived(
     }
 );
 
+export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
+    return summaries.reduce((result, chat) => {
+        if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
+            result[chat.chatId] = chat.latestThreads;
+        }
+        return result;
+    }, {} as Record<string, ThreadSyncDetails[]>);
+});
+
+function countThreads<T>(things: Record<string, T[]>): number {
+    return Object.values(things)
+        .map((ts) => ts.length)
+        .reduce((total, n) => total + n, 0);
+}
+
+// returns the totol number of threads that we are involved in
+export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
+    countThreads(threads)
+);
+
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
 
 export function setSelectedChat(
     api: ServiceContainer,
     chatId: string,
-    messageIndex?: number
+    messageIndex?: number,
+    threadMessageIndex?: number
 ): void {
     const summaries = get(chatSummariesStore);
     const currentUser = get(currentUserStore);
@@ -145,8 +173,13 @@ export function setSelectedChat(
     );
 
     selectedChatStore.set(
-        new ChatController(api, user, readableChatSummary, messageIndex, (message) =>
-            updateSummaryWithConfirmedMessage(chat.chatId, message)
+        new ChatController(
+            api,
+            user,
+            readableChatSummary,
+            messageIndex,
+            threadMessageIndex,
+            (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
         )
     );
 }
@@ -194,11 +227,13 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-export function clearSelectedChat(): void {
+export function clearSelectedChat(navigate = true): void {
     selectedChatStore.update((controller) => {
         if (controller !== undefined) {
             controller.destroy();
-            push("/");
+            if (navigate) {
+                push("/");
+            }
         }
         return undefined;
     });

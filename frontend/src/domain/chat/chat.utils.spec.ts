@@ -17,6 +17,7 @@ import {
     indexIsInRanges,
     mergeChatMetrics,
     mergeChatUpdates,
+    mergeUnconfirmedThreadsIntoSummary,
     newMessageId,
     rangesAreEqual,
 } from "./chat.utils";
@@ -94,6 +95,15 @@ const defaultGroupChat: GroupChatSummary = {
     },
     metrics: emptyChatMetrics(),
     myMetrics: emptyChatMetrics(),
+    latestThreads: [
+        {
+            threadRootMessageIndex: 1,
+            lastUpdated: BigInt(0),
+            latestEventIndex: 3,
+            latestMessageIndex: 3,
+        },
+    ],
+    isProposalGroup: false,
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -120,6 +130,34 @@ function createUser(userId: string, username: string, seconds: number): PartialU
         updated: BigInt(0),
     };
 }
+
+describe("thread utils", () => {
+    test("merge unconfirmed thread message into summary", () => {
+        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, {
+            abc_1: {
+                messages: [
+                    {
+                        index: 4,
+                        timestamp: BigInt(0),
+                        event: {
+                            kind: "message",
+                            messageId: BigInt(0),
+                            messageIndex: 5,
+                            sender: "",
+                            content: { kind: "placeholder_content" },
+                            reactions: [],
+                            edited: false,
+                            forwarded: false,
+                        },
+                    },
+                ],
+                messageIds: new Set(),
+            },
+        });
+        expect(chat.latestThreads[0].latestEventIndex).toEqual(4);
+        expect(chat.latestThreads[0].latestMessageIndex).toEqual(5);
+    });
+});
 
 describe("merging metrics", () => {
     test("merging with empty leaves unchanged", () => {

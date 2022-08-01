@@ -10,33 +10,30 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
-    LocalReaction,
     Message,
     MessageContent,
     Participant,
     MemberRole,
     SendMessageSuccess,
     TransferSuccess,
-    CryptocurrencyContent,
 } from "../domain/chat/chat";
 import {
-    activeUserIdFromEvent,
-    containsReaction,
     createMessage,
     getMinVisibleMessageIndex,
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
     mergeUnconfirmedIntoSummary,
-    pruneLocalReactions,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
     serialiseMessageForRtc,
-    toggleReaction,
     userIdsFromEvents,
     indexIsInRanges,
     updateEventPollContent,
+    mergeSendMessageResponse,
+    makeRtcConnections,
+    upToDate,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -47,19 +44,14 @@ import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
-import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-
-const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
-const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -76,9 +68,7 @@ export class ChatController {
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
 
-    private localReactions: Record<string, LocalReaction[]> = {};
     private initialised = false;
-    private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
@@ -91,10 +81,11 @@ export class ChatController {
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
         private _focusMessageIndex: number | undefined,
+        private _focusThreadMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
-            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
+            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed)
         );
 
         const { chatId, kind } = get(this.chat);
@@ -121,19 +112,12 @@ export class ChatController {
             } else {
                 this.loadPreviousMessages();
             }
-            this.pruneInterval = window.setInterval(() => {
-                this.localReactions = pruneLocalReactions(this.localReactions);
-            }, PRUNE_LOCAL_REACTIONS_INTERVAL);
             this.loadDetails();
         }
     }
 
     destroy(): void {
-        if (this.pruneInterval !== undefined) {
-            console.log("Stopping the local reactions pruner");
-            window.clearInterval(this.pruneInterval);
-            this.events.set([]);
-        }
+        this.events.set([]);
     }
 
     get chatVal(): ChatSummary {
@@ -201,10 +185,6 @@ export class ChatController {
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
-                console.log(
-                    "loading chat details updated to: ",
-                    this.groupDetails.latestEventIndex
-                );
             }
         }
     }
@@ -241,17 +221,8 @@ export class ChatController {
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
         this.findAndUpdatePollContent(messageIndex, answerIndex, type);
-        const promise =
-            this.chatVal.kind === "group_chat"
-                ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
-                : this.api.registerDirectChatPollVote(
-                      this.chatVal.them,
-                      messageIndex,
-                      answerIndex,
-                      type
-                  );
-
-        promise
+        this.api
+            .registerPollVote(this.chatVal.chatId, messageIndex, answerIndex, type)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -306,7 +277,7 @@ export class ChatController {
         }
     }
 
-    private async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
+    async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
         const participantIds = get(this.participants).map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
         const allUserIds = [...participantIds, ...blockedIds, ...userIdsFromEvents];
@@ -331,14 +302,6 @@ export class ChatController {
         userStore.addMany(resp.users);
     }
 
-    private upToDate(): boolean {
-        const events = get(this.events);
-        return (
-            this.chatVal.latestMessage === undefined ||
-            events[events.length - 1]?.index >= this.chatVal.latestEventIndex
-        );
-    }
-
     private async handleEventsResponse(
         resp: EventsResponse<ChatEvent>,
         keepCurrentEvents = true
@@ -354,7 +317,6 @@ export class ChatController {
         }
 
         const updated = replaceAffected(
-            this.chatId,
             replaceLocal(
                 this.user.userId,
                 this.chatId,
@@ -362,8 +324,7 @@ export class ChatController {
                 keepCurrentEvents ? events : [],
                 resp.events
             ),
-            resp.affectedEvents,
-            this.localReactions
+            resp.affectedEvents
         );
 
         const userIds = userIdsFromEvents(updated);
@@ -375,33 +336,7 @@ export class ChatController {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
         }
 
-        this.makeRtcConnections();
-    }
-
-    private makeRtcConnections(): void {
-        const userIds = this.getUsersToMakeRtcConnectionsWith();
-        if (userIds.length === 0) return;
-
-        // TODO - for groups we need to disconnect when the chat is unselected
-        const lookup = get(userStore);
-        userIds
-            .map((u) => lookup[u])
-            .filter((user) => !rtcConnectionsManager.exists(user.userId))
-            .map((user) => user.userId)
-            .forEach((userId) => {
-                rtcConnectionsManager.create(this.user.userId, userId);
-            });
-    }
-
-    private getUsersToMakeRtcConnectionsWith(): string[] {
-        if (this.chatVal.kind === "direct_chat") {
-            return [this.chatId];
-        }
-
-        const activeUsers = this.getRecentlyActiveUsers(MAX_RTC_CONNECTIONS_PER_CHAT);
-        return activeUsers.has(this.user.userId)
-            ? Array.from(activeUsers).filter((u) => u !== this.user.userId)
-            : [];
+        makeRtcConnections(this.user.userId, this.chatVal, get(this.events), get(userStore));
     }
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
@@ -426,6 +361,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
+                focusThreadMessageIndex: this._focusThreadMessageIndex,
                 messageIndex: messageIndex,
                 preserveFocus,
                 allowRecursion: false,
@@ -452,17 +388,9 @@ export class ChatController {
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
-        if (this.chatVal.kind === "direct_chat") {
-            return this.api.directChatEvents(
-                indexRangeForChat(get(this.serverChatSummary)),
-                this.chatVal.them,
-                startIndex,
-                ascending
-            );
-        }
-        return this.api.groupChatEvents(
+        return this.api.chatEvents(
+            this.chatVal,
             indexRangeForChat(get(this.serverChatSummary)),
-            this.chatVal.chatId,
             startIndex,
             ascending
         );
@@ -529,7 +457,7 @@ export class ChatController {
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!this.upToDate()) {
+        if (!upToDate(this.chatVal, get(this.events))) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
@@ -555,6 +483,7 @@ export class ChatController {
                 messageEvent: serialiseMessageForRtc(messageEvent),
                 userId: this.user.userId,
             });
+
             // mark our own messages as read manually since we will not be observing them
             messagesRead.markMessageRead(
                 this.chatId,
@@ -595,7 +524,7 @@ export class ChatController {
                 affectedEvents: [],
             });
         } else {
-            if (!this.upToDate()) {
+            if (!upToDate(this.chatVal, get(this.events))) {
                 return;
             }
 
@@ -676,52 +605,6 @@ export class ChatController {
         );
     }
 
-    toggleReaction(messageId: bigint, reaction: string, userId: string): void {
-        messageId = BigInt(messageId);
-        const key = messageId.toString();
-        if (this.localReactions[key] === undefined) {
-            this.localReactions[key] = [];
-        }
-        const messageReactions = this.localReactions[key];
-        this.events.update((events) =>
-            events.map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
-                        ? "remove"
-                        : "add";
-                    messageReactions.push({
-                        reaction,
-                        timestamp: Date.now(),
-                        kind: addOrRemove,
-                        userId,
-                    });
-                    const updatedEvent = {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            reactions: toggleReaction(userId, e.event.reactions, reaction),
-                        },
-                    };
-                    overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
-                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
-                    );
-                    if (userId === this.user.userId) {
-                        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                            kind: "remote_user_toggled_reaction",
-                            chatType: this.chatVal.kind,
-                            chatId: this.chatVal.chatId,
-                            messageId,
-                            userId,
-                            reaction,
-                        });
-                    }
-                    return updatedEvent;
-                }
-                return e;
-            })
-        );
-    }
-
     isDirectChatWith(userId: string): boolean {
         return this.chatVal.kind === "direct_chat" && this.chatVal.them === userId;
     }
@@ -730,7 +613,12 @@ export class ChatController {
         return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
-    async goToMessageIndex(messageIndex: number, preserveFocus: boolean): Promise<void> {
+    async goToMessageIndex(
+        messageIndex: number,
+        preserveFocus: boolean,
+        focusThreadMessageIndex?: number
+    ): Promise<void> {
+        this._focusThreadMessageIndex = focusThreadMessageIndex;
         return this.loadEventWindow(messageIndex, preserveFocus);
     }
 
@@ -741,6 +629,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_event_window",
+                focusThreadMessageIndex: undefined,
                 messageIndex: messageIndex,
                 preserveFocus: false,
                 allowRecursion: true,
@@ -830,22 +719,11 @@ export class ChatController {
         );
     }
 
-    mergeSendMessageResponse(msg: Message, resp: SendMessageSuccess | TransferSuccess): Message {
-        return {
-            ...msg,
-            messageIndex: resp.messageIndex,
-            content:
-                resp.kind === "transfer_success"
-                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
-                    : msg.content,
-        };
-    }
-
     confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             messagesRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
-                event: this.mergeSendMessageResponse(candidate, resp),
+                event: mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
@@ -866,21 +744,23 @@ export class ChatController {
         draftMessages.setAttachment(this.chatId, content);
     }
 
-    startTyping(): void {
+    startTyping(threadRootMessageIndex?: number): void {
         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
             kind: "remote_user_typing",
             chatType: this.kind,
             chatId: this.chatId,
             userId: this.user.userId,
+            threadRootMessageIndex,
         });
     }
 
-    stopTyping(): void {
+    stopTyping(threadRootMessageIndex?: number): void {
         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
             kind: "remote_user_stopped_typing",
             chatType: this.kind,
             chatId: this.chatId,
             userId: this.user.userId,
+            threadRootMessageIndex,
         });
     }
 
@@ -898,7 +778,6 @@ export class ChatController {
 
     clearFocusMessageIndex(): void {
         this.focusMessageIndex.set(undefined);
-        replace(`/${this.chatId}`);
     }
 
     earliestLoadedIndex(): number | undefined {
@@ -948,21 +827,7 @@ export class ChatController {
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        draftMessages.setEditingEvent(this.chatId, event);
-        draftMessages.setAttachment(
-            this.chatId,
-            event.event.content.kind !== "text_content" ? event.event.content : undefined
-        );
-        draftMessages.setReplyingTo(
-            this.chatId,
-            event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...event.event.repliesTo,
-                      content: event.event.content,
-                      sender: get(userStore)[event.event.sender],
-                  }
-                : undefined
-        );
+        draftMessages.setEditing(this.chatId, event);
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
@@ -1230,25 +1095,12 @@ export class ChatController {
     }
 
     // Returns the most recently active users, only considering users who have been active within the last 10 minutes
-    private getRecentlyActiveUsers(maxUsers: number): Set<string> {
-        const users = new Set<string>();
-        if (this.upToDate()) {
-            const tenMinsAgo = Date.now() - 10 * 60 * 1000;
-            const events = get(this.events);
-
-            for (let i = events.length - 1; i >= 0; i--) {
-                const event = events[i];
-                if (event.timestamp < tenMinsAgo) break;
-
-                const activeUser = activeUserIdFromEvent(event.event);
-                if (activeUser !== undefined) {
-                    users.add(activeUser);
-                    if (users.size >= maxUsers) {
-                        break;
-                    }
-                }
-            }
-        }
-        return users;
+    findMessageEvent(
+        events: EventWrapper<ChatEvent>[],
+        index: number
+    ): EventWrapper<Message> | undefined {
+        return events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+        ) as EventWrapper<Message> | undefined;
     }
 }

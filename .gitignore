@@ -2,6 +2,7 @@
 target/
 dist/
 node_modules/
+wasms/
 
 **/*.rs.bk
 

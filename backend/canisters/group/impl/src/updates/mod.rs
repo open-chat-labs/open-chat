@@ -12,9 +12,9 @@ mod c2c_dismiss_super_admin;
 mod c2c_end_poll;
 mod c2c_join_group;
 mod c2c_leave_group;
-mod c2c_register_proposal_vote;
 mod c2c_relinquish_super_admin;
 mod c2c_toggle_mute_notifications;
+mod c2c_update_proposals;
 mod c2c_update_user_principal;
 mod change_role;
 mod delete_group;
@@ -25,6 +25,7 @@ mod enable_invite_code;
 mod make_private;
 mod pin_message;
 mod register_poll_vote;
+mod register_proposal_vote;
 mod remove_participant;
 mod send_message;
 mod toggle_reaction;
@@ -79,7 +80,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
             }
         };
 
-        for event in data.events.main.iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
+        for event in data.events.main().iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
             match &event.event {

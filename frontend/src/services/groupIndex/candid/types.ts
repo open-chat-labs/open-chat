@@ -1,5 +1,7 @@
 import type { Principal } from '@dfinity/principal';
-export type AccountIdentifier = Array<number>;
+import type { ActorMethod } from '@dfinity/agent';
+
+export type AccountIdentifier = Uint8Array;
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -13,7 +15,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Array<number>,
+  'data' : Uint8Array,
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -38,7 +40,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Array<number>,
+  'module' : Uint8Array,
 }
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -65,6 +67,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -158,7 +161,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -234,6 +237,7 @@ export interface GroupChatSummary {
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
@@ -250,7 +254,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Array<EventIndex>,
+  'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -258,6 +262,7 @@ export interface GroupChatSummaryUpdates {
   'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -339,7 +344,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
-  { 'EndDateInThePast' : null };
+  { 'EndDateInThePast' : null } |
+  { 'PollsNotValidForDirectChats' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -398,6 +404,20 @@ export interface MessageUnpinned {
 }
 export type Milliseconds = bigint;
 export type NeuronId = bigint;
+export interface NnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'created' : TimestampMillis,
+  'topic' : number,
+  'last_updated' : TimestampMillis,
+  'deadline' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -481,20 +501,30 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export type Proposal = { 'NNS' : NnsProposal } |
+  { 'SNS' : SnsProposal };
 export interface ProposalContent {
-  'url' : string,
-  'title' : string,
   'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
   'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
+  'proposal' : Proposal,
 }
+export type ProposalDecisionStatus = { 'Failed' : null } |
+  { 'Open' : null } |
+  { 'Rejected' : null } |
+  { 'Executed' : null } |
+  { 'Adopted' : null } |
+  { 'Unspecified' : null };
 export type ProposalId = bigint;
+export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
+  { 'AcceptVotes' : null } |
+  { 'Unspecified' : null } |
+  { 'Settled' : null };
+export interface ProposalUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
+export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -531,6 +561,20 @@ export type SearchResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
+export interface SnsProposal {
+  'id' : ProposalId,
+  'url' : string,
+  'status' : ProposalDecisionStatus,
+  'tally' : Tally,
+  'title' : string,
+  'created' : TimestampMillis,
+  'action' : bigint,
+  'last_updated' : TimestampMillis,
+  'deadline' : TimestampMillis,
+  'reward_status' : ProposalRewardStatus,
+  'summary' : string,
+  'proposer' : NeuronId,
+}
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -540,6 +584,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
@@ -547,8 +592,15 @@ export interface ThreadSummary {
   'reply_count' : number,
   'latest_event_index' : EventIndex,
 }
+export interface ThreadSyncDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'read_up_to' : [] | [MessageIndex],
+  'latest_event' : [] | [EventIndex],
+  'latest_message' : [] | [MessageIndex],
+}
 export interface ThreadUpdated {
-  'updated_by' : UserId,
+  'latest_thread_message_index_if_updated' : [] | [MessageIndex],
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -558,7 +610,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Array<number>;
+export type TransactionHash = Uint8Array;
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -597,5 +649,5 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
+  'search' : ActorMethod<[SearchArgs], SearchResponse>,
 }

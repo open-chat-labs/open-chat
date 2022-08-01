@@ -3,6 +3,7 @@ import type {
     ApiEventsResponse,
     ApiUpdatesResponse,
     ApiCreateGroupResponse,
+    ApiDeleteGroupResponse,
     ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
@@ -28,10 +29,12 @@ import type {
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptoWithinGroupResponse,
+    ApiCryptoAccountFull,
     ApiChatMetrics,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
+    ApiThreadSyncDetails,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -40,6 +43,7 @@ import type {
     EventWrapper,
     ChatSummaryUpdates,
     CreateGroupResponse,
+    DeleteGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
     BlockUserResponse,
@@ -60,6 +64,8 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
+    ThreadSyncDetails,
+    ThreadSyncDetailsUpdates,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -69,7 +75,6 @@ import {
     groupPermissions,
     message,
     messageContent,
-    publicGroupSummary,
     token,
     updatedMessage,
 } from "../common/chatMappers";
@@ -85,6 +90,8 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
+import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
+import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -481,6 +488,19 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
+export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
+}
+
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
@@ -634,15 +654,16 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
-            mentions: candid.Group.mentions.map(mention),
+            mentions: candid.Group.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
             ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
-            affectedEvents: candid.Group.affected_events,
+            affectedEvents: [...candid.Group.affected_events],
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
+            latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
         };
     }
     if ("Direct" in candid) {
@@ -659,7 +680,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
-            affectedEvents: candid.Direct.affected_events,
+            affectedEvents: [...candid.Direct.affected_events],
             metrics: optional(candid.Direct.metrics, chatMetrics),
             myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
         };
@@ -722,6 +743,7 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+    const ownerId = candid.owner_id.toString();
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
@@ -749,11 +771,33 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         notificationsMuted: candid.notifications_muted,
         participantCount: candid.participant_count,
         myRole: participantRole(candid.role),
-        mentions: candid.mentions.map(mention),
-        ownerId: candid.owner_id.toString(),
+        mentions: candid.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
+        ownerId,
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: candid.latest_threads.map(threadSyncDetails),
+        isProposalGroup: ownerId === PROPOSALS_BOT_USER_ID,
+    };
+}
+
+function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
+        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
+    };
+}
+
+function threadSyncDetailsUpdates(candid: ApiThreadSyncDetails): ThreadSyncDetailsUpdates {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        readUpTo: optional(candid.read_up_to, identity),
+        latestEventIndex: optional(candid.latest_event, identity),
+        latestMessageIndex: optional(candid.latest_message, identity),
     };
 }
 
@@ -783,7 +827,7 @@ export function failedCryptoWithdrawal(
     return {
         kind: "failed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -797,7 +841,7 @@ export function completedCryptoWithdrawal(
     return {
         kind: "completed",
         token: token(candid.token),
-        to: bytesToHexString(candid.to),
+        to: cryptoAccountFull(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -822,4 +866,25 @@ export function withdrawCryptoResponse(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
         candid
     );
+}
+
+function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
+    if ("User" in candid) {
+        const [userId] = candid.User;
+        return userId.toString();
+    }
+    if ("UserIndex" in candid) {
+        return bytesToHexString(candid.UserIndex);
+    }
+    if ("Mint" in candid) {
+        return "Minting Account";
+    }
+    if ("Named" in candid) {
+        const [, accountIdentifier] = candid.Named;
+        return bytesToHexString(accountIdentifier);
+    }
+    if ("Unknown" in candid) {
+        return bytesToHexString(candid.Unknown);
+    }
+    throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
 }

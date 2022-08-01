@@ -416,7 +416,8 @@
             "sendMessages": "send messages",
             "reactToMessages": "react to messages",
             "inviteUsers": "invite users",
-            "notPermitted": "You are not permitted to {permission}"
+            "notPermitted": "You are not permitted to {permission}",
+            "replyInThread": "reply in thread"
         },
         "invite": {
             "inviteWithLink": "Invite to group via link",
@@ -525,15 +526,21 @@
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
+    "readOnlyThread": "This thread is read-only",
     "accounts": "Accounts",
     "forward": "Forward",
     "thread": {
         "menu": "Reply in thread",
         "title": "Thread",
+        "previewTitle": "Threads",
         "replies": "replies",
         "reply": "reply",
+        "openThread": "open thread ",
+        "unread": "{count} thread(s) with unread messages",
+        "moreMessages": "- {number} more message(s) -",
         "lastMessage": "(last message {date}) ",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewFailure": "Unable to load thread previews"
     },
     "linkCopiedToClipboard": "Link copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
@@ -548,5 +555,26 @@
         "unpinFailed": "Failed to unpin chat - please try later",
         "menuItem": "Pin chat",
         "unpinMenuItem": "Unpin chat"
-    }
+    },
+    "proposal": {
+        "voteFailed": "Failed to cast vote - please try later",
+        "alreadyVoted": "You have already voted - try reloading the page",
+        "noEligibleNeurons": "No eligible neurons found",
+        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. Your OpenChat user id is:",
+        "proposalNotAceptingVotes": "This proposal is not accepting votes - try reloading the page",
+        "proposedBy": "proposed by",
+        "topic": "topic",
+        "action": "action",
+        "votingPeriodRemaining": "Voting period remaining",
+        "votingPeriodEnded": "Voting period ended",
+        "adopt": "Adopt",
+        "reject": "Reject",
+        "youVotedAdopt": "You voted adopt!",
+        "youVotedReject": "You voted reject!",
+        "additionalContent": "addtional content",
+        "viewOnDashboard": "view on dashboard"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "quoteReply": "Quote reply"
 }

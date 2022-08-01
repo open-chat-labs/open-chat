@@ -7,6 +7,7 @@ import type {
     Message,
     MessageContent,
 } from "../domain/chat/chat";
+import { userStore } from "./user";
 
 type KeyType = string | number | symbol;
 
@@ -46,8 +47,25 @@ export function createDraftMessages<T extends KeyType>() {
         setTextContent: (id: T, textContent: string | undefined): void => set(id, { textContent }),
         setAttachment: (id: T, attachment: MessageContent | undefined): void =>
             set(id, { attachment }),
-        setEditingEvent: (id: T, editingEvent: EventWrapper<Message> | undefined): void =>
-            set(id, { editingEvent }),
+        setEditing: (id: T, editingEvent: EventWrapper<Message>): void => {
+            const users = get(userStore);
+            set(id, {
+                editingEvent,
+                attachment:
+                    editingEvent?.event.content.kind !== "text_content"
+                        ? editingEvent?.event.content
+                        : undefined,
+                replyingTo:
+                    editingEvent.event.repliesTo &&
+                    editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
+                        ? {
+                              ...editingEvent.event.repliesTo,
+                              content: editingEvent.event.content,
+                              sender: users[editingEvent.event.sender],
+                          }
+                        : undefined,
+            });
+        },
         setReplyingTo: (id: T, replyingTo: EnhancedReplyContext | undefined): void =>
             set(id, { replyingTo }),
         delete: (id: T): void =>

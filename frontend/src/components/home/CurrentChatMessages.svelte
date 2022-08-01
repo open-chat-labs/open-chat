@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import { afterUpdate, createEventDispatcher, onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import { _ } from "svelte-i18n";
@@ -27,9 +27,12 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { trackEvent } from "../../utils/tracking";
-    import { threadSummaryStore } from "../../stores/thread";
     import { userStore } from "../../stores/user";
+    import { selectReaction } from "../../stores/reactions";
+    import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
+    import { trackEvent } from "../../utils/tracking";
+    import * as shareFunctions from "../../domain/share";
+    import { configKeys } from "../../utils/config";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -50,7 +53,7 @@
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
-    export let selectedThreadMessageIndex: number | undefined;
+    export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -113,6 +116,19 @@
                 }
             });
         }, options);
+
+        // this is where we pick up events that may be published from a thread
+        relaySubscribe((event: RelayedEvent) => {
+            if (event.kind === "relayed_delete_message") {
+                deleteMessage(event.message);
+            }
+
+            if (event.kind === "relayed_select_reaction") {
+                onSelectReaction(event);
+            }
+        });
+
+        return relayUnsubscribe;
     });
 
     afterUpdate(() => {
@@ -148,7 +164,8 @@
     function scrollToMessageIndex(
         index: number,
         preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true
+        loadWindowIfMissing: boolean = true,
+        focusThreadMessageIndex: number | undefined = undefined
     ) {
         if (index < 0) {
             controller.clearFocusMessageIndex();
@@ -162,6 +179,17 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
+            const msgEvent = controller.findMessageEvent($events, index);
+            if (msgEvent) {
+                if (msgEvent.event.thread !== undefined) {
+                    dispatch("openThread", {
+                        rootEvent: msgEvent,
+                        focusThreadMessageIndex,
+                    });
+                } else {
+                    dispatch("closeThread");
+                }
+            }
             if (!preserveFocus) {
                 setTimeout(() => {
                     controller.clearFocusMessageIndex();
@@ -258,52 +286,27 @@
         return -(messagesDiv?.scrollTop ?? 0);
     }
 
-    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+    function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
-        // optimistic update
-        controller.toggleReaction(
-            ev.detail.message.messageId,
-            ev.detail.reaction,
+
+        selectReaction(
+            controller.api,
+            controller.events,
+            $chat,
+            controller.user.userId,
+            message.messageId,
+            reaction,
+            controller.chatUserIds,
             controller.user.userId
-        );
+        ).then((added) => {
+            if (added) {
+                trackEvent("reacted_to_message");
+            }
+        });
+    }
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? controller.api.toggleGroupChatReaction(
-                      $chat.chatId,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  )
-                : controller.api.toggleDirectChatReaction(
-                      $chat.them,
-                      ev.detail.message.messageId,
-                      ev.detail.reaction
-                  );
-
-        apiPromise
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    // toggle again to undo
-                    controller.toggleReaction(
-                        ev.detail.message.messageId,
-                        ev.detail.reaction,
-                        controller.user.userId
-                    );
-                } else {
-                    if (resp === "added") {
-                        trackEvent("reacted_to_message");
-                    }
-                }
-            })
-            .catch((err) => {
-                // toggle again to undo
-                console.log("Reaction failed: ", err);
-                controller.toggleReaction(
-                    ev.detail.message.messageId,
-                    ev.detail.reaction,
-                    controller.user.userId
-                );
-            });
+    function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        onSelectReaction(ev.detail);
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
@@ -319,27 +322,27 @@
         controller.editEvent(ev.detail);
     }
 
-    function deleteMessage(ev: CustomEvent<Message>) {
-        if (!canDelete && controller.user.userId !== ev.detail.sender) return;
+    function onDeleteMessage(ev: CustomEvent<Message>) {
+        deleteMessage(ev.detail);
+    }
 
-        controller.deleteMessage(ev.detail.messageId, controller.user.userId);
+    function deleteMessage(message: Message) {
+        if (!canDelete && controller.user.userId !== message.sender) return;
 
-        const apiPromise =
-            $chat.kind === "group_chat"
-                ? controller.api.deleteGroupMessage(controller.chatId, ev.detail.messageId)
-                : controller.api.deleteDirectMessage($chat.them, ev.detail.messageId);
+        controller.deleteMessage(message.messageId, controller.user.userId);
 
-        apiPromise
+        controller.api
+            .deleteMessage($chat, message.messageId)
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    controller.undeleteMessage(ev.detail, controller.user.userId);
+                    controller.undeleteMessage(message, controller.user.userId);
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                controller.undeleteMessage(ev.detail, controller.user.userId);
+                controller.undeleteMessage(message, controller.user.userId);
             });
     }
 
@@ -388,21 +391,37 @@
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
-                        tick().then(() => {
-                            expectedScrollTop = undefined;
-                            scrollToMessageIndex(index, preserveFocus, allowRecursion);
-                        });
+                        const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
+                        tick()
+                            .then(() => {
+                                expectedScrollTop = undefined;
+                                scrollToMessageIndex(
+                                    index,
+                                    preserveFocus,
+                                    allowRecursion,
+                                    focusThreadMessageIndex
+                                );
+                            })
+                            .then(expandWindowIfNecessary);
                         initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
-                        tick().then(() => {
-                            setIfInsideFromBottomThreshold();
-                            if (insideFromBottomThreshold) {
-                                // only scroll if we are now within threshold from the bottom
-                                scrollBottom("smooth");
-                            }
-                        });
+                        tick()
+                            .then(() => {
+                                setIfInsideFromBottomThreshold();
+                                if (insideFromBottomThreshold) {
+                                    // only scroll if we are now within threshold from the bottom
+                                    scrollBottom("smooth");
+                                }
+                            })
+                            .then(() => {
+                                // there is a possibility here we will not have loaded enough *visible* events
+                                // after grouping of certain events. In that case we may need to immediately go and load more
+                                if (shouldLoadNewMessages()) {
+                                    controller.loadNewMessages();
+                                }
+                            });
                         break;
                     case "sending_message":
                         // smooth scroll doesn't work here when we are leaping from the top
@@ -432,6 +451,25 @@
             return evt.event.created_by === controller.user?.userId;
         }
         return false;
+    }
+
+    /**
+     * When we load an event window, it is possible that there are not enough *visible* events
+     * either above the focus message or below the focus message to allow scrolling. If that is the case
+     * we must trigger the loading of more messages (either previous messages or subsequent messages or both)
+     *
+     * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
+     * there *still* are not enough visible events 🤯
+     */
+    function expandWindowIfNecessary() {
+        if (localStorage.getItem(configKeys.expandWindow) === "true") {
+            if (shouldLoadNewMessages()) {
+                controller.loadNewMessages();
+            }
+            if (shouldLoadPreviousMessages()) {
+                controller.loadPreviousMessages();
+            }
+        }
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
@@ -490,6 +528,18 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
+
+    function shareMessage(ev: CustomEvent<Message>) {
+        shareFunctions.shareMessage(
+            controller.user.userId,
+            ev.detail.sender === controller.user.userId,
+            ev.detail
+        );
+    }
+
+    function copyMessageUrl(ev: CustomEvent<Message>) {
+        shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
+    }
 </script>
 
 <div
@@ -518,7 +568,6 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === userGroup.length}
-                        {selectedThreadMessageIndex}
                         {preview}
                         {canPin}
                         {canBlockUser}
@@ -526,23 +575,28 @@
                         {canSend}
                         {canReact}
                         {canInvite}
+                        {canReplyInThread}
+                        supportsEdit={true}
+                        supportsReply={true}
                         inThread={false}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
                         editing={$editingEvent === evt}
                         on:chatWith
+                        on:initiateThread
                         on:replyTo={replyTo}
-                        on:replyInThread
                         on:replyPrivatelyTo
-                        on:deleteMessage={deleteMessage}
+                        on:deleteMessage={onDeleteMessage}
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={selectReaction}
+                        on:selectReaction={onSelectReactionEv}
                         on:blockUser={blockUser}
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}
                         on:registerVote={registerVote}
+                        on:copyMessageUrl={copyMessageUrl}
+                        on:shareMessage={shareMessage}
                         on:upgrade
                         on:forward
                         event={evt} />

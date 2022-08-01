@@ -51,7 +51,7 @@
         overflow: hidden;
     }
     .spinner {
-        @include loading-spinner(1em, 0.5em, false, var(--spinner));
+        @include loading-spinner(1em, 0.5em, var(--spinner));
         padding: 0 $sp4;
     }
 </style>

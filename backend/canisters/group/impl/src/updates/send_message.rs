@@ -7,8 +7,8 @@ use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
-    CanisterId, ChatId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -24,7 +24,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
 
-        if let Err(error) = args.content.validate_for_new_message(args.forwarding, now) {
+        if let Err(error) = args.content.validate_for_new_message(false, args.forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -52,14 +52,25 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
+        if let Some(root_message_index) = args.thread_root_message_index {
+            if !runtime_state.data.events.is_message_accessible_by_index(
+                participant.min_visible_event_index(),
+                None,
+                root_message_index,
+            ) {
+                return ThreadMessageNotFound;
+            }
+        }
+
         let sender = participant.user_id;
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events.main));
+            .and_then(|r| get_user_being_replied_to(r, runtime_state.data.events.main()));
 
         let push_message_args = PushMessageArgs {
             sender,
+            thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
@@ -67,61 +78,54 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             forwarded: args.forwarding,
         };
 
-        let (message_event, thread_participants, root_message_sender, first_thread_reply) = match args.thread_root_message_index
-        {
-            Some(thread_message_index) => {
-                if let Some(root_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
-                    let root_message_sender = root_message.event.sender;
-                    let chat_id: ChatId = runtime_state.env.canister_id().into();
+        let message_event = runtime_state.data.events.push_message(push_message_args);
 
-                    let thread_events = runtime_state
-                        .data
-                        .events
-                        .threads
-                        .entry(thread_message_index)
-                        .or_insert_with(|| ChatEvents::new_thread(chat_id));
-
-                    let message_event = thread_events.push_message(push_message_args);
-
-                    let thread_summary = runtime_state.data.events.main.update_thread_summary(
-                        thread_message_index,
-                        sender,
-                        true,
-                        message_event.index,
-                        now,
-                    );
-                    (
-                        message_event,
-                        Some(thread_summary.participant_ids),
-                        Some(root_message_sender),
-                        thread_summary.reply_count == 1,
-                    )
-                } else {
-                    return ThreadMessageNotFound;
-                }
-            }
-            None => (
-                runtime_state.data.events.main.push_message(push_message_args),
-                None,
-                None,
-                false,
-            ),
-        };
+        register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
 
-        handle_activity_notification(runtime_state);
+        let mut mentions: HashSet<_> = args
+            .mentioned
+            .iter()
+            .map(|m| m.user_id)
+            .chain(user_being_replied_to)
+            .collect();
 
-        register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
+        let mut notification_recipients = HashSet::new();
+        let mut thread_participants = None;
 
-        // Add mentions
-        let mut mentions: HashSet<UserId> = args.mentioned.iter().map(|m| m.user_id).collect();
-        if let Some(user_id) = user_being_replied_to {
-            mentions.insert(user_id);
+        if let Some(thread_root_message) = args
+            .thread_root_message_index
+            .and_then(|root_message_index| {
+                runtime_state
+                    .data
+                    .events
+                    .main()
+                    .message_internal_by_message_index(root_message_index)
+            })
+            .map(|e| e.event)
+        {
+            notification_recipients.insert(thread_root_message.sender);
+
+            if let Some(thread_summary) = &thread_root_message.thread_summary {
+                thread_participants = Some(thread_summary.participant_ids.as_slice());
+
+                let is_first_reply = thread_summary.reply_count == 1;
+                if is_first_reply {
+                    mentions.insert(thread_root_message.sender);
+                }
+            }
+
+            for user_id in mentions.iter().copied().chain([sender]) {
+                runtime_state
+                    .data
+                    .participants
+                    .add_thread(&user_id, thread_root_message.message_index);
+            }
         }
-        mentions.remove(&sender);
 
+        mentions.remove(&sender);
         for user_id in mentions.iter() {
             runtime_state
                 .data
@@ -129,21 +133,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 .add_mention(user_id, args.thread_root_message_index, message_index);
         }
 
-        // If this is the first message in a thread then mention the original sender/message
-        if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
-            if first_thread_reply {
-                runtime_state
-                    .data
-                    .participants
-                    .add_mention(&user_id, None, root_message_index);
-            }
-        }
-
-        // Build the notification recipients list
-        let mut notification_recipients = runtime_state.data.participants.users_to_notify(thread_participants.as_ref());
-        if let Some(user_id) = root_message_sender {
-            notification_recipients.insert(user_id);
-        }
+        notification_recipients.extend(runtime_state.data.participants.users_to_notify(thread_participants));
         notification_recipients.extend(&mentions);
         notification_recipients.remove(&sender);
         let notification_recipients: Vec<UserId> = notification_recipients.into_iter().collect();
@@ -160,6 +150,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         });
 
         runtime_state.push_notification(notification_recipients, notification);
+
+        handle_activity_notification(runtime_state);
 
         Success(SuccessResult {
             event_index,

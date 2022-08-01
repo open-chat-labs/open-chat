@@ -404,7 +404,8 @@
             "sendMessages": "לשלוח הודעות",
             "reactToMessages": "להגיב להודעות",
             "inviteUsers": "להזמין משתמשים",
-            "notPermitted": "אינך מורשה {permission}"
+            "notPermitted": "אינך מורשה {permission}",
+            "replyInThread": "תשובה בשרשור"
         },
         "advanced": "מִתקַדֵם",
         "invite": {
@@ -535,7 +536,12 @@
         "replies": "עונה",
         "reply": "תשובה",
         "lastMessage": "(הודעה אחרונה {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "חוטים",
+        "openThread": "חוט פתוח",
+        "unread": "{count} שרשור(ים) עם הודעות שלא נקראו",
+        "moreMessages": "- {number} הודעות נוספות -",
+        "previewFailure": "לא ניתן לטעון תצוגות מקדימות של שרשור"
     },
     "noChatsAvailable": "אין צ'אטים זמינים!",
     "invitedUsers": "משתמשים מוזמנים",
@@ -548,5 +554,27 @@
         "unpinFailed": "ביטול ההצמדה של הצ'אט נכשל - נסה מאוחר יותר",
         "menuItem": "הצמד צ'אט",
         "unpinMenuItem": "בטל את ההצמדה של הצ'אט"
-    }
+    },
+    "readOnlyThread": "השרשור הזה הוא לקריאה בלבד",
+    "proposal": {
+        "voteFailed": "ההצבעה נכשלה - אנא נסה מאוחר יותר",
+        "alreadyVoted": "כבר הצבעת - נסה לטעון מחדש את העמוד",
+        "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
+        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם. מזהה המשתמש שלך ב-OpenChat הוא:",
+        "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
+        "proposedBy": "הוצע על ידי",
+        "topic": "נוֹשֵׂא",
+        "action": "פעולה",
+        "votingPeriodRemaining": "נותרה תקופת הצבעה",
+        "votingPeriodEnded": "תקופת ההצבעה הסתיימה",
+        "adopt": "לְאַמֵץ",
+        "reject": "לִדחוֹת",
+        "youVotedAdopt": "הצבעת לאמץ!",
+        "youVotedReject": "הצבעת לדחות!",
+        "additionalContent": "תוכן נוסף",
+        "viewOnDashboard": "הצגה בלוח המחוונים"
+    },
+    "yes": "כן",
+    "no": "לא",
+    "quoteReply": "תשובת ציטוט"
 }

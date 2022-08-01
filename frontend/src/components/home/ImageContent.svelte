@@ -3,10 +3,9 @@
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { ImageContent } from "../../domain/chat/chat";
-    import { addEditedSuffix } from "../../domain/chat/chat.utils";
-    import Markdown from "./Markdown.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { isTouchDevice } from "../../utils/devices";
@@ -102,9 +101,7 @@
     </div>
 {/if}
 
-{#if content.caption !== undefined && content.caption !== ""}
-    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
-{/if}
+<ContentCaption caption={content.caption} {edited} {reply} />
 
 {#if zoomable && zoom}
     <Overlay on:close={() => (zoom = false)} dismissible={true} alignBottomOnMobile={false}>

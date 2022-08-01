@@ -97,7 +97,7 @@
 <input
     hidden={true}
     type="file"
-    accept=".jpg, .jpeg, .png, .gif"
+    accept=".jpg, .jpeg, .png, .gif, .svg"
     on:change={onFileSelected}
     bind:this={fileinput} />
 

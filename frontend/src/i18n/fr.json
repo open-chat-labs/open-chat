@@ -391,7 +391,8 @@
             "sendMessages": "envoyer des messages",
             "reactToMessages": "réagir aux messages",
             "inviteUsers": "inviter des utilisateurs",
-            "notPermitted": "Vous n'êtes pas autorisé à {permission}"
+            "notPermitted": "Vous n'êtes pas autorisé à {permission}",
+            "replyInThread": "répondre dans le fil"
         },
         "advanced": "Avancé",
         "invite": {
@@ -537,7 +538,12 @@
         "replies": "réponses",
         "reply": "Réponse",
         "lastMessage": "(dernier message {date})",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "Fils",
+        "openThread": "fil ouvert",
+        "unread": "{count} fils de discussion avec des messages non lus",
+        "moreMessages": "- {number} autre(s) message(s) -",
+        "previewFailure": "Impossible de charger les aperçus des fils de discussion"
     },
     "noChatsAvailable": "Aucun chat disponible !",
     "invitedUsers": "Utilisateurs invités",
@@ -550,5 +556,27 @@
         "unpinFailed": "Échec de désépinglage du chat - veuillez réessayer plus tard",
         "menuItem": "Épingler le chat",
         "unpinMenuItem": "Détacher le chat"
-    }
+    },
+    "readOnlyThread": "Ce fil est en lecture seule",
+    "proposal": {
+        "voteFailed": "Échec du vote - veuillez réessayer plus tard",
+        "alreadyVoted": "Vous avez déjà voté - essayez de recharger la page",
+        "noEligibleNeurons": "Aucun neurone éligible trouvé",
+        "noEligibleNeuronsMessage": "Aucun neurone éligible ou lié n'a été trouvé. Pour voter sur des propositions depuis OpenChat, vous devez d'abord ajouter votre identifiant d'utilisateur OpenChat en tant que raccourci clavier à tous les neurones avec lesquels vous souhaitez voter. Votre identifiant d'utilisateur OpenChat est :",
+        "proposalNotAceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
+        "proposedBy": "Proposé par",
+        "topic": "sujet",
+        "action": "action",
+        "votingPeriodRemaining": "Période de vote restante",
+        "votingPeriodEnded": "Période de vote terminée",
+        "adopt": "Adopter",
+        "reject": "Rejeter",
+        "youVotedAdopt": "Vous avez voté adopter !",
+        "youVotedReject": "Vous avez voté rejet !",
+        "additionalContent": "contenu additionnel",
+        "viewOnDashboard": "vue sur tableau de bord"
+    },
+    "yes": "Oui",
+    "no": "Non",
+    "quoteReply": "Citer la réponse"
 }

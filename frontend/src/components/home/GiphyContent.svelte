@@ -3,8 +3,7 @@
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { GiphyContent } from "../../domain/chat/chat";
-    import { addEditedSuffix } from "../../domain/chat/chat.utils";
-    import Markdown from "./Markdown.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
 
     export let content: GiphyContent;
@@ -15,12 +14,10 @@
     export let intersecting: boolean = true;
     export let edited: boolean;
 
-    let withCaption = content.caption !== undefined && content.caption !== "";
-    let image = $mobileWidth ? content.mobile : content.desktop;
-    let landscape = image.height < image.width;
-    let style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${
-        image.width
-    }px;`;
+    $: withCaption = content.caption !== undefined && content.caption !== "";
+    $: image = $mobileWidth ? content.mobile : content.desktop;
+    $: landscape = image.height < image.width;
+    $: style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`;
 </script>
 
 <div class="img-wrapper">
@@ -66,9 +63,7 @@
     {/if}
 </div>
 
-{#if content.caption !== undefined && content.caption !== ""}
-    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
-{/if}
+<ContentCaption caption={content.caption} {edited} {reply} />
 
 <style type="text/scss">
     .img-wrapper {

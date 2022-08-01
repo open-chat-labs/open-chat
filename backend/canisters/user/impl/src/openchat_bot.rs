@@ -1,10 +1,11 @@
+use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
+use chat_events::{ChatEventInternal, EditMessageArgs};
 use ic_ledger_types::Tokens;
-use std::fmt::Write;
 use types::{
-    CanisterId, MessageContent, MessageId, NeuronId, PhoneNumberConfirmed, ProposalId, ReferredUserRegistered, StorageUpgraded,
+    MessageContent, MessageContentInternal, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
     TextContent, UserId,
 };
 use user_canister::c2c_send_message;
@@ -25,7 +26,7 @@ const WELCOME_MESSAGES: &[&str] = &[
 
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
-        if !bot_chat_exists(state) {
+        if bot_chat(state).is_none() {
             for message in WELCOME_MESSAGES.iter() {
                 let content = MessageContent::Text(TextContent {
                     text: message.to_string(),
@@ -43,12 +44,8 @@ pub(crate) fn send_group_deleted_message(
     public: bool,
     runtime_state: &mut RuntimeState,
 ) {
-    let visibility = if public { "Public" } else { "Private" };
-
-    let text = format!(
-        "The group _{} ({})_ was deleted by @UserId({})",
-        group_name, visibility, deleted_by
-    );
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
 
     send_text_message(text, runtime_state);
 }
@@ -60,9 +57,9 @@ pub(crate) fn send_removed_from_group_message(
     blocked: bool,
     runtime_state: &mut RuntimeState,
 ) {
-    let visibility = if public { "Public" } else { "Private" };
+    let visibility = if public { "public" } else { "private" };
     let action = if blocked { "blocked" } else { "removed" };
-    let text = format!("You were {action} from the group _{group_name} ({visibility})_ by @UserId({removed_by})");
+    let text = format!("You were {action} from the {visibility} group \"{group_name}\" by @UserId({removed_by})");
 
     send_text_message(text, runtime_state);
 }
@@ -101,61 +98,38 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     send_text_message(text, runtime_state);
 }
 
-pub(crate) fn send_voted_on_proposal_message(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-    adopt: bool,
-    voted: &[NeuronId],
-    unable_to_vote: &[(NeuronId, String)],
-    errors: &[(NeuronId, String)],
-    runtime_state: &mut RuntimeState,
-) {
-    let mut text = String::new();
-    if !voted.is_empty() {
-        writeln!(&mut text, "Vote recorded.").unwrap();
-    } else {
-        writeln!(&mut text, "Failed to record vote").unwrap();
-    }
-    writeln!(&mut text).unwrap();
-    writeln!(&mut text, "Governance canister Id: {governance_canister_id}").unwrap();
-    writeln!(&mut text, "Proposal Id: {proposal_id}").unwrap();
-    writeln!(&mut text, "Adopt: {}", if adopt { "Yes" } else { "No" }).unwrap();
-    writeln!(&mut text).unwrap();
-    if voted.is_empty() && unable_to_vote.is_empty() && errors.is_empty() {
-        writeln!(&mut text).unwrap();
-        writeln!(&mut text, "No linked neurons found").unwrap();
-        writeln!(&mut text, "In order to vote on proposals from within OpenChat, you must first add your OpenChat UserId as a hotkey to any neurons you wish to vote with").unwrap();
-        writeln!(&mut text, "Your OpenChat UserId is {}", runtime_state.env.canister_id()).unwrap();
-    } else {
-        if !voted.is_empty() {
-            writeln!(&mut text, "The following neurons voted:").unwrap();
-            for n in voted {
-                writeln!(&mut text, "{n}").unwrap();
-            }
-        }
+pub(crate) fn make_links_relative(runtime_state: &mut RuntimeState) {
+    if let Some(bot_chat) = runtime_state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
+        let pattern = "https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app";
 
-        if !unable_to_vote.is_empty() {
-            writeln!(&mut text).unwrap();
-            writeln!(&mut text, "The following neurons were unable to vote:").unwrap();
-            for (n, e) in unable_to_vote {
-                writeln!(&mut text, "{n} - {e}").unwrap();
-            }
-        }
+        let edits_required: Vec<_> = bot_chat
+            .events
+            .main()
+            .iter()
+            .filter_map(|e| if let ChatEventInternal::Message(m) = &e.event { Some(m) } else { None })
+            .filter_map(|m| {
+                if let MessageContentInternal::Text(t) = &m.content {
+                    if t.text.contains(pattern) {
+                        return Some((m.message_id, t.text.clone().replace(pattern, "")));
+                    }
+                }
+                None
+            })
+            .collect();
 
-        if !errors.is_empty() {
-            writeln!(&mut text).unwrap();
-            writeln!(
-                &mut text,
-                "An error occurred while trying to vote with the following neurons:"
-            )
-            .unwrap();
-            for (n, e) in errors {
-                writeln!(&mut text, "{n} - {e}").unwrap();
+        if !edits_required.is_empty() {
+            let now = runtime_state.env.now();
+            for (message_id, text) in edits_required {
+                bot_chat.events.edit_message(EditMessageArgs {
+                    sender: OPENCHAT_BOT_USER_ID,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContent::Text(TextContent { text }),
+                    now,
+                });
             }
         }
     }
-
-    send_text_message(text, runtime_state);
 }
 
 fn to_gb(bytes: u64) -> String {
@@ -178,7 +152,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         .data
         .direct_chats
         .get(&OPENCHAT_BOT_USER_ID.into())
-        .and_then(|c| c.events.latest_message_index())
+        .and_then(|c| c.events.main().latest_message_index())
         .map(|i| i.incr())
         .unwrap_or_default();
 
@@ -196,6 +170,6 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
-fn bot_chat_exists(runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into()).is_some()
+fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
+    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into())
 }

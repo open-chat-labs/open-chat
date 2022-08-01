@@ -12,7 +12,8 @@ export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
 
     static create(identity: Identity): IDataClient {
-        const agent = new HttpAgent({ identity });
+        const host = process.env.IC_URL;
+        const agent = new HttpAgent({ identity, host });
         if (process.env.NODE_ENV !== "production") {
             agent.fetchRootKey();
         }
@@ -69,6 +70,7 @@ export class DataClient implements IDataClient {
                     accessorIds,
                     content.blobData
                 );
+
                 updatedContent = {
                     ...content,
                     blobReference: this.extractBlobReference(response),

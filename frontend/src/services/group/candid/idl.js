@@ -135,18 +135,59 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const ProposalId = IDL.Nat64;
+  const ProposalDecisionStatus = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Open' : IDL.Null,
+    'Rejected' : IDL.Null,
+    'Executed' : IDL.Null,
+    'Adopted' : IDL.Null,
+    'Unspecified' : IDL.Null,
+  });
+  const Tally = IDL.Record({
+    'no' : IDL.Nat64,
+    'yes' : IDL.Nat64,
+    'total' : IDL.Nat64,
+  });
+  const ProposalRewardStatus = IDL.Variant({
+    'ReadyToSettle' : IDL.Null,
+    'AcceptVotes' : IDL.Null,
+    'Unspecified' : IDL.Null,
+    'Settled' : IDL.Null,
+  });
   const NeuronId = IDL.Nat64;
-  const ProposalContent = IDL.Record({
+  const NnsProposal = IDL.Record({
+    'id' : ProposalId,
     'url' : IDL.Text,
+    'status' : ProposalDecisionStatus,
+    'tally' : Tally,
     'title' : IDL.Text,
-    'my_vote' : IDL.Opt(IDL.Bool),
-    'reject_votes' : IDL.Nat32,
+    'created' : TimestampMillis,
+    'topic' : IDL.Int32,
+    'last_updated' : TimestampMillis,
     'deadline' : TimestampMillis,
-    'adopt_votes' : IDL.Nat32,
+    'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposal_id' : ProposalId,
-    'governance_canister_id' : CanisterId,
     'proposer' : NeuronId,
+  });
+  const SnsProposal = IDL.Record({
+    'id' : ProposalId,
+    'url' : IDL.Text,
+    'status' : ProposalDecisionStatus,
+    'tally' : Tally,
+    'title' : IDL.Text,
+    'created' : TimestampMillis,
+    'action' : IDL.Nat64,
+    'last_updated' : TimestampMillis,
+    'deadline' : TimestampMillis,
+    'reward_status' : ProposalRewardStatus,
+    'summary' : IDL.Text,
+    'proposer' : NeuronId,
+  });
+  const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
+  const ProposalContent = IDL.Record({
+    'my_vote' : IDL.Opt(IDL.Bool),
+    'governance_canister_id' : CanisterId,
+    'proposal' : Proposal,
   });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
@@ -360,7 +401,7 @@ export const idlFactory = ({ IDL }) => {
     'change' : GroupInviteCodeChange,
   });
   const ThreadUpdated = IDL.Record({
-    'updated_by' : UserId,
+    'latest_thread_message_index_if_updated' : IDL.Opt(MessageIndex),
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -380,6 +421,13 @@ export const idlFactory = ({ IDL }) => {
     'changed_by' : UserId,
     'old_role' : Role,
     'new_role' : Role,
+  });
+  const ProposalUpdated = IDL.Record({
+    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
+  });
+  const ProposalsUpdated = IDL.Record({
+    'proposals' : IDL.Vec(ProposalUpdated),
   });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
@@ -422,6 +470,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
+    'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
@@ -534,12 +583,25 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'PollEnded' : IDL.Null,
     'Success' : PollVotes,
     'OptionIndexOutOfRange' : IDL.Null,
     'PollNotFound' : IDL.Null,
+  });
+  const RegisterProposalVoteArgs = IDL.Record({
+    'adopt' : IDL.Bool,
+    'message_index' : MessageIndex,
+  });
+  const RegisterProposalVoteResponse = IDL.Variant({
+    'AlreadyVoted' : IDL.Bool,
+    'ProposalNotFound' : IDL.Null,
+    'ProposalMessageNotFound' : IDL.Null,
+    'NoEligibleNeurons' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'ProposalNotAcceptingVotes' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
@@ -625,6 +687,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyOptions' : IDL.Nat32,
     'OptionTooLong' : IDL.Nat32,
     'EndDateInThePast' : IDL.Null,
+    'PollsNotValidForDirectChats' : IDL.Null,
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
@@ -639,6 +702,16 @@ export const idlFactory = ({ IDL }) => {
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
     'InvalidRequest' : IDL.Text,
+  });
+  const ThreadPreviewsArgs = IDL.Record({ 'threads' : IDL.Vec(MessageIndex) });
+  const ThreadPreview = IDL.Record({
+    'latest_replies' : IDL.Vec(MessageEventWrapper),
+    'total_replies' : IDL.Nat32,
+    'root_message' : MessageEventWrapper,
+  });
+  const ThreadPreviewsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({ 'threads' : IDL.Vec(ThreadPreview) }),
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
@@ -775,6 +848,11 @@ export const idlFactory = ({ IDL }) => {
         [RegisterPollVoteResponse],
         [],
       ),
+    'register_proposal_vote' : IDL.Func(
+        [RegisterProposalVoteArgs],
+        [RegisterProposalVoteResponse],
+        [],
+      ),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
@@ -801,6 +879,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'thread_previews' : IDL.Func(
+        [ThreadPreviewsArgs],
+        [ThreadPreviewsResponse],
+        ['query'],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],

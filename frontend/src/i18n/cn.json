@@ -392,7 +392,8 @@
             "sendMessages": "发送信息",
             "reactToMessages": "对消息做出反应",
             "inviteUsers": "邀请用户",
-            "notPermitted": "您无权{permission}"
+            "notPermitted": "您无权{permission}",
+            "replyInThread": "在线程中回复"
         },
         "advanced": "先进的",
         "invite": {
@@ -537,7 +538,12 @@
         "replies": "回复",
         "reply": "回复",
         "lastMessage": "（最后一条消息 {date}）",
-        "nreplies": "{number} {replies} {message}"
+        "nreplies": "{number} {replies} {message}",
+        "previewTitle": "线程",
+        "openThread": "打开线程",
+        "unread": "{count} 个有未读消息的线程",
+        "moreMessages": "- {number} 更多消息 -",
+        "previewFailure": "无法加载线程预览"
     },
     "noChatsAvailable": "没有可用的聊天！",
     "invitedUsers": "受邀用户",
@@ -550,5 +556,27 @@
         "unpinFailed": "取消固定聊天失败 - 请稍后再试",
         "menuItem": "固定聊天",
         "unpinMenuItem": "取消固定聊天"
-    }
+    },
+    "readOnlyThread": "此线程是只读的",
+    "yes": "是的",
+    "no": "不",
+    "proposal": {
+        "voteFailed": "投票失败 - 请稍后再试",
+        "alreadyVoted": "您已经投票 - 尝试重新加载页面",
+        "noEligibleNeurons": "未找到符合条件的神经元",
+        "noEligibleNeuronsMessage": "未找到符合条件或关联的神经元。为了在 OpenChat 中对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您希望与之投票的任何神经元。您的 OpenChat 用户 ID 是：",
+        "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
+        "proposedBy": "提议者",
+        "topic": "话题",
+        "action": "行动",
+        "votingPeriodRemaining": "剩余投票期",
+        "votingPeriodEnded": "投票期结束",
+        "adopt": "采纳",
+        "reject": "拒绝",
+        "youVotedAdopt": "你投了赞成票！",
+        "youVotedReject": "你投了反对票！",
+        "additionalContent": "附加内容",
+        "viewOnDashboard": "在仪表板上查看"
+    },
+    "quoteReply": "报价回复"
 }

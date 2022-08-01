@@ -14,7 +14,7 @@
         MessageContent,
         Participant,
     } from "../../domain/chat/chat";
-    import { canSendMessages } from "../../domain/chat/chat.utils";
+    import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
     import Loading from "../Loading.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
@@ -39,7 +39,7 @@
 
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
-    $: canSend = canSendMessages(chat, $userStore);
+    $: canSend = mode === "thread" ? canReplyInThread(chat) : canSendMessages(chat, $userStore);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -62,7 +62,7 @@
     function onDataTransfer(data: DataTransfer): void {
         const text = data.getData("text/plain") || data.getData("text/uri-list");
         if (text) {
-            messageEntry.insertTextAtCaret(text);
+            messageEntry.replaceSelection(text);
         }
         messageContentFromDataTransferItemList([...data.items]);
     }
@@ -76,13 +76,14 @@
 
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
+            messageEntry.saveSelection();
             onDataTransfer(e.clipboardData);
             e.preventDefault();
         }
     }
 
     function emojiSelected(ev: CustomEvent<string>) {
-        messageEntry?.insertTextAtCaret(ev.detail);
+        messageEntry?.replaceSelection(ev.detail);
     }
 </script>
 
@@ -93,6 +94,7 @@
                 {#if replyingTo}
                     <ReplyingTo
                         groupChat={chat.kind === "group_chat"}
+                        chatId={chat.chatId}
                         preview={true}
                         on:cancelReply
                         {user}
