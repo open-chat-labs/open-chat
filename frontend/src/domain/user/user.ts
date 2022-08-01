@@ -176,3 +176,10 @@ export type UpgradeStorageResponse =
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 
 export type UnpinChatResponse = "success";
+
+export type MigrateUserPrincipalResponse =
+    | "success"
+    | "principal_already_in_use"
+    | "migration_already_in_progress"
+    | "internal_error"
+    | "migration_not_initialized";

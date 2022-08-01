@@ -35,6 +35,7 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
+    ApiMigrateUserPrincipalResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -84,6 +85,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
@@ -887,4 +889,13 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
         return bytesToHexString(candid.Unknown);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
+}
+
+export function migrateUserPrincipal(candid: ApiMigrateUserPrincipalResponse): MigrateUserPrincipalResponse {
+    if ("Success" in candid) return "success";
+    if ("MigrationNotInitialized" in candid) return "migration_not_initialized";
+    if ("MigrationAlreadyInProgress" in candid) return "migration_already_in_progress";
+    if ("PrincipalAlreadyInUse" in candid) return "principal_already_in_use";
+    if ("InternalError" in candid) return "internal_error";
+    throw new UnsupportedValueError("Unexpected ApiMigrateUserPrincipalResponse type received", candid);
 }

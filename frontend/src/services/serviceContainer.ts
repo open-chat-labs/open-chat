@@ -1060,6 +1060,15 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).registerProposalVote(messageIndex, adopt);
     }
 
+    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+        return this.userClient.initUserPrincipalMigration(newPrincipal);
+    }
+
+    migrateUserPrincipal(userId: string): Promise<void> {
+        const userClient = UserClient.create(userId, this.identity, undefined, undefined);
+        return userClient.migrateUserPrincipal().then(() => {});
+    }
+
     async threadPreviews(
         threadsByChat: Record<string, ThreadSyncDetails[]>
     ): Promise<ThreadPreview[]> {
