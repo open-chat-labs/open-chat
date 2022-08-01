@@ -31,7 +31,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "make_private" => role.can_change_group_visibility(),
             "pin_message" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
-            "send_message" => role.can_send_messages(permissions),
+            "send_message" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
             "toggle_reaction" => role.can_react_to_messages(permissions),
             "unblock_user" => role.can_block_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
