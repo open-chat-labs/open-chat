@@ -129,6 +129,11 @@ impl UserMap {
 
             // Checks are complete, now update the data
 
+            if principal_changed {
+                self.principal_to_user_id.remove(&previous_principal);
+                self.principal_to_user_id.insert(principal, user_id);
+            }
+
             if phone_number_changed {
                 if let Some(previous_phone_number) = previous_phone_number {
                     self.phone_number_to_user_id.remove(previous_phone_number);

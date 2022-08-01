@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, run_regular_jobs, Principal, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, Principal, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::CanisterId;
@@ -14,7 +14,7 @@ async fn migrate_user_principal(_args: Args) -> Response {
         caller,
         c2c_args,
         user_index_canister_id,
-    } = match read_state(prepare) {
+    } = match mutate_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -42,9 +42,11 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
     if runtime_state.data.pending_user_principal_migration == Some(caller) {
+        runtime_state.data.pending_user_principal_migration = None;
+
         let c2c_args = user_index_canister::c2c_migrate_user_principal::Args {
             new_principal: caller,
             groups: runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect(),
