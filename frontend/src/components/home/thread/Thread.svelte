@@ -144,7 +144,7 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = canSendMessages($chat, $userStore);
+    $: canSend = canReplyInThread($chat);
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
@@ -834,7 +834,7 @@
                             canDelete={canDeleteOtherUsersMessages($chat)}
                             canSend={canSendMessages($chat, $userStore)}
                             canReact={canReactToMessages($chat)}
-                            canReplyInThread={canReplyInThread($chat)}
+                            canReplyInThread={canSend}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith
