@@ -15,10 +15,11 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         return;
     }
 
-    // 'bio' can be called by anyone
-    let public = method_name == "bio";
-
-    if public || runtime_state.is_caller_owner() {
+    if runtime_state.is_caller_owner() || is_public(&method_name) {
         ic_cdk::api::call::accept_message();
     }
+}
+
+fn is_public(method_name: &str) -> bool {
+    method_name == "bio" || method_name == "migrate_user_principal"
 }

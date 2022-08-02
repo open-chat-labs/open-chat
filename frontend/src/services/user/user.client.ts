@@ -58,6 +58,7 @@ import {
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
+    migrateUserPrincipal,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -75,6 +76,7 @@ import {
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type {
+    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
@@ -603,5 +605,23 @@ export class UserClient extends CandidService implements IUserClient {
             }),
             unpinChatResponse
         );
+    }
+
+    @profile("userClient")
+    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+        return this.handleResponse(
+            this.userService.init_user_principal_migration({
+                new_principal: Principal.fromText(newPrincipal)
+            }),
+            toVoid
+        );
+    }
+
+    @profile("userClient")
+    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
+        return this.handleResponse(
+            this.userService.migrate_user_principal({}),
+            migrateUserPrincipal
+        )
     }
 }

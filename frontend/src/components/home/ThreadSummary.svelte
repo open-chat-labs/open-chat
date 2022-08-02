@@ -83,6 +83,7 @@
                                           threadSummary.latestEventTimestamp,
                                           $_("today"),
                                           $_("yesterday"),
+                                          true,
                                           true
                                       ),
                                   },

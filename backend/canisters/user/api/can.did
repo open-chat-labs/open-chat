@@ -346,6 +346,29 @@ type UnpinChatResponse =
         Success;
     };
 
+type InitUserPrincipalMigrationArgs =
+    record {
+        new_principal: principal;
+    };
+
+type InitUserPrincipalMigrationResponse =
+    variant {
+        Success;
+    };
+
+type MigrateUserPrincipalArgs =
+    record {
+    };
+
+type MigrateUserPrincipalResponse =
+    variant {
+        Success;
+        MigrationNotInitialized;
+        MigrationAlreadyInProgress;
+        PrincipalAlreadyInUse;
+        InternalError: text;
+    };
+
 type InitialStateArgs =
     record {
     };
@@ -557,6 +580,9 @@ service: {
     withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
+
+    init_user_principal_migration: (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
+    migrate_user_principal: (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

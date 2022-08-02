@@ -509,25 +509,25 @@ dependencies = [
 [[package]]
 name = "bucket_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
  "candid",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
  "serde",
  "serde_bytes",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
 ]
 
 [[package]]
 name = "bucket_canister_c2c_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
  "bucket_canister",
- "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
  "ic-cdk 0.5.2",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
 ]
 
 [[package]]
@@ -667,7 +667,7 @@ dependencies = [
 [[package]]
 name = "candid_gen"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
  "quote",
  "syn",
@@ -721,7 +721,7 @@ dependencies = [
 [[package]]
 name = "canister_client_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 
 [[package]]
 name = "canister_installer"
@@ -2079,25 +2079,25 @@ dependencies = [
 [[package]]
 name = "index_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
  "candid",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
  "serde",
  "serde_bytes",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
 ]
 
 [[package]]
 name = "index_canister_c2c_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
- "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
  "ic-cdk 0.5.2",
  "index_canister",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae)",
 ]
 
 [[package]]
@@ -4365,7 +4365,7 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
+source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
 dependencies = [
  "candid",
  "hex",
@@ -4569,6 +4569,8 @@ dependencies = [
  "ledger_utils",
  "lodepng",
  "msgpack",
+ "notifications_canister",
+ "notifications_canister_c2c_client",
  "rand 0.7.3",
  "rand_chacha 0.2.2",
  "rand_core 0.5.1",

@@ -99,6 +99,10 @@ impl UserMap {
         let user_id = user.user_id;
 
         if let Some(previous) = self.users.get(&user_id) {
+            let previous_principal = previous.principal;
+            let principal = user.principal;
+            let principal_changed = previous_principal != principal;
+
             let previous_phone_number = previous.phone_status.phone_number();
             let phone_number = user.phone_status.phone_number();
             let phone_number_changed = previous_phone_number != phone_number;
@@ -106,6 +110,10 @@ impl UserMap {
             let previous_username = &previous.username;
             let username = &user.username;
             let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
+
+            if principal_changed && self.principal_to_user_id.contains_key(&principal) {
+                return UpdateUserResult::PrincipalTaken;
+            }
 
             if phone_number_changed {
                 if let Some(phone_number) = phone_number {
@@ -120,6 +128,11 @@ impl UserMap {
             }
 
             // Checks are complete, now update the data
+
+            if principal_changed {
+                self.principal_to_user_id.remove(&previous_principal);
+                self.principal_to_user_id.insert(principal, user_id);
+            }
 
             if phone_number_changed {
                 if let Some(previous_phone_number) = previous_phone_number {
@@ -379,6 +392,7 @@ impl UserMap {
 #[derive(Debug)]
 pub enum UpdateUserResult {
     Success,
+    PrincipalTaken,
     PhoneNumberTaken,
     UsernameTaken,
     UserNotFound,
