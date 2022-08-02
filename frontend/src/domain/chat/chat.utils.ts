@@ -742,7 +742,7 @@ function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boole
     return false;
 }
 
-function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][] {
+export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
     return groupWhile(sameUser, events);
 }
 

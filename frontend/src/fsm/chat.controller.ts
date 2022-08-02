@@ -66,9 +66,7 @@ export class ChatController {
     public blockedUsers: Writable<Set<string>>;
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
-    public loading: Writable<boolean>;
 
-    private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
@@ -90,7 +88,6 @@ export class ChatController {
 
         const { chatId, kind } = get(this.chat);
         this.events = immutableStore(unconfirmed.getMessages(chatId));
-        this.loading = writable(false);
         this.focusMessageIndex = immutableStore(_focusMessageIndex);
         this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
@@ -308,7 +305,6 @@ export class ChatController {
     ): Promise<void> {
         if (resp === "events_failed") return;
 
-        this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
@@ -341,7 +337,6 @@ export class ChatController {
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
         if (messageIndex >= 0) {
-            this.loading.set(true);
             const range = indexRangeForChat(get(this.serverChatSummary));
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 this.chatVal.kind === "direct_chat"
@@ -354,7 +349,6 @@ export class ChatController {
             }
 
             await this.handleEventsResponse(eventsResponse, false);
-            this.loading.set(false);
         }
 
         this.raiseEvent({
@@ -403,7 +397,6 @@ export class ChatController {
     }
 
     public async loadNewMessages(): Promise<void> {
-        this.loading.set(true);
         const criteria = this.newMessageCriteria();
 
         const eventsResponse = criteria
@@ -411,7 +404,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return undefined;
         }
 
@@ -428,11 +420,9 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
         });
-        this.loading.set(false);
     }
 
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
-        this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
         const eventsResponse = criteria
@@ -440,7 +430,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return [];
         }
 
@@ -450,8 +439,6 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_previous_messages" },
         });
-
-        this.loading.set(false);
         return get(this.events);
     }
 
@@ -662,16 +649,13 @@ export class ChatController {
             return Promise.resolve();
         }
 
-        this.loading.set(true);
         const chat = this.chatVal;
         const eventsPromise =
             chat.kind === "direct_chat"
                 ? this.api.directChatEventsByEventIndex(chat.them, filtered)
                 : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
 
-        return eventsPromise
-            .then((resp) => this.handleEventsResponse(resp))
-            .finally(() => this.loading.set(false));
+        return eventsPromise.then((resp) => this.handleEventsResponse(resp));
     }
 
     markAllRead(): void {

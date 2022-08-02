@@ -31,7 +31,6 @@
         canPinMessages,
         canReactToMessages,
         canReplyInThread,
-        canSendMessages,
         createMessage,
         getMessageContent,
         getStorageRequiredForMessage,
@@ -144,7 +143,7 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = canSendMessages($chat, $userStore);
+    $: canSend = canReplyInThread($chat);
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
@@ -832,9 +831,9 @@
                             canPin={canPinMessages($chat)}
                             canBlockUser={canBlockUsers($chat)}
                             canDelete={canDeleteOtherUsersMessages($chat)}
-                            canSend={canSendMessages($chat, $userStore)}
+                            canQuoteReply={canSend}
                             canReact={canReactToMessages($chat)}
-                            canReplyInThread={canReplyInThread($chat)}
+                            canStartThread={false}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith

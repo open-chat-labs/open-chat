@@ -1,5 +1,10 @@
 <script lang="ts">
-    import type { ThreadPreview, GroupChatSummary } from "../../../domain/chat/chat";
+    import type {
+        ThreadPreview,
+        GroupChatSummary,
+        EventWrapper,
+        Message,
+    } from "../../../domain/chat/chat";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
     import { push } from "svelte-spa-router";
@@ -13,7 +18,7 @@
     import { currentUserKey } from "../../../stores/user";
     import { groupAvatarUrl } from "../../../domain/user/user.utils";
     import Avatar from "../../Avatar.svelte";
-    import { getContentAsText } from "../../../domain/chat/chat.utils";
+    import { getContentAsText, groupBySender } from "../../../domain/chat/chat.utils";
     import LinkButton from "../../LinkButton.svelte";
     import { messagesRead } from "../../../stores/markRead";
     import { toDatetimeString } from "../../../utils/date";
@@ -47,6 +52,8 @@
         lastOnline: Date.now(),
         updated: BigInt(Date.now()),
     };
+
+    $: grouped = groupBySender(thread.latestReplies);
 
     let open = false;
 
@@ -123,9 +130,9 @@
                     canPin={false}
                     canBlockUser={false}
                     canDelete={false}
-                    canSend={false}
+                    canQuoteReply={false}
                     canReact={false}
-                    canReplyInThread={false}
+                    canStartThread={false}
                     publicGroup={chat.kind === "group_chat" && chat.public}
                     editing={false}
                     eventIndex={thread.rootMessage.index}
@@ -138,38 +145,40 @@
                     {$_("thread.moreMessages", { values: { number: missingMessages.toString() } })}
                 </div>
             {/if}
-            {#each thread.latestReplies as evt, i (evt.event.messageId)}
-                <ChatMessage
-                    senderId={evt.event.sender}
-                    focused={false}
-                    {observer}
-                    confirmed={true}
-                    senderTyping={false}
-                    readByMe={true}
-                    readByThem={true}
-                    chatId={thread.chatId}
-                    chatType={chat.kind}
-                    {user}
-                    me={evt.event.sender === currentUser.userId}
-                    first={i === 0}
-                    last={i === thread.latestReplies.length - 1}
-                    preview={true}
-                    inThread={true}
-                    pinned={false}
-                    supportsEdit={false}
-                    supportsReply={false}
-                    canPin={false}
-                    canBlockUser={false}
-                    canDelete={false}
-                    canSend={false}
-                    canReact={false}
-                    canReplyInThread={false}
-                    publicGroup={chat.kind === "group_chat" && chat.public}
-                    editing={false}
-                    eventIndex={evt.index}
-                    timestamp={evt.timestamp}
-                    dateFormatter={toDatetimeString}
-                    msg={evt.event} />
+            {#each grouped as userGroup}
+                {#each userGroup as evt, i (evt.event.messageId)}
+                    <ChatMessage
+                        senderId={evt.event.sender}
+                        focused={false}
+                        {observer}
+                        confirmed={true}
+                        senderTyping={false}
+                        readByMe={true}
+                        readByThem={true}
+                        chatId={thread.chatId}
+                        chatType={chat.kind}
+                        {user}
+                        me={evt.event.sender === currentUser.userId}
+                        first={i === 0}
+                        last={i === userGroup.length - 1}
+                        preview={true}
+                        inThread={true}
+                        pinned={false}
+                        supportsEdit={false}
+                        supportsReply={false}
+                        canPin={false}
+                        canBlockUser={false}
+                        canDelete={false}
+                        canQuoteReply={false}
+                        canReact={false}
+                        canStartThread={false}
+                        publicGroup={chat.kind === "group_chat" && chat.public}
+                        editing={false}
+                        eventIndex={evt.index}
+                        timestamp={evt.timestamp}
+                        dateFormatter={toDatetimeString}
+                        msg={evt.event} />
+                {/each}
             {/each}
             <LinkButton underline="hover" on:click={selectThread}
                 >{$_("thread.openThread")}&#8594;</LinkButton>
