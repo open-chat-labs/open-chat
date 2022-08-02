@@ -1,10 +1,10 @@
 use self::governance_response_types::{ListProposalInfoResponse, ProposalInfo};
-use super::common::{RawProposal, WrappedNeuronId, WrappedProposalId};
+use super::common::{RawProposal, WrappedProposalId};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, ProposalId, Tally};
+use types::{CanisterId, NnsNeuronId, ProposalId, Tally};
 
 pub const TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const TOPIC_EXCHANGE_RATE: i32 = 2;
@@ -103,4 +103,9 @@ pub mod governance_response_types {
         pub summary: String,
         pub url: String,
     }
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct WrappedNeuronId {
+    pub id: NnsNeuronId,
 }
