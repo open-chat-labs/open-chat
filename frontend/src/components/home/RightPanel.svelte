@@ -192,7 +192,7 @@
             {controller}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && controller !== undefined}
-        <ProposalGroupFilters {controller} on:close={pop} />
+        <ProposalGroupFilters on:close={pop} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo
