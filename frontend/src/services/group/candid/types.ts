@@ -227,6 +227,7 @@ export interface DirectMessageNotification {
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type DisableInviteCodeArgs = {};
 export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
@@ -388,6 +389,7 @@ export interface GroupMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
 }
 export interface GroupNameChanged {

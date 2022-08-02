@@ -19,6 +19,7 @@ import type {
     ApiNotification,
     ApiSubscriptionExistsResponse,
 } from "./candid/idl";
+import { identity, optional } from "utils/mapping";
 
 export function muteNotificationsResponse(
     candid: ApiMuteNotificationsResponse | ApiUnmuteNotificationsResponse
@@ -79,6 +80,7 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
     return {
         kind: "group_notification",
         sender: candid.sender.toString(),
+        threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         message: {
             index: candid.message.index,
             timestamp: candid.message.timestamp,
@@ -98,6 +100,7 @@ export function directNotification(candid: ApiDirectMessageNotification): Direct
     return {
         kind: "direct_notification",
         sender: candid.sender.toString(),
+        threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         message: {
             index: candid.message.index,
             timestamp: candid.message.timestamp,
