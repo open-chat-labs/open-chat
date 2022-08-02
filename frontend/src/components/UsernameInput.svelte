@@ -4,7 +4,7 @@
     import type { ServiceContainer } from "../services/serviceContainer";
     import { rollbar } from "../utils/logging";
 
-    const MIN_USERNAME_LENGTH = 3;
+    const MIN_USERNAME_LENGTH = 8;
     const MAX_USERNAME_LENGTH = 25;
 
     export let api: ServiceContainer;
@@ -25,7 +25,7 @@
             stopChecking();
             return;
         }
-        
+
         const currTimer = timer;
 
         api.checkUsername(value)
@@ -75,12 +75,11 @@
 
     function stopChecking() {
         checking = false;
-        if (timer)  {
+        if (timer) {
             clearTimeout(timer);
             timer = undefined;
         }
     }
-
 </script>
 
 <Input
@@ -90,7 +89,7 @@
     value={originalUsername}
     autofocus={true}
     minlength={MIN_USERNAME_LENGTH}
-    maxlength={MAX_USERNAME_LENGTH} 
+    maxlength={MAX_USERNAME_LENGTH}
     countdown={true}
     placeholder={$_("register.enterUsername")}>
     <slot />

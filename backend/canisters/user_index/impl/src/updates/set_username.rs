@@ -6,7 +6,7 @@ use types::{UserEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
-const MIN_USERNAME_LENGTH: u16 = 3;
+const MIN_USERNAME_LENGTH: u16 = 8;
 
 #[update]
 #[trace]
