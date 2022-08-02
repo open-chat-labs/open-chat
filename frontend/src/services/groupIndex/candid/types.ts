@@ -174,6 +174,7 @@ export interface DirectMessageNotification {
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventIndex = number;
 export interface FailedCryptoTransaction {
@@ -295,6 +296,7 @@ export interface GroupMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
 }
 export interface GroupNameChanged {
