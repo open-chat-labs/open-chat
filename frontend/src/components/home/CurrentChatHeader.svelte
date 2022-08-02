@@ -58,6 +58,8 @@
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
+    $: isProposalGroup =
+        $selectedChatSummary.kind === "group_chat" && $selectedChatSummary.isProposalGroup;
     $: hasUserProfile = !isGroup && !isBot;
     $: pollsAllowed = isGroup && !isBot && canCreatePolls($selectedChatSummary);
 
@@ -214,11 +216,13 @@
     {/if}
     {#if !preview}
         {#if !$mobileWidth}
-            <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
-                <HoverIcon>
-                    <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </div>
+            {#if isProposalGroup}
+                <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
+                    <HoverIcon>
+                        <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+            {/if}
             <div class="icon" class:rtl={$rtlStore} on:click={searchChat}>
                 <HoverIcon>
                     <Magnify size={$iconSize} color={"var(--icon-txt)"} />
