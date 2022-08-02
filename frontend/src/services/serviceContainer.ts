@@ -20,6 +20,7 @@ import type {
     PublicProfile,
     PinChatResponse,
     UnpinChatResponse,
+    MigrateUserPrincipalResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -1058,6 +1059,15 @@ export class ServiceContainer implements MarkMessagesRead {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.getGroupClient(chatId).registerProposalVote(messageIndex, adopt);
+    }
+
+    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+        return this.userClient.initUserPrincipalMigration(newPrincipal);
+    }
+
+    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
+        const userClient = UserClient.create(userId, this.identity, undefined, undefined);
+        return userClient.migrateUserPrincipal();
     }
 
     async threadPreviews(

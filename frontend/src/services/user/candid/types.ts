@@ -431,6 +431,8 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
+export type InitUserPrincipalMigrationResponse = { 'Success' : null };
 export type InitialStateArgs = {};
 export type InitialStateResponse = {
     'Success' : {
@@ -540,6 +542,12 @@ export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
       'latest_event_index' : EventIndex,
     }
   };
+export type MigrateUserPrincipalArgs = {};
+export type MigrateUserPrincipalResponse = { 'PrincipalAlreadyInUse' : null } |
+  { 'MigrationAlreadyInProgress' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'MigrationNotInitialized' : null };
 export type Milliseconds = bigint;
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
@@ -962,6 +970,10 @@ export interface _SERVICE {
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'init_user_principal_migration' : ActorMethod<
+    [InitUserPrincipalMigrationArgs],
+    InitUserPrincipalMigrationResponse,
+  >,
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
@@ -969,6 +981,10 @@ export interface _SERVICE {
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse,
+  >,
+  'migrate_user_principal' : ActorMethod<
+    [MigrateUserPrincipalArgs],
+    MigrateUserPrincipalResponse,
   >,
   'mute_notifications' : ActorMethod<
     [MuteNotificationsArgs],
