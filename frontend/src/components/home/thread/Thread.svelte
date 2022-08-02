@@ -831,9 +831,9 @@
                             canPin={canPinMessages($chat)}
                             canBlockUser={canBlockUsers($chat)}
                             canDelete={canDeleteOtherUsersMessages($chat)}
-                            canSend={canSend}
+                            canQuoteReply={canSend}
                             canReact={canReactToMessages($chat)}
-                            canReplyInThread={false}
+                            canStartThread={false}
                             publicGroup={$chat.kind === "group_chat" && $chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith

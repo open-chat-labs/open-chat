@@ -130,9 +130,9 @@
                     canPin={false}
                     canBlockUser={false}
                     canDelete={false}
-                    canSend={false}
+                    canQuoteReply={false}
                     canReact={false}
-                    canReplyInThread={false}
+                    canStartThread={false}
                     publicGroup={chat.kind === "group_chat" && chat.public}
                     editing={false}
                     eventIndex={thread.rootMessage.index}
@@ -169,9 +169,9 @@
                         canPin={false}
                         canBlockUser={false}
                         canDelete={false}
-                        canSend={false}
+                        canQuoteReply={false}
                         canReact={false}
-                        canReplyInThread={false}
+                        canStartThread={false}
                         publicGroup={chat.kind === "group_chat" && chat.public}
                         editing={false}
                         eventIndex={evt.index}
