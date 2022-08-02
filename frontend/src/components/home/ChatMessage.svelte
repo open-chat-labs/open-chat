@@ -80,12 +80,12 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canQuoteReply: boolean;
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
     export let inThread: boolean;
-    export let canReplyInThread: boolean;
+    export let canStartThread: boolean;
     export let senderTyping: boolean;
     export let dateFormatter: (date: Date) => string = toShortTimeString;
     export let collapsed: boolean = false;
@@ -566,7 +566,7 @@
                                     {/if}
                                 {/if}
                                 {#if confirmed && supportsReply}
-                                    {#if canSend}
+                                    {#if canQuoteReply}
                                         <MenuItem on:click={reply}>
                                             <Reply
                                                 size={$iconSize}
@@ -575,7 +575,7 @@
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
                                     {/if}
-                                    {#if !inThread && canReplyInThread}
+                                    {#if !inThread && canStartThread}
                                         <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
