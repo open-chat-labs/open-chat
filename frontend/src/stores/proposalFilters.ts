@@ -1,11 +1,13 @@
 import { Readable, writable } from "svelte/store";
 
-export interface ProposalFilters extends Readable<Set<number>> {
+export interface ProposalFiltersStore extends Readable<Set<number>> {
     toggle(topic: number): void;
 }
 
-export function createProposalFiltersStore(chatId: string): ProposalFilters {
-    const key = "proposal_filters_" + chatId;
+export const proposalFilters = createProposalFiltersStore();
+
+export function createProposalFiltersStore(): ProposalFiltersStore {
+    const key = "nns_proposal_filters";
     const json = localStorage.getItem(key);
     const initial = json !== null ? <number[]>JSON.parse(json) : [];
 

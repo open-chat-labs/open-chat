@@ -5,28 +5,13 @@
     import SectionHeader from "../SectionHeader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { ChatController } from "../../fsm/chat.controller";
-    import { NnsProposalTopic } from "../../domain/chat/chat";
+    import { nnsProposalTopicLabels, NnsProposalTopic } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
-
-    export let controller: ChatController;
-
-    $: proposalFilters = controller.proposalFilters;
+    import { proposalFilters } from "../../stores/proposalFilters";
 
     const dispatch = createEventDispatcher();
 
-    const nnsProposalTopics = [
-        { id: 1, label: "Neuron Management" },
-        { id: 3, label: "Network Economics" },
-        { id: 4, label: "Governance" },
-        { id: 5, label: "Node Admin" },
-        { id: 6, label: "Participant Management" },
-        { id: 7, label: "Subnet Management" },
-        { id: 8, label: "Network Canister Management" },
-        { id: 9, label: "KYC" },
-        { id: 10, label: "Node Provider Rewards" },
-        { id: 11, label: "SNS Decentralization Sale" },
-    ];
+    const nnsProposalTopics = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
     function close() {
         dispatch("close");
@@ -43,12 +28,12 @@
 </SectionHeader>
 
 <div class="proposal-filters">
-    {#each nnsProposalTopics as { id, label }}
+    {#each nnsProposalTopics as id}
         <div class="topic">
             <Toggle
                 id={NnsProposalTopic[id]}
                 on:change={() => proposalFilters.toggle(id)}
-                {label}
+                label={nnsProposalTopicLabels[id]}
                 checked={!$proposalFilters.has(id)}
                 bigGap />
         </div>

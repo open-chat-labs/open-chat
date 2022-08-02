@@ -60,5 +60,5 @@
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
     </ImageObserver>
 {:else if content.kind === "proposal_content"}
-    <ProposalContent {content} {chatId} {messageIndex} {messageId} {collapsed} on:click />
+    <ProposalContent {content} {chatId} {messageIndex} {messageId} {collapsed} on:expandMessage />
 {/if}

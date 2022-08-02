@@ -106,7 +106,7 @@
         on:forward
         on:copyMessageUrl
         on:shareMessage
-        on:click
+        on:expandMessage
         on:collapseMessage
         eventIndex={event.index}
         timestamp={event.timestamp}

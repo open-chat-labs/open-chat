@@ -3,6 +3,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import {
+        nnsProposalTopicLabels,
         NnsProposalTopic,
         ProposalContent,
         ProposalDecisionStatus,
@@ -63,7 +64,7 @@
     $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
-            ? NnsProposalTopic[proposal.topic]
+            ? nnsProposalTopicLabels[proposal.topic]
             : SnsProposalAction[proposal.action];
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
@@ -124,7 +125,7 @@
 
     function onClick() {
         if (collapsed) {
-            dispatch("click");
+            dispatch("expandMessage");
         }
     }
 </script>

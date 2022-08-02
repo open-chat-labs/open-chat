@@ -809,8 +809,7 @@ export function groupEvents(
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
-        .map((events) => groupInner(events, proposalFilters, expandedMessages))
-        .reverse();
+        .map((events) => groupInner(events, proposalFilters, expandedMessages));
 }
 
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {

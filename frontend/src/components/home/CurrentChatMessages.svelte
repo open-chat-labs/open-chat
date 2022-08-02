@@ -36,6 +36,8 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
+    import { proposalFilters } from "../../stores/proposalFilters";
+    import { expandedMessages } from "../../stores/expandedMessages";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -60,8 +62,6 @@
 
     $: chat = controller.chat;
     $: events = controller.events;
-    $: proposalFilters = controller.proposalFilters;
-    $: expandedMessages = controller.expandedMessages;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
@@ -393,7 +393,7 @@
         }
     }
 
-    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages);
+    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -559,7 +559,7 @@
             return;
         }
 
-        controller.toggleMessageExpansion(ew.event.messageId);
+        expandedMessages.toggle(ew.event.messageId);
     }
 </script>
 
@@ -619,7 +619,7 @@
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
-                        on:click={() => toggleMessageExpansion(evt)}
+                        on:expandMessage={() => toggleMessageExpansion(evt)}
                         on:collapseMessage={() => toggleMessageExpansion(evt)}
                         on:upgrade
                         on:forward

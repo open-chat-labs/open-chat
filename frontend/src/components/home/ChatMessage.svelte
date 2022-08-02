@@ -482,7 +482,7 @@
                 edited={msg.edited}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote}
-                on:click />
+                on:expandMessage />
 
             {#if !inert}
                 <TimeAndTicks
