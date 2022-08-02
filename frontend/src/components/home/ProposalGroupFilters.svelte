@@ -8,6 +8,7 @@
     import { nnsProposalTopicLabels, NnsProposalTopic } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
     import { proposalFilters } from "../../stores/proposalFilters";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -18,7 +19,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader shadow={true} flush={!$mobileWidth}>
     <h4>{$_("proposal.filter")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
@@ -50,10 +51,13 @@
         flex: 0 0 30px;
     }
     .proposal-filters {
-        margin-top: $sp3;
         color: var(--section-txt);
         background-color: var(--collapsible-bg);
         padding: $sp4;
         padding-bottom: 0;
+
+        @include mobile() {
+            height: 100%;
+        }
     }
 </style>
