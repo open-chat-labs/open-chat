@@ -767,6 +767,17 @@
         }
     }
 
+    function showProposalFilters() {
+        if ($selectedChatStore !== undefined) {
+            replace(`/${$selectedChatStore.chatId}`);
+            rightPanelHistory = [
+                {
+                    kind: "proposal_filters",
+                },
+            ];
+        }
+    }
+
     function updateChat(ev: CustomEvent<ChatSummary>) {
         addOrReplaceChat(ev.detail);
     }
@@ -960,6 +971,7 @@
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:addParticipants={addParticipants}
             on:showGroupDetails={showGroupDetails}
+            on:showProposalFilters={showProposalFilters}
             on:openThread={openThread}
             on:showParticipants={showParticipants}
             on:updateChat={updateChat}

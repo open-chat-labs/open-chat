@@ -44,6 +44,7 @@
     export let inThread: boolean;
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
+    export let collapsed: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -88,6 +89,7 @@
         {inThread}
         {supportsEdit}
         {supportsReply}
+        {collapsed}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
@@ -104,6 +106,8 @@
         on:forward
         on:copyMessageUrl
         on:shareMessage
+        on:expandMessage
+        on:collapseMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

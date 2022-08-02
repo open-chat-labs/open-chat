@@ -17,6 +17,7 @@
     import Poll from "svelte-material-icons/Poll.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
+    import FilterOutline from "svelte-material-icons/FilterOutline.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -94,6 +95,10 @@
 
     function showGroupDetails() {
         dispatch("showGroupDetails");
+    }
+
+    function showProposalFilters() {
+        dispatch("showProposalFilters");
     }
 
     function showParticipants() {
@@ -209,7 +214,12 @@
     {/if}
     {#if !preview}
         {#if !$mobileWidth}
-            <div class="search" class:rtl={$rtlStore} on:click={searchChat}>
+            <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
+                <HoverIcon>
+                    <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
+            <div class="icon" class:rtl={$rtlStore} on:click={searchChat}>
                 <HoverIcon>
                     <Magnify size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
@@ -273,6 +283,15 @@
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("addParticipants")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if $selectedChatSummary.isProposalGroup}
+                                <MenuItem on:click={showProposalFilters}>
+                                    <FilterOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("proposal.filter")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}
@@ -364,7 +383,7 @@
         }
     }
 
-    .search {
+    .icon {
         margin-left: $sp2;
         &.rtl {
             margin-right: $sp2;

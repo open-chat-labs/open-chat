@@ -32,6 +32,7 @@
     export let edited: boolean;
     export let chatId: string;
     export let messageIndex: number;
+    export let collapsed = false;
 </script>
 
 {#if content.kind === "text_content"}
@@ -59,5 +60,5 @@
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
     </ImageObserver>
 {:else if content.kind === "proposal_content"}
-    <ProposalContent {content} {chatId} {messageIndex} {messageId} />
+    <ProposalContent {content} {chatId} {messageIndex} {messageId} {collapsed} on:expandMessage />
 {/if}

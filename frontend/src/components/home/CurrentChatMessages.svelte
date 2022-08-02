@@ -17,7 +17,11 @@
         Mention,
         ChatSummary,
     } from "../../domain/chat/chat";
-    import { groupEvents, messageIsReadByThem } from "../../domain/chat/chat.utils";
+    import {
+        groupEvents,
+        isFilteredProposal,
+        messageIsReadByThem,
+    } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -32,6 +36,8 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
+    import { proposalFilters } from "../../stores/proposalFilters";
+    import { expandedMessages } from "../../stores/expandedMessages";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -208,11 +214,21 @@
     }
 
     function shouldLoadPreviousMessages() {
-        return initialised && !loadingPrevious && morePrevAvailable && calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
+        return (
+            initialised &&
+            !loadingPrevious &&
+            morePrevAvailable &&
+            calculateFromTop() < MESSAGE_LOAD_THRESHOLD
+        );
     }
 
     function shouldLoadNewMessages() {
-        return initialised && !loadingNew && moreNewAvailable && calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
+        return (
+            initialised &&
+            !loadingNew &&
+            moreNewAvailable &&
+            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD
+        );
     }
 
     let expectedScrollTop: number | undefined = undefined;
@@ -377,7 +393,7 @@
         }
     }
 
-    $: groupedEvents = groupEvents($events).reverse();
+    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -387,43 +403,40 @@
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
                     case "loaded_previous_messages":
-                        tick()
-                            .then(() => {
-                                resetScroll();
-                                loadingPrevious = false;
-                                recalculateFieldsAndLoadEventsIfRequired();
-                                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
-                            });
+                        tick().then(() => {
+                            resetScroll();
+                            loadingPrevious = false;
+                            recalculateFieldsAndLoadEventsIfRequired();
+                            expectedScrollTop = messagesDiv?.scrollTop ?? 0;
+                        });
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
                         const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
-                        tick()
-                            .then(() => {
-                                recalculateFieldsAndLoadEventsIfRequired();
-                                expectedScrollTop = undefined;
-                                scrollToMessageIndex(
-                                    index,
-                                    preserveFocus,
-                                    allowRecursion,
-                                    focusThreadMessageIndex
-                                );
-                            });
+                        tick().then(() => {
+                            recalculateFieldsAndLoadEventsIfRequired();
+                            expectedScrollTop = undefined;
+                            scrollToMessageIndex(
+                                index,
+                                preserveFocus,
+                                allowRecursion,
+                                focusThreadMessageIndex
+                            );
+                        });
                         initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
-                        tick()
-                            .then(() => {
-                                loadingNew = false;
-                                recalculateFieldsAndLoadEventsIfRequired();
-                                if (insideFromBottomThreshold) {
-                                    // only scroll if we are now within threshold from the bottom
-                                    scrollBottom("smooth");
-                                }
-                            });
+                        tick().then(() => {
+                            loadingNew = false;
+                            recalculateFieldsAndLoadEventsIfRequired();
+                            if (insideFromBottomThreshold) {
+                                // only scroll if we are now within threshold from the bottom
+                                scrollBottom("smooth");
+                            }
+                        });
                         break;
                     case "sending_message":
                         // smooth scroll doesn't work here when we are leaping from the top
@@ -523,6 +536,31 @@
     function copyMessageUrl(ev: CustomEvent<Message>) {
         shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
     }
+
+    function isCollapsed(
+        ew: EventWrapper<ChatEventType>,
+        proposalFilters: Set<number>,
+        expandedMessages: Set<bigint>
+    ): boolean {
+        return (
+            ew.event.kind === "message" &&
+            ew.event.content.kind === "proposal_content" &&
+            !expandedMessages.has(ew.event.messageId) &&
+            isFilteredProposal(ew.event.content, proposalFilters)
+        );
+    }
+
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>) {
+        if (
+            ew.event.kind !== "message" ||
+            ew.event.content.kind !== "proposal_content" ||
+            !isFilteredProposal(ew.event.content, $proposalFilters)
+        ) {
+            return;
+        }
+
+        expandedMessages.toggle(ew.event.messageId);
+    }
 </script>
 
 <div
@@ -536,8 +574,8 @@
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
-                {#each userGroup as evt, i (eventKey(evt))}
+            {#each dayGroup as innerGroup, _ui (controller.userGroupKey(innerGroup))}
+                {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
@@ -550,7 +588,7 @@
                         user={controller.user}
                         me={isMe(evt)}
                         first={i === 0}
-                        last={i + 1 === userGroup.length}
+                        last={i + 1 === innerGroup.length}
                         {preview}
                         {canPin}
                         {canBlockUser}
@@ -559,6 +597,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
+                        collapsed={isCollapsed(evt, $proposalFilters, $expandedMessages)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
@@ -580,6 +619,8 @@
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
+                        on:expandMessage={() => toggleMessageExpansion(evt)}
+                        on:collapseMessage={() => toggleMessageExpansion(evt)}
                         on:upgrade
                         on:forward
                         event={evt} />

@@ -204,6 +204,21 @@ export enum NnsProposalTopic {
     SnsDecentralizationSale,
 }
 
+export const nnsProposalTopicLabels = [
+    "Unspecified",
+    "Neuron Management",
+    "Exchange Rate",
+    "Network Economics",
+    "Governance",
+    "Node Admin",
+    "Participant Management",
+    "Subnet Management",
+    "Network Canister Management",
+    "KYC",
+    "Node Provider Rewards",
+    "SNS Decentralization Sale",
+];
+
 export enum SnsProposalAction {
     Unspecified = 0,
     Motion = 1,
@@ -861,7 +876,7 @@ export type CreateGroupNameTooShort = {
 
 export type CreateGroupNameReserved = {
     kind: "name_reserved";
-}
+};
 
 export type CreateGroupDescriptionTooLong = {
     kind: "description_too_long";

@@ -44,7 +44,6 @@ import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
