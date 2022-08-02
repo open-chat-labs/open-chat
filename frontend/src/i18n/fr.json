@@ -574,7 +574,9 @@
         "youVotedAdopt": "Vous avez voté adopter !",
         "youVotedReject": "Vous avez voté rejet !",
         "additionalContent": "contenu additionnel",
-        "viewOnDashboard": "vue sur tableau de bord"
+        "viewOnDashboard": "vue sur tableau de bord",
+        "filter": "Filtrer les propositions",
+        "collapse": "Réduire le message"
     },
     "yes": "Oui",
     "no": "Non",

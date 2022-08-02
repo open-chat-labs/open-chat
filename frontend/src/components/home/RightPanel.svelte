@@ -30,6 +30,8 @@
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
     import { push } from "svelte-spa-router";
+    import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
+
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController | undefined;
@@ -189,6 +191,8 @@
                 : undefined}
             {controller}
             on:closeThread={closeThread} />
+    {:else if lastState.kind === "proposal_filters" && controller !== undefined}
+        <ProposalGroupFilters {controller} on:close={pop} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

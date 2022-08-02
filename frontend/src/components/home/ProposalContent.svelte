@@ -14,6 +14,7 @@
     import { now, now500 } from "../../stores/time";
     import { formatTimeRemaining } from "../../utils/time";
     import { toDateString, toShortTimeString } from "../../utils/date";
+    import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -24,17 +25,21 @@
     import ModalContent from "../ModalContent.svelte";
     import { currentUserStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let content: ProposalContent;
     export let chatId: string;
     export let messageIndex: number;
     export let messageId: bigint;
+    export let collapsed: boolean;
 
     const api: ServiceContainer = getContext(apiKey);
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
-    let expanded = false;
+    let summaryExpanded = false;
     let showNeuronInfo = false;
 
     $: voteStatus =
@@ -63,8 +68,14 @@
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
 
+    $: {
+        if (collapsed) {
+            summaryExpanded = false;
+        }
+    }
+
     function toggleSummary() {
-        expanded = !expanded;
+        summaryExpanded = !summaryExpanded;
     }
 
     function onVote(adopt: boolean) {
@@ -110,99 +121,121 @@
     function round2(num: number): number {
         return Math.round((num + Number.EPSILON) * 100) / 100;
     }
+
+    function onClick() {
+        if (collapsed) {
+            dispatch("click");
+        }
+    }
 </script>
 
-<div class="header">
-    <div class="title-block">
-        <div class="title">
-            {#if proposal.url.length > 0}
-                <a href={proposal.url} target="_blank"
-                    >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
-            {:else}
-                {proposal.title}
-            {/if}
-        </div>
-        <div class="subtitle">
-            {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
-            <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
-        </div>
+{#if collapsed}
+    <div on:click={onClick}>
+        {proposal.title}
+        <EyeOff viewBox="0 -5 24 24" />
     </div>
-    <div class="status" class:positive class:negative>
-        {ProposalDecisionStatus[proposal.status]}
-    </div>
-</div>
+{:else}
+    <div>
+        <div class="header">
+            <div class="title-block">
+                <div class="title">
+                    {#if proposal.url.length > 0}
+                        <a href={proposal.url} target="_blank"
+                            >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
+                    {:else}
+                        {proposal.title}
+                    {/if}
+                </div>
+                <div class="subtitle">
+                    {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
+                    <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
+                </div>
+            </div>
+            <div class="status" class:positive class:negative>
+                {ProposalDecisionStatus[proposal.status]}
+            </div>
+        </div>
 
-{#if proposal.summary.length > 0}
-    <div class="summary" class:expanded on:click={toggleSummary}>
-        <Markdown text={proposal.summary} isInline={false} />
-        <div class="gradient" />
+        {#if proposal.summary.length > 0}
+            <div class="summary" class:expanded={summaryExpanded} on:click={toggleSummary}>
+                <Markdown text={proposal.summary} isInline={false} />
+                <div class="gradient" />
+            </div>
+        {/if}
+
+        <div class="votes" class:rtl={$rtlStore}>
+            <div class="data">
+                <div class="yes">
+                    <span class="label">{$_("yes")}</span>
+                    <span class="value">{adoptPercent}%</span>
+                </div>
+                <div class="remaining">
+                    {#if !votingEnded}
+                        <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
+                        <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
+                    {:else}
+                        <span class="label">{$_("proposal.votingPeriodEnded")}</span>
+                        <span class="value"
+                            >{toDateString(deadline)} {toShortTimeString(deadline)}</span>
+                    {/if}
+                </div>
+                <div class="no">
+                    <span class="label">{$_("no")}</span>
+                    <span class="value">{rejectPercent}%</span>
+                </div>
+            </div>
+            <div class="progress">
+                <div class="adopt" style="width: {adoptPercent}%" />
+                <div class="reject" style="width: {rejectPercent}%" />
+                <div class="vertical-line" style="{rtl}: 3%" />
+                <div class="vertical-line" style="{rtl}: 50%" />
+                <div class="icon" style="{rtl}: calc(3% - 0.5em)">
+                    <ChevronDown viewBox="-1 0 24 24" />
+                </div>
+                <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
+                    <svg viewBox="-1 0 24 24">
+                        <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
+            <button
+                class="adopt"
+                class:voting={voteStatus === "adopting"}
+                class:disabled={votingDisabled}
+                class:gray={voteStatus === "rejected" || votingEnded}
+                on:click={() => onVote(true)}>
+                <div class="contents">
+                    <div>
+                        {$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}
+                    </div>
+                    <div class="icon"><ThumbUp /></div>
+                </div>
+            </button>
+            <button
+                class="reject"
+                class:voting={voteStatus === "rejecting"}
+                class:disabled={votingDisabled}
+                class:gray={voteStatus === "adopted" || votingEnded}
+                on:click={() => onVote(false)}>
+                <div class="contents">
+                    <div>
+                        {$_(
+                            "proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject")
+                        )}
+                    </div>
+                    <div class="icon"><ThumbDown /></div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <div class="more" class:rtl={$rtlStore}>
+        <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
     </div>
 {/if}
-
-<div class="votes" class:rtl={$rtlStore}>
-    <div class="data">
-        <div class="yes">
-            <span class="label">{$_("yes")}</span>
-            <span class="value">{adoptPercent}%</span>
-        </div>
-        <div class="remaining">
-            {#if !votingEnded}
-                <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
-                <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
-            {:else}
-                <span class="label">{$_("proposal.votingPeriodEnded")}</span>
-                <span class="value">{toDateString(deadline)} {toShortTimeString(deadline)}</span>
-            {/if}
-        </div>
-        <div class="no">
-            <span class="label">{$_("no")}</span>
-            <span class="value">{rejectPercent}%</span>
-        </div>
-    </div>
-    <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%" />
-        <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: 3%" />
-        <div class="vertical-line" style="{rtl}: 50%" />
-        <div class="icon" style="{rtl}: calc(3% - 0.5em)">
-            <ChevronDown viewBox="-1 0 24 24" />
-        </div>
-        <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
-            <svg viewBox="-1 0 24 24">
-                <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
-            </svg>
-        </div>
-    </div>
-</div>
-
-<div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
-    <button
-        class="adopt"
-        class:voting={voteStatus === "adopting"}
-        class:disabled={votingDisabled}
-        class:gray={voteStatus === "rejected" || votingEnded}
-        on:click={() => onVote(true)}>
-        <div class="contents">
-            <div>{$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}</div>
-            <div class="icon"><ThumbUp /></div>
-        </div>
-    </button>
-    <button
-        class="reject"
-        class:voting={voteStatus === "rejecting"}
-        class:disabled={votingDisabled}
-        class:gray={voteStatus === "adopted" || votingEnded}
-        on:click={() => onVote(false)}>
-        <div class="contents">
-            <div>{$_("proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject"))}</div>
-            <div class="icon"><ThumbDown /></div>
-        </div>
-    </button>
-</div>
-
-<div class="more" class:rtl={$rtlStore}>
-    <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
-</div>
 
 {#if showNeuronInfo}
     <Overlay dismissible>
@@ -237,6 +270,7 @@
                     display: flex;
                     gap: $sp2;
                     align-items: center;
+                    width: fit-content;
                 }
             }
 

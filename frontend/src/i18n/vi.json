@@ -575,7 +575,9 @@
         "youVotedAdopt": "Bạn đã bỏ phiếu nhận con nuôi!",
         "youVotedReject": "Bạn đã bỏ phiếu từ chối!",
         "additionalContent": "nội dung bổ sung",
-        "viewOnDashboard": "xem trên trang tổng quan"
+        "viewOnDashboard": "xem trên trang tổng quan",
+        "filter": "Lọc đề xuất",
+        "collapse": "Thu gọn tin nhắn"
     },
     "yes": "Đúng",
     "no": "Không",

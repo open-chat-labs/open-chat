@@ -8,6 +8,7 @@ export type RightPanelState =
     | UserProfilePanel
     | NewGroupPanel
     | MessageThreadPanel
+    | ProposalFilterPanel
     | NoPanel;
 
 export type NoPanel = {
@@ -42,6 +43,10 @@ export type ShowParticipantsPanel = {
 
 export type ShowPinnedPanel = {
     kind: "show_pinned";
+};
+
+export type ProposalFilterPanel = {
+    kind: "proposal_filters";
 };
 
 export type UpdatedAvatar = {

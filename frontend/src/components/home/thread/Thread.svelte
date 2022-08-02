@@ -146,7 +146,7 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canReplyInThread($chat);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents([rootEvent, ...$events]) as EventWrapper<Message>[][][];
     $: preview = isPreviewing($chat);
     $: pollsAllowed = canCreatePolls($chat);
     $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;

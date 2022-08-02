@@ -572,7 +572,9 @@
         "youVotedAdopt": "You voted adopt!",
         "youVotedReject": "You voted reject!",
         "additionalContent": "addtional content",
-        "viewOnDashboard": "view on dashboard"
+        "viewOnDashboard": "view on dashboard",
+        "filter": "Filter proposals",
+        "collapse": "Collapse message"
     },
     "yes": "Yes",
     "no": "No",

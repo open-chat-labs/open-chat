@@ -190,18 +190,18 @@ export enum ProposalRewardStatus {
 }
 
 export enum NnsProposalTopic {
-    Unspecified,
-    NeuronManagement,
-    ExchangeRate,
-    NetworkEconomics,
-    Governance,
-    NodeAdmin,
-    ParticipantManagement,
-    SubnetManagement,
-    NetworkCanisterManagement,
-    KYC,
-    NodeProviderRewards,
-    SnsDecentralizationSale,
+    Unspecified = 0,
+    NeuronManagement = 1,
+    ExchangeRate = 2,
+    NetworkEconomics = 3,
+    Governance = 4,
+    NodeAdmin = 5,
+    ParticipantManagement = 6,
+    SubnetManagement = 7,
+    NetworkCanisterManagement = 8,
+    KYC = 9,
+    NodeProviderRewards = 10,
+    SnsDecentralizationSale = 11,
 }
 
 export enum SnsProposalAction {

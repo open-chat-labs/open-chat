@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
-import { derived, get, readable, Readable, Writable } from "svelte/store";
+import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
@@ -44,7 +44,6 @@ import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { writable } from "svelte/store";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
@@ -52,6 +51,7 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
+import { createProposalFiltersStore, ProposalFilters } from "../stores/proposalFilters";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -66,6 +66,8 @@ export class ChatController {
     public blockedUsers: Writable<Set<string>>;
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
+    public proposalFilters: ProposalFilters;
+    public expandedMessages: Writable<Set<bigint>>;
 
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
@@ -102,6 +104,8 @@ export class ChatController {
         this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
         this.fileToAttach = derived(draftMessage, (d) => d.attachment);
         this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
+        this.proposalFilters = createProposalFiltersStore(chatId);
+        this.expandedMessages = writable(new Set<bigint>());
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -196,6 +200,17 @@ export class ChatController {
     private removePinnedMessage(messageIndex: number): void {
         this.pinnedMessages.update((s) => {
             s.delete(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    toggleMessageExpansion(messageId: bigint): void {
+        this.expandedMessages.update((s) => {
+            if (s.has(messageId)) {
+                s.delete(messageId);
+            } else {
+                s.add(messageId);
+            }
             return new Set(s);
         });
     }
