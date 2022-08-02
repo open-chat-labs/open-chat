@@ -80,9 +80,9 @@
         {canPin}
         {canBlockUser}
         {canDelete}
-        {canSend}
+        canQuoteReply={canSend}
         {canReact}
-        {canReplyInThread}
+        canStartThread={canReplyInThread}
         {publicGroup}
         {editing}
         {inThread}
