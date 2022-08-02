@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const store = writable<Set<bigint>>();
+const store = writable<Set<bigint>>(new Set());
 
 export const expandedMessages = {
     subscribe: store.subscribe,
