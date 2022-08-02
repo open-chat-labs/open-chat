@@ -655,7 +655,7 @@ export class ChatController {
                 ? this.api.directChatEventsByEventIndex(chat.them, filtered)
                 : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
 
-        return eventsPromise.then(this.handleEventsResponse);
+        return eventsPromise.then((resp) => this.handleEventsResponse(resp));
     }
 
     markAllRead(): void {
