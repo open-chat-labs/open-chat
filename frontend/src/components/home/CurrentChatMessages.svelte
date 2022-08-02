@@ -389,9 +389,9 @@
                     case "loaded_previous_messages":
                         tick()
                             .then(() => {
+                                resetScroll();
                                 loadingPrevious = false;
                                 recalculateFieldsAndLoadEventsIfRequired();
-                                resetScroll();
                                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
                             });
                         break;
