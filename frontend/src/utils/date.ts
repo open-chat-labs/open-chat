@@ -85,7 +85,8 @@ export function formatMessageDate(
     timestamp: bigint,
     today: string,
     yesterday: string,
-    timeIfToday = false
+    timeIfToday = false,
+    short = false
 ): string {
     const date = new Date(Number(timestamp));
 
@@ -98,5 +99,9 @@ export function formatMessageDate(
         return yesterday;
     }
     const useDayNameOnly = date >= addDays(startOfToday, -6);
-    return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
+    return useDayNameOnly
+        ? toDayOfWeekString(date)
+        : short
+        ? toDateString(date)
+        : toLongDateString(date);
 }
