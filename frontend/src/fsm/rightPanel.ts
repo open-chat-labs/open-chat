@@ -70,6 +70,13 @@ export function filterByChatType(
         if (chat.kind === "direct_chat") {
             return ["new_group_panel", "user_profile"].includes(panel.kind);
         }
+        if (
+            chat.kind == "group_chat" &&
+            !chat.isProposalGroup &&
+            panel.kind === "proposal_filters"
+        ) {
+            return false;
+        }
         return true;
     });
 }
