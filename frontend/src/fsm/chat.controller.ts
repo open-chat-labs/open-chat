@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
-import { derived, get, readable, Readable, Writable } from "svelte/store";
+import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
