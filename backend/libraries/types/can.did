@@ -148,6 +148,7 @@ type DirectChatSummaryUpdates =
 type DirectMessageNotification =
     record {
         sender: UserId;
+        thread_root_message_index: opt MessageIndex;
         sender_name: text;
         message: MessageEventWrapper;
     };
@@ -335,6 +336,7 @@ type MessageEventWrapper =
 type GroupMessageNotification =
     record {
         chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
         group_name: text;
         sender: UserId;
         sender_name: text;
@@ -912,7 +914,7 @@ type ThreadSyncDetails =
         latest_event: opt EventIndex;
         latest_message: opt MessageIndex;
         read_up_to: opt MessageIndex;
-        last_updated: TimestampMillis;     
+        last_updated: TimestampMillis;
     };
 
 type ProposalsUpdated =
