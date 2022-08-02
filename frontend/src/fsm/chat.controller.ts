@@ -67,7 +67,6 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
 
-    private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
@@ -306,7 +305,6 @@ export class ChatController {
     ): Promise<void> {
         if (resp === "events_failed") return;
 
-        this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
