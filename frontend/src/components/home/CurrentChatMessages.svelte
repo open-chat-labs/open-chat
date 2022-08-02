@@ -370,7 +370,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events).reverse();
+    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
