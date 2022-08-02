@@ -6,6 +6,7 @@
     import MarkdownLink from "./MarkdownLink.svelte";
     import FakeMarkdownLink from "./FakeMarkdownLink.svelte";
     import SvelteMarkdown from "svelte-markdown";
+    import ErrorBoundary from "../ErrorBoundary";
 
     export let text: string;
     export let inline: boolean = true;
@@ -32,23 +33,25 @@
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
-    {#if suppressLinks}
-        <SvelteMarkdown
-            renderers={{
-                link: FakeMarkdownLink,
-            }}
-            {isInline}
-            source={parsed}
-            {options} />
-    {:else}
-        <SvelteMarkdown
-            renderers={{
-                link: MarkdownLink,
-            }}
-            {isInline}
-            source={parsed}
-            {options} />
-    {/if}
+    <ErrorBoundary>
+        {#if suppressLinks}
+            <SvelteMarkdown
+                renderers={{
+                    link: FakeMarkdownLink,
+                }}
+                {isInline}
+                source={parsed}
+                {options} />
+        {:else}
+            <SvelteMarkdown
+                renderers={{
+                    link: MarkdownLink,
+                }}
+                {isInline}
+                source={parsed}
+                {options} />
+        {/if}
+    </ErrorBoundary>
 </p>
 
 <style type="text/scss">
