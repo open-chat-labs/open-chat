@@ -517,6 +517,7 @@ describe("merging updates", () => {
             affectedEvents: [],
             metrics: emptyChatMetrics(),
             myMetrics: emptyChatMetrics(),
+            subtype: { kind: "no_change" },
         };
 
         test("attempting to update with a mismatched kind throws error", () => {
