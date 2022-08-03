@@ -11,7 +11,6 @@
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
-    export let isInline: boolean = true;
 
     let sanitized = "unsafe";
     $: options = {
@@ -31,7 +30,7 @@
     $: {
         let parsed = replaceUserIds(text);
         try {
-            if (isInline) {
+            if (inline) {
                 parsed = marked.parseInline(parsed, options);
             } else {
                 parsed = marked.parse(parsed, options);
