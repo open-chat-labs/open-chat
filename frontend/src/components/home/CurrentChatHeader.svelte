@@ -43,6 +43,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
+    import { isProposalGroup } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -58,8 +59,6 @@
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
-    $: isProposalGroup =
-        $selectedChatSummary.kind === "group_chat" && $selectedChatSummary.isProposalGroup;
     $: hasUserProfile = !isGroup && !isBot;
     $: pollsAllowed = isGroup && !isBot && canCreatePolls($selectedChatSummary);
 
@@ -216,7 +215,7 @@
     {/if}
     {#if !preview}
         {#if !$mobileWidth}
-            {#if isProposalGroup}
+            {#if $isProposalGroup}
                 <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
                     <HoverIcon>
                         <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -289,7 +288,7 @@
                                     <div slot="text">{$_("addParticipants")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if $selectedChatSummary.isProposalGroup}
+                            {#if $isProposalGroup}
                                 <MenuItem on:click={showProposalFilters}>
                                     <FilterOutline
                                         size={$iconSize}
