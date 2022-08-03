@@ -1,10 +1,9 @@
 use crate::model::mentions::Mentions;
 use candid::Principal;
-use chat_events::{AllChatEvents, ChatEvents};
+use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::mem;
 use types::{
     EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
     UserId, MAX_RETURNED_MENTIONS,
@@ -22,21 +21,6 @@ pub struct Participants {
 
 #[allow(clippy::too_many_arguments)]
 impl Participants {
-    pub fn migrate_mentions(&mut self, chat_events: &ChatEvents) {
-        for participant in self.by_principal.values_mut() {
-            for mention in mem::take(&mut participant.mentions)
-                .into_iter()
-                .filter(|m| m.thread_root_message_index.is_none())
-            {
-                let timestamp = chat_events
-                    .message_internal_by_message_index(mention.message_index)
-                    .unwrap()
-                    .timestamp;
-                participant.mentions_v2.add(mention, timestamp);
-            }
-        }
-    }
-
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
         let participant = ParticipantInternal {
             user_id: creator_user_id,
