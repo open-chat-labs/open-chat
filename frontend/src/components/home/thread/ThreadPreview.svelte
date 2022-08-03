@@ -93,8 +93,7 @@
                     <Markdown
                         text={getContentAsText(thread.rootMessage.event.content)}
                         oneLine={true}
-                        suppressLinks={true}
-                        inline={false} />
+                        suppressLinks={true} />
                 </div>
             </div>
             {#if unreadCount > 0}

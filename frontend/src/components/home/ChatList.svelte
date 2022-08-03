@@ -245,8 +245,7 @@
                                             <Markdown
                                                 text={getContentAsText(msg.content)}
                                                 oneLine={true}
-                                                suppressLinks={true}
-                                                inline={false} />
+                                                suppressLinks={true} />
                                         </div>
                                     </SearchResult>
                                 {/each}

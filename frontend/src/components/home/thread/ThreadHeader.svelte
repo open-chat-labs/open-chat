@@ -100,7 +100,7 @@
             {#if chat.typing}
                 {chat.subtext} <Typing />
             {:else}
-                <Markdown text={chat.subtext} oneLine={true} suppressLinks={true} inline={false} />
+                <Markdown text={chat.subtext} oneLine={true} suppressLinks={true} />
             {/if}
         </div>
     </div>
