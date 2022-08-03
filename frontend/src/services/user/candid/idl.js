@@ -169,7 +169,7 @@ export const idlFactory = ({ IDL }) => {
     'Unspecified' : IDL.Null,
     'Settled' : IDL.Null,
   });
-  const NeuronId = IDL.Nat64;
+  const NnsNeuronId = IDL.Nat64;
   const NnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -182,8 +182,9 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : NnsNeuronId,
   });
+  const SnsNeuronId = IDL.Vec(IDL.Nat8);
   const SnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -196,7 +197,7 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : SnsNeuronId,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -539,6 +540,13 @@ export const idlFactory = ({ IDL }) => {
     'proposals' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
+  const GovernanceProposalsSubtype = IDL.Record({
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupSubtype = IDL.Variant({
+    'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
@@ -566,6 +574,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
+    'subtype' : IDL.Opt(GroupSubtype),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -695,6 +704,7 @@ export const idlFactory = ({ IDL }) => {
   const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'subtype' : IDL.Opt(GroupSubtype),
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
@@ -862,6 +872,11 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
+  const GroupSubtypeUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : GroupSubtype,
+  });
   const PinnedMessageUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -876,6 +891,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
+    'subtype' : GroupSubtypeUpdate,
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),

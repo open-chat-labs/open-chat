@@ -3,7 +3,6 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -159,7 +158,7 @@ export interface ProposalCommon {
     lastUpdated: number;
     rewardStatus: ProposalRewardStatus;
     summary: string;
-    proposer: NeuronId;
+    proposer: string;
 }
 
 export interface Tally {
@@ -710,7 +709,13 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
+    subtype: GroupSubtypeUpdate;
 };
+
+export type GroupSubtypeUpdate =
+    | { kind: "no_change" }
+    | { kind: "set_to_none" }
+    | { kind: "set_to_some"; subtype: GroupSubtype };
 
 export type ThreadSyncDetailsUpdates = {
     threadRootMessageIndex: number;
@@ -817,8 +822,16 @@ export type GroupChatSummary = DataContent &
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
-        isProposalGroup: boolean;
+        subtype: GroupSubtype;
     };
+
+export type GroupSubtype = GovernanceProposalsSubtype | undefined;
+
+export type GovernanceProposalsSubtype = {
+    kind: "governance_proposals";
+    isNns: boolean;
+    governanceCanisterId: string;
+};
 
 export type Mention = {
     messageId: bigint;
