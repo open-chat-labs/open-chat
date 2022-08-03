@@ -19,7 +19,7 @@
     }
 </script>
 
-<SectionHeader shadow={true} flush={!$mobileWidth}>
+<SectionHeader shadow={true} flush={$mobileWidth}>
     <h4>{$_("proposal.filter")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
