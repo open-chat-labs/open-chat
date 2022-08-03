@@ -790,7 +790,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
     };
 }
 
-function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     return {
         kind: "governance_proposals",
         isNns: subtype.GovernanceProposals.is_nns,
