@@ -32,9 +32,9 @@
         let parsed = replaceUserIds(text);
         try {
             if (isInline) {
-                parsed = marked.parseInline(text, options);
+                parsed = marked.parseInline(parsed, options);
             } else {
-                parsed = marked.parse(text, options);
+                parsed = marked.parse(parsed, options);
             }
         } catch (err: any) {
             rollbar.error("Error parsing markdown: ", err);
