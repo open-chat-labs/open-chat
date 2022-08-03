@@ -209,7 +209,7 @@
             {#if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else}
-                <Markdown text={lastMessage} oneLine={true} suppressLinks={true} inline={false} />
+                <Markdown text={lastMessage} oneLine={true} suppressLinks={true} />
             {/if}
         </div>
     </div>

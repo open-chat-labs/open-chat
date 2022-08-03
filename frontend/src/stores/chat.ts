@@ -70,6 +70,14 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 
 export const selectedChatStore = writable<ChatController | undefined>(undefined);
 
+export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
+    return (
+        $selectedChatStore !== undefined &&
+        $selectedChatStore.chatVal.kind === "group_chat" &&
+        $selectedChatStore.chatVal.isProposalGroup
+    );
+});
+
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(

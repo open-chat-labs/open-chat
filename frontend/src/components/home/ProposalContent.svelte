@@ -159,7 +159,7 @@
 
         {#if proposal.summary.length > 0}
             <div class="summary" class:expanded={summaryExpanded} on:click={toggleSummary}>
-                <Markdown text={proposal.summary} isInline={false} />
+                <Markdown text={proposal.summary} inline={false} />
                 <div class="gradient" />
             </div>
         {/if}
