@@ -1217,7 +1217,7 @@ export function groupChatFromCandidate(
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: false,
+        subtype: undefined,
     };
 }
 

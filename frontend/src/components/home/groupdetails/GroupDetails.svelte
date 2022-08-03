@@ -281,7 +281,7 @@
     function description(): string {
         let description = originalGroup.description;
 
-        if (originalGroup.isProposalGroup) {
+        if (originalGroup.subtype?.kind === "governance_proposals" ?? false) {
             description = description.replace("{userId}", currentUser.userId);
         }
 

@@ -98,6 +98,8 @@ import {
     ProposalRewardStatus,
     ThreadSyncDetails,
     MigrateUserPrincipalResponse,
+    GroupSubtype,
+    GovernanceProposalsSubtype,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -198,6 +200,8 @@ export {
     ProposalRewardStatus as ApiProposalRewardStatus,
     ThreadSyncDetails as ApiThreadSyncDetails,
     MigrateUserPrincipalResponse as ApiMigrateUserPrincipalResponse,
+    GroupSubtype as ApiGroupSubtype,
+    GovernanceProposalsSubtype as ApiGovernanceProposalsSubtype,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

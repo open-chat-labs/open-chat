@@ -103,7 +103,7 @@ const defaultGroupChat: GroupChatSummary = {
             latestMessageIndex: 3,
         },
     ],
-    isProposalGroup: false,
+    subtype: undefined,
 };
 
 function directChatId(id: number): DirectChatSummary {
