@@ -4,7 +4,7 @@
     import type { ServiceContainer } from "../services/serviceContainer";
     import { rollbar } from "../utils/logging";
 
-    const MIN_USERNAME_LENGTH = 8;
+    const MIN_USERNAME_LENGTH = 5;
     const MAX_USERNAME_LENGTH = 25;
 
     export let api: ServiceContainer;
