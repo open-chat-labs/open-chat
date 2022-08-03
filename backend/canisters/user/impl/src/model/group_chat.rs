@@ -54,6 +54,7 @@ impl GroupChat {
             last_updated: self.last_updated(),
             name: None,
             description: None,
+            subtype: OptionUpdate::NoChange,
             avatar_id: OptionUpdate::NoChange,
             latest_message: None,
             latest_event_index: None,

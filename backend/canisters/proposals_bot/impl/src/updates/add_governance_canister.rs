@@ -1,20 +1,21 @@
 use crate::guards::caller_is_service_owner;
-use crate::{mutate_state, read_state};
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use std::fmt::Write;
-use types::{ChatId, GroupPermissions, PermissionRole};
+use types::{ChatId, GovernanceProposalsSubtype, GroupPermissions, GroupSubtype, PermissionRole};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
 #[update(guard = "caller_is_service_owner")]
 #[trace]
 async fn add_governance_canister(args: Args) -> Response {
-    if read_state(|state| state.data.nervous_systems.exists(&args.governance_canister_id)) {
-        return AlreadyAdded;
-    }
+    let PrepareResult { is_nns } = match read_state(|state| prepare(&args, state)) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
-    let chat_id = match create_group(&args).await {
+    let chat_id = match create_group(&args, is_nns).await {
         Ok(id) => id,
         Err(response) => return response,
     };
@@ -29,7 +30,21 @@ async fn add_governance_canister(args: Args) -> Response {
     Success
 }
 
-async fn create_group(args: &Args) -> Result<ChatId, Response> {
+struct PrepareResult {
+    is_nns: bool,
+}
+
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.nervous_systems.exists(&args.governance_canister_id) {
+        Err(AlreadyAdded)
+    } else {
+        Ok(PrepareResult {
+            is_nns: args.governance_canister_id == runtime_state.data.nns_governance_canister_id,
+        })
+    }
+}
+
+async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
     let (group_index_canister_id, my_principal) =
         read_state(|state| (state.data.group_index_canister_id, state.env.canister_id()));
 
@@ -38,6 +53,10 @@ async fn create_group(args: &Args) -> Result<ChatId, Response> {
         creator_principal: my_principal,
         name: format!("{} Proposals", &args.name),
         description: args.description.clone().unwrap_or_else(|| default_description(&args.name)),
+        subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
+            governance_canister_id: args.governance_canister_id,
+            is_nns,
+        })),
         avatar: args.avatar.clone(),
         history_visible_to_new_joiners: true,
         permissions: Some(GroupPermissions {

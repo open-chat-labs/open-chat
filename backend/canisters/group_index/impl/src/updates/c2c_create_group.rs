@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, M
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version};
+use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, GroupSubtype, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -11,8 +11,9 @@ use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 #[update_msgpack]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
-    let name = args.name.to_owned();
-    let description = args.description.to_owned();
+    let name = args.name.to_string();
+    let description = args.description.to_string();
+    let subtype = args.subtype.clone();
     let is_public = args.is_public;
     let avatar_id = Avatar::id(&args.avatar);
 
@@ -42,6 +43,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         chat_id,
                         name,
                         description,
+                        subtype,
                         avatar_id,
                         wasm_version,
                     },
@@ -92,6 +94,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
             is_public: args.is_public,
             name: args.name,
             description: args.description,
+            subtype: args.subtype,
             // History is always visible on public groups
             history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
             permissions: args.permissions,
@@ -120,6 +123,7 @@ struct CommitArgs {
     chat_id: ChatId,
     name: String,
     description: String,
+    subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     wasm_version: Version,
 }
@@ -131,6 +135,7 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             chat_id: args.chat_id,
             name: args.name,
             description: args.description,
+            subtype: args.subtype,
             avatar_id: args.avatar_id,
             now,
             wasm_version: args.wasm_version,

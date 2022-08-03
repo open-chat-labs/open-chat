@@ -230,6 +230,7 @@ type GroupChatSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         is_public: bool;
         history_visible_to_new_joiners: bool;
@@ -258,6 +259,7 @@ type GroupChatSummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
+        subtype: GroupSubtypeUpdate;
         avatar_id: AvatarIdUpdate;
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
@@ -358,6 +360,24 @@ type GroupReplyContext =
         event_index: EventIndex;
     };
 
+type GroupSubtype =
+    variant {
+        GovernanceProposals: GovernanceProposalsSubtype;
+    };
+
+type GroupSubtypeUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: GroupSubtype;
+    };
+
+type GovernanceProposalsSubtype =
+    record {
+        is_nns: bool;
+        governance_canister_id: CanisterId;
+    };
+
 type MessagePinned =
     record {
         message_index: MessageIndex;
@@ -384,6 +404,7 @@ type PublicGroupSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
