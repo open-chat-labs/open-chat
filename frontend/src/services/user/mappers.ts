@@ -38,6 +38,7 @@ import type {
     ApiMigrateUserPrincipalResponse,
     ApiGovernanceProposalsSubtype,
     ApiGroupSubtype,
+    ApiGroupSubtypeUpdate,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -71,6 +72,7 @@ import type {
     ThreadSyncDetailsUpdates,
     GovernanceProposalsSubtype,
     GroupSubtype,
+    GroupSubtypeUpdate,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -671,6 +673,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
             latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
+            subtype: updatedSubtype(candid.Group.subtype),
         };
     }
     if ("Direct" in candid) {
@@ -693,6 +696,16 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
+}
+
+function updatedSubtype(candid: ApiGroupSubtypeUpdate): GroupSubtypeUpdate {
+    if ("NoChange" in candid) {
+        return { kind: "no_change" };
+    } else if ("SetToNone" in candid) {
+        return { kind: "set_to_none" };
+    } else {
+        return { kind: "set_to_some", subtype: apiGroupSubtype(candid.SetToSome) };
+    }
 }
 
 function participantRole(candid: ApiRole): MemberRole {

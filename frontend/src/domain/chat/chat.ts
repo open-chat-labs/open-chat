@@ -709,7 +709,13 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
+    subtype: GroupSubtypeUpdate;
 };
+
+export type GroupSubtypeUpdate =
+    | { kind: "no_change" }
+    | { kind: "set_to_none" }
+    | { kind: "set_to_some"; subtype: GroupSubtype };
 
 export type ThreadSyncDetailsUpdates = {
     threadRootMessageIndex: number;

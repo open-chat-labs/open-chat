@@ -36,6 +36,8 @@ import type {
     ThreadRead,
     ThreadSyncDetailsUpdates,
     ProposalContent,
+    GroupSubtype,
+    GroupSubtypeUpdate,
 } from "./chat";
 import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -568,6 +570,7 @@ function mergeUpdatedGroupChat(
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
+        subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
     };
 }
 
@@ -596,6 +599,16 @@ function mergeThreadSyncDetails(
             toRecord(existing, (t) => t.threadRootMessageIndex)
         )
     );
+}
+
+function mergeSubtype(updated: GroupSubtypeUpdate, existing: GroupSubtype): GroupSubtype {
+    if (updated.kind === "no_change") {
+        return existing;
+    } else if (updated.kind === "set_to_none") {
+        return undefined;
+    } else {
+        return updated.subtype;
+    }
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {

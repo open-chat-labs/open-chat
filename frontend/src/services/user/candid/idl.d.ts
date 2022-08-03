@@ -100,6 +100,7 @@ import {
     MigrateUserPrincipalResponse,
     GroupSubtype,
     GovernanceProposalsSubtype,
+    GroupSubtypeUpdate,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -202,6 +203,7 @@ export {
     MigrateUserPrincipalResponse as ApiMigrateUserPrincipalResponse,
     GroupSubtype as ApiGroupSubtype,
     GovernanceProposalsSubtype as ApiGovernanceProposalsSubtype,
+    GroupSubtypeUpdate as ApiGroupSubtypeUpdate,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
