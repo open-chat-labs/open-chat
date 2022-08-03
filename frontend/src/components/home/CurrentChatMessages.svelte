@@ -4,6 +4,7 @@
     import { afterUpdate, createEventDispatcher, onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
+    import ProposalBot from "../ProposalBot.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
@@ -38,6 +39,7 @@
     import * as shareFunctions from "../../domain/share";
     import { proposalFilters } from "../../stores/proposalFilters";
     import { expandedMessages } from "../../stores/expandedMessages";
+    import { isProposalGroup } from "../../stores/chat";
     import { configKeys } from "../../utils/config";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -638,10 +640,11 @@
             {/each}
         </div>
     {/each}
-    {#if $chat.kind === "group_chat" && !morePrevAvailable}
+    {#if $isProposalGroup && !morePrevAvailable}
+        <ProposalBot />
+    {:else if $chat.kind === "group_chat" && !morePrevAvailable}
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
-    {/if}
-    {#if isBot && !morePrevAvailable}
+    {:else if isBot && !morePrevAvailable}
         <Robot />
     {/if}
 </div>
