@@ -61,7 +61,8 @@
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
     $: votingDisabled = voteStatus !== undefined || votingEnded;
-    $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
+    $: isNns = content.proposal.kind === "nns";
+    $: typeLabel = $_(isNns ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
             ? nnsProposalTopicLabels[proposal.topic]
@@ -149,7 +150,11 @@
                 </div>
                 <div class="subtitle">
                     {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
-                    <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
+                    {#if isNns}
+                        <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
+                    {:else}
+                        <span>{proposal.proposer}</span>
+                    {/if}
                 </div>
             </div>
             <div class="status" class:positive class:negative>
@@ -233,9 +238,11 @@
         </div>
     </div>
 
-    <div class="more" class:rtl={$rtlStore}>
-        <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
-    </div>
+    {#if isNns}
+        <div class="more" class:rtl={$rtlStore}>
+            <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
+        </div>
+    {/if}
 {/if}
 
 {#if showNeuronInfo}
