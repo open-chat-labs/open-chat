@@ -3,7 +3,7 @@ use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use std::collections::HashMap;
-use types::{CanisterId, NeuronId, ProposalId};
+use types::{CanisterId, NnsNeuronId, ProposalId};
 
 const REWARD_STATUS_ACCEPTING_VOTES: i32 = 1;
 
@@ -49,15 +49,15 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
 }
 
 pub enum GetBallotsResult {
-    Success(Vec<(NeuronId, Option<bool>)>),
+    Success(Vec<(NnsNeuronId, Option<bool>)>),
     ProposalNotAcceptingVotes,
     ProposalNotFound,
 }
 
 pub async fn register_vote(
     governance_canister_id: CanisterId,
-    neuron_id: u64,
-    proposal_id: u64,
+    neuron_id: NnsNeuronId,
+    proposal_id: ProposalId,
     adopt: bool,
 ) -> CallResult<Result<(), GovernanceError>> {
     let args = ManageNeuron {
@@ -95,7 +95,7 @@ mod list_proposals {
     #[derive(CandidType, Deserialize)]
     pub struct ProposalInfo {
         pub id: Option<WrappedProposalId>,
-        pub ballots: HashMap<u64, Ballot>,
+        pub ballots: HashMap<NnsNeuronId, Ballot>,
         pub reward_status: i32,
     }
 
@@ -212,7 +212,7 @@ pub struct GovernanceError {
 
 #[derive(CandidType, Deserialize)]
 pub struct WrappedNeuronId {
-    pub id: NeuronId,
+    pub id: NnsNeuronId,
 }
 
 impl From<u64> for WrappedNeuronId {
