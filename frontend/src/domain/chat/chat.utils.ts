@@ -35,7 +35,6 @@ import type {
     ThreadSyncDetails,
     ThreadRead,
     ThreadSyncDetailsUpdates,
-    ProposalContent,
     GroupSubtype,
     GroupSubtypeUpdate,
 } from "./chat";
@@ -58,6 +57,7 @@ import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import type { UnconfirmedMessages } from "../../stores/unconfirmed";
+import type { FilteredProposals } from "../../stores/filteredProposals";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -762,16 +762,15 @@ function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boole
 function inSameGroup(
     a: EventWrapper<ChatEvent>,
     b: EventWrapper<ChatEvent>,
-    proposalFilters: Set<number> | undefined,
-    expandedMessages: Set<bigint> | undefined
+    filteredProposals?: FilteredProposals
 ): boolean {
     if (a.event.kind === "message" && b.event.kind === "message") {
         const aKind = a.event.content.kind;
         const bKind = b.event.content.kind;
         if (aKind === "proposal_content" || bKind === "proposal_content") {
             return (
-                isCollpasedProposal(a.event, proposalFilters, expandedMessages) &&
-                isCollpasedProposal(b.event, proposalFilters, expandedMessages)
+                isCollpasedProposal(a.event, filteredProposals) &&
+                isCollpasedProposal(b.event, filteredProposals)
             );
         } else {
             return sameUser(a, b);
@@ -780,35 +779,19 @@ function inSameGroup(
     return false;
 }
 
-function isCollpasedProposal(
+export function isCollpasedProposal(
     message: Message,
-    proposalFilters: Set<number> | undefined,
-    expandedMessages: Set<bigint> | undefined
-) {
-    if (message.content.kind !== "proposal_content") return false;
-    if (expandedMessages?.has(message.messageId)) return false;
-    return isFilteredProposal(message.content, proposalFilters);
-}
-
-export function isFilteredProposal(
-    content: ProposalContent,
-    proposalFilters: Set<number> | undefined
+    filteredProposals?: FilteredProposals
 ): boolean {
-    if (proposalFilters === undefined) return true;
-
-    if (content.proposal.kind === "nns") {
-        return proposalFilters.has(content.proposal.topic);
-    } else {
-        return proposalFilters.has(content.proposal.action);
-    }
+    if (message.content.kind !== "proposal_content") return false;
+    return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
 }
 
 function groupInner(
     events: EventWrapper<ChatEvent>[],
-    proposalFilters: Set<number> | undefined,
-    expandedMessages: Set<bigint> | undefined
+    filteredProposals?: FilteredProposals
 ): EventWrapper<ChatEvent>[][] {
-    return groupWhile((a, b) => inSameGroup(a, b, proposalFilters, expandedMessages), events);
+    return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
 }
 
 export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
@@ -817,12 +800,11 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
-    proposalFilters?: Set<number>,
-    expandedMessages?: Set<bigint>
+    filteredProposals?: FilteredProposals
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
-        .map((events) => groupInner(events, proposalFilters, expandedMessages));
+        .map((events) => groupInner(events, filteredProposals));
 }
 
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {

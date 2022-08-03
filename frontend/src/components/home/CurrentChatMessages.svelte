@@ -20,7 +20,7 @@
     } from "../../domain/chat/chat";
     import {
         groupEvents,
-        isFilteredProposal,
+        isCollpasedProposal,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
@@ -37,9 +37,8 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
-    import { proposalFilters } from "../../stores/proposalFilters";
-    import { expandedMessages } from "../../stores/expandedMessages";
     import { isProposalGroup } from "../../stores/chat";
+    import { filteredProposals, FilteredProposals } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -372,7 +371,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages).reverse();
+    $: groupedEvents = groupEvents($events, $filteredProposals).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -551,27 +550,15 @@
 
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
-        proposalFilters: Set<number>,
-        expandedMessages: Set<bigint>
+        filteredProposals: FilteredProposals
     ): boolean {
-        return (
-            ew.event.kind === "message" &&
-            ew.event.content.kind === "proposal_content" &&
-            !expandedMessages.has(ew.event.messageId) &&
-            isFilteredProposal(ew.event.content, proposalFilters)
-        );
+        return ew.event.kind === "message" && isCollpasedProposal(ew.event, filteredProposals);
     }
 
-    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>) {
-        if (
-            ew.event.kind !== "message" ||
-            ew.event.content.kind !== "proposal_content" ||
-            !isFilteredProposal(ew.event.content, $proposalFilters)
-        ) {
-            return;
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
+            filteredProposals.toggleMessageExpansion(ew.event.messageId, expand);
         }
-
-        expandedMessages.toggle(ew.event.messageId);
     }
 </script>
 
@@ -609,7 +596,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
-                        collapsed={isCollapsed(evt, $proposalFilters, $expandedMessages)}
+                        collapsed={isCollapsed(evt, $filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
@@ -631,8 +618,8 @@
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
-                        on:expandMessage={() => toggleMessageExpansion(evt)}
-                        on:collapseMessage={() => toggleMessageExpansion(evt)}
+                        on:expandMessage={() => toggleMessageExpansion(evt, true)}
+                        on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
                         event={evt} />

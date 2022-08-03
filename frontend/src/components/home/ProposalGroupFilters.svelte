@@ -7,8 +7,8 @@
     import { iconSize } from "../../stores/iconSize";
     import { nnsProposalTopicLabels, NnsProposalTopic } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
-    import { proposalFilters } from "../../stores/proposalFilters";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { filteredProposals, FilteredProposals } from "../../stores/filteredProposals";
 
     const dispatch = createEventDispatcher();
 
@@ -33,9 +33,9 @@
         <div class="topic">
             <Toggle
                 id={NnsProposalTopic[id]}
-                on:change={() => proposalFilters.toggle(id)}
+                on:change={() => filteredProposals.toggleFilter(id)}
                 label={nnsProposalTopicLabels[id]}
-                checked={!$proposalFilters.has(id)}
+                checked={!$filteredProposals.hasFilter(id)}
                 bigGap />
         </div>
     {/each}

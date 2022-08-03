@@ -7,7 +7,6 @@ import type {
 } from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
 import { message } from "./chatMappers";
-import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
 import { apiGroupSubtype } from "../../services/user/mappers";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
