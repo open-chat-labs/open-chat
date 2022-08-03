@@ -84,6 +84,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             creator_principal: runtime_state.env.caller(),
             name: args.name,
             description: args.description,
+            subtype: args.subtype,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,
             permissions: args.permissions,

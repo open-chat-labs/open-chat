@@ -1,6 +1,6 @@
 use crate::{
-    ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role,
-    TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    CanisterId, ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange,
+    OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -57,6 +57,8 @@ pub struct GroupChatSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    #[serde(default)]
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
@@ -112,6 +114,8 @@ pub struct GroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
@@ -137,6 +141,8 @@ pub struct PublicGroupSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    #[serde(default)]
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
@@ -153,6 +159,8 @@ pub struct GroupChatSummaryInternal {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    #[serde(default)]
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
@@ -183,12 +191,6 @@ impl GroupChatSummaryInternal {
             );
         }
 
-        let avatar_id = match updates.avatar_id {
-            OptionUpdate::SetToSome(avatar_id) => Some(avatar_id),
-            OptionUpdate::SetToNone => None,
-            OptionUpdate::NoChange => self.avatar_id,
-        };
-
         // Mentions are ordered in ascending order of MessageIndex
         let mentions_to_skip = (self.mentions.len() + updates.mentions.len()).saturating_sub(MAX_RETURNED_MENTIONS);
         let mentions: Vec<_> = self
@@ -211,7 +213,8 @@ impl GroupChatSummaryInternal {
             last_updated: updates.last_updated,
             name: updates.name.unwrap_or(self.name),
             description: updates.description.unwrap_or(self.description),
-            avatar_id,
+            subtype: updates.subtype.apply_to(self.subtype),
+            avatar_id: updates.avatar_id.apply_to(self.avatar_id),
             is_public: updates.is_public.unwrap_or(self.is_public),
             history_visible_to_new_joiners: self.history_visible_to_new_joiners,
             min_visible_event_index: self.min_visible_event_index,
@@ -241,6 +244,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             last_updated: s.last_updated,
             name: s.name,
             description: s.description,
+            subtype: s.subtype,
             avatar_id: s.avatar_id,
             is_public: s.is_public,
             history_visible_to_new_joiners: s.history_visible_to_new_joiners,
@@ -271,6 +275,8 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
@@ -295,6 +301,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             last_updated: s.last_updated,
             name: s.name,
             description: s.description,
+            subtype: s.subtype,
             avatar_id: s.avatar_id,
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
@@ -384,4 +391,15 @@ impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
             read_up_to: None,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum GroupSubtype {
+    GovernanceProposals(GovernanceProposalsSubtype),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GovernanceProposalsSubtype {
+    pub is_nns: bool,
+    pub governance_canister_id: CanisterId,
 }
