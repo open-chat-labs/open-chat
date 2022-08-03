@@ -21,13 +21,6 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
-    pub fn populate_chat_and_thread_ids(&mut self) {
-        for (thread_root_message_index, chat_events) in self.threads.iter_mut() {
-            chat_events.chat_id = self.chat_id;
-            chat_events.thread_root_message_index = Some(*thread_root_message_index);
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
