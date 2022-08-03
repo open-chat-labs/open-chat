@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
 
     import "../i18n/i18n";
+    import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "svelte-spa-router";
@@ -85,7 +86,9 @@
             switch (user.kind) {
                 case "unknown_user":
                     // TODO remove this once the principal migration can be done via the UI
-                    const principalMigrationUserId = localStorage.getItem("openchat_principal_migration_user_id");
+                    const principalMigrationUserId = localStorage.getItem(
+                        "openchat_principal_migration_user_id"
+                    );
                     if (principalMigrationUserId !== null) {
                         console.log("Migrating user principal", principalMigrationUserId);
                         api.migrateUserPrincipal(principalMigrationUserId);
@@ -107,7 +110,9 @@
 
     function onCreatedUser(id: Identity, user: CreatedUser): void {
         // TODO remove this once the principal migration can be done via the UI
-        const principalMigrationNewPrincipal = localStorage.getItem("openchat_principal_migration_new_principal");
+        const principalMigrationNewPrincipal = localStorage.getItem(
+            "openchat_principal_migration_new_principal"
+        );
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
             api.createUserClient(user.userId);
