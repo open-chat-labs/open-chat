@@ -1,10 +1,10 @@
 use self::governance_response_types::{ListProposalsResponse, ProposalData};
-use super::common::{RawProposal, WrappedNeuronId, WrappedProposalId};
+use super::common::{RawProposal, WrappedProposalId};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, Tally};
+use types::{CanisterId, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, SnsNeuronId, Tally};
 
 pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListProposals) -> CallResult<Vec<ProposalData>> {
     let method_name = "list_proposals";
@@ -160,4 +160,9 @@ pub mod governance_response_types {
         pub summary: String,
         pub url: String,
     }
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct WrappedNeuronId {
+    pub id: SnsNeuronId,
 }

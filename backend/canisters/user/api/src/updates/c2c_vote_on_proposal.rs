@@ -4,6 +4,7 @@ use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub is_nns: bool,
     pub governance_canister_id: CanisterId,
     pub proposal_id: u64,
     pub adopt: bool,
