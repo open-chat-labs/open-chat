@@ -5,6 +5,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
@@ -200,11 +201,14 @@ impl GroupChatSummaryInternal {
             .skip(mentions_to_skip)
             .collect();
 
+        let mut threads_set = HashSet::new();
         // Threads are ordered in descending chronological order
         let latest_threads = updates
             .latest_threads
             .into_iter()
             .chain(self.latest_threads)
+            // We could use Itertools `unique_by` but I didn't want to add that dependency
+            .filter(|t| threads_set.insert(t.root_message_index))
             .take(MAX_THREADS_IN_SUMMARY)
             .collect();
 
