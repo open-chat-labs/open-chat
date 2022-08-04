@@ -36,7 +36,6 @@ import type {
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
     ApiMigrateUserPrincipalResponse,
-    ApiGovernanceProposalsSubtype,
     ApiGroupSubtype,
     ApiGroupSubtypeUpdate,
 } from "./candid/idl";
@@ -70,7 +69,6 @@ import type {
     ChatMetrics,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
-    GovernanceProposalsSubtype,
     GroupSubtype,
     GroupSubtypeUpdate,
 } from "../../domain/chat/chat";

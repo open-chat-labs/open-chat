@@ -18,11 +18,7 @@
         Mention,
         ChatSummary,
     } from "../../domain/chat/chat";
-    import {
-        groupEvents,
-        isFilteredProposal,
-        messageIsReadByThem,
-    } from "../../domain/chat/chat.utils";
+    import { groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -37,10 +33,10 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
-    import { proposalFilters } from "../../stores/proposalFilters";
-    import { expandedMessages } from "../../stores/expandedMessages";
     import { isProposalGroup } from "../../stores/chat";
+    import { filteredProposals, FilteredProposals } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
+    import { groupWhile } from "../../utils/list";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -372,7 +368,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events, $proposalFilters, $expandedMessages).reverse();
+    $: groupedEvents = groupEvents($events, groupInner($filteredProposals)).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -551,27 +547,49 @@
 
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
-        proposalFilters: Set<number>,
-        expandedMessages: Set<bigint>
+        filteredProposals: FilteredProposals
     ): boolean {
-        return (
-            ew.event.kind === "message" &&
-            ew.event.content.kind === "proposal_content" &&
-            !expandedMessages.has(ew.event.messageId) &&
-            isFilteredProposal(ew.event.content, proposalFilters)
-        );
+        return ew.event.kind === "message" && isCollpasedProposal(ew.event, filteredProposals);
     }
 
-    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>) {
-        if (
-            ew.event.kind !== "message" ||
-            ew.event.content.kind !== "proposal_content" ||
-            !isFilteredProposal(ew.event.content, $proposalFilters)
-        ) {
-            return;
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
+            filteredProposals.toggleMessageExpansion(ew.event.messageId, expand);
         }
+    }
 
-        expandedMessages.toggle(ew.event.messageId);
+    function groupInner(filteredProposals: FilteredProposals) {
+        return (events: EventWrapper<ChatEventType>[]) => {
+            return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
+        };
+    }
+
+    // Each expanded proposal should be in a group by itself
+    // All collapsed proposals should be grouped together
+    // Otherwise group by sender
+    function inSameGroup(
+        a: EventWrapper<ChatEventType>,
+        b: EventWrapper<ChatEventType>,
+        filteredProposals: FilteredProposals
+    ): boolean {
+        if (a.event.kind === "message" && b.event.kind === "message") {
+            const aKind = a.event.content.kind;
+            const bKind = b.event.content.kind;
+            if (aKind === "proposal_content" || bKind === "proposal_content") {
+                return (
+                    isCollpasedProposal(a.event, filteredProposals) &&
+                    isCollpasedProposal(b.event, filteredProposals)
+                );
+            } else {
+                return sameUser(a, b);
+            }
+        }
+        return false;
+    }
+
+    function isCollpasedProposal(message: Message, filteredProposals: FilteredProposals): boolean {
+        if (message.content.kind !== "proposal_content") return false;
+        return filteredProposals.isCollapsed(message.messageId, message.content.proposal);
     }
 </script>
 
@@ -609,7 +627,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
-                        collapsed={isCollapsed(evt, $proposalFilters, $expandedMessages)}
+                        collapsed={isCollapsed(evt, $filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
@@ -631,8 +649,8 @@
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
-                        on:expandMessage={() => toggleMessageExpansion(evt)}
-                        on:collapseMessage={() => toggleMessageExpansion(evt)}
+                        on:expandMessage={() => toggleMessageExpansion(evt, true)}
+                        on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
                         event={evt} />
