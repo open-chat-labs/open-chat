@@ -85,6 +85,6 @@ fn default_description(name: &str) -> String {
     )
     .unwrap();
     writeln!(&mut description).unwrap();
-    writeln!(&mut description, "You can find your UserId on the 'About OpenChat' page.").unwrap();
+    writeln!(&mut description, "Your OpenChat user id is {{userId}}.").unwrap();
     description
 }
