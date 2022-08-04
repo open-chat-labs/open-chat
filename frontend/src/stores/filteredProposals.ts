@@ -14,10 +14,10 @@ export class FilteredProposals {
     }
 
     static fromStorage(): FilteredProposals {
-        const pvc = new FilteredProposals();
+        const filteredProposals = new FilteredProposals();
         const json = localStorage.getItem(storageKey);
-        pvc._filters = new Set(json !== null ? <number[]>JSON.parse(json) : []);
-        return pvc;
+        filteredProposals._filters = new Set(json !== null ? <number[]>JSON.parse(json) : []);
+        return filteredProposals;
     }
 
     get filters(): Set<number> {

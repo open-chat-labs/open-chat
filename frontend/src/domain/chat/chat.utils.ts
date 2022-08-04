@@ -746,7 +746,7 @@ function mergeThings<A, U>(
     );
 }
 
-function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
+export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
@@ -756,55 +756,17 @@ function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boole
     return false;
 }
 
-// Each expanded proposal should be in a group by itself
-// All collapsed proposals should be grouped together
-// Otherwise group by sender
-function inSameGroup(
-    a: EventWrapper<ChatEvent>,
-    b: EventWrapper<ChatEvent>,
-    filteredProposals?: FilteredProposals
-): boolean {
-    if (a.event.kind === "message" && b.event.kind === "message") {
-        const aKind = a.event.content.kind;
-        const bKind = b.event.content.kind;
-        if (aKind === "proposal_content" || bKind === "proposal_content") {
-            return (
-                isCollpasedProposal(a.event, filteredProposals) &&
-                isCollpasedProposal(b.event, filteredProposals)
-            );
-        } else {
-            return sameUser(a, b);
-        }
-    }
-    return false;
-}
-
-export function isCollpasedProposal(
-    message: Message,
-    filteredProposals?: FilteredProposals
-): boolean {
-    if (message.content.kind !== "proposal_content") return false;
-    return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
-}
-
-function groupInner(
-    events: EventWrapper<ChatEvent>[],
-    filteredProposals?: FilteredProposals
-): EventWrapper<ChatEvent>[][] {
-    return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
-}
-
 export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
     return groupWhile(sameUser, events);
 }
 
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
-    filteredProposals?: FilteredProposals
+    groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
-        .map((events) => groupInner(events, filteredProposals));
+        .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
