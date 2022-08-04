@@ -12,7 +12,7 @@ fn thread_previews(args: Args) -> Response {
 
 fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(partipant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         Success(SuccessResult {
             threads: args
                 .threads
@@ -20,8 +20,8 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .filter_map(|root_message_index| {
                     build_thread_preview(
                         runtime_state,
-                        partipant.user_id,
-                        partipant.min_visible_event_index(),
+                        participant.user_id,
+                        participant.min_visible_event_index(),
                         root_message_index,
                     )
                 })
