@@ -145,9 +145,8 @@ export interface CreateGroupArgs {
   'history_visible_to_new_joiners' : boolean,
   'avatar' : [] | [Avatar],
 }
-export type CreateGroupResponse = {
-    'DescriptionTooLong' : FieldTooLongResult
-  } |
+export type CreateGroupResponse = { 'NameReserved' : null } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
@@ -226,6 +225,7 @@ export interface DirectMessageNotification {
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EditMessageArgs {
   'content' : MessageContent,
@@ -308,6 +308,10 @@ export interface GiphyImageVariant {
   'mime_type' : string,
   'width' : number,
 }
+export interface GovernanceProposalsSubtype {
+  'is_nns' : boolean,
+  'governance_canister_id' : CanisterId,
+}
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -317,6 +321,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -343,6 +348,7 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -385,6 +391,7 @@ export interface GroupMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
 }
 export interface GroupNameChanged {
@@ -408,6 +415,12 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export type GroupSubtype = {
+    'GovernanceProposals' : GovernanceProposalsSubtype
+  };
+export type GroupSubtypeUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : GroupSubtype };
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
@@ -430,6 +443,8 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
+export type InitUserPrincipalMigrationResponse = { 'Success' : null };
 export type InitialStateArgs = {};
 export type InitialStateResponse = {
     'Success' : {
@@ -539,11 +554,17 @@ export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
       'latest_event_index' : EventIndex,
     }
   };
+export type MigrateUserPrincipalArgs = {};
+export type MigrateUserPrincipalResponse = { 'PrincipalAlreadyInUse' : null } |
+  { 'MigrationAlreadyInProgress' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'MigrationNotInitialized' : null };
 export type Milliseconds = bigint;
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
-export type NeuronId = bigint;
+export type NnsNeuronId = bigint;
 export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -556,7 +577,7 @@ export interface NnsProposal {
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
-  'proposer' : NeuronId,
+  'proposer' : NnsNeuronId,
 }
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -670,6 +691,7 @@ export interface ProposalUpdated {
 export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
+  'subtype' : [] | [GroupSubtype],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
@@ -780,6 +802,7 @@ export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
 export interface SetBioArgs { 'text' : string }
 export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
   { 'Success' : null };
+export type SnsNeuronId = Uint8Array;
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -792,7 +815,7 @@ export interface SnsProposal {
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
-  'proposer' : NeuronId,
+  'proposer' : SnsNeuronId,
 }
 export interface Subscription {
   'value' : SubscriptionInfo,
@@ -961,6 +984,10 @@ export interface _SERVICE {
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'init_user_principal_migration' : ActorMethod<
+    [InitUserPrincipalMigrationArgs],
+    InitUserPrincipalMigrationResponse,
+  >,
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
@@ -968,6 +995,10 @@ export interface _SERVICE {
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse,
+  >,
+  'migrate_user_principal' : ActorMethod<
+    [MigrateUserPrincipalArgs],
+    MigrateUserPrincipalResponse,
   >,
   'mute_notifications' : ActorMethod<
     [MuteNotificationsArgs],

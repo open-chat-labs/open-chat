@@ -9,7 +9,7 @@ use std::cmp::max;
 use types::{CryptoAmount, Cryptocurrency, StorageUpgraded, UserEvent, ICP};
 use user_index_canister::upgrade_storage::{Response::*, *};
 
-const FEE_PER_GB: ICP = ICP::from_e8s(ICP::SUBDIVIDABLE_BY); // 0.1 ICP
+const FEE_PER_GB: ICP = ICP::from_e8s(2 * ICP::SUBDIVIDABLE_BY); // 2 ICP
 const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
 
 #[update]

@@ -35,6 +35,8 @@ import type {
     ThreadSyncDetails,
     ThreadRead,
     ThreadSyncDetailsUpdates,
+    GroupSubtype,
+    GroupSubtypeUpdate,
 } from "./chat";
 import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -567,6 +569,7 @@ function mergeUpdatedGroupChat(
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
+        subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
     };
 }
 
@@ -595,6 +598,16 @@ function mergeThreadSyncDetails(
             toRecord(existing, (t) => t.threadRootMessageIndex)
         )
     );
+}
+
+function mergeSubtype(updated: GroupSubtypeUpdate, existing: GroupSubtype): GroupSubtype {
+    if (updated.kind === "no_change") {
+        return existing;
+    } else if (updated.kind === "set_to_none") {
+        return undefined;
+    } else {
+        return updated.subtype;
+    }
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
@@ -732,7 +745,7 @@ function mergeThings<A, U>(
     );
 }
 
-function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
+export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
@@ -742,14 +755,17 @@ function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boole
     return false;
 }
 
-function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][] {
+export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
     return groupWhile(sameUser, events);
 }
 
-export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
+export function groupEvents(
+    events: EventWrapper<ChatEvent>[],
+    groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
+): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
-        .map(groupBySender);
+        .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
@@ -1157,7 +1173,7 @@ export function groupChatFromCandidate(
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: false,
+        subtype: undefined,
     };
 }
 
@@ -1547,6 +1563,7 @@ export function canForward(content: MessageContent): boolean {
         content.kind !== "crypto_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
+        content.kind !== "proposal_content" &&
         content.kind !== "placeholder_content"
     );
 }

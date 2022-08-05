@@ -90,8 +90,24 @@ pub use version::*;
 pub type CanisterId = Principal;
 pub type ICP = Tokens;
 pub type Milliseconds = u64;
-pub type NeuronId = u64;
+pub type NnsNeuronId = u64;
 pub type ProposalId = u64;
 pub type Salt = [u8; 32];
+pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
+
+pub trait PushIfNotContains<T> {
+    fn push_if_not_contains(&mut self, item: T) -> bool;
+}
+
+impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
+    fn push_if_not_contains(&mut self, item: T) -> bool {
+        if !self.contains(&item) {
+            self.push(item);
+            true
+        } else {
+            false
+        }
+    }
+}

@@ -3,7 +3,6 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -159,7 +158,7 @@ export interface ProposalCommon {
     lastUpdated: number;
     rewardStatus: ProposalRewardStatus;
     summary: string;
-    proposer: NeuronId;
+    proposer: string;
 }
 
 export interface Tally {
@@ -203,6 +202,21 @@ export enum NnsProposalTopic {
     NodeProviderRewards,
     SnsDecentralizationSale,
 }
+
+export const nnsProposalTopicLabels = [
+    "Unspecified",
+    "Neuron Management",
+    "Exchange Rate",
+    "Network Economics",
+    "Governance",
+    "Node Admin",
+    "Participant Management",
+    "Subnet Management",
+    "Network Canister Management",
+    "KYC",
+    "Node Provider Rewards",
+    "SNS Decentralization Sale",
+];
 
 export enum SnsProposalAction {
     Unspecified = 0,
@@ -695,7 +709,13 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
+    subtype: GroupSubtypeUpdate;
 };
+
+export type GroupSubtypeUpdate =
+    | { kind: "no_change" }
+    | { kind: "set_to_none" }
+    | { kind: "set_to_some"; subtype: GroupSubtype };
 
 export type ThreadSyncDetailsUpdates = {
     threadRootMessageIndex: number;
@@ -802,8 +822,16 @@ export type GroupChatSummary = DataContent &
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
-        isProposalGroup: boolean;
+        subtype: GroupSubtype;
     };
+
+export type GroupSubtype = GovernanceProposalsSubtype | undefined;
+
+export type GovernanceProposalsSubtype = {
+    kind: "governance_proposals";
+    isNns: boolean;
+    governanceCanisterId: string;
+};
 
 export type Mention = {
     messageId: bigint;
@@ -831,9 +859,9 @@ export type CandidateGroupChat = {
 export type CreateGroupResponse =
     | CreateGroupSuccess
     | CreateGroupInternalError
-    | CreateGroupInvalidName
-    | CreateGroupNameTooLong
     | CreateGroupNameTooShort
+    | CreateGroupNameTooLong
+    | CreateGroupNameReserved
     | CreateGroupDescriptionTooLong
     | GroupNameTaken
     | AvatarTooBig
@@ -857,6 +885,10 @@ export type CreateGroupNameTooLong = {
 
 export type CreateGroupNameTooShort = {
     kind: "name_too_short";
+};
+
+export type CreateGroupNameReserved = {
+    kind: "name_reserved";
 };
 
 export type CreateGroupDescriptionTooLong = {
@@ -1091,8 +1123,9 @@ export type MarkReadResponse = "success";
 export type UpdateGroupResponse =
     | "success"
     | "not_authorised"
-    | "name_too_long"
     | "name_too_short"
+    | "name_too_long"
+    | "name_reserved"
     | "desc_too_long"
     | "unchanged"
     | "name_taken"

@@ -16,7 +16,7 @@
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;
-    const icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
+    const icpPrice: number = 0.2; // storage price in ICP per 1/10th of a GB
 
     export let api: ServiceContainer;
     export let user: CreatedUser;

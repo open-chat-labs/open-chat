@@ -574,9 +574,13 @@
         "youVotedAdopt": "あなたは養子縁組に投票しました！",
         "youVotedReject": "あなたは拒否に投票しました！",
         "additionalContent": "追加コンテンツ",
-        "viewOnDashboard": "ダッシュボードに表示"
+        "viewOnDashboard": "ダッシュボードに表示",
+        "filter": "提案をフィルタリングする",
+        "collapse": "メッセージを折りたたむ"
     },
     "yes": "はい",
     "no": "いいえ",
-    "quoteReply": "引用返信"
+    "quoteReply": "引用返信",
+    "groupNameTooShort": "グループ名が短すぎます",
+    "groupNameReserved": "グループ名は予約済み"
 }

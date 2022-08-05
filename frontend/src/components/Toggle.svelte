@@ -8,9 +8,10 @@
     export let label: string | undefined = undefined;
     export let id: string;
     export let small: boolean = false;
+    export let bigGap: boolean = false;
 </script>
 
-<div class="toggle-wrapper">
+<div class="toggle-wrapper" class:big-gap={bigGap}>
     <div class="toggle">
         <Checkbox {small} {disabled} {waiting} {id} toggle={true} on:change {label} bind:checked />
     </div>
@@ -32,6 +33,9 @@
         }
         .label {
             flex: 1;
+        }
+        &.big-gap {
+            gap: $sp4;
         }
     }
 </style>

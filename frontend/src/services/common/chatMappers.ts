@@ -1,7 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
 import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
-import {
+import type {
     FileContent,
     ImageContent,
     AudioContent,
@@ -28,7 +28,6 @@ import {
     ThreadSummary,
     ProposalContent,
     Proposal,
-    NnsProposalTopic,
 } from "../../domain/chat/chat";
 import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
@@ -168,7 +167,7 @@ function proposal(candid: ApiProposal): Proposal {
             kind: "nns",
             id: p.id,
             topic: p.topic,
-            proposer: p.proposer,
+            proposer: p.proposer.toString(),
             title: p.title,
             summary: p.summary,
             url: p.url,
@@ -189,7 +188,7 @@ function proposal(candid: ApiProposal): Proposal {
             kind: "sns",
             id: p.id,
             action: Number(p.action),
-            proposer: p.proposer,
+            proposer: Buffer.from(p.proposer).toString("hex"),
             title: p.title,
             summary: p.summary,
             url: p.url,

@@ -129,6 +129,7 @@ mod tests {
                 chat_id,
                 name: name.to_string(),
                 description: description.to_string(),
+                subtype: None,
                 avatar_id: None,
                 now: env.now,
                 wasm_version: Version::new(1, 0, 0),

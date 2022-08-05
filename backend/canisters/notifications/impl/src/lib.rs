@@ -36,6 +36,10 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    pub fn is_caller_user_index(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
+    }
+
     pub fn is_caller_push_service(&self) -> bool {
         self.data.push_service_principals.contains(&self.env.caller())
     }

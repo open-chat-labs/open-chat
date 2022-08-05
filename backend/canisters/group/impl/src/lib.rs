@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
-    Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -80,6 +80,7 @@ impl RuntimeState {
             last_updated: latest_event.timestamp,
             name: data.name.clone(),
             description: data.description.clone(),
+            subtype: data.subtype.value.clone(),
             avatar_id: Avatar::id(&data.avatar),
             is_public: data.is_public,
             history_visible_to_new_joiners: data.history_visible_to_new_joiners,
@@ -94,7 +95,7 @@ impl RuntimeState {
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.get_most_recent_mentions(data.events.main()),
+            mentions: participant.most_recent_mentions(None, &data.events),
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
@@ -143,6 +144,8 @@ struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,
+    #[serde(default)]
+    pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
@@ -169,6 +172,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
+        subtype: Option<GroupSubtype>,
         avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
@@ -189,6 +193,7 @@ impl Data {
             is_public,
             name,
             description,
+            subtype: Timestamped::new(subtype, now),
             avatar,
             history_visible_to_new_joiners,
             participants,

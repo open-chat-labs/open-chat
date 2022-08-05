@@ -34,6 +34,7 @@
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import { containsSocialVideoLink, fillMessage, isSocialVideoLink } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -55,7 +56,6 @@
     import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
-    import { configKeys } from "../../utils/config";
     import { toShortTimeString } from "../../utils/date";
 
     const dispatch = createEventDispatcher();
@@ -80,14 +80,15 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canQuoteReply: boolean;
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
     export let inThread: boolean;
-    export let canReplyInThread: boolean;
+    export let canStartThread: boolean;
     export let senderTyping: boolean;
     export let dateFormatter: (date: Date) => string = toShortTimeString;
+    export let collapsed: boolean = false;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -102,8 +103,6 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
-    let threadsEnabled =
-        canReplyInThread && localStorage.getItem(configKeys.threadsEnabled) === "true";
 
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
@@ -119,8 +118,7 @@
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
     $: isProposal = msg.content.kind === "proposal_content";
-    $: isFirst = first || isProposal;
-    $: isLast = last || isProposal;
+    $: inert = deleted || collapsed;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -332,6 +330,10 @@
     function copyMessageUrl() {
         dispatch("copyMessageUrl", msg);
     }
+
+    function collapseMessage() {
+        dispatch("collapseMessage");
+    }
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
@@ -375,7 +377,7 @@
         on:close={closeUserProfile} />
 {/if}
 
-<div class="message-wrapper" class:last={isLast}>
+<div class="message-wrapper" class:last>
     <div
         bind:this={msgElement}
         class="message"
@@ -383,7 +385,7 @@
         data-index={msg.messageIndex}
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
-        {#if me && !deleted && canReact}
+        {#if me && !inert && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -395,7 +397,7 @@
 
         {#if showAvatar}
             <div class="avatar-col">
-                {#if isFirst}
+                {#if first}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
                             url={userAvatarUrl(sender)}
@@ -415,17 +417,18 @@
             class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
-            class:fill={fill && !deleted}
+            class:fill={fill && !inert}
             class:me
-            class:deleted
-            class:first={isFirst}
-            class:last={isLast}
+            class:inert
+            class:collapsed
+            class:first
+            class:last
             class:readByMe
             class:crypto
-            class:full-width={isProposal}
+            class:full-width={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if isFirst && !me && groupChat && msg.content.kind !== "proposal_content"}
+            {#if first && !me && groupChat && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -450,7 +453,7 @@
                     <div class="text">{"Forwarded"}</div>
                 </div>
             {/if}
-            {#if msg.repliesTo !== undefined && !deleted}
+            {#if msg.repliesTo !== undefined && !inert}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
                         {preview}
@@ -470,16 +473,18 @@
                 {groupChat}
                 {senderId}
                 {chatId}
-                first={isFirst}
+                {collapsed}
+                first
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}
                 edited={msg.edited}
                 height={mediaCalculatedHeight}
-                on:registerVote={registerVote} />
+                on:registerVote={registerVote}
+                on:expandMessage />
 
-            {#if !deleted}
+            {#if !inert}
                 <TimeAndTicks
                     {pinned}
                     {fill}
@@ -504,7 +509,7 @@
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if !deleted && !preview}
+            {#if !inert && !preview}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
@@ -514,6 +519,15 @@
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if isProposal && !collapsed}
+                                    <MenuItem on:click={collapseMessage}>
+                                        <EyeOff
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("proposal.collapse")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if publicGroup && confirmed}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
@@ -552,7 +566,7 @@
                                     {/if}
                                 {/if}
                                 {#if confirmed && supportsReply}
-                                    {#if canSend}
+                                    {#if canQuoteReply}
                                         <MenuItem on:click={reply}>
                                             <Reply
                                                 size={$iconSize}
@@ -561,7 +575,7 @@
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
                                     {/if}
-                                    {#if !inThread && threadsEnabled}
+                                    {#if !inThread && canStartThread}
                                         <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
@@ -577,7 +591,7 @@
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && groupChat && !me && !inThread}
+                                {#if confirmed && groupChat && !me && !inThread && !isProposal}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}
@@ -639,7 +653,7 @@
             {/if}
         </div>
 
-        {#if !me && !deleted && canReact}
+        {#if !me && !inert && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -661,7 +675,7 @@
             url={msgUrl} />
     {/if}
 
-    {#if msg.reactions.length > 0 && !deleted}
+    {#if msg.reactions.length > 0 && !inert}
         <div class="message-reactions" class:me class:indent={showAvatar}>
             {#each msg.reactions as { reaction, userIds } (reaction)}
                 <MessageReaction
@@ -953,8 +967,12 @@
             box-shadow: 0 0 0 4px var(--toast-success-bg);
         }
 
-        &.deleted {
+        &.inert {
             opacity: 0.8;
+        }
+
+        &.collapsed {
+            cursor: pointer;
         }
 
         &.bot-font {

@@ -22,6 +22,5 @@ export const configKeys = {
     groupAdvancedSection: "openchat_group_advanced_section",
     theme: "openchat_theme",
     scrollStrategy: "openchat_scrollstrategy",
-    threadsEnabled: "openchat_threads_enabled",
     expandWindow: "openchat_expand_window",
 };

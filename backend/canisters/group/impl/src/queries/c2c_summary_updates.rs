@@ -2,10 +2,11 @@ use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
 use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
+use std::cmp::max;
 use std::collections::HashSet;
 use types::{
-    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, OptionUpdate,
-    TimestampMillis, UserId, MAX_RETURNED_MENTIONS, MAX_THREADS_IN_SUMMARY,
+    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, GroupSubtype, Mention, Message, OptionUpdate,
+    TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query_msgpack]
@@ -27,6 +28,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             last_updated,
             name: updates_from_events.name,
             description: updates_from_events.description,
+            subtype: updates_from_events.subtype,
             avatar_id: updates_from_events.avatar_id,
             latest_message: updates_from_events.latest_message,
             latest_event_index: updates_from_events.latest_event_index,
@@ -66,6 +68,7 @@ struct UpdatesFromEvents {
     latest_update: Option<TimestampMillis>,
     name: Option<String>,
     description: Option<String>,
+    subtype: OptionUpdate<GroupSubtype>,
     avatar_id: OptionUpdate<u128>,
     latest_message: Option<EventWrapper<Message>>,
     latest_event_index: Option<EventIndex>,
@@ -85,38 +88,40 @@ fn process_events(
 ) -> UpdatesFromEvents {
     let chat_events = &runtime_state.data.events.main();
 
-    let mut latest_update = None;
-    let new_proposal_votes: HashSet<_> = participant
-        .proposal_votes
-        .iter()
-        .rev()
-        .take_while(|(&t, _)| t > since)
-        .flat_map(|(&t, m)| {
-            if latest_update.is_none() {
-                latest_update = Some(t);
-            }
-            m.iter().copied()
-        })
-        .filter_map(|m| chat_events.get_event_index_by_message_index(m))
-        .collect();
-
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
-        latest_update,
-        affected_events: new_proposal_votes,
+        mentions: participant.most_recent_mentions(Some(since), &runtime_state.data.events),
         ..Default::default()
     };
 
+    if runtime_state.data.subtype.timestamp > since {
+        updates.latest_update = max(updates.latest_update, Some(runtime_state.data.subtype.timestamp));
+        updates.subtype = OptionUpdate::from_update(runtime_state.data.subtype.value.clone());
+    }
+
+    let new_proposal_votes = participant
+        .proposal_votes
+        .iter()
+        .rev()
+        .take_while(|(&t, _)| t > since)
+        .enumerate()
+        .flat_map(|(i, (&t, m))| {
+            if i == 0 {
+                updates.latest_update = max(updates.latest_update, Some(t));
+            }
+            m.iter().copied()
+        })
+        .filter_map(|m| chat_events.get_event_index_by_message_index(m));
+
+    updates.affected_events.extend(new_proposal_votes);
+
     // Iterate through events starting from most recent
-    let mut lowest_message_index = None;
     for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
-            if updates.latest_update.map_or(true, |t| t < event_wrapper.timestamp) {
-                updates.latest_update = Some(event_wrapper.timestamp);
-            }
+            updates.latest_update = max(updates.latest_update, Some(event_wrapper.timestamp));
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
@@ -170,9 +175,6 @@ fn process_events(
             | ChatEventInternal::UsersUnblocked(_) => {
                 updates.participants_changed = true;
             }
-            ChatEventInternal::Message(message) => {
-                lowest_message_index = Some(message.message_index);
-            }
             ChatEventInternal::OwnershipTransferred(ownership) => {
                 let caller = runtime_state.env.caller().into();
                 if ownership.new_owner == caller || ownership.old_owner == caller {
@@ -192,19 +194,6 @@ fn process_events(
             }
             _ => {}
         }
-    }
-
-    if let Some(lowest_message_index) = lowest_message_index {
-        updates.mentions = participant
-            .mentions
-            .iter()
-            .rev()
-            .take_while(|m| m.message_index >= lowest_message_index)
-            .filter_map(|message_index| runtime_state.data.events.main().hydrate_mention(message_index))
-            .take(MAX_RETURNED_MENTIONS)
-            .collect();
-
-        updates.mentions.reverse();
     }
 
     updates

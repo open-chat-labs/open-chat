@@ -66,6 +66,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'Throttled' : IDL.Null,
@@ -168,7 +169,7 @@ export const idlFactory = ({ IDL }) => {
     'Unspecified' : IDL.Null,
     'Settled' : IDL.Null,
   });
-  const NeuronId = IDL.Nat64;
+  const NnsNeuronId = IDL.Nat64;
   const NnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -181,8 +182,9 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : NnsNeuronId,
   });
+  const SnsNeuronId = IDL.Vec(IDL.Nat8);
   const SnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -195,7 +197,7 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : SnsNeuronId,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -507,6 +509,12 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const InitUserPrincipalMigrationArgs = IDL.Record({
+    'new_principal' : IDL.Principal,
+  });
+  const InitUserPrincipalMigrationResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const InitialStateArgs = IDL.Record({});
   const Cycles = IDL.Nat;
   const Version = IDL.Record({
@@ -531,6 +539,13 @@ export const idlFactory = ({ IDL }) => {
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+  });
+  const GovernanceProposalsSubtype = IDL.Record({
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupSubtype = IDL.Variant({
+    'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
@@ -559,6 +574,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
+    'subtype' : IDL.Opt(GroupSubtype),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -657,6 +673,14 @@ export const idlFactory = ({ IDL }) => {
       'latest_event_index' : EventIndex,
     }),
   });
+  const MigrateUserPrincipalArgs = IDL.Record({});
+  const MigrateUserPrincipalResponse = IDL.Variant({
+    'PrincipalAlreadyInUse' : IDL.Null,
+    'MigrationAlreadyInProgress' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'MigrationNotInitialized' : IDL.Null,
+  });
   const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const MuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -680,6 +704,7 @@ export const idlFactory = ({ IDL }) => {
   const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'subtype' : IDL.Opt(GroupSubtype),
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
@@ -847,6 +872,11 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
+  const GroupSubtypeUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : GroupSubtype,
+  });
   const PinnedMessageUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -861,6 +891,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
+    'subtype' : GroupSubtypeUpdate,
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
@@ -948,6 +979,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'init_user_principal_migration' : IDL.Func(
+        [InitUserPrincipalMigrationArgs],
+        [InitUserPrincipalMigrationResponse],
+        [],
+      ),
     'initial_state' : IDL.Func(
         [InitialStateArgs],
         [InitialStateResponse],
@@ -960,6 +996,11 @@ export const idlFactory = ({ IDL }) => {
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
         ['query'],
+      ),
+    'migrate_user_principal' : IDL.Func(
+        [MigrateUserPrincipalArgs],
+        [MigrateUserPrincipalResponse],
+        [],
       ),
     'mute_notifications' : IDL.Func(
         [MuteNotificationsArgs],

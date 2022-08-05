@@ -154,7 +154,7 @@ export const idlFactory = ({ IDL }) => {
     'Unspecified' : IDL.Null,
     'Settled' : IDL.Null,
   });
-  const NeuronId = IDL.Nat64;
+  const NnsNeuronId = IDL.Nat64;
   const NnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -167,8 +167,9 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : NnsNeuronId,
   });
+  const SnsNeuronId = IDL.Vec(IDL.Nat8);
   const SnsProposal = IDL.Record({
     'id' : ProposalId,
     'url' : IDL.Text,
@@ -181,7 +182,7 @@ export const idlFactory = ({ IDL }) => {
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
-    'proposer' : NeuronId,
+    'proposer' : SnsNeuronId,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -548,6 +549,13 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
   });
   const PublicSummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
+  const GovernanceProposalsSubtype = IDL.Record({
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupSubtype = IDL.Variant({
+    'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -555,6 +563,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'subtype' : IDL.Opt(GroupSubtype),
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
@@ -767,6 +776,7 @@ export const idlFactory = ({ IDL }) => {
     'min_length' : IDL.Nat32,
   });
   const UpdateGroupResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'CallerNotInGroup' : IDL.Null,

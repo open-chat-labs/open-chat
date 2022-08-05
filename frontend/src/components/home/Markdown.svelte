@@ -3,21 +3,18 @@
 <script lang="ts">
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import MarkdownLink from "./MarkdownLink.svelte";
-    import FakeMarkdownLink from "./FakeMarkdownLink.svelte";
-    import SvelteMarkdown from "svelte-markdown";
+    import { marked } from "marked";
+    import DOMPurify from "dompurify";
+    import { rollbar } from "../../utils/logging";
 
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
-    export let isInline: boolean = true;
 
-    $: parsed = replaceUserIds(text);
+    let sanitized = "unsafe";
     $: options = {
         breaks: !oneLine,
-        mangle: false,
-        silent: true,
     };
 
     function replaceUserIds(text: string): string {
@@ -29,26 +26,31 @@
             return match;
         });
     }
+
+    $: {
+        let parsed = replaceUserIds(text);
+        try {
+            if (inline) {
+                parsed = marked.parseInline(parsed, options);
+            } else {
+                parsed = marked.parse(parsed, options);
+            }
+        } catch (err: any) {
+            rollbar.error("Error parsing markdown: ", err);
+        }
+
+        try {
+            sanitized = DOMPurify.sanitize(parsed, {
+                ALLOWED_ATTR: ["target", "href", "class"],
+            });
+        } catch (err: any) {
+            rollbar.error("Error sanitzing message content: ", err);
+        }
+    }
 </script>
 
-<p class="markdown-wrapper" class:inline class:oneLine>
-    {#if suppressLinks}
-        <SvelteMarkdown
-            renderers={{
-                link: FakeMarkdownLink,
-            }}
-            {isInline}
-            source={parsed}
-            {options} />
-    {:else}
-        <SvelteMarkdown
-            renderers={{
-                link: MarkdownLink,
-            }}
-            {isInline}
-            source={parsed}
-            {options} />
-    {/if}
+<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks>
+    {@html sanitized}
 </p>
 
 <style type="text/scss">
@@ -154,6 +156,13 @@
             select,
             textarea {
                 max-width: 100%;
+            }
+
+            &.suppressLinks {
+                a {
+                    pointer-events: none;
+                    color: inherit;
+                }
             }
         }
     }

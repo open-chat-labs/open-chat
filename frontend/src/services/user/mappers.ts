@@ -35,6 +35,9 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
+    ApiMigrateUserPrincipalResponse,
+    ApiGroupSubtype,
+    ApiGroupSubtypeUpdate,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -66,6 +69,8 @@ import type {
     ChatMetrics,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
+    GroupSubtype,
+    GroupSubtypeUpdate,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -84,13 +89,13 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
 } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
-import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
@@ -452,16 +457,16 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "group_name_taken" };
     }
 
-    if ("InvalidName" in candid) {
-        return { kind: "invalid_name" };
-    }
-
     if ("NameTooLong" in candid) {
         return { kind: "name_too_long" };
     }
 
     if ("NameTooShort" in candid) {
         return { kind: "name_too_short" };
+    }
+
+    if ("NameReserved" in candid) {
+        return { kind: "name_reserved" };
     }
 
     if ("DescriptionTooLong" in candid) {
@@ -654,7 +659,9 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
-            mentions: candid.Group.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
+            mentions: candid.Group.mentions
+                .filter((m) => m.thread_root_message_index.length === 0)
+                .map(mention),
             ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
@@ -664,6 +671,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
             public: optional(candid.Group.is_public, identity),
             latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
+            subtype: updatedSubtype(candid.Group.subtype),
         };
     }
     if ("Direct" in candid) {
@@ -686,6 +694,16 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
+}
+
+function updatedSubtype(candid: ApiGroupSubtypeUpdate): GroupSubtypeUpdate {
+    if ("NoChange" in candid) {
+        return { kind: "no_change" };
+    } else if ("SetToNone" in candid) {
+        return { kind: "set_to_none" };
+    } else {
+        return { kind: "set_to_some", subtype: apiGroupSubtype(candid.SetToSome) };
+    }
 }
 
 function participantRole(candid: ApiRole): MemberRole {
@@ -771,13 +789,23 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         notificationsMuted: candid.notifications_muted,
         participantCount: candid.participant_count,
         myRole: participantRole(candid.role),
-        mentions: candid.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
+        mentions: candid.mentions
+            .filter((m) => m.thread_root_message_index.length === 0)
+            .map(mention),
         ownerId,
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
         latestThreads: candid.latest_threads.map(threadSyncDetails),
-        isProposalGroup: ownerId === PROPOSALS_BOT_USER_ID,
+        subtype: optional(candid.subtype, apiGroupSubtype),
+    };
+}
+
+export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toText(),
     };
 }
 
@@ -887,4 +915,18 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
         return bytesToHexString(candid.Unknown);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
+}
+
+export function migrateUserPrincipal(
+    candid: ApiMigrateUserPrincipalResponse
+): MigrateUserPrincipalResponse {
+    if ("Success" in candid) return "success";
+    if ("MigrationNotInitialized" in candid) return "migration_not_initialized";
+    if ("MigrationAlreadyInProgress" in candid) return "migration_already_in_progress";
+    if ("PrincipalAlreadyInUse" in candid) return "principal_already_in_use";
+    if ("InternalError" in candid) return "internal_error";
+    throw new UnsupportedValueError(
+        "Unexpected ApiMigrateUserPrincipalResponse type received",
+        candid
+    );
 }

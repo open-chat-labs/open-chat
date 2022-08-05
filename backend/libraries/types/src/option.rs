@@ -49,6 +49,14 @@ impl<T> OptionUpdate<T> {
             OptionUpdate::SetToSome(value) => OptionUpdate::SetToSome(f(value)),
         }
     }
+
+    pub fn apply_to(self, opt: Option<T>) -> Option<T> {
+        match self {
+            OptionUpdate::NoChange => opt,
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::SetToSome(value) => Some(value),
+        }
+    }
 }
 
 impl<T> Default for OptionUpdate<T> {

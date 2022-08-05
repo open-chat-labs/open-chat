@@ -572,9 +572,13 @@
         "youVotedAdopt": "הצבעת לאמץ!",
         "youVotedReject": "הצבעת לדחות!",
         "additionalContent": "תוכן נוסף",
-        "viewOnDashboard": "הצגה בלוח המחוונים"
+        "viewOnDashboard": "הצגה בלוח המחוונים",
+        "filter": "סינון הצעות",
+        "collapse": "כווץ הודעה"
     },
     "yes": "כן",
     "no": "לא",
-    "quoteReply": "תשובת ציטוט"
+    "quoteReply": "תשובת ציטוט",
+    "groupNameTooShort": "שם הקבוצה קצר מדי",
+    "groupNameReserved": "שם הקבוצה שמור"
 }

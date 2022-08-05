@@ -368,6 +368,7 @@
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:addParticipants
             on:showGroupDetails
+            on:showProposalFilters
             on:showParticipants
             on:leaveGroup
             on:showPinned

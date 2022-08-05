@@ -1,5 +1,6 @@
+use crate::model::mentions::Mentions;
 use candid::Principal;
-use chat_events::ChatEvents;
+use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -29,6 +30,7 @@ impl Participants {
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
             mentions: Vec::new(),
+            mentions_v2: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
         };
@@ -64,6 +66,7 @@ impl Participants {
                         min_visible_message_index,
                         notifications_muted,
                         mentions: Vec::new(),
+                        mentions_v2: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                     };
@@ -167,8 +170,22 @@ impl Participants {
         }
     }
 
+    pub fn update_user_principal(&mut self, user_id: UserId, new_principal: Principal) -> bool {
+        if let Some(user) = self
+            .user_id_to_principal_map
+            .get(&user_id)
+            .and_then(|p| self.by_principal.remove(p))
+        {
+            self.user_id_to_principal_map.insert(user_id, new_principal);
+            self.by_principal.insert(new_principal, user);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn len(&self) -> u32 {
-        self.user_id_to_principal_map.len() as u32
+        self.by_principal.len() as u32
     }
 
     pub fn change_role(
@@ -308,25 +325,6 @@ impl Participants {
         self.admin_count
     }
 
-    pub fn add_mention(
-        &mut self,
-        user_id: &UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-    ) -> bool {
-        if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.last().map_or(true, |m| m.message_index < message_index) {
-                p.mentions.push(MentionInternal {
-                    thread_root_message_index,
-                    message_index,
-                });
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
             p.threads.insert(root_message_index);
@@ -375,6 +373,8 @@ pub struct ParticipantInternal {
     pub role: Role,
     pub notifications_muted: bool,
     pub mentions: Vec<MentionInternal>,
+    #[serde(default)]
+    pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
@@ -399,11 +399,10 @@ impl ParticipantInternal {
         }
     }
 
-    pub fn get_most_recent_mentions(&self, events: &ChatEvents) -> Vec<Mention> {
-        self.mentions
-            .iter()
-            .rev()
-            .filter_map(|message_index| events.hydrate_mention(message_index))
+    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &AllChatEvents) -> Vec<Mention> {
+        self.mentions_v2
+            .iter_most_recent(since)
+            .filter_map(|m| chat_events.hydrate_mention(m))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }
