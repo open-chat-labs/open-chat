@@ -35,6 +35,8 @@
     export let messageIndex: number;
     export let messageId: bigint;
     export let collapsed: boolean;
+    export let preview: boolean;
+    export let reply: boolean;
 
     const api: ServiceContainer = getContext(apiKey);
 
@@ -60,7 +62,7 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = voteStatus !== undefined || votingEnded;
+    $: votingDisabled = voteStatus !== undefined || votingEnded || preview || reply;
     $: isNns = content.proposal.kind === "nns";
     $: typeLabel = $_(isNns ? "proposal.topic" : "proposal.action");
     $: typeValue =
