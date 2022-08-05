@@ -66,6 +66,7 @@ mod sns {
 
         let neuron_ids = match crate::governance_clients::sns::list_neurons(governance_canister_id, 10, canister_id, now).await
         {
+            Ok(n) if n.len() == 0 => return NoEligibleNeurons,
             Ok(n) => n,
             Err(error) => return InternalError(format!("{:?}", error)),
         };
