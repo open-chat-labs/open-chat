@@ -3,6 +3,8 @@
 # Pass in network name, IC url, identity name, OpenStorage index canisterId, Ledger canisterId, and test mode (true/false)
 # eg './deploy.sh ic https://ic0.app/ openchat rturd-qaaaa-aaaaf-aabaq-cai ryjl3-tyaaa-aaaaa-aaaba-cai false'
 
+set -euxo pipefail
+
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
@@ -32,14 +34,14 @@ PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
-  $IC_URL \
-  $TEST_MODE \
-  $IDENTITY \
-  $USER_INDEX_CANISTER_ID \
-  $GROUP_INDEX_CANISTER_ID \
-  $NOTIFICATIONS_INDEX_CANISTER_ID \
-  $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
-  $CALLBACK_CANISTER_ID \
-  $PROPOSALS_BOT_CANISTER_ID \
-  $OPEN_STORAGE_INDEX_CANISTER_ID \
-  $LEDGER_CANISTER_ID
+  "$IC_URL" \
+  "$TEST_MODE" \
+  "$IDENTITY" \
+  "$USER_INDEX_CANISTER_ID" \
+  "$GROUP_INDEX_CANISTER_ID" \
+  "$NOTIFICATIONS_INDEX_CANISTER_ID" \
+  "$ONLINE_USERS_AGGREGATOR_CANISTER_ID" \
+  "$CALLBACK_CANISTER_ID" \
+  "$PROPOSALS_BOT_CANISTER_ID" \
+  "$OPEN_STORAGE_INDEX_CANISTER_ID" \
+  "$LEDGER_CANISTER_ID"

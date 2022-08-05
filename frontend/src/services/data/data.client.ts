@@ -14,7 +14,7 @@ export class DataClient implements IDataClient {
     static create(identity: Identity): IDataClient {
         const host = process.env.IC_URL;
         const agent = new HttpAgent({ identity, host });
-        if (process.env.NODE_ENV !== "production") {
+        if (true || (process.env.NODE_ENV !== "production")) {
             agent.fetchRootKey();
         }
         const openStorageAgent = new OpenStorageAgent(

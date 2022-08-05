@@ -18,7 +18,7 @@ export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory, canisterId: string): T {
         const host = process.env.IC_URL;
         const agent = new HttpAgent({ identity: this.identity, host });
-        if (process.env.NODE_ENV !== "production") {
+        if (true || (process.env.NODE_ENV !== "production")) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {

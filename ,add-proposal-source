@@ -1,0 +1,9 @@
+
+
+
+DFX_NETWORK=small12
+
+
+# dfx --identity openchat canister --network "$DFX_NETWORK" call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
+dfx --identity openchat canister --network "$DFX_NETWORK" call proposals_bot add_governance_canister '(record { governance_canister_id=principal "sp3hj-caaaa-aaaaa-aaajq-cai"; name="Tetris" })'
+
