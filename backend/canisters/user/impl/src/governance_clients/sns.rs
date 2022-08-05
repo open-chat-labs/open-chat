@@ -23,7 +23,8 @@ pub async fn list_neurons(
         .neurons
         .into_iter()
         .filter(|n| n.dissolve_state.as_ref().map_or(false, |d| !d.is_dissolved(now)))
-        .map(|n| n.id.id)
+        .filter_map(|n| n.id)
+        .map(|n| n.id)
         .collect();
 
     Ok(neuron_ids)
@@ -66,7 +67,7 @@ mod list_neurons {
 
     #[derive(CandidType, Deserialize)]
     pub struct Neuron {
-        pub id: WrappedNeuronId,
+        pub id: Option<WrappedNeuronId>,
         pub dissolve_state: Option<DissolveState>,
     }
 
