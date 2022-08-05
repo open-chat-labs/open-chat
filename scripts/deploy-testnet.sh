@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+
 set -euxo pipefail
 
 export DFX_NETWORK=small12
@@ -14,5 +14,10 @@ IDENTITY="$DFX_IDENTITY"
 OPEN_STORAGE_INDEX_CANISTER_ID="$DUMMY_ID"
 LEDGER_CANISTER_ID="$LEDGER_CANISTER_ID"
 TEST_MODE=true
+
+for canister in user_index group_index notifications online_users_aggregator callback proposals_bot
+do
+    dfx canister --network "$DFX_NETWORK" create "$canister"
+done
 
 ./scripts/deploy.sh "$NETWORK" "$IC_URL" "$IDENTITY" "$OPEN_STORAGE_INDEX_CANISTER_ID" "$LEDGER_CANISTER_ID" "$TEST_MODE"
