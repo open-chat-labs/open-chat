@@ -27,7 +27,9 @@
             <li><del>Message forwarding</del></li>
             <li><del>Pin chats</del></li>
             <li><del>Threaded replies</del></li>
-            <li>Special groups for viewing/discussing/voting on NNS and SNS proposals</li>
+            <li>
+                <del>Special groups for viewing/discussing/voting on NNS and SNS proposals</del>
+            </li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
