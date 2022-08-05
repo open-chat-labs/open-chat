@@ -4,7 +4,6 @@
     import { rtlStore } from "../../stores/rtl";
     import {
         nnsProposalTopicLabels,
-        NnsProposalTopic,
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
@@ -62,7 +61,8 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = voteStatus !== undefined || votingEnded || preview || reply;
+    $: disable = preview || reply || votingEnded;
+    $: votingDisabled = voteStatus !== undefined || disable;
     $: isNns = content.proposal.kind === "nns";
     $: typeLabel = $_(isNns ? "proposal.topic" : "proposal.action");
     $: typeValue =
@@ -71,6 +71,7 @@
             : SnsProposalAction[proposal.action];
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
+    $: showFullSummary = proposal.summary.length < 400;
 
     $: {
         if (collapsed) {
@@ -79,7 +80,9 @@
     }
 
     function toggleSummary() {
-        summaryExpanded = !summaryExpanded;
+        if (!showFullSummary) {
+            summaryExpanded = !summaryExpanded;
+        }
     }
 
     function onVote(adopt: boolean) {
@@ -135,7 +138,7 @@
 
 {#if collapsed}
     <div on:click={onClick}>
-        {proposal.title}
+        <em>{proposal.title}</em>
         <EyeOff viewBox="0 -5 24 24" />
     </div>
 {:else}
@@ -151,7 +154,9 @@
                     {/if}
                 </div>
                 <div class="subtitle">
-                    {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
+                    {typeLabel}: {typeValue} |
+                    <span
+                        >{$_("proposal.proposedBy")}{#if !isNns}:{/if}</span>
                     {#if isNns}
                         <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
                     {:else}
@@ -165,9 +170,15 @@
         </div>
 
         {#if proposal.summary.length > 0}
-            <div class="summary" class:expanded={summaryExpanded} on:click={toggleSummary}>
+            <div
+                class="summary"
+                class:expanded={summaryExpanded}
+                class:full={showFullSummary}
+                on:click={toggleSummary}>
                 <Markdown text={proposal.summary} inline={false} />
-                <div class="gradient" />
+                {#if !showFullSummary}
+                    <div class="gradient" />
+                {/if}
             </div>
         {/if}
 
@@ -176,6 +187,10 @@
                 <div class="yes">
                     <span class="label">{$_("yes")}</span>
                     <span class="value">{adoptPercent}%</span>
+                </div>
+                <div class="no">
+                    <span class="label">{$_("no")}</span>
+                    <span class="value">{rejectPercent}%</span>
                 </div>
                 <div class="remaining">
                     {#if !votingEnded}
@@ -186,10 +201,6 @@
                         <span class="value"
                             >{toDateString(deadline)} {toShortTimeString(deadline)}</span>
                     {/if}
-                </div>
-                <div class="no">
-                    <span class="label">{$_("no")}</span>
-                    <span class="value">{rejectPercent}%</span>
                 </div>
             </div>
             <div class="progress">
@@ -213,7 +224,7 @@
                 class="adopt"
                 class:voting={voteStatus === "adopting"}
                 class:disabled={votingDisabled}
-                class:gray={voteStatus === "rejected" || votingEnded}
+                class:gray={voteStatus === "rejected" || disable}
                 on:click={() => onVote(true)}>
                 <div class="contents">
                     <div>
@@ -226,7 +237,7 @@
                 class="reject"
                 class:voting={voteStatus === "rejecting"}
                 class:disabled={votingDisabled}
-                class:gray={voteStatus === "adopted" || votingEnded}
+                class:gray={voteStatus === "adopted" || disable}
                 on:click={() => onVote(false)}>
                 <div class="contents">
                     <div>
@@ -269,7 +280,7 @@
 
         .title-block {
             .title {
-                @include font-size(fs-140);
+                @include font-size(fs-130);
                 margin-bottom: toRem(4);
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
@@ -324,6 +335,11 @@
             max-height: toRem(360);
         }
 
+        &.full {
+            max-height: none;
+            cursor: default;
+        }
+
         .gradient {
             position: sticky;
             width: 100%;
@@ -333,8 +349,7 @@
         }
 
         &.expanded .gradient {
-            background: none;
-            height: 0;
+            display: none;
         }
     }
 
@@ -348,9 +363,8 @@
         margin: 12px 0;
 
         .data {
-            display: flex;
-            justify-content: space-between;
             margin-bottom: toRem(10);
+            position: relative;
 
             > div {
                 display: flex;
@@ -363,6 +377,8 @@
             }
 
             .yes {
+                position: absolute;
+                left: 0;
                 align-items: flex-start;
                 .value {
                     color: var(--vote-yes-color);
@@ -370,14 +386,19 @@
             }
 
             .no {
+                position: absolute;
+                right: 0;
                 align-items: flex-end;
                 .value {
                     color: var(--vote-no-color);
                 }
             }
 
-            .remaining .value {
-                @include font-size(fs-100);
+            .remaining {
+                margin: 0 auto;
+                .value {
+                    @include font-size(fs-100);
+                }
             }
         }
 
@@ -423,12 +444,21 @@
         }
 
         &.rtl {
+            .votes {
+                .yes {
+                    left: auto;
+                    right: 0;
+                }
+                .no {
+                    left: 0;
+                    right: auto;
+                }
+            }
             .progress {
                 .adopt {
                     left: auto;
                     right: 0;
                 }
-
                 .reject {
                     right: auto;
                     left: 0;

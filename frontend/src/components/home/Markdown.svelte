@@ -57,11 +57,12 @@
     :global {
         .markdown-wrapper {
             h1 {
-                @include font-size(fs-140);
+                @include font-size(fs-120);
             }
 
             h2 {
-                @include font-size(fs-120);
+                font-size: toRem(19);
+                line-height: 125%;
             }
 
             h3 {
