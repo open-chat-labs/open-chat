@@ -60,7 +60,7 @@ if (dfxNetwork) {
     );
 }
 
-const production = !process.env.ROLLUP_WATCH;
+const production = false; //!process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 const version = process.env.OPENCHAT_WEBSITE_VERSION;
 if (production && !version) {
