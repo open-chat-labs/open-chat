@@ -1,33 +1,27 @@
 {
   "callback": {
     "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
-    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai",
-    "small12": "tmxop-wyaaa-aaaaa-aaapa-cai"
+    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
   },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
-    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai",
-    "small12": "txssk-maaaa-aaaaa-aaanq-cai"
+    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
   },
   "notifications": {
     "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
-    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai",
-    "small12": "tcvdh-niaaa-aaaaa-aaaoa-cai"
+    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
   },
   "online_users_aggregator": {
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
-    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai",
-    "small12": "tfuft-aqaaa-aaaaa-aaaoq-cai"
+    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
   },
   "proposals_bot": {
     "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
-    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai",
-    "small12": "tlwi3-3aaaa-aaaaa-aaapq-cai"
+    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai"
   },
   "user_index": {
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",
-    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai",
-    "small12": "tqtu6-byaaa-aaaaa-aaana-cai"
+    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai"
   },
   "website": {
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
