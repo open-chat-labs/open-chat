@@ -388,7 +388,7 @@
 
                             // For some reason this hack is the only way I've found to prevent the screen jumping after
                             // loading previous events on Chrome.
-                            requestAnimationFrame(() => {
+                            window.requestAnimationFrame(() => {
                                 loadingPrevious = false;
                                 recalculateFieldsAndLoadEventsIfRequired();
                             });
