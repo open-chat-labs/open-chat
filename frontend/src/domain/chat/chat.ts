@@ -1253,3 +1253,19 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_found"
     | "proposal_not_accepting_votes"
     | "internal_error";
+
+export type ListNervousSystemFunctionsResponse = {
+    reservedIds: bigint[];
+    functions: NervousSystemFunction[];
+};
+
+export type NervousSystemFunction = {
+    id: bigint;
+    name: string;
+    description: string;
+    functionType?: SnsFunctionType;
+};
+
+export type SnsFunctionType =
+    | { kind: "native_nervous_system_function" }
+    | { kind: "generic_nervous_system_function" };

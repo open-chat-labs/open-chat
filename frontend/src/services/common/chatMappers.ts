@@ -28,6 +28,9 @@ import type {
     ThreadSummary,
     ProposalContent,
     Proposal,
+    ListNervousSystemFunctionsResponse,
+    NervousSystemFunction,
+    SnsFunctionType,
 } from "../../domain/chat/chat";
 import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
@@ -69,6 +72,11 @@ import type {
     ApiProposalRewardStatus,
 } from "../user/candid/idl";
 import type { Cryptocurrency } from "../../domain/crypto";
+import type {
+    ApiListNervousSystemFunctionsResponse,
+    ApiNervousSystemFunction,
+    ApiSnsFunctionType,
+} from "../snsGovernance/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -743,4 +751,30 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
+}
+
+export function nervousSystemFunctions(
+    candid: ApiListNervousSystemFunctionsResponse
+): ListNervousSystemFunctionsResponse {
+    return {
+        reservedIds: [...candid.reserved_ids],
+        functions: candid.functions.map(nervousSystemFunction),
+    };
+}
+
+function nervousSystemFunction(candid: ApiNervousSystemFunction): NervousSystemFunction {
+    return {
+        id: candid.id,
+        name: candid.name,
+        description: optional(candid.description, identity) ?? "",
+        functionType: optional(candid.function_type, snsFunctionType),
+    };
+}
+
+function snsFunctionType(candid: ApiSnsFunctionType): SnsFunctionType {
+    if ("NativeNervousSystemFunction" in candid) {
+        return { kind: "native_nervous_system_function" };
+    } else {
+        return { kind: "generic_nervous_system_function" };
+    }
 }
