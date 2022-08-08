@@ -1,0 +1,30 @@
+// This is a trimmed down version of the full SNS governance candid file which can be found here -
+// https://github.com/dfinity/ic/blob/master/rs/sns/governance/canister/governance.did
+
+type ListNervousSystemFunctionsResponse = record {
+    reserved_ids : vec nat64;
+    functions : vec NervousSystemFunction;
+};
+
+type NervousSystemFunction = record {
+    id : nat64;
+    name : text;
+    description : opt text;
+    function_type : opt FunctionType;
+};
+
+type FunctionType = variant {
+    NativeNervousSystemFunction : record {};
+    GenericNervousSystemFunction : GenericNervousSystemFunction;
+};
+
+type GenericNervousSystemFunction = record {
+    validator_canister_id : opt principal;
+    target_canister_id : opt principal;
+    validator_method_name : opt text;
+    target_method_name : opt text;
+};
+
+service : {
+    list_nervous_system_functions : () -> (ListNervousSystemFunctionsResponse) query;
+}
