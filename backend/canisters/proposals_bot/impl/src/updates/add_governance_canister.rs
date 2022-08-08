@@ -81,7 +81,7 @@ fn default_description(name: &str) -> String {
     writeln!(&mut description).unwrap();
     writeln!(
         &mut description,
-        "To vote on proposals you must add your UserId as a hotkey to any {name} neurons you wish to vote with."
+        "To vote on proposals you must add your user id as a hotkey to any {name} neurons you wish to vote with."
     )
     .unwrap();
     writeln!(&mut description).unwrap();
