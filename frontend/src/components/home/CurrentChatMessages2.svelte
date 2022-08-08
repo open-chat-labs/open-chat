@@ -383,15 +383,10 @@
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
                     case "loaded_previous_messages":
-                        tick().then(() => {
+                        waitForUiUpdates().then(() => {
                             resetScroll();
-
-                            // For some reason this hack is the only way I've found to prevent the screen jumping after
-                            // loading previous events on Chrome.
-                            window.requestAnimationFrame(() => {
-                                loadingPrevious = false;
-                                recalculateFieldsAndLoadEventsIfRequired();
-                            });
+                            loadingPrevious = false;
+                            recalculateFieldsAndLoadEventsIfRequired();
                         });
                         break;
                     case "loaded_event_window":
@@ -399,7 +394,7 @@
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
                         const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
-                        tick().then(() => {
+                        waitForUiUpdates().then(() => {
                             recalculateFieldsAndLoadEventsIfRequired();
                             scrollToMessageIndex(
                                 index,
@@ -412,7 +407,7 @@
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
-                        tick().then(() => {
+                        waitForUiUpdates().then(() => {
                             loadingNew = false;
                             recalculateFieldsAndLoadEventsIfRequired();
                             if (insideFromBottomThreshold) {
@@ -425,12 +420,14 @@
                         // smooth scroll doesn't work here when we are leaping from the top
                         // which means we are stuck with abrupt scroll which is disappointing
                         const { scroll } = evt.event;
-                        tick().then(() => scrollBottom(scroll));
+                        waitForUiUpdates().then(() => scrollBottom(scroll));
                         break;
                     case "chat_updated":
-                        if (shouldLoadNewMessages()) {
-                            loadNewMessages();
-                        }
+                        waitForUiUpdates().then(() => {
+                            if (shouldLoadNewMessages()) {
+                                loadNewMessages();
+                            }
+                        });
                         break;
                 }
             });
@@ -561,6 +558,12 @@
     function isCollpasedProposal(message: Message, filteredProposals: FilteredProposals): boolean {
         if (message.content.kind !== "proposal_content") return false;
         return filteredProposals.isCollapsed(message.messageId, message.content.proposal);
+    }
+
+    function waitForUiUpdates(): Promise<void> {
+        const p1 = tick();
+        const p2 = new Promise<void>((p) => window.requestAnimationFrame(() => p()));
+        return Promise.all([p1, p2]).then(_ => Promise.resolve());
     }
 </script>
 
