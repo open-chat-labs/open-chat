@@ -102,13 +102,13 @@ if (version) {
 
 fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
 
-const iiAlternativeOrigin = process.env.II_ALTERNATIVE_ORIGIN;
-if (iiAlternativeOrigin !== undefined) {
+const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
+if (iiAlternativeOrigins !== undefined) {
     fs.mkdirSync("build/.well-known");
     fs.writeFileSync(
         "build/.well-known/ii-alternative-origins",
         JSON.stringify({
-            alternativeOrigins: [iiAlternativeOrigin],
+            alternativeOrigins: iiAlternativeOrigins.split(","),
         })
     );
 }
