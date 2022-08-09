@@ -307,7 +307,7 @@
                 padding: toRem(1) toRem(6);
                 height: fit-content;
                 color: white;
-                background-color: var(--currentChat-msg-txt);
+                background-color: var(--vote-maybe-color);
 
                 &.positive {
                     background-color: var(--vote-yes-color);
