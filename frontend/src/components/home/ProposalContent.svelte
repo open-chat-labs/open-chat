@@ -146,7 +146,7 @@
 
         return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
             proposal.proposer.length - 4,
-            4
+            proposal.proposer.length
         )}`;
     }
 </script>
