@@ -284,6 +284,9 @@ export function lightTheme(): Theme {
                 color: pinkAccent,
                 hv: "#ff4fa7",
             },
+            maybe: {
+                color: "#666666",
+            },
             // yes: "lightgreen",
             // no: "red",
             // yes: "#2fb953",

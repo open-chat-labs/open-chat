@@ -289,6 +289,9 @@ export interface Theme {
             color: string;
             hv: string;
         };
+        maybe: {
+            color: string;
+        };
     };
 
     markdown: {
