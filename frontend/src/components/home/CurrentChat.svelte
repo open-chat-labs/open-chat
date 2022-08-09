@@ -1,7 +1,6 @@
 <script lang="ts">
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import CurrentChatMessages2 from "./CurrentChatMessages2.svelte";
     import Footer from "./Footer.svelte";
     import { rollbar } from "../../utils/logging";
     import { closeNotificationsForChat } from "../../utils/notifications";
@@ -70,9 +69,6 @@
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
-    let currentChatMessages = localStorage.getItem("openchat_scroll_fix") === "true"
-        ? CurrentChatMessages2
-        : CurrentChatMessages;
 
     $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
@@ -384,7 +380,7 @@
             selectedChatSummary={chat}
             hasPinned={$pinned.size > 0} />
     {/if}
-    <svelte:component this={currentChatMessages}
+    <CurrentChatMessages
         on:replyPrivatelyTo
         on:replyTo={replyTo}
         on:openThread
