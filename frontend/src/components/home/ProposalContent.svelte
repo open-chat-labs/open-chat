@@ -67,7 +67,6 @@
     $: votingEnded = proposal.deadline <= $now;
     $: disable = preview || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
-    $: typeLabel = $_(isNns ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
             ? nnsProposalTopicLabels[proposal.topic]
@@ -168,14 +167,14 @@
                         {proposal.title}
                     {/if}
                 </div>
-                <div class="subtitle">
-                    {typeLabel}: {typeValue} |
-                    {$_("proposal.proposedBy")}
-                    <a target="_blank" href={proposerUrl}>{truncatedProposerId()}</a>
+                <div class="status" class:positive class:negative>
+                    {ProposalDecisionStatus[proposal.status]}
                 </div>
             </div>
-            <div class="status" class:positive class:negative>
-                {ProposalDecisionStatus[proposal.status]}
+            <div class="subtitle">
+                {typeValue} |
+                {$_("proposal.proposedBy")}
+                <a target="_blank" href={proposerUrl}>{truncatedProposerId()}</a>
             </div>
         </div>
 
@@ -283,12 +282,11 @@
 
 <style type="text/scss">
     .header {
-        display: flex;
-        justify-content: space-between;
-        gap: $sp3;
-        margin-bottom: $sp3;
+        margin-bottom: toRem(4);
 
         .title-block {
+            display: flex;
+            justify-content: space-between;
             .title {
                 @include font-size(fs-130);
                 margin-bottom: toRem(4);
@@ -304,29 +302,26 @@
                     width: fit-content;
                 }
             }
+            .status {
+                border-radius: $sp3;
+                padding: toRem(1) toRem(6);
+                height: fit-content;
+                color: white;
 
-            .subtitle {
-                @include font-size(fs-70);
+                &.positive {
+                    background-color: var(--vote-yes-color);
+                }
+
+                &.negative {
+                    background-color: var(--vote-no-color);
+                }
             }
-            margin-bottom: $sp2;
         }
 
-        .status {
-            border-width: 2px;
-            border-style: solid;
-            border-radius: $sp4;
-            padding: $sp2 $sp3;
-            height: fit-content;
-
-            &.positive {
-                color: var(--vote-yes-color);
-                border-color: var(--vote-yes-color);
-            }
-
-            &.negative {
-                color: var(--vote-no-color);
-                border-color: var(--vote-no-color);
-            }
+        .subtitle {
+            @include font-size(fs-70);
+            padding: toRem(2) toRem(4);
+            background-color: var(--chatSummary-hv);
         }
     }
 
