@@ -7,7 +7,6 @@
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
-        SnsProposalAction,
     } from "../../domain/chat/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import Markdown from "./Markdown.svelte";
@@ -26,6 +25,7 @@
     import { currentUserStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
+    import { snsFunctions } from "../../stores/snsFunctions";
 
     const dispatch = createEventDispatcher();
 
@@ -40,10 +40,12 @@
     const api: ServiceContainer = getContext(apiKey);
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
+    const nnsDappUrl = "https://nns.ic0.app";
 
     let summaryExpanded = false;
     let showNeuronInfo = false;
 
+    $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
         $proposalVotes.get(messageId) ??
         (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
@@ -56,19 +58,21 @@
         proposal.status == ProposalDecisionStatus.Rejected ||
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
-    $: dashboardNeuronUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
+    $: proposerUrl = isNns
+        ? `${dashboardUrl}/neuron/${proposal.proposer}`
+        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
     $: disable = preview || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
-    $: isNns = content.proposal.kind === "nns";
     $: typeLabel = $_(isNns ? "proposal.topic" : "proposal.action");
     $: typeValue =
         proposal.kind === "nns"
             ? nnsProposalTopicLabels[proposal.topic]
-            : SnsProposalAction[proposal.action];
+            : $snsFunctions.get(content.governanceCanisterId)?.get(proposal.action)?.name ??
+              proposal.action;
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
     $: showFullSummary = proposal.summary.length < 400;
@@ -134,6 +138,17 @@
             dispatch("expandMessage");
         }
     }
+
+    function truncatedProposerId(): string {
+        if (proposal.proposer.length < 12) {
+            return proposal.proposer;
+        }
+
+        return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
+            proposal.proposer.length - 4,
+            4
+        )}`;
+    }
 </script>
 
 {#if collapsed}
@@ -155,13 +170,8 @@
                 </div>
                 <div class="subtitle">
                     {typeLabel}: {typeValue} |
-                    <span
-                        >{$_("proposal.proposedBy")}{#if !isNns}:{/if}</span>
-                    {#if isNns}
-                        <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
-                    {:else}
-                        <span>{proposal.proposer}</span>
-                    {/if}
+                    {$_("proposal.proposedBy")}
+                    <a target="_blank" href={proposerUrl}>{truncatedProposerId()}</a>
                 </div>
             </div>
             <div class="status" class:positive class:negative>

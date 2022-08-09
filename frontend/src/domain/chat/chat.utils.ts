@@ -93,7 +93,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "poll_content") {
         text = "poll";
     } else if (content.kind === "proposal_content") {
-        text = "governance proposal";
+        text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {

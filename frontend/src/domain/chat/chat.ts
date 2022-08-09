@@ -218,22 +218,9 @@ export const nnsProposalTopicLabels = [
     "SNS Decentralization Sale",
 ];
 
-export enum SnsProposalAction {
-    Unspecified = 0,
-    Motion = 1,
-    SetParameters = 2,
-    UpgradeCanister = 3,
-    AddCustom = 4,
-    RemoveCustom = 5,
-    TransferTokens = 1000,
-    BurnChat = 1001,
-    TopupCycles = 1002,
-    SwapTokens = 1003,
-}
-
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
-    action: SnsProposalAction;
+    action: number;
 }
 
 export interface ImageContent extends DataContent {
@@ -1253,3 +1240,19 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_found"
     | "proposal_not_accepting_votes"
     | "internal_error";
+
+export type ListNervousSystemFunctionsResponse = {
+    reservedIds: bigint[];
+    functions: NervousSystemFunction[];
+};
+
+export type NervousSystemFunction = {
+    id: number;
+    name: string;
+    description: string;
+    functionType?: SnsFunctionType;
+};
+
+export type SnsFunctionType =
+    | { kind: "native_nervous_system_function" }
+    | { kind: "generic_nervous_system_function" };
