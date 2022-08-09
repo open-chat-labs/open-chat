@@ -70,14 +70,6 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 
 export const selectedChatStore = writable<ChatController | undefined>(undefined);
 
-export const isNnsProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
-    return (
-        $selectedChatStore !== undefined &&
-        $selectedChatStore.chatVal.kind === "group_chat" &&
-        $selectedChatStore.chatVal.subtype?.isNns
-    );
-});
-
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
     return (
         $selectedChatStore !== undefined &&

@@ -1,21 +1,23 @@
 import type { Proposal } from "../domain/chat/chat";
-import { writable } from "svelte/store";
+import { Readable, writable } from "svelte/store";
 
-const storageKey = "nns_proposal_filters";
+const storageKeyPrefix = "proposal_filters_";
 
 export class FilteredProposals {
+    private _canisterId: string;
     // A map of messageId to boolean where true==collapsed
     private _messageState: Map<bigint, boolean>;
     private _filters: Set<number>;
 
-    constructor() {
+    constructor(canisterId: string) {
+        this._canisterId = canisterId;
         this._messageState = new Map();
         this._filters = new Set();
     }
 
-    static fromStorage(): FilteredProposals {
-        const filteredProposals = new FilteredProposals();
-        const json = localStorage.getItem(storageKey);
+    static fromStorage(canisterId: string): FilteredProposals {
+        const filteredProposals = new FilteredProposals(canisterId);
+        const json = localStorage.getItem(storageKeyPrefix + canisterId);
         filteredProposals._filters = new Set(json !== null ? <number[]>JSON.parse(json) : []);
         return filteredProposals;
     }
@@ -58,31 +60,40 @@ export class FilteredProposals {
     }
 
     clone(): FilteredProposals {
-        const clone = new FilteredProposals();
+        const clone = new FilteredProposals(this._canisterId);
         clone._messageState = new Map(this._messageState);
         clone._filters = new Set(this._filters);
         return clone;
     }
 
     private toStorage() {
-        localStorage.setItem(storageKey, JSON.stringify(Array.from(this._filters)));
+        localStorage.setItem(
+            storageKeyPrefix + this._canisterId,
+            JSON.stringify(Array.from(this._filters))
+        );
     }
 }
 
-const store = writable<FilteredProposals>(FilteredProposals.fromStorage());
+export interface IFilteredPropoalsStore extends Readable<FilteredProposals> {
+    toggleFilter(topic: number): void;
+    toggleMessageExpansion(messageId: bigint, expand: boolean): void;
+}
 
-export const filteredProposals = {
-    subscribe: store.subscribe,
-    toggleFilter: (topic: number): void =>
-        store.update((fp) => {
-            const clone = fp.clone();
-            clone.toggleFilter(topic);
-            return clone;
-        }),
-    toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
-        store.update((fp) => {
-            const clone = fp.clone();
-            clone.toggleMessageExpansion(messageId, expand);
-            return clone;
-        }),
-};
+export function createFilteredPropoalsStore(canisterId: string): IFilteredPropoalsStore {
+    const store = writable<FilteredProposals>(FilteredProposals.fromStorage(canisterId));
+    return {
+        subscribe: store.subscribe,
+        toggleFilter: (topic: number): void =>
+            store.update((fp) => {
+                const clone = fp.clone();
+                clone.toggleFilter(topic);
+                return clone;
+            }),
+        toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
+            store.update((fp) => {
+                const clone = fp.clone();
+                clone.toggleMessageExpansion(messageId, expand);
+                return clone;
+            }),
+    };
+}

@@ -25,7 +25,7 @@
     import { currentUserStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import { snsFunctions } from "../../stores/snsFunctions";
+    import { SnsFunctions, snsFunctions } from "../../stores/snsFunctions";
 
     const dispatch = createEventDispatcher();
 
@@ -69,11 +69,7 @@
     $: votingEnded = proposal.deadline <= $now;
     $: disable = preview || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
-    $: typeValue =
-        proposal.kind === "nns"
-            ? nnsProposalTopicLabels[proposal.topic]
-            : $snsFunctions.get(content.governanceCanisterId)?.get(proposal.action)?.name ??
-              proposal.action;
+    $: typeValue = getProposalTopicLabel(content, $snsFunctions);
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
     $: showFullSummary = proposal.summary.length < 400;
@@ -149,6 +145,16 @@
             proposal.proposer.length - 4,
             proposal.proposer.length
         )}`;
+    }
+
+    export function getProposalTopicLabel(
+        content: ProposalContent,
+        snsFunctions: SnsFunctions
+    ): string {
+        return content.proposal.kind === "nns"
+            ? nnsProposalTopicLabels[content.proposal.topic]
+            : snsFunctions.get(content.governanceCanisterId)?.get(content.proposal.action)?.name ??
+                  content.proposal.action.toString();
     }
 </script>
 
@@ -286,7 +292,7 @@
         .title-block {
             display: flex;
             justify-content: space-between;
-            gap: toRem(4);
+            gap: toRem(8);
             .title {
                 @include font-size(fs-130);
                 margin-bottom: toRem(4);

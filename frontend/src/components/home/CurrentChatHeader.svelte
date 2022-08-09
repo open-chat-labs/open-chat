@@ -43,7 +43,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
-    import { isNnsProposalGroup } from "../../stores/chat";
+    import { isProposalGroup } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -215,7 +215,7 @@
     {/if}
     {#if !preview}
         {#if !$mobileWidth}
-            {#if $isNnsProposalGroup}
+            {#if $isProposalGroup}
                 <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
                     <HoverIcon>
                         <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -288,7 +288,7 @@
                                     <div slot="text">{$_("addParticipants")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if $isNnsProposalGroup}
+                            {#if $isProposalGroup}
                                 <MenuItem on:click={showProposalFilters}>
                                     <FilterOutline
                                         size={$iconSize}

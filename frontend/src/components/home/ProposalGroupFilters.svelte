@@ -5,21 +5,60 @@
     import SectionHeader from "../SectionHeader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { nnsProposalTopicLabels, NnsProposalTopic } from "../../domain/chat/chat";
+    import { nnsProposalTopicLabels, NnsProposalTopic, ChatSummary } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { filteredProposals, FilteredProposals } from "../../stores/filteredProposals";
-
-    const dispatch = createEventDispatcher();
+    import { SnsFunctions, snsFunctions } from "../../stores/snsFunctions";
+    import type { ChatController } from "../../fsm/chat.controller";
 
     const nnsProposalTopics = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+    export let controller: ChatController;
+
+    $: chat = controller.chat;
+    $: filteredProposalsStore = controller.filteredProposals!;
+
+    const dispatch = createEventDispatcher();
 
     function close() {
         dispatch("close");
     }
+
+    function getTopics(chat: ChatSummary, snsFunctions: SnsFunctions): number[] {
+        if (chat.kind === "group_chat" && chat.subtype !== undefined) {
+            if (chat.subtype.isNns) {
+                return nnsProposalTopics;
+            } else {
+                const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
+                if (snsFunctionsMap !== undefined) {
+                    return [...snsFunctionsMap.keys()];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    function getTopicLabel(topicId: number, chat: ChatSummary, snsFunctions: SnsFunctions): string {
+        if (chat.kind === "group_chat" && chat.subtype !== undefined) {
+            if (chat.subtype.isNns) {
+                return nnsProposalTopicLabels[topicId];
+            } else {
+                const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
+                if (snsFunctionsMap !== undefined) {
+                    const snsFunction = snsFunctionsMap.get(topicId);
+                    if (snsFunction !== undefined) {
+                        return snsFunction.name;
+                    }
+                }
+            }
+        }
+
+        return topicId.toString();
+    }
 </script>
 
-<SectionHeader shadow={true} flush={$mobileWidth}>
+<SectionHeader shadow flush={$mobileWidth}>
     <h4>{$_("proposal.filter")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
@@ -29,15 +68,13 @@
 </SectionHeader>
 
 <div class="proposal-filters">
-    {#each nnsProposalTopics as id}
-        <div class="topic">
-            <Toggle
-                id={NnsProposalTopic[id]}
-                on:change={() => filteredProposals.toggleFilter(id)}
-                label={nnsProposalTopicLabels[id]}
-                checked={!$filteredProposals.hasFilter(id)}
-                bigGap />
-        </div>
+    {#each getTopics($chat, $snsFunctions) as id}
+        <Toggle
+            id={NnsProposalTopic[id]}
+            on:change={() => filteredProposalsStore.toggleFilter(id)}
+            label={getTopicLabel(id, $chat, $snsFunctions)}
+            checked={!$filteredProposalsStore.hasFilter(id)}
+            bigGap />
     {/each}
 </div>
 
