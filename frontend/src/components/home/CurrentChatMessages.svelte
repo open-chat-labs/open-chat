@@ -369,10 +369,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents(
-        $events,
-        groupInner(filteredProposalsStore !== undefined ? $filteredProposalsStore : undefined)
-    ).reverse();
+    $: groupedEvents = groupEvents($events, groupInner($filteredProposalsStore)).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -557,11 +554,7 @@
     }
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
-        if (
-            ew.event.kind === "message" &&
-            ew.event.content.kind === "proposal_content" &&
-            filteredProposalsStore !== undefined
-        ) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
             filteredProposalsStore.toggleMessageExpansion(ew.event.messageId, expand);
         }
     }
@@ -638,9 +631,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
-                        collapsed={filteredProposalsStore !== undefined
-                            ? isCollapsed(evt, $filteredProposalsStore)
-                            : false}
+                        collapsed={isCollapsed(evt, $filteredProposalsStore)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}

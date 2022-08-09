@@ -1,4 +1,4 @@
-import type { Proposal } from "../domain/chat/chat";
+import type { ChatSummary, Proposal } from "../domain/chat/chat";
 import { Readable, writable } from "svelte/store";
 
 const storageKeyPrefix = "proposal_filters_";
@@ -74,26 +74,35 @@ export class FilteredProposals {
     }
 }
 
-export interface IFilteredPropoalsStore extends Readable<FilteredProposals> {
+export interface IFilteredPropoalsStore extends Readable<FilteredProposals | undefined> {
     toggleFilter(topic: number): void;
     toggleMessageExpansion(messageId: bigint, expand: boolean): void;
 }
 
-export function createFilteredPropoalsStore(canisterId: string): IFilteredPropoalsStore {
-    const store = writable<FilteredProposals>(FilteredProposals.fromStorage(canisterId));
+export function createFilteredProposalsStore(chat: ChatSummary): IFilteredPropoalsStore {
+    const filteredProposals =
+        chat.kind === "group_chat" && chat.subtype?.kind === "governance_proposals"
+            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
+            : undefined;
+
+    const store = writable<FilteredProposals | undefined>(filteredProposals);
     return {
         subscribe: store.subscribe,
         toggleFilter: (topic: number): void =>
             store.update((fp) => {
-                const clone = fp.clone();
-                clone.toggleFilter(topic);
-                return clone;
+                if (fp !== undefined) {
+                    const clone = fp.clone();
+                    clone.toggleFilter(topic);
+                    return clone;
+                }
             }),
         toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
             store.update((fp) => {
-                const clone = fp.clone();
-                clone.toggleMessageExpansion(messageId, expand);
-                return clone;
+                if (fp !== undefined) {
+                    const clone = fp.clone();
+                    clone.toggleMessageExpansion(messageId, expand);
+                    return clone;
+                }
             }),
     };
 }

@@ -16,7 +16,7 @@
     export let controller: ChatController;
 
     $: chat = controller.chat;
-    $: filteredProposalsStore = controller.filteredProposals!;
+    $: filteredProposalsStore = controller.filteredProposals;
 
     const dispatch = createEventDispatcher();
 
@@ -31,7 +31,7 @@
             } else {
                 const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
                 if (snsFunctionsMap !== undefined) {
-                    return [...snsFunctionsMap.keys()];
+                    return [...snsFunctionsMap.keys()].slice(1);
                 }
             }
         }
@@ -73,7 +73,7 @@
             id={NnsProposalTopic[id]}
             on:change={() => filteredProposalsStore.toggleFilter(id)}
             label={getTopicLabel(id, $chat, $snsFunctions)}
-            checked={!$filteredProposalsStore.hasFilter(id)}
+            checked={!$filteredProposalsStore?.hasFilter(id)}
             bigGap />
     {/each}
 </div>

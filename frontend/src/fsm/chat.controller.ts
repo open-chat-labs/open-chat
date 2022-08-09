@@ -51,7 +51,7 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { createFilteredPropoalsStore, IFilteredPropoalsStore } from "../stores/filteredProposals";
+import { createFilteredProposalsStore, IFilteredPropoalsStore } from "../stores/filteredProposals";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -67,7 +67,7 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
-    public filteredProposals: IFilteredPropoalsStore | undefined;
+    public filteredProposals: IFilteredPropoalsStore;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -106,10 +106,7 @@ export class ChatController {
         this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
         this.fileToAttach = derived(draftMessage, (d) => d.attachment);
         this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
-        this.filteredProposals =
-            chat.kind === "group_chat" && chat.subtype !== undefined
-                ? createFilteredPropoalsStore(chat.subtype.governanceCanisterId)
-                : undefined;
+        this.filteredProposals = createFilteredProposalsStore(chat);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
