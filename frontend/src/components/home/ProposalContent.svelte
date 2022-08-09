@@ -3,7 +3,6 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import {
-        nnsProposalTopicLabels,
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
@@ -22,10 +21,9 @@
     import { rollbar } from "../../utils/logging";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { currentUserStore } from "../../stores/chat";
+    import { currentUserStore, proposalTopicsStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import { SnsFunctions, snsFunctions } from "../../stores/snsFunctions";
 
     const dispatch = createEventDispatcher();
 
@@ -69,7 +67,7 @@
     $: votingEnded = proposal.deadline <= $now;
     $: disable = preview || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
-    $: typeValue = getProposalTopicLabel(content, $snsFunctions);
+    $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
     $: showFullSummary = proposal.summary.length < 400;
@@ -149,12 +147,13 @@
 
     export function getProposalTopicLabel(
         content: ProposalContent,
-        snsFunctions: SnsFunctions
+        proposalTopics: Map<number, string>
     ): string {
-        return content.proposal.kind === "nns"
-            ? nnsProposalTopicLabels[content.proposal.topic]
-            : snsFunctions.get(content.governanceCanisterId)?.get(content.proposal.action)?.name ??
-                  content.proposal.action.toString();
+        return (
+            proposalTopics.get(
+                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action
+            ) ?? "unknown"
+        );
     }
 </script>
 
