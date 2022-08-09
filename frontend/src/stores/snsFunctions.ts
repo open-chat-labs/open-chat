@@ -51,7 +51,7 @@ export class SnsFunctions {
     }
 }
 
-const store = writable<SnsFunctions>();
+const store = writable<SnsFunctions>(new SnsFunctions());
 
 export const snsFunctions = {
     subscribe: store.subscribe,
