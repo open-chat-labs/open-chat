@@ -74,12 +74,12 @@ export class FilteredProposals {
     }
 }
 
-export interface IFilteredPropoalsStore extends Readable<FilteredProposals | undefined> {
+export interface IFilteredProposalsStore extends Readable<FilteredProposals | undefined> {
     toggleFilter(topic: number): void;
     toggleMessageExpansion(messageId: bigint, expand: boolean): void;
 }
 
-export function createFilteredProposalsStore(chat: ChatSummary): IFilteredPropoalsStore {
+export function createFilteredProposalsStore(chat: ChatSummary): IFilteredProposalsStore {
     const filteredProposals =
         chat.kind === "group_chat" && chat.subtype?.kind === "governance_proposals"
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)

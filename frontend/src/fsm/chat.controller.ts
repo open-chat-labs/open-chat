@@ -51,7 +51,7 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { createFilteredProposalsStore, IFilteredPropoalsStore } from "../stores/filteredProposals";
+import { createFilteredProposalsStore, IFilteredProposalsStore } from "../stores/filteredProposals";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -67,7 +67,7 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
-    public filteredProposals: IFilteredPropoalsStore;
+    public filteredProposals: IFilteredProposalsStore;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
