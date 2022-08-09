@@ -57,7 +57,9 @@
         proposal.status == ProposalDecisionStatus.Failed ||
         proposal.status == ProposalDecisionStatus.Rejected ||
         proposal.status == ProposalDecisionStatus.Unspecified;
-    $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
+    $: proposalUrl = isNns
+        ? `${dashboardUrl}/proposal/${proposal.id}`
+        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
         : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
@@ -259,12 +261,9 @@
             </button>
         </div>
     </div>
-
-    {#if isNns}
-        <div class="more" class:rtl={$rtlStore}>
-            <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
-        </div>
-    {/if}
+    <div class="more" class:rtl={$rtlStore}>
+        <a href={proposalUrl} target="_blank">{proposal.id}</a>
+    </div>
 {/if}
 
 {#if showNeuronInfo}
@@ -287,6 +286,7 @@
         .title-block {
             display: flex;
             justify-content: space-between;
+            gap: toRem(4);
             .title {
                 @include font-size(fs-130);
                 margin-bottom: toRem(4);
@@ -307,6 +307,7 @@
                 padding: toRem(1) toRem(6);
                 height: fit-content;
                 color: white;
+                background-color: var(--currentChat-msg-txt);
 
                 &.positive {
                     background-color: var(--vote-yes-color);
