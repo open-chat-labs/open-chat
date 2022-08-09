@@ -162,6 +162,10 @@ export function setSelectedChat(
 
     closeNotificationsForChat(chatId);
 
+    if (chat.kind === "group_chat" && chat.subtype?.isNns === false) {
+        api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
+    }
+
     const user: UserSummary = {
         kind: "user",
         userId: currentUser.userId,

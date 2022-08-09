@@ -7,7 +7,6 @@
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
-        SnsProposalAction,
     } from "../../domain/chat/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import Markdown from "./Markdown.svelte";
@@ -26,6 +25,7 @@
     import { currentUserStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
+    import { snsFunctions } from "../../stores/snsFunctions";
 
     const dispatch = createEventDispatcher();
 
@@ -60,7 +60,7 @@
     $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : `${nnsDappUrl}/neuron/${proposal.proposer}`;
+        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
@@ -71,7 +71,8 @@
     $: typeValue =
         proposal.kind === "nns"
             ? nnsProposalTopicLabels[proposal.topic]
-            : SnsProposalAction[proposal.action];
+            : $snsFunctions.get(content.governanceCanisterId)?.get(proposal.action)?.name ??
+              proposal.action;
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
     $: showFullSummary = proposal.summary.length < 400;
