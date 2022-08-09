@@ -108,6 +108,7 @@ import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
+import { snsFunctions } from "../stores/snsFunctions";
 
 export const apiKey = Symbol();
 
@@ -1075,10 +1076,12 @@ export class ServiceContainer implements MarkMessagesRead {
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string
     ): Promise<ListNervousSystemFunctionsResponse> {
-        return SnsGovernanceClient.create(
-            this.identity,
-            snsGovernanceCanisterId
-        ).listNervousSystemFunctions();
+        return SnsGovernanceClient.create(this.identity, snsGovernanceCanisterId)
+            .listNervousSystemFunctions()
+            .then((val) => {
+                snsFunctions.set(snsGovernanceCanisterId, val.functions);
+                return val;
+            });
     }
 
     async threadPreviews(

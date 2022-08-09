@@ -764,7 +764,7 @@ export function nervousSystemFunctions(
 
 function nervousSystemFunction(candid: ApiNervousSystemFunction): NervousSystemFunction {
     return {
-        id: candid.id,
+        id: Number(candid.id),
         name: candid.name,
         description: optional(candid.description, identity) ?? "",
         functionType: optional(candid.function_type, snsFunctionType),

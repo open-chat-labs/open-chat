@@ -3,6 +3,7 @@ import { idlFactory, SnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ISnsGovernanceClient } from "./sns.governance.client.interface";
 import type { ListNervousSystemFunctionsResponse } from "../../domain/chat/chat";
+import { nervousSystemFunctions } from "../common/chatMappers";
 
 export class SnsGovernanceClient extends CandidService implements ISnsGovernanceClient {
     private service: SnsGovernanceService;
