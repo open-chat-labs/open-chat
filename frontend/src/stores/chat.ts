@@ -187,7 +187,11 @@ export function setSelectedChat(
 
     closeNotificationsForChat(chatId);
 
-    if (chat.kind === "group_chat" && chat.subtype?.isNns === false) {
+    if (
+        chat.kind === "group_chat" &&
+        chat.subtype?.kind === "governance_proposals" &&
+        !chat.subtype.isNns
+    ) {
         api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
     }
 
