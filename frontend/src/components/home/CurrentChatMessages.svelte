@@ -82,7 +82,7 @@
 
     onMount(() => {
         const options = {
-            root: messagesDiv,
+            root: messagesDiv as Element,
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
@@ -102,7 +102,7 @@
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = controller.chatId;
-                        const timer = setTimeout(() => {
+                        const timer = window.setTimeout(() => {
                             if (chatId === controller.chatId) {
                                 dispatch("messageRead", {
                                     chatId,
@@ -662,12 +662,14 @@
             {/each}
         </div>
     {/each}
-    {#if $isProposalGroup && !morePrevAvailable}
-        <ProposalBot />
-    {:else if $chat.kind === "group_chat" && !morePrevAvailable}
-        <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
-    {:else if isBot && !morePrevAvailable}
-        <Robot />
+    {#if !morePrevAvailable}
+        {#if $isProposalGroup}
+            <ProposalBot />
+        {:else if $chat.kind === "group_chat"}
+            <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+        {:else if isBot}
+            <Robot />
+        {/if}
     {/if}
 </div>
 {#if !preview}
