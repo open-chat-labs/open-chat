@@ -662,7 +662,7 @@
             {/each}
         </div>
     {/each}
-    {#if !morePrevAvailable}
+    {#if initialised && !morePrevAvailable}
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if $chat.kind === "group_chat"}
