@@ -925,6 +925,24 @@
         return chats.filter((c) => selectedChatId !== c.chatId && canSendMessages(c, $userStore));
     }
 
+    function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
+        const op = ev.detail.mute ? "muted" : "unmuted";
+        api.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute)
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                        values: { operation: $_(op) },
+                    });
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Error toggling mute notifications", err);
+                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                    values: { operation: $_(op) },
+                });
+            });
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -953,6 +971,7 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}
@@ -982,6 +1001,7 @@
             on:dismissRecommendation={dismissRecommendation}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
+            on:toggleMuteNotifications={toggleMuteNotifications}
             on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
