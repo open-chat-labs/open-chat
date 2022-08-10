@@ -34,7 +34,7 @@
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
     import { isProposalGroup } from "../../stores/chat";
-    import { filteredProposals, FilteredProposals } from "../../stores/filteredProposals";
+    import type { FilteredProposals } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
     import { groupWhile } from "../../utils/list";
 
@@ -66,6 +66,7 @@
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
+    $: filteredProposalsStore = controller.filteredProposals;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -368,7 +369,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events, groupInner($filteredProposals)).reverse();
+    $: groupedEvents = groupEvents($events, groupInner($filteredProposalsStore)).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -547,18 +548,18 @@
 
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
-        filteredProposals: FilteredProposals
+        filteredProposals: FilteredProposals | undefined
     ): boolean {
         return ew.event.kind === "message" && isCollpasedProposal(ew.event, filteredProposals);
     }
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            filteredProposals.toggleMessageExpansion(ew.event.messageId, expand);
+            filteredProposalsStore.toggleMessageExpansion(ew.event.messageId, expand);
         }
     }
 
-    function groupInner(filteredProposals: FilteredProposals) {
+    function groupInner(filteredProposals: FilteredProposals | undefined) {
         return (events: EventWrapper<ChatEventType>[]) => {
             return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
         };
@@ -570,7 +571,7 @@
     function inSameGroup(
         a: EventWrapper<ChatEventType>,
         b: EventWrapper<ChatEventType>,
-        filteredProposals: FilteredProposals
+        filteredProposals: FilteredProposals | undefined
     ): boolean {
         if (a.event.kind === "message" && b.event.kind === "message") {
             const aKind = a.event.content.kind;
@@ -587,9 +588,12 @@
         return false;
     }
 
-    function isCollpasedProposal(message: Message, filteredProposals: FilteredProposals): boolean {
+    function isCollpasedProposal(
+        message: Message,
+        filteredProposals: FilteredProposals | undefined
+    ): boolean {
         if (message.content.kind !== "proposal_content") return false;
-        return filteredProposals.isCollapsed(message.messageId, message.content.proposal);
+        return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 </script>
 
@@ -627,7 +631,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
-                        collapsed={isCollapsed(evt, $filteredProposals)}
+                        collapsed={isCollapsed(evt, $filteredProposalsStore)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}

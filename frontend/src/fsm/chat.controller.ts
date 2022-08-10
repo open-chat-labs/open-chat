@@ -51,6 +51,7 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
+import { createFilteredProposalsStore, IFilteredProposalsStore } from "../stores/filteredProposals";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -66,6 +67,7 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
+    public filteredProposals: IFilteredProposalsStore;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -87,23 +89,24 @@ export class ChatController {
             mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed)
         );
 
-        const { chatId, kind } = get(this.chat);
-        this.events = immutableStore(unconfirmed.getMessages(chatId));
+        const chat = get(this.chat);
+        this.events = immutableStore(unconfirmed.getMessages(chat.chatId));
         this.loading = writable(false);
         this.focusMessageIndex = immutableStore(_focusMessageIndex);
         this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
-        this.chatId = chatId;
+        this.chatId = chat.chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
-        this.chatUserIds = new Set<string>(kind === "direct_chat" ? [chatId] : []);
-        const draftMessage = readable(draftMessages.get(chatId), (set) =>
-            draftMessages.subscribe((d) => set(d[chatId] ?? {}))
+        this.chatUserIds = new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : []);
+        const draftMessage = readable(draftMessages.get(chat.chatId), (set) =>
+            draftMessages.subscribe((d) => set(d[chat.chatId] ?? {}))
         );
         this.textContent = derived(draftMessage, (d) => d.textContent);
         this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
         this.fileToAttach = derived(draftMessage, (d) => d.attachment);
         this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
+        this.filteredProposals = createFilteredProposalsStore(chat);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {

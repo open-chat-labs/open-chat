@@ -203,21 +203,6 @@ export enum NnsProposalTopic {
     SnsDecentralizationSale,
 }
 
-export const nnsProposalTopicLabels = [
-    "Unspecified",
-    "Neuron Management",
-    "Exchange Rate",
-    "Network Economics",
-    "Governance",
-    "Node Admin",
-    "Participant Management",
-    "Subnet Management",
-    "Network Canister Management",
-    "KYC",
-    "Node Provider Rewards",
-    "SNS Decentralization Sale",
-];
-
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
     action: number;

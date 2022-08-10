@@ -30,6 +30,7 @@ import { scrollStrategy } from "./settings";
 import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
+import { snsFunctions } from "./snsFunctions";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -69,14 +70,6 @@ type LoadedEventWindow = {
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 export const selectedChatStore = writable<ChatController | undefined>(undefined);
-
-export const isNnsProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
-    return (
-        $selectedChatStore !== undefined &&
-        $selectedChatStore.chatVal.kind === "group_chat" &&
-        $selectedChatStore.chatVal.subtype?.isNns
-    );
-});
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
     return (
@@ -130,6 +123,38 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
     }, {} as Record<string, ThreadSyncDetails[]>);
 });
 
+export const proposalTopicsStore = derived(
+    [selectedChatStore, snsFunctions],
+    ([selectedChat, snsFunctions]): Map<number, string> => {
+        if (selectedChat !== undefined) {
+            const chat = get(selectedChat.chat);
+            if (chat.kind === "group_chat" && chat.subtype !== undefined) {
+                if (chat.subtype.isNns) {
+                    return new Map([
+                        [1, "Neuron Management"],
+                        [3, "Network Economics"],
+                        [4, "Governance"],
+                        [5, "Node Admin"],
+                        [6, "Participant Management"],
+                        [7, "Subnet Management"],
+                        [8, "Network Canister Management"],
+                        [9, "KYC"],
+                        [10, "Node Provider Rewards"],
+                        [11, "SNS Decentralization Sale"],
+                    ]);
+                } else {
+                    const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
+                    if (snsFunctionsMap !== undefined) {
+                        return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
+                    }
+                }
+            }
+        }
+
+        return new Map();
+    }
+);
+
 function countThreads<T>(things: Record<string, T[]>): number {
     return Object.values(things)
         .map((ts) => ts.length)
@@ -162,7 +187,11 @@ export function setSelectedChat(
 
     closeNotificationsForChat(chatId);
 
-    if (chat.kind === "group_chat" && chat.subtype?.isNns === false) {
+    if (
+        chat.kind === "group_chat" &&
+        chat.subtype?.kind === "governance_proposals" &&
+        !chat.subtype.isNns
+    ) {
         api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
     }
 
