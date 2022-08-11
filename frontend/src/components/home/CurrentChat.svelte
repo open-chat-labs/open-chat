@@ -110,29 +110,6 @@
 
     onDestroy(unsub);
 
-    function toggleMuteNotifications() {
-        const op = controller.notificationsMuted ? "unmuted" : "muted";
-        controller.api
-            .toggleMuteNotifications(controller.chatId, !controller.notificationsMuted)
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                        values: { operation: $_(op) },
-                    });
-                } else {
-                    toastStore.showSuccessToast("toggleMuteNotificationsSucceeded", {
-                        values: { operation: $_(op) },
-                    });
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Error toggling mute notifications", err);
-                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                    values: { operation: $_(op) },
-                });
-            });
-    }
-
     function markAllRead() {
         controller.markAllRead();
     }
@@ -365,7 +342,7 @@
             on:blockUser
             on:unblockUser
             on:markAllRead={markAllRead}
-            on:toggleMuteNotifications={toggleMuteNotifications}
+            on:toggleMuteNotifications
             on:addParticipants
             on:showGroupDetails
             on:showProposalFilters

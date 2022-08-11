@@ -671,16 +671,15 @@ export function mergeUnconfirmedThreadsIntoSummary(
 export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmed: UnconfirmedMessages
+    unconfirmed: UnconfirmedMessages,
+    muted: boolean | undefined
 ): ChatSummary {
     const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
-
-    if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
     let mentions = chatSummary.kind === "group_chat" ? chatSummary.mentions : [];
-    if (unconfirmedMessages.length > 0) {
+    if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(userId, unconfirmedMessages);
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
@@ -694,19 +693,27 @@ export function mergeUnconfirmedIntoSummary(
             latestEventIndex = latestUnconfirmedMessage.index;
         }
     }
+    const notificationsMuted = muted ?? chatSummary.notificationsMuted;
 
-    return chatSummary.kind === "group_chat"
-        ? {
-              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed),
-              latestMessage,
-              latestEventIndex,
-              mentions,
-          }
-        : {
-              ...chatSummary,
-              latestMessage,
-              latestEventIndex,
-          };
+    if (chatSummary.kind === "group_chat") {
+        if (unconfirmedMessages !== undefined) {
+            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
+        }
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            mentions,
+            notificationsMuted,
+        };
+    } else {
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            notificationsMuted,
+        };
+    }
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {

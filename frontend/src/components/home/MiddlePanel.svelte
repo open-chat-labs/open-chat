@@ -59,6 +59,7 @@
             on:upgrade
             on:cancelPreview
             on:showPinned
+            on:toggleMuteNotifications
             on:openThread
             on:goToMessageIndex
             on:closeThread

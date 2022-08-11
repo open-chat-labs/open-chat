@@ -50,6 +50,7 @@ import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
+import { mutedChatsStore } from "../stores/mutedChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { createFilteredProposalsStore, IFilteredProposalsStore } from "../stores/filteredProposals";
 
@@ -85,8 +86,15 @@ export class ChatController {
         private _focusThreadMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
-        this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
-            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed)
+        this.chat = derived(
+            [serverChatSummary, unconfirmed, mutedChatsStore],
+            ([summary, unconfirmed, mutedChats]) =>
+                mergeUnconfirmedIntoSummary(
+                    user.userId,
+                    summary,
+                    unconfirmed,
+                    mutedChats.get(summary.chatId)
+                )
         );
 
         const chat = get(this.chat);

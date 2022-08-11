@@ -41,6 +41,7 @@
             on:deleteDirectChat
             on:pinChat
             on:unpinChat
+            on:toggleMuteNotifications
             createdUser={user}
             {searchResultsAvailable}
             {searchTerm}
