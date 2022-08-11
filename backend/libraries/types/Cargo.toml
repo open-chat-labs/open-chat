@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-candid = "0.7.14"
+candid = "0.7.15"
 ic-ledger-types = "0.1.1"
 serde = "1.0.137"
 serde_bytes = "0.11.6"

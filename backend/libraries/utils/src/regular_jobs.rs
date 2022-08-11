@@ -15,7 +15,7 @@ impl<Data> RegularJobs<Data> {
     pub fn run(&mut self, env: &dyn Environment, data: &mut Data) -> Vec<&'static str> {
         let mut jobs_run = Vec::new();
         for job in self.jobs.iter_mut() {
-            if job.try_run(env, data) {
+            if job.run_if_due(env, data) {
                 trace!(job.name, "Regular job executed");
                 jobs_run.push(job.name);
             }
@@ -41,7 +41,7 @@ impl<Data> RegularJob<Data> {
         }
     }
 
-    pub fn try_run(&mut self, env: &dyn Environment, data: &mut Data) -> bool {
+    pub fn run_if_due(&mut self, env: &dyn Environment, data: &mut Data) -> bool {
         let now = env.now();
         if now > self.next_due() {
             self.last_run = now;

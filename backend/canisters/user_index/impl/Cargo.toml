@@ -11,13 +11,12 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.14"
+candid = "0.7.15"
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
-#  We need a custom captcha that allows using custom RNGs https://github.com/dfinity/internet-identity/issues/472
-captcha = { git = 'https://github.com/nmattia/captcha', rev = '4751b6fa4e56229c2af5b9a28195ff039551d8e7' }
+captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 futures = "0.3.21"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
@@ -34,8 +33,8 @@ notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
 open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
 rand = "0.7.3"
-rand_chacha = "0.2.2"
-rand_core = "0.5.1"
+rand_chacha = "0.3.1"
+rand_core = "0.6.3"
 serde = "1.0.137"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 tracing = "0.1.33"
