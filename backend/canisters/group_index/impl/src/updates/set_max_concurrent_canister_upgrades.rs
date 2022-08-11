@@ -5,6 +5,7 @@ use group_index_canister::set_max_concurrent_canister_upgrades::{Response::*, *}
 use ic_cdk_macros::update;
 use tracing::info;
 
+// dfx --identity openchat canister --network ic call group_index set_max_concurrent_canister_upgrades '(record { value=N:nat64 })'
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn set_max_concurrent_canister_upgrades(args: Args) -> Response {

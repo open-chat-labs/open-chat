@@ -16,7 +16,6 @@ fn main() {
     generate_candid_method!(group, add_participants, update);
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);
-    generate_candid_method!(group, delete_group, update);
     generate_candid_method!(group, delete_messages, update);
     generate_candid_method!(group, disable_invite_code, update);
     generate_candid_method!(group, edit_message, update);
