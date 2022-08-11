@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::{read_state, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::c2c_toggle_mute_notifications;
 use ic_cdk_macros::update;
+use tracing::error;
 use types::{ChatId, Timestamped};
 use user_canister::mute_notifications::*;
-use tracing::error;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -28,12 +28,13 @@ async fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool) -> Response
             match group_canister_c2c_client::c2c_toggle_mute_notifications(chat_id.into(), &args).await {
                 Ok(response) => match response {
                     c2c_toggle_mute_notifications::Response::Success => {
-                        if mutate_state(|state| commit(&chat_id, mute, state)) {
+                        if mutate_state(|state| commit_group_chat(&chat_id, state)) {
                             return Response::Success;
                         }
                     }
                     c2c_toggle_mute_notifications::Response::CallerNotInGroup => {
-                        let message = "INCONSISTENT: Caller has reference to group in user canister but group does not contain caller";
+                        let message =
+                            "INCONSISTENT: Caller has reference to group in user canister but group does not contain caller";
                         error!(message);
                         return Response::InternalError(message.to_owned());
                     }
@@ -42,7 +43,7 @@ async fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool) -> Response
             }
         }
         Some(false) => {
-            mutate_state(|state| commit(&chat_id, mute, state));
+            mutate_state(|state| commit_direct_chat(&chat_id, mute, state));
             return Response::Success;
         }
         None => {}
@@ -61,14 +62,16 @@ fn is_group(chat_id: &ChatId, runtime_state: &RuntimeState) -> Option<bool> {
     }
 }
 
-fn commit(chat_id: &ChatId, mute: bool, runtime_state: &mut RuntimeState) -> bool {
-    if let Some(group_chat) = runtime_state.data.group_chats.get_mut(&chat_id) {
+fn commit_group_chat(chat_id: &ChatId, runtime_state: &mut RuntimeState) -> bool {
+    if let Some(group_chat) = runtime_state.data.group_chats.get_mut(chat_id) {
         group_chat.last_changed_for_my_data = runtime_state.env.now();
-        true
-    } else if let Some(direct_chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        direct_chat.notifications_muted = Timestamped::new(mute, runtime_state.env.now());
         true
     } else {
         false
     }
+}
+
+fn commit_direct_chat(chat_id: &ChatId, mute: bool, runtime_state: &mut RuntimeState) {
+    let direct_chat = runtime_state.data.direct_chats.get_mut(chat_id).unwrap();
+    direct_chat.notifications_muted = Timestamped::new(mute, runtime_state.env.now());
 }
