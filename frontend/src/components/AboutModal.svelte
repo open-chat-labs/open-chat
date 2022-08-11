@@ -4,10 +4,31 @@
     import ModalContent from "./ModalContent.svelte";
     import type { Canister } from "../domain/canister";
     import { rtlStore } from "../stores/rtl";
+    import Markdown from "./home/Markdown.svelte";
 
     const dispatch = createEventDispatcher();
 
     export let canister: Canister | undefined = undefined;
+
+    let body = `
+OpenChat (OC) is a fully featured chat application running on the [Internet Computer (IC)](https://medium.com/dfinity/the-internet-computer-for-geeks-a-new-dfinity-white-paper-ecb075b2d525) similar to Signal and Telegram, and will soon be getting a major new capability called “communities” which are like Slack workspaces or Discord servers. It is a responsive, progressive web application (PWA) and as such scales to take advantage of any screen size and integrates with devices in a similar way to native apps, with notifications on desktop and Android devices, and on iOS from next year (once Apple supports web push).
+
+The IC is a decentralized global compute platform which uses novel block-chain technology to achieve consensus within subnets. It is tamperproof, globally distributed in numerous independent data centers, and aims to be truly unstoppable by any centralized authority.
+
+The OC app uses repeatable builds, and runs as a collection of canisters. It will soon be possible for anyone to see the version of the source code that is running on any canister at any given time with a link back to the particular commit on github, and for them to prove this is true. Each user is given their own canister which holds their direct chat data, links to the groups they are members of, and also serves as a wallet allowing OC users to hold and manage tokens.
+
+OC users can send messages to each other containing ICP tokens (and soon BTC) and so can be used for global remittance.
+
+However, the ground-breaking difference between OpenChat and other similar apps, is that it will soon become a decentralized app (dapp), itself governed as a DAO. It will have its own governance token called CHAT, analogous to ICP, and be controlled by a system called the [SNS (Service Nervous System)](https://medium.com/dfinity/how-dapp-developers-placing-their-faith-in-total-decentralization-will-inherit-the-world-79419a3e36c9) which is analogous to the [NNS (Network Nervous System)](https://medium.com/dfinity/the-network-nervous-system-governing-the-internet-computer-1d176605d66a) on the IC.
+
+Users will be automatically rewarded with CHAT tokens for actively using the app and helping it grow. The algorithm used for this will be dicussed with the community and then development will start subject to an approved SNS proposal. Amongst other factors it will likely take into account the following:
+
+- posting relevant messages (no spamming!)
+- inviting others to join (if they become active too)
+- moderating public groups
+- owning/managing popular groups
+- time online
+`;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -16,54 +37,7 @@
 <ModalContent large={true} compactFooter={canister !== undefined} on:close>
     <div slot="header">About OpenChat</div>
     <div slot="body" class:rtl={$rtlStore}>
-        <p>
-            We are pleased to open up OpenChat for beta testing! The number of users has been
-            limited to <strong>30,000</strong> for now but this will soon increase.
-        </p>
-        <p>
-            We have rebuilt OpenChat from the ground up over the last 6+ months giving us a solid
-            platform going forwards. With a canister per user and per group this will ultimately
-            allow OpenChat to scale indefinitely.
-        </p>
-        <p>
-            Unfortunately we won't be able to migrate accounts from the original test version which
-            is still running at <a href="https://v1.oc.app" target="_blank">https://v1.oc.app</a>.
-            We will keep the old version running as long as possible (hopefully forever) so you can
-            continue to access your old messages.
-        </p>
-        <strong>New feature highlights</strong>
-        <ul>
-            <li>Message reactions 👍️</li>
-            <li>Searchable public groups</li>
-            <li>Group admin</li>
-            <li>Group preview</li>
-            <li>Voice messages</li>
-            <li>@user mentions</li>
-            <li>Inline _<em>markdown</em>_</li>
-        </ul>
-        <strong>Upcoming features/developments</strong>
-        <ul>
-            <li>Send cycles and ICP as chat messages</li>
-            <li>
-                <a
-                    target="_blank"
-                    href="https://forum.dfinity.org/t/open-governance-canister-for-sns-design-proposal/10224"
-                    >SNS integration</a> / tokenisation
-            </li>
-            <li>Tag/filter messages</li>
-            <li>Invite contacts</li>
-            <li>Edit sent messages</li>
-            <li>Message forwarding</li>
-            <li>Voice and video calls</li>
-            <li>Native apps</li>
-        </ul>
-        <p>
-            <em>Enjoy! - OpenChat devs</em>
-        </p>
-        <p class="limitations">
-            (Each user is currently limited to 100Mb storage for media messages and also to creating
-            10 groups - you can join as many as you like!)
-        </p>
+        <Markdown text={body} inline={false} />
     </div>
     <div class="footer" class:rtl={$rtlStore} slot="footer">
         {#if canister !== undefined}
@@ -89,27 +63,6 @@
         padding-right: $sp4;
     }
 
-    ul {
-        margin-left: 20px;
-        margin-bottom: $sp4;
-    }
-
-    p {
-        margin-bottom: $sp4;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-
-    a {
-        text-decoration: underline;
-    }
-
-    .limitations {
-        @include font-size(fs-50);
-    }
-
     .footer {
         display: flex;
         justify-content: flex-end;
@@ -123,11 +76,6 @@
     }
 
     .rtl {
-        ul {
-            margin-right: 20px;
-            margin-left: 0;
-        }
-
         .version {
             text-align: right;
         }
