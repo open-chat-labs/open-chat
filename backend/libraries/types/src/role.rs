@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Role {
     SuperAdmin(FallbackRole),
     Owner,
@@ -9,7 +9,7 @@ pub enum Role {
     Participant,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FallbackRole {
     Admin,
     Participant,
