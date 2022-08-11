@@ -17,7 +17,6 @@ mod c2c_toggle_mute_notifications;
 mod c2c_update_proposals;
 mod c2c_update_user_principal;
 mod change_role;
-mod delete_group;
 mod delete_messages;
 mod disable_invite_code;
 mod edit_message;

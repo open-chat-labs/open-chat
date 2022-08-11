@@ -180,10 +180,6 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
-export type DeleteGroupArgs = {};
-export type DeleteGroupResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : null };
 export interface DeleteMessagesArgs {
   'message_ids' : Array<MessageId>,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -945,7 +941,6 @@ export interface _SERVICE {
   >,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
-  'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'disable_invite_code' : ActorMethod<
     [DisableInviteCodeArgs],
