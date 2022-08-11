@@ -84,6 +84,7 @@
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
+    import { mutedChatsStore } from "../../stores/mutedChatsStore";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -926,8 +927,11 @@
     }
 
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
-        const op = ev.detail.mute ? "muted" : "unmuted";
-        api.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute)
+        const mute = ev.detail.mute;
+        const chatId = ev.detail.chatId;
+        const op = mute ? "muted" : "unmuted";
+        mutedChatsStore.toggle(chatId, mute);
+        api.toggleMuteNotifications(chatId, mute)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("toggleMuteNotificationsFailed", {
