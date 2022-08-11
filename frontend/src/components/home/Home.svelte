@@ -930,20 +930,24 @@
         const mute = ev.detail.mute;
         const chatId = ev.detail.chatId;
         const op = mute ? "muted" : "unmuted";
+
         mutedChatsStore.toggle(chatId, mute);
+
+        let success = false;
         api.toggleMuteNotifications(chatId, mute)
             .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                        values: { operation: $_(op) },
-                    });
-                }
+                success = resp === "success";
             })
             .catch((err) => {
                 rollbar.error("Error toggling mute notifications", err);
-                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                    values: { operation: $_(op) },
-                });
+            })
+            .finally(() => {
+                if (!success) {
+                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                        values: { operation: $_(op) },
+                    });
+                    mutedChatsStore.toggle(chatId, !mute);
+                }
             });
     }
 
