@@ -695,20 +695,25 @@ export function mergeUnconfirmedIntoSummary(
     }
     const notificationsMuted = muted ?? chatSummary.notificationsMuted;
 
-    return chatSummary.kind === "group_chat"
-        ? {
-              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed),
-              latestMessage,
-              latestEventIndex,
-              mentions,
-              notificationsMuted,
-          }
-        : {
-              ...chatSummary,
-              latestMessage,
-              latestEventIndex,
-              notificationsMuted,
-          };
+    if (chatSummary.kind === "group_chat") {
+        if (unconfirmedMessages !== undefined) {
+            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
+        }
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            mentions,
+            notificationsMuted,
+        };
+    } else {
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            notificationsMuted,
+        };
+    }
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
