@@ -183,6 +183,7 @@
                         on:click={closeSearch}
                         on:pinChat
                         on:unpinChat
+                        on:toggleMuteNotifications
                         on:deleteDirectChat />
                 {/each}
 

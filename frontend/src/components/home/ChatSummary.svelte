@@ -7,6 +7,8 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
+    import BellIcon from "svelte-material-icons/Bell.svelte";
+    import MutedIcon from "svelte-material-icons/BellOff.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
@@ -36,6 +38,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
+    import { notificationsSupported } from "../../stores/notifications";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -170,6 +173,10 @@
         dispatch("unpinChat", chatSummary.chatId);
     }
 
+    function toggleMuteNotifications(mute: boolean) {
+        dispatch("toggleMuteNotifications", { chatId: chatSummary.chatId, mute });
+    }
+
     $: displayDate = getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
@@ -177,6 +184,7 @@
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
+    $: muted = chatSummary.notificationsMuted;
 </script>
 
 <div
@@ -219,8 +227,13 @@
         {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
     </div>
     {#if !preview}
+        {#if muted && $notificationsSupported}
+            <div class="mute icon" class:rtl={$rtlStore}>
+                <MutedIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+            </div>
+        {/if}
         {#if pinned}
-            <div class="pin-icon">
+            <div class="pin icon">
                 <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
             </div>
         {/if}
@@ -262,6 +275,25 @@
                                     slot="icon" />
                                 <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                             </MenuItem>
+                        {/if}
+                        {#if $notificationsSupported}
+                            {#if muted}
+                                <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                                    <BellIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("unmuteNotifications")}</div>
+                                </MenuItem>
+                            {:else}
+                                <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                                    <MutedIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("muteNotifications")}</div>
+                                </MenuItem>
+                            {/if}
                         {/if}
                     </Menu>
                 </div>
@@ -353,9 +385,19 @@
             bottom: 0.4em;
         }
 
-        .pin-icon {
+        .icon {
             height: 0;
-            @include font-size(fs-80);
+            &.mute {
+                margin-left: 2px;
+                @include font-size(fs-70);
+                &.rtl {
+                    margin-left: 0;
+                    margin-right: 2px;
+                }
+            }
+            &.pin {
+                @include font-size(fs-80);
+            }
         }
 
         &:hover {

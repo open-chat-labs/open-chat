@@ -84,6 +84,7 @@
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
+    import { mutedChatsStore } from "../../stores/mutedChatsStore";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -925,6 +926,31 @@
         return chats.filter((c) => selectedChatId !== c.chatId && canSendMessages(c, $userStore));
     }
 
+    function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
+        const mute = ev.detail.mute;
+        const chatId = ev.detail.chatId;
+        const op = mute ? "muted" : "unmuted";
+
+        mutedChatsStore.toggle(chatId, mute);
+
+        let success = false;
+        api.toggleMuteNotifications(chatId, mute)
+            .then((resp) => {
+                success = resp === "success";
+            })
+            .catch((err) => {
+                rollbar.error("Error toggling mute notifications", err);
+            })
+            .finally(() => {
+                if (!success) {
+                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                        values: { operation: $_(op) },
+                    });
+                    mutedChatsStore.toggle(chatId, !mute);
+                }
+            });
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -953,6 +979,7 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}
@@ -982,6 +1009,7 @@
             on:dismissRecommendation={dismissRecommendation}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
+            on:toggleMuteNotifications={toggleMuteNotifications}
             on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />

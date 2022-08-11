@@ -38,12 +38,12 @@
     import { userStore } from "../../stores/user";
     import type { Readable } from "svelte/store";
     import Link from "../Link.svelte";
-    import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
     import { isProposalGroup } from "../../stores/chat";
+    import { notificationsSupported } from "../../stores/notifications";
 
     const dispatch = createEventDispatcher();
 
@@ -53,7 +53,6 @@
     export let unreadMessages: number;
     export let hasPinned: boolean;
 
-    let supportsNotifications = notificationsSupported();
     let viewProfile = false;
 
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
@@ -66,8 +65,8 @@
         dispatch("clearSelection");
     }
 
-    function toggleMuteNotifications() {
-        dispatch("toggleMuteNotifications");
+    function toggleMuteNotifications(mute: boolean) {
+        dispatch("toggleMuteNotifications", { chatId: $selectedChatSummary.chatId, mute });
     }
 
     function searchChat() {
@@ -308,14 +307,14 @@
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
-                        {#if supportsNotifications}
+                        {#if $notificationsSupported}
                             {#if $selectedChatSummary.notificationsMuted === true}
-                                <MenuItem on:click={toggleMuteNotifications}>
+                                <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                     <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                     <div slot="text">{$_("unmuteNotifications")}</div>
                                 </MenuItem>
                             {:else}
-                                <MenuItem on:click={toggleMuteNotifications}>
+                                <MenuItem on:click={() => toggleMuteNotifications(true)}>
                                     <BellOff
                                         size={$iconSize}
                                         color={"var(--icon-txt)"}
