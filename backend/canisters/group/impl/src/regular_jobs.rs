@@ -1,10 +1,10 @@
 use crate::Data;
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
-use utils::time::MINUTE_IN_MS;
+use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 pub(crate) fn build() -> RegularJobs<Data> {
-    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, MINUTE_IN_MS);
+    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, HOUR_IN_MS);
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
 
     RegularJobs::new(vec![check_cycles_balance, retry_deleting_files])
