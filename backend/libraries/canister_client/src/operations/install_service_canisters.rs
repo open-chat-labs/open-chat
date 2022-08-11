@@ -1,12 +1,9 @@
-use crate::utils::{
-    build_ic_agent, build_management_canister, create_empty_canister, get_canister_wasm, install_wasm, set_controllers,
-};
+use crate::utils::{build_ic_agent, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
 use crate::{CanisterIds, CanisterName};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
-use ic_utils::Canister;
 use types::{CanisterId, Version};
 
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
@@ -14,7 +11,7 @@ const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 
 pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
-    let management_canister = build_management_canister(&agent);
+    let management_canister = ManagementCanister::create(&agent);
 
     let (user_index_canister_id, group_index_canister_id, notifications_canister_id, online_users_aggregator_canister_id) =
         futures::future::join4(
@@ -62,7 +59,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
 pub async fn install_service_canisters(identity: BasicIdentity, url: String, canister_ids: CanisterIds, test_mode: bool) {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
-    let management_canister = build_management_canister(&agent);
+    let management_canister = ManagementCanister::create(&agent);
 
     install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
 }
@@ -70,7 +67,7 @@ pub async fn install_service_canisters(identity: BasicIdentity, url: String, can
 async fn install_service_canisters_impl(
     principal: Principal,
     canister_ids: &CanisterIds,
-    management_canister: &Canister<'_, ManagementCanister>,
+    management_canister: &ManagementCanister<'_>,
     test_mode: bool,
 ) {
     let controllers = vec![principal];

@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 callback_canister = { path = "../../canisters/callback/api" }
-candid = "0.7.14"
+candid = "0.7.15"
 canister_client_macros = { path = "../canister_client_macros", features = ["ingress"] }
 dirs = "3.0.2"
 futures = "0.3.21"
@@ -17,8 +17,8 @@ group_canister = { path = "../../canisters/group/api" }
 group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
-ic-agent = "0.15.0"
-ic-utils = "0.15.0"
+ic-agent = "0.20.0"
+ic-utils = "0.20.0"
 notifications_canister = { path = "../../canisters/notifications/api" }
 proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 serde = "1.0.137"

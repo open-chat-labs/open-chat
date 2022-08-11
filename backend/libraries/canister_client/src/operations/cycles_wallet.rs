@@ -2,10 +2,9 @@ use crate::utils::{create_empty_canister, delay, install_wasm, read_file_from_lo
 use candid::CandidType;
 use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
-use ic_utils::Canister;
 use types::{CanisterId, Cycles};
 
-pub async fn create_cycles_wallet(management_canister: &Canister<'_, ManagementCanister>) -> CanisterId {
+pub async fn create_cycles_wallet(management_canister: &ManagementCanister<'_>) -> CanisterId {
     print!("Creating cycles wallet canister... ");
     let cycles_wallet_canister_id = create_empty_canister(management_canister).await;
     println!("Ok. Canister id: {}", cycles_wallet_canister_id);
