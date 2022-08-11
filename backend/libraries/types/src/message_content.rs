@@ -104,7 +104,9 @@ impl MessageContent {
 
         if is_empty {
             Err(Empty)
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE {
+        // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
+        // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
+        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContent::GovernanceProposal(_)) {
             Err(TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
