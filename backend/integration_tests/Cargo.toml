@@ -9,7 +9,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.14"
+candid = "0.7.15"
 canister_client = { path = "../libraries/canister_client" }
 fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 futures = "0.3.21"
@@ -18,7 +18,7 @@ group_canister = { path = "../canisters/group/api" }
 group_canister_client = { path = "../canisters/group/client" }
 group_index_canister = { path = "../canisters/group_index/api" }
 group_index_canister_client = { path = "../canisters/group_index/client" }
-ic-agent = "0.15.0"
+ic-agent = "0.20.0"
 ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }

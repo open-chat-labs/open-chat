@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.53"
-candid = "0.7.14"
+candid = "0.7.15"
 futures = "0.3.21"
 garcon = "0.2.3"
-ic-agent = "0.15.0"
+ic-agent = "0.20.0"
 index_store = { path = "../../libraries/index_store" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }

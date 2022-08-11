@@ -1,11 +1,10 @@
-use crate::utils::{build_ic_agent, build_management_canister, delay, get_canister_wasm};
+use crate::utils::{build_ic_agent, delay, get_canister_wasm};
 use crate::CanisterName;
 use candid::CandidType;
 use ic_agent::identity::BasicIdentity;
 use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
 use ic_utils::interfaces::ManagementCanister;
-use ic_utils::Canister;
 use types::{CanisterId, CanisterWasm, Version};
 
 pub async fn upgrade_group_index_canister(
@@ -176,14 +175,14 @@ async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
     canister_name: CanisterName,
 ) {
     let agent = build_ic_agent(url, identity).await;
-    let management_canister = build_management_canister(&agent);
+    let management_canister = ManagementCanister::create(&agent);
     let canister_wasm = get_canister_wasm(canister_name, version);
 
     upgrade_wasm(&management_canister, &canister_id, &canister_wasm.module, args).await;
 }
 
 async fn upgrade_wasm<A: CandidType + Send + Sync>(
-    management_canister: &Canister<'_, ManagementCanister>,
+    management_canister: &ManagementCanister<'_>,
     canister_id: &CanisterId,
     wasm_bytes: &[u8],
     args: A,

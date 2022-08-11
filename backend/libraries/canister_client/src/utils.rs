@@ -4,7 +4,6 @@ use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
-use ic_utils::Canister;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -51,17 +50,8 @@ pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
     agent
 }
 
-pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> {
-    Canister::builder()
-        .with_agent(agent)
-        .with_canister_id(Principal::management_canister())
-        .with_interface(ManagementCanister)
-        .build()
-        .unwrap()
-}
-
 const TEN_TRILLION: u128 = 10_000_000_000_000;
-pub async fn create_empty_canister(management_canister: &Canister<'_, ManagementCanister>) -> CanisterId {
+pub async fn create_empty_canister(management_canister: &ManagementCanister<'_>) -> CanisterId {
     let (canister_id,) = management_canister
         .create_canister()
         .as_provisional_create_with_amount(Some(TEN_TRILLION))
@@ -73,7 +63,7 @@ pub async fn create_empty_canister(management_canister: &Canister<'_, Management
 }
 
 pub async fn set_controllers(
-    management_canister: &Canister<'_, ManagementCanister>,
+    management_canister: &ManagementCanister<'_>,
     canister_id: &CanisterId,
     controllers: Vec<Principal>,
 ) {
@@ -85,7 +75,7 @@ pub async fn set_controllers(
 }
 
 pub async fn install_wasm<A: CandidType + Sync + Send>(
-    management_canister: &Canister<'_, ManagementCanister>,
+    management_canister: &ManagementCanister<'_>,
     canister_id: &CanisterId,
     wasm_bytes: &[u8],
     init_args: A,
