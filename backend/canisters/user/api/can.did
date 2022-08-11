@@ -220,6 +220,7 @@ type MuteNotificationsResponse =
     variant {
         Success;
         ChatNotFound;
+        InternalError: text;
     };
 
 type UnmuteNotificationsArgs =
@@ -231,6 +232,7 @@ type UnmuteNotificationsResponse =
     variant {
         Success;
         ChatNotFound;
+        InternalError: text;
     };
 
 type AssumeGroupSuperAdminArgs =

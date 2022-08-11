@@ -39,4 +39,4 @@ export type NotificationStatus =
     | "hard-denied"
     | "granted";
 
-export type ToggleMuteNotificationResponse = "success" | "chat_not_found";
+export type ToggleMuteNotificationResponse = "success" | "chat_not_found" | "internal_error";
