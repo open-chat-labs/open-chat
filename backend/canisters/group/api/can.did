@@ -324,17 +324,6 @@ type RegisterProposalVoteResponse =
         InternalError: text;
     };
 
-type DeleteGroupArgs =
-    record {
-    };
-
-type DeleteGroupResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        InternalError;
-    };
-
 type MakePrivateArgs =
     record {
     };
@@ -508,7 +497,6 @@ type PublicSummarySuccess =
 
 service: {
     // Owner only
-    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
 
     // Admin only

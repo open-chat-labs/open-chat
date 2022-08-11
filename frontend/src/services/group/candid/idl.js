@@ -57,12 +57,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const DeleteGroupArgs = IDL.Record({});
-  const DeleteGroupResponse = IDL.Variant({
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'InternalError' : IDL.Null,
-  });
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const DeleteMessagesArgs = IDL.Record({
@@ -815,7 +809,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
-    'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
