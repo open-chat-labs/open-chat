@@ -24,17 +24,16 @@ fn unmute_notifications(args: Args) -> Response {
 
 fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
-    let notifications_muted = Timestamped::new(mute, now);
 
     match runtime_state.data.group_chats.get_mut(&chat_id) {
         Some(group_chat) => {
-            group_chat.notifications_muted = notifications_muted;
+            group_chat.changed_by_me = now;
             ic_cdk::spawn(toggle_mute_notifications_on_group_canister(group_chat.chat_id.into(), mute));
             Response::Success
         }
         None => match runtime_state.data.direct_chats.get_mut(&chat_id) {
             Some(direct_chat) => {
-                direct_chat.notifications_muted = notifications_muted;
+                direct_chat.notifications_muted = Timestamped::new(mute, now);
                 Response::Success
             }
             None => Response::ChatNotFound,

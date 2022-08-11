@@ -21,7 +21,7 @@ fn c2c_try_add_to_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         runtime_state
             .data
             .group_chats
-            .join(chat_id, false, false, args.latest_message_index, now);
+            .join(chat_id, false, args.latest_message_index, now);
 
         runtime_state.data.recommended_group_exclusions.remove(&chat_id, now);
 

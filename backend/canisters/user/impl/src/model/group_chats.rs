@@ -37,7 +37,7 @@ impl GroupChats {
     }
 
     pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
-        self.join(chat_id, false, false, None, now);
+        self.join(chat_id, false, None, now);
         self.groups_created += 1;
         true
     }
@@ -46,13 +46,12 @@ impl GroupChats {
         &mut self,
         chat_id: ChatId,
         as_super_admin: bool,
-        notifications_muted: bool,
         read_up_to: Option<MessageIndex>,
         now: TimestampMillis,
     ) -> bool {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
-                e.insert(GroupChat::new(chat_id, as_super_admin, notifications_muted, read_up_to, now));
+                e.insert(GroupChat::new(chat_id, as_super_admin, read_up_to, now));
                 self.removed.retain(|g| g.chat_id != chat_id);
                 true
             }
