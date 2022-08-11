@@ -9,7 +9,7 @@ pub struct GroupChat {
     pub date_joined: TimestampMillis,
     pub read_by_me: Timestamped<RangeSet>,
     #[serde(alias = "notifications_muted", deserialize_with = "deserialize_notifications_muted")]
-    pub changed_by_me: TimestampMillis,
+    pub last_changed_for_my_data: TimestampMillis,
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
@@ -33,7 +33,7 @@ impl GroupChat {
             chat_id,
             date_joined: now,
             read_by_me: Timestamped::new(read_by_me, now),
-            changed_by_me: now,
+            last_changed_for_my_data: now,
             is_super_admin,
             threads_read: TimestampedMap::default(),
         }
@@ -42,7 +42,7 @@ impl GroupChat {
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.read_by_me.timestamp,
-            self.changed_by_me,
+            self.last_changed_for_my_data,
             self.threads_read.last_updated().unwrap_or_default(),
         ]
         .iter()

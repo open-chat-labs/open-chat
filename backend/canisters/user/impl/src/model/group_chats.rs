@@ -91,4 +91,8 @@ impl GroupChats {
     pub fn len(&self) -> usize {
         self.group_chats.len()
     }
+
+    pub fn has(&self, chat_id: &ChatId) -> bool {
+        self.group_chats.contains_key(chat_id)
+    }
 }
