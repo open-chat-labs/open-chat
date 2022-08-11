@@ -6,6 +6,23 @@ function createStore() {
     const DELETE_LOCAL_VALUE_INTERVAL = 60000;
     const timers: Map<string, number> = new Map();
     const store = immutableStore<Map<string, boolean>>(new Map());
+
+    function updateStore(chatId: string, mute: boolean) {
+        store.update((map) => {
+            const clone = new Map(map);
+            clone.set(chatId, mute);
+            return clone;
+        });
+    }
+
+    function deleteFromStore(chatId: string) {
+        store.update((map) => {
+            const clone = new Map(map);
+            clone.delete(chatId);
+            return clone;
+        });
+    }
+
     return {
         subscribe: store.subscribe,
         toggle: (chatId: string, mute: boolean) => {
@@ -20,23 +37,11 @@ function createStore() {
             // chatId after 1 minute.
             const newTimer = window.setTimeout(() => {
                 timers.delete(chatId);
-                mutedChatsStore.delete(chatId);
+                deleteFromStore(chatId);
             }, DELETE_LOCAL_VALUE_INTERVAL);
             timers.set(chatId, newTimer);
 
-            // Update the store
-            store.update((map) => {
-                const clone = new Map(map);
-                clone.set(chatId, mute);
-                return clone;
-            });
-        },
-        delete: (chatId: string) => {
-            store.update((map) => {
-                const clone = new Map(map);
-                clone.delete(chatId);
-                return clone;
-            });
+            updateStore(chatId, mute);
         },
     };
 }
