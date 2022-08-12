@@ -21,6 +21,7 @@ pub(crate) struct UpdatesArgs {
     group_index_canister_id: CanisterId,
     updates_since: UpdatesSince,
     group_chat_ids: Vec<ChatId>,
+    group_chat_ids_with_my_changes: Vec<ChatId>,
     now: TimestampMillis,
 }
 
@@ -41,10 +42,17 @@ pub(crate) fn build_summaries_args(now: TimestampMillis, data: &Data) -> Summari
 }
 
 pub(crate) fn build_updates_args(updates_since: UpdatesSince, now: TimestampMillis, data: &Data) -> UpdatesArgs {
+    let since = updates_since.timestamp;
     UpdatesArgs {
         group_index_canister_id: data.group_index_canister_id,
         updates_since,
         group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
+        group_chat_ids_with_my_changes: data
+            .group_chats
+            .iter()
+            .filter(|g| g.last_changed_for_my_data > since)
+            .map(|g| g.chat_id)
+            .collect(),
         now,
     }
 }
@@ -57,6 +65,7 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Summaries, String> 
             .as_ref()
             .map_or(UpdatesSince::default(), |c| c.updates_args()),
         group_chat_ids: args.group_chat_ids,
+        group_chat_ids_with_my_changes: Vec::new(),
         now: args.now,
     };
 
@@ -124,7 +133,10 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
         group_chats_added.retain(|id| {
             !has_group_been_deleted(&filter_groups_result.deleted_groups, id) && !upgrades_in_progress.contains(id)
         });
-        group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id) && !upgrades_in_progress.contains(id));
+        group_chats_to_check_for_updates.retain(|(id, _)| {
+            (active_groups.contains(id) && !upgrades_in_progress.contains(id))
+                || args.group_chat_ids_with_my_changes.contains(id)
+        });
 
         let summaries_future = c2c::summaries(group_chats_added);
         let summary_updates_future = c2c::summary_updates(group_chats_to_check_for_updates);
