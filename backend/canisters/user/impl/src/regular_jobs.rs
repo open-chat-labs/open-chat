@@ -1,5 +1,5 @@
 use crate::group_summaries::{build_summaries_args, SummariesArgs};
-use crate::{mutate_state, CachedGroupSummaries, Data};
+use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -13,7 +13,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
     );
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
     let update_cached_group_summaries =
-        RegularJob::new("Update cached group summaries", update_cached_group_summaries, DAY_IN_MS);
+        RegularJob::new("Update cached group summaries", update_cached_group_summaries, MINUTE_IN_MS);
 
     RegularJobs::new(vec![
         check_cycles_balance,
@@ -44,11 +44,21 @@ fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
 
 async fn update_cached_group_summaries_impl(args: SummariesArgs) {
     if let Ok(summaries) = crate::group_summaries::summaries(args).await {
-        if !summaries.groups.is_empty() && summaries.upgrades_in_progress.is_empty() {
+        // We need this check because the call to `summaries` may have been synchronous in which
+        // case we still hold the borrow on `data` which was passed into
+        // `update_cached_group_summaries`.
+        if can_borrow_state() {
             mutate_state(|state| {
                 let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
-                    groups: summaries.groups,
+                    groups: summaries
+                        .groups
+                        .into_iter()
+                        // This ensures we don't cache any groups which have been deleted or the
+                        // user has been removed from, which they were members of at the beginning
+                        // of this async operation.
+                        .filter(|g| state.data.group_chats.exists(&g.chat_id))
+                        .collect(),
                     timestamp: now,
                 });
             });

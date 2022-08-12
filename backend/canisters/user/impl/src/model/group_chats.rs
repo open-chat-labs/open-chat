@@ -68,6 +68,10 @@ impl GroupChats {
         group
     }
 
+    pub fn exists(&self, chat_id: &ChatId) -> bool {
+        self.group_chats.contains_key(chat_id)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
     }
