@@ -13,7 +13,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
     );
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
     let update_cached_group_summaries =
-        RegularJob::new("Update cached group summaries", update_cached_group_summaries, MINUTE_IN_MS);
+        RegularJob::new("Update cached group summaries", update_cached_group_summaries, DAY_IN_MS);
 
     RegularJobs::new(vec![
         check_cycles_balance,
