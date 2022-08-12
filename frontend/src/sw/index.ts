@@ -90,7 +90,7 @@ async function isClientFocused(): Promise<boolean> {
         includeUncontrolled: true,
     });
 
-    return windowClients.some((wc) => wc.focused);
+    return windowClients.some((wc) => wc.focused && wc.visibilityState === "visible");
 }
 
 async function showNotification(notification: Notification): Promise<void> {
