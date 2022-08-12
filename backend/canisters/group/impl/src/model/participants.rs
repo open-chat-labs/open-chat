@@ -1,14 +1,13 @@
 use crate::model::mentions::Mentions;
 use candid::Principal;
 use chat_events::AllChatEvents;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
     EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
     Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
-use utils::time;
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
 
@@ -373,24 +372,14 @@ pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    #[serde(deserialize_with = "deserialize_notifications_muted")]
     pub notifications_muted: Timestamped<bool>,
     pub mentions: Vec<MentionInternal>,
-    #[serde(default)]
     pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
-}
-
-fn deserialize_notifications_muted<'de, D>(deserializer: D) -> Result<Timestamped<bool>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let notifications_muted: bool = de::Deserialize::deserialize(deserializer)?;
-    Ok(Timestamped::new(notifications_muted, time::now_millis()))
 }
 
 impl ParticipantInternal {

@@ -58,7 +58,6 @@ pub struct GroupChatSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
@@ -115,7 +114,6 @@ pub struct GroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[serde(default)]
     pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
@@ -142,7 +140,6 @@ pub struct PublicGroupSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
@@ -160,7 +157,6 @@ pub struct GroupChatSummaryInternal {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
@@ -279,7 +275,6 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[serde(default)]
     pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
