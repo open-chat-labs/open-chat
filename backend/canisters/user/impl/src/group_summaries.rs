@@ -64,6 +64,10 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Summaries, String> 
 
     let groups = if let Some(cached) = args.cached_group_summaries {
         let mut merged = merge_updates(cached.groups, updates.updated);
+        if !updates.deleted.is_empty() {
+            let deleted: HashSet<_> = updates.deleted.into_iter().map(|d| d.id).collect();
+            merged.retain(|g| !deleted.contains(&g.chat_id));
+        }
         merged.extend(updates.added);
         merged
     } else {
@@ -133,11 +137,7 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
 
         added = s;
         updated = su;
-        deleted = filter_groups_result
-            .deleted_groups
-            .into_iter()
-            .filter(|g| g.timestamp > args.updates_since.timestamp)
-            .collect();
+        deleted = filter_groups_result.deleted_groups;
         upgrades_in_progress = filter_groups_result.upgrades_in_progress;
     }
 
