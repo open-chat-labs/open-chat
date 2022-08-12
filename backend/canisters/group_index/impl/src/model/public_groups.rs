@@ -172,7 +172,6 @@ pub struct PublicGroupInfo {
     id: ChatId,
     name: String,
     description: String,
-    #[serde(default)]
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     created: TimestampMillis,

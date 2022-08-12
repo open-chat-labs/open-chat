@@ -8,7 +8,6 @@ pub struct Args {
     pub creator_principal: Principal,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub subtype: Option<GroupSubtype>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,

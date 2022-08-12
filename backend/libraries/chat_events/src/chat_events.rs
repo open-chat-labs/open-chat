@@ -684,7 +684,6 @@ impl AllChatEvents {
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     chat_id: ChatId,
-    #[serde(default)]
     thread_root_message_index: Option<MessageIndex>,
     events_type: ChatEventsType,
     events: ChatEventsVec,
