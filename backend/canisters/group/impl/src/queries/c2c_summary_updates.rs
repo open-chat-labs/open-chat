@@ -56,6 +56,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
                 Some(args.updates_since),
                 MAX_THREADS_IN_SUMMARY,
             ),
+            notifications_muted: participant.notifications_muted.if_set_after(args.updates_since).copied(),
         };
         Success(Box::new(SuccessResult { updates }))
     } else {

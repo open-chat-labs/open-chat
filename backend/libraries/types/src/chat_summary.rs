@@ -296,6 +296,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub notifications_muted: Option<bool>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -312,7 +313,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             participant_count: s.participant_count,
             role: s.role,
             read_by_me: None,
-            notifications_muted: None,
+            notifications_muted: s.notifications_muted,
             mentions: s.mentions,
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
