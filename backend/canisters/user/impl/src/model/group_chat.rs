@@ -1,6 +1,7 @@
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
+use utils::time;
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
@@ -8,18 +9,14 @@ pub struct GroupChat {
     pub chat_id: ChatId,
     pub date_joined: TimestampMillis,
     pub read_by_me: Timestamped<RangeSet>,
-    #[serde(alias = "notifications_muted", deserialize_with = "deserialize_notifications_muted")]
+    #[serde(default = "time_now")]
     pub last_changed_for_my_data: TimestampMillis,
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
 }
 
-fn deserialize_notifications_muted<'de, D>(deserializer: D) -> Result<TimestampMillis, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let notifications_muted: Timestamped<bool> = de::Deserialize::deserialize(deserializer)?;
-    Ok(notifications_muted.timestamp)
+fn time_now() -> TimestampMillis {
+    time::now_millis()
 }
 
 impl GroupChat {
