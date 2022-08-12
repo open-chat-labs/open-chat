@@ -56,7 +56,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
                 Some(args.updates_since),
                 MAX_THREADS_IN_SUMMARY,
             ),
-            notifications_muted: participant.notifications_muted.if_set_after(args.updates_since).copied(),
+            notifications_muted: updates_from_events.notifications_muted,
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -80,6 +80,7 @@ struct UpdatesFromEvents {
     permissions: Option<GroupPermissions>,
     affected_events: HashSet<EventIndex>,
     is_public: Option<bool>,
+    notifications_muted: Option<bool>,
 }
 
 fn process_events(
@@ -101,6 +102,11 @@ fn process_events(
     if runtime_state.data.subtype.timestamp > since {
         updates.latest_update = max(updates.latest_update, Some(runtime_state.data.subtype.timestamp));
         updates.subtype = OptionUpdate::from_update(runtime_state.data.subtype.value.clone());
+    }
+
+    if participant.notifications_muted.timestamp > since {
+        updates.latest_update = max(updates.latest_update, Some(participant.notifications_muted.timestamp));
+        updates.notifications_muted = Some(participant.notifications_muted.value);
     }
 
     let new_proposal_votes = participant
