@@ -9,6 +9,7 @@ export type AddedToGroupNotification = {
     groupName: string;
     addedBy: string;
     addedByUsername: string;
+    timestamp: bigint;
 };
 
 export type DirectNotification = {

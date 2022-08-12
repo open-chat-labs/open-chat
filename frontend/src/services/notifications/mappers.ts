@@ -76,6 +76,7 @@ export function addedToGroupNotification(
         groupName: candid.group_name,
         addedBy: candid.added_by.toString(),
         addedByUsername: candid.added_by_name,
+        timestamp: candid.timestamp,
     };
 }
 

@@ -24,6 +24,7 @@ type AddedToGroupNotification =
         group_name: text;
         added_by: UserId;
         added_by_name: text;
+        timestamp: TimestampMillis;
     };
 
 type AudioContent =

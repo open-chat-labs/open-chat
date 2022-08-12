@@ -98,6 +98,7 @@ async function showNotification(notification: Notification): Promise<void> {
     let title = "OpenChat - ";
     let body: string;
     let path: string;
+    let timestamp: number;
     if (notification.kind === "direct_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
@@ -107,6 +108,7 @@ async function showNotification(notification: Notification): Promise<void> {
         body = content.text;
         icon = content.image ?? icon;
         path = notification.sender;
+        timestamp = Number(notification.message.timestamp);
     } else if (notification.kind === "group_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
@@ -117,11 +119,13 @@ async function showNotification(notification: Notification): Promise<void> {
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
         path = notification.chatId;
+        timestamp = Number(notification.message.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
         title += notification.groupName;
         body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
         path = notification.chatId;
+        timestamp = Number(notification.timestamp);
     } else {
         throw new UnsupportedValueError("Unexpected notification type received", notification);
     }
@@ -130,6 +134,7 @@ async function showNotification(notification: Notification): Promise<void> {
         body,
         icon,
         tag: path,
+        timestamp,
         data: {
             path,
         },

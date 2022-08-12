@@ -494,6 +494,7 @@ export const Notification = IDL.Variant({
   'AddedToGroupNotification' : IDL.Record({
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
+    'timestamp' : IDL.Nat64,
     'chat_id' : IDL.Principal,
     'group_name' : IDL.Text,
   }),
