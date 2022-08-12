@@ -16,7 +16,7 @@ callback_canister_c2c_client = { path = "../../callback/c2c_client" }
 candid = "0.7.15"
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
+canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
 futures = "0.3.21"
@@ -37,7 +37,7 @@ open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_cl
 search = { path = "../../../libraries/search" }
 serde = "1.0.137"
 serde_bytes = "0.11.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
+stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
 tracing = "0.1.33"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils", features = ["range-set"] }

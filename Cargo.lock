@@ -754,7 +754,7 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
+source = "git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7#d9c575fb4b91e1cfe80add0746eac389df33c8f7"
 
 [[package]]
 name = "canister_tracing_macros"
@@ -3772,7 +3772,7 @@ dependencies = [
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
+source = "git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7#d9c575fb4b91e1cfe80add0746eac389df33c8f7"
 dependencies = [
  "ic-cdk",
  "rmp-serde",
