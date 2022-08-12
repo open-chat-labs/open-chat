@@ -233,7 +233,7 @@ impl GroupChatSummaryInternal {
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
             owner_id: updates.owner_id.unwrap_or(self.owner_id),
             permissions: updates.permissions.unwrap_or(self.permissions),
-            notifications_muted: self.notifications_muted,
+            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
             my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
             latest_threads,
