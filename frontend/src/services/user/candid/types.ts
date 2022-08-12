@@ -563,7 +563,8 @@ export type MigrateUserPrincipalResponse = { 'PrincipalAlreadyInUse' : null } |
 export type Milliseconds = bigint;
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export type NnsNeuronId = bigint;
 export interface NnsProposal {
   'id' : ProposalId,
@@ -898,7 +899,8 @@ export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface UnpinChatRequest { 'chat_id' : ChatId }
 export type UnpinChatResponse = { 'Success' : null };
 export interface UpdatedMessage {

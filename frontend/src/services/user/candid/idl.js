@@ -685,6 +685,7 @@ export const idlFactory = ({ IDL }) => {
   const MuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const PinChatRequest = IDL.Record({ 'chat_id' : ChatId });
   const PinChatResponse = IDL.Variant({
@@ -860,6 +861,7 @@ export const idlFactory = ({ IDL }) => {
   const UnmuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
   const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });

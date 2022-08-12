@@ -233,7 +233,7 @@ impl GroupChatSummaryInternal {
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
             owner_id: updates.owner_id.unwrap_or(self.owner_id),
             permissions: updates.permissions.unwrap_or(self.permissions),
-            notifications_muted: self.notifications_muted,
+            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
             my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
             latest_threads,
@@ -296,6 +296,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub notifications_muted: Option<bool>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -312,7 +313,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             participant_count: s.participant_count,
             role: s.role,
             read_by_me: None,
-            notifications_muted: None,
+            notifications_muted: s.notifications_muted,
             mentions: s.mentions,
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,

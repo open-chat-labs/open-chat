@@ -30,6 +30,9 @@ export function muteNotificationsResponse(
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
     throw new UnsupportedValueError(
         `Unexpected ApiToggleMuteNotificationsResponse type received`,
         candid
