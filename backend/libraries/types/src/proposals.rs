@@ -1,4 +1,4 @@
-use crate::{CanisterId, NeuronId, ProposalId, TimestampMillis, UserId};
+use crate::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -10,6 +10,14 @@ pub enum Proposal {
 }
 
 impl Proposal {
+    pub fn is_nns(&self) -> bool {
+        matches!(self, Proposal::NNS(_))
+    }
+
+    pub fn is_sns(&self) -> bool {
+        !self.is_nns()
+    }
+
     pub fn id(&self) -> ProposalId {
         match self {
             Proposal::NNS(p) => p.id,
@@ -78,7 +86,7 @@ impl Proposal {
 pub struct NnsProposal {
     pub id: ProposalId,
     pub topic: i32,
-    pub proposer: NeuronId,
+    pub proposer: NnsNeuronId,
     pub created: TimestampMillis,
     pub title: String,
     pub summary: String,
@@ -109,7 +117,7 @@ impl NnsProposal {
 pub struct SnsProposal {
     pub id: ProposalId,
     pub action: u64,
-    pub proposer: NeuronId,
+    pub proposer: SnsNeuronId,
     pub created: TimestampMillis,
     pub title: String,
     pub summary: String,

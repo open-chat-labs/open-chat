@@ -1,6 +1,6 @@
 use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
 use crate::{ProposalsUpdatedInternal, ThreadUpdatedInternal};
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use itertools::Itertools;
 use search::*;
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ impl AllChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
+            thread_root_message_index: None,
             events_type: ChatEventsType::Direct,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -50,6 +51,7 @@ impl AllChatEvents {
     ) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id,
+            thread_root_message_index: None,
             events_type: ChatEventsType::Group,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -76,7 +78,9 @@ impl AllChatEvents {
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
         let chat_events = if let Some(root_message_index) = args.thread_root_message_index {
-            self.threads.entry(root_message_index).or_insert_with(ChatEvents::new_thread)
+            self.threads
+                .entry(root_message_index)
+                .or_insert_with(|| ChatEvents::new_thread(self.chat_id, root_message_index))
         } else {
             &mut self.main
         };
@@ -474,6 +478,15 @@ impl AllChatEvents {
             .collect()
     }
 
+    pub fn hydrate_mention(&self, mention: &MentionInternal) -> Option<Mention> {
+        let chat_events = if let Some(root_message_index) = mention.thread_root_message_index {
+            self.threads.get(&root_message_index)?
+        } else {
+            &self.main
+        };
+        chat_events.hydrate_mention(&mention.message_index)
+    }
+
     pub fn metrics(&self) -> &ChatMetrics {
         &self.metrics
     }
@@ -671,6 +684,7 @@ impl AllChatEvents {
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     chat_id: ChatId,
+    thread_root_message_index: Option<MessageIndex>,
     events_type: ChatEventsType,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -744,9 +758,10 @@ pub enum ToggleReactionResult {
 }
 
 impl ChatEvents {
-    pub fn new_thread() -> ChatEvents {
+    pub fn new_thread(chat_id: ChatId, thread_root_message_index: MessageIndex) -> ChatEvents {
         ChatEvents {
-            chat_id: Principal::anonymous().into(),
+            chat_id,
+            thread_root_message_index: Some(thread_root_message_index),
             events_type: ChatEventsType::Thread,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -834,9 +849,7 @@ impl ChatEvents {
 
         if latest_thread_message_index_if_updated.is_some() {
             summary.reply_count += 1;
-            if !summary.participant_ids.contains(&user_id) {
-                summary.participant_ids.push(user_id);
-            }
+            summary.participant_ids.push_if_not_contains(user_id);
         }
     }
 
@@ -1026,16 +1039,19 @@ impl ChatEvents {
             .map(|m| m.message_index)
     }
 
-    pub fn hydrate_mention(&self, mention: &MentionInternal) -> Option<Mention> {
-        let event_index = *self.message_index_map.get(&mention.message_index)?;
-
-        self.get(event_index).and_then(|e| e.event.as_message()).map(|m| Mention {
-            thread_root_message_index: mention.thread_root_message_index,
-            message_id: m.message_id,
-            message_index: m.message_index,
-            event_index,
-            mentioned_by: m.sender,
-        })
+    pub fn hydrate_mention(&self, message_index: &MessageIndex) -> Option<Mention> {
+        self.message_index_map
+            .get(message_index)
+            .and_then(|event_index| self.get(*event_index))
+            .and_then(|e| {
+                e.event.as_message().map(|m| Mention {
+                    thread_root_message_index: self.thread_root_message_index,
+                    message_id: m.message_id,
+                    message_index: m.message_index,
+                    event_index: e.index,
+                    mentioned_by: m.sender,
+                })
+            })
     }
 
     pub fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {

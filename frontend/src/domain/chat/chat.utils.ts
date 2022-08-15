@@ -35,6 +35,8 @@ import type {
     ThreadSyncDetails,
     ThreadRead,
     ThreadSyncDetailsUpdates,
+    GroupSubtype,
+    GroupSubtypeUpdate,
 } from "./chat";
 import { dedupe, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -91,7 +93,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "poll_content") {
         text = "poll";
     } else if (content.kind === "proposal_content") {
-        text = "governance proposal";
+        text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {
@@ -567,6 +569,7 @@ function mergeUpdatedGroupChat(
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
         public: updatedChat.public ?? chat.public,
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
+        subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
     };
 }
 
@@ -595,6 +598,16 @@ function mergeThreadSyncDetails(
             toRecord(existing, (t) => t.threadRootMessageIndex)
         )
     );
+}
+
+function mergeSubtype(updated: GroupSubtypeUpdate, existing: GroupSubtype): GroupSubtype {
+    if (updated.kind === "no_change") {
+        return existing;
+    } else if (updated.kind === "set_to_none") {
+        return undefined;
+    } else {
+        return updated.subtype;
+    }
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
@@ -658,16 +671,15 @@ export function mergeUnconfirmedThreadsIntoSummary(
 export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmed: UnconfirmedMessages
+    unconfirmed: UnconfirmedMessages,
+    muted: boolean | undefined
 ): ChatSummary {
     const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
-
-    if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
     let mentions = chatSummary.kind === "group_chat" ? chatSummary.mentions : [];
-    if (unconfirmedMessages.length > 0) {
+    if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(userId, unconfirmedMessages);
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
@@ -681,19 +693,27 @@ export function mergeUnconfirmedIntoSummary(
             latestEventIndex = latestUnconfirmedMessage.index;
         }
     }
+    const notificationsMuted = muted ?? chatSummary.notificationsMuted;
 
-    return chatSummary.kind === "group_chat"
-        ? {
-              ...mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed),
-              latestMessage,
-              latestEventIndex,
-              mentions,
-          }
-        : {
-              ...chatSummary,
-              latestMessage,
-              latestEventIndex,
-          };
+    if (chatSummary.kind === "group_chat") {
+        if (unconfirmedMessages !== undefined) {
+            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
+        }
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            mentions,
+            notificationsMuted,
+        };
+    } else {
+        return {
+            ...chatSummary,
+            latestMessage,
+            latestEventIndex,
+            notificationsMuted,
+        };
+    }
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
@@ -732,7 +752,7 @@ function mergeThings<A, U>(
     );
 }
 
-function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
+export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
@@ -742,14 +762,17 @@ function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boole
     return false;
 }
 
-function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][] {
+export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
     return groupWhile(sameUser, events);
 }
 
-export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
+export function groupEvents(
+    events: EventWrapper<ChatEvent>[],
+    groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
+): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
-        .map(groupBySender);
+        .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
@@ -1157,7 +1180,7 @@ export function groupChatFromCandidate(
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: false,
+        subtype: undefined,
     };
 }
 
@@ -1547,6 +1570,7 @@ export function canForward(content: MessageContent): boolean {
         content.kind !== "crypto_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
+        content.kind !== "proposal_content" &&
         content.kind !== "placeholder_content"
     );
 }

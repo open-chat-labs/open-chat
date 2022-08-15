@@ -575,9 +575,12 @@
         "youVotedAdopt": "Votaste adoptar!",
         "youVotedReject": "Votaste rechazar!",
         "additionalContent": "contenido adicional",
-        "viewOnDashboard": "ver en el tablero"
+        "filter": "Filtrar propuestas",
+        "collapse": "Ocultar mensaje"
     },
     "yes": "Sí",
     "no": "No",
-    "quoteReply": "Citar respuesta"
+    "quoteReply": "Citar respuesta",
+    "groupNameTooShort": "El nombre del grupo es demasiado corto.",
+    "groupNameReserved": "El nombre del grupo está reservado."
 }

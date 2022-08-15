@@ -95,6 +95,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            git_commit_id: utils::git::git_commit_id(),
             direct_chats: self.data.direct_chats.len() as u32,
             group_chats: self.data.group_chats.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
@@ -142,6 +143,8 @@ struct Data {
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
+    #[serde(default)]
+    pub pending_user_principal_migration: Option<Principal>,
 }
 
 impl Data {
@@ -180,6 +183,7 @@ impl Data {
             phone_is_verified: false,
             user_created: now,
             pinned_chats: Timestamped::default(),
+            pending_user_principal_migration: None,
         }
     }
 
@@ -228,6 +232,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub git_commit_id: String,
     pub direct_chats: u32,
     pub group_chats: u32,
     pub groups_created: u32,

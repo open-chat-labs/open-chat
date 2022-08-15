@@ -7,8 +7,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.14"
+candid = "0.7.15"
 canister_client_macros = { path = "../canister_client_macros" }
+compile-time-run = "0.2.12"
 getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = "0.5.2"
 itertools = "0.10.3"

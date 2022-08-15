@@ -1,11 +1,12 @@
+use crate::model::mentions::Mentions;
 use candid::Principal;
-use chat_events::ChatEvents;
+use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
     EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
-    UserId, MAX_RETURNED_MENTIONS,
+    Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
@@ -27,8 +28,9 @@ impl Participants {
             role: Role::Owner,
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
-            notifications_muted: false,
+            notifications_muted: Timestamped::new(false, now),
             mentions: Vec::new(),
+            mentions_v2: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
         };
@@ -62,8 +64,9 @@ impl Participants {
                         role: if as_super_admin { Role::SuperAdmin(FallbackRole::Participant) } else { Role::Participant },
                         min_visible_event_index,
                         min_visible_message_index,
-                        notifications_muted,
+                        notifications_muted: Timestamped::new(notifications_muted, now),
                         mentions: Vec::new(),
+                        mentions_v2: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
                     };
@@ -147,13 +150,13 @@ impl Participants {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()
-                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| p.notifications_muted))
+                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| p.notifications_muted.value))
                 .copied()
                 .collect()
         } else {
             self.by_principal
                 .values()
-                .filter(|p| !p.notifications_muted)
+                .filter(|p| !p.notifications_muted.value)
                 .map(|p| p.user_id)
                 .collect()
         }
@@ -167,8 +170,22 @@ impl Participants {
         }
     }
 
+    pub fn update_user_principal(&mut self, user_id: UserId, new_principal: Principal) -> bool {
+        if let Some(user) = self
+            .user_id_to_principal_map
+            .get(&user_id)
+            .and_then(|p| self.by_principal.remove(p))
+        {
+            self.user_id_to_principal_map.insert(user_id, new_principal);
+            self.by_principal.insert(new_principal, user);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn len(&self) -> u32 {
-        self.user_id_to_principal_map.len() as u32
+        self.by_principal.len() as u32
     }
 
     pub fn change_role(
@@ -308,25 +325,6 @@ impl Participants {
         self.admin_count
     }
 
-    pub fn add_mention(
-        &mut self,
-        user_id: &UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-    ) -> bool {
-        if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.last().map_or(true, |m| m.message_index < message_index) {
-                p.mentions.push(MentionInternal {
-                    thread_root_message_index,
-                    message_index,
-                });
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
             p.threads.insert(root_message_index);
@@ -334,6 +332,7 @@ impl Participants {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(ParticipantInternal),
     AlreadyInGroup,
@@ -373,8 +372,9 @@ pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub notifications_muted: bool,
+    pub notifications_muted: Timestamped<bool>,
     pub mentions: Vec<MentionInternal>,
+    pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
 
@@ -399,11 +399,10 @@ impl ParticipantInternal {
         }
     }
 
-    pub fn get_most_recent_mentions(&self, events: &ChatEvents) -> Vec<Mention> {
-        self.mentions
-            .iter()
-            .rev()
-            .filter_map(|message_index| events.hydrate_mention(message_index))
+    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &AllChatEvents) -> Vec<Mention> {
+        self.mentions_v2
+            .iter_most_recent(since)
+            .filter_map(|m| chat_events.hydrate_mention(m))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }

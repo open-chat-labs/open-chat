@@ -20,6 +20,7 @@ import type {
     PublicProfile,
     PinChatResponse,
     UnpinChatResponse,
+    MigrateUserPrincipalResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -72,6 +73,7 @@ import type {
     ThreadPreview,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
+    ListNervousSystemFunctionsResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -105,6 +107,8 @@ import { userStore } from "../stores/user";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
+import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
+import { snsFunctions } from "../stores/snsFunctions";
 
 export const apiKey = Symbol();
 
@@ -1058,6 +1062,26 @@ export class ServiceContainer implements MarkMessagesRead {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.getGroupClient(chatId).registerProposalVote(messageIndex, adopt);
+    }
+
+    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+        return this.userClient.initUserPrincipalMigration(newPrincipal);
+    }
+
+    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
+        const userClient = UserClient.create(userId, this.identity, undefined, undefined);
+        return userClient.migrateUserPrincipal();
+    }
+
+    listNervousSystemFunctions(
+        snsGovernanceCanisterId: string
+    ): Promise<ListNervousSystemFunctionsResponse> {
+        return SnsGovernanceClient.create(this.identity, snsGovernanceCanisterId)
+            .listNervousSystemFunctions()
+            .then((val) => {
+                snsFunctions.set(snsGovernanceCanisterId, val.functions);
+                return val;
+            });
     }
 
     async threadPreviews(

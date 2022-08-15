@@ -44,11 +44,13 @@
             `${chatSummary.chatId}_${threadRootMessageIndex}`,
             typing
         );
+
+        const msgTxt = getContentAsText(rootEvent.event.content);
         const subtext =
-            someoneTyping ?? `${$_("thread.title")}: ${getContentAsText(rootEvent.event.content)}`;
+            someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
-                name: $userStore[chatSummary.them]?.username,
+                title: $mobileWidth ? $userStore[chatSummary.them]?.username : $_("thread.title"),
                 avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext,
@@ -56,7 +58,7 @@
             };
         }
         return {
-            name: chatSummary.name,
+            title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
             subtext,
@@ -91,18 +93,14 @@
             size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
-        <div class="chat-name" title={chat.name}>
-            {chat.name}
+        <div class="chat-name" title={chat.title}>
+            {chat.title}
         </div>
         <div class="chat-subtext" title={chat.subtext}>
             {#if chat.typing}
                 {chat.subtext} <Typing />
             {:else}
-                <Markdown
-                    text={chat.subtext}
-                    oneLine={true}
-                    suppressLinks={true}
-                    inline={false} />
+                <Markdown text={chat.subtext} oneLine={true} suppressLinks={true} />
             {/if}
         </div>
     </div>

@@ -1,12 +1,10 @@
-import type { Writable } from "svelte/store";
 import { get } from "svelte/store";
 import { immutableStore } from "./immutable";
 
-const initialValue: string[] = [];
+export const pinnedChatsStore = createStore();
 
-export const pinnedChatsStore = createStore(immutableStore(initialValue));
-
-function createStore(store: Writable<string[]>) {
+function createStore() {
+    const store = immutableStore<string[]>([]);
     return {
         subscribe: store.subscribe,
         set: store.set,

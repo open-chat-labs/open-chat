@@ -81,4 +81,8 @@ impl DirectChats {
     pub fn metrics(&self) -> &ChatMetrics {
         &self.metrics
     }
+
+    pub fn has(&self, chat_id: &ChatId) -> bool {
+        self.direct_chats.contains_key(chat_id)
+    }
 }

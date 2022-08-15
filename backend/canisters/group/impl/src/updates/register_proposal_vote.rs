@@ -13,6 +13,7 @@ async fn register_proposal_vote(args: Args) -> Response {
 
     let PrepareResult {
         user_id,
+        is_nns,
         governance_canister_id,
         proposal_id,
     } = match read_state(|state| prepare(&args, state)) {
@@ -21,6 +22,7 @@ async fn register_proposal_vote(args: Args) -> Response {
     };
 
     let c2c_args = user_canister::c2c_vote_on_proposal::Args {
+        is_nns,
         governance_canister_id,
         proposal_id,
         adopt: args.adopt,
@@ -42,6 +44,7 @@ async fn register_proposal_vote(args: Args) -> Response {
 
 struct PrepareResult {
     user_id: UserId,
+    is_nns: bool,
     governance_canister_id: CanisterId,
     proposal_id: ProposalId,
 }
@@ -66,6 +69,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         } else {
             Ok(PrepareResult {
                 user_id: participant.user_id,
+                is_nns: proposal.proposal.is_nns(),
                 governance_canister_id: proposal.governance_canister_id,
                 proposal_id: proposal.proposal.id(),
             })

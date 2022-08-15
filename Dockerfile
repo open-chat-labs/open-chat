@@ -2,7 +2,7 @@
 FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
-ARG rust_version=1.62.0
+ARG rust_version=1.63.0
 
 ENV TZ=UTC
 

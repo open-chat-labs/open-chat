@@ -10,8 +10,9 @@ type Memo = nat64;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
-type NeuronId = nat64;
+type NnsNeuronId = nat64;
 type ProposalId = nat64;
+type SnsNeuronId = blob;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type TransactionHash = blob;
@@ -148,6 +149,7 @@ type DirectChatSummaryUpdates =
 type DirectMessageNotification =
     record {
         sender: UserId;
+        thread_root_message_index: opt MessageIndex;
         sender_name: text;
         message: MessageEventWrapper;
     };
@@ -228,6 +230,7 @@ type GroupChatSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         is_public: bool;
         history_visible_to_new_joiners: bool;
@@ -255,6 +258,7 @@ type GroupChatSummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
+        subtype: GroupSubtypeUpdate;
         avatar_id: AvatarIdUpdate;
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
@@ -333,6 +337,7 @@ type MessageEventWrapper =
 type GroupMessageNotification =
     record {
         chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
         group_name: text;
         sender: UserId;
         sender_name: text;
@@ -351,6 +356,24 @@ type GroupNameChanged =
 type GroupReplyContext =
     record {
         event_index: EventIndex;
+    };
+
+type GroupSubtype =
+    variant {
+        GovernanceProposals: GovernanceProposalsSubtype;
+    };
+
+type GroupSubtypeUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: GroupSubtype;
+    };
+
+type GovernanceProposalsSubtype =
+    record {
+        is_nns: bool;
+        governance_canister_id: CanisterId;
     };
 
 type MessagePinned =
@@ -379,6 +402,7 @@ type PublicGroupSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
@@ -625,7 +649,7 @@ type NnsProposal =
     record {
         id: ProposalId;
         topic: int32;
-        proposer: NeuronId;
+        proposer: NnsNeuronId;
         created: TimestampMillis;
         title: text;
         summary: text;
@@ -641,7 +665,7 @@ type SnsProposal =
     record {
         id: ProposalId;
         action: nat64;
-        proposer: NeuronId;
+        proposer: SnsNeuronId;
         created: TimestampMillis;
         title: text;
         summary: text;
@@ -909,7 +933,7 @@ type ThreadSyncDetails =
         latest_event: opt EventIndex;
         latest_message: opt MessageIndex;
         read_up_to: opt MessageIndex;
-        last_updated: TimestampMillis;     
+        last_updated: TimestampMillis;
     };
 
 type ProposalsUpdated =

@@ -23,6 +23,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         last_updated: latest_event.timestamp,
         name: data.name.clone(),
         description: data.description.clone(),
+        subtype: data.subtype.value.clone(),
         avatar_id: Avatar::id(&data.avatar),
         latest_message: chat_events.latest_message(None),
         latest_event_index: latest_event.index,

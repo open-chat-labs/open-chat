@@ -211,6 +211,7 @@ export interface DirectMessageNotification {
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventIndex = number;
 export interface FailedCryptoTransaction {
@@ -253,6 +254,10 @@ export interface GiphyImageVariant {
   'mime_type' : string,
   'width' : number,
 }
+export interface GovernanceProposalsSubtype {
+  'is_nns' : boolean,
+  'governance_canister_id' : CanisterId,
+}
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -262,6 +267,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -287,6 +293,7 @@ export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -324,6 +331,7 @@ export interface GroupMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'group_name' : string,
 }
 export interface GroupNameChanged {
@@ -347,6 +355,12 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export type GroupSubtype = {
+    'GovernanceProposals' : GovernanceProposalsSubtype
+  };
+export type GroupSubtypeUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : GroupSubtype };
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
@@ -432,7 +446,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
-export type NeuronId = bigint;
+export type NnsNeuronId = bigint;
 export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -445,7 +459,7 @@ export interface NnsProposal {
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
-  'proposer' : NeuronId,
+  'proposer' : NnsNeuronId,
 }
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -560,6 +574,7 @@ export interface ProposalUpdated {
 export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
+  'subtype' : [] | [GroupSubtype],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
@@ -622,6 +637,7 @@ export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
+export type SnsNeuronId = Uint8Array;
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -634,7 +650,7 @@ export interface SnsProposal {
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
-  'proposer' : NeuronId,
+  'proposer' : SnsNeuronId,
 }
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |

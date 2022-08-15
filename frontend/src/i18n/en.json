@@ -572,9 +572,12 @@
         "youVotedAdopt": "You voted adopt!",
         "youVotedReject": "You voted reject!",
         "additionalContent": "addtional content",
-        "viewOnDashboard": "view on dashboard"
+        "filter": "Filter proposals",
+        "collapse": "Collapse message"
     },
     "yes": "Yes",
     "no": "No",
-    "quoteReply": "Quote reply"
+    "quoteReply": "Quote reply",
+    "groupNameTooShort": "The group name is too short",
+    "groupNameReserved": "The group name is reserved"
 }

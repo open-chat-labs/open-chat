@@ -6,7 +6,7 @@ use types::{UserEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
-const MIN_USERNAME_LENGTH: u16 = 3;
+const MIN_USERNAME_LENGTH: u16 = 5;
 
 #[update]
 #[trace]
@@ -100,7 +100,7 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -109,14 +109,14 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "xyz".to_string(),
+            username: "vwxyz".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
-        let user = runtime_state.data.users.get_by_username("xyz").unwrap();
+        let user = runtime_state.data.users.get_by_username("vwxyz").unwrap();
 
-        assert_eq!(&user.username, "xyz");
+        assert_eq!(&user.username, "vwxyz");
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -136,7 +136,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "abc".to_string(),
+            username: "abcdef".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
@@ -150,7 +150,7 @@ mod tests {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -160,7 +160,7 @@ mod tests {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
-            username: "xyz".to_string(),
+            username: "vwxyz".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -169,7 +169,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "xyz".to_string(),
+            username: "vwxyz".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTaken));
@@ -183,7 +183,7 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -192,7 +192,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "a a".to_string(),
+            username: "ab ab".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameInvalid));
@@ -206,7 +206,7 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -215,10 +215,10 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "ab".to_string(),
+            username: "abcd".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UsernameTooShort(3)));
+        assert!(matches!(result, Response::UsernameTooShort(MIN_USERNAME_LENGTH)));
     }
 
     #[test]
@@ -229,7 +229,7 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -241,13 +241,13 @@ mod tests {
             username: "abcdefghijklmnopqrstuvwxyz".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UsernameTooLong(25)));
+        assert!(matches!(result, Response::UsernameTooLong(MAX_USERNAME_LENGTH)));
     }
 
     #[test]
     fn valid_usernames() {
-        assert!(matches!(validate_username("abc"), UsernameValidationResult::Ok));
-        assert!(matches!(validate_username("123"), UsernameValidationResult::Ok));
+        assert!(matches!(validate_username("abcde"), UsernameValidationResult::Ok));
+        assert!(matches!(validate_username("12345"), UsernameValidationResult::Ok));
         assert!(matches!(
             validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"),
             UsernameValidationResult::Ok
@@ -256,15 +256,15 @@ mod tests {
 
     #[test]
     fn invalid_usernames() {
-        assert!(matches!(validate_username("abc "), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("_abc"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abc_"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab__c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab,c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcṷ"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abc王"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcde "), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab cde"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("_abcde"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcde_"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab__cde"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab,cde"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcéd"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcṷd"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abc王d"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("OpenChat_Bot"), UsernameValidationResult::Invalid));
     }
 }

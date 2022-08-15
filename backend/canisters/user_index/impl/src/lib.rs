@@ -2,6 +2,7 @@ use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
+use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -90,6 +91,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            git_commit_id: utils::git::git_commit_id(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             users_created: user_metrics.users_created,
@@ -129,6 +131,7 @@ struct Data {
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_event_sync_queue: UserEventSyncQueue,
+    pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
@@ -169,6 +172,7 @@ impl Data {
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_event_sync_queue: UserEventSyncQueue::default(),
+            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
@@ -199,6 +203,7 @@ impl Default for Data {
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_event_sync_queue: UserEventSyncQueue::default(),
+            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
@@ -216,6 +221,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
     pub users_online_5_minutes: u32,

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{NeuronId, Proposal, ProposalId};
+use types::{Proposal, ProposalId};
 
 pub trait RawProposal: TryInto<Proposal, Error = &'static str> {
     fn id(&self) -> ProposalId;
@@ -9,9 +9,4 @@ pub trait RawProposal: TryInto<Proposal, Error = &'static str> {
 #[derive(CandidType, Deserialize, Clone)]
 pub struct WrappedProposalId {
     pub id: ProposalId,
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct WrappedNeuronId {
-    pub id: NeuronId,
 }

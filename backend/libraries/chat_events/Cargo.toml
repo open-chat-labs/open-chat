@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.14"
+candid = "0.7.15"
 itertools = "0.10.3"
 search = { path = "../search" }
 serde = "1.0.137"

@@ -246,6 +246,7 @@ type UpdateGroupResponse =
         CallerNotInGroup;
         NameTooShort: FieldTooShortResult;
         NameTooLong: FieldTooLongResult;
+        NameReserved;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
         NameTaken;
@@ -321,17 +322,6 @@ type RegisterProposalVoteResponse =
         ProposalNotFound;
         ProposalNotAcceptingVotes;
         InternalError: text;
-    };
-
-type DeleteGroupArgs =
-    record {
-    };
-
-type DeleteGroupResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        InternalError;
     };
 
 type MakePrivateArgs =
@@ -507,7 +497,6 @@ type PublicSummarySuccess =
 
 service: {
     // Owner only
-    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
 
     // Admin only

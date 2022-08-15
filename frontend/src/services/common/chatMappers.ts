@@ -1,7 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
 import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
-import {
+import type {
     FileContent,
     ImageContent,
     AudioContent,
@@ -28,7 +28,9 @@ import {
     ThreadSummary,
     ProposalContent,
     Proposal,
-    NnsProposalTopic,
+    ListNervousSystemFunctionsResponse,
+    NervousSystemFunction,
+    SnsFunctionType,
 } from "../../domain/chat/chat";
 import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
@@ -70,6 +72,11 @@ import type {
     ApiProposalRewardStatus,
 } from "../user/candid/idl";
 import type { Cryptocurrency } from "../../domain/crypto";
+import type {
+    ApiListNervousSystemFunctionsResponse,
+    ApiNervousSystemFunction,
+    ApiSnsFunctionType,
+} from "../snsGovernance/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -168,7 +175,7 @@ function proposal(candid: ApiProposal): Proposal {
             kind: "nns",
             id: p.id,
             topic: p.topic,
-            proposer: p.proposer,
+            proposer: p.proposer.toString(),
             title: p.title,
             summary: p.summary,
             url: p.url,
@@ -189,7 +196,7 @@ function proposal(candid: ApiProposal): Proposal {
             kind: "sns",
             id: p.id,
             action: Number(p.action),
-            proposer: p.proposer,
+            proposer: Buffer.from(p.proposer).toString("hex"),
             title: p.title,
             summary: p.summary,
             url: p.url,
@@ -744,4 +751,30 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
+}
+
+export function nervousSystemFunctions(
+    candid: ApiListNervousSystemFunctionsResponse
+): ListNervousSystemFunctionsResponse {
+    return {
+        reservedIds: [...candid.reserved_ids],
+        functions: candid.functions.map(nervousSystemFunction),
+    };
+}
+
+function nervousSystemFunction(candid: ApiNervousSystemFunction): NervousSystemFunction {
+    return {
+        id: Number(candid.id),
+        name: candid.name,
+        description: optional(candid.description, identity) ?? "",
+        functionType: optional(candid.function_type, snsFunctionType),
+    };
+}
+
+function snsFunctionType(candid: ApiSnsFunctionType): SnsFunctionType {
+    if ("NativeNervousSystemFunction" in candid) {
+        return { kind: "native_nervous_system_function" };
+    } else {
+        return { kind: "generic_nervous_system_function" };
+    }
 }

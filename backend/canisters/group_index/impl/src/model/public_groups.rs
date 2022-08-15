@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version,
+    ChatId, Cycles, CyclesTopUp, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary,
+    TimestampMillis, Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -58,6 +59,7 @@ impl PublicGroups {
             chat_id,
             name,
             description,
+            subtype,
             avatar_id,
             now,
             wasm_version,
@@ -66,7 +68,7 @@ impl PublicGroups {
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, avatar_id, now, wasm_version, cycles);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now, wasm_version, cycles);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -100,6 +102,7 @@ impl PublicGroups {
             last_updated: summary.last_updated,
             name: group.name.clone(),
             description: group.description.clone(),
+            subtype: group.subtype.clone(),
             avatar_id: group.avatar_id,
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
@@ -168,6 +171,7 @@ pub struct PublicGroupInfo {
     id: ChatId,
     name: String,
     description: String,
+    subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
@@ -184,10 +188,12 @@ pub enum UpdateGroupResult {
 }
 
 impl PublicGroupInfo {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: ChatId,
         name: String,
         description: String,
+        subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
         now: TimestampMillis,
         wasm_version: Version,
@@ -197,6 +203,7 @@ impl PublicGroupInfo {
             id,
             name,
             description,
+            subtype,
             avatar_id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
@@ -312,6 +319,7 @@ pub struct GroupCreatedArgs {
     pub chat_id: ChatId,
     pub name: String,
     pub description: String,
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub now: TimestampMillis,
     pub wasm_version: Version,

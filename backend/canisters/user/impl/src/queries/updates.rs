@@ -99,7 +99,6 @@ fn finalize(
         }
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
-            summary.notifications_muted = group_chat.notifications_muted.value;
             summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
 
             for thread in summary.latest_threads.iter_mut() {
@@ -109,11 +108,6 @@ fn finalize(
             group_chats_updated
                 .entry(group_chat.chat_id)
                 .and_modify(|su| {
-                    su.notifications_muted = if group_chat.notifications_muted.timestamp > updates_since {
-                        Some(group_chat.notifications_muted.value)
-                    } else {
-                        None
-                    };
                     su.read_by_me = if group_chat.read_by_me.timestamp > updates_since {
                         Some(convert_to_message_index_ranges(group_chat.read_by_me.value.clone()))
                     } else {

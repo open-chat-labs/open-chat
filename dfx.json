@@ -83,6 +83,12 @@
         "https://ic0.app/"
       ],
       "type": "persistent"
+    },
+    "web_test": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
     }
   },
   "version": 1

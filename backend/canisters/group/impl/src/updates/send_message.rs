@@ -7,8 +7,8 @@ use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
-    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
-    MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
+    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -127,10 +127,15 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         mentions.remove(&sender);
         for user_id in mentions.iter() {
-            runtime_state
-                .data
-                .participants
-                .add_mention(user_id, args.thread_root_message_index, message_index);
+            if let Some(participant) = runtime_state.data.participants.get_by_user_id_mut(user_id) {
+                participant.mentions_v2.add(
+                    MentionInternal {
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index,
+                    },
+                    now,
+                );
+            }
         }
 
         notification_recipients.extend(runtime_state.data.participants.users_to_notify(thread_participants));

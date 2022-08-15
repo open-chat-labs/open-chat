@@ -7,7 +7,7 @@ import type {
 } from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
 import { message } from "./chatMappers";
-import { PROPOSALS_BOT_USER_ID } from "../../stores/user";
+import { apiGroupSubtype } from "../../services/user/mappers";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
     return {
@@ -55,7 +55,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
-        isProposalGroup: candid.owner_id.toString() === PROPOSALS_BOT_USER_ID,
+        subtype: optional(candid.subtype, apiGroupSubtype),
     };
 }
 

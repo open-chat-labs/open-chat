@@ -30,6 +30,8 @@ import { scrollStrategy } from "./settings";
 import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
+import { snsFunctions } from "./snsFunctions";
+import { mutedChatsStore } from "./mutedChatsStore";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -70,18 +72,27 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 
 export const selectedChatStore = writable<ChatController | undefined>(undefined);
 
+export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
+    return (
+        $selectedChatStore !== undefined &&
+        $selectedChatStore.chatVal.kind === "group_chat" &&
+        $selectedChatStore.chatVal.subtype?.kind === "governance_proposals"
+    );
+});
+
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore],
-    ([summaries, unconfirmed, currentUser]) => {
+    [serverChatSummariesStore, unconfirmed, currentUserStore, mutedChatsStore],
+    ([summaries, unconfirmed, currentUser, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
                         currentUser.userId,
                         summary,
-                        unconfirmed
+                        unconfirmed,
+                        mutedChats.get(chatId)
                     );
                 }
                 return result;
@@ -114,6 +125,38 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
     }, {} as Record<string, ThreadSyncDetails[]>);
 });
 
+export const proposalTopicsStore = derived(
+    [selectedChatStore, snsFunctions],
+    ([selectedChat, snsFunctions]): Map<number, string> => {
+        if (selectedChat !== undefined) {
+            const chat = get(selectedChat.chat);
+            if (chat.kind === "group_chat" && chat.subtype !== undefined) {
+                if (chat.subtype.isNns) {
+                    return new Map([
+                        [1, "Neuron Management"],
+                        [3, "Network Economics"],
+                        [4, "Governance"],
+                        [5, "Node Admin"],
+                        [6, "Participant Management"],
+                        [7, "Subnet Management"],
+                        [8, "Network Canister Management"],
+                        [9, "KYC"],
+                        [10, "Node Provider Rewards"],
+                        [11, "SNS Decentralization Sale"],
+                    ]);
+                } else {
+                    const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
+                    if (snsFunctionsMap !== undefined) {
+                        return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
+                    }
+                }
+            }
+        }
+
+        return new Map();
+    }
+);
+
 function countThreads<T>(things: Record<string, T[]>): number {
     return Object.values(things)
         .map((ts) => ts.length)
@@ -145,6 +188,14 @@ export function setSelectedChat(
     if (chat === undefined) return;
 
     closeNotificationsForChat(chatId);
+
+    if (
+        chat.kind === "group_chat" &&
+        chat.subtype?.kind === "governance_proposals" &&
+        !chat.subtype.isNns
+    ) {
+        api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
+    }
 
     const user: UserSummary = {
         kind: "user",

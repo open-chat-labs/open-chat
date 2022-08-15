@@ -3,7 +3,6 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { NeuronId } from "services/user/candid/types";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -159,7 +158,7 @@ export interface ProposalCommon {
     lastUpdated: number;
     rewardStatus: ProposalRewardStatus;
     summary: string;
-    proposer: NeuronId;
+    proposer: string;
 }
 
 export interface Tally {
@@ -204,22 +203,9 @@ export enum NnsProposalTopic {
     SnsDecentralizationSale,
 }
 
-export enum SnsProposalAction {
-    Unspecified = 0,
-    Motion = 1,
-    SetParameters = 2,
-    UpgradeCanister = 3,
-    AddCustom = 4,
-    RemoveCustom = 5,
-    TransferTokens = 1000,
-    BurnChat = 1001,
-    TopupCycles = 1002,
-    SwapTokens = 1003,
-}
-
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
-    action: SnsProposalAction;
+    action: number;
 }
 
 export interface ImageContent extends DataContent {
@@ -695,7 +681,13 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
+    subtype: GroupSubtypeUpdate;
 };
+
+export type GroupSubtypeUpdate =
+    | { kind: "no_change" }
+    | { kind: "set_to_none" }
+    | { kind: "set_to_some"; subtype: GroupSubtype };
 
 export type ThreadSyncDetailsUpdates = {
     threadRootMessageIndex: number;
@@ -802,8 +794,16 @@ export type GroupChatSummary = DataContent &
         permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
-        isProposalGroup: boolean;
+        subtype: GroupSubtype;
     };
+
+export type GroupSubtype = GovernanceProposalsSubtype | undefined;
+
+export type GovernanceProposalsSubtype = {
+    kind: "governance_proposals";
+    isNns: boolean;
+    governanceCanisterId: string;
+};
 
 export type Mention = {
     messageId: bigint;
@@ -831,9 +831,9 @@ export type CandidateGroupChat = {
 export type CreateGroupResponse =
     | CreateGroupSuccess
     | CreateGroupInternalError
-    | CreateGroupInvalidName
-    | CreateGroupNameTooLong
     | CreateGroupNameTooShort
+    | CreateGroupNameTooLong
+    | CreateGroupNameReserved
     | CreateGroupDescriptionTooLong
     | GroupNameTaken
     | AvatarTooBig
@@ -857,6 +857,10 @@ export type CreateGroupNameTooLong = {
 
 export type CreateGroupNameTooShort = {
     kind: "name_too_short";
+};
+
+export type CreateGroupNameReserved = {
+    kind: "name_reserved";
 };
 
 export type CreateGroupDescriptionTooLong = {
@@ -1091,8 +1095,9 @@ export type MarkReadResponse = "success";
 export type UpdateGroupResponse =
     | "success"
     | "not_authorised"
-    | "name_too_long"
     | "name_too_short"
+    | "name_too_long"
+    | "name_reserved"
     | "desc_too_long"
     | "unchanged"
     | "name_taken"
@@ -1220,3 +1225,19 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_found"
     | "proposal_not_accepting_votes"
     | "internal_error";
+
+export type ListNervousSystemFunctionsResponse = {
+    reservedIds: bigint[];
+    functions: NervousSystemFunction[];
+};
+
+export type NervousSystemFunction = {
+    id: number;
+    name: string;
+    description: string;
+    functionType?: SnsFunctionType;
+};
+
+export type SnsFunctionType =
+    | { kind: "native_nervous_system_function" }
+    | { kind: "generic_nervous_system_function" };

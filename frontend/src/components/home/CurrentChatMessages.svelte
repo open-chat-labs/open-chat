@@ -4,6 +4,7 @@
     import { afterUpdate, createEventDispatcher, onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
+    import ProposalBot from "../ProposalBot.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
@@ -17,7 +18,7 @@
         Mention,
         ChatSummary,
     } from "../../domain/chat/chat";
-    import { groupEvents, messageIsReadByThem } from "../../domain/chat/chat.utils";
+    import { groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -32,7 +33,10 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
+    import { isProposalGroup } from "../../stores/chat";
+    import type { FilteredProposals } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
+    import { groupWhile } from "../../utils/list";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -62,6 +66,7 @@
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
+    $: filteredProposalsStore = controller.filteredProposals;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -77,7 +82,7 @@
 
     onMount(() => {
         const options = {
-            root: messagesDiv,
+            root: messagesDiv as Element,
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
@@ -97,7 +102,7 @@
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = controller.chatId;
-                        const timer = setTimeout(() => {
+                        const timer = window.setTimeout(() => {
                             if (chatId === controller.chatId) {
                                 dispatch("messageRead", {
                                     chatId,
@@ -364,7 +369,7 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events).reverse();
+    $: groupedEvents = groupEvents($events, groupInner($filteredProposalsStore)).reverse();
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -540,6 +545,56 @@
     function copyMessageUrl(ev: CustomEvent<Message>) {
         shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
     }
+
+    function isCollapsed(
+        ew: EventWrapper<ChatEventType>,
+        filteredProposals: FilteredProposals | undefined
+    ): boolean {
+        return ew.event.kind === "message" && isCollpasedProposal(ew.event, filteredProposals);
+    }
+
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
+            filteredProposalsStore.toggleMessageExpansion(ew.event.messageId, expand);
+        }
+    }
+
+    function groupInner(filteredProposals: FilteredProposals | undefined) {
+        return (events: EventWrapper<ChatEventType>[]) => {
+            return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
+        };
+    }
+
+    // Each expanded proposal should be in a group by itself
+    // All collapsed proposals should be grouped together
+    // Otherwise group by sender
+    function inSameGroup(
+        a: EventWrapper<ChatEventType>,
+        b: EventWrapper<ChatEventType>,
+        filteredProposals: FilteredProposals | undefined
+    ): boolean {
+        if (a.event.kind === "message" && b.event.kind === "message") {
+            const aKind = a.event.content.kind;
+            const bKind = b.event.content.kind;
+            if (aKind === "proposal_content" || bKind === "proposal_content") {
+                return (
+                    isCollpasedProposal(a.event, filteredProposals) &&
+                    isCollpasedProposal(b.event, filteredProposals)
+                );
+            } else {
+                return sameUser(a, b);
+            }
+        }
+        return false;
+    }
+
+    function isCollpasedProposal(
+        message: Message,
+        filteredProposals: FilteredProposals | undefined
+    ): boolean {
+        if (message.content.kind !== "proposal_content") return false;
+        return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
+    }
 </script>
 
 <div
@@ -553,8 +608,8 @@
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
-                {#each userGroup as evt, i (eventKey(evt))}
+            {#each dayGroup as innerGroup, _ui (controller.userGroupKey(innerGroup))}
+                {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
@@ -567,7 +622,7 @@
                         user={controller.user}
                         me={isMe(evt)}
                         first={i === 0}
-                        last={i + 1 === userGroup.length}
+                        last={i + 1 === innerGroup.length}
                         {preview}
                         {canPin}
                         {canBlockUser}
@@ -576,6 +631,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
+                        collapsed={isCollapsed(evt, $filteredProposalsStore)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
@@ -597,6 +653,8 @@
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
+                        on:expandMessage={() => toggleMessageExpansion(evt, true)}
+                        on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
                         event={evt} />
@@ -604,11 +662,14 @@
             {/each}
         </div>
     {/each}
-    {#if $chat.kind === "group_chat" && !morePrevAvailable}
-        <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
-    {/if}
-    {#if isBot && !morePrevAvailable}
-        <Robot />
+    {#if initialised && !morePrevAvailable}
+        {#if $isProposalGroup}
+            <ProposalBot />
+        {:else if $chat.kind === "group_chat"}
+            <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+        {:else if isBot}
+            <Robot />
+        {/if}
     {/if}
 </div>
 {#if !preview}

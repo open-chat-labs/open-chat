@@ -576,7 +576,10 @@
         "youVotedAdopt": "Sie haben für adoptiert gestimmt!",
         "youVotedReject": "Sie haben für ablehnen gestimmt!",
         "additionalContent": "zusätzlicher Inhalt",
-        "viewOnDashboard": "auf dem Armaturenbrett anzeigen"
+        "filter": "Vorschläge filtern",
+        "collapse": "Meldung minimieren"
     },
-    "quoteReply": "Antwort zitieren"
+    "quoteReply": "Antwort zitieren",
+    "groupNameTooShort": "Der Gruppenname ist zu kurz",
+    "groupNameReserved": "Der Gruppenname ist reserviert"
 }

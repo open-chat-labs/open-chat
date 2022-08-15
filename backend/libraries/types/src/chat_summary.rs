@@ -1,10 +1,11 @@
 use crate::{
-    ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role,
-    TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    CanisterId, ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange,
+    OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
@@ -57,6 +58,7 @@ pub struct GroupChatSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
@@ -111,6 +113,7 @@ pub struct GroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
@@ -135,6 +138,7 @@ pub struct PublicGroupSummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
@@ -150,6 +154,7 @@ pub struct GroupChatSummaryInternal {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
@@ -179,12 +184,6 @@ impl GroupChatSummaryInternal {
             );
         }
 
-        let avatar_id = match updates.avatar_id {
-            OptionUpdate::SetToSome(avatar_id) => Some(avatar_id),
-            OptionUpdate::SetToNone => None,
-            OptionUpdate::NoChange => self.avatar_id,
-        };
-
         // Mentions are ordered in ascending order of MessageIndex
         let mentions_to_skip = (self.mentions.len() + updates.mentions.len()).saturating_sub(MAX_RETURNED_MENTIONS);
         let mentions: Vec<_> = self
@@ -194,11 +193,14 @@ impl GroupChatSummaryInternal {
             .skip(mentions_to_skip)
             .collect();
 
+        let mut threads_set = HashSet::new();
         // Threads are ordered in descending chronological order
         let latest_threads = updates
             .latest_threads
             .into_iter()
             .chain(self.latest_threads)
+            // We could use Itertools `unique_by` but I didn't want to add that dependency
+            .filter(|t| threads_set.insert(t.root_message_index))
             .take(MAX_THREADS_IN_SUMMARY)
             .collect();
 
@@ -207,7 +209,8 @@ impl GroupChatSummaryInternal {
             last_updated: updates.last_updated,
             name: updates.name.unwrap_or(self.name),
             description: updates.description.unwrap_or(self.description),
-            avatar_id,
+            subtype: updates.subtype.apply_to(self.subtype),
+            avatar_id: updates.avatar_id.apply_to(self.avatar_id),
             is_public: updates.is_public.unwrap_or(self.is_public),
             history_visible_to_new_joiners: self.history_visible_to_new_joiners,
             min_visible_event_index: self.min_visible_event_index,
@@ -221,7 +224,7 @@ impl GroupChatSummaryInternal {
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
             owner_id: updates.owner_id.unwrap_or(self.owner_id),
             permissions: updates.permissions.unwrap_or(self.permissions),
-            notifications_muted: self.notifications_muted,
+            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
             my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
             latest_threads,
@@ -236,6 +239,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             last_updated: s.last_updated,
             name: s.name,
             description: s.description,
+            subtype: s.subtype,
             avatar_id: s.avatar_id,
             is_public: s.is_public,
             history_visible_to_new_joiners: s.history_visible_to_new_joiners,
@@ -265,6 +269,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
@@ -279,6 +284,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub notifications_muted: Option<bool>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -288,13 +294,14 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             last_updated: s.last_updated,
             name: s.name,
             description: s.description,
+            subtype: s.subtype,
             avatar_id: s.avatar_id,
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
             participant_count: s.participant_count,
             role: s.role,
             read_by_me: None,
-            notifications_muted: None,
+            notifications_muted: s.notifications_muted,
             mentions: s.mentions,
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
@@ -376,4 +383,15 @@ impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
             read_up_to: None,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum GroupSubtype {
+    GovernanceProposals(GovernanceProposalsSubtype),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GovernanceProposalsSubtype {
+    pub is_nns: bool,
+    pub governance_canister_id: CanisterId,
 }

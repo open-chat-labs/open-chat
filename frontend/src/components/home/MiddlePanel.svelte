@@ -52,12 +52,14 @@
             on:replyPrivatelyTo
             on:addParticipants
             on:showGroupDetails
+            on:showProposalFilters
             on:showParticipants
             on:chatWith
             on:joinGroup
             on:upgrade
             on:cancelPreview
             on:showPinned
+            on:toggleMuteNotifications
             on:openThread
             on:goToMessageIndex
             on:closeThread

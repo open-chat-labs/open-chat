@@ -12,3 +12,8 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
 ./upgrade-canister.sh ic https://ic0.app/ $IDENTITY $CANISTER_NAME $VERSION
+
+TAG=v$VERSION-$CANISTER_NAME
+
+git tag $TAG HEAD
+git push origin tag $TAG

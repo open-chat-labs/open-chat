@@ -14,6 +14,7 @@ export type AddedToGroupNotification = {
 export type DirectNotification = {
     kind: "direct_notification";
     sender: string;
+    threadRootMessageIndex: number | undefined;
     message: EventWrapper<Message>;
     senderName: string;
 };
@@ -21,6 +22,7 @@ export type DirectNotification = {
 export type GroupNotification = {
     kind: "group_notification";
     sender: string;
+    threadRootMessageIndex: number | undefined;
     message: EventWrapper<Message>;
     senderName: string;
     chatId: string;
@@ -37,4 +39,4 @@ export type NotificationStatus =
     | "hard-denied"
     | "granted";
 
-export type ToggleMuteNotificationResponse = "success" | "chat_not_found";
+export type ToggleMuteNotificationResponse = "success" | "chat_not_found" | "internal_error";

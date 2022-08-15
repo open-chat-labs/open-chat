@@ -7,6 +7,8 @@ pub struct Args {}
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    NotAuthorized,
-    InternalError,
+    MigrationNotInitialized,
+    MigrationAlreadyInProgress,
+    PrincipalAlreadyInUse,
+    InternalError(String),
 }

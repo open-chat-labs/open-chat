@@ -3,17 +3,16 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import {
-        NnsProposalTopic,
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
-        SnsProposalAction,
     } from "../../domain/chat/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
     import { formatTimeRemaining } from "../../utils/time";
     import { toDateString, toShortTimeString } from "../../utils/date";
+    import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -22,21 +21,29 @@
     import { rollbar } from "../../utils/logging";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { currentUserStore } from "../../stores/chat";
+    import { currentUserStore, proposalTopicsStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let content: ProposalContent;
     export let chatId: string;
     export let messageIndex: number;
     export let messageId: bigint;
+    export let collapsed: boolean;
+    export let preview: boolean;
+    export let reply: boolean;
 
     const api: ServiceContainer = getContext(apiKey);
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
+    const nnsDappUrl = "https://nns.ic0.app";
 
-    let expanded = false;
+    let summaryExpanded = false;
     let showNeuronInfo = false;
 
+    $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
         $proposalVotes.get(messageId) ??
         (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
@@ -48,23 +55,33 @@
         proposal.status == ProposalDecisionStatus.Failed ||
         proposal.status == ProposalDecisionStatus.Rejected ||
         proposal.status == ProposalDecisionStatus.Unspecified;
-    $: dashboardProposalUrl = `${dashboardUrl}/proposal/${proposal.id}`;
-    $: dashboardNeuronUrl = `${dashboardUrl}/neuron/${proposal.proposer}`;
+    $: proposalUrl = isNns
+        ? `${dashboardUrl}/proposal/${proposal.id}`
+        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
+    $: proposerUrl = isNns
+        ? `${dashboardUrl}/neuron/${proposal.proposer}`
+        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: votingDisabled = voteStatus !== undefined || votingEnded;
-    $: typeLabel = $_(proposal.kind === "nns" ? "proposal.topic" : "proposal.action");
-    $: typeValue =
-        proposal.kind === "nns"
-            ? NnsProposalTopic[proposal.topic]
-            : SnsProposalAction[proposal.action];
+    $: disable = preview || reply || votingEnded;
+    $: votingDisabled = voteStatus !== undefined || disable;
+    $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";
     $: user = $currentUserStore!;
+    $: showFullSummary = proposal.summary.length < 400;
+
+    $: {
+        if (collapsed) {
+            summaryExpanded = false;
+        }
+    }
 
     function toggleSummary() {
-        expanded = !expanded;
+        if (!showFullSummary) {
+            summaryExpanded = !summaryExpanded;
+        }
     }
 
     function onVote(adopt: boolean) {
@@ -110,99 +127,149 @@
     function round2(num: number): number {
         return Math.round((num + Number.EPSILON) * 100) / 100;
     }
+
+    function onClick() {
+        if (collapsed) {
+            dispatch("expandMessage");
+        }
+    }
+
+    function truncatedProposerId(): string {
+        if (proposal.proposer.length < 12) {
+            return proposal.proposer;
+        }
+
+        return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
+            proposal.proposer.length - 4,
+            proposal.proposer.length
+        )}`;
+    }
+
+    export function getProposalTopicLabel(
+        content: ProposalContent,
+        proposalTopics: Map<number, string>
+    ): string {
+        return (
+            proposalTopics.get(
+                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action
+            ) ?? "unknown"
+        );
+    }
 </script>
 
-<div class="header">
-    <div class="title-block">
-        <div class="title">
-            {#if proposal.url.length > 0}
-                <a href={proposal.url} target="_blank"
-                    >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
-            {:else}
-                {proposal.title}
-            {/if}
-        </div>
-        <div class="subtitle">
-            {typeLabel}: {typeValue} | {$_("proposal.proposedBy")}:
-            <a target="_blank" href={dashboardNeuronUrl}>{proposal.proposer}</a>
-        </div>
+{#if collapsed}
+    <div on:click={onClick}>
+        <em>{proposal.title}</em>
+        <EyeOff viewBox="0 -5 24 24" />
     </div>
-    <div class="status" class:positive class:negative>
-        {ProposalDecisionStatus[proposal.status]}
-    </div>
-</div>
+{:else}
+    <div>
+        <div class="header">
+            <div class="title-block">
+                <div class="title">
+                    {#if proposal.url.length > 0}
+                        <a href={proposal.url} target="_blank"
+                            >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
+                    {:else}
+                        {proposal.title}
+                    {/if}
+                </div>
+                <div class="status" class:positive class:negative>
+                    {ProposalDecisionStatus[proposal.status]}
+                </div>
+            </div>
+            <div class="subtitle">
+                {typeValue} |
+                {$_("proposal.proposedBy")}
+                <a target="_blank" href={proposerUrl}>{truncatedProposerId()}</a>
+            </div>
+        </div>
 
-{#if proposal.summary.length > 0}
-    <div class="summary" class:expanded on:click={toggleSummary}>
-        <Markdown text={proposal.summary} isInline={false} />
-        <div class="gradient" />
+        {#if proposal.summary.length > 0}
+            <div
+                class="summary"
+                class:expanded={summaryExpanded}
+                class:full={showFullSummary}
+                on:click={toggleSummary}>
+                <Markdown text={proposal.summary} inline={false} />
+                {#if !showFullSummary}
+                    <div class="gradient" />
+                {/if}
+            </div>
+        {/if}
+
+        <div class="votes" class:rtl={$rtlStore}>
+            <div class="data">
+                <div class="yes">
+                    <span class="label">{$_("yes")}</span>
+                    <span class="value">{adoptPercent}%</span>
+                </div>
+                <div class="no">
+                    <span class="label">{$_("no")}</span>
+                    <span class="value">{rejectPercent}%</span>
+                </div>
+                <div class="remaining">
+                    {#if !votingEnded}
+                        <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
+                        <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
+                    {:else}
+                        <span class="label">{$_("proposal.votingPeriodEnded")}</span>
+                        <span class="value"
+                            >{toDateString(deadline)} {toShortTimeString(deadline)}</span>
+                    {/if}
+                </div>
+            </div>
+            <div class="progress">
+                <div class="adopt" style="width: {adoptPercent}%" />
+                <div class="reject" style="width: {rejectPercent}%" />
+                <div class="vertical-line" style="{rtl}: 3%" />
+                <div class="vertical-line" style="{rtl}: 50%" />
+                <div class="icon" style="{rtl}: calc(3% - 0.5em)">
+                    <ChevronDown viewBox="-1 0 24 24" />
+                </div>
+                <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
+                    <svg viewBox="-1 0 24 24">
+                        <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
+            <button
+                class="adopt"
+                class:voting={voteStatus === "adopting"}
+                class:disabled={votingDisabled}
+                class:gray={voteStatus === "rejected" || disable}
+                on:click={() => onVote(true)}>
+                <div class="contents">
+                    <div>
+                        {$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}
+                    </div>
+                    <div class="icon"><ThumbUp /></div>
+                </div>
+            </button>
+            <button
+                class="reject"
+                class:voting={voteStatus === "rejecting"}
+                class:disabled={votingDisabled}
+                class:gray={voteStatus === "adopted" || disable}
+                on:click={() => onVote(false)}>
+                <div class="contents">
+                    <div>
+                        {$_(
+                            "proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject")
+                        )}
+                    </div>
+                    <div class="icon"><ThumbDown /></div>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="more" class:rtl={$rtlStore}>
+        <a href={proposalUrl} target="_blank">{proposal.id}</a>
     </div>
 {/if}
-
-<div class="votes" class:rtl={$rtlStore}>
-    <div class="data">
-        <div class="yes">
-            <span class="label">{$_("yes")}</span>
-            <span class="value">{adoptPercent}%</span>
-        </div>
-        <div class="remaining">
-            {#if !votingEnded}
-                <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
-                <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
-            {:else}
-                <span class="label">{$_("proposal.votingPeriodEnded")}</span>
-                <span class="value">{toDateString(deadline)} {toShortTimeString(deadline)}</span>
-            {/if}
-        </div>
-        <div class="no">
-            <span class="label">{$_("no")}</span>
-            <span class="value">{rejectPercent}%</span>
-        </div>
-    </div>
-    <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%" />
-        <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: 3%" />
-        <div class="vertical-line" style="{rtl}: 50%" />
-        <div class="icon" style="{rtl}: calc(3% - 0.5em)">
-            <ChevronDown viewBox="-1 0 24 24" />
-        </div>
-        <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
-            <svg viewBox="-1 0 24 24">
-                <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
-            </svg>
-        </div>
-    </div>
-</div>
-
-<div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
-    <button
-        class="adopt"
-        class:voting={voteStatus === "adopting"}
-        class:disabled={votingDisabled}
-        class:gray={voteStatus === "rejected" || votingEnded}
-        on:click={() => onVote(true)}>
-        <div class="contents">
-            <div>{$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}</div>
-            <div class="icon"><ThumbUp /></div>
-        </div>
-    </button>
-    <button
-        class="reject"
-        class:voting={voteStatus === "rejecting"}
-        class:disabled={votingDisabled}
-        class:gray={voteStatus === "adopted" || votingEnded}
-        on:click={() => onVote(false)}>
-        <div class="contents">
-            <div>{$_("proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject"))}</div>
-            <div class="icon"><ThumbDown /></div>
-        </div>
-    </button>
-</div>
-
-<div class="more" class:rtl={$rtlStore}>
-    <a href={dashboardProposalUrl} target="_blank">{$_("proposal.viewOnDashboard")}</a>
-</div>
 
 {#if showNeuronInfo}
     <Overlay dismissible>
@@ -219,14 +286,14 @@
 
 <style type="text/scss">
     .header {
-        display: flex;
-        justify-content: space-between;
-        gap: $sp3;
-        margin-bottom: $sp3;
+        margin-bottom: toRem(4);
 
         .title-block {
+            display: flex;
+            justify-content: space-between;
+            gap: toRem(8);
             .title {
-                @include font-size(fs-140);
+                @include font-size(fs-130);
                 margin-bottom: toRem(4);
                 text-decoration: underline;
                 text-decoration-thickness: 1px;
@@ -237,31 +304,30 @@
                     display: flex;
                     gap: $sp2;
                     align-items: center;
+                    width: fit-content;
                 }
             }
+            .status {
+                border-radius: $sp3;
+                padding: toRem(1) toRem(6);
+                height: fit-content;
+                color: white;
+                background-color: var(--vote-maybe-color);
 
-            .subtitle {
-                @include font-size(fs-70);
+                &.positive {
+                    background-color: var(--vote-yes-color);
+                }
+
+                &.negative {
+                    background-color: var(--vote-no-color);
+                }
             }
-            margin-bottom: $sp2;
         }
 
-        .status {
-            border-width: 2px;
-            border-style: solid;
-            border-radius: $sp4;
-            padding: $sp2 $sp3;
-            height: fit-content;
-
-            &.positive {
-                color: var(--vote-yes-color);
-                border-color: var(--vote-yes-color);
-            }
-
-            &.negative {
-                color: var(--vote-no-color);
-                border-color: var(--vote-no-color);
-            }
+        .subtitle {
+            @include font-size(fs-70);
+            padding: toRem(2) toRem(4);
+            background-color: var(--chatSummary-hv);
         }
     }
 
@@ -280,6 +346,11 @@
             max-height: toRem(360);
         }
 
+        &.full {
+            max-height: none;
+            cursor: default;
+        }
+
         .gradient {
             position: sticky;
             width: 100%;
@@ -289,8 +360,7 @@
         }
 
         &.expanded .gradient {
-            background: none;
-            height: 0;
+            display: none;
         }
     }
 
@@ -304,9 +374,8 @@
         margin: 12px 0;
 
         .data {
-            display: flex;
-            justify-content: space-between;
             margin-bottom: toRem(10);
+            position: relative;
 
             > div {
                 display: flex;
@@ -319,6 +388,8 @@
             }
 
             .yes {
+                position: absolute;
+                left: 0;
                 align-items: flex-start;
                 .value {
                     color: var(--vote-yes-color);
@@ -326,14 +397,19 @@
             }
 
             .no {
+                position: absolute;
+                right: 0;
                 align-items: flex-end;
                 .value {
                     color: var(--vote-no-color);
                 }
             }
 
-            .remaining .value {
-                @include font-size(fs-100);
+            .remaining {
+                margin: 0 auto;
+                .value {
+                    @include font-size(fs-100);
+                }
             }
         }
 
@@ -379,12 +455,21 @@
         }
 
         &.rtl {
+            .votes {
+                .yes {
+                    left: auto;
+                    right: 0;
+                }
+                .no {
+                    left: 0;
+                    right: auto;
+                }
+            }
             .progress {
                 .adopt {
                     left: auto;
                     right: 0;
                 }
-
                 .reject {
                     right: auto;
                     left: 0;
