@@ -44,6 +44,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            git_commit_id: utils::git::git_commit_id(),
             nervous_systems: self.data.nervous_systems.metrics(),
         }
     }
@@ -84,6 +85,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
 }
 
