@@ -62,7 +62,7 @@ pub(crate) fn c2c_send_message_impl(
 ) -> Response {
     let now = runtime_state.env.now();
 
-    let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state);
+    let replies_to = convert_reply_context(args.replies_to, sender, runtime_state);
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,

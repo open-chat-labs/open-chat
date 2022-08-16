@@ -163,7 +163,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         sender_message_index: message_index,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
-        replies_to_v2: None,
+        replies_to: None,
         forwarding: false,
     };
 

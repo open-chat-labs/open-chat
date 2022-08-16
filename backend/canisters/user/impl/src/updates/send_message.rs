@@ -98,7 +98,7 @@ fn send_message_impl(
         sender_name: args.sender_name,
         sender_message_index: message_event.event.message_index,
         content: args.content,
-        replies_to_v2: args.replies_to.and_then(|r| {
+        replies_to: args.replies_to.and_then(|r| {
             if let Some(chat_id) = r.chat_id_if_other {
                 Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
             } else {
