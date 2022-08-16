@@ -33,11 +33,11 @@ fn main() {
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
     generate_candid_method!(user, toggle_reaction, update);
-    generate_candid_method!(user, transfer_crypto_within_group, update);
+    generate_candid_method!(user, transfer_crypto_within_group_v2, update);
     generate_candid_method!(user, unblock_user, update);
     generate_candid_method!(user, unmute_notifications, update);
     generate_candid_method!(user, unpin_chat, update);
-    generate_candid_method!(user, withdraw_crypto, update);
+    generate_candid_method!(user, withdraw_crypto_v2, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

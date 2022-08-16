@@ -4,10 +4,63 @@ use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
+use ledger_utils::default_ledger_account;
 use types::{
-    CryptoTransaction, CryptocurrencyContent, MessageContent, ICP_TRANSFER_LIMIT, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
+    nns, CompletedCryptoTransaction, CompletedCryptoTransactionV2, CryptoAccount, CryptoTransaction, CryptoTransactionV2,
+    CryptocurrencyContent, MessageContent, PendingCryptoTransaction, PendingCryptoTransactionV2, UserId, ICP_TRANSFER_LIMIT,
+    MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::transfer_crypto_within_group::{Response::*, *};
+use user_canister::transfer_crypto_within_group_v2 as v2;
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+async fn transfer_crypto_within_group_v2(args: v2::Args) -> v2::Response {
+    let my_user_id: UserId = read_state(|state| state.env.canister_id()).into();
+
+    let pending_transaction = match &args.content.transfer {
+        CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.clone(),
+        _ => return v2::Response::InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+    };
+
+    let response = transfer_crypto_within_group(Args {
+        message_id: args.message_id,
+        group_id: args.group_id,
+        recipient: args.recipient,
+        content: CryptocurrencyContent {
+            transfer: CryptoTransaction::Pending(PendingCryptoTransaction {
+                token: pending_transaction.token,
+                amount: pending_transaction.amount,
+                to: CryptoAccount::User(args.recipient),
+                fee: pending_transaction.fee,
+                memo: pending_transaction.memo,
+            }),
+            caption: args.content.caption,
+        },
+        sender_name: args.sender_name,
+        replies_to: args.replies_to,
+        mentioned: args.mentioned,
+    })
+    .await;
+
+    match response {
+        Success(r) => v2::Response::Success(v2::SuccessResult {
+            event_index: r.event_index,
+            message_index: r.message_index,
+            timestamp: r.timestamp,
+            transfer: convert_transaction(r.transfer, my_user_id, args.recipient),
+        }),
+        TextTooLong(l) => v2::Response::TextTooLong(l),
+        RecipientBlocked => v2::Response::RecipientBlocked,
+        CallerNotInGroup(ct) => v2::Response::CallerNotInGroup(ct.map(|t| convert_transaction(t, my_user_id, args.recipient))),
+        CryptocurrencyNotSupported(c) => v2::Response::CryptocurrencyNotSupported(c),
+        InvalidRequest(e) => v2::Response::InvalidRequest(e),
+        TransferFailed(e) => v2::Response::TransferFailed(e),
+        TransferCannotBeZero => v2::Response::TransferCannotBeZero,
+        TransferLimitExceeded(l) => v2::Response::TransferLimitExceeded(l),
+        InternalError(e, t) => v2::Response::InternalError(e, convert_transaction(t, my_user_id, args.recipient)),
+    }
+}
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -75,4 +128,22 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
     } else {
         Ok(())
     }
+}
+
+fn convert_transaction(
+    transaction: CompletedCryptoTransaction,
+    my_user_id: UserId,
+    recipient: UserId,
+) -> CompletedCryptoTransactionV2 {
+    CompletedCryptoTransactionV2::NNS(nns::CompletedCryptoTransaction {
+        token: transaction.token,
+        amount: transaction.amount,
+        fee: transaction.fee,
+        from: nns::CryptoAccount::Account(default_ledger_account(my_user_id.into())),
+        to: nns::CryptoAccount::Account(default_ledger_account(recipient.into())),
+        memo: transaction.memo,
+        created: transaction.created,
+        transaction_hash: transaction.transaction_hash,
+        block_index: transaction.block_index,
+    })
 }
