@@ -561,7 +561,6 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'pinned_message' : IDL.Opt(MessageIndex),
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,

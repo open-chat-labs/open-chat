@@ -582,7 +582,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Vec(MessageIndexRange),
-    'pinned_message' : IDL.Opt(MessageIndex),
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -709,7 +708,6 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'pinned_message' : IDL.Opt(MessageIndex),
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
@@ -878,11 +876,6 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : GroupSubtype,
   });
-  const PinnedMessageUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : MessageIndex,
-  });
   const AvatarIdUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -901,7 +894,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
-    'pinned_message' : PinnedMessageUpdate,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),

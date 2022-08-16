@@ -57,7 +57,6 @@ impl GroupChat {
             read_by_me: Some(convert_to_message_index_ranges(self.read_by_me.value.clone())),
             notifications_muted: None,
             mentions: Vec::new(),
-            pinned_message: OptionUpdate::NoChange,
             wasm_version: None,
             owner_id: None,
             permissions: None,
