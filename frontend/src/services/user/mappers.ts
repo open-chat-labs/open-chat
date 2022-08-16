@@ -26,8 +26,6 @@ import type {
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
-    ApiFailedCryptocurrencyWithdrawal,
-    ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptoWithinGroupResponse,
     ApiCryptoAccountFull,
     ApiChatMetrics,
@@ -38,6 +36,10 @@ import type {
     ApiMigrateUserPrincipalResponse,
     ApiGroupSubtype,
     ApiGroupSubtypeUpdate,
+    ApiDirectChatSummary,
+    ApiGroupChatSummary,
+    ApiNnsFailedCryptoTransaction,
+    ApiNnsCompletedCryptoTransaction
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -95,7 +97,6 @@ import type {
     SetBioResponse,
     UnpinChatResponse,
 } from "../../domain/user/user";
-import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
@@ -201,11 +202,12 @@ export function searchDirectChatResponse(
 }
 
 export function messageMatch(candid: ApiMessageMatch): MessageMatch {
+    const sender = candid.sender.toString();
     return {
         chatId: candid.chat_id.toString(),
         messageIndex: candid.message_index,
-        content: messageContent(candid.content),
-        sender: candid.sender.toString(),
+        content: messageContent(candid.content, sender),
+        sender,
         score: candid.score,
     };
 }
@@ -350,15 +352,18 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function transferWithinGroupResponse(
-    candid: ApiTransferCryptoWithinGroupResponse
+    candid: ApiTransferCryptoWithinGroupResponse,
+    sender: string,
+    recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
+        const transfer = candid.Success.transfer;
         return {
             kind: "transfer_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer),
+            transfer: completedCryptoTransfer(transfer.NNS, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -850,12 +855,12 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
 }
 
 export function failedCryptoWithdrawal(
-    candid: ApiFailedCryptocurrencyWithdrawal
+    candid: ApiNnsFailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
         token: token(candid.token),
-        to: cryptoAccountFull(candid.to),
+        to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -864,12 +869,12 @@ export function failedCryptoWithdrawal(
 }
 
 export function completedCryptoWithdrawal(
-    candid: ApiCompletedCryptocurrencyWithdrawal
+    candid: ApiNnsCompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
         token: token(candid.token),
-        to: cryptoAccountFull(candid.to),
+        to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -885,32 +890,15 @@ export function withdrawCryptoResponse(
         return { kind: "currency_not_supported" };
     }
     if ("TransactionFailed" in candid) {
-        return failedCryptoWithdrawal(candid.TransactionFailed);
+        return failedCryptoWithdrawal(candid.TransactionFailed.NNS);
     }
     if ("Success" in candid) {
-        return completedCryptoWithdrawal(candid.Success);
+        return completedCryptoWithdrawal(candid.Success.NNS);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
         candid
     );
-}
-
-function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
-    if ("User" in candid) {
-        const [userId] = candid.User;
-        return userId.toString();
-    }
-    if ("UserIndex" in candid) {
-        return bytesToHexString(candid.UserIndex);
-    }
-    if ("Mint" in candid) {
-        return "Minting Account";
-    }
-    if ("Unknown" in candid) {
-        return bytesToHexString(candid.Unknown);
-    }
-    throw new UnsupportedValueError("Unexpected ApiCryptoAccountFull type received", candid);
 }
 
 export function migrateUserPrincipal(

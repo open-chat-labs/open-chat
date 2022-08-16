@@ -365,9 +365,11 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         _threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        const content = apiPendingCryptoContent(message.content as CryptocurrencyContent);
+
         const req: ApiTransferCryptoWithinGroupArgs = {
-            content: apiPendingCryptoContent(message.content as CryptocurrencyContent),
-            recipient: Principal.fromText(recipientId),
+            content,
+            recipient: content.recipient,
             sender_name: sender.username,
             mentioned: [],
             message_id: message.messageId,
@@ -378,8 +380,8 @@ export class UserClient extends CandidService implements IUserClient {
             ),
         };
         return this.handleResponse(
-            this.userService.transfer_crypto_within_group(req),
-            transferWithinGroupResponse
+            this.userService.transfer_crypto_within_group_v2(req),
+            resp => transferWithinGroupResponse(resp, message.sender, (message.content as CryptocurrencyContent).transfer.recipient)
         ).then((resp) => [resp, message]);
     }
 
@@ -582,9 +584,11 @@ export class UserClient extends CandidService implements IUserClient {
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
-            withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
+            withdrawal: {
+                NNS: apiPendingCryptocurrencyWithdrawal(domain)
+            },
         };
-        return this.handleResponse(this.userService.withdraw_crypto(req), withdrawCryptoResponse);
+        return this.handleResponse(this.userService.withdraw_crypto_v2(req), withdrawCryptoResponse);
     }
 
     @profile("userClient")

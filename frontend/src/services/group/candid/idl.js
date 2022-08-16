@@ -244,6 +244,58 @@ export const idlFactory = ({ IDL }) => {
     'blob_reference' : IDL.Opt(BlobReference),
     'caption' : IDL.Opt(IDL.Text),
   });
+  const NnsCryptoAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'Account' : AccountIdentifier,
+  });
+  const NnsFailedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const FailedCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsFailedCryptoTransaction,
+  });
+  const NnsCompletedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'amount' : Tokens,
+  });
+  const CompletedCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsCompletedCryptoTransaction,
+  });
+  const NnsPendingCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : IDL.Opt(Tokens),
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
+  const PendingCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsPendingCryptoTransaction,
+  });
+  const CryptoTransactionV2 = IDL.Variant({
+    'Failed' : FailedCryptoTransactionV2,
+    'Completed' : CompletedCryptoTransactionV2,
+    'Pending' : PendingCryptoTransactionV2,
+  });
+  const CryptoContent = IDL.Record({
+    'recipient' : UserId,
+    'caption' : IDL.Opt(IDL.Text),
+    'transfer' : CryptoTransactionV2,
+  });
   const VideoContent = IDL.Record({
     'height' : IDL.Nat32,
     'image_blob_reference' : IDL.Opt(BlobReference),
@@ -266,6 +318,7 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposal' : ProposalContent,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
+    'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
   });
