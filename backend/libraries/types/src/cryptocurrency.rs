@@ -89,7 +89,6 @@ pub enum CryptoAccountFull {
     Mint,
     User(UserId, AccountIdentifier),
     UserIndex(AccountIdentifier),
-    Named(String, AccountIdentifier),
     Unknown(AccountIdentifier),
 }
 
@@ -222,9 +221,7 @@ impl From<CryptoAccountFull> for CryptoAccount {
         match a {
             CryptoAccountFull::Mint => CryptoAccount::Mint,
             CryptoAccountFull::User(u, _) => CryptoAccount::User(u),
-            CryptoAccountFull::UserIndex(a) | CryptoAccountFull::Named(_, a) | CryptoAccountFull::Unknown(a) => {
-                CryptoAccount::Account(a)
-            }
+            CryptoAccountFull::UserIndex(a) | CryptoAccountFull::Unknown(a) => CryptoAccount::Account(a),
         }
     }
 }

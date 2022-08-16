@@ -136,7 +136,6 @@ export const Notification = IDL.Variant({
               'Failed' : IDL.Record({
                 'to' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -147,7 +146,6 @@ export const Notification = IDL.Variant({
                 'transaction_hash' : IDL.Vec(IDL.Nat8),
                 'from' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -159,7 +157,6 @@ export const Notification = IDL.Variant({
               'Completed' : IDL.Record({
                 'to' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -171,7 +168,6 @@ export const Notification = IDL.Variant({
                 'block_index' : IDL.Nat64,
                 'from' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -382,7 +378,6 @@ export const Notification = IDL.Variant({
               'Failed' : IDL.Record({
                 'to' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -393,7 +388,6 @@ export const Notification = IDL.Variant({
                 'transaction_hash' : IDL.Vec(IDL.Nat8),
                 'from' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -405,7 +399,6 @@ export const Notification = IDL.Variant({
               'Completed' : IDL.Record({
                 'to' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),
@@ -417,7 +410,6 @@ export const Notification = IDL.Variant({
                 'block_index' : IDL.Nat64,
                 'from' : IDL.Variant({
                   'UserIndex' : IDL.Vec(IDL.Nat8),
-                  'Named' : IDL.Tuple(IDL.Text, IDL.Vec(IDL.Nat8)),
                   'Mint' : IDL.Null,
                   'User' : IDL.Tuple(IDL.Principal, IDL.Vec(IDL.Nat8)),
                   'Unknown' : IDL.Vec(IDL.Nat8),

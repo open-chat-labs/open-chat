@@ -858,7 +858,6 @@ type CryptoAccountFull =
         Mint;
         User: record { UserId; AccountIdentifier };
         UserIndex: AccountIdentifier;
-        Named: record { text; AccountIdentifier };
         Unknown: AccountIdentifier;
     };
 
