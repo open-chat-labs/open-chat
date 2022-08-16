@@ -143,7 +143,6 @@ struct Data {
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
-    #[serde(default)]
     pub pending_user_principal_migration: Option<Principal>,
 }
 

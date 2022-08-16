@@ -2,8 +2,8 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal, ProposalContent,
-    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal,
+    CryptoTransactionV2, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -25,6 +25,7 @@ pub enum MessageContent {
     File(FileContent),
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
+    Crypto(CryptoContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
@@ -39,6 +40,7 @@ pub enum MessageContentInternal {
     File(FileContent),
     Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContentInternal),
+    Crypto(CryptoContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
@@ -97,6 +99,7 @@ impl MessageContent {
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
             MessageContent::Cryptocurrency(c) => c.transfer.amount() == Tokens::ZERO,
+            MessageContent::Crypto(c) => c.transfer.is_zero(),
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
             MessageContent::GovernanceProposal(_) => false,
@@ -128,6 +131,7 @@ impl MessageContent {
                 ended: false,
             }),
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
+            MessageContent::Crypto(c) => MessageContentInternal::Crypto(c),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
             MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
@@ -168,6 +172,7 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
+            | MessageContent::Crypto(_)
             | MessageContent::Deleted(_)
             | MessageContent::Giphy(_)
             | MessageContent::GovernanceProposal(_) => {}
@@ -185,6 +190,7 @@ impl MessageContent {
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
@@ -219,6 +225,7 @@ impl MessageContentInternal {
                 },
                 caption: c.caption.clone(),
             }),
+            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
             MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
@@ -418,6 +425,13 @@ impl From<CryptocurrencyContent> for CryptocurrencyContentInternal {
             caption: c.caption,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptoContent {
+    pub recipient: UserId,
+    pub transfer: CryptoTransactionV2,
+    pub caption: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
