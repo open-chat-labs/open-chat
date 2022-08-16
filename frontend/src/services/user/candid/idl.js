@@ -208,7 +208,6 @@ export const idlFactory = ({ IDL }) => {
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
-    'Named' : IDL.Tuple(IDL.Text, AccountIdentifier),
     'Mint' : IDL.Null,
     'User' : IDL.Tuple(UserId, AccountIdentifier),
     'Unknown' : AccountIdentifier,

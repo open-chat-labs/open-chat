@@ -907,10 +907,6 @@ function cryptoAccountFull(candid: ApiCryptoAccountFull): string {
     if ("Mint" in candid) {
         return "Minting Account";
     }
-    if ("Named" in candid) {
-        const [, accountIdentifier] = candid.Named;
-        return bytesToHexString(accountIdentifier);
-    }
     if ("Unknown" in candid) {
         return bytesToHexString(candid.Unknown);
     }

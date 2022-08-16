@@ -120,7 +120,6 @@ export type CryptoAccount = { 'Mint' : null } |
   { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
-  { 'Named' : [string, AccountIdentifier] } |
   { 'Mint' : null } |
   { 'User' : [UserId, AccountIdentifier] } |
   { 'Unknown' : AccountIdentifier };
