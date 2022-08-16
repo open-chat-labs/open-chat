@@ -26,6 +26,13 @@ type SendMessageResponse =
             timestamp: TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
+        TransferSuccessV2: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptoTransactionV2;
+        };
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
