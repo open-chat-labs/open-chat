@@ -352,7 +352,7 @@ export class UserClient extends CandidService implements IUserClient {
             };
             return this.handleResponse(
                 this.userService.send_message(req),
-                sendMessageResponse
+                (resp) => sendMessageResponse(resp, message.sender, recipientId)
             ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
@@ -381,7 +381,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleResponse(
             this.userService.transfer_crypto_within_group_v2(req),
-            resp => transferWithinGroupResponse(resp, message.sender, (message.content as CryptocurrencyContent).transfer.recipient)
+            resp => transferWithinGroupResponse(resp, message.sender, recipientId)
         ).then((resp) => [resp, message]);
     }
 

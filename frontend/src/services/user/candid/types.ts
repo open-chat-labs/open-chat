@@ -817,6 +817,15 @@ export interface SendMessageArgs {
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
+  {
+    'TransferSuccessV2' : {
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransactionV2,
+      'message_index' : MessageIndex,
+    }
+  } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {

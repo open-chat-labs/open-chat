@@ -405,7 +405,7 @@ export function transferWithinGroupResponse(
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
-export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+export function sendMessageResponse(candid: ApiSendMessageResponse, sender: string, recipient: string): SendMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -421,6 +421,15 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             messageIndex: candid.TransferSuccess.message_index,
             eventIndex: candid.TransferSuccess.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
+        };
+    }
+    if ("TransferSuccessV2" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.TransferSuccessV2.timestamp,
+            messageIndex: candid.TransferSuccessV2.message_index,
+            eventIndex: candid.TransferSuccessV2.event_index,
+            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer.NNS, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
