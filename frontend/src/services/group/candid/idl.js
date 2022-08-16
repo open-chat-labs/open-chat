@@ -187,7 +187,6 @@ export const idlFactory = ({ IDL }) => {
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
-    'Named' : IDL.Tuple(IDL.Text, AccountIdentifier),
     'Mint' : IDL.Null,
     'User' : IDL.Tuple(UserId, AccountIdentifier),
     'Unknown' : AccountIdentifier,
@@ -562,7 +561,6 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'pinned_message' : IDL.Opt(MessageIndex),
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,

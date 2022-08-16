@@ -142,7 +142,6 @@ export type CryptoAccount = { 'Mint' : null } |
   { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
-  { 'Named' : [string, AccountIdentifier] } |
   { 'Mint' : null } |
   { 'User' : [UserId, AccountIdentifier] } |
   { 'Unknown' : AccountIdentifier };
@@ -276,7 +275,6 @@ export interface GroupChatSummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
-  'pinned_message' : [] | [MessageIndex],
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
@@ -303,7 +301,6 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
-  'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
@@ -581,7 +578,6 @@ export interface PublicGroupSummary {
   'wasm_version' : Version,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'pinned_message' : [] | [MessageIndex],
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,

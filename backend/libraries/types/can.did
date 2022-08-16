@@ -103,6 +103,13 @@ type CryptocurrencyContent =
         caption: opt text;
     };
 
+type CryptoContent =
+    record {
+        recipient: UserId;
+        transfer: CryptoTransactionV2;
+        caption: opt text;
+    };
+
 type DeletedContent =
     record {
         deleted_by: UserId;
@@ -244,7 +251,6 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
@@ -268,7 +274,6 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
@@ -409,7 +414,6 @@ type PublicGroupSummary =
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         participant_count: nat32;
-        pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
         is_public: bool;
@@ -472,6 +476,7 @@ type MessageContent =
         File: FileContent;
         Poll: PollContent;
         Cryptocurrency: CryptocurrencyContent;
+        Crypto: CryptoContent;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
@@ -814,6 +819,13 @@ type CryptoTransaction =
         Failed: FailedCryptoTransaction;
     };
 
+type CryptoTransactionV2 =
+    variant {
+        Pending: PendingCryptoTransactionV2;
+        Completed: CompletedCryptoTransactionV2;
+        Failed: FailedCryptoTransactionV2;
+    };
+
 type PendingCryptoTransaction =
     record {
         token: Cryptocurrency;
@@ -861,8 +873,63 @@ type CryptoAccountFull =
         Mint;
         User: record { UserId; AccountIdentifier };
         UserIndex: AccountIdentifier;
-        Named: record { text; AccountIdentifier };
         Unknown: AccountIdentifier;
+    };
+
+type PendingCryptoTransactionV2 =
+    variant {
+        NNS: NnsPendingCryptoTransaction;
+    };
+
+type CompletedCryptoTransactionV2 =
+    variant {
+        NNS: NnsCompletedCryptoTransaction;
+    };
+
+type FailedCryptoTransactionV2 =
+    variant {
+        NNS: NnsFailedCryptoTransaction;
+    };
+
+type NnsPendingCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        to: NnsCryptoAccount;
+        fee: opt Tokens;
+        memo: opt Memo;
+    };
+
+type NnsCompletedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: NnsCryptoAccount;
+        to: NnsCryptoAccount;
+        memo: Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        block_index: BlockIndex;
+    };
+
+type NnsFailedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: NnsCryptoAccount;
+        to: NnsCryptoAccount;
+        memo: Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        error_message: text;
+    };
+
+type NnsCryptoAccount =
+    variant {
+        Mint;
+        Account: AccountIdentifier;
     };
 
 type PendingCryptoTransfer =

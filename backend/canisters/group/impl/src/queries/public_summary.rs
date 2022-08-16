@@ -28,7 +28,6 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         latest_message: chat_events.latest_message(None),
         latest_event_index: latest_event.index,
         participant_count: data.participants.len(),
-        pinned_message: None,
         wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         owner_id: runtime_state.data.owner_id,
         is_public: runtime_state.data.is_public,
