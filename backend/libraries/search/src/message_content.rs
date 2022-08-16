@@ -1,5 +1,8 @@
 use crate::document::Document;
-use types::MessageContentInternal;
+use types::{
+    CompletedCryptoTransactionV2, CryptoTransactionV2, FailedCryptoTransactionV2, MessageContentInternal,
+    PendingCryptoTransactionV2,
+};
 
 impl From<&MessageContentInternal> for Document {
     fn from(message_content: &MessageContentInternal) -> Self {
@@ -23,6 +26,16 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Cryptocurrency(c) => {
                 document.add_field(c.transfer.token().token_symbol(), 1.0);
                 document.add_field(format!("{}", c.transfer.amount()), 1.0);
+                try_add_caption(&mut document, c.caption.as_ref())
+            }
+            MessageContentInternal::Crypto(c) => {
+                let (token, amount) = match &c.transfer {
+                    CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
+                    CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
+                    CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
+                };
+                document.add_field(token.token_symbol(), 1.0);
+                document.add_field(format!("{}", amount), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::Image(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
