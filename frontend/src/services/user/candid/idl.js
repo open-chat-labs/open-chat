@@ -297,8 +297,12 @@ export const idlFactory = ({ IDL }) => {
   const CompletedCryptoTransactionV2 = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
   });
+  const NnsUserOrAccount = IDL.Variant({
+    'User' : UserId,
+    'Account' : AccountIdentifier,
+  });
   const NnsPendingCryptoTransaction = IDL.Record({
-    'to' : NnsCryptoAccount,
+    'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),

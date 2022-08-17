@@ -1,4 +1,4 @@
-use crate::{Cryptocurrency, TimestampMillis, TransactionHash};
+use crate::{Cryptocurrency, TimestampMillis, TransactionHash, UserId};
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
@@ -54,10 +54,16 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum UserOrAccount {
+        User(UserId),
+        Account(AccountIdentifier),
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub struct PendingCryptoTransaction {
         pub token: Cryptocurrency,
         pub amount: Tokens,
-        pub to: CryptoAccount,
+        pub to: UserOrAccount,
         pub fee: Option<Tokens>,
         pub memo: Option<Memo>,
     }

@@ -240,7 +240,7 @@ export const Notification = IDL.Variant({
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
-                    'Mint' : IDL.Null,
+                    'User' : IDL.Principal,
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
@@ -538,7 +538,7 @@ export const Notification = IDL.Variant({
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
-                    'Mint' : IDL.Null,
+                    'User' : IDL.Principal,
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
