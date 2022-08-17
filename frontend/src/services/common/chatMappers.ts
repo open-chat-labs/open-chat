@@ -755,7 +755,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                 NNS: {
                     token: apiToken(domain.token),
                     to: {
-                        Mint: null,
+                        User: Principal.fromText(domain.recipient),
                     },
                     amount: apiICP(domain.amountE8s),
                     fee: apiOptional(apiICP, domain.feeE8s),
