@@ -115,7 +115,7 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
-export type CompletedCryptoTransactionV2 = {
+export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   };
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
@@ -134,11 +134,11 @@ export type CreateChallengeResponse = { 'Throttled' : null } |
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
-  'transfer' : CryptoTransactionV2,
+  'transfer' : CryptoTransaction,
 }
-export type CryptoTransactionV2 = { 'Failed' : FailedCryptoTransactionV2 } |
-  { 'Completed' : CompletedCryptoTransactionV2 } |
-  { 'Pending' : PendingCryptoTransactionV2 };
+export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
+  { 'Completed' : CompletedCryptoTransaction } |
+  { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
@@ -200,7 +200,7 @@ export interface DirectMessageNotification {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventIndex = number;
-export type FailedCryptoTransactionV2 = { 'NNS' : NnsFailedCryptoTransaction };
+export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
 export interface FieldTooLongResult {
@@ -511,9 +511,7 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export type PendingCryptoTransactionV2 = {
-    'NNS' : NnsPendingCryptoTransaction
-  };
+export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction };
 export type PermissionRole = { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
