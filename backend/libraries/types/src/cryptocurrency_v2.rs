@@ -1,6 +1,7 @@
+use crate::nns::UserOrAccount;
 use crate::{Cryptocurrency, TimestampMillis, TransactionHash, UserId};
 use candid::CandidType;
-use ic_ledger_types::Tokens;
+use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +40,17 @@ impl CryptoTransactionV2 {
             CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.amount == Tokens::ZERO,
             CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => t.amount == Tokens::ZERO,
             CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => t.amount == Tokens::ZERO,
+        }
+    }
+}
+
+impl PendingCryptoTransactionV2 {
+    pub fn is_user_recipient(&self, user_id: UserId) -> bool {
+        match self {
+            PendingCryptoTransactionV2::NNS(t) => match t.to {
+                UserOrAccount::User(u) => u == user_id,
+                UserOrAccount::Account(a) => a == AccountIdentifier::new(&user_id.into(), &DEFAULT_SUBACCOUNT),
+            },
         }
     }
 }

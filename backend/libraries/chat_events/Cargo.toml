@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 candid = "0.7.15"
 itertools = "0.10.3"
+ledger_utils = { path = "../ledger_utils" }
 search = { path = "../search" }
 serde = "1.0.137"
 types = { path = "../types" }

@@ -811,6 +811,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "itertools",
+ "ledger_utils",
  "search",
  "serde",
  "types 0.1.0",

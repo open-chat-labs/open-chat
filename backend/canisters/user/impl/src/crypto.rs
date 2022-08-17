@@ -1,13 +1,13 @@
 use crate::read_state;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
-use types::{
-    CompletedCryptoTransaction, CryptoAccount, CryptoAccountFull, FailedCryptoTransaction, PendingCryptoTransaction, UserId,
-};
+use types::{nns, CompletedCryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2, UserId};
 
 pub async fn process_transaction(
-    transaction: PendingCryptoTransaction,
-) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+    transaction: PendingCryptoTransactionV2,
+) -> Result<CompletedCryptoTransactionV2, FailedCryptoTransactionV2> {
+    let PendingCryptoTransactionV2::NNS(t) = transaction;
+
     let (my_user_id, ledger_canister_id, now) = read_state(|state| {
         if !state.is_caller_owner() {
             panic!("Only the owner can transfer cryptocurrency");
@@ -20,22 +20,18 @@ pub async fn process_transaction(
         (my_user_id, ledger_canister_id, now)
     });
 
-    let memo = transaction.memo.unwrap_or(Memo(0));
-    let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
+    let memo = t.memo.unwrap_or(Memo(0));
+    let fee = t.fee.unwrap_or(DEFAULT_FEE);
 
     let from = default_ledger_account(my_user_id.into());
-    let (to, to_full) = match transaction.to {
-        CryptoAccount::User(user_id) => {
-            let to = default_ledger_account(user_id.into());
-            (to, CryptoAccountFull::User(user_id, to))
-        }
-        CryptoAccount::Account(a) => (a, CryptoAccountFull::Unknown(a)),
-        CryptoAccount::Mint => panic!("Burning is not supported yet"),
+    let to = match t.to {
+        nns::UserOrAccount::User(u) => default_ledger_account(u.into()),
+        nns::UserOrAccount::Account(a) => a,
     };
 
     let transfer_args = TransferArgs {
         memo,
-        amount: transaction.amount,
+        amount: t.amount,
         fee,
         from_subaccount: None,
         to,
@@ -47,17 +43,17 @@ pub async fn process_transaction(
     let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
 
     match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
-        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction {
-            token: transaction.token,
-            amount: transaction.amount,
+        Ok(Ok(block_index)) => Ok(CompletedCryptoTransactionV2::NNS(nns::CompletedCryptoTransaction {
+            token: t.token,
+            amount: t.amount,
             fee,
-            from: CryptoAccountFull::User(my_user_id, from),
-            to: to_full.clone(),
+            from: nns::CryptoAccount::Account(from),
+            to: nns::CryptoAccount::Account(to),
             memo,
             created: now,
             transaction_hash,
             block_index,
-        }),
+        })),
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Err(error_message)
@@ -67,15 +63,17 @@ pub async fn process_transaction(
             Err(error_message)
         }
     }
-    .map_err(|error| FailedCryptoTransaction {
-        token: transaction.token,
-        amount: transaction.amount,
-        fee,
-        from: CryptoAccountFull::User(my_user_id, from),
-        to: to_full,
-        memo,
-        created: now,
-        transaction_hash,
-        error_message: error,
+    .map_err(|error| {
+        FailedCryptoTransactionV2::NNS(nns::FailedCryptoTransaction {
+            token: t.token,
+            amount: t.amount,
+            fee,
+            from: nns::CryptoAccount::Account(from),
+            to: nns::CryptoAccount::Account(to),
+            memo,
+            created: now,
+            transaction_hash,
+            error_message: error,
+        })
     })
 }
