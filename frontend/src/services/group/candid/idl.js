@@ -184,70 +184,20 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
-  const AccountIdentifier = IDL.Vec(IDL.Nat8);
-  const CryptoAccountFull = IDL.Variant({
-    'UserIndex' : AccountIdentifier,
-    'Mint' : IDL.Null,
-    'User' : IDL.Tuple(UserId, AccountIdentifier),
-    'Unknown' : AccountIdentifier,
-  });
-  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
-  const TransactionHash = IDL.Vec(IDL.Nat8);
-  const Memo = IDL.Nat64;
-  const FailedCryptoTransaction = IDL.Record({
-    'to' : CryptoAccountFull,
-    'fee' : Tokens,
-    'created' : TimestampMillis,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : CryptoAccountFull,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const BlockIndex = IDL.Nat64;
-  const CompletedCryptoTransaction = IDL.Record({
-    'to' : CryptoAccountFull,
-    'fee' : Tokens,
-    'created' : TimestampMillis,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'from' : CryptoAccountFull,
-    'memo' : Memo,
-    'amount' : Tokens,
-  });
-  const CryptoAccount = IDL.Variant({
-    'Mint' : IDL.Null,
-    'User' : UserId,
-    'Account' : AccountIdentifier,
-  });
-  const PendingCryptoTransaction = IDL.Record({
-    'to' : CryptoAccount,
-    'fee' : IDL.Opt(Tokens),
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
-    'amount' : Tokens,
-  });
-  const CryptoTransaction = IDL.Variant({
-    'Failed' : FailedCryptoTransaction,
-    'Completed' : CompletedCryptoTransaction,
-    'Pending' : PendingCryptoTransaction,
-  });
-  const CryptocurrencyContent = IDL.Record({
-    'caption' : IDL.Opt(IDL.Text),
-    'transfer' : CryptoTransaction,
-  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
     'caption' : IDL.Opt(IDL.Text),
   });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const NnsCryptoAccount = IDL.Variant({
     'Mint' : IDL.Null,
     'Account' : AccountIdentifier,
   });
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
+  const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -262,6 +212,7 @@ export const idlFactory = ({ IDL }) => {
   const FailedCryptoTransactionV2 = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
   });
+  const BlockIndex = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -320,7 +271,6 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'GovernanceProposal' : ProposalContent,
-    'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,

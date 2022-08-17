@@ -98,12 +98,6 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
-type CryptocurrencyContent =
-    record {
-        transfer: CryptoTransaction;
-        caption: opt text;
-    };
-
 type CryptoContent =
     record {
         recipient: UserId;
@@ -476,7 +470,6 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Poll: PollContent;
-        Cryptocurrency: CryptocurrencyContent;
         Crypto: CryptoContent;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
@@ -813,68 +806,11 @@ type Cryptocurrency =
         InternetComputer;
     };
 
-type CryptoTransaction =
-    variant {
-        Pending: PendingCryptoTransaction;
-        Completed: CompletedCryptoTransaction;
-        Failed: FailedCryptoTransaction;
-    };
-
 type CryptoTransactionV2 =
     variant {
         Pending: PendingCryptoTransactionV2;
         Completed: CompletedCryptoTransactionV2;
         Failed: FailedCryptoTransactionV2;
-    };
-
-type PendingCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        to: CryptoAccount;
-        fee: opt Tokens;
-        memo: opt Memo;
-    };
-
-type CompletedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: CryptoAccountFull;
-        to: CryptoAccountFull;
-        memo: Memo;
-        created: TimestampMillis;
-        transaction_hash: TransactionHash;
-        block_index: BlockIndex;
-    };
-
-type FailedCryptoTransaction =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        fee: Tokens;
-        from: CryptoAccountFull;
-        to: CryptoAccountFull;
-        memo: Memo;
-        created: TimestampMillis;
-        transaction_hash: TransactionHash;
-        error_message: text;
-    };
-
-type CryptoAccount =
-    variant {
-        Mint;
-        User: UserId;
-        Account: AccountIdentifier;
-    };
-
-type CryptoAccountFull =
-    variant {
-        Mint;
-        User: record { UserId; AccountIdentifier };
-        UserIndex: AccountIdentifier;
-        Unknown: AccountIdentifier;
     };
 
 type PendingCryptoTransactionV2 =
@@ -937,15 +873,6 @@ type NnsCryptoAccount =
     variant {
         Mint;
         Account: AccountIdentifier;
-    };
-
-type PendingCryptoTransfer =
-    record {
-        token: Cryptocurrency;
-        amount: Tokens;
-        to: UserId;
-        fee: opt Tokens;
-        memo: opt Memo;
     };
 
 type VideoContent =

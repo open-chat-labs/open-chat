@@ -7,8 +7,8 @@ use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    nns, CanisterId, CompletedCryptoTransactionV2, ContentValidationError, CryptoContent, CryptoTransaction,
-    CryptoTransactionV2, FailedCryptoTransactionV2, MessageContent, PendingCryptoTransactionV2, UserId,
+    CanisterId, CompletedCryptoTransactionV2, ContentValidationError, CryptoTransactionV2, FailedCryptoTransactionV2,
+    MessageContent, UserId,
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
@@ -22,24 +22,6 @@ async fn send_message(mut args: Args) -> Response {
 
     if let Err(response) = read_state(|state| validate_request(&args, state)) {
         return response;
-    }
-
-    if let MessageContent::Cryptocurrency(c) = &mut args.content {
-        let pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone(),
-            _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
-        };
-        args.content = MessageContent::Crypto(CryptoContent {
-            recipient: args.recipient,
-            transfer: CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(nns::PendingCryptoTransaction {
-                token: pending_transaction.token,
-                amount: pending_transaction.amount,
-                to: nns::UserOrAccount::User(args.recipient),
-                fee: pending_transaction.fee,
-                memo: pending_transaction.memo,
-            })),
-            caption: c.caption.clone(),
-        });
     }
 
     let mut completed_transfer = None;

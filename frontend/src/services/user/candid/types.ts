@@ -123,17 +123,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface CompletedCryptoTransaction {
-  'to' : CryptoAccountFull,
-  'fee' : Tokens,
-  'created' : TimestampMillis,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'from' : CryptoAccountFull,
-  'memo' : Memo,
-  'amount' : Tokens,
-}
 export type CompletedCryptoTransactionV2 = {
     'NNS' : NnsCompletedCryptoTransaction
   };
@@ -160,29 +149,15 @@ export type CreateGroupResponse = { 'NameReserved' : null } |
   { 'MaxGroupsCreated' : number } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
-export type CryptoAccount = { 'Mint' : null } |
-  { 'User' : UserId } |
-  { 'Account' : AccountIdentifier };
-export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
-  { 'Mint' : null } |
-  { 'User' : [UserId, AccountIdentifier] } |
-  { 'Unknown' : AccountIdentifier };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
   'transfer' : CryptoTransactionV2,
 }
-export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
-  { 'Completed' : CompletedCryptoTransaction } |
-  { 'Pending' : PendingCryptoTransaction };
 export type CryptoTransactionV2 = { 'Failed' : FailedCryptoTransactionV2 } |
   { 'Completed' : CompletedCryptoTransactionV2 } |
   { 'Pending' : PendingCryptoTransactionV2 };
 export type Cryptocurrency = { 'InternetComputer' : null };
-export interface CryptocurrencyContent {
-  'caption' : [] | [string],
-  'transfer' : CryptoTransaction,
-}
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -278,17 +253,6 @@ export interface EventsWindowArgs {
   'user_id' : UserId,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
-}
-export interface FailedCryptoTransaction {
-  'to' : CryptoAccountFull,
-  'fee' : Tokens,
-  'created' : TimestampMillis,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'from' : CryptoAccountFull,
-  'memo' : Memo,
-  'error_message' : string,
-  'amount' : Tokens,
 }
 export type FailedCryptoTransactionV2 = { 'NNS' : NnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
@@ -521,7 +485,6 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'GovernanceProposal' : ProposalContent } |
-  { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -665,23 +628,9 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export interface PendingCryptoTransaction {
-  'to' : CryptoAccount,
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'amount' : Tokens,
-}
 export type PendingCryptoTransactionV2 = {
     'NNS' : NnsPendingCryptoTransaction
   };
-export interface PendingCryptoTransfer {
-  'to' : UserId,
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'amount' : Tokens,
-}
 export type PermissionRole = { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -842,16 +791,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : string } |
-  { 'TransferFailed' : string } |
-  {
-    'TransferSuccess' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'message_index' : MessageIndex,
-    }
-  };
+  { 'TransferFailed' : string };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null };

@@ -23,11 +23,6 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Text(c) => {
                 document.add_field(c.text.clone(), 1.0);
             }
-            MessageContentInternal::Cryptocurrency(c) => {
-                document.add_field(c.transfer.token().token_symbol(), 1.0);
-                document.add_field(format!("{}", c.transfer.amount()), 1.0);
-                try_add_caption(&mut document, c.caption.as_ref())
-            }
             MessageContentInternal::Crypto(c) => {
                 let (token, amount) = match &c.transfer {
                     CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
