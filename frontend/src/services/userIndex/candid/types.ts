@@ -125,6 +125,9 @@ export interface CompletedCryptoTransaction {
   'memo' : Memo,
   'amount' : Tokens,
 }
+export type CompletedCryptoTransactionV2 = {
+    'NNS' : NnsCompletedCryptoTransaction
+  };
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : SuccessResult } |
@@ -145,9 +148,17 @@ export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
   { 'Mint' : null } |
   { 'User' : [UserId, AccountIdentifier] } |
   { 'Unknown' : AccountIdentifier };
+export interface CryptoContent {
+  'recipient' : UserId,
+  'caption' : [] | [string],
+  'transfer' : CryptoTransactionV2,
+}
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
+export type CryptoTransactionV2 = { 'Failed' : FailedCryptoTransactionV2 } |
+  { 'Completed' : CompletedCryptoTransactionV2 } |
+  { 'Pending' : PendingCryptoTransactionV2 };
 export type Cryptocurrency = { 'InternetComputer' : null };
 export interface CryptocurrencyContent {
   'caption' : [] | [string],
@@ -224,6 +235,7 @@ export interface FailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
+export type FailedCryptoTransactionV2 = { 'NNS' : NnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
 export interface FieldTooLongResult {
@@ -415,6 +427,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
@@ -445,7 +458,38 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
+export interface NnsCompletedCryptoTransaction {
+  'to' : NnsCryptoAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'from' : NnsCryptoAccount,
+  'memo' : Memo,
+  'amount' : Tokens,
+}
+export type NnsCryptoAccount = { 'Mint' : null } |
+  { 'Account' : AccountIdentifier };
+export interface NnsFailedCryptoTransaction {
+  'to' : NnsCryptoAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'from' : NnsCryptoAccount,
+  'memo' : Memo,
+  'error_message' : string,
+  'amount' : Tokens,
+}
 export type NnsNeuronId = bigint;
+export interface NnsPendingCryptoTransaction {
+  'to' : NnsCryptoAccount,
+  'fee' : [] | [Tokens],
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
 export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -508,6 +552,9 @@ export interface PendingCryptoTransaction {
   'memo' : [] | [Memo],
   'amount' : Tokens,
 }
+export type PendingCryptoTransactionV2 = {
+    'NNS' : NnsPendingCryptoTransaction
+  };
 export interface PendingCryptoTransfer {
   'to' : UserId,
   'fee' : [] | [Tokens],

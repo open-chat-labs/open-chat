@@ -50,9 +50,12 @@ import type {
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptocurrencyContent,
+    ApiCryptoContent,
     ApiCryptoTransaction,
-    ApiPendingCryptoTransaction,
+    ApiCryptoTransactionV2,
+    ApiNnsPendingCryptoTransaction,
     ApiCompletedCryptoTransaction,
+    ApiNnsCompletedCryptoTransaction,
     ApiMessageIndexRange,
     ApiUser,
     ApiICP,
@@ -81,10 +84,11 @@ import type {
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function message(candid: ApiMessage): Message {
+    const sender = candid.sender.toString();
     return {
         kind: "message",
-        content: messageContent(candid.content),
-        sender: candid.sender.toString(),
+        content: messageContent(candid.content, sender),
+        sender,
         repliesTo: optional(candid.replies_to, replyContext),
         messageId: candid.message_id,
         messageIndex: candid.message_index,
@@ -118,7 +122,7 @@ export function apiMessageIndexRanges(ranges: ApiMessageIndexRange[]): DRange {
     return drange;
 }
 
-export function messageContent(candid: ApiMessageContent): MessageContent {
+export function messageContent(candid: ApiMessageContent, sender: string): MessageContent {
     if ("File" in candid) {
         return fileContent(candid.File);
     }
@@ -139,6 +143,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     }
     if ("Cryptocurrency" in candid) {
         return cryptoContent(candid.Cryptocurrency);
+    }
+    if ("Crypto" in candid) {
+        return cryptoContentV2(candid.Crypto, sender);
     }
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
@@ -321,6 +328,14 @@ function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent 
     };
 }
 
+function cryptoContentV2(candid: ApiCryptoContent, sender: string): CryptocurrencyContent {
+    return {
+        kind: "crypto_content",
+        caption: optional(candid.caption, identity),
+        transfer: cryptoTransferV2(candid.transfer, sender, candid.recipient.toString()),
+    };
+}
+
 export function token(_candid: ApiCryptocurrency): Cryptocurrency {
     return "icp";
 }
@@ -357,14 +372,44 @@ function cryptoTransfer(candid: ApiCryptoTransaction): CryptocurrencyTransfer {
     throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
 }
 
+function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipient: string): CryptocurrencyTransfer {
+    if ("Pending" in candid) {
+        return {
+            kind: "pending",
+            token: token(candid.Pending.NNS.token),
+            recipient,
+            amountE8s: candid.Pending.NNS.amount.e8s,
+            feeE8s: optional(candid.Pending.NNS.fee, (f) => f.e8s),
+            memo: optional(candid.Pending.NNS.memo, identity),
+        };
+    }
+    if ("Completed" in candid) {
+        return completedCryptoTransfer(candid.Completed.NNS, sender, recipient);
+    }
+    if ("Failed" in candid) {
+        return {
+            kind: "failed",
+            token: token(candid.Failed.NNS.token),
+            recipient,
+            amountE8s: candid.Failed.NNS.amount.e8s,
+            feeE8s: candid.Failed.NNS.fee.e8s,
+            memo: candid.Failed.NNS.memo,
+            errorMessage: candid.Failed.NNS.error_message,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCryptoTransferV2 type received", candid);
+}
+
 export function completedCryptoTransfer(
-    candid: ApiCompletedCryptoTransaction
+    candid: ApiCompletedCryptoTransaction | ApiNnsCompletedCryptoTransaction,
+    sender: string = "",
+    recipient: string = ""
 ): CompletedCryptocurrencyTransfer {
     return {
         kind: "completed",
         token: token(candid.token),
-        recipient: "User" in candid.to ? candid.to.User[0].toString() : "",
-        sender: "User" in candid.from ? candid.from.User[0].toString() : "",
+        recipient: "User" in candid.to ? candid.to.User[0].toString() : recipient,
+        sender: "User" in candid.from ? candid.from.User[0].toString() : sender,
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
@@ -552,7 +597,7 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
             return { File: apiFileContent(domain) };
 
         case "crypto_content":
-            return { Cryptocurrency: apiPendingCryptoContent(domain) };
+            return { Crypto: apiPendingCryptoContent(domain) };
 
         case "deleted_content":
             return { Deleted: apiDeletedContent(domain) };
@@ -695,25 +740,28 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
+export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCryptoContent {
     return {
+        recipient: Principal.fromText(domain.transfer.recipient),
         caption: apiOptional(identity, domain.caption),
         transfer: apiPendingCryptoTransaction(domain.transfer),
     };
 }
 
-function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
+function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransactionV2 {
     if (domain.kind === "pending") {
         return {
             Pending: {
-                token: apiToken(domain.token),
-                to: {
-                    User: Principal.fromText(domain.recipient),
+                NNS: {
+                    token: apiToken(domain.token),
+                    to: {
+                        Mint: null,
+                    },
+                    amount: apiICP(domain.amountE8s),
+                    fee: apiOptional(apiICP, domain.feeE8s),
+                    memo: apiOptional(identity, domain.memo),
                 },
-                amount: apiICP(domain.amountE8s),
-                fee: apiOptional(apiICP, domain.feeE8s),
-                memo: apiOptional(identity, domain.memo),
-            },
+            }
         };
     }
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
@@ -721,7 +769,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
-): ApiPendingCryptoTransaction {
+): ApiNnsPendingCryptoTransaction {
     return {
         token: apiToken(domain.token),
         to: { Account: hexStringToBytes(domain.to) },
