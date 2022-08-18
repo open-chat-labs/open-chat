@@ -191,6 +191,7 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
         group_name: runtime_state.data.name.clone(),
         added_by,
         added_by_name,
+        timestamp: now,
     });
     runtime_state.push_notification(user_ids, notification);
 }

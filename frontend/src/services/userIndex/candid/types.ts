@@ -9,6 +9,7 @@ export type AddSuperAdminResponse = { 'Success' : null } |
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
+  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'group_name' : string,
 }

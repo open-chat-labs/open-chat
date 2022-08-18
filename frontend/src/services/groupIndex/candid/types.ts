@@ -5,6 +5,7 @@ export type AccountIdentifier = Uint8Array;
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
+  'timestamp' : TimestampMillis,
   'chat_id' : ChatId,
   'group_name' : string,
 }
