@@ -895,7 +895,7 @@ type NnsPendingCryptoTransaction =
     record {
         token: Cryptocurrency;
         amount: Tokens;
-        to: NnsCryptoAccount;
+        to: NnsUserOrAccount;
         fee: opt Tokens;
         memo: opt Memo;
     };
@@ -924,6 +924,12 @@ type NnsFailedCryptoTransaction =
         created: TimestampMillis;
         transaction_hash: TransactionHash;
         error_message: text;
+    };
+
+type NnsUserOrAccount =
+    variant {
+        User: UserId;
+        Account: AccountIdentifier;
     };
 
 type NnsCryptoAccount =

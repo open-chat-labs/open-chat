@@ -564,7 +564,7 @@ export interface NnsFailedCryptoTransaction {
 }
 export type NnsNeuronId = bigint;
 export interface NnsPendingCryptoTransaction {
-  'to' : NnsCryptoAccount,
+  'to' : NnsUserOrAccount,
   'fee' : [] | [Tokens],
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
@@ -584,6 +584,8 @@ export interface NnsProposal {
   'summary' : string,
   'proposer' : NnsNeuronId,
 }
+export type NnsUserOrAccount = { 'User' : UserId } |
+  { 'Account' : AccountIdentifier };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
