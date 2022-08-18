@@ -134,6 +134,9 @@ export interface CompletedCryptoTransaction {
   'memo' : Memo,
   'amount' : Tokens,
 }
+export type CompletedCryptoTransactionV2 = {
+    'NNS' : NnsCompletedCryptoTransaction
+  };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -161,13 +164,20 @@ export type CryptoAccount = { 'Mint' : null } |
   { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
-  { 'Named' : [string, AccountIdentifier] } |
   { 'Mint' : null } |
   { 'User' : [UserId, AccountIdentifier] } |
   { 'Unknown' : AccountIdentifier };
+export interface CryptoContent {
+  'recipient' : UserId,
+  'caption' : [] | [string],
+  'transfer' : CryptoTransactionV2,
+}
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
+export type CryptoTransactionV2 = { 'Failed' : FailedCryptoTransactionV2 } |
+  { 'Completed' : CompletedCryptoTransactionV2 } |
+  { 'Pending' : PendingCryptoTransactionV2 };
 export type Cryptocurrency = { 'InternetComputer' : null };
 export interface CryptocurrencyContent {
   'caption' : [] | [string],
@@ -280,6 +290,7 @@ export interface FailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
+export type FailedCryptoTransactionV2 = { 'NNS' : NnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
 export interface FieldTooLongResult {
@@ -331,7 +342,6 @@ export interface GroupChatSummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
-  'pinned_message' : [] | [MessageIndex],
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
@@ -358,7 +368,6 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
-  'pinned_message' : PinnedMessageUpdate,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
@@ -514,6 +523,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
@@ -566,7 +576,38 @@ export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface NnsCompletedCryptoTransaction {
+  'to' : NnsCryptoAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'from' : NnsCryptoAccount,
+  'memo' : Memo,
+  'amount' : Tokens,
+}
+export type NnsCryptoAccount = { 'Mint' : null } |
+  { 'Account' : AccountIdentifier };
+export interface NnsFailedCryptoTransaction {
+  'to' : NnsCryptoAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'from' : NnsCryptoAccount,
+  'memo' : Memo,
+  'error_message' : string,
+  'amount' : Tokens,
+}
 export type NnsNeuronId = bigint;
+export interface NnsPendingCryptoTransaction {
+  'to' : NnsUserOrAccount,
+  'fee' : [] | [Tokens],
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
 export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
@@ -581,6 +622,8 @@ export interface NnsProposal {
   'summary' : string,
   'proposer' : NnsNeuronId,
 }
+export type NnsUserOrAccount = { 'User' : UserId } |
+  { 'Account' : AccountIdentifier };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -629,6 +672,9 @@ export interface PendingCryptoTransaction {
   'memo' : [] | [Memo],
   'amount' : Tokens,
 }
+export type PendingCryptoTransactionV2 = {
+    'NNS' : NnsPendingCryptoTransaction
+  };
 export interface PendingCryptoTransfer {
   'to' : UserId,
   'fee' : [] | [Tokens],
@@ -698,7 +744,6 @@ export interface PublicGroupSummary {
   'wasm_version' : Version,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'pinned_message' : [] | [MessageIndex],
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
@@ -775,6 +820,15 @@ export interface SendMessageArgs {
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
+  {
+    'TransferSuccessV2' : {
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransactionV2,
+      'message_index' : MessageIndex,
+    }
+  } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
@@ -871,7 +925,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array;
 export interface TransferCryptoWithinGroupArgs {
-  'content' : CryptocurrencyContent,
+  'content' : CryptoContent,
   'recipient' : UserId,
   'mentioned' : Array<User>,
   'group_id' : ChatId,
@@ -881,20 +935,20 @@ export interface TransferCryptoWithinGroupArgs {
 }
 export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : Tokens } |
-  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
+  { 'CallerNotInGroup' : [] | [CompletedCryptoTransactionV2] } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
+      'transfer' : CompletedCryptoTransactionV2,
       'message_index' : MessageIndex,
     }
   } |
   { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'InternalError' : [string, CompletedCryptoTransactionV2] } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
@@ -962,12 +1016,12 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
-export interface WithdrawCryptoRequest {
-  'withdrawal' : PendingCryptoTransaction,
+export interface WithdrawCryptoArgs {
+  'withdrawal' : PendingCryptoTransactionV2,
 }
 export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
-  { 'TransactionFailed' : FailedCryptoTransaction } |
-  { 'Success' : CompletedCryptoTransaction };
+  { 'TransactionFailed' : FailedCryptoTransactionV2 } |
+  { 'Success' : CompletedCryptoTransactionV2 };
 export interface _SERVICE {
   'add_recommended_group_exclusions' : ActorMethod<
     [AddRecommendedGroupExclusionsArgs],
@@ -1026,7 +1080,7 @@ export interface _SERVICE {
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
-  'transfer_crypto_within_group' : ActorMethod<
+  'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse,
   >,
@@ -1037,8 +1091,8 @@ export interface _SERVICE {
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
-  'withdraw_crypto' : ActorMethod<
-    [WithdrawCryptoRequest],
+  'withdraw_crypto_v2' : ActorMethod<
+    [WithdrawCryptoArgs],
     WithdrawCryptoResponse,
   >,
 }

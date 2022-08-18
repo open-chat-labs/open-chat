@@ -2,12 +2,8 @@ use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
-use chat_events::{ChatEventInternal, EditMessageArgs};
 use ic_ledger_types::Tokens;
-use types::{
-    MessageContent, MessageContentInternal, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
-    TextContent, UserId,
-};
+use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -98,40 +94,6 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     send_text_message(text, runtime_state);
 }
 
-pub(crate) fn make_links_relative(runtime_state: &mut RuntimeState) {
-    if let Some(bot_chat) = runtime_state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
-        let pattern = "https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app";
-
-        let edits_required: Vec<_> = bot_chat
-            .events
-            .main()
-            .iter()
-            .filter_map(|e| if let ChatEventInternal::Message(m) = &e.event { Some(m) } else { None })
-            .filter_map(|m| {
-                if let MessageContentInternal::Text(t) = &m.content {
-                    if t.text.contains(pattern) {
-                        return Some((m.message_id, t.text.clone().replace(pattern, "")));
-                    }
-                }
-                None
-            })
-            .collect();
-
-        if !edits_required.is_empty() {
-            let now = runtime_state.env.now();
-            for (message_id, text) in edits_required {
-                bot_chat.events.edit_message(EditMessageArgs {
-                    sender: OPENCHAT_BOT_USER_ID,
-                    thread_root_message_index: None,
-                    message_id,
-                    content: MessageContent::Text(TextContent { text }),
-                    now,
-                });
-            }
-        }
-    }
-}
-
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
@@ -163,7 +125,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         sender_message_index: message_index,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
-        replies_to_v2: None,
+        replies_to: None,
         forwarding: false,
     };
 

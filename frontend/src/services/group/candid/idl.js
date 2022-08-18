@@ -187,7 +187,6 @@ export const idlFactory = ({ IDL }) => {
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
-    'Named' : IDL.Tuple(IDL.Text, AccountIdentifier),
     'Mint' : IDL.Null,
     'User' : IDL.Tuple(UserId, AccountIdentifier),
     'Unknown' : AccountIdentifier,
@@ -245,6 +244,62 @@ export const idlFactory = ({ IDL }) => {
     'blob_reference' : IDL.Opt(BlobReference),
     'caption' : IDL.Opt(IDL.Text),
   });
+  const NnsCryptoAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'Account' : AccountIdentifier,
+  });
+  const NnsFailedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const FailedCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsFailedCryptoTransaction,
+  });
+  const NnsCompletedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'amount' : Tokens,
+  });
+  const CompletedCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsCompletedCryptoTransaction,
+  });
+  const NnsUserOrAccount = IDL.Variant({
+    'User' : UserId,
+    'Account' : AccountIdentifier,
+  });
+  const NnsPendingCryptoTransaction = IDL.Record({
+    'to' : NnsUserOrAccount,
+    'fee' : IDL.Opt(Tokens),
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
+  const PendingCryptoTransactionV2 = IDL.Variant({
+    'NNS' : NnsPendingCryptoTransaction,
+  });
+  const CryptoTransactionV2 = IDL.Variant({
+    'Failed' : FailedCryptoTransactionV2,
+    'Completed' : CompletedCryptoTransactionV2,
+    'Pending' : PendingCryptoTransactionV2,
+  });
+  const CryptoContent = IDL.Record({
+    'recipient' : UserId,
+    'caption' : IDL.Opt(IDL.Text),
+    'transfer' : CryptoTransactionV2,
+  });
   const VideoContent = IDL.Record({
     'height' : IDL.Nat32,
     'image_blob_reference' : IDL.Opt(BlobReference),
@@ -267,6 +322,7 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposal' : ProposalContent,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
+    'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
   });
@@ -562,7 +618,6 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'pinned_message' : IDL.Opt(MessageIndex),
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,

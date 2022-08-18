@@ -6,7 +6,10 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, UserId};
+use types::{
+    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoAccount, CryptoTransaction, CryptoTransactionV2,
+    CryptocurrencyContent, MessageContent, PendingCryptoTransaction, PendingCryptoTransactionV2, UserId,
+};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -19,6 +22,23 @@ async fn send_message(mut args: Args) -> Response {
 
     if let Err(response) = read_state(|state| validate_request(&args, state)) {
         return response;
+    }
+
+    if let MessageContent::Crypto(c) = &mut args.content {
+        let pending_transaction = match &c.transfer {
+            CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.clone(),
+            _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+        };
+        args.content = MessageContent::Cryptocurrency(CryptocurrencyContent {
+            transfer: CryptoTransaction::Pending(PendingCryptoTransaction {
+                token: pending_transaction.token,
+                amount: pending_transaction.amount,
+                to: CryptoAccount::User(c.recipient),
+                fee: pending_transaction.fee,
+                memo: pending_transaction.memo,
+            }),
+            caption: c.caption.clone(),
+        });
     }
 
     let mut completed_transfer = None;
@@ -98,7 +118,7 @@ fn send_message_impl(
         sender_name: args.sender_name,
         sender_message_index: message_event.event.message_index,
         content: args.content,
-        replies_to_v2: args.replies_to.and_then(|r| {
+        replies_to: args.replies_to.and_then(|r| {
             if let Some(chat_id) = r.chat_id_if_other {
                 Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
             } else {
