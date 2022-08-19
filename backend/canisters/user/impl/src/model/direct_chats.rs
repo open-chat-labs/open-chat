@@ -12,6 +12,12 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
+    pub fn migrate_to_new_crypto_content_type(&mut self) {
+        for chat in self.direct_chats.values_mut() {
+            chat.events.migrate_to_new_crypto_content_type();
+        }
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

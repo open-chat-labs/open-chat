@@ -7,8 +7,8 @@ use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoAccount, CryptoTransaction, CryptoTransactionV2,
-    CryptocurrencyContent, MessageContent, PendingCryptoTransaction, PendingCryptoTransactionV2, UserId,
+    nns, CanisterId, CompletedCryptoTransactionV2, ContentValidationError, CryptoContent, CryptoTransaction,
+    CryptoTransactionV2, FailedCryptoTransactionV2, MessageContent, PendingCryptoTransactionV2, UserId,
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
@@ -24,19 +24,20 @@ async fn send_message(mut args: Args) -> Response {
         return response;
     }
 
-    if let MessageContent::Crypto(c) = &mut args.content {
+    if let MessageContent::Cryptocurrency(c) = &mut args.content {
         let pending_transaction = match &c.transfer {
-            CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.clone(),
+            CryptoTransaction::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
-        args.content = MessageContent::Cryptocurrency(CryptocurrencyContent {
-            transfer: CryptoTransaction::Pending(PendingCryptoTransaction {
+        args.content = MessageContent::Crypto(CryptoContent {
+            recipient: args.recipient,
+            transfer: CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(nns::PendingCryptoTransaction {
                 token: pending_transaction.token,
                 amount: pending_transaction.amount,
-                to: CryptoAccount::User(c.recipient),
+                to: nns::UserOrAccount::User(args.recipient),
                 fee: pending_transaction.fee,
                 memo: pending_transaction.memo,
-            }),
+            })),
             caption: c.caption.clone(),
         });
     }
@@ -44,17 +45,21 @@ async fn send_message(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContent::Cryptocurrency(c) = &mut args.content {
+    if let MessageContent::Crypto(c) = &mut args.content {
         let pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone(),
+            CryptoTransactionV2::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
+        if !pending_transaction.is_user_recipient(args.recipient) {
+            return InvalidRequest("Transaction is not to the user's account".to_string());
+        }
+
         completed_transfer = match process_transaction(pending_transaction).await {
             Ok(completed) => {
-                c.transfer = CryptoTransaction::Completed(completed.clone());
+                c.transfer = CryptoTransactionV2::Completed(completed.clone());
                 Some(completed)
             }
-            Err(failed) => return TransferFailed(failed.error_message),
+            Err(FailedCryptoTransactionV2::NNS(failed)) => return TransferFailed(failed.error_message),
         };
     }
 
@@ -91,7 +96,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
 
 fn send_message_impl(
     args: Args,
-    completed_transfer: Option<CompletedCryptoTransaction>,
+    completed_transfer: Option<CompletedCryptoTransactionV2>,
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let now = runtime_state.env.now();
@@ -135,7 +140,7 @@ fn send_message_impl(
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
 
     if let Some(transfer) = completed_transfer {
-        TransferSuccess(TransferSuccessResult {
+        TransferSuccessV2(TransferSuccessV2Result {
             chat_id: recipient.into(),
             event_index: message_event.index,
             message_index: message_event.event.message_index,

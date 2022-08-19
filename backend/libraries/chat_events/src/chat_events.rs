@@ -2,6 +2,7 @@ use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
 use crate::{ProposalsUpdatedInternal, ThreadUpdatedInternal};
 use candid::CandidType;
 use itertools::Itertools;
+use ledger_utils::default_ledger_account;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
@@ -21,6 +22,41 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
+    pub fn migrate_to_new_crypto_content_type(&mut self) {
+        for message in self.main.events.iter_mut().filter_map(|e| e.event.as_message_mut()) {
+            if let MessageContentInternal::Cryptocurrency(content) = &message.content {
+                let transfer = match &content.transfer {
+                    CryptoTransactionInternal::Completed(c) => c,
+                    _ => panic!("This should never happen1"),
+                };
+                let recipient = match transfer.to {
+                    CryptoAccount::User(user_id) => user_id,
+                    _ => panic!("This should never happen2"),
+                };
+
+                let new_content = MessageContentInternal::Crypto(CryptoContent {
+                    recipient,
+                    transfer: CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(
+                        nns::CompletedCryptoTransaction {
+                            token: transfer.token,
+                            amount: transfer.amount,
+                            fee: transfer.fee,
+                            from: nns::CryptoAccount::Account(default_ledger_account(message.sender.into())),
+                            to: nns::CryptoAccount::Account(default_ledger_account(recipient.into())),
+                            memo: transfer.memo,
+                            created: transfer.created,
+                            transaction_hash: transfer.transaction_hash,
+                            block_index: transfer.block_index,
+                        },
+                    )),
+                    caption: content.caption.clone(),
+                });
+
+                message.content = new_content;
+            }
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
@@ -624,7 +660,7 @@ impl AllChatEvents {
                     }
                     return match message.content {
                         MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
-                        MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
+                        MessageContentInternal::Crypto(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
                         _ => {
                             message.last_updated = Some(now);
                             message.deleted_by = Some(DeletedBy {

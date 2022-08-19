@@ -2,8 +2,9 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal,
-    CryptoTransactionV2, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CompletedCryptoTransactionV2, CryptoAccountFull, CryptoTransaction,
+    CryptoTransactionInternal, CryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2, ProposalContent,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -66,7 +67,7 @@ impl MessageContent {
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {
+                MessageContent::Poll(_) | MessageContent::Crypto(_) | MessageContent::Deleted(_) => {
                     return Err(InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -79,8 +80,12 @@ impl MessageContent {
                     return Err(InvalidPoll(reason));
                 }
             }
-            MessageContent::Cryptocurrency(c) => {
-                let amount = c.transfer.amount();
+            MessageContent::Crypto(c) => {
+                let amount = match &c.transfer {
+                    CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.amount,
+                    CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => t.amount,
+                    CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => t.amount,
+                };
                 if amount == Tokens::ZERO {
                     return Err(TransferCannotBeZero);
                 }
