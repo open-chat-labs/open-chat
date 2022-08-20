@@ -137,7 +137,6 @@
     $: chat = $selectedChatStore?.chat;
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
-    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
     /** SHOW LEFT
      * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -987,7 +986,6 @@
             {hotGroups}
             {joining}
             loadingChats={$chatsLoading}
-            blocked={!!blocked}
             controller={$selectedChatStore}
             on:initiateThread={initiateThread}
             on:clearSelection={() => clearSelectedChat(true)}
