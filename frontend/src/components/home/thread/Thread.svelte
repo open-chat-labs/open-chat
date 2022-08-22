@@ -112,6 +112,8 @@
                     threadRootMessageIndex,
                     true
                 );
+            } else {
+                events.set([]);
             }
         } else {
             // we haven't changed the thread we are looking at, but the threads latest index has changed (i.e. an event has been added by someone else)
