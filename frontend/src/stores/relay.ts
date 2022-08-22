@@ -6,11 +6,21 @@
 
 import type { Message } from "../domain/chat/chat";
 
-export type RelayedEvent = RelayedDeleteMessage | RelayedSelectReaction;
+export type RelayedEvent = RelayedDeleteMessage | RelayedSelectReaction | RelayedRegisterVote;
 
 export type RelayedDeleteMessage = {
     kind: "relayed_delete_message";
     message: Message;
+};
+
+export type RelayedRegisterVote = {
+    kind: "relayed_register_vote";
+    data: {
+        messageIndex: number;
+        messageId: bigint;
+        answerIndex: number;
+        type: "register" | "delete";
+    };
 };
 
 export type RelayedSelectReaction = {
