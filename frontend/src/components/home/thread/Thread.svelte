@@ -555,8 +555,18 @@
     }
 
     function registerVote(
-        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+        ev: CustomEvent<{
+            messageIndex: number;
+            messageId: bigint;
+            answerIndex: number;
+            type: "register" | "delete";
+        }>
     ) {
+        if (ev.detail.messageId === rootEvent.event.messageId) {
+            relayPublish({ kind: "relayed_register_vote", data: ev.detail });
+            return;
+        }
+
         events.update((events) =>
             events.map((e) =>
                 updateEventPollContent(
