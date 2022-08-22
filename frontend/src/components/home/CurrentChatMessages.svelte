@@ -131,6 +131,14 @@
             if (event.kind === "relayed_select_reaction") {
                 onSelectReaction(event);
             }
+
+            if (event.kind === "relayed_register_vote") {
+                controller.registerPollVote(
+                    event.data.messageIndex,
+                    event.data.answerIndex,
+                    event.data.type
+                );
+            }
         });
 
         return relayUnsubscribe;
