@@ -316,6 +316,7 @@
         dispatch("registerVote", {
             ...ev.detail,
             messageIndex: msg.messageIndex,
+            messageId: msg.messageId,
         });
     }
 
