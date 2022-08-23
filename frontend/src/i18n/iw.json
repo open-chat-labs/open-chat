@@ -573,7 +573,9 @@
         "youVotedReject": "הצבעת לדחות!",
         "additionalContent": "תוכן נוסף",
         "filter": "סינון הצעות",
-        "collapse": "כווץ הודעה"
+        "collapse": "כווץ הודעה",
+        "enableAll": "אפשר הכל",
+        "disableAll": "השבת הכל"
     },
     "yes": "כן",
     "no": "לא",

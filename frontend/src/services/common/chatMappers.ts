@@ -402,8 +402,8 @@ function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipi
 
 export function completedCryptoTransfer(
     candid: ApiCompletedCryptoTransaction | ApiNnsCompletedCryptoTransaction,
-    sender: string = "",
-    recipient: string = ""
+    sender = "",
+    recipient = ""
 ): CompletedCryptocurrencyTransfer {
     return {
         kind: "completed",

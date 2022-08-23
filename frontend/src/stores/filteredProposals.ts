@@ -1,5 +1,5 @@
 import type { ChatSummary, Proposal } from "../domain/chat/chat";
-import { Readable, writable } from "svelte/store";
+import { Readable, Writable, writable } from "svelte/store";
 
 const storageKeyPrefix = "proposal_filters_";
 
@@ -49,6 +49,16 @@ export class FilteredProposals {
         this.toStorage();
     }
 
+    enableAll(): void {
+        this._filters = new Set<number>();
+        this.toStorage();
+    }
+
+    disableAll(ids: number[]): void {
+        this._filters = new Set<number>(ids);
+        this.toStorage();
+    }
+
     toggleMessageExpansion(messageId: bigint, expand: boolean): void {
         const currState = this._messageState.get(messageId);
 
@@ -75,8 +85,23 @@ export class FilteredProposals {
 }
 
 export interface IFilteredProposalsStore extends Readable<FilteredProposals | undefined> {
+    enableAll(): void;
+    disableAll(ids: number[]): void;
     toggleFilter(topic: number): void;
     toggleMessageExpansion(messageId: bigint, expand: boolean): void;
+}
+
+function modifyFilteredProposals(
+    store: Writable<FilteredProposals | undefined>,
+    fn: (fp: FilteredProposals) => void
+) {
+    store.update((fp) => {
+        if (fp !== undefined) {
+            const clone = fp.clone();
+            fn(clone);
+            return clone;
+        }
+    });
 }
 
 export function createFilteredProposalsStore(chat: ChatSummary): IFilteredProposalsStore {
@@ -88,21 +113,12 @@ export function createFilteredProposalsStore(chat: ChatSummary): IFilteredPropos
     const store = writable<FilteredProposals | undefined>(filteredProposals);
     return {
         subscribe: store.subscribe,
+        enableAll: (): void => modifyFilteredProposals(store, (fp) => fp.enableAll()),
+        disableAll: (ids: number[]): void =>
+            modifyFilteredProposals(store, (fp) => fp.disableAll(ids)),
         toggleFilter: (topic: number): void =>
-            store.update((fp) => {
-                if (fp !== undefined) {
-                    const clone = fp.clone();
-                    clone.toggleFilter(topic);
-                    return clone;
-                }
-            }),
+            modifyFilteredProposals(store, (fp) => fp.toggleFilter(topic)),
         toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
-            store.update((fp) => {
-                if (fp !== undefined) {
-                    const clone = fp.clone();
-                    clone.toggleMessageExpansion(messageId, expand);
-                    return clone;
-                }
-            }),
+            modifyFilteredProposals(store, (fp) => fp.toggleMessageExpansion(messageId, expand)),
     };
 }

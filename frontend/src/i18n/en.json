@@ -573,7 +573,9 @@
         "youVotedReject": "You voted reject!",
         "additionalContent": "addtional content",
         "filter": "Filter proposals",
-        "collapse": "Collapse message"
+        "collapse": "Collapse message",
+        "enableAll": "Enable all",
+        "disableAll": "Disable all"
     },
     "yes": "Yes",
     "no": "No",
