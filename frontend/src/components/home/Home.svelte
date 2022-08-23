@@ -134,7 +134,6 @@
     $: combinedMetrics = $chatSummariesListStore
         .map((c) => c.myMetrics)
         .reduce(mergeChatMetrics, emptyChatMetrics());
-    $: chat = $selectedChatStore?.chat;
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
 

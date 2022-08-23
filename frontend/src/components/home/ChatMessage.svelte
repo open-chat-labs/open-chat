@@ -116,7 +116,7 @@
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `/#/${chatId}/${msg.messageIndex}`;
+    $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: inert = deleted || collapsed;
 
@@ -669,7 +669,7 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={msg.messageIndex === $pathParams.messageIndex}
+            selected={msg.messageIndex === $pathParams.messageIndex && $pathParams.open}
             {threadSummary}
             indent={showAvatar}
             {me}
