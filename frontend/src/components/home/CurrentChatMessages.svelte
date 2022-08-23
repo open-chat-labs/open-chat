@@ -37,6 +37,7 @@
     import type { FilteredProposals } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
     import { groupWhile } from "../../utils/list";
+    import { pathParams } from "../../stores/routing";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -194,7 +195,7 @@
             scrollToElement(element);
             const msgEvent = controller.findMessageEvent($events, index);
             if (msgEvent) {
-                if (msgEvent.event.thread !== undefined) {
+                if (msgEvent.event.thread !== undefined && $pathParams.open) {
                     dispatch("openThread", {
                         rootEvent: msgEvent,
                         focusThreadMessageIndex,
