@@ -138,7 +138,11 @@
         recalculateMediaDimensions();
     });
 
-    onDestroy(() => observer?.unobserve(msgElement));
+    onDestroy(() => {
+        if (msgElement) {
+            observer?.unobserve(msgElement);
+        }
+    });
 
     function chatWithUser() {
         dispatch("chatWith", senderId);

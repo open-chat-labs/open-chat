@@ -1,5 +1,5 @@
 import type { ChatSummary, Proposal } from "../domain/chat/chat";
-import { Readable, Writable, writable } from "svelte/store";
+import { writable } from "svelte/store";
 
 const storageKeyPrefix = "proposal_filters_";
 
@@ -84,18 +84,10 @@ export class FilteredProposals {
     }
 }
 
-export interface IFilteredProposalsStore extends Readable<FilteredProposals | undefined> {
-    enableAll(): void;
-    disableAll(ids: number[]): void;
-    toggleFilter(topic: number): void;
-    toggleMessageExpansion(messageId: bigint, expand: boolean): void;
-}
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
 
-function modifyFilteredProposals(
-    store: Writable<FilteredProposals | undefined>,
-    fn: (fp: FilteredProposals) => void
-) {
-    store.update((fp) => {
+function modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
+    filteredProposalsStore.update((fp) => {
         if (fp !== undefined) {
             const clone = fp.clone();
             fn(clone);
@@ -104,21 +96,27 @@ function modifyFilteredProposals(
     });
 }
 
-export function createFilteredProposalsStore(chat: ChatSummary): IFilteredProposalsStore {
+export function enableAllProposalFilters(): void {
+    modifyFilteredProposals((fp) => fp.enableAll());
+}
+
+export function disableAllProposalFilters(ids: number[]): void {
+    modifyFilteredProposals((fp) => fp.disableAll(ids));
+}
+
+export function toggleProposalFilter(topic: number): void {
+    modifyFilteredProposals((fp) => fp.toggleFilter(topic));
+}
+
+export function toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean): void {
+    modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
+}
+
+export function resetFilteredProposalsStore(chat: ChatSummary): void {
     const filteredProposals =
         chat.kind === "group_chat" && chat.subtype?.kind === "governance_proposals"
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
             : undefined;
 
-    const store = writable<FilteredProposals | undefined>(filteredProposals);
-    return {
-        subscribe: store.subscribe,
-        enableAll: (): void => modifyFilteredProposals(store, (fp) => fp.enableAll()),
-        disableAll: (ids: number[]): void =>
-            modifyFilteredProposals(store, (fp) => fp.disableAll(ids)),
-        toggleFilter: (topic: number): void =>
-            modifyFilteredProposals(store, (fp) => fp.toggleFilter(topic)),
-        toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
-            modifyFilteredProposals(store, (fp) => fp.toggleMessageExpansion(messageId, expand)),
-    };
+    filteredProposalsStore.update((_) => filteredProposals);
 }

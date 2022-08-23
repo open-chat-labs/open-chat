@@ -8,13 +8,14 @@
     import { NnsProposalTopic } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { ChatController } from "../../fsm/chat.controller";
     import { proposalTopicsStore } from "../../stores/chat";
+    import {
+        filteredProposalsStore,
+        enableAllProposalFilters,
+        disableAllProposalFilters,
+        toggleProposalFilter,
+    } from "../../stores/filteredProposals";
     import LinkButton from "../LinkButton.svelte";
-
-    export let controller: ChatController;
-
-    $: filteredProposalsStore = controller.filteredProposals;
 
     const dispatch = createEventDispatcher();
 
@@ -34,17 +35,16 @@
 
 <div class="proposal-filters">
     <div class="controls">
-        <LinkButton on:click={() => filteredProposalsStore.enableAll()} underline={"always"}
+        <LinkButton on:click={enableAllProposalFilters} underline={"always"}
             >{$_("proposal.enableAll")}</LinkButton>
         <LinkButton
-            on:click={() =>
-                filteredProposalsStore.disableAll([...$proposalTopicsStore].map(([id]) => id))}
+            on:click={() => disableAllProposalFilters([...$proposalTopicsStore].map(([id]) => id))}
             underline={"always"}>{$_("proposal.disableAll")}</LinkButton>
     </div>
     {#each [...$proposalTopicsStore] as [id, label]}
         <Toggle
             id={NnsProposalTopic[id]}
-            on:change={() => filteredProposalsStore.toggleFilter(id)}
+            on:change={() => toggleProposalFilter(id)}
             {label}
             checked={!$filteredProposalsStore?.hasFilter(id)}
             bigGap />

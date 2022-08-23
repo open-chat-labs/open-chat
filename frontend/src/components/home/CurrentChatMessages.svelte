@@ -34,7 +34,11 @@
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
     import { isProposalGroup } from "../../stores/chat";
-    import type { FilteredProposals } from "../../stores/filteredProposals";
+    import {
+        FilteredProposals,
+        toggleProposalFilterMessageExpansion,
+        filteredProposalsStore,
+    } from "../../stores/filteredProposals";
     import { configKeys } from "../../utils/config";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
@@ -67,7 +71,6 @@
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
-    $: filteredProposalsStore = controller.filteredProposals;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -564,7 +567,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            filteredProposalsStore.toggleMessageExpansion(ew.event.messageId, expand);
+            toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
