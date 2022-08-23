@@ -576,7 +576,9 @@
         "youVotedReject": "Bạn đã bỏ phiếu từ chối!",
         "additionalContent": "nội dung bổ sung",
         "filter": "Lọc đề xuất",
-        "collapse": "Thu gọn tin nhắn"
+        "collapse": "Thu gọn tin nhắn",
+        "enableAll": "Cho phép tất cả",
+        "disableAll": "Vô hiệu hóa tất cả"
     },
     "yes": "Đúng",
     "no": "Không",

@@ -52,7 +52,6 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { mutedChatsStore } from "../stores/mutedChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { createFilteredProposalsStore, IFilteredProposalsStore } from "../stores/filteredProposals";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -68,7 +67,6 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
-    public filteredProposals: IFilteredProposalsStore;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -114,7 +112,6 @@ export class ChatController {
         this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
         this.fileToAttach = derived(draftMessage, (d) => d.attachment);
         this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
-        this.filteredProposals = createFilteredProposalsStore(chat);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {

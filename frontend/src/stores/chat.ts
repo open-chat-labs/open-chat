@@ -32,6 +32,7 @@ import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { mutedChatsStore } from "./mutedChatsStore";
+import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -233,6 +234,8 @@ export function setSelectedChat(
             (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
         )
     );
+
+    resetFilteredProposalsStore(chat);
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -279,6 +282,7 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
 }
 
 export function clearSelectedChat(navigate = true): void {
+    filteredProposalsStore.set(undefined);
     selectedChatStore.update((controller) => {
         if (controller !== undefined) {
             controller.destroy();

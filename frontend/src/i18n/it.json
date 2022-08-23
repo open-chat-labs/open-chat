@@ -575,7 +575,9 @@
         "youVotedReject": "Hai votato rifiuto!",
         "additionalContent": "contenuto aggiuntivo",
         "filter": "Filtra le proposte",
-        "collapse": "Comprimi messaggio"
+        "collapse": "Comprimi messaggio",
+        "enableAll": "Attiva tutto",
+        "disableAll": "Disabilitare tutto"
     },
     "yes": "sì",
     "no": "No",

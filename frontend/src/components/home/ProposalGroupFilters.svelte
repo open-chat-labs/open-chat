@@ -8,12 +8,14 @@
     import { NnsProposalTopic } from "../../domain/chat/chat";
     import Toggle from "../Toggle.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { ChatController } from "../../fsm/chat.controller";
     import { proposalTopicsStore } from "../../stores/chat";
-
-    export let controller: ChatController;
-
-    $: filteredProposalsStore = controller.filteredProposals;
+    import {
+        filteredProposalsStore,
+        enableAllProposalFilters,
+        disableAllProposalFilters,
+        toggleProposalFilter,
+    } from "../../stores/filteredProposals";
+    import LinkButton from "../LinkButton.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -32,10 +34,17 @@
 </SectionHeader>
 
 <div class="proposal-filters">
+    <div class="controls">
+        <LinkButton on:click={enableAllProposalFilters} underline={"always"}
+            >{$_("proposal.enableAll")}</LinkButton>
+        <LinkButton
+            on:click={() => disableAllProposalFilters([...$proposalTopicsStore].map(([id]) => id))}
+            underline={"always"}>{$_("proposal.disableAll")}</LinkButton>
+    </div>
     {#each [...$proposalTopicsStore] as [id, label]}
         <Toggle
             id={NnsProposalTopic[id]}
-            on:change={() => filteredProposalsStore.toggleFilter(id)}
+            on:change={() => toggleProposalFilter(id)}
             {label}
             checked={!$filteredProposalsStore?.hasFilter(id)}
             bigGap />
@@ -60,5 +69,13 @@
         @include mobile() {
             height: 100%;
         }
+    }
+
+    .controls {
+        display: flex;
+        gap: $sp4;
+        align-items: center;
+        margin-bottom: $sp4;
+        text-transform: lowercase;
     }
 </style>

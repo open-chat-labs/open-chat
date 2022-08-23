@@ -575,7 +575,9 @@
         "youVotedReject": "あなたは拒否に投票しました！",
         "additionalContent": "追加コンテンツ",
         "filter": "提案をフィルタリングする",
-        "collapse": "メッセージを折りたたむ"
+        "collapse": "メッセージを折りたたむ",
+        "enableAll": "全て可能にする",
+        "disableAll": "すべて無効にします"
     },
     "yes": "はい",
     "no": "いいえ",

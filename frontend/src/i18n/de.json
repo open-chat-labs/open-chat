@@ -577,7 +577,9 @@
         "youVotedReject": "Sie haben für ablehnen gestimmt!",
         "additionalContent": "zusätzlicher Inhalt",
         "filter": "Vorschläge filtern",
-        "collapse": "Meldung minimieren"
+        "collapse": "Meldung minimieren",
+        "enableAll": "Alle aktivieren",
+        "disableAll": "Alle deaktivieren"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",
