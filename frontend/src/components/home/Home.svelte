@@ -180,13 +180,13 @@
     }
 
     function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
-        hotGroups = { kind: "idle" };
         interruptRecommended = true;
 
         // if this is an unknown chat let's preview it
         if ($chatSummariesStore[chatId] === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
+                hotGroups = { kind: "idle" };
             } else {
                 const code = qs.get("code");
                 if (code) {
@@ -209,6 +209,7 @@
             // if it's a known chat let's select it
             setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
             resetRightPanel();
+            hotGroups = { kind: "idle" };
         }
     }
 
