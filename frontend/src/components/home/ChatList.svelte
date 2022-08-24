@@ -127,13 +127,28 @@
         dispatch("searchEntered", "");
     }
 
-    function onScroll() {
+    function chatSelected(ev: CustomEvent<string>): void {
         chatScrollTop = chatListElement.scrollTop;
-        menuStore.hideMenu();
+        push(`/${ev.detail}`);
+        closeSearch();
     }
 
     let chatListElement: HTMLElement;
     let chatScrollTop = 0;
+
+    function hideMenu() {
+        menuStore.hideMenu();
+    }
+
+    $: {
+        if (chatListElement) {
+            if ($menuStore !== undefined) {
+                chatListElement.addEventListener("scroll", hideMenu);
+            } else {
+                chatListElement.removeEventListener("scroll", hideMenu);
+            }
+        }
+    }
 
     onMount(() => {
         tick().then(() => {
@@ -163,7 +178,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
 
-    <div bind:this={chatListElement} class="body" on:scroll={onScroll}>
+    <div bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
         {:else}
@@ -180,7 +195,7 @@
                         {chatSummary}
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}
-                        on:click={closeSearch}
+                        on:chatSelected={chatSelected}
                         on:pinChat
                         on:unpinChat
                         on:toggleMuteNotifications
