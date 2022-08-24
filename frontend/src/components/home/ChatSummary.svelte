@@ -161,8 +161,7 @@
     }
 
     function onClick() {
-        dispatch("click");
-        push(`/${chatSummary.chatId}`);
+        dispatch("chatSelected", chatSummary.chatId);
     }
 
     function pinChat() {
