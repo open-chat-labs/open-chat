@@ -132,9 +132,11 @@
     }
 
     // trigger initial refresh
-    onMount(() => {
+    onMount(async () => {
         rows = contents.getElementsByTagName("svelte-virtual-list-row");
         mounted = true;
+        await tick();
+        viewport_height = viewport.offsetHeight;
     });
 </script>
 

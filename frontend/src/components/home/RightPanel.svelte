@@ -51,6 +51,7 @@
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
     $: participants = controller?.participants ?? writable([]);
+    $: blockedUsers = controller?.blockedUsers ?? writable(new Set<string>());
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
     $: events = controller?.events;
@@ -152,8 +153,10 @@
     {:else if lastState.kind === "show_participants" && controller !== undefined}
         <Participants
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
-            {controller}
+            chat={groupChat}
             {userId}
+            {participants}
+            {blockedUsers}
             on:close={popHistory}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
