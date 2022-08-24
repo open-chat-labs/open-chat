@@ -31,7 +31,7 @@
         selectedChatStore,
     } from "../../stores/chat";
     import { messagesRead } from "../../stores/markRead";
-    import { menuStore } from "../../stores/menu";
+    import { menuCloser } from "../../actions/closeMenu";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -136,20 +136,6 @@
     let chatListElement: HTMLElement;
     let chatScrollTop = 0;
 
-    function hideMenu() {
-        menuStore.hideMenu();
-    }
-
-    $: {
-        if (chatListElement) {
-            if ($menuStore !== undefined) {
-                chatListElement.addEventListener("scroll", hideMenu);
-            } else {
-                chatListElement.removeEventListener("scroll", hideMenu);
-            }
-        }
-    }
-
     onMount(() => {
         tick().then(() => {
             if (chatListElement) {
@@ -178,7 +164,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
 
-    <div bind:this={chatListElement} class="body">
+    <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
         {:else}
