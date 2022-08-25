@@ -34,6 +34,7 @@
     $: publicGroup = $chat.public;
 
     let searchTerm = "";
+    let participantList: VirtualList;
 
     const dispatch = createEventDispatcher();
 
@@ -110,14 +111,18 @@
     on:addParticipants={addParticipants} />
 
 <div class="search">
-    <Search searching={false} bind:searchTerm placeholder={"filterParticipants"} />
+    <Search
+        on:searchEntered={() => participantList.reset()}
+        searching={false}
+        bind:searchTerm
+        placeholder={"filterParticipants"} />
 </div>
 
 {#if me !== undefined && me.memberKind === "full_member"}
     <Participant me={true} participant={me} />
 {/if}
 
-<VirtualList keyFn={(user) => user.userId} items={others} let:item>
+<VirtualList bind:this={participantList} keyFn={(user) => user.userId} items={others} let:item>
     <Participant
         me={false}
         participant={item}

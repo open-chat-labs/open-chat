@@ -30,6 +30,14 @@
         return { index: i + start, data, key: keyFn ? keyFn(data) : undefined };
     });
 
+    export function reset() {
+        start = 0;
+        end = 0;
+        viewport_height = viewport.offsetHeight;
+        viewport.scrollTo(0, 0);
+        refresh(items, viewport_height, itemHeight);
+    }
+
     // whenever `items` changes, invalidate the current heightmap
     $: if (mounted) refresh(items, viewport_height, itemHeight);
 
