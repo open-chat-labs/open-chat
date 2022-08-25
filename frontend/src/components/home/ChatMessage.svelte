@@ -171,7 +171,9 @@
     }
 
     function reply() {
-        dispatch("replyTo", createReplyContext());
+        if (canQuoteReply) {
+            dispatch("replyTo", createReplyContext());
+        }
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
@@ -231,6 +233,14 @@
     function editMessage() {
         if (canEdit) {
             dispatch("editMessage");
+        }
+    }
+
+    function doubleClickMessage() {
+        if (me) {
+            editMessage();
+        } else {
+            reply();
         }
     }
 
@@ -417,7 +427,7 @@
             style={msgBubbleCalculatedWidth !== undefined
                 ? `width: ${msgBubbleCalculatedWidth}px`
                 : undefined}
-            on:dblclick={editMessage}
+            on:dblclick={doubleClickMessage}
             class="message-bubble"
             class:bot-font={isBot && !isProposal}
             class:focused
