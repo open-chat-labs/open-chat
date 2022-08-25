@@ -235,6 +235,10 @@
                 modal = ModalType.SelectChat;
             } else {
                 // if we have something in the chatId url param
+
+                // first close any open thread
+                closeThread();
+
                 if ($pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if ($pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
@@ -252,9 +256,6 @@
                                 false,
                                 $pathParams.threadMessageIndex
                             );
-                        } else {
-                            // otherwise close any open thread
-                            closeThread();
                         }
                     }
                 } else {
