@@ -56,7 +56,12 @@
         <div class:rendered={tweetRendered} class="tweet" bind:this={tweetWrapper} />
 
         {#if !tweetRendered}
-            {$_("loadingTweetPreview")}
+            <div class="preview">
+                <div class="logo" />
+                <p class="label">
+                    {$_("loadingTweetPreview")}
+                </p>
+            </div>
         {/if}
     {/if}
 {:else}
@@ -85,6 +90,21 @@
 {/if}
 
 <style type="text/scss">
+    .preview {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        min-height: toRem(150);
+
+        .logo {
+            @include loading-spinner(4em, 2em, var(--button-spinner), "../assets/twitter.svg");
+        }
+
+        .label {
+            text-align: center;
+        }
+    }
     .social-video-txt {
         margin-bottom: $sp3;
     }
