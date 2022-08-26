@@ -329,23 +329,13 @@
                                 <div slot="text">{$_("poll.create")}</div>
                             </MenuItem>
                         {/if}
-                        {#if unreadMessages > 0}
-                            <MenuItem on:click={markAllRead}>
-                                <CheckboxMultipleMarked
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("markAllRead")}</div>
-                            </MenuItem>
-                        {:else}
-                            <MenuItem disabled={true}>
-                                <CheckboxMultipleMarked
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("markAllRead")}</div>
-                            </MenuItem>
-                        {/if}
+                        <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
+                            <CheckboxMultipleMarked
+                                size={$iconSize}
+                                color={"var(--icon-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
+                        </MenuItem>
                     </Menu>
                 </div>
             </MenuIcon>
