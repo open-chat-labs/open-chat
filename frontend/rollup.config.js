@@ -231,7 +231,7 @@ export default [
                         `var parcelRequire;`,
                     ];
                     const cspHashValues = inlineScripts.map(generateCspHashValue);
-                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ ${cspHashValues.join(
+                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ ${cspHashValues.join(
                         " "
                     )}`;
                     if (!production) {
@@ -246,6 +246,10 @@ export default [
                                 <meta charset="utf-8" />
                                 <meta name="viewport" content="width=device-width, initial-scale=1">
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
+                                <meta name="twitter:widgets:autoload" content="off">
+                                <meta name="twitter:dnt" content="on">
+                                <meta name="twitter:widgets:csp" content="on">
+                                <link rel="canonical" href="/">
                                 <title>OpenChat</title>
                                 <link rel="manifest" href="/openchat.webmanifest" />
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
@@ -253,6 +257,7 @@ export default [
                                 <link rel="icon" type="image/png" href="/icon.png" />
                                 <link rel="stylesheet" href="/global.css" />
                                 <link rel="stylesheet" href="/${cssFile}" />
+                                <script src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
