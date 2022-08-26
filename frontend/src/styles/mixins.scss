@@ -165,6 +165,10 @@ $sp11: 192px;
     animation: loading-spinner 0.8s linear infinite;
 }
 
+@mixin pulse() {
+    animation: pulse 1s linear infinite;
+}
+
 @mixin pop() {
     animation: pop 150ms ease-out;
 }
@@ -198,6 +202,18 @@ $sp11: 192px;
 @keyframes loading-spinner {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.9);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(0.9);
     }
 }
 
