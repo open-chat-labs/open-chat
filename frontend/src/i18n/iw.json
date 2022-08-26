@@ -581,5 +581,6 @@
     "no": "לא",
     "quoteReply": "תשובת ציטוט",
     "groupNameTooShort": "שם הקבוצה קצר מדי",
-    "groupNameReserved": "שם הקבוצה שמור"
+    "groupNameReserved": "שם הקבוצה שמור",
+    "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ..."
 }

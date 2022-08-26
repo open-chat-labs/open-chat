@@ -583,5 +583,6 @@
     "no": "いいえ",
     "quoteReply": "引用返信",
     "groupNameTooShort": "グループ名が短すぎます",
-    "groupNameReserved": "グループ名は予約済み"
+    "groupNameReserved": "グループ名は予約済み",
+    "loadingTweetPreview": "ツイートのプレビューを読み込んでいます..."
 }

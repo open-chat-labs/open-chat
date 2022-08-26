@@ -581,5 +581,6 @@
     "no": "No",
     "quoteReply": "Quote reply",
     "groupNameTooShort": "The group name is too short",
-    "groupNameReserved": "The group name is reserved"
+    "groupNameReserved": "The group name is reserved",
+    "loadingTweetPreview": "Loading tweet preview..."
 }
