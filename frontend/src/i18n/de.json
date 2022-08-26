@@ -583,5 +583,6 @@
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",
-    "groupNameReserved": "Der Gruppenname ist reserviert"
+    "groupNameReserved": "Der Gruppenname ist reserviert",
+    "loadingTweetPreview": "Tweet-Vorschau wird geladen..."
 }

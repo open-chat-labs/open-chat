@@ -35,10 +35,10 @@
     $: {
         if (twitterLinkMatch && tweetWrapper !== undefined && !tweetRendered) {
             tweetWrapper.innerHTML = "";
-            window.twttr.widgets
+            (<any>window).twttr.widgets
                 .createTweet(twitterLinkMatch[2], tweetWrapper, {
                     conversation: "none",
-                    theme: $themeStore,
+                    theme: $themeStore.name,
                 })
                 .then(() => {
                     tweetRendered = true;
@@ -56,7 +56,7 @@
         <div class:rendered={tweetRendered} class="tweet" bind:this={tweetWrapper} />
 
         {#if !tweetRendered}
-            Loading tweet preview ...
+            {$_("loadingTweetPreview")}
         {/if}
     {/if}
 {:else}
@@ -86,7 +86,7 @@
 
 <style type="text/scss">
     .tweet {
-        min-width: 500px;
+        // min-width: 500px;
 
         @include mobile() {
             min-width: unset;

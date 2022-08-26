@@ -584,5 +584,6 @@
     "no": "No",
     "quoteReply": "Citar respuesta",
     "groupNameTooShort": "El nombre del grupo es demasiado corto.",
-    "groupNameReserved": "El nombre del grupo está reservado."
+    "groupNameReserved": "El nombre del grupo está reservado.",
+    "loadingTweetPreview": "Cargando vista previa del tweet..."
 }
