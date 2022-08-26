@@ -85,13 +85,6 @@
 {/if}
 
 <style type="text/scss">
-    .tweet {
-        // min-width: 500px;
-
-        @include mobile() {
-            min-width: unset;
-        }
-    }
     .social-video-txt {
         margin-bottom: $sp3;
     }

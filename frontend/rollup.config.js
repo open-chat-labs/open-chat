@@ -257,7 +257,7 @@ export default [
                                 <link rel="icon" type="image/png" href="/icon.png" />
                                 <link rel="stylesheet" href="/global.css" />
                                 <link rel="stylesheet" href="/${cssFile}" />
-                                <script src="https://platform.twitter.com/widgets.js"></script>
+                                <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
