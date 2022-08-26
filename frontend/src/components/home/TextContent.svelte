@@ -99,10 +99,14 @@
 
         .logo {
             @include loading-spinner(4em, 2em, var(--button-spinner), "../assets/twitter.svg");
+            &::after {
+                @include pulse();
+            }
         }
 
         .label {
             text-align: center;
+            opacity: 0.9;
         }
     }
     .social-video-txt {
