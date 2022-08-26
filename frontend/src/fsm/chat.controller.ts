@@ -34,6 +34,7 @@ import {
     mergeSendMessageResponse,
     makeRtcConnections,
     upToDate,
+    markAllRead,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -682,14 +683,7 @@ export class ChatController {
     }
 
     markAllRead(): void {
-        const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
-        if (latestMessageIndex) {
-            messagesRead.markRangeRead(
-                this.chatId,
-                getMinVisibleMessageIndex(this.chatVal),
-                latestMessageIndex
-            );
-        }
+        markAllRead(this.chatVal);
     }
 
     setTextContent(text: string | undefined): void {
