@@ -4,7 +4,7 @@
 </script>
 
 {#if disabled}
-    <div class:disabled class="menu-item" role="menuitem">
+    <div disabled class:disabled class="menu-item" role="menuitem">
         <span class="icon">
             <slot name="icon" />
         </span>
