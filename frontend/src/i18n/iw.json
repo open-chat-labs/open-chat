@@ -573,11 +573,14 @@
         "youVotedReject": "הצבעת לדחות!",
         "additionalContent": "תוכן נוסף",
         "filter": "סינון הצעות",
-        "collapse": "כווץ הודעה"
+        "collapse": "כווץ הודעה",
+        "enableAll": "אפשר הכל",
+        "disableAll": "השבת הכל"
     },
     "yes": "כן",
     "no": "לא",
     "quoteReply": "תשובת ציטוט",
     "groupNameTooShort": "שם הקבוצה קצר מדי",
-    "groupNameReserved": "שם הקבוצה שמור"
+    "groupNameReserved": "שם הקבוצה שמור",
+    "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ..."
 }

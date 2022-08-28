@@ -19,15 +19,13 @@
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";
     import type { UserLookup } from "../../../domain/user/user";
-    import type { ChatController } from "../../../fsm/chat.controller";
 
-    export let controller: ChatController;
     export let userId: string;
     export let closeIcon: "close" | "back";
+    export let participants: Readable<ParticipantType[]>;
+    export let blockedUsers: Readable<Set<string>>;
+    export let chat: Readable<GroupChatSummary>;
 
-    $: chat = controller.chat as Readable<GroupChatSummary>;
-    $: participants = controller.participants;
-    $: blockedUsers = controller.blockedUsers;
     $: knownUsers = getKnownUsers($userStore, $participants, $blockedUsers);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: others = knownUsers
@@ -36,6 +34,7 @@
     $: publicGroup = $chat.public;
 
     let searchTerm = "";
+    let participantList: VirtualList;
 
     const dispatch = createEventDispatcher();
 
@@ -112,14 +111,18 @@
     on:addParticipants={addParticipants} />
 
 <div class="search">
-    <Search searching={false} bind:searchTerm placeholder={"filterParticipants"} />
+    <Search
+        on:searchEntered={() => participantList.reset()}
+        searching={false}
+        bind:searchTerm
+        placeholder={"filterParticipants"} />
 </div>
 
 {#if me !== undefined && me.memberKind === "full_member"}
     <Participant me={true} participant={me} />
 {/if}
 
-<VirtualList keyFn={(user) => user.userId} items={others} let:item>
+<VirtualList bind:this={participantList} keyFn={(user) => user.userId} items={others} let:item>
     <Participant
         me={false}
         participant={item}

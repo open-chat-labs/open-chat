@@ -68,7 +68,7 @@
     });
 
     function selectThread() {
-        push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}`);
+        push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
     }
 
     onDestroy(unsub);

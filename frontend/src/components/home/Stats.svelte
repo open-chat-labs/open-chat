@@ -138,7 +138,7 @@
                 cx={160}
                 cy={160}
                 r={75}
-                stroke-dasharray={`calc(${slice.perc} * ${circum} / 100) ${circum}`}
+                stroke-dasharray={`${(slice.perc * circum) / 100} ${circum}`}
                 transform={`rotate(${-90 + slice.rotate}) ${
                     i === hoveredIndex ? "scale(1.05)" : ""
                 }`}>

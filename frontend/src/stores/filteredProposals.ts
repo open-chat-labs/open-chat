@@ -1,5 +1,5 @@
 import type { ChatSummary, Proposal } from "../domain/chat/chat";
-import { Readable, writable } from "svelte/store";
+import { writable } from "svelte/store";
 
 const storageKeyPrefix = "proposal_filters_";
 
@@ -49,6 +49,16 @@ export class FilteredProposals {
         this.toStorage();
     }
 
+    enableAll(): void {
+        this._filters = new Set<number>();
+        this.toStorage();
+    }
+
+    disableAll(ids: number[]): void {
+        this._filters = new Set<number>(ids);
+        this.toStorage();
+    }
+
     toggleMessageExpansion(messageId: bigint, expand: boolean): void {
         const currState = this._messageState.get(messageId);
 
@@ -74,35 +84,39 @@ export class FilteredProposals {
     }
 }
 
-export interface IFilteredProposalsStore extends Readable<FilteredProposals | undefined> {
-    toggleFilter(topic: number): void;
-    toggleMessageExpansion(messageId: bigint, expand: boolean): void;
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
+
+function modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
+    filteredProposalsStore.update((fp) => {
+        if (fp !== undefined) {
+            const clone = fp.clone();
+            fn(clone);
+            return clone;
+        }
+    });
 }
 
-export function createFilteredProposalsStore(chat: ChatSummary): IFilteredProposalsStore {
+export function enableAllProposalFilters(): void {
+    modifyFilteredProposals((fp) => fp.enableAll());
+}
+
+export function disableAllProposalFilters(ids: number[]): void {
+    modifyFilteredProposals((fp) => fp.disableAll(ids));
+}
+
+export function toggleProposalFilter(topic: number): void {
+    modifyFilteredProposals((fp) => fp.toggleFilter(topic));
+}
+
+export function toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean): void {
+    modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
+}
+
+export function resetFilteredProposalsStore(chat: ChatSummary): void {
     const filteredProposals =
         chat.kind === "group_chat" && chat.subtype?.kind === "governance_proposals"
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
             : undefined;
 
-    const store = writable<FilteredProposals | undefined>(filteredProposals);
-    return {
-        subscribe: store.subscribe,
-        toggleFilter: (topic: number): void =>
-            store.update((fp) => {
-                if (fp !== undefined) {
-                    const clone = fp.clone();
-                    clone.toggleFilter(topic);
-                    return clone;
-                }
-            }),
-        toggleMessageExpansion: (messageId: bigint, expand: boolean): void =>
-            store.update((fp) => {
-                if (fp !== undefined) {
-                    const clone = fp.clone();
-                    clone.toggleMessageExpansion(messageId, expand);
-                    return clone;
-                }
-            }),
-    };
+    filteredProposalsStore.update((_) => filteredProposals);
 }

@@ -34,6 +34,7 @@ import {
     mergeSendMessageResponse,
     makeRtcConnections,
     upToDate,
+    markAllRead,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -52,7 +53,6 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { mutedChatsStore } from "../stores/mutedChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { createFilteredProposalsStore, IFilteredProposalsStore } from "../stores/filteredProposals";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -68,7 +68,6 @@ export class ChatController {
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
-    public filteredProposals: IFilteredProposalsStore;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -114,7 +113,6 @@ export class ChatController {
         this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
         this.fileToAttach = derived(draftMessage, (d) => d.attachment);
         this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
-        this.filteredProposals = createFilteredProposalsStore(chat);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -685,14 +683,7 @@ export class ChatController {
     }
 
     markAllRead(): void {
-        const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
-        if (latestMessageIndex) {
-            messagesRead.markRangeRead(
-                this.chatId,
-                getMinVisibleMessageIndex(this.chatVal),
-                latestMessageIndex
-            );
-        }
+        markAllRead(this.chatVal);
     }
 
     setTextContent(text: string | undefined): void {

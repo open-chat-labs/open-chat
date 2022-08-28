@@ -575,11 +575,14 @@
         "youVotedReject": "Hai votato rifiuto!",
         "additionalContent": "contenuto aggiuntivo",
         "filter": "Filtra le proposte",
-        "collapse": "Comprimi messaggio"
+        "collapse": "Comprimi messaggio",
+        "enableAll": "Attiva tutto",
+        "disableAll": "Disabilitare tutto"
     },
     "yes": "sì",
     "no": "No",
     "quoteReply": "Citare la risposta",
     "groupNameTooShort": "Il nome del gruppo è troppo breve",
-    "groupNameReserved": "Il nome del gruppo è riservato"
+    "groupNameReserved": "Il nome del gruppo è riservato",
+    "loadingTweetPreview": "Caricamento anteprima tweet in corso..."
 }
