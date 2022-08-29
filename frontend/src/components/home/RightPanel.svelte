@@ -29,8 +29,9 @@
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
-    import { push } from "svelte-spa-router";
+    import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
+    import { removeQueryStringParam } from "utils/urls";
 
     const dispatch = createEventDispatcher();
 
@@ -50,6 +51,7 @@
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
     $: participants = controller?.participants ?? writable([]);
+    $: blockedUsers = controller?.blockedUsers ?? writable(new Set<string>());
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
     $: events = controller?.events;
@@ -67,7 +69,7 @@
         controller?.removeParticipant(ev.detail);
     }
 
-    function pop() {
+    function popHistory() {
         rightPanelHistory = rightPanelHistory.slice(0, rightPanelHistory.length - 1);
     }
 
@@ -97,7 +99,7 @@
         savingParticipants = true;
         const success = await controller?.addParticipants(false, ev.detail);
         if (success) {
-            pop();
+            popHistory();
         } else {
             toastStore.showFailureToast("addParticipantsFailed");
         }
@@ -107,13 +109,13 @@
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
         dispatch("goToMessageIndex", ev.detail);
         if (modal) {
-            pop();
+            popHistory();
         }
     }
 
     function closeThread(ev: CustomEvent<string>) {
-        pop();
-        push(`/${ev.detail}`);
+        popHistory();
+        replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
     }
 
     function findMessage(
@@ -136,7 +138,7 @@
         <GroupDetails
             chat={$groupChat}
             participantCount={$participants.length}
-            on:close={pop}
+            on:close={popHistory}
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
@@ -147,13 +149,15 @@
             busy={savingParticipants}
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             on:saveParticipants={saveParticipants}
-            on:cancelAddParticipants={pop} />
+            on:cancelAddParticipants={popHistory} />
     {:else if lastState.kind === "show_participants" && controller !== undefined}
         <Participants
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
-            {controller}
+            chat={groupChat}
             {userId}
-            on:close={pop}
+            {participants}
+            {blockedUsers}
+            on:close={popHistory}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:transferOwnership={transferOwnership}
@@ -168,7 +172,7 @@
             on:goToMessageIndex={goToMessageIndex}
             {chatId}
             pinned={$pinned}
-            on:close={pop} />
+            on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
@@ -177,9 +181,9 @@
             {user}
             {metrics}
             on:userAvatarSelected
-            on:closeProfile={pop} />
+            on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
-        <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
+        <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
     {:else if threadRootEvent !== undefined && controller !== undefined}
         <Thread
             bind:this={thread}
@@ -192,7 +196,7 @@
             {controller}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && controller !== undefined}
-        <ProposalGroupFilters {controller} on:close={pop} />
+        <ProposalGroupFilters on:close={popHistory} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

@@ -34,3 +34,9 @@ declare namespace svelte.JSX {
         onswiping?: any;
     }
 }
+
+declare global {
+    interface Window {
+        twttr: any;
+    }
+}

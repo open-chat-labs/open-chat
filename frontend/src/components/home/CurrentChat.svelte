@@ -5,7 +5,6 @@
     import { rollbar } from "../../utils/logging";
     import { closeNotificationsForChat } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
-    import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { createEventDispatcher, getContext, onDestroy, tick } from "svelte";
     import {
@@ -20,6 +19,7 @@
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
+        ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
@@ -31,6 +31,7 @@
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import { remainingStorage } from "../../stores/storage";
     import { userStore } from "../../stores/user";
+    import { blockedUsers as directlyBlockedUsers } from "stores/blockedUsers";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -51,7 +52,6 @@
     import { messagesRead } from "../../stores/markRead";
 
     export let controller: ChatController;
-    export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
 
     const dispatch = createEventDispatcher();
@@ -79,6 +79,7 @@
     $: textContent = controller.textContent;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
+    $: blocked = isBlocked($chat, $directlyBlockedUsers);
 
     $: canSend = canSendMessages($chat, $userStore);
     $: preview = isPreviewing($chat);
@@ -305,6 +306,10 @@
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
         controller.setTextContent(ev.detail);
+    }
+
+    function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
+        return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
     }
 </script>
 

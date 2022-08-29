@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { push } from "svelte-spa-router";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -19,6 +19,7 @@
         getDisplayDate,
         getMinVisibleMessageIndex,
         getTypingString,
+        markAllRead,
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type { ChatSummary } from "../../domain/chat/chat";
@@ -161,8 +162,7 @@
     }
 
     function onClick() {
-        dispatch("click");
-        push(`/${chatSummary.chatId}`);
+        dispatch("chatSelected", chatSummary.chatId);
     }
 
     function pinChat() {
@@ -295,6 +295,15 @@
                                 </MenuItem>
                             {/if}
                         {/if}
+                        <MenuItem
+                            disabled={unreadMessages === 0}
+                            on:click={() => markAllRead(chatSummary)}>
+                            <CheckboxMultipleMarked
+                                size={$iconSize}
+                                color={"var(--icon-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
+                        </MenuItem>
                     </Menu>
                 </div>
             </MenuIcon>

@@ -13,7 +13,6 @@
 
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
-    export let blocked: boolean;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
 
@@ -42,7 +41,6 @@
     {:else}
         <CurrentChat
             {joining}
-            {blocked}
             {controller}
             on:initiateThread
             on:unblockUser

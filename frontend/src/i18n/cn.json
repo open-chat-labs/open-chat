@@ -577,9 +577,12 @@
         "youVotedReject": "你投了反对票！",
         "additionalContent": "附加内容",
         "filter": "过滤提案",
-        "collapse": "收起消息"
+        "collapse": "收起消息",
+        "enableAll": "全部启用",
+        "disableAll": "禁用所有"
     },
     "quoteReply": "报价回复",
     "groupNameTooShort": "组名太短",
-    "groupNameReserved": "保留组名"
+    "groupNameReserved": "保留组名",
+    "loadingTweetPreview": "正在加载推文预览..."
 }

@@ -218,7 +218,7 @@
         }
 
         @include size-above(xl) {
-            margin: 0 0 $sp3 0;
+            margin: 0;
         }
     }
     .avatar {

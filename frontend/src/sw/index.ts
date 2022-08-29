@@ -36,7 +36,10 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const bytes = toUint8Array(event.data.text());
 
     // Try to extract the typed notification from the event
-    const candid = IDL.decode([NotificationIdl], Buffer.from(bytes))[0] as unknown as ApiNotification;
+    const candid = IDL.decode(
+        [NotificationIdl],
+        Buffer.from(bytes)
+    )[0] as unknown as ApiNotification;
     if (!candid) {
         return;
     }
@@ -132,7 +135,7 @@ async function showNotification(notification: Notification): Promise<void> {
 
     // We need to close any exiting notifications for the same tag otherwise the new notification will not be shown
     const existing = await self.registration.getNotifications({
-        tag: path
+        tag: path,
     });
     existing.forEach((n) => n.close());
 
@@ -223,7 +226,7 @@ function extractMessageContent(
         };
     } else if (content.kind === "proposal_content") {
         result = {
-            text: "TODO - proposal content",
+            text: content.proposal.title,
         };
     } else {
         throw new UnsupportedValueError(

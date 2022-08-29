@@ -91,7 +91,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
     } else if (content.kind === "poll_content") {
-        text = "poll";
+        text = content.config.text ?? "poll";
     } else if (content.kind === "proposal_content") {
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
@@ -1625,4 +1625,15 @@ export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
                   readUpTo: t.readUpTo!,
               }))
         : [];
+}
+
+export function markAllRead(chat: ChatSummary): void {
+    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+    if (latestMessageIndex) {
+        messagesRead.markRangeRead(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            latestMessageIndex
+        );
+    }
 }

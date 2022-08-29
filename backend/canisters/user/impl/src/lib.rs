@@ -137,6 +137,7 @@ struct Data {
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub username: String,
     pub bio: String,
+    #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub group_creation_limit: u32,
     pub storage_limit: u64,

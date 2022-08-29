@@ -31,7 +31,7 @@
         selectedChatStore,
     } from "../../stores/chat";
     import { messagesRead } from "../../stores/markRead";
-    import { menuStore } from "../../stores/menu";
+    import { menuCloser } from "../../actions/closeMenu";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -127,9 +127,10 @@
         dispatch("searchEntered", "");
     }
 
-    function onScroll() {
+    function chatSelected(ev: CustomEvent<string>): void {
         chatScrollTop = chatListElement.scrollTop;
-        menuStore.hideMenu();
+        push(`/${ev.detail}`);
+        closeSearch();
     }
 
     let chatListElement: HTMLElement;
@@ -163,7 +164,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
 
-    <div bind:this={chatListElement} class="body" on:scroll={onScroll}>
+    <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
         {:else}
@@ -180,7 +181,7 @@
                         {chatSummary}
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}
-                        on:click={closeSearch}
+                        on:chatSelected={chatSelected}
                         on:pinChat
                         on:unpinChat
                         on:toggleMuteNotifications
