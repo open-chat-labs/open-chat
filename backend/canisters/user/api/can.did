@@ -19,13 +19,6 @@ type SendMessageResponse =
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
-        TransferSuccess: record {
-            chat_id: ChatId;
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            transfer: CompletedCryptoTransaction;
-        };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;

@@ -49,12 +49,9 @@ import type {
     ApiReplyContext,
     ApiUpdatedMessage,
     ApiDeletedContent,
-    ApiCryptocurrencyContent,
     ApiCryptoContent,
-    ApiCryptoTransaction,
     ApiCryptoTransactionV2,
     ApiNnsPendingCryptoTransaction,
-    ApiCompletedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
     ApiMessageIndexRange,
     ApiUser,
@@ -140,9 +137,6 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     }
     if ("Deleted" in candid) {
         return deletedContent(candid.Deleted);
-    }
-    if ("Cryptocurrency" in candid) {
-        return cryptoContent(candid.Cryptocurrency);
     }
     if ("Crypto" in candid) {
         return cryptoContentV2(candid.Crypto, sender);
@@ -320,14 +314,6 @@ function deletedContent(candid: ApiDeletedContent): DeletedContent {
     };
 }
 
-function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent {
-    return {
-        kind: "crypto_content",
-        caption: optional(candid.caption, identity),
-        transfer: cryptoTransfer(candid.transfer),
-    };
-}
-
 function cryptoContentV2(candid: ApiCryptoContent, sender: string): CryptocurrencyContent {
     return {
         kind: "crypto_content",
@@ -342,34 +328,6 @@ export function token(_candid: ApiCryptocurrency): Cryptocurrency {
 
 export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
     return { InternetComputer: null };
-}
-
-function cryptoTransfer(candid: ApiCryptoTransaction): CryptocurrencyTransfer {
-    if ("Pending" in candid) {
-        return {
-            kind: "pending",
-            token: token(candid.Pending.token),
-            recipient: "User" in candid.Pending.to ? candid.Pending.to.User.toString() : "",
-            amountE8s: candid.Pending.amount.e8s,
-            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
-            memo: optional(candid.Pending.memo, identity),
-        };
-    }
-    if ("Completed" in candid) {
-        return completedCryptoTransfer(candid.Completed);
-    }
-    if ("Failed" in candid) {
-        return {
-            kind: "failed",
-            token: token(candid.Failed.token),
-            recipient: "User" in candid.Failed.to ? candid.Failed.to.User.toString() : "",
-            amountE8s: candid.Failed.amount.e8s,
-            feeE8s: candid.Failed.fee.e8s,
-            memo: candid.Failed.memo,
-            errorMessage: candid.Failed.error_message,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
 }
 
 function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipient: string): CryptocurrencyTransfer {
@@ -401,15 +359,15 @@ function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipi
 }
 
 export function completedCryptoTransfer(
-    candid: ApiCompletedCryptoTransaction | ApiNnsCompletedCryptoTransaction,
-    sender = "",
-    recipient = ""
+    candid: ApiNnsCompletedCryptoTransaction,
+    sender: string,
+    recipient: string
 ): CompletedCryptocurrencyTransfer {
     return {
         kind: "completed",
         token: token(candid.token),
-        recipient: "User" in candid.to ? candid.to.User[0].toString() : recipient,
-        sender: "User" in candid.from ? candid.from.User[0].toString() : sender,
+        recipient,
+        sender,
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
         memo: candid.memo,

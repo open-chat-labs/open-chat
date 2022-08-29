@@ -27,7 +27,6 @@ import type {
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiTransferCryptoWithinGroupResponse,
-    ApiCryptoAccountFull,
     ApiChatMetrics,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
@@ -412,15 +411,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse, sender: stri
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-        };
-    }
-    if ("TransferSuccess" in candid) {
-        return {
-            kind: "transfer_success",
-            timestamp: candid.TransferSuccess.timestamp,
-            messageIndex: candid.TransferSuccess.message_index,
-            eventIndex: candid.TransferSuccess.event_index,
-            transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
         };
     }
     if ("TransferSuccessV2" in candid) {

@@ -2,9 +2,8 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CompletedCryptoTransactionV2, CryptoAccountFull, CryptoTransaction,
-    CryptoTransactionInternal, CryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2, ProposalContent,
-    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransactionV2, CryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2,
+    ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -25,7 +24,6 @@ pub enum MessageContent {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContent),
-    Cryptocurrency(CryptocurrencyContent),
     Crypto(CryptoContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
@@ -40,7 +38,6 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContentInternal),
     Crypto(CryptoContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
@@ -103,7 +100,6 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Cryptocurrency(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Crypto(c) => c.transfer.is_zero(),
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
@@ -135,7 +131,6 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Crypto(c) => MessageContentInternal::Crypto(c),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
@@ -176,7 +171,6 @@ impl MessageContent {
             }
             MessageContent::Text(_)
             | MessageContent::Poll(_)
-            | MessageContent::Cryptocurrency(_)
             | MessageContent::Crypto(_)
             | MessageContent::Deleted(_)
             | MessageContent::Giphy(_)
@@ -194,7 +188,6 @@ impl MessageContent {
             MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
@@ -212,24 +205,6 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(CryptocurrencyContent {
-                transfer: match &c.transfer {
-                    CryptoTransactionInternal::Pending(t) => CryptoTransaction::Pending(t.clone()),
-                    CryptoTransactionInternal::Completed(t) => CryptoTransaction::Completed(CompletedCryptoTransaction {
-                        token: t.token,
-                        amount: t.amount,
-                        fee: t.fee,
-                        from: CryptoAccountFull::user(t.from.user_id().unwrap()),
-                        to: CryptoAccountFull::user(t.to.user_id().unwrap()),
-                        memo: t.memo,
-                        created: t.created,
-                        block_index: t.block_index,
-                        transaction_hash: t.transaction_hash,
-                    }),
-                    _ => unreachable!(),
-                },
-                caption: c.caption.clone(),
-            }),
             MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
@@ -409,27 +384,6 @@ pub enum RegisterVoteResult {
     SuccessNoChange,
     PollEnded,
     OptionIndexOutOfRange,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContent {
-    pub transfer: CryptoTransaction,
-    pub caption: Option<String>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContentInternal {
-    pub transfer: CryptoTransactionInternal,
-    pub caption: Option<String>,
-}
-
-impl From<CryptocurrencyContent> for CryptocurrencyContentInternal {
-    fn from(c: CryptocurrencyContent) -> Self {
-        CryptocurrencyContentInternal {
-            transfer: c.transfer.into(),
-            caption: c.caption,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

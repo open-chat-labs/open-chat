@@ -1,8 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CompletedCryptoTransaction, CompletedCryptoTransactionV2, EventIndex, InvalidPollReason, MessageContent, MessageId,
-    MessageIndex, ReplyContext, TimestampMillis, UserId,
+    ChatId, CompletedCryptoTransactionV2, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext,
+    TimestampMillis, UserId,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,7 +19,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    TransferSuccess(TransferSuccessResult),
     TransferSuccessV2(TransferSuccessV2Result),
     MessageEmpty,
     TextTooLong(u32),
@@ -37,15 +36,6 @@ pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct TransferSuccessResult {
-    pub chat_id: ChatId,
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
-    pub timestamp: TimestampMillis,
-    pub transfer: CompletedCryptoTransaction,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
