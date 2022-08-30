@@ -5,6 +5,7 @@ import {
     dsocialRegex,
     isDsocialLink,
     isYoutubeLink,
+    twitterLinkRegex,
     youtubeRegex,
 } from "./media";
 
@@ -52,6 +53,22 @@ function extractIdTests(form: "short" | "long", url: string) {
         });
     });
 }
+
+describe("twitter link", () => {
+    describe("with qs params", () => {
+        const match =
+            "https://twitter.com/stephhegarty/status/1564531848209915904?s=20&t=53i6PnUJwXK3K-Qy03-SbQ".match(
+                twitterLinkRegex()
+            );
+        expect(match![2]).toEqual("1564531848209915904");
+    });
+    describe("without qs params", () => {
+        const match = "https://twitter.com/stephhegarty/status/1564531848209915904".match(
+            twitterLinkRegex()
+        );
+        expect(match![2]).toEqual("1564531848209915904");
+    });
+});
 
 describe("video link transform", () => {
     describe("dsocial", () => {

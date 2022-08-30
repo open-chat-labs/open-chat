@@ -255,7 +255,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
 
 /** twitter link */
 export const twitterLinkRegex = (): RegExp =>
-    /https?:\/\/twitter\.com\/[^/]+\/status(es)?\/(\d+)\?[^ ]*/i;
+    /https?:\/\/twitter\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
 
 /** Youtube link handling */
 export const youtubeRegex = (): RegExp =>
