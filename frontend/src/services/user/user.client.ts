@@ -216,8 +216,10 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
+        const disableCache = localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+
         const resp = await this.handleQueryResponse(
-            () => this.userService.initial_state({}),
+            () => this.userService.initial_state({ disable_cache: [disableCache] }),
             initialStateResponse
         );
 

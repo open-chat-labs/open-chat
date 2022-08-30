@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use types::{ChatId, ChatSummary, Cycles, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {}
+pub struct Args {
+    pub disable_cache: Option<bool>,
+}
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

@@ -521,7 +521,7 @@ export const idlFactory = ({ IDL }) => {
   const InitUserPrincipalMigrationResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
-  const InitialStateArgs = IDL.Record({});
+  const InitialStateArgs = IDL.Record({ 'disable_cache' : IDL.Opt(IDL.Bool) });
   const Cycles = IDL.Nat;
   const Version = IDL.Record({
     'major' : IDL.Nat32,
