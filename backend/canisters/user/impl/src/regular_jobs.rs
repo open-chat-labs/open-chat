@@ -37,7 +37,7 @@ fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
 }
 
 fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
-    let summaries_args = build_summaries_args(env.now(), data);
+    let summaries_args = build_summaries_args(false, env.now(), data);
 
     ic_cdk::spawn(update_cached_group_summaries_impl(summaries_args));
 }

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
-    Timestamped, UserId, MAX_RETURNED_MENTIONS,
+    EventIndex, FallbackRole, GroupPermissions, Mention, MessageIndex, Participant, Role, TimestampMillis, Timestamped, UserId,
+    MAX_RETURNED_MENTIONS,
 };
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
@@ -29,7 +29,6 @@ impl Participants {
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
-            mentions: Vec::new(),
             mentions_v2: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
@@ -65,7 +64,6 @@ impl Participants {
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
-                        mentions: Vec::new(),
                         mentions_v2: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
@@ -373,7 +371,6 @@ pub struct ParticipantInternal {
     pub date_added: TimestampMillis,
     pub role: Role,
     pub notifications_muted: Timestamped<bool>,
-    pub mentions: Vec<MentionInternal>,
     pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
