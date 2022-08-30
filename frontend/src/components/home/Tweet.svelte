@@ -21,7 +21,6 @@
                 })
                 .then(() => {
                     tweetRendered = true;
-                    console.log("Rendered tweet, ", text);
                 });
         }
     }
