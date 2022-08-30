@@ -419,7 +419,7 @@ export interface IndexedNotification {
 }
 export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
 export type InitUserPrincipalMigrationResponse = { 'Success' : null };
-export type InitialStateArgs = {};
+export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
 export type InitialStateResponse = {
     'Success' : {
       'cycles_balance' : Cycles,

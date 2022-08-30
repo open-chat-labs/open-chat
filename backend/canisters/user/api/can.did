@@ -373,6 +373,7 @@ type MigrateUserPrincipalResponse =
 
 type InitialStateArgs =
     record {
+        disable_cache: opt bool;
     };
 
 type InitialStateResponse =
