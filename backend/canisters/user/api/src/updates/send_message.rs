@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CompletedCryptoTransactionV2, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext,
+    ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext,
     TimestampMillis, UserId,
 };
 
@@ -44,5 +44,5 @@ pub struct TransferSuccessV2Result {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
-    pub transfer: CompletedCryptoTransactionV2,
+    pub transfer: CompletedCryptoTransaction,
 }

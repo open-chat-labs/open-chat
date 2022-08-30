@@ -144,7 +144,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export type CompletedCryptoTransactionV2 = {
+export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   };
 export interface ConfirmationCodeSms {
@@ -154,11 +154,11 @@ export interface ConfirmationCodeSms {
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
-  'transfer' : CryptoTransactionV2,
+  'transfer' : CryptoTransaction,
 }
-export type CryptoTransactionV2 = { 'Failed' : FailedCryptoTransactionV2 } |
-  { 'Completed' : CompletedCryptoTransactionV2 } |
-  { 'Pending' : PendingCryptoTransactionV2 };
+export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
+  { 'Completed' : CompletedCryptoTransaction } |
+  { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
@@ -258,7 +258,7 @@ export interface EventsWindowArgs {
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type FailedCryptoTransactionV2 = { 'NNS' : NnsFailedCryptoTransaction };
+export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
 export interface FieldTooLongResult {
@@ -591,9 +591,7 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export type PendingCryptoTransactionV2 = {
-    'NNS' : NnsPendingCryptoTransaction
-  };
+export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction };
 export type PermissionRole = { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };

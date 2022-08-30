@@ -5,8 +5,8 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use types::{
-    CompletedCryptoTransactionV2, CryptoContent, CryptoTransactionV2, FailedCryptoTransactionV2, MessageContent,
-    PendingCryptoTransactionV2, ICP_TRANSFER_LIMIT, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
+    CompletedCryptoTransaction, CryptoContent, CryptoTransaction, FailedCryptoTransaction, MessageContent,
+    PendingCryptoTransaction, ICP_TRANSFER_LIMIT, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::transfer_crypto_within_group_v2::{Response::*, *};
 
@@ -20,7 +20,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
     }
 
     let pending_transaction = match &args.content.transfer {
-        CryptoTransactionV2::Pending(t) => t.clone(),
+        CryptoTransaction::Pending(t) => t.clone(),
         _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
     };
     if !pending_transaction.is_user_recipient(args.recipient) {
@@ -29,7 +29,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 
     let completed_transaction = match process_transaction(pending_transaction).await {
         Ok(completed) => completed,
-        Err(FailedCryptoTransactionV2::NNS(failed)) => return TransferFailed(failed.error_message),
+        Err(FailedCryptoTransaction::NNS(failed)) => return TransferFailed(failed.error_message),
     };
 
     let c2c_args = group_canister::send_message::Args {
@@ -37,7 +37,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
         thread_root_message_index: None,
         content: MessageContent::Crypto(CryptoContent {
             recipient: args.recipient,
-            transfer: CryptoTransactionV2::Completed(completed_transaction.clone()),
+            transfer: CryptoTransaction::Completed(completed_transaction.clone()),
             caption: args.content.caption,
         }),
         sender_name: args.sender_name,
@@ -68,9 +68,9 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
     let amount = match &args.content.transfer {
-        CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.amount,
-        CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => t.amount,
-        CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => t.amount,
+        CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => t.amount,
+        CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => t.amount,
+        CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => t.amount,
     };
 
     if runtime_state.data.blocked_users.contains(&args.recipient) {

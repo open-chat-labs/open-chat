@@ -24,7 +24,7 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: CompletedCryptoTransactionV2;
+            transfer: CompletedCryptoTransaction;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -302,28 +302,28 @@ type TransferCryptoWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: CompletedCryptoTransactionV2;
+            transfer: CompletedCryptoTransaction;
         };
         TextTooLong: nat32;
         RecipientBlocked;
-        CallerNotInGroup: opt CompletedCryptoTransactionV2;
+        CallerNotInGroup: opt CompletedCryptoTransaction;
         CryptocurrencyNotSupported: Cryptocurrency;
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: Tokens;
-        InternalError: record { text; CompletedCryptoTransactionV2; };
+        InternalError: record { text; CompletedCryptoTransaction; };
     };
 
 type WithdrawCryptoArgs =
     record {
-        withdrawal: PendingCryptoTransactionV2;
+        withdrawal: PendingCryptoTransaction;
     };
 
 type WithdrawCryptoResponse =
     variant {
-        Success: CompletedCryptoTransactionV2;
-        TransactionFailed: FailedCryptoTransactionV2;
+        Success: CompletedCryptoTransaction;
+        TransactionFailed: FailedCryptoTransaction;
         CurrencyNotSupported;
     };
 

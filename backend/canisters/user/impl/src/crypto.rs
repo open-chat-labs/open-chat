@@ -1,12 +1,12 @@
 use crate::read_state;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
-use types::{nns, CompletedCryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2, UserId};
+use types::{nns, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
 
 pub async fn process_transaction(
-    transaction: PendingCryptoTransactionV2,
-) -> Result<CompletedCryptoTransactionV2, FailedCryptoTransactionV2> {
-    let PendingCryptoTransactionV2::NNS(t) = transaction;
+    transaction: PendingCryptoTransaction,
+) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+    let PendingCryptoTransaction::NNS(t) = transaction;
 
     let (my_user_id, ledger_canister_id, now) = read_state(|state| {
         if !state.is_caller_owner() {
@@ -43,7 +43,7 @@ pub async fn process_transaction(
     let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
 
     match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
-        Ok(Ok(block_index)) => Ok(CompletedCryptoTransactionV2::NNS(nns::CompletedCryptoTransaction {
+        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(nns::CompletedCryptoTransaction {
             token: t.token,
             amount: t.amount,
             fee,
@@ -64,7 +64,7 @@ pub async fn process_transaction(
         }
     }
     .map_err(|error| {
-        FailedCryptoTransactionV2::NNS(nns::FailedCryptoTransaction {
+        FailedCryptoTransaction::NNS(nns::FailedCryptoTransaction {
             token: t.token,
             amount: t.amount,
             fee,

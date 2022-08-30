@@ -101,7 +101,7 @@ type ConfirmationCodeSms =
 type CryptoContent =
     record {
         recipient: UserId;
-        transfer: CryptoTransactionV2;
+        transfer: CryptoTransaction;
         caption: opt text;
     };
 
@@ -806,24 +806,24 @@ type Cryptocurrency =
         InternetComputer;
     };
 
-type CryptoTransactionV2 =
+type CryptoTransaction =
     variant {
-        Pending: PendingCryptoTransactionV2;
-        Completed: CompletedCryptoTransactionV2;
-        Failed: FailedCryptoTransactionV2;
+        Pending: PendingCryptoTransaction;
+        Completed: CompletedCryptoTransaction;
+        Failed: FailedCryptoTransaction;
     };
 
-type PendingCryptoTransactionV2 =
+type PendingCryptoTransaction =
     variant {
         NNS: NnsPendingCryptoTransaction;
     };
 
-type CompletedCryptoTransactionV2 =
+type CompletedCryptoTransaction =
     variant {
         NNS: NnsCompletedCryptoTransaction;
     };
 
-type FailedCryptoTransactionV2 =
+type FailedCryptoTransaction =
     variant {
         NNS: NnsFailedCryptoTransaction;
     };

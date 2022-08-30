@@ -2,7 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransactionV2, CryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction,
     ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
@@ -79,9 +79,9 @@ impl MessageContent {
             }
             MessageContent::Crypto(c) => {
                 let amount = match &c.transfer {
-                    CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => t.amount,
-                    CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => t.amount,
-                    CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => t.amount,
+                    CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => t.amount,
+                    CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => t.amount,
+                    CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => t.amount,
                 };
                 if amount == Tokens::ZERO {
                     return Err(TransferCannotBeZero);
@@ -389,7 +389,7 @@ pub enum RegisterVoteResult {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContent {
     pub recipient: UserId,
-    pub transfer: CryptoTransactionV2,
+    pub transfer: CryptoTransaction,
     pub caption: Option<String>,
 }
 

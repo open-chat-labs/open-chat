@@ -1,15 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CompletedCryptoTransactionV2, FailedCryptoTransactionV2, PendingCryptoTransactionV2};
+use types::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub withdrawal: PendingCryptoTransactionV2,
+    pub withdrawal: PendingCryptoTransaction,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(CompletedCryptoTransactionV2),
-    TransactionFailed(FailedCryptoTransactionV2),
+    Success(CompletedCryptoTransaction),
+    TransactionFailed(FailedCryptoTransaction),
     CurrencyNotSupported,
 }
