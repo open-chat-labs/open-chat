@@ -11,8 +11,9 @@ use user_canister::{initial_state, updates};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query(guard = "caller_is_owner")]
-async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
-    let group_summaries_args = read_state(|state| build_summaries_args(state.env.now(), &state.data));
+async fn initial_state(args: initial_state::Args) -> initial_state::Response {
+    let disable_cache = args.disable_cache.unwrap_or_default();
+    let group_summaries_args = read_state(|state| build_summaries_args(disable_cache, state.env.now(), &state.data));
 
     match crate::group_summaries::summaries(group_summaries_args).await {
         Ok(group_summaries) => {

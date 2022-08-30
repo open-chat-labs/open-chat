@@ -32,11 +32,11 @@ pub(crate) struct Updates {
     pub upgrades_in_progress: Vec<ChatId>,
 }
 
-pub(crate) fn build_summaries_args(now: TimestampMillis, data: &Data) -> SummariesArgs {
+pub(crate) fn build_summaries_args(disable_cache: bool, now: TimestampMillis, data: &Data) -> SummariesArgs {
     SummariesArgs {
         group_index_canister_id: data.group_index_canister_id,
         group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
-        cached_group_summaries: data.cached_group_summaries.clone(),
+        cached_group_summaries: if disable_cache { None } else { data.cached_group_summaries.clone() },
         now,
     }
 }
