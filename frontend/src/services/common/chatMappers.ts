@@ -50,7 +50,7 @@ import type {
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptoContent,
-    ApiCryptoTransactionV2,
+    ApiCryptoTransaction,
     ApiNnsPendingCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
     ApiMessageIndexRange,
@@ -139,7 +139,7 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return deletedContent(candid.Deleted);
     }
     if ("Crypto" in candid) {
-        return cryptoContentV2(candid.Crypto, sender);
+        return cryptoContent(candid.Crypto, sender);
     }
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
@@ -314,11 +314,11 @@ function deletedContent(candid: ApiDeletedContent): DeletedContent {
     };
 }
 
-function cryptoContentV2(candid: ApiCryptoContent, sender: string): CryptocurrencyContent {
+function cryptoContent(candid: ApiCryptoContent, sender: string): CryptocurrencyContent {
     return {
         kind: "crypto_content",
         caption: optional(candid.caption, identity),
-        transfer: cryptoTransferV2(candid.transfer, sender, candid.recipient.toString()),
+        transfer: cryptoTransfer(candid.transfer, sender, candid.recipient.toString()),
     };
 }
 
@@ -330,7 +330,7 @@ export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
     return { InternetComputer: null };
 }
 
-function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipient: string): CryptocurrencyTransfer {
+function cryptoTransfer(candid: ApiCryptoTransaction, sender: string, recipient: string): CryptocurrencyTransfer {
     if ("Pending" in candid) {
         return {
             kind: "pending",
@@ -355,7 +355,7 @@ function cryptoTransferV2(candid: ApiCryptoTransactionV2, sender: string, recipi
             errorMessage: candid.Failed.NNS.error_message,
         };
     }
-    throw new UnsupportedValueError("Unexpected ApiCryptoTransferV2 type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiCryptoTransaction type received", candid);
 }
 
 export function completedCryptoTransfer(
@@ -706,7 +706,7 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
     };
 }
 
-function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransactionV2 {
+function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
         return {
             Pending: {

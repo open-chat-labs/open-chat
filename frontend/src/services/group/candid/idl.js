@@ -209,7 +209,7 @@ export const idlFactory = ({ IDL }) => {
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
-  const FailedCryptoTransactionV2 = IDL.Variant({
+  const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
   });
   const BlockIndex = IDL.Nat64;
@@ -224,7 +224,7 @@ export const idlFactory = ({ IDL }) => {
     'memo' : Memo,
     'amount' : Tokens,
   });
-  const CompletedCryptoTransactionV2 = IDL.Variant({
+  const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
@@ -238,18 +238,18 @@ export const idlFactory = ({ IDL }) => {
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,
   });
-  const PendingCryptoTransactionV2 = IDL.Variant({
+  const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
   });
-  const CryptoTransactionV2 = IDL.Variant({
-    'Failed' : FailedCryptoTransactionV2,
-    'Completed' : CompletedCryptoTransactionV2,
-    'Pending' : PendingCryptoTransactionV2,
+  const CryptoTransaction = IDL.Variant({
+    'Failed' : FailedCryptoTransaction,
+    'Completed' : CompletedCryptoTransaction,
+    'Pending' : PendingCryptoTransaction,
   });
   const CryptoContent = IDL.Record({
     'recipient' : UserId,
     'caption' : IDL.Opt(IDL.Text),
-    'transfer' : CryptoTransactionV2,
+    'transfer' : CryptoTransaction,
   });
   const VideoContent = IDL.Record({
     'height' : IDL.Nat32,

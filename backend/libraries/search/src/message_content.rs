@@ -1,7 +1,6 @@
 use crate::document::Document;
 use types::{
-    CompletedCryptoTransactionV2, CryptoTransactionV2, FailedCryptoTransactionV2, MessageContentInternal,
-    PendingCryptoTransactionV2,
+    CompletedCryptoTransaction, CryptoTransaction, FailedCryptoTransaction, MessageContentInternal, PendingCryptoTransaction,
 };
 
 impl From<&MessageContentInternal> for Document {
@@ -25,9 +24,9 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::Crypto(c) => {
                 let (token, amount) = match &c.transfer {
-                    CryptoTransactionV2::Pending(PendingCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
-                    CryptoTransactionV2::Completed(CompletedCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
-                    CryptoTransactionV2::Failed(FailedCryptoTransactionV2::NNS(t)) => (t.token, t.amount),
+                    CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => (t.token, t.amount),
+                    CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => (t.token, t.amount),
+                    CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => (t.token, t.amount),
                 };
                 document.add_field(token.token_symbol(), 1.0);
                 document.add_field(format!("{}", amount), 1.0);
