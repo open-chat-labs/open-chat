@@ -428,13 +428,15 @@ export class ChatController {
         // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
         // if so, we update the chat summary to show the correct latest message.
         const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
-        if (latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex()) {
+        const newLatestMessage = latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex();
+
+        if (newLatestMessage) {
             this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
         }
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_new_messages" },
+            event: { kind: "loaded_new_events", newLatestMessage },
         });
         this.loading.set(false);
     }
@@ -456,7 +458,7 @@ export class ChatController {
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_previous_messages" },
+            event: { kind: "loaded_previous_events" },
         });
 
         this.loading.set(false);
@@ -545,7 +547,8 @@ export class ChatController {
         this.raiseEvent({
             chatId: this.chatId,
             event: {
-                kind: "loaded_new_messages",
+                kind: "loaded_new_events",
+                newLatestMessage: true
             },
         });
     }
