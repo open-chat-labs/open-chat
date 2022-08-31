@@ -1,4 +1,4 @@
-import { params, querystring, loc } from "svelte-spa-router";
+import { params, querystring } from "svelte-spa-router";
 import { derived, get } from "svelte/store";
 
 export type RouteParams = {
