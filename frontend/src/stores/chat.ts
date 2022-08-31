@@ -47,20 +47,20 @@ export type ChatState = {
 
 export type ChatLifecycleEvent =
     | Nothing
-    | LoadedNewMessages
+    | LoadedNewEvents
     | SendingMessage
     | ChatUpdated
     | LoadedEventWindow
-    | LoadedPreviousMessages;
+    | LoadedPreviousEvents;
 
 type Nothing = { kind: "nothing" };
-type LoadedNewMessages = { kind: "loaded_new_messages" };
+type LoadedNewEvents = { kind: "loaded_new_events", newLatestMessage: boolean };
 type SendingMessage = {
     kind: "sending_message";
     scroll: ScrollBehavior;
 };
 type ChatUpdated = { kind: "chat_updated" };
-type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
+type LoadedPreviousEvents = { kind: "loaded_previous_events" };
 type LoadedEventWindow = {
     kind: "loaded_event_window";
     focusThreadMessageIndex: number | undefined;

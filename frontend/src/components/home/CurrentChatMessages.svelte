@@ -390,7 +390,7 @@
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
-                    case "loaded_previous_messages":
+                    case "loaded_previous_events":
                         tick()
                             .then(resetScroll)
                             .then(() => {
@@ -422,12 +422,14 @@
                             .then(expandWindowIfNecessary);
                         initialised = true;
                         break;
-                    case "loaded_new_messages":
+                    case "loaded_new_events":
+                        const newLatestMessage = evt.event.newLatestMessage;
+
                         // wait until the events are rendered
                         tick()
                             .then(() => {
                                 setIfInsideFromBottomThreshold();
-                                if (insideFromBottomThreshold) {
+                                if (newLatestMessage && insideFromBottomThreshold) {
                                     // only scroll if we are now within threshold from the bottom
                                     scrollBottom("smooth");
                                 }
