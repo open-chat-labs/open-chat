@@ -1629,7 +1629,7 @@ export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
 
 export function markAllRead(chat: ChatSummary): void {
     const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-    if (latestMessageIndex) {
+    if (latestMessageIndex !== undefined) {
         messagesRead.markRangeRead(
             chat.chatId,
             getMinVisibleMessageIndex(chat),
