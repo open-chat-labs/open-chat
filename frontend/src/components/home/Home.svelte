@@ -22,6 +22,7 @@
     } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { pathParams } from "../../stores/routing";
+    import type { RouteParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -213,14 +214,15 @@
         }
     }
 
-    $: {
+    // extracting to a function to try to control more tightly what this reacts to
+    function routeChange(initialised: boolean, pathParams: RouteParams): void {
         // wait until we have loaded the chats
-        if ($chatsInitialised) {
-            if ($pathParams.chatId === "threads") {
+        if (initialised) {
+            if (pathParams.chatId === "threads") {
                 closeThread();
                 clearSelectedChat(false);
                 hotGroups = { kind: "idle" };
-            } else if ($pathParams.chatId === "share") {
+            } else if (pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
                 const title = local_qs.get("title") ?? "";
                 const text = local_qs.get("text") ?? "";
@@ -239,22 +241,22 @@
                 // first close any open thread
                 closeThread();
 
-                if ($pathParams.chatId !== undefined) {
+                if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
-                    if ($pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
+                    if (pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
                         newChatSelected(
-                            $pathParams.chatId,
-                            $pathParams.messageIndex,
-                            $pathParams.threadMessageIndex
+                            pathParams.chatId,
+                            pathParams.messageIndex,
+                            pathParams.threadMessageIndex
                         );
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
-                        if ($pathParams.messageIndex !== undefined) {
+                        if (pathParams.messageIndex !== undefined) {
                             $selectedChatStore?.goToMessageIndex(
-                                $pathParams.messageIndex,
+                                pathParams.messageIndex,
                                 false,
-                                $pathParams.threadMessageIndex
+                                pathParams.threadMessageIndex
                             );
                         }
                     }
@@ -280,6 +282,10 @@
                 }
             }
         }
+    }
+
+    $: {
+        routeChange($chatsInitialised, $pathParams);
     }
 
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
