@@ -126,6 +126,17 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
     }, {} as Record<string, ThreadSyncDetails[]>);
 });
 
+export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
+    return Object.entries(threadsByChat).reduce<Record<string, Set<number>>>((result, [chatId, threads]) => {
+        const set = new Set<number>();
+        for (const thread of threads) {
+            set.add(thread.threadRootMessageIndex)
+        }
+        result[chatId] = set;
+        return result;
+    }, {});
+});
+
 export const proposalTopicsStore = derived(
     [selectedChatStore, snsFunctions],
     ([selectedChat, snsFunctions]): Map<number, string> => {
