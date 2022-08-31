@@ -73,6 +73,7 @@
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
+    import { threadsFollowedByMeStore } from "stores/chat";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -116,7 +117,7 @@
                 events.set([]);
             }
         } else {
-            // we haven't changed the thread we are looking at, but the threads latest index has changed (i.e. an event has been added by someone else)
+            // we haven't changed the thread we are looking at, but the thread's latest index has changed (i.e. an event has been added by someone else)
             if (
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
@@ -151,6 +152,7 @@
     $: preview = isPreviewing($chat);
     $: pollsAllowed = canCreatePolls($chat);
     $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
+    $: isFollowedByMe = $threadsFollowedByMeStore[$chat.chatId]?.has(threadRootMessageIndex) ?? false;
 
     const dispatch = createEventDispatcher();
 
@@ -193,7 +195,7 @@
                 }
             });
 
-            if (userIds.has(currentUser.userId)) {
+            if (isFollowedByMe) {
                 const lastLoadedMessageIdx = lastMessageIndex($events);
                 if (lastLoadedMessageIdx !== undefined) {
                     messagesRead.markThreadRead(
