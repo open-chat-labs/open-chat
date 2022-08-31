@@ -1,5 +1,5 @@
-import { params, querystring } from "svelte-spa-router";
-import { derived } from "svelte/store";
+import { params, querystring, loc } from "svelte-spa-router";
+import { derived, get } from "svelte/store";
 
 export type RouteParams = {
     chatId?: string;
@@ -8,10 +8,13 @@ export type RouteParams = {
     open: boolean;
 };
 
-export const pathParams = derived([params, querystring], ([$params, $qs]) => {
+export const pathParams = derived([params], ([$params]) => {
     if ($params === undefined) {
         return {} as RouteParams;
     } else {
+        // NB: it's important that we do not *derive* from the querystring store as well as it is set at a slightly different time
+        // to the params store and that causes us problems
+        const $qs = get(querystring);
         const params = {
             chatId: $params["chatId"] == null ? undefined : $params["chatId"],
             messageIndex:
