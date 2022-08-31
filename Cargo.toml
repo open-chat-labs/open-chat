@@ -61,6 +61,6 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "b651609e1ef00f27d8693d760dfc0dc713059bb9" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "b651609e1ef00f27d8693d760dfc0dc713059bb9" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "8fe10b16ab31d9f0b2bb471785c6683d6c285959" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "8fe10b16ab31d9f0b2bb471785c6683d6c285959" }
 jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }
