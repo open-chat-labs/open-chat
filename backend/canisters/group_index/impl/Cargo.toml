@@ -21,8 +21,8 @@ group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../api" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.2"
-ic-cdk-macros = "0.5.2"
+ic-cdk = "0.5.6"
+ic-cdk-macros = "0.5.6"
 msgpack = { path = "../../../libraries/msgpack" }
 rand = "0.7.3"
 search = { path = "../../../libraries/search" }

@@ -24,8 +24,8 @@ group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.2"
-ic-cdk-macros = "0.5.2"
+ic-cdk = "0.5.6"
+ic-cdk-macros = "0.5.6"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
 msgpack = { path = "../../../libraries/msgpack" }

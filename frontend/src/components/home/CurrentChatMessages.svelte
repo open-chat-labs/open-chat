@@ -481,13 +481,11 @@
      * there *still* are not enough visible events 🤯
      */
     function expandWindowIfNecessary() {
-        if (localStorage.getItem(configKeys.expandWindow) === "true") {
-            if (shouldLoadNewMessages()) {
-                controller.loadNewMessages();
-            }
-            if (shouldLoadPreviousMessages()) {
-                controller.loadPreviousMessages();
-            }
+        if (shouldLoadNewMessages()) {
+            controller.loadNewMessages();
+        }
+        if (shouldLoadPreviousMessages()) {
+            controller.loadPreviousMessages();
         }
     }
 
