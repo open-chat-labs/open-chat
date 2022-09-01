@@ -52,6 +52,7 @@ impl DeletedGroups {
             public,
             private,
             notifications_pending: self.pending_group_deleted_notifications.len() as u64,
+            chat_ids: self.groups.keys().copied().collect(),
         }
     }
 }
@@ -60,4 +61,5 @@ pub struct Metrics {
     pub public: u64,
     pub private: u64,
     pub notifications_pending: u64,
+    pub chat_ids: Vec<ChatId>,
 }

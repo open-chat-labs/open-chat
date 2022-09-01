@@ -74,6 +74,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            deleted_groups: self.data.cached_metrics.deleted_groups.clone(),
         }
     }
 }
@@ -144,6 +145,7 @@ impl Data {
             deleted_public_groups: deleted_group_metrics.public,
             deleted_private_groups: deleted_group_metrics.private,
             group_deleted_notifications_pending: deleted_group_metrics.notifications_pending,
+            deleted_groups: deleted_group_metrics.chat_ids,
             ..Default::default()
         };
 
@@ -208,6 +210,7 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
+    pub deleted_groups: Vec<ChatId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
@@ -218,4 +221,5 @@ pub struct CachedMetrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
+    pub deleted_groups: Vec<ChatId>,
 }
