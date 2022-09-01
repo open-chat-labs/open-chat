@@ -6,10 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, FailedCryptoTransaction, MessageContent,
-    UserId,
-};
+use types::{CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, UserId};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -41,7 +38,7 @@ async fn send_message(mut args: Args) -> Response {
                 c.transfer = CryptoTransaction::Completed(completed.clone());
                 Some(completed)
             }
-            Err(FailedCryptoTransaction::NNS(failed)) => return TransferFailed(failed.error_message),
+            Err(failed) => return TransferFailed(failed.error_message().to_string()),
         };
     }
 

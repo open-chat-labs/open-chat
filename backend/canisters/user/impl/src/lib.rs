@@ -6,14 +6,14 @@ use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::AccountIdentifier;
+use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use types::{Avatar, CanisterId, ChatId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -129,7 +129,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
+    #[serde(default = "default_ledger_canister_ids")]
+    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
@@ -145,6 +146,13 @@ struct Data {
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
+}
+
+// TODO - remove this
+fn default_ledger_canister_ids() -> HashMap<Cryptocurrency, CanisterId> {
+    [(Cryptocurrency::InternetComputer, MAINNET_LEDGER_CANISTER_ID)]
+        .into_iter()
+        .collect()
 }
 
 impl Data {
@@ -169,7 +177,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             callback_canister_id,
-            ledger_canister_id,
+            ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             avatar: Timestamped::default(),
             test_mode,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
@@ -223,6 +231,13 @@ impl Data {
             self.pinned_chats.timestamp = now;
             self.pinned_chats.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
         }
+    }
+
+    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
+        self.ledger_canister_ids
+            .get(token)
+            .copied()
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{:?}'", token))
     }
 }
 

@@ -16,6 +16,7 @@ pub struct Args {
     pub forwarding: bool,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -27,7 +28,7 @@ pub enum Response {
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
-    TransferLimitExceeded(u64),
+    TransferLimitExceeded(u128),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
