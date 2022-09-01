@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte";
+    import { fullScreen } from "../../stores/settings";
     import "emoji-picker-element";
     import { getCurrentThemeName } from "../../theme/themes";
 
@@ -16,6 +17,7 @@
 </script>
 
 <emoji-picker
+    class:fullscreen={$fullScreen}
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}
@@ -28,6 +30,14 @@
         --num-columns: 17;
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
+
+        &.fullscreen {
+            --num-columns: 24;
+        }
+
+        @include size-below(xxl) {
+            --num-columns: 17 !important;
+        }
 
         @include size-below(xl) {
             --num-columns: 15 !important;
