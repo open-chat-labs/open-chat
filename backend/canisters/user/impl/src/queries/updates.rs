@@ -182,10 +182,6 @@ fn finalize(
         }
     }
 
-    // let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
-
-    let blocked_users = runtime_state.data.blocked_users.value.iter().copied().collect();
-
     let blocked_users_v2 = runtime_state
         .data
         .blocked_users
@@ -207,7 +203,6 @@ fn finalize(
         chats_added,
         chats_updated,
         chats_removed,
-        blocked_users,
         cycles_balance: None,
         avatar_id,
         upgrades_in_progress: group_chat_upgrades_in_progress,

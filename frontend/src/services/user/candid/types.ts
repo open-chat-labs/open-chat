@@ -908,7 +908,6 @@ export type UpdatesResponse = {
       'user_canister_wasm_version' : [] | [Version],
       'upgrades_in_progress' : Array<ChatId>,
       'chats_updated' : Array<ChatSummaryUpdates>,
-      'blocked_users' : Array<UserId>,
       'blocked_users_v2' : [] | [Array<UserId>],
       'chats_added' : Array<ChatSummary>,
       'avatar_id' : AvatarIdUpdate,

@@ -32,7 +32,6 @@ pub struct SuccessResult {
     pub chats_added: Vec<ChatSummary>,
     pub chats_updated: Vec<ChatSummaryUpdates>,
     pub chats_removed: Vec<ChatId>,
-    pub blocked_users: Vec<UserId>,
     pub cycles_balance: Option<Cycles>,
     pub avatar_id: OptionUpdate<u128>,
     pub upgrades_in_progress: Vec<ChatId>,
