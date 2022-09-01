@@ -395,6 +395,7 @@
                 switch (evt.event.kind) {
                     case "loaded_previous_events":
                         tick()
+                            .then(() => (initialised = true))
                             .then(resetScroll)
                             .then(() => {
                                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
@@ -408,6 +409,7 @@
                         const allowRecursion = evt.event.allowRecursion;
                         const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
                         tick()
+                            .then(() => (initialised = true))
                             .then(() => {
                                 expectedScrollTop = undefined;
                                 scrollToMessageIndex(
@@ -418,7 +420,6 @@
                                 );
                             })
                             .then(loadMoreIfRequired);
-                        initialised = true;
                         break;
                     case "loaded_new_events":
                         const newLatestMessage = evt.event.newLatestMessage;
