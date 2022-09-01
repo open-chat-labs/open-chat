@@ -41,7 +41,6 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import { writable } from "svelte/store";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
