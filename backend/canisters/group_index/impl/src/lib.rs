@@ -210,7 +210,7 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
-    pub deleted_groups: Vec<ChatId>,
+    pub deleted_groups: Vec<(ChatId, TimestampMillis)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
@@ -221,5 +221,5 @@ pub struct CachedMetrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
-    pub deleted_groups: Vec<ChatId>,
+    pub deleted_groups: Vec<(ChatId, TimestampMillis)>,
 }
