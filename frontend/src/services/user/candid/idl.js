@@ -932,7 +932,6 @@ export const idlFactory = ({ IDL }) => {
       'user_canister_wasm_version' : IDL.Opt(Version),
       'upgrades_in_progress' : IDL.Vec(ChatId),
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
-      'blocked_users' : IDL.Vec(UserId),
       'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
       'chats_added' : IDL.Vec(ChatSummary),
       'avatar_id' : AvatarIdUpdate,
