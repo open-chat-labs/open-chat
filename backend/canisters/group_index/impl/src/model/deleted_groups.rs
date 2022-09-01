@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
-use types::{ChatId, DeletedGroupInfo, TimestampMillis, UserId};
+use types::{ChatId, DeletedGroupInfo, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct DeletedGroups {
@@ -52,7 +52,6 @@ impl DeletedGroups {
             public,
             private,
             notifications_pending: self.pending_group_deleted_notifications.len() as u64,
-            chat_ids: self.groups.values().map(|g| (g.id, g.timestamp)).collect(),
         }
     }
 }
@@ -61,5 +60,4 @@ pub struct Metrics {
     pub public: u64,
     pub private: u64,
     pub notifications_pending: u64,
-    pub chat_ids: Vec<(ChatId, TimestampMillis)>,
 }
