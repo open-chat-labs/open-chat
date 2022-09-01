@@ -34,6 +34,7 @@
     import { blockedUsers } from "../../stores/blockedUsers";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
+    import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
     import { filterByChatType, RightPanelState } from "../../fsm/rightPanel";
     import { rollbar } from "../../utils/logging";
@@ -62,7 +63,7 @@
     } from "../../domain/chat/chat.utils";
     import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
     import { trackEvent } from "../../utils/tracking";
-    import { numberOfColumns, oldLayout } from "../../stores/layout";
+    import { numberOfColumns } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import {
         chatSummariesListStore,
@@ -958,7 +959,7 @@
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
-<main class:old-layout={oldLayout}>
+<main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
             {api}
@@ -1128,17 +1129,10 @@
         gap: $sp3;
         margin: 0 auto;
 
-        &:not(.old-layout) {
+        &:not(.fullscreen) {
             max-width: 1400px;
             @include size-above(xl) {
                 max-width: 1792px;
-            }
-        }
-
-        &.old-layout {
-            max-width: 1600px;
-            @include size-below(xl) {
-                max-width: 1400px;
             }
         }
     }

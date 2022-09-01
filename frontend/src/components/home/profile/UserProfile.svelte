@@ -28,6 +28,7 @@
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
+        fullScreen,
         referralOpen,
         scrollStrategy,
         statsSectionOpen,
@@ -287,6 +288,15 @@
             <div class="para">
                 <Legend>{$_("fontSize")}</Legend>
                 <FontSize />
+            </div>
+
+            <div class="para">
+                <Legend>{$_("displayWidth")}</Legend>
+                <Toggle
+                    id={"full-screen"}
+                    on:change={() => fullScreen.toggle()}
+                    label={$_("fullScreen")}
+                    checked={$fullScreen} />
             </div>
         </CollapsibleCard>
     </div>
