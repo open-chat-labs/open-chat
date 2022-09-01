@@ -71,8 +71,8 @@
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
 
-    let loadingPrev = writable(false);
-    let loadingNew = writable(false);
+    let loadingPrev = false;
+    let loadingNew = false;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -230,12 +230,12 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = controller.morePreviousMessagesAvailable();
-        return !$loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         return (
-            !$loadingNew &&
+            !loadingNew &&
             calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
             controller.moreNewMessagesAvailable()
         );
@@ -282,7 +282,7 @@
         }
 
         if (shouldLoadPreviousMessages()) {
-            loadingPrev.set(true);
+            loadingPrev = true;
             controller.loadPreviousMessages();
         }
 
@@ -290,7 +290,7 @@
             // Note - this fires even when we have entered our own message. This *seems* wrong but
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
-            loadingNew.set(true);
+            loadingNew = true;
             controller.loadNewMessages();
         }
 
@@ -400,8 +400,8 @@
                             .then(() => {
                                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
                             })
-                            .then(() => loadingPrev.set(false))
-                            .then(checkIfMoreLoadMore);
+                            .then(() => (loadingPrev = false))
+                            .then(loadMoreIfRequired);
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
@@ -418,7 +418,7 @@
                                     focusThreadMessageIndex
                                 );
                             })
-                            .then(checkIfMoreLoadMore);
+                            .then(loadMoreIfRequired);
                         initialised = true;
                         break;
                     case "loaded_new_events":
@@ -432,8 +432,8 @@
                                     scrollBottom("smooth");
                                 }
                             })
-                            .then(() => loadingNew.set(false))
-                            .then(checkIfMoreLoadMore);
+                            .then(() => (loadingNew = false))
+                            .then(loadMoreIfRequired);
                         break;
                     case "sending_message":
                         // smooth scroll doesn't work here when we are leaping from the top
@@ -473,13 +473,13 @@
      * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
      * there *still* are not enough visible events 🤯
      */
-    function checkIfMoreLoadMore() {
+    function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
-            loadingNew.set(true);
+            loadingNew = true;
             controller.loadNewMessages();
         }
         if (shouldLoadPreviousMessages()) {
-            loadingPrev.set(true);
+            loadingPrev = true;
             controller.loadPreviousMessages();
         }
     }
