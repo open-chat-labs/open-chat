@@ -4,6 +4,9 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import ModalPage from "./ModalPage.svelte";
+    import { selectedAuthProviderStore, showAuthProvidersStore } from "../stores/authProviders";
+    import { AuthProvider } from "../domain/auth";
+
     const dispatch = createEventDispatcher();
     export let loading: boolean = false;
 </script>
@@ -24,6 +27,26 @@
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}
         >{$_("login.signInOrRegister")}</Button>
+    {#if $showAuthProvidersStore}
+        <div class="auth-providers">
+            <label>
+                <input
+                    type="radio"
+                    bind:group={$selectedAuthProviderStore}
+                    name="authProviders"
+                    value={AuthProvider.II} />
+                {AuthProvider.II}
+            </label>
+            <label>
+                <input
+                    type="radio"
+                    bind:group={$selectedAuthProviderStore}
+                    name="authProviders"
+                    value={AuthProvider.NFID} />
+                {AuthProvider.NFID}
+            </label>
+        </div>
+    {/if}
 </ModalPage>
 
 <style type="text/scss">
@@ -47,5 +70,15 @@
         text-decoration-color: var(--link-underline);
         text-underline-offset: $sp1;
         cursor: pointer;
+    }
+
+    .auth-providers {
+        @include font(book, normal, fs-80);
+        margin-top: toRem(8);
+        display: flex;
+        gap: toRem(8);
+        input {
+            margin: 0;
+        }
     }
 </style>

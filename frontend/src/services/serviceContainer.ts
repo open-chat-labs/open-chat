@@ -109,6 +109,7 @@ import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import { snsFunctions } from "../stores/snsFunctions";
+import { userCreatedStore } from "../stores/settings";
 
 export const apiKey = Symbol();
 
@@ -769,7 +770,12 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser();
+        return this._userIndexClient.getCurrentUser().then((response) => {
+            if (response.kind === "created_user") {
+                userCreatedStore.set(true);
+            }
+            return response;
+        });
     }
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
