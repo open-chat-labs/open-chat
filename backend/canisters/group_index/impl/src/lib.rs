@@ -52,6 +52,7 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
@@ -63,8 +64,9 @@ impl RuntimeState {
             private_groups: self.data.private_groups.len() as u64,
             active_public_groups: self.data.cached_metrics.active_public_groups,
             active_private_groups: self.data.cached_metrics.active_private_groups,
-            deleted_public_groups: 0,
-            deleted_private_groups: 0,
+            deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
+            deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
+            group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
@@ -91,6 +93,7 @@ struct Data {
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
+    #[serde(skip_deserializing)]
     pub cached_metrics: CachedMetrics,
     pub max_concurrent_canister_upgrades: usize,
 }
@@ -134,8 +137,13 @@ impl Data {
             return;
         }
 
+        let deleted_group_metrics = self.deleted_groups.metrics();
+
         let mut cached_metrics = CachedMetrics {
             last_run: now,
+            deleted_public_groups: deleted_group_metrics.public,
+            deleted_private_groups: deleted_group_metrics.private,
+            group_deleted_notifications_pending: deleted_group_metrics.notifications_pending,
             ..Default::default()
         };
 
@@ -188,10 +196,11 @@ pub struct Metrics {
     pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
-    pub active_public_groups: u32,
-    pub active_private_groups: u32,
-    pub deleted_public_groups: u32,
+    pub active_public_groups: u64,
+    pub active_private_groups: u64,
+    pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
+    pub group_deleted_notifications_pending: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
@@ -204,6 +213,9 @@ pub struct Metrics {
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct CachedMetrics {
     pub last_run: TimestampMillis,
-    pub active_public_groups: u32,
-    pub active_private_groups: u32,
+    pub active_public_groups: u64,
+    pub active_private_groups: u64,
+    pub deleted_public_groups: u64,
+    pub deleted_private_groups: u64,
+    pub group_deleted_notifications_pending: u64,
 }

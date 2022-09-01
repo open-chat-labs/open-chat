@@ -36,4 +36,28 @@ impl DeletedGroups {
             .pop_front()
             .and_then(|(chat_id, user_id)| self.groups.get(&chat_id).map(|d| (user_id, d.clone())))
     }
+
+    pub fn metrics(&self) -> Metrics {
+        let mut public = 0;
+        let mut private = 0;
+        for group in self.groups.values() {
+            if group.public {
+                public += 1;
+            } else {
+                private += 1;
+            }
+        }
+
+        Metrics {
+            public,
+            private,
+            notifications_pending: self.pending_group_deleted_notifications.len() as u64,
+        }
+    }
+}
+
+pub struct Metrics {
+    pub public: u64,
+    pub private: u64,
+    pub notifications_pending: u64,
 }
