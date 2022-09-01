@@ -220,7 +220,7 @@
         if (initialised) {
             if (pathParams.chatId === "threads") {
                 closeThread();
-                clearSelectedChat(false);
+                clearSelectedChat();
                 hotGroups = { kind: "idle" };
             } else if (pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
@@ -629,7 +629,7 @@
     }
 
     function deleteGroup(chatId: string): Promise<void> {
-        clearSelectedChat();
+        push("/");
         return api
             .deleteGroup(chatId)
             .then((resp) => {
@@ -650,7 +650,7 @@
     }
 
     function leaveGroup(chatId: string): Promise<void> {
-        clearSelectedChat();
+        push("/");
         return api
             .leaveGroup(chatId)
             .then((resp) => {
@@ -675,7 +675,7 @@
 
     function deleteDirectChat(ev: CustomEvent<string>) {
         if (ev.detail === $pathParams.chatId) {
-            clearSelectedChat();
+            push("/");
         }
         tick().then(() => removeChat(ev.detail));
     }
@@ -808,14 +808,14 @@
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
-                    setSelectedChat(api, group.chatId, undefined, undefined);
+                    setSelectedChat(api, group.chatId);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    setSelectedChat(api, group.chatId, undefined, undefined);
+                    setSelectedChat(api, group.chatId);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {
@@ -841,14 +841,14 @@
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
-        clearSelectedChat();
+        push("/");
         tick().then(() => {
             removeChat(ev.detail);
         });
     }
 
     function whatsHot() {
-        clearSelectedChat();
+        push("/");
         tick().then(() => {
             interruptRecommended = false;
             hotGroups = { kind: "loading" };
@@ -856,9 +856,6 @@
                 .then((resp) => (hotGroups = { kind: "success", data: resp }))
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
-        if ($pathParams.chatId === "threads") {
-            push("/");
-        }
     }
 
     function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
@@ -995,7 +992,7 @@
             loadingChats={$chatsLoading}
             controller={$selectedChatStore}
             on:initiateThread={initiateThread}
-            on:clearSelection={() => clearSelectedChat(true)}
+            on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}

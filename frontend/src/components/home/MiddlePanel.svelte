@@ -16,6 +16,7 @@
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
 
+    $: noChat = $pathParams.chatId === undefined;
     $: showThreads = $pathParams.chatId === "threads";
 </script>
 
@@ -33,7 +34,7 @@
                 on:recommend
                 on:dismissRecommendation
                 groups={hotGroups.data} />
-        {:else}
+        {:else if noChat}
             <div class="no-chat" in:fade>
                 <NoChatSelected on:recommend on:newchat />
             </div>

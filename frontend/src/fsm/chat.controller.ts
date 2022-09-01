@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
-import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
+import { derived, get, readable, Readable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
@@ -67,7 +67,6 @@ export class ChatController {
     public blockedUsers: Writable<Set<string>>;
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
-    public loading: Writable<boolean>;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -98,7 +97,6 @@ export class ChatController {
 
         const chat = get(this.chat);
         this.events = immutableStore(unconfirmed.getMessages(chat.chatId));
-        this.loading = writable(false);
         this.focusMessageIndex = immutableStore(_focusMessageIndex);
         this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
@@ -349,7 +347,6 @@ export class ChatController {
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
         if (messageIndex >= 0) {
-            this.loading.set(true);
             const range = indexRangeForChat(get(this.serverChatSummary));
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 this.chatVal.kind === "direct_chat"
@@ -362,7 +359,6 @@ export class ChatController {
             }
 
             await this.handleEventsResponse(eventsResponse, false);
-            this.loading.set(false);
         }
 
         this.raiseEvent({
@@ -411,7 +407,6 @@ export class ChatController {
     }
 
     public async loadNewMessages(): Promise<void> {
-        this.loading.set(true);
         const criteria = this.newMessageCriteria();
 
         const eventsResponse = criteria
@@ -419,7 +414,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return undefined;
         }
 
@@ -428,7 +422,8 @@ export class ChatController {
         // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
         // if so, we update the chat summary to show the correct latest message.
         const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
-        const newLatestMessage = latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex();
+        const newLatestMessage =
+            latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex();
 
         if (newLatestMessage) {
             this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
@@ -438,11 +433,9 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_new_events", newLatestMessage },
         });
-        this.loading.set(false);
     }
 
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
-        this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
         const eventsResponse = criteria
@@ -450,7 +443,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return [];
         }
 
@@ -461,7 +453,6 @@ export class ChatController {
             event: { kind: "loaded_previous_events" },
         });
 
-        this.loading.set(false);
         return get(this.events);
     }
 
@@ -548,7 +539,7 @@ export class ChatController {
             chatId: this.chatId,
             event: {
                 kind: "loaded_new_events",
-                newLatestMessage: true
+                newLatestMessage: true,
             },
         });
     }
@@ -673,16 +664,13 @@ export class ChatController {
             return Promise.resolve();
         }
 
-        this.loading.set(true);
         const chat = this.chatVal;
         const eventsPromise =
             chat.kind === "direct_chat"
                 ? this.api.directChatEventsByEventIndex(chat.them, filtered)
                 : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
 
-        return eventsPromise
-            .then((resp) => this.handleEventsResponse(resp))
-            .finally(() => this.loading.set(false));
+        return eventsPromise.then((resp) => this.handleEventsResponse(resp));
     }
 
     markAllRead(): void {

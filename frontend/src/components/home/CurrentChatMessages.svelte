@@ -39,7 +39,6 @@
         toggleProposalFilterMessageExpansion,
         filteredProposalsStore,
     } from "../../stores/filteredProposals";
-    import { configKeys } from "../../utils/config";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
 
@@ -65,12 +64,14 @@
     export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
-    $: loading = controller.loading;
     $: events = controller.events;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
+
+    let loadingPrev = false;
+    let loadingNew = false;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -228,12 +229,14 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = controller.morePreviousMessagesAvailable();
-        return calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         return (
-            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()
+            !loadingNew &&
+            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
+            controller.moreNewMessagesAvailable()
         );
     }
 
@@ -277,17 +280,17 @@
             return;
         }
 
-        if (!$loading) {
-            if (shouldLoadPreviousMessages()) {
-                controller.loadPreviousMessages();
-            }
+        if (shouldLoadPreviousMessages()) {
+            loadingPrev = true;
+            controller.loadPreviousMessages();
+        }
 
-            if (shouldLoadNewMessages()) {
-                // Note - this fires even when we have entered our own message. This *seems* wrong but
-                // it is actually correct because we do want to load our own messages from the server
-                // so that any incorrect indexes are corrected and only the right thing goes in the cache
-                controller.loadNewMessages();
-            }
+        if (shouldLoadNewMessages()) {
+            // Note - this fires even when we have entered our own message. This *seems* wrong but
+            // it is actually correct because we do want to load our own messages from the server
+            // so that any incorrect indexes are corrected and only the right thing goes in the cache
+            loadingNew = true;
+            controller.loadNewMessages();
         }
 
         setIfInsideFromBottomThreshold();
@@ -392,17 +395,13 @@
                 switch (evt.event.kind) {
                     case "loaded_previous_events":
                         tick()
+                            .then(() => (initialised = true))
                             .then(resetScroll)
                             .then(() => {
                                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
                             })
-                            .then(() => {
-                                // there is a possibility here we will not have loaded enough *visible* events
-                                // after grouping of certain events. In that case we may need to immediately go and load more
-                                if (shouldLoadPreviousMessages()) {
-                                    controller.loadPreviousMessages();
-                                }
-                            });
+                            .then(() => (loadingPrev = false))
+                            .then(loadMoreIfRequired);
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
@@ -410,6 +409,7 @@
                         const allowRecursion = evt.event.allowRecursion;
                         const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
                         tick()
+                            .then(() => (initialised = true))
                             .then(() => {
                                 expectedScrollTop = undefined;
                                 scrollToMessageIndex(
@@ -419,12 +419,10 @@
                                     focusThreadMessageIndex
                                 );
                             })
-                            .then(expandWindowIfNecessary);
-                        initialised = true;
+                            .then(loadMoreIfRequired);
                         break;
                     case "loaded_new_events":
                         const newLatestMessage = evt.event.newLatestMessage;
-
                         // wait until the events are rendered
                         tick()
                             .then(() => {
@@ -434,13 +432,8 @@
                                     scrollBottom("smooth");
                                 }
                             })
-                            .then(() => {
-                                // there is a possibility here we will not have loaded enough *visible* events
-                                // after grouping of certain events. In that case we may need to immediately go and load more
-                                if (shouldLoadNewMessages()) {
-                                    controller.loadNewMessages();
-                                }
-                            });
+                            .then(() => (loadingNew = false))
+                            .then(loadMoreIfRequired);
                         break;
                     case "sending_message":
                         // smooth scroll doesn't work here when we are leaping from the top
@@ -480,11 +473,13 @@
      * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
      * there *still* are not enough visible events 🤯
      */
-    function expandWindowIfNecessary() {
+    function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
+            loadingNew = true;
             controller.loadNewMessages();
         }
         if (shouldLoadPreviousMessages()) {
+            loadingPrev = true;
             controller.loadPreviousMessages();
         }
     }

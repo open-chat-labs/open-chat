@@ -414,7 +414,6 @@ type UpdatesResponse =
             chats_added: vec ChatSummary;
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
-            blocked_users: vec UserId;
             cycles_balance: opt Cycles;
             avatar_id: AvatarIdUpdate;
             upgrades_in_progress: vec ChatId;
