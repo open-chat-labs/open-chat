@@ -54,7 +54,7 @@ export type ChatLifecycleEvent =
     | LoadedPreviousEvents;
 
 type Nothing = { kind: "nothing" };
-type LoadedNewEvents = { kind: "loaded_new_events", newLatestMessage: boolean };
+type LoadedNewEvents = { kind: "loaded_new_events"; newLatestMessage: boolean };
 type SendingMessage = {
     kind: "sending_message";
     scroll: ScrollBehavior;
@@ -127,14 +127,17 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
 });
 
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
-    return Object.entries(threadsByChat).reduce<Record<string, Set<number>>>((result, [chatId, threads]) => {
-        const set = new Set<number>();
-        for (const thread of threads) {
-            set.add(thread.threadRootMessageIndex)
-        }
-        result[chatId] = set;
-        return result;
-    }, {});
+    return Object.entries(threadsByChat).reduce<Record<string, Set<number>>>(
+        (result, [chatId, threads]) => {
+            const set = new Set<number>();
+            for (const thread of threads) {
+                set.add(thread.threadRootMessageIndex);
+            }
+            result[chatId] = set;
+            return result;
+        },
+        {}
+    );
 });
 
 export const proposalTopicsStore = derived(
@@ -292,14 +295,11 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-export function clearSelectedChat(navigate = true): void {
+export function clearSelectedChat(): void {
     filteredProposalsStore.set(undefined);
     selectedChatStore.update((controller) => {
         if (controller !== undefined) {
             controller.destroy();
-            if (navigate) {
-                push("/");
-            }
         }
         return undefined;
     });
