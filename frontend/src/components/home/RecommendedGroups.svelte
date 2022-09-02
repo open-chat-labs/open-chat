@@ -168,7 +168,7 @@
     }
 
     .wrapper {
-        background-color: var(--currentChat-header-bg);
+        background-color: var(--panel-right-bg);
         color: var(--currentChat-header-txt);
 
         display: flex;
@@ -189,7 +189,6 @@
         &.no-groups {
             justify-content: center;
             text-align: center;
-            background-color: var(--currentChat-header-bg);
 
             .title {
                 @include mobile() {
