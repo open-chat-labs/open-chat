@@ -14,6 +14,12 @@ function createStore() {
 
     const store = writable<AuthProvider>(initial);
 
+    function _init(authProvider: AuthProvider) {
+        if (localStorage.getItem(key) === null) {
+            _set(authProvider);
+        }
+    }
+
     function _set(authProvider: AuthProvider) {
         store.update((_) => {
             localStorage.setItem(key, authProvider);
@@ -21,16 +27,10 @@ function createStore() {
         });
     }
 
-    function _setOnce(authProvider: AuthProvider) {
-        if (localStorage.getItem(key) === null) {
-            _set(authProvider);
-        }
-    }
-
     return {
         subscribe: store.subscribe,
+        init: (authProvider: AuthProvider): void => _init(authProvider),
         set: (authProvider: AuthProvider): void => _set(authProvider),
-        setOnce: (authProvider: AuthProvider): void => _setOnce(authProvider),
     };
 }
 

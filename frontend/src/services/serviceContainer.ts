@@ -775,7 +775,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.getCurrentUser().then((response) => {
             if (response.kind === "created_user") {
                 userCreatedStore.set(true);
-                selectedAuthProviderStore.setOnce(AuthProvider.II);
+                selectedAuthProviderStore.init(AuthProvider.II);
             }
             return response;
         });
