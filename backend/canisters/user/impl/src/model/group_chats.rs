@@ -63,7 +63,6 @@ impl GroupChats {
         let group = self.group_chats.remove(&chat_id);
         if group.is_some() {
             self.removed.push(RemovedGroup { chat_id, timestamp: now });
-            self.removed.sort_unstable_by_key(|g| g.timestamp);
         }
         group
     }
