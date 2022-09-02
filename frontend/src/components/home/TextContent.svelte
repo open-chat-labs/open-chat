@@ -39,7 +39,7 @@
     {/if}
     {#if twitterLinkMatch}
         <MessageObserver let:intersecting>
-            <Tweet tweetId={twitterLinkMatch[2]} {intersecting} text={content.text} />
+            <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
         </MessageObserver>
     {/if}
 {:else}
