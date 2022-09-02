@@ -16,6 +16,12 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             .events
             .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
+            let latest_event_index = chat_events.last().index;
+
+            if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                return ReplicaNotUpToDate;
+            }
+
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
 
             let events = chat_events.from_index(
@@ -27,7 +33,6 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             );
 
             let affected_events = chat_events.affected_events(&events, user_id);
-            let latest_event_index = chat_events.last().index;
 
             Success(SuccessResult {
                 events,
