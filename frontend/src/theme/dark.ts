@@ -31,7 +31,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
         accent: "#e87fb4",
 
         notificationBar: {
-            // bg: "#f3722b",
             bg: "#df783f",
             txt: "#ffffff",
         },
