@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { numberOfColumns, oldLayout } from "../stores/layout";
+    import { numberOfColumns } from "../stores/layout";
+    import { fullScreen } from "../stores/settings";
     import { mobileWidth } from "../stores/screenDimensions";
 
     export let left: boolean = false;
@@ -10,7 +11,7 @@
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
 </script>
 
-<section class:old-layout={oldLayout} class:left class:right class:middle class:modal>
+<section class:fullscreen={$fullScreen} class:left class:right class:middle class:modal>
     <slot />
 </section>
 
@@ -30,16 +31,11 @@
             @include mobile() {
                 padding: 0;
             }
+            flex: 13;
+            background: none;
 
-            &.old-layout {
-                width: 100%;
-                flex: auto;
-            }
-
-            &:not(.old-layout) {
+            &:not(.fullscreen) {
                 max-width: 840px;
-                flex: 13;
-                background: none;
             }
         }
 
@@ -48,6 +44,12 @@
             flex: 7;
             display: flex;
             flex-direction: column;
+
+            &.fullscreen {
+                @include size-above(xxl) {
+                    flex: 5;
+                }
+            }
         }
 
         &.left {
@@ -63,17 +65,7 @@
             }
         }
 
-        &.old-layout.left {
-            min-width: 236px;
-            max-width: 550px;
-            flex: 0 0 $left-width;
-
-            @include mobile() {
-                flex: auto;
-            }
-        }
-
-        &:not(.old-layout).right {
+        &.right {
             background: var(--panel-right-bg);
             padding: 0px;
 
@@ -94,16 +86,6 @@
                 height: 100%;
                 min-width: 0;
                 max-width: none;
-            }
-        }
-
-        &.old-layout.right {
-            width: $right-width;
-            display: flex;
-            flex-direction: column;
-            @include fullHeight();
-            @include mobile() {
-                width: 100%;
             }
         }
     }

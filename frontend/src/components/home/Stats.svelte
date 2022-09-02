@@ -257,6 +257,7 @@
 
     .pie {
         flex: auto;
+        width: 50%;
 
         &.rendered circle {
             transition: transform 200ms ease-in-out;
@@ -266,6 +267,7 @@
     .numbers {
         text-align: left;
         flex: 0 0 50%;
+        width: 50%;
     }
 
     .background {
