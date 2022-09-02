@@ -210,10 +210,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
                 me: {
                     bg: "#820041",
-                    txt: "#fff",
+                    txt: dark60,
                     hv: "#680034",
                     bd: "#820041",
-                    muted: txtLow,
+                    muted: dark50,
                 },
             },
         },
