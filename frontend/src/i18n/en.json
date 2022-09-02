@@ -582,5 +582,7 @@
     "quoteReply": "Quote reply",
     "groupNameTooShort": "The group name is too short",
     "groupNameReserved": "The group name is reserved",
-    "loadingTweetPreview": "Loading tweet preview..."
+    "loadingTweetPreview": "Loading tweet preview...",
+    "fullScreen": "Display full width on desktop",
+    "displayWidth": "Display width"
 }
