@@ -110,6 +110,8 @@ import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import { snsFunctions } from "../stores/snsFunctions";
 import { userCreatedStore } from "../stores/settings";
+import { selectedAuthProviderStore } from "../stores/authProviders";
+import { AuthProvider } from "../domain/auth";
 
 export const apiKey = Symbol();
 
@@ -773,6 +775,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.getCurrentUser().then((response) => {
             if (response.kind === "created_user") {
                 userCreatedStore.set(true);
+                selectedAuthProviderStore.setOnce(AuthProvider.II);
             }
             return response;
         });
