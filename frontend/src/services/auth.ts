@@ -46,7 +46,7 @@ function buildWindowOpenerFeatures(authProvider: AuthProvider): string {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
     const width = Math.min(screenWidth, isII ? 525 : 465);
-    const height = Math.min(screenHeight, isII ? 800 : 690);
+    const height = Math.min(screenHeight, isII ? 800 : 705);
     const left = (screenWidth - width) / 2;
     const top = (screenHeight - height) / 2;
 
@@ -60,7 +60,8 @@ function buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
         return (
             process.env.NFID_URL +
             "&applicationLogo=" +
-            encodeURIComponent("https://oc.app/_/raw/apple-touch-icon.png")
+            encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+            "#authorize"
         );
     }
 }
