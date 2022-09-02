@@ -427,6 +427,7 @@ type MessagesByMessageIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
+        invite_code: opt nat64;
     };
 
 type MessagesByMessageIndexResponse =
