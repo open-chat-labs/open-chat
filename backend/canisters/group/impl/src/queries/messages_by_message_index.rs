@@ -15,6 +15,12 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
             .events
             .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
+            let latest_event_index = chat_events.last().index;
+
+            if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                return ReplicaNotUpToDate;
+            }
+
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
 
             let messages: Vec<_> = args
@@ -23,8 +29,6 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
                 .filter_map(|m| chat_events.message_by_message_index(m, user_id))
                 .filter(|m| m.index >= min_visible_event_index)
                 .collect();
-
-            let latest_event_index = chat_events.last().index;
 
             Success(SuccessResult {
                 messages,

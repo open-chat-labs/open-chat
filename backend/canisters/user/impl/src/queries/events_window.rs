@@ -11,6 +11,12 @@ fn events_window(args: Args) -> Response {
 
 fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
+        let latest_event_index = chat.events.main().last().index;
+
+        if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+            return ReplicaNotUpToDate;
+        }
+
         let my_user_id = runtime_state.env.canister_id().into();
         let chat_events = chat.events.main();
 
@@ -24,7 +30,11 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             (Vec::new(), Vec::new())
         };
 
-        Success(SuccessResult { events, affected_events })
+        Success(SuccessResult {
+            events,
+            affected_events,
+            latest_event_index,
+        })
     } else {
         ChatNotFound
     }
