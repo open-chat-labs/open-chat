@@ -20,6 +20,7 @@ function boolFromLS(key: string, def: boolean): boolean {
 }
 
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
+export const userCreatedStore = createLsBoolStore(configKeys.userCreated, false);
 export const fullScreen = createLsBoolStore(configKeys.fullScreen, false);
 
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
@@ -41,6 +42,13 @@ function createLsBoolStore(key: string, def: boolean) {
     const store = writable<boolean>(boolFromLS(key, def));
     return {
         subscribe: store.subscribe,
+        set: (state: boolean): void =>
+            store.update((_) => {
+                if (!test) {
+                    localStorage.setItem(key, state.toString());
+                }
+                return state;
+            }),
         toggle: (): void =>
             store.update((val) => {
                 if (!test) {

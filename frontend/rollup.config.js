@@ -77,6 +77,7 @@ const WEBPUSH_SERVICE_WORKER_PATH = env === "development" ? "sw.js" : "_/raw/sw.
 console.log("PROD", production);
 console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
+console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
 
 function serve() {
@@ -187,6 +188,7 @@ export default [
                 "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
                     process.env.INTERNET_IDENTITY_URL
                 ),
+                "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
                 "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
                 "process.env.NODE_ENV": JSON.stringify(env),
                 "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
