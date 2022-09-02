@@ -60,9 +60,7 @@ function buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
         return (
             process.env.NFID_URL +
             "&applicationLogo=" +
-            encodeURIComponent(
-                "https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/_/raw/apple-touch-icon.png"
-            )
+            encodeURIComponent("https://oc.app/_/raw/apple-touch-icon.png")
         );
     }
 }
