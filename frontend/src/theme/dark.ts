@@ -244,7 +244,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         recommended: {
             ...defaultTheme.recommended,
-            bg: dark25,
+            bg: dark15,
         },
 
         profile: {
