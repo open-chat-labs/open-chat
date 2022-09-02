@@ -1,4 +1,5 @@
 export INTERNET_IDENTITY_URL=https://identity.ic0.app
+export NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChatTest
 export DFX_NETWORK=ic_test
 export DEV_PORT=5001
 export CLIENT_CACHING=true
