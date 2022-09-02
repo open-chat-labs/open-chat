@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { rollbar } from "../../utils/logging";
     import { themeStore } from "../../theme/themes";
 
-    export let text: string;
     export let intersecting: boolean;
     export let tweetId: string;
 
@@ -19,8 +19,10 @@
                     conversation: "none",
                     theme: $themeStore.name,
                 })
-                .then(() => {
-                    tweetRendered = true;
+                .then(() => (tweetRendered = true))
+                .catch((err: any) => {
+                    console.log("Failed to render tweet: ", err);
+                    rollbar.error("Failed to render tweet", err);
                 });
         }
     }
