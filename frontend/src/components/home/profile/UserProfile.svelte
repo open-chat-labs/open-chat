@@ -528,7 +528,7 @@
     }
 
     .user-form {
-        // @include nice-scrollbar();
+        @include nice-scrollbar();
 
         padding: $sp3;
         @include size-above(xl) {
