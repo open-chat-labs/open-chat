@@ -14,7 +14,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     ChatNotFound,
-    ReplicaNotUpToDate,
+    ReplicaNotUpToDate(EventIndex),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

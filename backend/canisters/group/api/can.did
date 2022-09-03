@@ -425,7 +425,7 @@ type EventsResponse =
         Success: EventsSuccessResult;
         CallerNotInGroup;
         ThreadMessageNotFound;
-        ReplicaNotUpToDate;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type MessagesByMessageIndexArgs =
@@ -444,7 +444,7 @@ type MessagesByMessageIndexResponse =
         };
         CallerNotInGroup;
         ThreadMessageNotFound;
-        ReplicaNotUpToDate;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type ThreadPreviewsArgs =
