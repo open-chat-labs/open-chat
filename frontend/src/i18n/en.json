@@ -584,5 +584,6 @@
     "groupNameReserved": "The group name is reserved",
     "loadingTweetPreview": "Loading tweet preview...",
     "fullScreen": "Display full width on desktop",
-    "displayWidth": "Display width"
+    "displayWidth": "Display width",
+    "apply": "Apply"
 }

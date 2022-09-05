@@ -1,7 +1,9 @@
 <script lang="ts">
     import Camera from "svelte-material-icons/Camera.svelte";
     import Overlay from "./Overlay.svelte";
-    import Link from "./Link.svelte";
+    import { _ } from "svelte-i18n";
+    import Button from "./Button.svelte";
+    import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
@@ -38,6 +40,7 @@
                     avatar = e?.target?.result as string;
                     originalImage.src = avatar;
                     showModal = true;
+                    fileinput.value = "";
                 };
             }
         }
@@ -88,7 +91,11 @@
                 </div>
             </span>
             <span slot="footer">
-                <Link on:click={cropImage}>Apply</Link>
+                <ButtonGroup>
+                    <Button tiny secondary={true} on:click={() => (showModal = false)}
+                        >{$_("cancel")}</Button>
+                    <Button tiny on:click={cropImage}>{$_("apply")}</Button>
+                </ButtonGroup>
             </span>
         </ModalContent>
     </Overlay>
