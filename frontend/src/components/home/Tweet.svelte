@@ -4,17 +4,23 @@
     import { _ } from "svelte-i18n";
     import { rollbar } from "../../utils/logging";
     import { themeStore } from "../../theme/themes";
+    import { onMount } from "svelte";
 
     export let intersecting: boolean;
     export let tweetId: string;
 
     let tweetWrapper: HTMLDivElement | undefined;
     let tweetRendered = false;
+    let supported = false;
+
+    onMount(() => {
+        supported = (<any>window).twttr !== undefined;
+    });
 
     $: {
-        if (intersecting && tweetWrapper !== undefined && !tweetRendered) {
+        if (intersecting && tweetWrapper !== undefined && !tweetRendered && supported) {
             tweetWrapper.innerHTML = "";
-            (<any>window).twttr.widgets
+            (<any>window).twttr?.widgets
                 .createTweet(tweetId, tweetWrapper, {
                     conversation: "none",
                     theme: $themeStore.name,
@@ -30,7 +36,7 @@
 
 <div class:rendered={tweetRendered} class="tweet" bind:this={tweetWrapper} />
 
-{#if !tweetRendered}
+{#if !tweetRendered && supported}
     <div class="preview">
         <div class="logo" />
         <p class="label">
