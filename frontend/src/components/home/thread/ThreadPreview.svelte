@@ -11,7 +11,7 @@
     import { chatSummariesStore } from "../../../stores/chat";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChatMessage from "../ChatMessage.svelte";
-    import IntersectionObserver from "../IntersectionObserver.svelte";
+    import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { getContext, onDestroy } from "svelte";
     import { CreatedUser, AvatarSize } from "../../../domain/user/user";
@@ -70,7 +70,7 @@
 
     function isIntersecting() {
         // if we can see *all* of the unread messages in this thread, then mark it as read.
-        if (unreadCount > 0 && unreadCount < 3) {
+        if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
             const lastMsgIdx = lastMessageIndex(thread.latestReplies);
             if (lastMsgIdx !== undefined) {
                 console.log("Marking thread as read");
@@ -127,7 +127,7 @@
                 </div>
             {/if}
         </div>
-        <IntersectionObserver on:intersecting={isIntersecting}>
+        <IntersectionObserverComponent on:intersecting={isIntersecting}>
             <div class="body">
                 <div class="root-msg">
                     <ChatMessage
@@ -207,7 +207,7 @@
                 <LinkButton underline="hover" on:click={selectThread}
                     >{$_("thread.openThread")}&#8594;</LinkButton>
             </div>
-        </IntersectionObserver>
+        </IntersectionObserverComponent>
     </CollapsibleCard>
 </div>
 
