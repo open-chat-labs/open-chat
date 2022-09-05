@@ -134,7 +134,7 @@ export function fillMessage(msg: Message): boolean {
             msg.repliesTo === undefined
         );
     } else if (msg.content.kind === "text_content" && isSocialVideoLink(msg.content.text)) {
-        return true;
+        return msg.repliesTo === undefined;
     } else {
         return false;
     }
