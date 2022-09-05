@@ -9,6 +9,11 @@ export const idlFactory = ({ IDL }) => {
   const AddRecommendedGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
+  const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
+  const ArchiveChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
@@ -311,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -493,23 +499,28 @@ export const idlFactory = ({ IDL }) => {
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
     'events' : IDL.Vec(ChatEventWrapper),
+    'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
+    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsRangeArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'to_index' : EventIndex,
     'from_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
@@ -598,6 +609,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'archived' : IDL.Bool,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -610,6 +622,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'read_by_them' : IDL.Vec(MessageIndexRange),
+    'archived' : IDL.Bool,
     'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
   });
@@ -667,11 +680,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MessagesByMessageIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
+    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),
@@ -859,6 +874,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
+  const UnArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
+  const UnArchiveChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
@@ -907,6 +927,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'archived' : IDL.Opt(IDL.Bool),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -919,6 +940,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'archived' : IDL.Opt(IDL.Bool),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
@@ -955,6 +977,7 @@ export const idlFactory = ({ IDL }) => {
         [AddRecommendedGroupExclusionsResponse],
         [],
       ),
+    'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'assume_group_super_admin' : IDL.Func(
         [AssumeGroupSuperAdminArgs],
         [AssumeGroupSuperAdminResponse],
@@ -1043,6 +1066,11 @@ export const idlFactory = ({ IDL }) => {
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [TransferCryptoWithinGroupResponse],
+        [],
+      ),
+    'unarchive_chat' : IDL.Func(
+        [UnArchiveChatArgs],
+        [UnArchiveChatResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

@@ -14,6 +14,9 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
+export interface ArchiveChatArgs { 'chat_id' : ChatId }
+export type ArchiveChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface AssumeGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
   { 'CallerNotInGroup' : null } |
@@ -193,6 +196,7 @@ export interface DirectChatSummary {
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
+  'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
 }
@@ -204,6 +208,7 @@ export interface DirectChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'read_by_them' : [] | [Array<MessageIndexRange>],
+  'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -315,6 +320,7 @@ export interface GroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -338,6 +344,7 @@ export interface GroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -517,6 +524,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array,
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -888,6 +896,9 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
+export interface UnArchiveChatArgs { 'chat_id' : ChatId }
+export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
@@ -962,6 +973,7 @@ export interface _SERVICE {
     [AddRecommendedGroupExclusionsArgs],
     AddRecommendedGroupExclusionsResponse,
   >,
+  'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'assume_group_super_admin' : ActorMethod<
     [AssumeGroupSuperAdminArgs],
     AssumeGroupSuperAdminResponse,
@@ -1019,6 +1031,7 @@ export interface _SERVICE {
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse,
   >,
+  'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unmute_notifications' : ActorMethod<
     [UnmuteNotificationsArgs],
