@@ -73,7 +73,6 @@
         if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
             const lastMsgIdx = lastMessageIndex(thread.latestReplies);
             if (lastMsgIdx !== undefined) {
-                console.log("Marking thread as read");
                 messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, lastMsgIdx);
             }
         }
