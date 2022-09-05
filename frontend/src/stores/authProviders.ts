@@ -8,18 +8,29 @@ export const selectedAuthProviderStore = createStore();
 
 function createStore() {
     const key = configKeys.selectedAuthProvider;
-    const def = AuthProvider.II;
+    const def = AuthProvider.NFID;
     const stored = localStorage.getItem(key);
     const initial = stored !== null ? enumFromStringValue(AuthProvider, stored, def) : def;
 
     const store = writable<AuthProvider>(initial);
+
+    function _init(authProvider: AuthProvider) {
+        if (localStorage.getItem(key) === null) {
+            _set(authProvider);
+        }
+    }
+
+    function _set(authProvider: AuthProvider) {
+        store.update((_) => {
+            localStorage.setItem(key, authProvider);
+            return authProvider;
+        });
+    }
+
     return {
         subscribe: store.subscribe,
-        set: (authProvider: AuthProvider): void =>
-            store.update((_) => {
-                localStorage.setItem(key, authProvider);
-                return authProvider;
-            }),
+        init: (authProvider: AuthProvider): void => _init(authProvider),
+        set: (authProvider: AuthProvider): void => _set(authProvider),
     };
 }
 
