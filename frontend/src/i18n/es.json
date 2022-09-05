@@ -587,5 +587,6 @@
     "groupNameReserved": "El nombre del grupo está reservado.",
     "loadingTweetPreview": "Cargando vista previa del tweet...",
     "fullScreen": "Mostrar ancho completo en el escritorio",
-    "displayWidth": "ancho de pantalla"
+    "displayWidth": "ancho de pantalla",
+    "apply": "Aplicar"
 }
