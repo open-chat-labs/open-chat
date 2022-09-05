@@ -550,11 +550,20 @@
 
     function unpinChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
-        pinnedChatsStore.unpin(chatId);
         api.unpinChat(chatId).catch((err) => {
             toastStore.showFailureToast("pinChat.unpinFailed");
             rollbar.error("Error unpinning chat", err);
             pinnedChatsStore.pin(chatId);
+        });
+    }
+
+    function archiveChat(ev: CustomEvent<string>) {
+        const chatId = ev.detail;
+        // pinnedChatsStore.unpin(chatId);
+        api.archiveChat(chatId).catch((err) => {
+            toastStore.showFailureToast("archiveChatFailed");
+            rollbar.error("Error archiving chat", err);
+            //pinnedChatsStore.pin(chatId);
         });
     }
 
@@ -983,6 +992,7 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:archiveChat={archiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}

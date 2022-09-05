@@ -184,6 +184,7 @@
                         on:chatSelected={chatSelected}
                         on:pinChat
                         on:unpinChat
+                        on:archiveChat
                         on:toggleMuteNotifications
                         on:deleteDirectChat />
                 {/each}

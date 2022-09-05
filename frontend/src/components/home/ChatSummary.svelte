@@ -9,6 +9,7 @@
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
+    import HideIcon from "svelte-material-icons/EyeOff.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
@@ -177,6 +178,10 @@
         dispatch("toggleMuteNotifications", { chatId: chatSummary.chatId, mute });
     }
 
+    function archiveChat() {
+        dispatch("archiveChat", chatSummary.chatId);
+    }
+
     $: displayDate = getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
@@ -262,6 +267,12 @@
                 </div>
                 <div slot="menu">
                     <Menu>
+                        {#if !pinned}
+                            <MenuItem on:click={archiveChat}>
+                                <HideIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("hideChat")}</div>
+                            </MenuItem>
+                        {/if}
                         {#if !pinned}
                             <MenuItem on:click={pinChat}>
                                 <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
