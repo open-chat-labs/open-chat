@@ -453,6 +453,7 @@ function mergeUpdatedDirectChat(
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+        archived: updatedChat.archived ?? chat.archived,
     };
 }
 
@@ -570,6 +571,7 @@ function mergeUpdatedGroupChat(
         public: updatedChat.public ?? chat.public,
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
+        archived: updatedChat.archived ?? chat.archived,
     };
 }
 
@@ -1181,6 +1183,7 @@ export function groupChatFromCandidate(
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
         subtype: undefined,
+        archived: false,
     };
 }
 

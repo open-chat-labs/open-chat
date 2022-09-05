@@ -429,6 +429,7 @@ export function createDirectChat(chatId: string): void {
                 notificationsMuted: false,
                 metrics: emptyChatMetrics(),
                 myMetrics: emptyChatMetrics(),
+                archived: false,
             },
         };
     });
