@@ -471,7 +471,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
-        ReplicaNotUpToDate;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type MessagesByMessageIndexArgs =
@@ -489,7 +489,7 @@ type MessagesByMessageIndexResponse =
             latest_event_index: EventIndex;
         };
         ChatNotFound;
-        ReplicaNotUpToDate;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type RecommendedGroupsArgs =

@@ -13,7 +13,7 @@ fn events_range_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let latest_event_index = chat.events.main().last().index;
 
         if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-            return ReplicaNotUpToDate;
+            return ReplicaNotUpToDate(latest_event_index);
         }
 
         let my_user_id = runtime_state.env.canister_id().into();
