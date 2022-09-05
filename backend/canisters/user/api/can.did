@@ -348,6 +348,28 @@ type UnpinChatResponse =
         Success;
     };
 
+type ArchiveChatArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type ArchiveChatResponse =
+    variant {
+        Success;
+        ChatNotFound;
+    };
+
+type UnArchiveChatArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type UnArchiveChatResponse =
+    variant {
+        Success;
+        ChatNotFound;
+    };
+
 type InitUserPrincipalMigrationArgs =
     record {
         new_principal: principal;
@@ -590,6 +612,8 @@ service: {
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
+    archive_chat: (ArchiveChatArgs) -> (ArchiveChatResponse);
+    unarchive_chat: (UnArchiveChatArgs) -> (UnArchiveChatResponse);
 
     init_user_principal_migration: (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal: (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

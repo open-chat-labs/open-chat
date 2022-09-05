@@ -11,6 +11,7 @@ pub struct GroupChat {
     pub last_changed_for_my_data: TimestampMillis,
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
+    pub archived: Timestamped<bool>,
 }
 
 impl GroupChat {
@@ -27,6 +28,7 @@ impl GroupChat {
             last_changed_for_my_data: now,
             is_super_admin,
             threads_read: TimestampedMap::default(),
+            archived: Timestamped::new(false, now),
         }
     }
 
@@ -35,6 +37,7 @@ impl GroupChat {
             self.read_by_me.timestamp,
             self.last_changed_for_my_data,
             self.threads_read.last_updated().unwrap_or_default(),
+            self.archived.timestamp,
         ]
         .iter()
         .max()
@@ -75,6 +78,7 @@ impl GroupChat {
                     last_updated: read_up_to.last_updated,
                 })
                 .collect(),
+            archived: self.archived.if_set_after(updates_since).copied(),
         }
     }
 }

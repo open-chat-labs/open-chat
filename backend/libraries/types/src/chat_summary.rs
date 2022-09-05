@@ -43,6 +43,7 @@ pub struct DirectChatSummary {
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
+    pub archived: bool,
 }
 
 impl DirectChatSummary {
@@ -78,6 +79,7 @@ pub struct GroupChatSummary {
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<ThreadSyncDetails>,
+    pub archived: bool,
 }
 
 impl GroupChatSummary {
@@ -104,6 +106,7 @@ pub struct DirectChatSummaryUpdates {
     pub affected_events: Vec<EventIndex>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
+    pub archived: Option<bool>,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -130,6 +133,7 @@ pub struct GroupChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetails>,
+    pub archived: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -259,6 +263,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             metrics: s.metrics,
             my_metrics: s.my_metrics,
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
+            archived: false,
         }
     }
 }
@@ -311,6 +316,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             my_metrics: s.my_metrics,
             is_public: s.is_public,
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
+            archived: None,
         }
     }
 }
