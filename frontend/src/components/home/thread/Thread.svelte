@@ -152,7 +152,8 @@
     $: preview = isPreviewing($chat);
     $: pollsAllowed = canCreatePolls($chat);
     $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
-    $: isFollowedByMe = $threadsFollowedByMeStore[$chat.chatId]?.has(threadRootMessageIndex) ?? false;
+    $: isFollowedByMe =
+        $threadsFollowedByMeStore[$chat.chatId]?.has(threadRootMessageIndex) ?? false;
 
     const dispatch = createEventDispatcher();
 
@@ -166,6 +167,7 @@
         if (thread === undefined || controller.chatVal === undefined) return;
         loading = true;
 
+        const chatId = controller.chatId;
         const eventsResponse = await api.chatEvents(
             controller.chatVal,
             range,
@@ -173,6 +175,10 @@
             ascending,
             threadRootMessageIndex
         );
+        if (chatId !== controller.chatId) {
+            // the chat has changed while we were loading the messages
+            return;
+        }
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
             if (clearEvents) {
