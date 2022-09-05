@@ -16,13 +16,8 @@
     type Spinning = { kind: "spinning" };
     type AwaitingUsername = { kind: "awaiting_username" };
     type AwaitingChallengeAttempt = { kind: "awaiting_challenge_attempt" };
-    type AwaitingCompletion = { kind: "awaiting_completion" };
 
-    type RegisterState =
-        | Spinning
-        | AwaitingUsername
-        | AwaitingChallengeAttempt
-        | AwaitingCompletion;
+    type RegisterState = Spinning | AwaitingUsername | AwaitingChallengeAttempt;
 
     export let api: ServiceContainer;
     export let referredBy: string | undefined;
@@ -110,8 +105,8 @@
         state.set({ kind: "spinning" });
         api.getCurrentUser().then((resp) => {
             if (resp.kind === "created_user") {
-                state.set({ kind: "awaiting_completion" });
                 createdUser = resp;
+                dispatch("createdUser", createdUser);
             }
         });
     }
@@ -132,30 +127,11 @@
         challengeAttempt = undefined;
         state.set({ kind: "awaiting_username" });
     }
-
-    function complete() {
-        if (createdUser !== undefined) {
-            dispatch("createdUser", createdUser);
-        }
-    }
-
-    let bgClass: "underwater" | "sunset" = "underwater";
-    $: {
-        switch ($state.kind) {
-            case "awaiting_completion":
-                bgClass = "sunset";
-                break;
-            default:
-                bgClass = "underwater";
-        }
-    }
 </script>
 
-<ModalPage {bgClass} minHeight="380px">
+<ModalPage minHeight="380px">
     {#if $state.kind === "spinning"}
         <div class="spinner" />
-    {:else if $state.kind === "awaiting_completion"}
-        <Complete on:complete={complete} />
     {:else if $state.kind === "awaiting_challenge_attempt"}
         <ChallengeComponent
             challenge={$challenge}
