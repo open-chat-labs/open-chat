@@ -111,7 +111,7 @@ export const chatSummariesListStore = derived(
             .filter((id) => summaries[id] !== undefined)
             .map((id) => summaries[id]);
         const unpinned = Object.values(summaries)
-            .filter((chat) => !pinnedChats.includes(chat.chatId) && !chat.archived)
+            .filter((chat) => !pinnedChats.includes(chat.chatId))
             .sort(compareChats);
         return pinned.concat(unpinned);
     }

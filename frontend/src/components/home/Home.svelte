@@ -208,6 +208,9 @@
                 });
             }
         } else {
+            if ($chatSummariesStore[chatId].archived) {
+                unArchiveChat(chatId);
+            }
             // if it's a known chat let's select it
             setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
             resetRightPanel();
@@ -559,11 +562,19 @@
 
     function archiveChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
-        // pinnedChatsStore.unpin(chatId);
         api.archiveChat(chatId).catch((err) => {
             toastStore.showFailureToast("archiveChatFailed");
             rollbar.error("Error archiving chat", err);
-            //pinnedChatsStore.pin(chatId);
+            push(`/${chatId}`);
+        });
+        push("/");
+    }
+
+    function unArchiveChat(chatId: string) {
+        api.unArchiveChat(chatId).catch((err) => {
+            toastStore.showFailureToast("unArchiveChatFailed");
+            rollbar.error("Error un-archiving chat", err);
+            push("/");
         });
     }
 

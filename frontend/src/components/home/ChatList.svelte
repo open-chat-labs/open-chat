@@ -64,10 +64,14 @@
         return false;
     }
 
+    function notHidden(chat: ChatSummaryType): boolean {
+        return !chat.archived;
+    }
+
     $: chats =
         searchTerm !== ""
             ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore;
+            : $chatSummariesListStore.filter(notHidden);
 
     let unsub = messagesRead.subscribe((_val) => {
         chatsWithUnreadMsgs = chats
