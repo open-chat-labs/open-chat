@@ -8,6 +8,7 @@ pub struct Args {
     pub mid_point: MessageIndex,
     pub max_events: u32,
     pub invite_code: Option<u64>,
+    pub latest_client_event_index: Option<EventIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -15,6 +16,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     ThreadMessageNotFound,
+    ReplicaNotUpToDate(EventIndex),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

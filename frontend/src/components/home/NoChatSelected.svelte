@@ -13,7 +13,7 @@
 
 <style type="text/scss">
     .wrapper {
-        background-color: var(--currentChat-header-bg);
+        background-color: var(--panel-right-bg);
         color: var(--currentChat-header-txt);
 
         display: flex;

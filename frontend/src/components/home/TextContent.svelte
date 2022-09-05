@@ -3,7 +3,7 @@
 <script lang="ts">
     import Markdown from "./Markdown.svelte";
     import Tweet from "./Tweet.svelte";
-    import MessageObserver from "./MessageObserver.svelte";
+    import IntersectionObserver from "./IntersectionObserver.svelte";
     import { translationStore } from "../../stores/translation";
     import { _ } from "svelte-i18n";
     import type { TextContent } from "../../domain/chat/chat";
@@ -38,9 +38,9 @@
         <span class="edited-msg">({$_("edited")})</span>
     {/if}
     {#if twitterLinkMatch}
-        <MessageObserver let:intersecting>
-            <Tweet tweetId={twitterLinkMatch[2]} {intersecting} text={content.text} />
-        </MessageObserver>
+        <IntersectionObserver let:intersecting>
+            <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+        </IntersectionObserver>
     {/if}
 {:else}
     <div class="social-video">

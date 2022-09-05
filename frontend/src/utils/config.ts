@@ -5,8 +5,8 @@ export const configKeys = {
     primeCacheBatchSize: "openchat_prime_cache_batch_size",
     lastCryptoSent: "openchat_lastcryptosent",
     fontSize: "openchat_font_size",
-    oldLayout: "openchat_oldlayout",
     enterSend: "openchat_entersend",
+    fullScreen: "openchat_fullscreen",
     userInfoSection: "openchat_userinfo_section",
     appearanceSection: "openchat_appearance_section",
     chatsSection: "openchat_chats_section",
@@ -22,5 +22,7 @@ export const configKeys = {
     groupAdvancedSection: "openchat_group_advanced_section",
     theme: "openchat_theme",
     scrollStrategy: "openchat_scrollstrategy",
-    expandWindow: "openchat_expand_window",
+	expandWindow: "openchat_expand_window",
+    selectedAuthProvider: "openchat_selected_auth_provider",
+    userCreated: "openchat_user_created",
 };

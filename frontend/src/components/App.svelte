@@ -30,6 +30,7 @@
     import { apiStore } from "../stores/api";
     import { startUserUpdatePoller } from "../stores/user";
     import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
+    import { selectedAuthProviderStore } from "../stores/authProviders";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -166,7 +167,7 @@
 
     function doLogin(): void {
         identityState.set("logging_in");
-        login().then((id) => loadedIdentity(id));
+        login($selectedAuthProviderStore).then((id) => loadedIdentity(id));
     }
 
     function acknowledgeExpiry(): void {

@@ -384,6 +384,7 @@ type EventsArgs =
         ascending: bool;
         max_events: nat32;
         invite_code: opt nat64;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsByIndexArgs =
@@ -391,6 +392,7 @@ type EventsByIndexArgs =
         thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
         invite_code: opt nat64;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsRangeArgs =
@@ -399,6 +401,7 @@ type EventsRangeArgs =
         from_index: EventIndex;
         to_index: EventIndex;
         invite_code: opt nat64;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsWindowArgs =
@@ -407,6 +410,7 @@ type EventsWindowArgs =
         mid_point: MessageIndex;
         max_events: nat32;
         invite_code: opt nat64;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsSuccessResult =
@@ -421,12 +425,15 @@ type EventsResponse =
         Success: EventsSuccessResult;
         CallerNotInGroup;
         ThreadMessageNotFound;
-    }; 
+        ReplicaNotUpToDate: EventIndex;
+    };
 
 type MessagesByMessageIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
+        invite_code: opt nat64;
+        latest_client_event_index: opt EventIndex;
     };
 
 type MessagesByMessageIndexResponse =
@@ -437,6 +444,7 @@ type MessagesByMessageIndexResponse =
         };
         CallerNotInGroup;
         ThreadMessageNotFound;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type ThreadPreviewsArgs =

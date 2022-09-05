@@ -431,6 +431,7 @@ type EventsArgs =
         start_index: EventIndex;
         ascending: bool;
         max_events: nat32;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsByIndexArgs =
@@ -438,6 +439,7 @@ type EventsByIndexArgs =
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsRangeArgs =
@@ -446,6 +448,7 @@ type EventsRangeArgs =
         thread_root_message_index: opt MessageIndex;
         from_index: EventIndex;
         to_index: EventIndex;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsWindowArgs =
@@ -454,18 +457,21 @@ type EventsWindowArgs =
         thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
         max_events: nat32;
+        latest_client_event_index: opt EventIndex;
     };
 
 type EventsSuccessResult =
     record {
         events: vec ChatEventWrapper;
         affected_events: vec ChatEventWrapper;
+        latest_event_index: EventIndex;
     };
 
 type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type MessagesByMessageIndexArgs =
@@ -473,6 +479,7 @@ type MessagesByMessageIndexArgs =
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
+        latest_client_event_index: opt EventIndex;
     };
 
 type MessagesByMessageIndexResponse =
@@ -482,6 +489,7 @@ type MessagesByMessageIndexResponse =
             latest_event_index: EventIndex;
         };
         ChatNotFound;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type RecommendedGroupsArgs =

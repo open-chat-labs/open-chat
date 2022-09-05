@@ -15,8 +15,13 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             .events
             .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
-            let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
             let latest_event_index = chat_events.last().index;
+
+            if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                return ReplicaNotUpToDate(latest_event_index);
+            }
+
+            let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
 
             let (events, affected_events) =
                 if let Some(mid_point) = chat_events.get_event_index_by_message_index(args.mid_point) {

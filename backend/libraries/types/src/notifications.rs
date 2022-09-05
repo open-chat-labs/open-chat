@@ -21,7 +21,6 @@ pub struct AddedToGroupNotification {
     pub group_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
-    #[serde(default)]
     pub timestamp: TimestampMillis,
 }
 

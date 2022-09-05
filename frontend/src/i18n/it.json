@@ -584,5 +584,8 @@
     "quoteReply": "Citare la risposta",
     "groupNameTooShort": "Il nome del gruppo è troppo breve",
     "groupNameReserved": "Il nome del gruppo è riservato",
-    "loadingTweetPreview": "Caricamento anteprima tweet in corso..."
+    "loadingTweetPreview": "Caricamento anteprima tweet in corso...",
+    "fullScreen": "Visualizza a tutta larghezza sul desktop",
+    "displayWidth": "Larghezza di visualizzazione",
+    "apply": "Applicare"
 }

@@ -582,5 +582,8 @@
     "quoteReply": "תשובת ציטוט",
     "groupNameTooShort": "שם הקבוצה קצר מדי",
     "groupNameReserved": "שם הקבוצה שמור",
-    "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ..."
+    "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ...",
+    "fullScreen": "הצגת רוחב מלא על שולחן העבודה",
+    "displayWidth": "רוחב תצוגה",
+    "apply": "להגיש מועמדות"
 }

@@ -93,7 +93,6 @@ struct Data {
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
-    #[serde(skip_deserializing)]
     pub cached_metrics: CachedMetrics,
     pub max_concurrent_canister_upgrades: usize,
 }

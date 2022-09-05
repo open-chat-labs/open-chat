@@ -11,6 +11,12 @@ const dark50 = "#777777";
 const dark55 = "#888888";
 const dark60 = "#ababab";
 
+const cardBg = dark10;
+
+const txtHigh = "rgba(255,255,255,0.8)";
+const txtMed = "rgba(255,255,255,0.6)";
+const txtLow = "rgba(255,255,255,0.38)";
+
 const blueAccent = "#085d8c";
 
 export function darkTheme(defaultTheme: Theme): Theme {
@@ -20,24 +26,24 @@ export function darkTheme(defaultTheme: Theme): Theme {
         label: "Dark",
 
         bg: darkBase,
-        txt: dark60,
+        txt: txtHigh,
         error: "#CF6679",
-        accent: "hotpink",
+        accent: "#e87fb4",
 
         notificationBar: {
-            bg: "#f3722b",
+            bg: "#df783f",
             txt: "#ffffff",
         },
 
         reaction: {
             ...defaultTheme.reaction,
             bg: dark25,
-            txt: dark60,
+            txt: txtHigh,
             me: "#085d8c",
         },
 
         timeline: {
-            txt: "rgba(255,255,255,0.7)",
+            txt: txtMed,
             bg: "transparent",
         },
 
@@ -50,10 +56,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         section: {
-            bg: dark20,
-            txt: dark60,
-            bd: dark15,
-            "bd-start": dark15,
+            bg: cardBg,
+            txt: txtHigh,
+            bd: cardBg,
+            "bd-start": cardBg,
         },
 
         "sub-section": {
@@ -61,28 +67,29 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         input: {
-            bg: "#555555",
-            txt: dark60,
-            bd: dark15,
+            // bg: "#555555",
+            bg: cardBg,
+            txt: txtHigh,
+            bd: dark25,
         },
 
         participants: {
             ...defaultTheme.participants,
-            bg: dark20,
-            txt: dark60,
+            bg: cardBg,
+            txt: txtHigh,
             hv: dark15,
-            bd: `1px solid ${dark15}`,
+            bd: `1px solid #3d3d3d`,
             panel: {
                 bg: dark10,
             },
         },
 
         entry: {
-            bg: dark20,
+            bg: cardBg,
             bd: dark15,
             input: {
-                bg: "#555555",
-                txt: dark60,
+                bg: dark20,
+                txt: txtHigh,
             },
         },
 
@@ -99,9 +106,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         currentUser: {
-            bd: `1px solid ${dark15}`,
-            bg: dark20,
-            txt: dark60,
+            bd: `1px solid ${cardBg}`,
+            bg: cardBg,
+            txt: txtHigh,
             ic: dark60,
         },
 
@@ -113,31 +120,31 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         chatSearch: {
             ...defaultTheme.chatSearch,
-            bg: "#555555",
-            txt: dark60,
-            bd: dark15,
+            bg: cardBg,
+            txt: txtHigh,
+            bd: dark20,
 
             section: {
                 ...defaultTheme.chatSearch.section,
-                txt: dark60,
+                txt: txtHigh,
             },
         },
 
         chatSummary: {
             ...defaultTheme.chatSummary,
-            bg: dark20,
+            bg: cardBg,
             "bg-selected": dark15,
-            hv: "#3d3d3d",
-            txt1: dark60,
-            txt2: "#888888",
+            hv: dark15,
+            txt1: txtHigh,
+            txt2: txtMed,
             bd: "1px solid #3d3d3d",
             del: "#085d8c",
         },
 
         menu: {
             bg: dark15,
-            txt: dark60,
-            "disabled-txt": dark45,
+            txt: txtMed,
+            "disabled-txt": txtLow,
             bd: dark20,
             hv: "#424242",
             sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
@@ -147,7 +154,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         button: {
             bg: blueAccent,
             hv: "#053d5c",
-            txt: "#ffffff",
+            txt: txtHigh,
             bd: "transparent",
             disabled: dark20,
             spinner: dark60,
@@ -156,25 +163,25 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         modal: {
-            bg: dark20,
-            txt: dark60,
+            bg: cardBg,
+            txt: txtHigh,
             sh: "0px 0px 0px 10px rgba(8,93,140,0.4)",
             filter: "blur(5px)",
             header: {
-                bg: dark20,
-                txt: dark60,
+                bg: dark15,
+                txt: txtHigh,
                 bd: dark15,
             },
             footer: {
-                bg: dark20,
-                txt: dark60,
+                bg: dark15,
+                txt: txtHigh,
                 bd: dark15,
             },
         },
 
         modalPage: {
             bg: "rgba(0, 0, 0, 0.4)",
-            txt: dark60,
+            txt: txtHigh,
             sh: "none",
             filter: "blur(10px)",
             bd: "1px inset rgba(255, 255, 255, 0.1)",
@@ -185,7 +192,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.currentChat,
             header: {
                 bg: dark20,
-                txt: dark60,
+                txt: txtHigh,
                 bd: dark15,
             },
             msgs: {
@@ -193,11 +200,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
 
             msg: {
-                bg: dark20,
-                txt: dark60,
-                hv: dark10,
+                bg: cardBg,
+                txt: txtMed,
+                hv: dark15,
                 bd: dark15,
-                muted: dark45,
+                muted: txtLow,
                 "reply-accent": blueAccent,
 
                 me: {
@@ -214,7 +221,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             color: dark25,
             // hv: dark25,
             hv: "rgba(255,255,255,0.2)",
-            txt: dark60,
+            txt: txtMed,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
             },
@@ -236,27 +243,27 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         recommended: {
             ...defaultTheme.recommended,
-            bg: dark25,
+            bg: dark15,
         },
 
         profile: {
             ...defaultTheme.profile,
             section: {
                 ...defaultTheme.profile.section,
-                bg: dark25,
+                bg: cardBg,
                 xs: {
                     ...defaultTheme.profile.section.xs,
-                    bd: `1px solid ${dark15}`,
+                    bd: `1px solid ${cardBg}`,
                 },
             },
         },
 
         collapsible: {
             header: {
-                bg: dark20,
+                bg: dark15,
                 bd: `1px solid ${dark15}`,
             },
-            bg: dark25,
+            bg: cardBg,
         },
 
         toggle: {

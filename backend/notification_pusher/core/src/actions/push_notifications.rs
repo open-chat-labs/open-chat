@@ -143,20 +143,17 @@ async fn push_notifications_to_user(
     let results = futures::future::join_all(futures).await;
 
     let mut subscriptions_to_remove = Vec::new();
-    for result in results {
-        match result {
-            Ok(_) => (),
-            Err((error, subscription)) => match error {
-                WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
-                    let subscription_key = &subscription.keys.p256dh;
-                    if !subscriptions_to_remove.contains(subscription_key) {
-                        subscriptions_to_remove.push(subscription_key.clone());
-                    }
+    for (error, subscription) in results.into_iter().filter_map(|r| r.err()) {
+        match error {
+            WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
+                let subscription_key = &subscription.keys.p256dh;
+                if !subscriptions_to_remove.contains(subscription_key) {
+                    subscriptions_to_remove.push(subscription_key.clone());
                 }
-                _ => {
-                    error!(?error, "Failed to push notification");
-                }
-            },
+            }
+            _ => {
+                error!(?error, subscription = ?SubscriptionInfoDebug::from(subscription), "Failed to push notification");
+            }
         }
     }
 
@@ -188,5 +185,23 @@ fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo
             p256dh: value.keys.p256dh,
             auth: value.keys.auth,
         },
+    }
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct SubscriptionInfoDebug<'a> {
+    endpoint: &'a str,
+    p256dh_len: usize,
+    auth_len: usize,
+}
+
+impl<'a> From<&'a SubscriptionInfo> for SubscriptionInfoDebug<'a> {
+    fn from(s: &'a SubscriptionInfo) -> Self {
+        SubscriptionInfoDebug {
+            endpoint: &s.endpoint,
+            p256dh_len: s.keys.p256dh.len(),
+            auth_len: s.keys.auth.len(),
+        }
     }
 }
