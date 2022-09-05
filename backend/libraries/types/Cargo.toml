@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 base64 = "0.13.0"
 candid = "0.7.15"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "14a93b1aaebba29e1598f0753d5a3e90ad1b8b4f" }
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
 ic-ledger-types = "0.1.1"
 serde = "1.0.137"
 serde_bytes = "0.11.6"
