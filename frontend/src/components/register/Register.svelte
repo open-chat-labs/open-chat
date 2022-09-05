@@ -3,7 +3,6 @@
     import { _ } from "svelte-i18n";
     import Toast from "../Toast.svelte";
     import ModalPage from "../ModalPage.svelte";
-    import Complete from "./Complete.svelte";
     import ChallengeComponent from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import type { ChallengeAttempt, CreatedUser, Challenge } from "../../domain/user/user";
