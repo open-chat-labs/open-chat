@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     let intersecting = false;
     let container: HTMLElement;
@@ -9,6 +11,7 @@
             const observer = new IntersectionObserver((entries) => {
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
+                    dispatch("intersecting");
                     observer.unobserve(container);
                 }
             });

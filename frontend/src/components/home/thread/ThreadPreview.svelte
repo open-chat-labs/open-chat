@@ -11,6 +11,7 @@
     import { chatSummariesStore } from "../../../stores/chat";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChatMessage from "../ChatMessage.svelte";
+    import IntersectionObserver from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { getContext, onDestroy } from "svelte";
     import { CreatedUser, AvatarSize } from "../../../domain/user/user";
@@ -56,6 +57,27 @@
     $: grouped = groupBySender(thread.latestReplies);
 
     let open = false;
+
+    function lastMessageIndex(events: EventWrapper<Message>[]): number | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const evt = events[i].event;
+            if (evt.kind === "message") {
+                return evt.messageIndex;
+            }
+        }
+        return undefined;
+    }
+
+    function isIntersecting() {
+        // if we can see *all* of the unread messages in this thread, then mark it as read.
+        if (unreadCount > 0 && unreadCount < 3) {
+            const lastMsgIdx = lastMessageIndex(thread.latestReplies);
+            if (lastMsgIdx !== undefined) {
+                console.log("Marking thread as read");
+                messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, lastMsgIdx);
+            }
+        }
+    }
 
     const unsub = messagesRead.subscribe(() => {
         if (syncDetails !== undefined) {
@@ -105,49 +127,11 @@
                 </div>
             {/if}
         </div>
-        <div class="body">
-            <div class="root-msg">
-                <ChatMessage
-                    senderId={thread.rootMessage.event.sender}
-                    focused={false}
-                    {observer}
-                    confirmed={true}
-                    senderTyping={false}
-                    readByMe={true}
-                    readByThem={true}
-                    chatId={thread.chatId}
-                    chatType={chat.kind}
-                    {user}
-                    me={thread.rootMessage.event.sender === currentUser.userId}
-                    first={true}
-                    last={true}
-                    preview={true}
-                    inThread={true}
-                    pinned={false}
-                    supportsEdit={false}
-                    supportsReply={false}
-                    canPin={false}
-                    canBlockUser={false}
-                    canDelete={false}
-                    canQuoteReply={false}
-                    canReact={false}
-                    canStartThread={false}
-                    publicGroup={chat.kind === "group_chat" && chat.public}
-                    editing={false}
-                    eventIndex={thread.rootMessage.index}
-                    timestamp={thread.rootMessage.timestamp}
-                    dateFormatter={toDatetimeString}
-                    msg={thread.rootMessage.event} />
-            </div>
-            {#if missingMessages > 0}
-                <div class="separator">
-                    {$_("thread.moreMessages", { values: { number: missingMessages.toString() } })}
-                </div>
-            {/if}
-            {#each grouped as userGroup}
-                {#each userGroup as evt, i (evt.event.messageId)}
+        <IntersectionObserver on:intersecting={isIntersecting}>
+            <div class="body">
+                <div class="root-msg">
                     <ChatMessage
-                        senderId={evt.event.sender}
+                        senderId={thread.rootMessage.event.sender}
                         focused={false}
                         {observer}
                         confirmed={true}
@@ -157,9 +141,9 @@
                         chatId={thread.chatId}
                         chatType={chat.kind}
                         {user}
-                        me={evt.event.sender === currentUser.userId}
-                        first={i === 0}
-                        last={i === userGroup.length - 1}
+                        me={thread.rootMessage.event.sender === currentUser.userId}
+                        first={true}
+                        last={true}
                         preview={true}
                         inThread={true}
                         pinned={false}
@@ -173,15 +157,57 @@
                         canStartThread={false}
                         publicGroup={chat.kind === "group_chat" && chat.public}
                         editing={false}
-                        eventIndex={evt.index}
-                        timestamp={evt.timestamp}
+                        eventIndex={thread.rootMessage.index}
+                        timestamp={thread.rootMessage.timestamp}
                         dateFormatter={toDatetimeString}
-                        msg={evt.event} />
+                        msg={thread.rootMessage.event} />
+                </div>
+                {#if missingMessages > 0}
+                    <div class="separator">
+                        {$_("thread.moreMessages", {
+                            values: { number: missingMessages.toString() },
+                        })}
+                    </div>
+                {/if}
+                {#each grouped as userGroup}
+                    {#each userGroup as evt, i (evt.event.messageId)}
+                        <ChatMessage
+                            senderId={evt.event.sender}
+                            focused={false}
+                            {observer}
+                            confirmed={true}
+                            senderTyping={false}
+                            readByMe={true}
+                            readByThem={true}
+                            chatId={thread.chatId}
+                            chatType={chat.kind}
+                            {user}
+                            me={evt.event.sender === currentUser.userId}
+                            first={i === 0}
+                            last={i === userGroup.length - 1}
+                            preview={true}
+                            inThread={true}
+                            pinned={false}
+                            supportsEdit={false}
+                            supportsReply={false}
+                            canPin={false}
+                            canBlockUser={false}
+                            canDelete={false}
+                            canQuoteReply={false}
+                            canReact={false}
+                            canStartThread={false}
+                            publicGroup={chat.kind === "group_chat" && chat.public}
+                            editing={false}
+                            eventIndex={evt.index}
+                            timestamp={evt.timestamp}
+                            dateFormatter={toDatetimeString}
+                            msg={evt.event} />
+                    {/each}
                 {/each}
-            {/each}
-            <LinkButton underline="hover" on:click={selectThread}
-                >{$_("thread.openThread")}&#8594;</LinkButton>
-        </div>
+                <LinkButton underline="hover" on:click={selectThread}
+                    >{$_("thread.openThread")}&#8594;</LinkButton>
+            </div>
+        </IntersectionObserver>
     </CollapsibleCard>
 </div>
 
