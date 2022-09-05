@@ -12,7 +12,7 @@
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import ProposalContent from "./ProposalContent.svelte";
-    import MessageObserver from "./MessageObserver.svelte";
+    import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
 
@@ -38,9 +38,9 @@
 {#if content.kind === "text_content"}
     <TextContent {fill} {truncate} {pinned} {messageId} {content} {edited} {height} />
 {:else if content.kind === "image_content"}
-    <MessageObserver let:intersecting>
+    <IntersectionObserver let:intersecting>
         <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
-    </MessageObserver>
+    </IntersectionObserver>
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
@@ -56,9 +56,9 @@
 {:else if content.kind === "poll_content"}
     <PollContent {preview} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
-    <MessageObserver let:intersecting>
+    <IntersectionObserver let:intersecting>
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
-    </MessageObserver>
+    </IntersectionObserver>
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
