@@ -39,6 +39,7 @@ import type {
     ApiGroupChatSummary,
     ApiNnsFailedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
+    ApiArchiveChatResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -90,6 +91,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -332,6 +334,18 @@ export function pinChatResponse(candid: ApiPinChatResponse): PinChatResponse {
 
 export function unpinChatResponse(_candid: ApiUnpinChatResponse): UnpinChatResponse {
     return "success";
+}
+
+export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChatResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiArchiveChatResponse type received", candid);
 }
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
