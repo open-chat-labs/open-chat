@@ -19,7 +19,7 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             let latest_event_index = chat_events.last().index;
 
             if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                return ReplicaNotUpToDate;
+                return ReplicaNotUpToDate(latest_event_index);
             }
 
             let mut event_indexes = args.events;

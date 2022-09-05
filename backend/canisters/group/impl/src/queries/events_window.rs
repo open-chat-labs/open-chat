@@ -18,7 +18,7 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             let latest_event_index = chat_events.last().index;
 
             if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                return ReplicaNotUpToDate;
+                return ReplicaNotUpToDate(latest_event_index);
             }
 
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);

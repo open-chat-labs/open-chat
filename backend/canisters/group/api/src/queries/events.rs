@@ -17,7 +17,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     ThreadMessageNotFound,
-    ReplicaNotUpToDate,
+    ReplicaNotUpToDate(EventIndex),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
