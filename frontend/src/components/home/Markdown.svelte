@@ -39,6 +39,10 @@
             rollbar.error("Error parsing markdown: ", err);
         }
 
+        if (oneLine) {
+            parsed = parsed.replace(/<br\s*\/?>/gi, ' ');
+        }
+
         try {
             sanitized = DOMPurify.sanitize(parsed, {
                 ALLOWED_ATTR: ["target", "href", "class"],
