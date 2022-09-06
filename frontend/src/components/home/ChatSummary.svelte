@@ -316,15 +316,13 @@
                                     </MenuItem>
                                 {/if}
                             {/if}
-                            {#if !pinned}
-                                <MenuItem on:click={archiveChat}>
-                                    <ArchiveIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("archiveChat")}</div>
-                                </MenuItem>
-                            {/if}
+                            <MenuItem on:click={archiveChat}>
+                                <ArchiveIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("archiveChat")}</div>
+                            </MenuItem>
                             <MenuItem
                                 disabled={unreadMessages === 0}
                                 on:click={() => markAllRead(chatSummary)}>
