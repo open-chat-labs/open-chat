@@ -22,6 +22,12 @@ fn toggle_archive_chat(chat_id: ChatId, archive: bool) -> Response {
 
     mutate_state(|state| {
         let now = state.env.now();
+
+        if archive {
+            // Unpin the chat if it is pinned
+            state.data.unpin_chat(&chat_id, now);
+        }
+
         if let Some(dc) = state.data.direct_chats.get_mut(&chat_id) {
             dc.archived = Timestamped::new(archive, now);
             Response::Success
