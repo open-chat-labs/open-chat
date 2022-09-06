@@ -7,6 +7,7 @@ import type {
     ChatSummary,
     EnhancedReplyContext,
     EventsResponse,
+    EventsSuccessResult,
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
@@ -320,6 +321,8 @@ export class ChatController {
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
             this.userGroupKeys.clear();
+        } else if (!this.isContiguous(resp)) {
+            return;
         }
 
         const updated = replaceAffected(
@@ -1094,5 +1097,25 @@ export class ChatController {
         return events.find(
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
         ) as EventWrapper<Message> | undefined;
+    }
+
+    isContiguous(response: EventsSuccessResult<ChatEvent>): boolean {
+        if (this.confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+
+        const firstIndex = response.events[0].index;
+        const lastIndex = response.events[response.events.length - 1].index;
+        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
+
+        const isContiguous = this.confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+
+        if (!isContiguous) {
+            console.log(
+                "Events in response are not contiguous with the loaded events",
+                this.confirmedEventIndexesLoaded,
+                firstIndex,
+                lastIndex);
+        }
+
+        return isContiguous;
     }
 }
