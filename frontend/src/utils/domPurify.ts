@@ -15,7 +15,7 @@ function createOneLine(): DOMPurifyI {
     const domPurify = DOMPurify();
     domPurify.setConfig({
         ALLOWED_ATTR: ["target", "href", "class"],
-        ALLOWED_TAGS: ["br"],
+        FORBID_TAGS: ["br"],
     });
     domPurify.addHook("uponSanitizeElement", (node) => {
         if (node.tagName === "BR") {
