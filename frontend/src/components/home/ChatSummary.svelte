@@ -46,6 +46,7 @@
     export let chatSummary: ChatSummary;
     export let userId: string;
     export let selected: boolean;
+    export let archived: boolean;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -107,6 +108,10 @@
             chatSummary.latestMessage?.event.messageIndex
         );
         unreadMentions = getUnreadMentionCount(chatSummary);
+
+        if (archived && unreadMessages > 0) {
+            dispatch("unarchiveChat", chatSummary.chatId);
+        }
     }
 
     function deleteDirectChat() {
@@ -179,6 +184,7 @@
     }
 
     function archiveChat() {
+        markAllRead(chatSummary);
         dispatch("archiveChat", chatSummary.chatId);
     }
 
@@ -192,152 +198,163 @@
     $: muted = chatSummary.notificationsMuted;
 </script>
 
-<div
-    role="button"
-    class="chat-summary"
-    class:first={index === 0}
-    class:selected
-    use:swipe
-    on:swiping={swiping}
-    on:leftswipe={leftSwipe}
-    on:rightswipe={rightSwipe}
-    class:empty={canDelete}
-    class:rtl={$rtlStore}
-    on:mouseenter={() => (hovering = true)}
-    on:mouseleave={() => (hovering = false)}
-    on:click={onClick}>
-    <div class="avatar">
-        <Avatar
-            statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "var(--chatSummary-bg)"}
-            {blocked}
-            url={chat.avatarUrl}
-            status={chat.userStatus}
-            size={AvatarSize.Small} />
-    </div>
-    <div class="details" class:rtl={$rtlStore}>
-        <div class="name-date">
-            <h4 class="chat-name">{chat.name}</h4>
+{#if !archived}
+    <div
+        role="button"
+        class="chat-summary"
+        class:first={index === 0}
+        class:selected
+        use:swipe
+        on:swiping={swiping}
+        on:leftswipe={leftSwipe}
+        on:rightswipe={rightSwipe}
+        class:empty={canDelete}
+        class:rtl={$rtlStore}
+        on:mouseenter={() => (hovering = true)}
+        on:mouseleave={() => (hovering = false)}
+        on:click={onClick}>
+        <div class="avatar">
+            <Avatar
+                statusBorder={selected || hovering
+                    ? "var(--chatSummary-hv)"
+                    : "var(--chatSummary-bg)"}
+                {blocked}
+                url={chat.avatarUrl}
+                status={chat.userStatus}
+                size={AvatarSize.Small} />
         </div>
-        <div class="chat-msg">
-            {#if chat.typing !== undefined}
-                {chat.typing} <Typing />
-            {:else}
-                <Markdown text={lastMessage} oneLine={true} suppressLinks={true} />
-            {/if}
+        <div class="details" class:rtl={$rtlStore}>
+            <div class="name-date">
+                <h4 class="chat-name">{chat.name}</h4>
+            </div>
+            <div class="chat-msg">
+                {#if chat.typing !== undefined}
+                    {chat.typing} <Typing />
+                {:else}
+                    <Markdown text={lastMessage} oneLine={true} suppressLinks={true} />
+                {/if}
+            </div>
         </div>
-    </div>
-    <!-- this date formatting is OK for now but we might want to use something like this: 
-    https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-    <div class:rtl={$rtlStore} class="chat-date">
-        {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
-    </div>
-    {#if !preview}
-        {#if muted && $notificationsSupported}
-            <div class="mute icon" class:rtl={$rtlStore}>
-                <MutedIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-            </div>
-        {/if}
-        {#if pinned}
-            <div class="pin icon">
-                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-            </div>
-        {/if}
-        {#if unreadMentions > 0}
-            <div
-                in:pop={{ duration: 1500 }}
-                title={$_("chatSummary.mentions", { values: { count: unreadMentions.toString() } })}
-                class:rtl={$rtlStore}
-                class="notification mention">
-                @
-            </div>
-        {/if}
-        {#if unreadMessages > 0}
-            <div
-                in:pop={{ duration: 1500 }}
-                title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
-                class:rtl={$rtlStore}
-                class="notification">
-                {unreadMessages > 999 ? "999+" : unreadMessages}
-            </div>
-        {/if}
-        <div class="menu">
-            <MenuIcon>
-                <div class="menu-icon" slot="icon">
-                    <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+        <!-- this date formatting is OK for now but we might want to use something like this: 
+        https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
+        <div class:rtl={$rtlStore} class="chat-date">
+            {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
+        </div>
+        {#if !preview}
+            {#if muted && $notificationsSupported}
+                <div class="mute icon" class:rtl={$rtlStore}>
+                    <MutedIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                 </div>
-                <div slot="menu">
-                    <Menu>
-                        {#if !pinned}
-                            <MenuItem on:click={pinChat}>
-                                <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("pinChat.menuItem")}</div>
-                            </MenuItem>
-                        {:else}
-                            <MenuItem on:click={unpinChat}>
-                                <PinOffIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if $notificationsSupported}
-                            {#if muted}
-                                <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                    <BellIcon
+            {/if}
+            {#if pinned}
+                <div class="pin icon">
+                    <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                </div>
+            {/if}
+            {#if unreadMentions > 0}
+                <div
+                    in:pop={{ duration: 1500 }}
+                    title={$_("chatSummary.mentions", {
+                        values: { count: unreadMentions.toString() },
+                    })}
+                    class:rtl={$rtlStore}
+                    class="notification mention">
+                    @
+                </div>
+            {/if}
+            {#if unreadMessages > 0}
+                <div
+                    in:pop={{ duration: 1500 }}
+                    title={$_("chatSummary.unread", {
+                        values: { count: unreadMessages.toString() },
+                    })}
+                    class:rtl={$rtlStore}
+                    class="notification">
+                    {unreadMessages > 999 ? "999+" : unreadMessages}
+                </div>
+            {/if}
+            <div class="menu">
+                <MenuIcon>
+                    <div class="menu-icon" slot="icon">
+                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                    </div>
+                    <div slot="menu">
+                        <Menu>
+                            {#if !pinned}
+                                <MenuItem on:click={pinChat}>
+                                    <PinIcon
                                         size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("unmuteNotifications")}</div>
+                                    <div slot="text">{$_("pinChat.menuItem")}</div>
                                 </MenuItem>
                             {:else}
-                                <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                    <MutedIcon
+                                <MenuItem on:click={unpinChat}>
+                                    <PinOffIcon
                                         size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("muteNotifications")}</div>
+                                    <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                 </MenuItem>
                             {/if}
-                        {/if}
-                        {#if !pinned}
-                            <MenuItem on:click={archiveChat}>
-                                <ArchiveIcon
+                            {#if $notificationsSupported}
+                                {#if muted}
+                                    <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                                        <BellIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("unmuteNotifications")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                                        <MutedIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("muteNotifications")}</div>
+                                    </MenuItem>
+                                {/if}
+                            {/if}
+                            {#if !pinned}
+                                <MenuItem on:click={archiveChat}>
+                                    <ArchiveIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("archiveChat")}</div>
+                                </MenuItem>
+                            {/if}
+                            <MenuItem
+                                disabled={unreadMessages === 0}
+                                on:click={() => markAllRead(chatSummary)}>
+                                <CheckboxMultipleMarked
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("archiveChat")}</div>
+                                <div slot="text">{$_("markAllRead")}</div>
                             </MenuItem>
-                        {/if}
-                        <MenuItem
-                            disabled={unreadMessages === 0}
-                            on:click={() => markAllRead(chatSummary)}>
-                            <CheckboxMultipleMarked
-                                size={$iconSize}
-                                color={"var(--icon-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("markAllRead")}</div>
-                        </MenuItem>
-                    </Menu>
-                </div>
-            </MenuIcon>
-        </div>
-    {/if}
-    {#if canDelete}
-        <div
-            title={$_("removeChat")}
-            style={$mobileWidth
-                ? $rtlStore
-                    ? `left: ${delOffset}px`
-                    : `right: ${delOffset}px`
-                : ""}
-            on:click|stopPropagation|preventDefault={deleteDirectChat}
-            class:rtl={$rtlStore}
-            class="delete-chat">
-            <Delete size={$iconSize} color={"#fff"} slot="icon" />
-        </div>
-    {/if}
-</div>
+                        </Menu>
+                    </div>
+                </MenuIcon>
+            </div>
+        {/if}
+        {#if canDelete}
+            <div
+                title={$_("removeChat")}
+                style={$mobileWidth
+                    ? $rtlStore
+                        ? `left: ${delOffset}px`
+                        : `right: ${delOffset}px`
+                    : ""}
+                on:click|stopPropagation|preventDefault={deleteDirectChat}
+                class:rtl={$rtlStore}
+                class="delete-chat">
+                <Delete size={$iconSize} color={"#fff"} slot="icon" />
+            </div>
+        {/if}
+    </div>
+{/if}
 
 <style type="text/scss">
     .delete-chat {

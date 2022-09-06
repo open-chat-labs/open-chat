@@ -564,7 +564,7 @@
         });
     }
 
-    function archiveChat(ev: CustomEvent<string>) {
+    function onArchiveChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
         archivedChatsStore.set(chatId, true);
         api.archiveChat(chatId).catch((err) => {
@@ -574,6 +574,10 @@
             push(`/${chatId}`);
         });
         push("/");
+    }
+
+    function onUnarchiveChat(ev: CustomEvent<string>) {
+        unarchiveChat(ev.detail);
     }
 
     function unarchiveChat(chatId: string) {
@@ -1011,7 +1015,8 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
-            on:archiveChat={archiveChat}
+            on:archiveChat={onArchiveChat}
+            on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}
