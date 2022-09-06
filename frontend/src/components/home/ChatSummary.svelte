@@ -270,7 +270,7 @@
                         {#if !pinned}
                             <MenuItem on:click={archiveChat}>
                                 <HideIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("hideChat")}</div>
+                                <div slot="text">{$_("archiveChat")}</div>
                             </MenuItem>
                         {/if}
                         {#if !pinned}
