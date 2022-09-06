@@ -1070,8 +1070,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.archiveChat(chatId);
     }
 
-    unArchiveChat(chatId: string): Promise<ArchiveChatResponse> {
-        return this.userClient.unArchiveChat(chatId);
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.userClient.unarchiveChat(chatId);
     }
 
     registerProposalVote(

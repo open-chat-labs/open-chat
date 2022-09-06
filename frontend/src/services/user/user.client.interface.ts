@@ -126,7 +126,7 @@ export interface IUserClient {
     pinChat(chatId: string): Promise<PinChatResponse>;
     unpinChat(chatId: string): Promise<UnpinChatResponse>;
     archiveChat(chatId: string): Promise<ArchiveChatResponse>;
-    unArchiveChat(chatId: string): Promise<ArchiveChatResponse>;
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse>;
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
 }

@@ -518,8 +518,8 @@ export class CachingUserClient implements IUserClient {
         return this.client.archiveChat(chatId);
     }
 
-    unArchiveChat(chatId: string): Promise<ArchiveChatResponse> {
-        return this.client.unArchiveChat(chatId);
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.client.unarchiveChat(chatId);
     }
 
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {

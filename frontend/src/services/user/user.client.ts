@@ -628,7 +628,7 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    unArchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.handleResponse(
             this.userService.unarchive_chat({
                 chat_id: Principal.fromText(chatId),

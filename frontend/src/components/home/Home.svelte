@@ -184,8 +184,10 @@
     function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
         interruptRecommended = true;
 
+        const summary = $chatSummariesStore[chatId];
+
         // if this is an unknown chat let's preview it
-        if ($chatSummariesStore[chatId] === undefined) {
+        if (summary === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
@@ -208,9 +210,11 @@
                 });
             }
         } else {
-            if ($chatSummariesStore[chatId].archived) {
-                unArchiveChat(chatId);
+            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+            if (summary.archived) {
+                unarchiveChat(chatId);
             }
+
             // if it's a known chat let's select it
             setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
             resetRightPanel();
@@ -570,9 +574,9 @@
         push("/");
     }
 
-    function unArchiveChat(chatId: string) {
-        api.unArchiveChat(chatId).catch((err) => {
-            toastStore.showFailureToast("unArchiveChatFailed");
+    function unarchiveChat(chatId: string) {
+        api.unarchiveChat(chatId).catch((err) => {
+            toastStore.showFailureToast("unarchiveChatFailed");
             rollbar.error("Error un-archiving chat", err);
             push("/");
         });
