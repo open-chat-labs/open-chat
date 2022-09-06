@@ -453,6 +453,7 @@ function mergeUpdatedDirectChat(
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+        archived: updatedChat.archived ?? chat.archived,
     };
 }
 
@@ -570,6 +571,7 @@ function mergeUpdatedGroupChat(
         public: updatedChat.public ?? chat.public,
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
+        archived: updatedChat.archived ?? chat.archived,
     };
 }
 
@@ -672,7 +674,8 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    muted: boolean | undefined
+    archivedLocally: boolean | undefined,
+    mutedLocally: boolean | undefined
 ): ChatSummary {
     const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
 
@@ -693,7 +696,8 @@ export function mergeUnconfirmedIntoSummary(
             latestEventIndex = latestUnconfirmedMessage.index;
         }
     }
-    const notificationsMuted = muted ?? chatSummary.notificationsMuted;
+    const archived = archivedLocally ?? chatSummary.archived;
+    const notificationsMuted = mutedLocally ?? chatSummary.notificationsMuted;
 
     if (chatSummary.kind === "group_chat") {
         if (unconfirmedMessages !== undefined) {
@@ -704,6 +708,7 @@ export function mergeUnconfirmedIntoSummary(
             latestMessage,
             latestEventIndex,
             mentions,
+            archived,
             notificationsMuted,
         };
     } else {
@@ -711,6 +716,7 @@ export function mergeUnconfirmedIntoSummary(
             ...chatSummary,
             latestMessage,
             latestEventIndex,
+            archived,
             notificationsMuted,
         };
     }
@@ -1181,6 +1187,7 @@ export function groupChatFromCandidate(
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
         subtype: undefined,
+        archived: false,
     };
 }
 

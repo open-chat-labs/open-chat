@@ -585,5 +585,8 @@
     "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ...",
     "fullScreen": "הצגת רוחב מלא על שולחן העבודה",
     "displayWidth": "רוחב תצוגה",
-    "apply": "להגיש מועמדות"
+    "apply": "להגיש מועמדות",
+    "archiveChat": "ארכיון צ'אט",
+    "archiveChatFailed": "העברת הצ'אט לארכיון נכשלה",
+    "unarchiveChatFailed": "ביטול הארכיון של הצ'אט נכשל"
 }

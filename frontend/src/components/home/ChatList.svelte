@@ -181,9 +181,12 @@
                         {chatSummary}
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}
+                        archived={searchTerm === "" && chatSummary.archived}
                         on:chatSelected={chatSelected}
                         on:pinChat
                         on:unpinChat
+                        on:archiveChat
+                        on:unarchiveChat
                         on:toggleMuteNotifications
                         on:deleteDirectChat />
                 {/each}

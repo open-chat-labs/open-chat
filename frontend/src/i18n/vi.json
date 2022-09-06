@@ -588,5 +588,8 @@
     "loadingTweetPreview": "Đang tải bản xem trước tweet ...",
     "fullScreen": "Hiển thị toàn bộ chiều rộng trên máy tính để bàn",
     "displayWidth": "Chiều rộng màn hình",
-    "apply": "Ứng dụng"
+    "apply": "Ứng dụng",
+    "archiveChat": "Lưu trữ trò chuyện",
+    "archiveChatFailed": "Không lưu trữ được cuộc trò chuyện",
+    "unarchiveChatFailed": "Không thể hủy lưu trữ cuộc trò chuyện"
 }
