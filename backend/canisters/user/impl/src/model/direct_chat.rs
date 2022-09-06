@@ -13,6 +13,7 @@ pub struct DirectChat {
     pub read_by_me: Timestamped<RangeSet>,
     pub read_by_them: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
+    pub archived: Timestamped<bool>,
 }
 
 impl DirectChat {
@@ -25,6 +26,7 @@ impl DirectChat {
             read_by_me: Timestamped::new(RangeSet::new(), now),
             read_by_them: Timestamped::new(RangeSet::new(), now),
             notifications_muted: Timestamped::new(false, now),
+            archived: Timestamped::new(false, now),
         }
     }
 
@@ -34,6 +36,7 @@ impl DirectChat {
             self.read_by_me.timestamp,
             self.read_by_them.timestamp,
             self.notifications_muted.timestamp,
+            self.archived.timestamp,
         ];
 
         timestamps.into_iter().max().unwrap()

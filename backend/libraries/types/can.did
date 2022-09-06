@@ -133,6 +133,7 @@ type DirectChatSummary =
         notifications_muted: bool;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
+        archived: bool;
     };
 
 type DirectChatSummaryUpdates =
@@ -146,6 +147,7 @@ type DirectChatSummaryUpdates =
         affected_events: vec EventIndex;
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
+        archived: opt bool;
     };
 
 type DirectMessageNotification =
@@ -252,6 +254,7 @@ type GroupChatSummary =
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
         latest_threads: vec ThreadSyncDetails;
+        archived: bool;
     };
 
 type GroupChatSummaryUpdates =
@@ -277,6 +280,7 @@ type GroupChatSummaryUpdates =
         my_metrics: opt ChatMetrics;
         is_public: opt bool;
         latest_threads: vec ThreadSyncDetails;
+        archived: opt bool;
     };
 
 type GroupDescriptionChanged =
