@@ -3,12 +3,13 @@
     import { _ } from "svelte-i18n";
     import { rollbar } from "../utils/logging";
     import { Poller } from "../fsm/poller";
+    import { Version } from "domain/version";
 
     const VERSION_INTERVAL = 60 * 1000;
 
     let poller = new Poller(checkVersion, VERSION_INTERVAL);
     // @ts-ignore
-    let clientVersion = window.OPENCHAT_WEBSITE_VERSION;
+    let clientVersion = Version.parse(window.OPENCHAT_WEBSITE_VERSION);
     let countdown = 30;
     let showBanner = false;
     let errorCount = 0;
@@ -18,7 +19,7 @@
     function checkVersion(): Promise<void> {
         if (process.env.NODE_ENV !== "production") return Promise.resolve();
         return getServerVersion().then((serverVersion) => {
-            if (serverVersion !== clientVersion) {
+            if (serverVersion.isGreaterThan(clientVersion)) {
                 poller.stop();
                 countdown = 30;
                 showBanner = true;
@@ -33,7 +34,7 @@
         });
     }
 
-    function getServerVersion(): Promise<string> {
+    function getServerVersion(): Promise<Version> {
         return fetch("/version", {
             method: "get",
             headers: {
@@ -44,7 +45,7 @@
             .then((res) => {
                 console.log("Server version: ", res);
                 errorCount = 0;
-                return res.version;
+                return Version.parse(res.version);
             })
             .catch((err) => {
                 errorCount += 1;
