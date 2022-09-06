@@ -101,6 +101,7 @@ fn finalize(
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
             summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
+            summary.archived = group_chat.archived.value;
 
             for thread in summary.latest_threads.iter_mut() {
                 thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -114,6 +115,8 @@ fn finalize(
                     } else {
                         None
                     };
+
+                    su.archived = group_chat.archived.if_set_after(updates_since).copied();
 
                     for thread in su.latest_threads.iter_mut() {
                         thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -145,6 +148,7 @@ fn finalize(
                     .user_metrics(&my_user_id, None)
                     .cloned()
                     .unwrap_or_default(),
+                archived: direct_chat.archived.value,
             }));
         } else {
             let latest_message = chat_events.latest_message_if_updated(updates_since, Some(my_user_id));
@@ -178,6 +182,7 @@ fn finalize(
                 affected_events,
                 metrics,
                 my_metrics: direct_chat.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
+                archived: direct_chat.archived.if_set_after(updates_since).copied(),
             }));
         }
     }

@@ -1,4 +1,5 @@
 pub mod add_recommended_group_exclusions;
+pub mod archive_chat;
 pub mod assume_group_super_admin;
 pub mod block_user;
 pub mod c2c_charge_user_account;
@@ -33,6 +34,7 @@ pub mod set_avatar;
 pub mod set_bio;
 pub mod toggle_reaction;
 pub mod transfer_crypto_within_group_v2;
+pub mod unarchive_chat;
 pub mod unblock_user;
 pub mod unmute_notifications;
 pub mod unpin_chat;
