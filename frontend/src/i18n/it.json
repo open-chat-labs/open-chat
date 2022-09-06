@@ -587,5 +587,8 @@
     "loadingTweetPreview": "Caricamento anteprima tweet in corso...",
     "fullScreen": "Visualizza a tutta larghezza sul desktop",
     "displayWidth": "Larghezza di visualizzazione",
-    "apply": "Applicare"
+    "apply": "Applicare",
+    "archiveChat": "Archivia chat",
+    "archiveChatFailed": "Impossibile archiviare la chat",
+    "unarchiveChatFailed": "Impossibile annullare l'archiviazione della chat"
 }
