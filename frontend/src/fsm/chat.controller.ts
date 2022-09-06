@@ -51,7 +51,7 @@ import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
-import { mutedChatsStore } from "../stores/mutedChatsStore";
+import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 
 export class ChatController {
@@ -85,12 +85,13 @@ export class ChatController {
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived(
-            [serverChatSummary, unconfirmed, mutedChatsStore],
-            ([summary, unconfirmed, mutedChats]) =>
+            [serverChatSummary, unconfirmed, archivedChatsStore, mutedChatsStore],
+            ([summary, unconfirmed, archivedChats, mutedChats]) =>
                 mergeUnconfirmedIntoSummary(
                     user.userId,
                     summary,
                     unconfirmed,
+                    archivedChats.get(summary.chatId),
                     mutedChats.get(summary.chatId)
                 )
         );

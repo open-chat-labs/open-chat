@@ -31,7 +31,7 @@ import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
-import { mutedChatsStore } from "./mutedChatsStore";
+import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 
 const ONE_MINUTE = 60 * 1000;
@@ -84,8 +84,8 @@ export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore, mutedChatsStore],
-    ([summaries, unconfirmed, currentUser, mutedChats]) => {
+    [serverChatSummariesStore, unconfirmed, currentUserStore, archivedChatsStore, mutedChatsStore],
+    ([summaries, unconfirmed, currentUser, archivedChats, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
@@ -93,6 +93,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         currentUser.userId,
                         summary,
                         unconfirmed,
+                        archivedChats.get(summary.chatId),
                         mutedChats.get(chatId)
                     );
                 }

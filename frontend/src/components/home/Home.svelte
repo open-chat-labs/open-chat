@@ -86,7 +86,7 @@
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
-    import { mutedChatsStore } from "../../stores/mutedChatsStore";
+    import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -566,18 +566,22 @@
 
     function archiveChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
+        archivedChatsStore.set(chatId, true);
         api.archiveChat(chatId).catch((err) => {
             toastStore.showFailureToast("archiveChatFailed");
             rollbar.error("Error archiving chat", err);
+            archivedChatsStore.set(chatId, false);
             push(`/${chatId}`);
         });
         push("/");
     }
 
     function unarchiveChat(chatId: string) {
+        archivedChatsStore.set(chatId, false);
         api.unarchiveChat(chatId).catch((err) => {
             toastStore.showFailureToast("unarchiveChatFailed");
             rollbar.error("Error un-archiving chat", err);
+            archivedChatsStore.set(chatId, true);
             push("/");
         });
     }
@@ -959,7 +963,7 @@
         const chatId = ev.detail.chatId;
         const op = mute ? "muted" : "unmuted";
 
-        mutedChatsStore.toggle(chatId, mute);
+        mutedChatsStore.set(chatId, mute);
 
         let success = false;
         api.toggleMuteNotifications(chatId, mute)
@@ -974,7 +978,7 @@
                     toastStore.showFailureToast("toggleMuteNotificationsFailed", {
                         values: { operation: $_(op) },
                     });
-                    mutedChatsStore.toggle(chatId, !mute);
+                    mutedChatsStore.set(chatId, !mute);
                 }
             });
     }
