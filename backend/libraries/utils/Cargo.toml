@@ -10,11 +10,11 @@ edition = "2021"
 candid = "0.7.15"
 canister_client_macros = { path = "../canister_client_macros" }
 compile-time-run = "0.2.12"
-getrandom = { version = "0.2.3", features = ["js"] }
+getrandom = { version = "0.2.7", features = ["custom"] }
 ic-cdk = "0.5.6"
 itertools = "0.10.3"
 msgpack = { path = "../msgpack" }
-rand = "0.7.3"
+rand = "0.8.5"
 range-set = { version = "0.0.9", features = ["serde"], optional = true }
 serde = "1.0.137"
 serde_bytes = "0.11.6"
