@@ -571,9 +571,10 @@
             toastStore.showFailureToast("archiveChatFailed");
             rollbar.error("Error archiving chat", err);
             archivedChatsStore.set(chatId, false);
-            push(`/${chatId}`);
         });
-        push("/");
+        if (chatId === $selectedChatStore?.chatId) {
+            push("/");
+        }
     }
 
     function onUnarchiveChat(ev: CustomEvent<string>) {
@@ -586,7 +587,6 @@
             toastStore.showFailureToast("unarchiveChatFailed");
             rollbar.error("Error un-archiving chat", err);
             archivedChatsStore.set(chatId, true);
-            push("/");
         });
     }
 
