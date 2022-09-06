@@ -42,7 +42,7 @@
         try {
             sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
-            console.log("Error sanitizing message content: ", err);
+            rollbar.error("Error sanitizing message content: ", err);
         }
     }
 </script>
