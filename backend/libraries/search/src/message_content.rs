@@ -1,7 +1,5 @@
 use crate::document::Document;
-use types::{
-    CompletedCryptoTransaction, CryptoTransaction, FailedCryptoTransaction, MessageContentInternal, PendingCryptoTransaction,
-};
+use types::{CompletedCryptoTransaction, CryptoTransaction, MessageContentInternal};
 
 impl From<&MessageContentInternal> for Document {
     fn from(message_content: &MessageContentInternal) -> Self {
@@ -23,13 +21,21 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(c.text.clone(), 1.0);
             }
             MessageContentInternal::Crypto(c) => {
-                let (token, amount) = match &c.transfer {
-                    CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => (t.token, t.amount),
-                    CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => (t.token, t.amount),
-                    CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => (t.token, t.amount),
-                };
+                let token = c.transfer.token();
                 document.add_field(token.token_symbol(), 1.0);
-                document.add_field(format!("{}", amount), 1.0);
+
+                if let CryptoTransaction::Completed(c) = &c.transfer {
+                    let amount_string = match c {
+                        CompletedCryptoTransaction::NNS(t) => {
+                            format!("{}", t.amount)
+                        }
+                        CompletedCryptoTransaction::SNS(t) => {
+                            format!("{}", t.amount)
+                        }
+                    };
+                    document.add_field(amount_string, 1.0);
+                }
+
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::Image(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),

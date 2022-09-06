@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::{CryptoAmount, PhoneNumber, UserId};
+use crate::{PhoneNumber, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
@@ -25,7 +25,7 @@ pub struct PhoneNumberConfirmed {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct StorageUpgraded {
-    pub cost: CryptoAmount,
+    pub cost: crate::nns::CryptoAmount,
     pub storage_added: u64,
     pub new_storage_limit: u64,
 }

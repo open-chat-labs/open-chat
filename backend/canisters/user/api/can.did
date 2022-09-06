@@ -33,7 +33,7 @@ type SendMessageResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: nat64;
+        TransferLimitExceeded: nat;
     };
 
 type EditMessageArgs =
@@ -311,7 +311,7 @@ type TransferCryptoWithinGroupResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: Tokens;
+        TransferLimitExceeded: nat;
         InternalError: record { text; CompletedCryptoTransaction; };
     };
 
