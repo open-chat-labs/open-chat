@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use std::cmp::max;
-use types::{CryptoAmount, Cryptocurrency, StorageUpgraded, UserEvent, ICP};
+use types::{nns::CryptoAmount, Cryptocurrency, StorageUpgraded, UserEvent, ICP};
 use user_index_canister::upgrade_storage::{Response::*, *};
 
 const FEE_PER_GB: ICP = ICP::from_e8s(2 * ICP::SUBDIVIDABLE_BY); // 2 ICP

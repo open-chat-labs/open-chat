@@ -820,16 +820,19 @@ type CryptoTransaction =
 type PendingCryptoTransaction =
     variant {
         NNS: NnsPendingCryptoTransaction;
+        SNS: SnsPendingCryptoTransaction;
     };
 
 type CompletedCryptoTransaction =
     variant {
         NNS: NnsCompletedCryptoTransaction;
+        SNS: SnsCompletedCryptoTransaction;
     };
 
 type FailedCryptoTransaction =
     variant {
         NNS: NnsFailedCryptoTransaction;
+        SNS: SnsFailedCryptoTransaction;
     };
 
 type NnsPendingCryptoTransaction =
@@ -877,6 +880,53 @@ type NnsCryptoAccount =
     variant {
         Mint;
         Account: AccountIdentifier;
+    };
+
+type SnsPendingCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        to: Icrc1Account;
+        fee: Tokens;
+        memo: opt Memo;
+    };
+
+type SnsCompletedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: SnsAccount;
+        to: SnsAccount;
+        memo: opt Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        block_index: BlockIndex;
+    };
+
+type SnsFailedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: SnsAccount;
+        to: SnsAccount;
+        memo: opt Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        error_message: text;
+    };
+
+type SnsAccount =
+    variant {
+        Mint;
+        Account: Icrc1Account;
+    };
+
+type Icrc1Account =
+    record {
+        owner: principal;
+        subaccount: opt blob;
     };
 
 type VideoContent =

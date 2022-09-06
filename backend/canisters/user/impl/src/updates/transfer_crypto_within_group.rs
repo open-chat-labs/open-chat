@@ -3,11 +3,7 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use ic_ledger_types::Tokens;
-use types::{
-    CompletedCryptoTransaction, CryptoContent, CryptoTransaction, FailedCryptoTransaction, MessageContent,
-    PendingCryptoTransaction, ICP_TRANSFER_LIMIT, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
-};
+use types::{CryptoContent, CryptoTransaction, MessageContent, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};
 use user_canister::transfer_crypto_within_group_v2::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -29,7 +25,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 
     let completed_transaction = match process_transaction(pending_transaction).await {
         Ok(completed) => completed,
-        Err(FailedCryptoTransaction::NNS(failed)) => return TransferFailed(failed.error_message),
+        Err(failed) => return TransferFailed(failed.error_message().to_string()),
     };
 
     let c2c_args = group_canister::send_message::Args {
@@ -67,20 +63,14 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 }
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
-    let amount = match &args.content.transfer {
-        CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => t.amount,
-        CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => t.amount,
-        CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => t.amount,
-    };
-
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         Err(RecipientBlocked)
     } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
         Err(CallerNotInGroup(None))
-    } else if amount == Tokens::ZERO {
+    } else if args.content.transfer.is_zero() {
         Err(TransferCannotBeZero)
-    } else if amount > ICP_TRANSFER_LIMIT {
-        Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT))
+    } else if args.content.transfer.exceeds_transfer_limit() {
+        Err(TransferLimitExceeded(args.content.transfer.token().transfer_limit()))
     } else if args.content.caption.as_ref().map_or(0, |c| c.len()) > MAX_TEXT_LENGTH_USIZE {
         Err(TextTooLong(MAX_TEXT_LENGTH))
     } else {

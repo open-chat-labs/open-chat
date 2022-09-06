@@ -1,5 +1,4 @@
 use candid::CandidType;
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CompletedCryptoTransaction, CryptoContent, Cryptocurrency, EventIndex, GroupReplyContext, MessageId, MessageIndex,
@@ -27,7 +26,7 @@ pub enum Response {
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
-    TransferLimitExceeded(Tokens),
+    TransferLimitExceeded(u128),
     InternalError(String, CompletedCryptoTransaction),
 }
 

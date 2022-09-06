@@ -2,8 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction,
-    ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -49,7 +48,7 @@ pub enum ContentValidationError {
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
-    TransferLimitExceeded(u64),
+    TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
 }
 
@@ -78,16 +77,10 @@ impl MessageContent {
                 }
             }
             MessageContent::Crypto(c) => {
-                let amount = match &c.transfer {
-                    CryptoTransaction::Pending(PendingCryptoTransaction::NNS(t)) => t.amount,
-                    CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(t)) => t.amount,
-                    CryptoTransaction::Failed(FailedCryptoTransaction::NNS(t)) => t.amount,
-                };
-                if amount == Tokens::ZERO {
+                if c.transfer.is_zero() {
                     return Err(TransferCannotBeZero);
-                }
-                if amount > ICP_TRANSFER_LIMIT {
-                    return Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT.e8s()));
+                } else if c.transfer.exceeds_transfer_limit() {
+                    return Err(TransferLimitExceeded(c.transfer.token().transfer_limit()));
                 }
             }
             _ => {}
@@ -100,10 +93,8 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Crypto(c) => c.transfer.is_zero(),
             MessageContent::Deleted(_) => true,
-            MessageContent::Giphy(_) => false,
-            MessageContent::GovernanceProposal(_) => false,
+            MessageContent::Crypto(_) | MessageContent::Giphy(_) | MessageContent::GovernanceProposal(_) => false,
         };
 
         if is_empty {
