@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, createEventDispatcher, onMount, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher, onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
@@ -84,6 +84,7 @@
     let messageReadTimers: Record<number, number> = {};
     let insideFromBottomThreshold: boolean = false;
     let morePrevAvailable = controller.morePreviousMessagesAvailable();
+    let previousScrollHeight: number | undefined = undefined;
 
     onMount(() => {
         const options = {
@@ -148,6 +149,8 @@
 
         return relayUnsubscribe;
     });
+
+    beforeUpdate(() => previousScrollHeight = messagesDiv?.scrollHeight);
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
@@ -430,6 +433,12 @@
                                 if (newLatestMessage && insideFromBottomThreshold) {
                                     // only scroll if we are now within threshold from the bottom
                                     scrollBottom("smooth");
+                                } else if (messagesDiv?.scrollTop === 0 && previousScrollHeight !== undefined) {
+                                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
+                                    if (clientHeightChange > 0) {
+                                        messagesDiv.scrollTop = -clientHeightChange;
+                                        console.log("scrollTop updated from 0 to " + messagesDiv.scrollTop);
+                                    }
                                 }
                             })
                             .then(() => (loadingNew = false))
