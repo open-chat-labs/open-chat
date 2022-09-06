@@ -9,7 +9,7 @@
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
-    import HideIcon from "svelte-material-icons/EyeOff.svelte";
+    import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
@@ -268,12 +268,6 @@
                 <div slot="menu">
                     <Menu>
                         {#if !pinned}
-                            <MenuItem on:click={archiveChat}>
-                                <HideIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("archiveChat")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if !pinned}
                             <MenuItem on:click={pinChat}>
                                 <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("pinChat.menuItem")}</div>
@@ -305,6 +299,15 @@
                                     <div slot="text">{$_("muteNotifications")}</div>
                                 </MenuItem>
                             {/if}
+                        {/if}
+                        {#if !pinned}
+                            <MenuItem on:click={archiveChat}>
+                                <ArchiveIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("archiveChat")}</div>
+                            </MenuItem>
                         {/if}
                         <MenuItem
                             disabled={unreadMessages === 0}
