@@ -24,7 +24,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = "0.5.6"
 ic-cdk-macros = "0.5.6"
 msgpack = { path = "../../../libraries/msgpack" }
-rand = "0.7.3"
+rand = "0.8.5"
 search = { path = "../../../libraries/search" }
 serde = "1.0.137"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
