@@ -25,14 +25,20 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
 ic-cdk = "0.5.6"
 ic-cdk-macros = "0.5.6"
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
 ic-ledger-types = "0.1.1"
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "999f7cc6bbe17abdb7b7a1eab73840a94597e363" }
 itertools = "0.10.3"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+num-traits = "0.2.15"
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 search = { path = "../../../libraries/search" }
 serde = "1.0.137"
