@@ -40,7 +40,7 @@
         }
 
         if (oneLine) {
-            parsed = parsed.replace(/<br\s*\/?>/gi, ' ');
+            parsed = parsed.replace(/<br\s*\/?>/gi, " ");
         }
 
         try {
