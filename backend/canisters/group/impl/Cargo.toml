@@ -32,7 +32,7 @@ msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
-rand = "0.7.3"
+rand = "0.8.5"
 regex = "1.5.4"
 search = { path = "../../../libraries/search" }
 serde = "1.0.137"
