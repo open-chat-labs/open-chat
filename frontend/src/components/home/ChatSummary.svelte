@@ -450,6 +450,7 @@
         .chat-msg {
             color: var(--chatSummary-txt2);
             @include font(book, normal, fs-80);
+            overflow: hidden;
         }
     }
 
