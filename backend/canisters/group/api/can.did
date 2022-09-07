@@ -103,7 +103,7 @@ type BlockUserResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
-    }; 
+    };
 
 type UnblockUserArgs =
     record {
@@ -117,7 +117,7 @@ type UnblockUserResponse =
         CannotUnblockSelf;
         GroupNotPublic;
         NotAuthorized;
-    }; 
+    };
 
 type AddParticipantsArgs =
     record {
@@ -168,7 +168,7 @@ type RemoveParticipantResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
-    }; 
+    };
 
 type ChangeRoleArgs =
     record {
@@ -183,10 +183,10 @@ type ChangeRoleResponse =
         NotAuthorized;
         UserNotInGroup;
         Invalid;
-    }; 
+    };
 
 type InviteCodeArgs =
-    record {        
+    record {
     };
 
 type InviteCodeResponse =
@@ -195,10 +195,10 @@ type InviteCodeResponse =
             code: opt nat64;
         };
         NotAuthorized;
-    }; 
+    };
 
 type EnableInviteCodeArgs =
-    record {        
+    record {
     };
 
 type EnableInviteCodeResponse =
@@ -207,20 +207,20 @@ type EnableInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
-    }; 
+    };
 
 type DisableInviteCodeArgs =
-    record {        
+    record {
     };
 
 type DisableInviteCodeResponse =
     variant {
         Success;
         NotAuthorized;
-    }; 
+    };
 
 type ResetInviteCodeArgs =
-    record {        
+    record {
     };
 
 type ResetInviteCodeResponse =
@@ -229,7 +229,7 @@ type ResetInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
-    }; 
+    };
 
 type UpdateGroupArgs =
     record {
@@ -450,14 +450,17 @@ type MessagesByMessageIndexResponse =
 type ThreadPreviewsArgs =
     record {
         threads: vec MessageIndex;
+        latest_client_event_index: opt EventIndex;
     };
 
 type ThreadPreviewsResponse =
     variant {
         Success: record {
             threads: vec ThreadPreview;
+            latest_event_index: EventIndex;
         };
         CallerNotInGroup;
+        ReplicaNotUpToDate: EventIndex;
     };
 
 type ThreadPreview =
@@ -480,7 +483,7 @@ type SearchMessagesResponse =
         TermTooLong: nat8;
         InvalidTerm;
         CallerNotInGroup;
-    }; 
+    };
 
 type SearchMessagesSuccessResult =
     record {
@@ -522,7 +525,7 @@ service: {
     reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Can be called by admins or regular users of public groups
-    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
+    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
