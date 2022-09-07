@@ -227,6 +227,7 @@ export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } };
 export type EventIndex = number;
 export interface EventsArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
   'max_events' : number,
   'ascending' : boolean,
@@ -234,17 +235,20 @@ export interface EventsArgs {
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
   'events' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
   'to_index' : EventIndex,
   'from_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
@@ -253,6 +257,7 @@ export interface EventsSuccessResult {
   'latest_event_index' : number,
 }
 export interface EventsWindowArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'invite_code' : [] | [bigint],
   'max_events' : number,
@@ -488,12 +493,15 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array,
+  'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {
     'ThreadMessageNotFound' : null
   } |
+  { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
   {
     'Success' : {
@@ -805,8 +813,12 @@ export interface ThreadPreview {
   'total_replies' : number,
   'root_message' : MessageEventWrapper,
 }
-export interface ThreadPreviewsArgs { 'threads' : Uint32Array }
-export type ThreadPreviewsResponse = { 'CallerNotInGroup' : null } |
+export interface ThreadPreviewsArgs {
+  'latest_client_event_index' : [] | [EventIndex],
+  'threads' : Uint32Array,
+}
+export type ThreadPreviewsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : { 'threads' : Array<ThreadPreview> } };
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,

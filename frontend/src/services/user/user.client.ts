@@ -151,16 +151,18 @@ export class UserClient extends CandidService implements IUserClient {
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
             events: new Uint32Array(eventIndexes),
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -170,7 +172,8 @@ export class UserClient extends CandidService implements IUserClient {
         _eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        interrupt: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -178,10 +181,11 @@ export class UserClient extends CandidService implements IUserClient {
             user_id: Principal.fromText(userId),
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args,
             interrupt
         );
@@ -193,7 +197,8 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -202,11 +207,12 @@ export class UserClient extends CandidService implements IUserClient {
                 max_events: MAX_EVENTS,
                 start_index: index,
                 ascending: asc,
+                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
             };
 
             return this.handleQueryResponse(
                 () => this.userService.events(args),
-                getEventsResponse,
+                resp => getEventsResponse(resp, latestClientEventIndex),
                 args
             );
         };
