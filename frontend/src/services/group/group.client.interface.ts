@@ -37,18 +37,21 @@ import type { ServiceRetryInterrupt } from "services/candidService";
 export interface IGroupClient {
     chatEventsByIndex(
         eventIndexes: number[],
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(
@@ -82,7 +85,10 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
-    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>>;
+    getMessagesByMessageIndex(
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
     registerPollVote(
@@ -96,6 +102,9 @@ export interface IGroupClient {
     enableInviteCode(): Promise<EnableInviteCodeResponse>;
     disableInviteCode(): Promise<DisableInviteCodeResponse>;
     resetInviteCode(): Promise<ResetInviteCodeResponse>;
-    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse>;
+    threadPreviews(
+        threadRootMessageIndexes: number[],
+        latestClientEventIndex: number | undefined
+    ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
 }

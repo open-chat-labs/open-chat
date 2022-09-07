@@ -1,7 +1,7 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { rollbar } from "../utils/logging";
-import { AuthError, SessionExpiryError, toHttpError } from "./httpError";
+import { AuthError, ReplicaNotUpToDateError, SessionExpiryError, toCanisterResponseError } from "./error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -34,7 +34,7 @@ export abstract class CandidService {
     ): Promise<To> {
         return service.then(mapper).catch((err) => {
             console.log(err, args);
-            throw toHttpError(err as Error, this.identity);
+            throw toCanisterResponseError(err as Error, this.identity);
         });
     }
 
@@ -48,14 +48,17 @@ export abstract class CandidService {
         return serviceCall()
             .then(mapper)
             .catch((err) => {
-                const httpErr = toHttpError(err as Error, this.identity);
+                const responseErr = toCanisterResponseError(err as Error, this.identity);
                 if (
-                    !(httpErr instanceof SessionExpiryError) &&
-                    !(httpErr instanceof AuthError) &&
+                    !(responseErr instanceof SessionExpiryError) &&
+                    !(responseErr instanceof AuthError) &&
                     retries < MAX_RETRIES &&
                     !(interrupt && interrupt(retries)) // bail out of the retry if the caller tells us to
                 ) {
-                    const delay = RETRY_DELAY * Math.pow(2, retries);
+                    const delay = responseErr instanceof ReplicaNotUpToDateError
+                        ? 0
+                        : RETRY_DELAY * Math.pow(2, retries);
+
                     return new Promise((resolve, reject) => {
                         debug(`query: error occurred, retrying in ${delay}ms`);
                         window.setTimeout(() => {
@@ -72,7 +75,7 @@ export abstract class CandidService {
                     });
                 } else {
                     debug(`query: Error performing query request: ${err}, ${args}, ${retries}`);
-                    throw httpErr;
+                    throw responseErr;
                 }
             });
     }

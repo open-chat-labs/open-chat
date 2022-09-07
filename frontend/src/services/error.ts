@@ -23,7 +23,17 @@ export class SessionExpiryError extends HttpError {
     }
 }
 
-export function toHttpError(error: Error, identity: Identity): HttpError {
+export class ReplicaNotUpToDateError extends Error {
+    constructor(public latestReplicaEventIndex: number, public latestClientEventIndex: number) {
+        super("Replica not up to date");
+    }
+}
+
+export function toCanisterResponseError(error: Error, identity: Identity): HttpError | ReplicaNotUpToDateError {
+    if (error instanceof ReplicaNotUpToDateError) {
+        return error;
+    }
+
     let code = 500;
 
     const statusLine = error.message

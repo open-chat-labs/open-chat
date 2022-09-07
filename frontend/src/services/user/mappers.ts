@@ -97,6 +97,7 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
+import {ReplicaNotUpToDateError} from "services/error";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -510,15 +511,22 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
-export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
+export function getEventsResponse(
+    candid: ApiEventsResponse,
+    latestClientEventIndex: number | undefined
+): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
+    }
+    if ("ReplicaNotUpToDate" in candid) {
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
