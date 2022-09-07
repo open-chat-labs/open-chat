@@ -274,6 +274,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    pub rules: GroupRules,
     pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
@@ -400,4 +401,10 @@ pub enum GroupSubtype {
 pub struct GovernanceProposalsSubtype {
     pub is_nns: bool,
     pub governance_canister_id: CanisterId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupRules {
+    pub text: String,
+    pub enabled: bool,
 }
