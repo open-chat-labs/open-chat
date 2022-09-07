@@ -86,7 +86,7 @@
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
-    import { mutedChatsStore } from "../../stores/mutedChatsStore";
+    import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -184,8 +184,10 @@
     function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
         interruptRecommended = true;
 
+        const summary = $chatSummariesStore[chatId];
+
         // if this is an unknown chat let's preview it
-        if ($chatSummariesStore[chatId] === undefined) {
+        if (summary === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
@@ -208,6 +210,11 @@
                 });
             }
         } else {
+            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+            if (summary.archived) {
+                unarchiveChat(chatId);
+            }
+
             // if it's a known chat let's select it
             setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
             resetRightPanel();
@@ -550,11 +557,36 @@
 
     function unpinChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
-        pinnedChatsStore.unpin(chatId);
         api.unpinChat(chatId).catch((err) => {
             toastStore.showFailureToast("pinChat.unpinFailed");
             rollbar.error("Error unpinning chat", err);
             pinnedChatsStore.pin(chatId);
+        });
+    }
+
+    function onArchiveChat(ev: CustomEvent<string>) {
+        const chatId = ev.detail;
+        archivedChatsStore.set(chatId, true);
+        api.archiveChat(chatId).catch((err) => {
+            toastStore.showFailureToast("archiveChatFailed");
+            rollbar.error("Error archiving chat", err);
+            archivedChatsStore.set(chatId, false);
+        });
+        if (chatId === $selectedChatStore?.chatId) {
+            push("/");
+        }
+    }
+
+    function onUnarchiveChat(ev: CustomEvent<string>) {
+        unarchiveChat(ev.detail);
+    }
+
+    function unarchiveChat(chatId: string) {
+        archivedChatsStore.set(chatId, false);
+        api.unarchiveChat(chatId).catch((err) => {
+            toastStore.showFailureToast("unarchiveChatFailed");
+            rollbar.error("Error un-archiving chat", err);
+            archivedChatsStore.set(chatId, true);
         });
     }
 
@@ -935,7 +967,7 @@
         const chatId = ev.detail.chatId;
         const op = mute ? "muted" : "unmuted";
 
-        mutedChatsStore.toggle(chatId, mute);
+        mutedChatsStore.set(chatId, mute);
 
         let success = false;
         api.toggleMuteNotifications(chatId, mute)
@@ -950,7 +982,7 @@
                     toastStore.showFailureToast("toggleMuteNotificationsFailed", {
                         values: { operation: $_(op) },
                     });
-                    mutedChatsStore.toggle(chatId, !mute);
+                    mutedChatsStore.set(chatId, !mute);
                 }
             });
     }
@@ -983,6 +1015,8 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:archiveChat={onArchiveChat}
+            on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}

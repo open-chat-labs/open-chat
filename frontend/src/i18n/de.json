@@ -587,5 +587,9 @@
     "loadingTweetPreview": "Tweet-Vorschau wird geladen...",
     "fullScreen": "Anzeige in voller Breite auf dem Desktop",
     "displayWidth": "Anzeigebreite",
-    "apply": "Sich bewerben"
+    "apply": "Sich bewerben",
+    "archiveChat": "Chat archivieren",
+    "archiveChatFailed": "Chat konnte nicht archiviert werden",
+    "unarchiveChatFailed": "Archivierung des Chats fehlgeschlagen",
+    "unarchiveChat": "entarchivieren kat"
 }

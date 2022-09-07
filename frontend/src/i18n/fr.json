@@ -587,5 +587,9 @@
     "loadingTweetPreview": "Chargement de l'aperçu du tweet...",
     "fullScreen": "Afficher toute la largeur sur le bureau",
     "displayWidth": "Largeur d'affichage",
-    "apply": "Appliquer"
+    "apply": "Appliquer",
+    "archiveChat": "Archiver le chat",
+    "archiveChatFailed": "Échec de l'archivage du chat",
+    "unarchiveChatFailed": "Impossible de désarchiver le chat",
+    "unarchiveChat": "Un-archive chat"
 }

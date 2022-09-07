@@ -51,6 +51,7 @@ import {
 } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -511,6 +512,14 @@ export class CachingUserClient implements IUserClient {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.client.unpinChat(chatId);
+    }
+
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.client.archiveChat(chatId);
+    }
+
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.client.unarchiveChat(chatId);
     }
 
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {

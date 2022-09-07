@@ -191,6 +191,7 @@ export interface DirectChatSummary {
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
+  'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
 }
@@ -202,6 +203,7 @@ export interface DirectChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'read_by_them' : [] | [Array<MessageIndexRange>],
+  'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -319,6 +321,7 @@ export interface GroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -342,6 +345,7 @@ export interface GroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
