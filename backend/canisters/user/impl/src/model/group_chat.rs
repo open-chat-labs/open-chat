@@ -11,6 +11,7 @@ pub struct GroupChat {
     pub last_changed_for_my_data: TimestampMillis,
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
+    #[serde(default)]
     pub archived: Timestamped<bool>,
 }
 
