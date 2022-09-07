@@ -59,8 +59,14 @@ export abstract class CandidService {
                         ? 0
                         : RETRY_DELAY * Math.pow(2, retries);
 
+                    if (responseErr instanceof ReplicaNotUpToDateError) {
+                        const replica = responseErr.latestReplicaEventIndex;
+                        debug(`query: replica not up to date. replica: ${replica}, args: ${JSON.stringify(args)}, retries: ${retries}`);
+                    } else {
+                        debug(`query: error occurred, retrying in ${delay}ms. retries: ${retries}`);
+                    }
+
                     return new Promise((resolve, reject) => {
-                        debug(`query: error occurred, retrying in ${delay}ms`);
                         window.setTimeout(() => {
                             this.handleQueryResponse(
                                 serviceCall,
@@ -74,7 +80,7 @@ export abstract class CandidService {
                         }, delay);
                     });
                 } else {
-                    debug(`query: Error performing query request: ${err}, ${args}, ${retries}`);
+                    debug(`query: Error performing query request: ${JSON.stringify(err)}, ${JSON.stringify(args)}, ${retries}`);
                     throw responseErr;
                 }
             });
