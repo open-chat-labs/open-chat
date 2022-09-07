@@ -604,6 +604,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'archived' : IDL.Bool,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -616,6 +617,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'read_by_them' : IDL.Vec(MessageIndexRange),
+    'archived' : IDL.Bool,
     'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
   });
@@ -915,6 +917,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'archived' : IDL.Opt(IDL.Bool),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -927,6 +930,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'archived' : IDL.Opt(IDL.Bool),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
