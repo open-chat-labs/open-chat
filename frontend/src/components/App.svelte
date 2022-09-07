@@ -3,6 +3,7 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
+    import "../utils/sessionflag";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "svelte-spa-router";

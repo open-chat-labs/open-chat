@@ -533,8 +533,8 @@ export function setCachedMessageFromNotification(
     const chatId =
         notification.kind === "group_notification" ? notification.chatId : notification.sender;
 
-    setCachedMessage(db, chatId, notification.message, notification.threadRootMessageIndex).catch((err) =>
-        rollbar.error("Unable to write notification message to the cache", err)
+    setCachedMessage(db, chatId, notification.message, notification.threadRootMessageIndex).catch(
+        (err) => rollbar.error("Unable to write notification message to the cache", err)
     );
 }
 

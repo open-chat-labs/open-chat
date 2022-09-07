@@ -5,6 +5,7 @@ import { unregister } from "../utils/notifications";
 import { closeDb } from "../utils/caching";
 import { initialiseTracking, startTrackingSession, endTrackingSession } from "../utils/tracking";
 import { AuthProvider } from "../domain/auth";
+import { updateSessionFlag } from "../utils/sessionflag";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -19,11 +20,14 @@ const authClient = AuthClient.create({
 initialiseTracking();
 
 export function getIdentity(): Promise<Identity> {
-    return authClient.then((c) => c.getIdentity());
+    return authClient.then((c) => setSessionFlagFromIdentity(c.getIdentity()));
 }
 
-export function isAuthenticated(): Promise<boolean> {
-    return authClient.then((c) => c.isAuthenticated());
+function setSessionFlagFromIdentity(id: Identity): Identity {
+    const anon = id.getPrincipal().isAnonymous();
+    const timestamp = anon ? 0 : Date.now();
+    updateSessionFlag(timestamp);
+    return id;
 }
 
 export function login(authProvider: AuthProvider): Promise<Identity> {
@@ -34,7 +38,7 @@ export function login(authProvider: AuthProvider): Promise<Identity> {
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: process.env.II_DERIVATION_ORIGIN,
                 //windowOpenerFeatures: buildWindowOpenerFeatures(authProvider),
-                onSuccess: () => resolve(c.getIdentity()),
+                onSuccess: () => resolve(setSessionFlagFromIdentity(c.getIdentity())),
                 onError: (err) => reject(err),
             });
         });
@@ -69,9 +73,11 @@ function buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
 export async function logout(): Promise<void> {
     await unregister();
     return authClient.then((c) => {
-        c.logout();
-        endTrackingSession();
-        closeDb();
+        c.logout().then(() => {
+            updateSessionFlag(0);
+            endTrackingSession();
+            closeDb();
+        });
     });
 }
 
