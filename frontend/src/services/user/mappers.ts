@@ -100,6 +100,8 @@ import type {
 } from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { ReplicaNotUpToDateError } from "../error";
+import { get } from "svelte/store";
+import { serverChatSummariesStore } from "stores/chat";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -535,20 +537,28 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 
 export function getEventsResponse(
     candid: ApiEventsResponse,
-    latestClientEventIndex: number | undefined
+    chatId: string
 ): EventsResponse<DirectChatEvent> {
+    const latestClientEventIndex = get(serverChatSummariesStore)[chatId]?.latestEventIndex;
+
     if ("Success" in candid) {
+        const latestEventIndex = candid.Success.latest_event_index;
+
+        if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
+            throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);
+        }
+
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1, false);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

@@ -731,7 +731,10 @@ export const idlFactory = ({ IDL }) => {
   const ThreadPreviewsResponse = IDL.Variant({
     'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Record({ 'threads' : IDL.Vec(ThreadPreview) }),
+    'Success' : IDL.Record({
+      'threads' : IDL.Vec(ThreadPreview),
+      'latest_event_index' : EventIndex,
+    }),
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,

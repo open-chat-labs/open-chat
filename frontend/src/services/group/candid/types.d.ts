@@ -823,7 +823,12 @@ export interface ThreadPreviewsArgs {
 }
 export type ThreadPreviewsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
-  { 'Success' : { 'threads' : Array<ThreadPreview> } };
+  {
+    'Success' : {
+      'threads' : Array<ThreadPreview>,
+      'latest_event_index' : EventIndex,
+    }
+  };
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
