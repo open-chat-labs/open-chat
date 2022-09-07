@@ -2,10 +2,9 @@
 
 <script lang="ts">
     import { userStore } from "../../stores/user";
-    import { _ } from "svelte-i18n";
     import { marked } from "marked";
-    import DOMPurify from "dompurify";
     import { rollbar } from "../../utils/logging";
+    import { DOMPurifyDefault, DOMPurifyOneLine } from "utils/domPurify";
 
     export let text: string;
     export let inline: boolean = true;
@@ -39,12 +38,11 @@
             rollbar.error("Error parsing markdown: ", err);
         }
 
+        const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
-            sanitized = DOMPurify.sanitize(parsed, {
-                ALLOWED_ATTR: ["target", "href", "class"],
-            });
+            sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
-            rollbar.error("Error sanitzing message content: ", err);
+            rollbar.error("Error sanitizing message content: ", err);
         }
     }
 </script>
