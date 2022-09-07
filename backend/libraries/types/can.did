@@ -219,6 +219,7 @@ type ChatEvent =
         GroupInviteCodeChanged: GroupInviteCodeChanged;
         ThreadUpdated: ThreadUpdated;
         ProposalsUpdated: ProposalsUpdated;
+        GroupRulesChanged: GroupRulesChanged;
     };
 
 type ChatEventWrapper =
@@ -1003,4 +1004,15 @@ type ProposalUpdated =
     record {
         event_index: EventIndex;
         message_index: MessageIndex;
+    };
+
+type GroupRules =
+    record {
+        text: text;
+        enabled: bool;
+    };
+
+type GroupRulesChanged =
+    record {
+        changed_by: UserId;
     };

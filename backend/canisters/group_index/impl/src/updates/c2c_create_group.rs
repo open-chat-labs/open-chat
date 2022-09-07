@@ -94,6 +94,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
             is_public: args.is_public,
             name: args.name,
             description: args.description,
+            rules: args.rules,
             subtype: args.subtype,
             // History is always visible on public groups
             history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,

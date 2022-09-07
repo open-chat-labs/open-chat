@@ -30,6 +30,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         blocked_users_removed: vec![],
         pinned_messages_added: vec![],
         pinned_messages_removed: vec![],
+        rules: None,
     };
 
     let mut user_updates_handler = UserUpdatesHandler {
@@ -97,6 +98,9 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 if !result.pinned_messages_added.contains(&u.message_index) {
                     result.pinned_messages_removed.push(u.message_index);
                 }
+            }
+            ChatEventInternal::GroupRulesChanged(_) => {
+                result.rules = Some(data.rules.clone());
             }
             _ => {}
         }

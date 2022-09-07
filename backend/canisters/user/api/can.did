@@ -133,6 +133,7 @@ type CreateGroupArgs =
         avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
+        rules: GroupRules;
     };
 
 type CreateGroupSuccessResult =
@@ -152,6 +153,8 @@ type CreateGroupResponse =
         NameTaken;
         Throttled;
         InternalError;
+        RulesTooLong: FieldTooLongResult;
+        RulesTooShort: FieldTooShortResult;
     };
 
 type JoinGroupArgs =
