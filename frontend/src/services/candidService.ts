@@ -55,13 +55,11 @@ export abstract class CandidService {
                     retries < MAX_RETRIES &&
                     !(interrupt && interrupt(retries)) // bail out of the retry if the caller tells us to
                 ) {
-                    const delay = responseErr instanceof ReplicaNotUpToDateError
-                        ? 0
-                        : RETRY_DELAY * Math.pow(2, retries);
+                    const delay = RETRY_DELAY * Math.pow(2, retries);
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
                         const replica = responseErr.latestReplicaEventIndex;
-                        debug(`query: replica not up to date. replica: ${replica}, args: ${JSON.stringify(args)}, retries: ${retries}`);
+                        debug(`query: replica not up to date, retrying in ${delay}ms. replica: ${replica}, args: ${JSON.stringify(args)}, retries: ${retries}`);
                     } else {
                         debug(`query: error occurred, retrying in ${delay}ms. retries: ${retries}`);
                     }
