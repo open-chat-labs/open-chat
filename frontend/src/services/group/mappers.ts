@@ -71,7 +71,7 @@ import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { optional } from "../../utils/mapping";
 import { bigintToBase64 } from "utils/base64";
-import {ReplicaNotUpToDateError} from "services/error";
+import { ReplicaNotUpToDateError } from "../error";
 
 function principalToString(p: Principal): string {
     return p.toString();

@@ -73,7 +73,8 @@ import type {
     ThreadPreview,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
-    ListNervousSystemFunctionsResponse, ThreadPreviewsResponse,
+    ListNervousSystemFunctionsResponse,
+    ThreadPreviewsResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";

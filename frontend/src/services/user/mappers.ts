@@ -97,7 +97,7 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
-import {ReplicaNotUpToDateError} from "services/error";
+import { ReplicaNotUpToDateError } from "../error";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;

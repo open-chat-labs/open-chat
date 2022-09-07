@@ -98,7 +98,7 @@ export class CachingGroupClient implements IGroupClient {
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex?: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return getCachedEventsByIndex<GroupChatEvent>(
             this.db,
