@@ -66,14 +66,13 @@ import type {
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { groupPermissions, message, updatedMessage } from "../common/chatMappers";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { optional } from "../../utils/mapping";
 import { bigintToBase64 } from "utils/base64";
 import { ReplicaNotUpToDateError } from "../error";
-import { get } from "svelte/store";
-import { serverChatSummariesStore } from "stores/chat";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -510,21 +509,19 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 
 export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse,
-    chatId: string
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<Message> {
-    const latestClientEventIndex = get(serverChatSummariesStore)[chatId]?.latestEventIndex;
-
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
-            throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);
-        }
+        ensureReplicaIsUpToDate(chatId, threadRootMessageIndex, latestClientEventIndexPreRequest, latestEventIndex);
 
         return {
             events: candid.Success.messages.map(messageWrapper),
             affectedEvents: [],
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -534,7 +531,7 @@ export function getMessagesByMessageIndexResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1, false);
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
@@ -552,21 +549,19 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 
 export function getEventsResponse(
     candid: ApiEventsResponse,
-    chatId: string
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<GroupChatEvent> {
-    const latestClientEventIndex = get(serverChatSummariesStore)[chatId]?.latestEventIndex;
-
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
-            throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);
-        }
+        ensureReplicaIsUpToDate(chatId, threadRootMessageIndex, latestClientEventIndexPreRequest, latestEventIndex);
 
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("ChatNotFound" in candid) {
@@ -579,7 +574,7 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1, false);
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
@@ -689,17 +684,14 @@ function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
 }
 
 export function threadPreviewsResponse(
+    candid: ApiThreadPreviewsResponse,
     chatId: string,
-    candid: ApiThreadPreviewsResponse
+    latestClientEventIndexPreRequest: number | undefined
 ): ThreadPreviewsResponse {
-    const latestClientEventIndex = get(serverChatSummariesStore)[chatId]?.latestEventIndex;
-
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
-            throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);
-        }
+        ensureReplicaIsUpToDate(chatId, undefined, latestClientEventIndexPreRequest, latestEventIndex);
 
         return {
             kind: "thread_previews_success",
@@ -712,7 +704,7 @@ export function threadPreviewsResponse(
         };
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1, false);
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiThreadPreviewsResponse type received",
