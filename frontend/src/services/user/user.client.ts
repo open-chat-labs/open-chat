@@ -59,6 +59,7 @@ import {
     pinChatResponse,
     unpinChatResponse,
     migrateUserPrincipal,
+    archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -76,6 +77,7 @@ import {
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -222,7 +224,8 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
-        const disableCache = localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        const disableCache =
+            localStorage.getItem("openchat_disable_initial_state_cache") === "true";
 
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({ disable_cache: [disableCache] }),
@@ -358,9 +361,8 @@ export class UserClient extends CandidService implements IUserClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(
-                this.userService.send_message(req),
-                (resp) => sendMessageResponse(resp, message.sender, recipientId)
+            return this.handleResponse(this.userService.send_message(req), (resp) =>
+                sendMessageResponse(resp, message.sender, recipientId)
             ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
@@ -387,9 +389,8 @@ export class UserClient extends CandidService implements IUserClient {
                 message.repliesTo
             ),
         };
-        return this.handleResponse(
-            this.userService.transfer_crypto_within_group_v2(req),
-            resp => transferWithinGroupResponse(resp, message.sender, recipientId)
+        return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
+            transferWithinGroupResponse(resp, message.sender, recipientId)
         ).then((resp) => [resp, message]);
     }
 
@@ -593,10 +594,13 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
             withdrawal: {
-                NNS: apiPendingCryptocurrencyWithdrawal(domain)
+                NNS: apiPendingCryptocurrencyWithdrawal(domain),
             },
         };
-        return this.handleResponse(this.userService.withdraw_crypto_v2(req), withdrawCryptoResponse);
+        return this.handleResponse(
+            this.userService.withdraw_crypto_v2(req),
+            withdrawCryptoResponse
+        );
     }
 
     @profile("userClient")
@@ -620,10 +624,30 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.handleResponse(
+            this.userService.archive_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            archiveChatResponse
+        );
+    }
+
+    @profile("userClient")
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.handleResponse(
+            this.userService.unarchive_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            archiveChatResponse
+        );
+    }
+
+    @profile("userClient")
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {
         return this.handleResponse(
             this.userService.init_user_principal_migration({
-                new_principal: Principal.fromText(newPrincipal)
+                new_principal: Principal.fromText(newPrincipal),
             }),
             toVoid
         );
@@ -634,6 +658,6 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.migrate_user_principal({}),
             migrateUserPrincipal
-        )
+        );
     }
 }

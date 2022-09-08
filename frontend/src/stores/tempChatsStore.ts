@@ -1,16 +1,22 @@
+import type { Readable } from "svelte/store";
 import { immutableStore } from "./immutable";
 
-export const mutedChatsStore = createStore();
+export const mutedChatsStore = createTempChatsStore<boolean>();
+export const archivedChatsStore = createTempChatsStore<boolean>();
 
-function createStore() {
+export interface TempChatsStore<T> extends Readable<Map<string, T>> {
+    set(this: void, chatId: string, value: T): void;
+}
+
+export function createTempChatsStore<T>(): TempChatsStore<T> {
     const DELETE_LOCAL_VALUE_INTERVAL = 60000;
     const timers: Map<string, number> = new Map();
-    const store = immutableStore<Map<string, boolean>>(new Map());
+    const store = immutableStore<Map<string, T>>(new Map());
 
-    function updateStore(chatId: string, mute: boolean) {
+    function updateStore(chatId: string, value: T) {
         store.update((map) => {
             const clone = new Map(map);
-            clone.set(chatId, mute);
+            clone.set(chatId, value);
             return clone;
         });
     }
@@ -25,7 +31,7 @@ function createStore() {
 
     return {
         subscribe: store.subscribe,
-        toggle: (chatId: string, mute: boolean) => {
+        set: (chatId: string, value: T) => {
             // Remove any existing timer for this chatId
             const existingTimer = timers.get(chatId);
             if (existingTimer !== undefined) {
@@ -41,7 +47,7 @@ function createStore() {
             }, DELETE_LOCAL_VALUE_INTERVAL);
             timers.set(chatId, newTimer);
 
-            updateStore(chatId, mute);
+            updateStore(chatId, value);
         },
     };
 }

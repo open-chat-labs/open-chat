@@ -30,6 +30,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -127,6 +128,8 @@ export interface IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse>;
     pinChat(chatId: string): Promise<PinChatResponse>;
     unpinChat(chatId: string): Promise<UnpinChatResponse>;
+    archiveChat(chatId: string): Promise<ArchiveChatResponse>;
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse>;
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
 }

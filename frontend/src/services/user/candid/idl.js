@@ -9,6 +9,11 @@ export const idlFactory = ({ IDL }) => {
   const AddRecommendedGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
+  const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
+  const ArchiveChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
@@ -869,6 +874,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
+  const UnArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
+  const UnArchiveChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
@@ -967,6 +977,7 @@ export const idlFactory = ({ IDL }) => {
         [AddRecommendedGroupExclusionsResponse],
         [],
       ),
+    'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'assume_group_super_admin' : IDL.Func(
         [AssumeGroupSuperAdminArgs],
         [AssumeGroupSuperAdminResponse],
@@ -1055,6 +1066,11 @@ export const idlFactory = ({ IDL }) => {
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [TransferCryptoWithinGroupResponse],
+        [],
+      ),
+    'unarchive_chat' : IDL.Func(
+        [UnArchiveChatArgs],
+        [UnArchiveChatResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

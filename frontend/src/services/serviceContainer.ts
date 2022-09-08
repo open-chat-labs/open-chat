@@ -21,6 +21,7 @@ import type {
     PinChatResponse,
     UnpinChatResponse,
     MigrateUserPrincipalResponse,
+    ArchiveChatResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -1096,6 +1097,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.userClient.unpinChat(chatId);
+    }
+
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.userClient.archiveChat(chatId);
+    }
+
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.userClient.unarchiveChat(chatId);
     }
 
     registerProposalVote(

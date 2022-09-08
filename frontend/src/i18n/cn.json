@@ -587,5 +587,9 @@
     "loadingTweetPreview": "正在加载推文预览...",
     "fullScreen": "在桌面上显示全宽",
     "displayWidth": "显示宽度",
-    "apply": "申请"
+    "apply": "申请",
+    "archiveChat": "存档聊天",
+    "archiveChatFailed": "无法存档聊天",
+    "unarchiveChatFailed": "无法取消归档聊天",
+    "unarchiveChat": "解压猫"
 }

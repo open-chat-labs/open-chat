@@ -14,6 +14,9 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
+export interface ArchiveChatArgs { 'chat_id' : ChatId }
+export type ArchiveChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface AssumeGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
   { 'CallerNotInGroup' : null } |
@@ -902,6 +905,9 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
+export interface UnArchiveChatArgs { 'chat_id' : ChatId }
+export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
@@ -976,6 +982,7 @@ export interface _SERVICE {
     [AddRecommendedGroupExclusionsArgs],
     AddRecommendedGroupExclusionsResponse,
   >,
+  'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'assume_group_super_admin' : ActorMethod<
     [AssumeGroupSuperAdminArgs],
     AssumeGroupSuperAdminResponse,
@@ -1033,6 +1040,7 @@ export interface _SERVICE {
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse,
   >,
+  'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unmute_notifications' : ActorMethod<
     [UnmuteNotificationsArgs],

@@ -56,6 +56,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         myMetrics: emptyChatMetrics(),
         latestThreads: [],
         subtype: optional(candid.subtype, apiGroupSubtype),
+        archived: false,
     };
 }
 
