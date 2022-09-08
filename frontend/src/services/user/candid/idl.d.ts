@@ -97,6 +97,7 @@ import {
     GroupSubtype,
     GovernanceProposalsSubtype,
     GroupSubtypeUpdate,
+    ArchiveChatResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -196,6 +197,7 @@ export {
     GroupSubtype as ApiGroupSubtype,
     GovernanceProposalsSubtype as ApiGovernanceProposalsSubtype,
     GroupSubtypeUpdate as ApiGroupSubtypeUpdate,
+    ArchiveChatResponse as ApiArchiveChatResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

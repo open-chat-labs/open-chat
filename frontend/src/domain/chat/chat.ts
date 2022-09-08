@@ -598,6 +598,7 @@ export type EventWrapper<T extends ChatEvent> = {
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
     affectedEvents: EventWrapper<T>[];
+    latestEventIndex: number | undefined;
 };
 
 export type GroupChatUpdatesSince = {
@@ -661,6 +662,7 @@ type ChatSummaryUpdatesCommon = {
     affectedEvents: number[];
     metrics?: ChatMetrics;
     myMetrics?: ChatMetrics;
+    archived?: boolean;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -768,6 +770,7 @@ type ChatSummaryCommon = {
     notificationsMuted: boolean;
     metrics: ChatMetrics;
     myMetrics: ChatMetrics;
+    archived: boolean;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {

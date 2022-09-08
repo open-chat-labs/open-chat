@@ -173,7 +173,8 @@
             range,
             startIndex,
             ascending,
-            threadRootMessageIndex
+            threadRootMessageIndex,
+            thread.latestEventIndex
         );
         if (chatId !== controller.chatId) {
             // the chat has changed while we were loading the messages
@@ -184,7 +185,7 @@
             if (clearEvents) {
                 events.set([]);
             }
-            const [updated, userIds] = await handleEventsResponse($events, eventsResponse);
+            const [updated, _] = await handleEventsResponse($events, eventsResponse);
             events.set(
                 dedupe(
                     (a, b) => a.index === b.index,

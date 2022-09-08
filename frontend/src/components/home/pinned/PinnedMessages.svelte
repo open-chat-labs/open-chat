@@ -15,6 +15,7 @@
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../stores/user";
+    import { serverChatSummariesStore } from "stores/chat";
 
     export let pinned: Set<number>;
     export let chatId: string;
@@ -38,7 +39,7 @@
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
-            api.getGroupMessagesByMessageIndex(chatId, pinned)
+            api.getGroupMessagesByMessageIndex(chatId, pinned, $serverChatSummariesStore[chatId]?.latestEventIndex)
                 .then((resp) => {
                     if (resp === "events_failed") {
                         rollbar.warn("Unable to load pinned messages: ", resp);

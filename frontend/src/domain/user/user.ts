@@ -177,6 +177,8 @@ export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reache
 
 export type UnpinChatResponse = "success";
 
+export type ArchiveChatResponse = "chat_not_found" | "success";
+
 export type MigrateUserPrincipalResponse =
     | "success"
     | "principal_already_in_use"

@@ -30,6 +30,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -51,19 +52,22 @@ export interface IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
@@ -124,6 +128,8 @@ export interface IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse>;
     pinChat(chatId: string): Promise<PinChatResponse>;
     unpinChat(chatId: string): Promise<UnpinChatResponse>;
+    archiveChat(chatId: string): Promise<ArchiveChatResponse>;
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse>;
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
 }

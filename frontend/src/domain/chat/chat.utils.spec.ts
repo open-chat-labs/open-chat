@@ -57,6 +57,7 @@ const defaultDirectChat: DirectChatSummary = {
     notificationsMuted: false,
     metrics: emptyChatMetrics(),
     myMetrics: emptyChatMetrics(),
+    archived: false,
 };
 
 const defaultGroupChat: GroupChatSummary = {
@@ -104,6 +105,7 @@ const defaultGroupChat: GroupChatSummary = {
         },
     ],
     subtype: undefined,
+    archived: false,
 };
 
 function directChatId(id: number): DirectChatSummary {

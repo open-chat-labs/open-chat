@@ -38,7 +38,8 @@ import type {
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiNnsFailedCryptoTransaction,
-    ApiNnsCompletedCryptoTransaction
+    ApiNnsCompletedCryptoTransaction,
+    ApiArchiveChatResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -90,6 +91,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -97,6 +99,7 @@ import type {
     UnpinChatResponse,
 } from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
+import { ReplicaNotUpToDateError } from "../error";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -334,6 +337,18 @@ export function unpinChatResponse(_candid: ApiUnpinChatResponse): UnpinChatRespo
     return "success";
 }
 
+export function archiveChatResponse(candid: ApiArchiveChatResponse): ArchiveChatResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiArchiveChatResponse type received", candid);
+}
+
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
     if ("Success" in candid) {
         return "success";
@@ -404,7 +419,11 @@ export function transferWithinGroupResponse(
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
-export function sendMessageResponse(candid: ApiSendMessageResponse, sender: string, recipient: string): SendMessageResponse {
+export function sendMessageResponse(
+    candid: ApiSendMessageResponse,
+    sender: string,
+    recipient: string
+): SendMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -419,7 +438,11 @@ export function sendMessageResponse(candid: ApiSendMessageResponse, sender: stri
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer.NNS, sender, recipient),
+            transfer: completedCryptoTransfer(
+                candid.TransferSuccessV2.transfer.NNS,
+                sender,
+                recipient
+            ),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -510,15 +533,22 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
-export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
+export function getEventsResponse(
+    candid: ApiEventsResponse,
+    latestClientEventIndex: number | undefined
+): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
+    }
+    if ("ReplicaNotUpToDate" in candid) {
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
@@ -676,6 +706,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             public: optional(candid.Group.is_public, identity),
             latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
             subtype: updatedSubtype(candid.Group.subtype),
+            archived: optional(candid.Group.archived, identity),
         };
     }
     if ("Direct" in candid) {
@@ -695,6 +726,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             affectedEvents: [...candid.Direct.affected_events],
             metrics: optional(candid.Direct.metrics, chatMetrics),
             myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
+            archived: optional(candid.Direct.archived, identity),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
@@ -802,6 +834,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         myMetrics: chatMetrics(candid.my_metrics),
         latestThreads: candid.latest_threads.map(threadSyncDetails),
         subtype: optional(candid.subtype, apiGroupSubtype),
+        archived: candid.archived,
     };
 }
 
@@ -850,6 +883,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
+        archived: candid.archived,
     };
 }
 

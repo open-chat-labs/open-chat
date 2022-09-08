@@ -51,6 +51,7 @@ import {
 } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -115,13 +116,14 @@ export class CachingUserClient implements IUserClient {
     private handleMissingEvents(
         userId: string,
         [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing], userId, threadRootMessageIndex)
+                .chatEventsByIndex([...missing], userId, threadRootMessageIndex, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
@@ -136,14 +138,15 @@ export class CachingUserClient implements IUserClient {
     async chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         return getCachedEventsByIndex<DirectChatEvent>(
             this.db,
             eventIndexes,
             userId,
             threadRootMessageIndex
-        ).then((res) => this.handleMissingEvents(userId, res, threadRootMessageIndex));
+        ).then((res) => this.handleMissingEvents(userId, res, threadRootMessageIndex, latestClientEventIndex));
     }
 
     @profile("userCachingClient")
@@ -151,6 +154,7 @@ export class CachingUserClient implements IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
@@ -167,10 +171,10 @@ export class CachingUserClient implements IUserClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, userId, messageIndex, interrupt)
+                .chatEventsWindow(eventIndexRange, userId, messageIndex, latestClientEventIndex, interrupt)
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
-            return this.handleMissingEvents(userId, [cachedEvents, missing]);
+            return this.handleMissingEvents(userId, [cachedEvents, missing], undefined, latestClientEventIndex);
         }
     }
 
@@ -180,7 +184,8 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
@@ -203,6 +208,7 @@ export class CachingUserClient implements IUserClient {
                     startIndex,
                     ascending,
                     threadRootMessageIndex,
+                    latestClientEventIndex,
                     interrupt
                 )
                 .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
@@ -210,7 +216,8 @@ export class CachingUserClient implements IUserClient {
             return this.handleMissingEvents(
                 userId,
                 [cachedEvents, missing],
-                threadRootMessageIndex
+                threadRootMessageIndex,
+                latestClientEventIndex
             );
         }
     }
@@ -277,23 +284,25 @@ export class CachingUserClient implements IUserClient {
                     );
 
                     return targetMessageIndex !== undefined
-                        ? groupClient.chatEventsWindow(range, targetMessageIndex, () => true)
+                        ? groupClient.chatEventsWindow(range, targetMessageIndex, chat.latestEventIndex, () => true)
                         : groupClient.chatEvents(
                               range,
                               chat.latestEventIndex,
                               false,
                               undefined,
+                              chat.latestEventIndex,
                               () => true
                           );
                 } else {
                     return targetMessageIndex !== undefined
-                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, () => true)
+                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, chat.latestEventIndex, () => true)
                         : this.chatEvents(
                               range,
                               chat.chatId,
                               chat.latestEventIndex,
                               false,
                               undefined,
+                              chat.latestEventIndex,
                               () => true
                           );
                 }
@@ -511,6 +520,14 @@ export class CachingUserClient implements IUserClient {
 
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.client.unpinChat(chatId);
+    }
+
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.client.archiveChat(chatId);
+    }
+
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.client.unarchiveChat(chatId);
     }
 
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {

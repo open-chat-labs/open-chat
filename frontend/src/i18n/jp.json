@@ -587,5 +587,9 @@
     "loadingTweetPreview": "ツイートのプレビューを読み込んでいます...",
     "fullScreen": "デスクトップで全幅表示",
     "displayWidth": "表示幅",
-    "apply": "申し込み"
+    "apply": "申し込み",
+    "archiveChat": "アーカイブ チャット",
+    "archiveChatFailed": "チャットをアーカイブできませんでした",
+    "unarchiveChatFailed": "チャットのアーカイブを解除できませんでした",
+    "unarchiveChat": "猫のアーカイブを解除"
 }

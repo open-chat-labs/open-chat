@@ -585,5 +585,9 @@
     "loadingTweetPreview": "Loading tweet preview...",
     "fullScreen": "Display full width on desktop",
     "displayWidth": "Display width",
-    "apply": "Apply"
+    "apply": "Apply",
+    "archiveChat": "Archive chat",
+    "archiveChatFailed": "Failed to archive chat",
+    "unarchiveChatFailed": "Failed to un-archive chat",
+    "unarchiveChat": "Un-archive chat"
 }

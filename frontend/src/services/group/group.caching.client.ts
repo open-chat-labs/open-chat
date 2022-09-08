@@ -76,13 +76,14 @@ export class CachingGroupClient implements IGroupClient {
 
     private handleMissingEvents(
         [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing], threadRootMessageIndex)
+                .chatEventsByIndex([...missing], threadRootMessageIndex, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
@@ -96,20 +97,22 @@ export class CachingGroupClient implements IGroupClient {
     @profile("groupCachingClient")
     chatEventsByIndex(
         eventIndexes: number[],
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return getCachedEventsByIndex<GroupChatEvent>(
             this.db,
             eventIndexes,
             this.chatId,
             threadRootMessageIndex
-        ).then((res) => this.handleMissingEvents(res, threadRootMessageIndex));
+        ).then((res) => this.handleMissingEvents(res, threadRootMessageIndex, latestClientEventIndex));
     }
 
     @profile("groupCachingClient")
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
@@ -126,10 +129,10 @@ export class CachingGroupClient implements IGroupClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, messageIndex, interrupt)
+                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex, interrupt)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing]);
+            return this.handleMissingEvents([cachedEvents, missing], undefined, latestClientEventIndex);
         }
     }
 
@@ -138,7 +141,8 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
@@ -160,11 +164,12 @@ export class CachingGroupClient implements IGroupClient {
                     startIndex,
                     ascending,
                     threadRootMessageIndex,
+                    latestClientEventIndex,
                     interrupt
                 )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], threadRootMessageIndex);
+            return this.handleMissingEvents([cachedEvents, missing], threadRootMessageIndex, latestClientEventIndex);
         }
     }
 
@@ -269,25 +274,30 @@ export class CachingGroupClient implements IGroupClient {
      * This is only called to populate pinned messages which is why we don't need to care about threadRootMessageIndex
      */
     @profile("groupCachingClient")
-    async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
+    async getMessagesByMessageIndex(
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
         if (fromCache.missing.size > 0) {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.client
-                .getMessagesByMessageIndex(fromCache.missing)
+                .getMessagesByMessageIndex(fromCache.missing, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(resp));
 
             return resp === "events_failed"
-                ? "events_failed"
+                ? resp
                 : {
                       events: [...resp.events],
                       affectedEvents: resp.affectedEvents,
+                      latestEventIndex: resp.latestEventIndex,
                   };
         }
         return {
             events: fromCache.messageEvents,
             affectedEvents: [],
+            latestEventIndex: undefined,
         };
     }
 
@@ -333,8 +343,11 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.resetInviteCode();
     }
 
-    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
-        return this.client.threadPreviews(threadRootMessageIndexes);
+    threadPreviews(
+        threadRootMessageIndexes: number[],
+        latestClientEventIndex: number | undefined
+    ): Promise<ThreadPreviewsResponse> {
+        return this.client.threadPreviews(threadRootMessageIndexes, latestClientEventIndex);
     }
 
     registerProposalVote(

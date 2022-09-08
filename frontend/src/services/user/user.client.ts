@@ -59,6 +59,7 @@ import {
     pinChatResponse,
     unpinChatResponse,
     migrateUserPrincipal,
+    archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -76,6 +77,7 @@ import {
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type {
+    ArchiveChatResponse,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -151,16 +153,18 @@ export class UserClient extends CandidService implements IUserClient {
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
             events: new Uint32Array(eventIndexes),
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -170,7 +174,8 @@ export class UserClient extends CandidService implements IUserClient {
         _eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        interrupt: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -178,10 +183,11 @@ export class UserClient extends CandidService implements IUserClient {
             user_id: Principal.fromText(userId),
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args,
             interrupt
         );
@@ -193,7 +199,8 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -202,11 +209,12 @@ export class UserClient extends CandidService implements IUserClient {
                 max_events: MAX_EVENTS,
                 start_index: index,
                 ascending: asc,
+                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
             };
 
             return this.handleQueryResponse(
                 () => this.userService.events(args),
-                getEventsResponse,
+                resp => getEventsResponse(resp, latestClientEventIndex),
                 args
             );
         };
@@ -216,7 +224,8 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
-        const disableCache = localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        const disableCache =
+            localStorage.getItem("openchat_disable_initial_state_cache") === "true";
 
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({ disable_cache: [disableCache] }),
@@ -352,9 +361,8 @@ export class UserClient extends CandidService implements IUserClient {
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             };
-            return this.handleResponse(
-                this.userService.send_message(req),
-                (resp) => sendMessageResponse(resp, message.sender, recipientId)
+            return this.handleResponse(this.userService.send_message(req), (resp) =>
+                sendMessageResponse(resp, message.sender, recipientId)
             ).then((resp) => [resp, { ...message, content: newContent }]);
         });
     }
@@ -381,9 +389,8 @@ export class UserClient extends CandidService implements IUserClient {
                 message.repliesTo
             ),
         };
-        return this.handleResponse(
-            this.userService.transfer_crypto_within_group_v2(req),
-            resp => transferWithinGroupResponse(resp, message.sender, recipientId)
+        return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
+            transferWithinGroupResponse(resp, message.sender, recipientId)
         ).then((resp) => [resp, message]);
     }
 
@@ -587,10 +594,13 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
             withdrawal: {
-                NNS: apiPendingCryptocurrencyWithdrawal(domain)
+                NNS: apiPendingCryptocurrencyWithdrawal(domain),
             },
         };
-        return this.handleResponse(this.userService.withdraw_crypto_v2(req), withdrawCryptoResponse);
+        return this.handleResponse(
+            this.userService.withdraw_crypto_v2(req),
+            withdrawCryptoResponse
+        );
     }
 
     @profile("userClient")
@@ -614,10 +624,30 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.handleResponse(
+            this.userService.archive_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            archiveChatResponse
+        );
+    }
+
+    @profile("userClient")
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.handleResponse(
+            this.userService.unarchive_chat({
+                chat_id: Principal.fromText(chatId),
+            }),
+            archiveChatResponse
+        );
+    }
+
+    @profile("userClient")
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {
         return this.handleResponse(
             this.userService.init_user_principal_migration({
-                new_principal: Principal.fromText(newPrincipal)
+                new_principal: Principal.fromText(newPrincipal),
             }),
             toVoid
         );
@@ -628,6 +658,6 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.migrate_user_principal({}),
             migrateUserPrincipal
-        )
+        );
     }
 }

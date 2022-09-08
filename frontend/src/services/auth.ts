@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
+import { AuthClient, LocalStorage } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
 import { closeDb } from "../utils/caching";
@@ -14,6 +14,7 @@ const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
     },
+    storage: new LocalStorage(),
 });
 
 initialiseTracking();
