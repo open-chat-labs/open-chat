@@ -201,7 +201,5 @@ export function selectReaction(
 }
 
 export function startPruningLocalReactions(): void {
-    const pruneInterval = window.setInterval(() => {
-        pruneLocalReactions();
-    }, PRUNE_LOCAL_REACTIONS_INTERVAL);
+    window.setInterval(() => pruneLocalReactions(), PRUNE_LOCAL_REACTIONS_INTERVAL);
 }
