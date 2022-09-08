@@ -7,7 +7,7 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
-import { indexIsInRanges } from "../domain/chat/chat.utils";
+import { indexIsInRanges } from "../utils/range";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;
