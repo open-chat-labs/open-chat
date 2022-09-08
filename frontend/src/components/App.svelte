@@ -47,7 +47,7 @@
     let viewPortContent = "width=device-width, initial-scale=1";
     let profileTrace = showTrace();
 
-    let identityState = writable<IdentityState>("requires_login");
+    let identityState = writable<IdentityState>("loading_user");
     let identity: Identity;
     let api: ServiceContainer;
     let markOnlinePoller: Poller | undefined;
