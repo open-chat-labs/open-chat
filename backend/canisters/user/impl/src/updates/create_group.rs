@@ -70,7 +70,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
-    } else if args.rules.text.is_empty() {
+    } else if args.rules.enabled && args.rules.text.is_empty() {
         Err(RulesTooShort(FieldTooShortResult {
             length_provided: args.rules.text.len() as u32,
             min_length: 1,
