@@ -48,6 +48,7 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
+  const GroupRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -59,6 +60,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
+    'rules' : GroupRules,
     'avatar' : IDL.Opt(Avatar),
   });
   const FieldTooLongResult = IDL.Record({

@@ -179,7 +179,7 @@ function countThreads<T>(things: Record<string, T[]>): number {
         .reduce((total, n) => total + n, 0);
 }
 
-// returns the totol number of threads that we are involved in
+// returns the total number of threads that we are involved in
 export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );

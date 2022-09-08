@@ -661,6 +661,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
+  const GroupRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
     'blocked_users' : IDL.Vec(UserId),
@@ -776,6 +777,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(GroupPermissions),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'rules' : GroupRules,
     'avatar' : AvatarUpdate,
   });
   const FieldTooLongResult = IDL.Record({

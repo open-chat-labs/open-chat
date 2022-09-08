@@ -398,6 +398,7 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export interface GroupRules { 'text' : string, 'enabled' : boolean }
 export type GroupSubtype = {
     'GovernanceProposals' : GovernanceProposalsSubtype
   };
@@ -876,6 +877,7 @@ export interface UpdateGroupArgs {
   'permissions' : [] | [GroupPermissions],
   'name' : string,
   'description' : string,
+  'rules' : GroupRules,
   'avatar' : AvatarUpdate,
 }
 export type UpdateGroupResponse = { 'NameReserved' : null } |

@@ -119,7 +119,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -141,7 +141,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, latestClientEventIndex),
             args,
             interrupt
         );
@@ -167,7 +167,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             };
             return this.handleQueryResponse(
                 () => this.groupService.events(args),
-                resp => getEventsResponse(resp, latestClientEventIndex),
+                (resp) => getEventsResponse(resp, latestClientEventIndex),
                 args,
                 interrupt
             );
@@ -285,6 +285,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                               },
                           },
                 permissions: [],
+                rules: {
+                    text: "",
+                    enabled: false,
+                },
             }),
             updateGroupResponse
         );
@@ -414,7 +418,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            resp => getMessagesByMessageIndexResponse(resp, latestClientEventIndex),
+            (resp) => getMessagesByMessageIndexResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -511,7 +515,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             () =>
                 this.groupService.thread_previews({
                     threads: new Uint32Array(threadRootMessageIndexes),
-                    latest_client_event_index: apiOptional(identity, latestClientEventIndex)
+                    latest_client_event_index: apiOptional(identity, latestClientEventIndex),
                 }),
             (resp) => threadPreviewsResponse(this.chatId, resp, latestClientEventIndex)
         );

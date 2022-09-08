@@ -134,6 +134,10 @@ export class UserClient extends CandidService implements IUserClient {
                     };
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
+                rules: {
+                    text: "",
+                    enabled: false,
+                },
             }),
             createGroupResponse
         );
@@ -154,7 +158,7 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexes: number[],
         userId: string,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -164,7 +168,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -187,7 +191,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, latestClientEventIndex),
             args,
             interrupt
         );
@@ -200,7 +204,7 @@ export class UserClient extends CandidService implements IUserClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -214,7 +218,7 @@ export class UserClient extends CandidService implements IUserClient {
 
             return this.handleQueryResponse(
                 () => this.userService.events(args),
-                resp => getEventsResponse(resp, latestClientEventIndex),
+                (resp) => getEventsResponse(resp, latestClientEventIndex),
                 args
             );
         };
