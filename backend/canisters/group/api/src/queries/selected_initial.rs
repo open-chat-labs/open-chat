@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, MessageIndex, Participant, UserId};
+use types::{EventIndex, MessageIndex, Participant, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
@@ -13,6 +13,7 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
+    pub timestamp: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub participants: Vec<Participant>,
     pub blocked_users: Vec<UserId>,

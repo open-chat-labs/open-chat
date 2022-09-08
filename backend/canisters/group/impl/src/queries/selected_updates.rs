@@ -18,11 +18,8 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let data = &runtime_state.data;
     let latest_event_index = data.events.main().last().index;
 
-    if latest_event_index <= args.updates_since {
-        return SuccessNoUpdates(latest_event_index);
-    }
-
     let mut result = SuccessResult {
+        timestamp: runtime_state.env.now(),
         latest_event_index,
         participants_added_or_updated: vec![],
         participants_removed: vec![],
@@ -102,17 +99,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         }
     }
 
-    if result.participants_added_or_updated.is_empty()
-        && result.participants_removed.is_empty()
-        && result.blocked_users_added.is_empty()
-        && result.blocked_users_removed.is_empty()
-        && result.pinned_messages_added.is_empty()
-        && result.pinned_messages_removed.is_empty()
-    {
-        SuccessNoUpdates(latest_event_index)
-    } else {
-        Success(result)
-    }
+    Success(result)
 }
 
 struct UserUpdatesHandler<'a> {
