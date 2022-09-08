@@ -536,24 +536,6 @@
         }
     }
 
-    .icp-balance {
-        display: flex;
-        gap: $sp3;
-        justify-content: space-between;
-    }
-
-    .icp-balance-value {
-        @include font(book, normal, fs-120);
-        color: var(--input-txt);
-        height: 45px;
-        padding: $sp3;
-        width: 100%;
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
-        border-radius: $sp2;
-        text-align: right;
-    }
-
     .accounts {
         table {
             width: 100%;
