@@ -598,6 +598,7 @@ export type EventWrapper<T extends ChatEvent> = {
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
     affectedEvents: EventWrapper<T>[];
+    latestEventIndex: number | undefined;
 };
 
 export type GroupChatUpdatesSince = {

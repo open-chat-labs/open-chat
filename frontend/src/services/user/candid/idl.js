@@ -316,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -498,23 +499,28 @@ export const idlFactory = ({ IDL }) => {
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
     'events' : IDL.Vec(ChatEventWrapper),
+    'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
+    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsRangeArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'to_index' : EventIndex,
     'from_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
@@ -674,11 +680,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MessagesByMessageIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
+    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),

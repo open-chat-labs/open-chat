@@ -352,10 +352,11 @@ export class ChatController {
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
         if (messageIndex >= 0) {
             const range = indexRangeForChat(get(this.serverChatSummary));
+            const chat = this.chatVal;
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-                this.chatVal.kind === "direct_chat"
-                    ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
-                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
+                chat.kind === "direct_chat"
+                    ? this.api.directChatEventsWindow(range, chat.them, messageIndex, chat.latestEventIndex)
+                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex, chat.latestEventIndex);
             const eventsResponse = await eventsPromise;
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
@@ -396,11 +397,14 @@ export class ChatController {
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
+        const chat = this.chatVal;
         return this.api.chatEvents(
-            this.chatVal,
+            chat,
             indexRangeForChat(get(this.serverChatSummary)),
             startIndex,
-            ascending
+            ascending,
+            undefined,
+            chat.latestEventIndex
         );
     }
 
@@ -527,6 +531,7 @@ export class ChatController {
             this.handleEventsResponse({
                 events: [messageEvent],
                 affectedEvents: [],
+                latestEventIndex: undefined,
             });
         } else {
             if (!upToDate(this.chatVal, get(this.events))) {
@@ -671,8 +676,8 @@ export class ChatController {
         const chat = this.chatVal;
         const eventsPromise =
             chat.kind === "direct_chat"
-                ? this.api.directChatEventsByEventIndex(chat.them, filtered)
-                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
+                ? this.api.directChatEventsByEventIndex(chat.them, filtered, undefined, chat.latestEventIndex)
+                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered, undefined, chat.latestEventIndex);
 
         return eventsPromise.then((resp) => this.handleEventsResponse(resp));
     }

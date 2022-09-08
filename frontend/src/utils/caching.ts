@@ -21,7 +21,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 37;
+const CACHE_VERSION = 39;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -266,7 +266,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
 
     events.sort((a, b) => a.index - b.index);
 
-    return [{ events, affectedEvents: [] }, missing, totalMiss];
+    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing, totalMiss];
 }
 
 async function aggregateEventsWindow<T extends ChatEvent>(
@@ -384,7 +384,7 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
         })
     );
     const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
-    return [{ events, affectedEvents: [] }, missing];
+    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing];
 }
 
 export async function getCachedEvents<T extends ChatEvent>(
@@ -412,7 +412,7 @@ export async function getCachedEvents<T extends ChatEvent>(
         console.log("cache miss: ", missing);
     }
 
-    return [{ events, affectedEvents: [] }, missing];
+    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing];
 }
 
 export function mergeSuccessResponses<T extends ChatEvent>(
@@ -422,6 +422,9 @@ export function mergeSuccessResponses<T extends ChatEvent>(
     return {
         events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
         affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
+        latestEventIndex: a.latestEventIndex === undefined && b.latestEventIndex === undefined
+            ? undefined
+            : Math.max(a.latestEventIndex ?? -1, b.latestEventIndex ?? -1),
     };
 }
 

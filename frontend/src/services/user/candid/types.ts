@@ -230,6 +230,7 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserBlocked' : null };
 export type EventIndex = number;
 export interface EventsArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'max_events' : number,
   'ascending' : boolean,
@@ -237,23 +238,28 @@ export interface EventsArgs {
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'events' : Uint32Array,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'to_index' : EventIndex,
   'from_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type EventsResponse = { 'ChatNotFound' : null } |
+export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
+  { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'affected_events' : Array<ChatEventWrapper>,
   'events' : Array<ChatEventWrapper>,
+  'latest_event_index' : EventIndex,
 }
 export interface EventsWindowArgs {
+  'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'user_id' : UserId,
   'max_events' : number,
@@ -529,7 +535,10 @@ export interface MessagesByMessageIndexArgs {
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
+export type MessagesByMessageIndexResponse = {
+    'ReplicaNotUpToDate' : EventIndex
+  } |
+  { 'ChatNotFound' : null } |
   {
     'Success' : {
       'messages' : Array<MessageEventWrapper>,

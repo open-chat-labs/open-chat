@@ -108,16 +108,18 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     chatEventsByIndex(
         eventIndexes: number[],
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -126,6 +128,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const thread_root_message_index: [] = [];
@@ -134,10 +137,11 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            getEventsResponse,
+            resp => getEventsResponse(resp, latestClientEventIndex),
             args,
             interrupt
         );
@@ -148,7 +152,8 @@ export class GroupClient extends CandidService implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
@@ -158,10 +163,11 @@ export class GroupClient extends CandidService implements IGroupClient {
                 ascending: asc,
                 start_index: index,
                 invite_code: apiOptional(base64ToBigint, this.inviteCode),
+                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
             };
             return this.handleQueryResponse(
                 () => this.groupService.events(args),
-                getEventsResponse,
+                resp => getEventsResponse(resp, latestClientEventIndex),
                 args,
                 interrupt
             );
@@ -394,15 +400,21 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
+    getMessagesByMessageIndex(
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
+        const invite_code: [] = [];
         const args = {
             thread_root_message_index,
             messages: new Uint32Array(messageIndexes),
+            invite_code,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            getMessagesByMessageIndexResponse,
+            resp => getMessagesByMessageIndexResponse(resp, latestClientEventIndex),
             args
         );
     }
@@ -491,13 +503,17 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    threadPreviews(threadRootMessageIndexes: number[]): Promise<ThreadPreviewsResponse> {
+    threadPreviews(
+        threadRootMessageIndexes: number[],
+        latestClientEventIndex: number | undefined
+    ): Promise<ThreadPreviewsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.groupService.thread_previews({
                     threads: new Uint32Array(threadRootMessageIndexes),
+                    latest_client_event_index: apiOptional(identity, latestClientEventIndex)
                 }),
-            (resp) => threadPreviewsResponse(this.chatId, resp)
+            (resp) => threadPreviewsResponse(this.chatId, resp, latestClientEventIndex)
         );
     }
 

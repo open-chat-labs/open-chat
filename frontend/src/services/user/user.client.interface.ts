@@ -52,19 +52,22 @@ export interface IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;

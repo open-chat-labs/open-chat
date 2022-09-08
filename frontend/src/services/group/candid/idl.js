@@ -293,6 +293,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'invite_code' : IDL.Opt(IDL.Nat64),
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -490,21 +491,25 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
+    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'invite_code' : IDL.Opt(IDL.Nat64),
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsRangeArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'invite_code' : IDL.Opt(IDL.Nat64),
     'to_index' : EventIndex,
     'from_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'invite_code' : IDL.Opt(IDL.Nat64),
     'max_events' : IDL.Nat32,
@@ -523,7 +528,9 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Null,
   });
   const MessagesByMessageIndexArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageEventWrapper = IDL.Record({
@@ -533,6 +540,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
+    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),
@@ -711,13 +719,17 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'InvalidRequest' : IDL.Text,
   });
-  const ThreadPreviewsArgs = IDL.Record({ 'threads' : IDL.Vec(MessageIndex) });
+  const ThreadPreviewsArgs = IDL.Record({
+    'latest_client_event_index' : IDL.Opt(EventIndex),
+    'threads' : IDL.Vec(MessageIndex),
+  });
   const ThreadPreview = IDL.Record({
     'latest_replies' : IDL.Vec(MessageEventWrapper),
     'total_replies' : IDL.Nat32,
     'root_message' : MessageEventWrapper,
   });
   const ThreadPreviewsResponse = IDL.Variant({
+    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({ 'threads' : IDL.Vec(ThreadPreview) }),
   });

@@ -361,14 +361,14 @@
                 return;
         }
 
-        const chat = $chatSummariesStore[chatId];
+        const chat = $serverChatSummariesStore[chatId];
         if (chat === undefined) {
             return;
         }
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         setCachedMessageFromNotification(notification);
         Promise.all([
-            api.rehydrateMessage(chatType, chatId, message),
+            api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
             addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
