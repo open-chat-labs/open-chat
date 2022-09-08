@@ -2,14 +2,28 @@
     import Button from "./Button.svelte";
     import Logo from "./Logo.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
     import ModalPage from "./ModalPage.svelte";
-    import { selectedAuthProviderStore, showAuthProvidersStore } from "../stores/authProviders";
+    import {
+        idbAuthClientStore,
+        lsAuthClientStore,
+        selectedAuthProviderStore,
+    } from "../stores/authProviders";
     import { AuthProvider } from "../domain/auth";
     import { userCreatedStore } from "../stores/settings";
 
     const dispatch = createEventDispatcher();
     export let loading: boolean = false;
+
+    let showAuthProviders = false;
+
+    onMount(async () => {
+        const KEY_STORAGE_DELEGATION = "delegation";
+        const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
+        const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
+        const noDelegation = ls == null && idb == null;
+        showAuthProviders = !$userCreatedStore && noDelegation;
+    });
 </script>
 
 <ModalPage>
@@ -28,7 +42,7 @@
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}
         >{$_($userCreatedStore ? "login.signIn" : "login.signInOrRegister")}</Button>
-    {#if $showAuthProvidersStore}
+    {#if showAuthProviders}
         <div class="auth-providers">
             <div
                 class="provider"
