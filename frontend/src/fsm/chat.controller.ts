@@ -54,10 +54,10 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
+import { eventsStore } from "../stores/events";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
-    public events: Writable<EventWrapper<ChatEvent>[]>;
     public focusMessageIndex: Writable<number | undefined>;
     public textContent: Readable<string | undefined>;
     public replyingTo: Readable<EnhancedReplyContext | undefined>;
@@ -98,7 +98,7 @@ export class ChatController {
         );
 
         const chat = get(this.chat);
-        this.events = immutableStore(unconfirmed.getMessages(chat.chatId));
+        eventsStore.selectChat(chat.chatId);
         this.focusMessageIndex = immutableStore(_focusMessageIndex);
         this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
@@ -125,7 +125,7 @@ export class ChatController {
     }
 
     destroy(): void {
-        this.events.set([]);
+        eventsStore.clear();
     }
 
     get chatVal(): ChatSummary {
@@ -172,7 +172,7 @@ export class ChatController {
                     this.blockedUsers.set(resp.blockedUsers);
                     this.pinnedMessages.set(resp.pinnedMessages);
                 }
-                await this.updateUserStore(userIdsFromEvents(get(this.events)));
+                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             } else {
                 await this.updateDetails();
             }
@@ -192,7 +192,7 @@ export class ChatController {
                 this.participants.set(this.groupDetails.participants);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
-                await this.updateUserStore(userIdsFromEvents(get(this.events)));
+                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             }
         }
     }
@@ -220,7 +220,7 @@ export class ChatController {
         answerIndex: number,
         type: "register" | "delete"
     ): void {
-        this.events.update((events) => {
+        eventsStore.update((events) => {
             return events.map((evt) =>
                 updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
             );
@@ -317,7 +317,7 @@ export class ChatController {
         if (resp === "events_failed") return;
 
         this.initialised = true;
-        const events = get(this.events);
+        const events = get(eventsStore);
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
@@ -340,13 +340,13 @@ export class ChatController {
         const userIds = userIdsFromEvents(updated);
         await this.updateUserStore(userIds);
 
-        this.events.set(updated);
+        eventsStore.set(updated);
 
         if (resp.events.length > 0) {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
         }
 
-        makeRtcConnections(this.user.userId, this.chatVal, get(this.events), get(userStore));
+        makeRtcConnections(this.user.userId, this.chatVal, updated, get(userStore));
     }
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
@@ -355,8 +355,18 @@ export class ChatController {
             const chat = this.chatVal;
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 chat.kind === "direct_chat"
-                    ? this.api.directChatEventsWindow(range, chat.them, messageIndex, chat.latestEventIndex)
-                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex, chat.latestEventIndex);
+                    ? this.api.directChatEventsWindow(
+                          range,
+                          chat.them,
+                          messageIndex,
+                          chat.latestEventIndex
+                      )
+                    : this.api.groupChatEventsWindow(
+                          range,
+                          this.chatId,
+                          messageIndex,
+                          chat.latestEventIndex
+                      );
             const eventsResponse = await eventsPromise;
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
@@ -443,7 +453,7 @@ export class ChatController {
         });
     }
 
-    public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
+    public async loadPreviousMessages(): Promise<void> {
         const criteria = this.previousMessagesCriteria();
 
         const eventsResponse = criteria
@@ -451,7 +461,7 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return [];
+            return;
         }
 
         await this.handleEventsResponse(eventsResponse);
@@ -461,18 +471,18 @@ export class ChatController {
             event: { kind: "loaded_previous_events" },
         });
 
-        return get(this.events);
+        return;
     }
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!upToDate(this.chatVal, get(this.events))) {
+        if (!upToDate(this.chatVal, get(eventsStore))) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
         if (get(this.editingEvent)) {
-            this.events.update((events) => {
+            eventsStore.update((events) => {
                 return events.map((e) => {
                     if (
                         e.event.kind === "message" &&
@@ -534,7 +544,7 @@ export class ChatController {
                 latestEventIndex: undefined,
             });
         } else {
-            if (!upToDate(this.chatVal, get(this.events))) {
+            if (!upToDate(this.chatVal, get(eventsStore))) {
                 return;
             }
 
@@ -554,13 +564,13 @@ export class ChatController {
     }
 
     appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = get(this.events).find(
+        const existing = get(eventsStore).find(
             (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
         );
 
         if (existing !== undefined) return false;
 
-        this.events.update((events) => [...events, message]);
+        eventsStore.update((events) => [...events, message]);
         return true;
     }
 
@@ -575,7 +585,7 @@ export class ChatController {
             });
         }
 
-        this.events.update((events) =>
+        eventsStore.update((events) =>
             replaceMessageContent(events, BigInt(message.messageId), message.content)
         );
     }
@@ -590,7 +600,7 @@ export class ChatController {
                 userId: userId,
             });
         }
-        this.events.update((events) =>
+        eventsStore.update((events) =>
             replaceMessageContent(events, BigInt(messageId), {
                 kind: "deleted_content",
                 deletedBy: userId,
@@ -611,7 +621,7 @@ export class ChatController {
         }
         unconfirmed.delete(this.chatId, messageId);
         messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
-        this.events.update((events) =>
+        eventsStore.update((events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
     }
@@ -676,8 +686,18 @@ export class ChatController {
         const chat = this.chatVal;
         const eventsPromise =
             chat.kind === "direct_chat"
-                ? this.api.directChatEventsByEventIndex(chat.them, filtered, undefined, chat.latestEventIndex)
-                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered, undefined, chat.latestEventIndex);
+                ? this.api.directChatEventsByEventIndex(
+                      chat.them,
+                      filtered,
+                      undefined,
+                      chat.latestEventIndex
+                  )
+                : this.api.groupChatEventsByEventIndex(
+                      chat.chatId,
+                      filtered,
+                      undefined,
+                      chat.latestEventIndex
+                  );
 
         return eventsPromise.then((resp) => this.handleEventsResponse(resp));
     }
@@ -728,7 +748,7 @@ export class ChatController {
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
-            this.events.update((events) =>
+            eventsStore.update((events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
                         return confirmed;
@@ -1106,20 +1126,23 @@ export class ChatController {
     }
 
     isContiguous(response: EventsSuccessResult<ChatEvent>): boolean {
-        if (this.confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+        if (this.confirmedEventIndexesLoaded.length === 0 || response.events.length === 0)
+            return true;
 
         const firstIndex = response.events[0].index;
         const lastIndex = response.events[response.events.length - 1].index;
         const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
-        const isContiguous = this.confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+        const isContiguous =
+            this.confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
 
         if (!isContiguous) {
             console.log(
                 "Events in response are not contiguous with the loaded events",
                 this.confirmedEventIndexesLoaded,
                 firstIndex,
-                lastIndex);
+                lastIndex
+            );
         }
 
         return isContiguous;

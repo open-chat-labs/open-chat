@@ -14,10 +14,11 @@ import type {
     WebRtcMessage,
 } from "./webrtc";
 import { toggleReactionInEventList } from "../../stores/reactions";
+import { eventsStore } from "stores/events";
 
 function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
     delegateToChatController(message, (chat) =>
-        chat.events.update((events) =>
+        eventsStore.update((events) =>
             toggleReactionInEventList(
                 chat.chatVal,
                 message.userId,
