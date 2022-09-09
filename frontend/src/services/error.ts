@@ -24,8 +24,8 @@ export class SessionExpiryError extends HttpError {
 }
 
 export class ReplicaNotUpToDateError extends Error {
-    constructor(public latestReplicaEventIndex: number, public latestClientEventIndex: number) {
-        super(`Replica not up to date. Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}`);
+    constructor(public latestReplicaEventIndex: number, public latestClientEventIndex: number, failedPostCheck: boolean) {
+        super(`Replica not up to date. Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}. FailedPostCheck: ${failedPostCheck}`);
     }
 }
 
