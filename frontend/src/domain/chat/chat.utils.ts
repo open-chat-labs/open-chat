@@ -48,6 +48,7 @@ import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
+import { indexIsInRanges } from "../../utils/range";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
@@ -322,14 +323,6 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
     return chat.minVisibleEventIndex;
 }
 
-export function indexIsInRanges(index: number, ranges: DRange): boolean {
-    for (const range of ranges.subranges()) {
-        if (range.low <= index && index <= range.high) return true;
-        if (range.low > index) break;
-    }
-    return false;
-}
-
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
@@ -590,9 +583,9 @@ function mergeThreadSyncDetails(
                         threadRootMessageIndex: thread.threadRootMessageIndex,
                         lastUpdated: thread.lastUpdated,
                         readUpTo: thread.readUpTo ?? existing?.readUpTo,
-                        latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
+                        latestEventIndex: thread.latestEventIndex ?? existing.latestEventIndex,
                         latestMessageIndex:
-                            thread.latestMessageIndex ?? existing!.latestMessageIndex,
+                            thread.latestMessageIndex ?? existing.latestMessageIndex,
                     };
                 }
                 return merged;

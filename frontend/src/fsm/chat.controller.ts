@@ -30,7 +30,6 @@ import {
     replaceMessageContent,
     serialiseMessageForRtc,
     userIdsFromEvents,
-    indexIsInRanges,
     updateEventPollContent,
     mergeSendMessageResponse,
     makeRtcConnections,
@@ -48,6 +47,7 @@ import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
+import { indexIsInRanges } from "../utils/range";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
