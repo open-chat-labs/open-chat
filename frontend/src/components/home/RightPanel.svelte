@@ -31,7 +31,8 @@
     import Thread from "./thread/Thread.svelte";
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
-    import { removeQueryStringParam } from "utils/urls";
+    import { removeQueryStringParam } from "../../utils/urls";
+    import { eventsStore } from "../../stores/events";
 
     const dispatch = createEventDispatcher();
 
@@ -54,7 +55,6 @@
     $: blockedUsers = controller?.blockedUsers ?? writable(new Set<string>());
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
-    $: events = controller?.events;
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -128,8 +128,8 @@
     }
 
     $: threadRootEvent =
-        lastState.kind === "message_thread_panel" && events !== undefined
-            ? findMessage($events ?? [], lastState.rootEvent.event.messageId)
+        lastState.kind === "message_thread_panel"
+            ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
             : undefined;
 </script>
 

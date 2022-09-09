@@ -389,8 +389,6 @@
 
     $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
 
-    $: console.log("Grouped events: ", groupedEvents);
-
     $: {
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
