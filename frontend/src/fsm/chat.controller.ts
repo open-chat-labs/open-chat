@@ -40,7 +40,7 @@ import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
-import type { ChatState } from "../stores/chat";
+import { ChatState, currentChatMembers } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -53,9 +53,8 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { eventsStore } from "../stores/events";
+import { eventsStore } from "../stores/chat";
 import { focusMessageIndexStore } from "../stores/focusMessageIndex";
-import { currentChatMembers } from "../stores/members";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -97,8 +96,9 @@ export class ChatController {
         );
 
         const chat = get(this.chat);
-        eventsStore.selectChat(chat.chatId);
+        eventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
         focusMessageIndexStore.set(_focusMessageIndex);
+        currentChatMembers.set(chat.chatId, []);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
         this.chatId = chat.chatId;
@@ -123,9 +123,9 @@ export class ChatController {
     }
 
     destroy(): void {
-        eventsStore.clear();
+        eventsStore.clear(this.chatId);
         focusMessageIndexStore.set(undefined);
-        currentChatMembers.set([]);
+        currentChatMembers.clear(this.chatId);
     }
 
     get chatVal(): ChatSummary {
@@ -168,11 +168,11 @@ export class ChatController {
                 );
                 if (resp !== "caller_not_in_group") {
                     this.groupDetails = resp;
-                    currentChatMembers.set(resp.members);
+                    currentChatMembers.set(this.chatId, resp.members);
                     this.blockedUsers.set(resp.blockedUsers);
                     this.pinnedMessages.set(resp.pinnedMessages);
                 }
-                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
+                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
             } else {
                 await this.updateDetails();
             }
@@ -189,10 +189,10 @@ export class ChatController {
                     this.chatId,
                     this.groupDetails
                 );
-                currentChatMembers.set(this.groupDetails.members);
+                currentChatMembers.set(this.chatId, this.groupDetails.members);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
-                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
+                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
             }
         }
     }
@@ -220,7 +220,7 @@ export class ChatController {
         answerIndex: number,
         type: "register" | "delete"
     ): void {
-        eventsStore.update((events) => {
+        eventsStore.update(this.chatId, (events) => {
             return events.map((evt) =>
                 updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
             );
@@ -286,7 +286,9 @@ export class ChatController {
     }
 
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
-        const memberIds = get(currentChatMembers).map((p) => p.userId);
+        const members = get(currentChatMembers);
+        console.log("members: ", members);
+        const memberIds = members.map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
         const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
         allUserIds.forEach((u) => {
@@ -317,7 +319,7 @@ export class ChatController {
         if (resp === "events_failed") return;
 
         this.initialised = true;
-        const events = get(eventsStore);
+        const events = eventsStore.get();
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
@@ -340,7 +342,7 @@ export class ChatController {
         const userIds = userIdsFromEvents(updated);
         await this.updateUserStore(userIds);
 
-        eventsStore.set(updated);
+        eventsStore.set(this.chatId, updated);
 
         if (resp.events.length > 0) {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
@@ -476,13 +478,13 @@ export class ChatController {
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!upToDate(this.chatVal, get(eventsStore))) {
+        if (!upToDate(this.chatVal, eventsStore.get())) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
         if (get(this.editingEvent)) {
-            eventsStore.update((events) => {
+            eventsStore.update(this.chatId, (events) => {
                 return events.map((e) => {
                     if (
                         e.event.kind === "message" &&
@@ -544,7 +546,7 @@ export class ChatController {
                 latestEventIndex: undefined,
             });
         } else {
-            if (!upToDate(this.chatVal, get(eventsStore))) {
+            if (!upToDate(this.chatVal, eventsStore.get())) {
                 return;
             }
 
@@ -564,13 +566,16 @@ export class ChatController {
     }
 
     appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = get(eventsStore).find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-        );
+        const existing = eventsStore
+            .get()
+            .find(
+                (ev) =>
+                    ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+            );
 
         if (existing !== undefined) return false;
 
-        eventsStore.update((events) => [...events, message]);
+        eventsStore.update(this.chatId, (events) => [...events, message]);
         return true;
     }
 
@@ -585,7 +590,7 @@ export class ChatController {
             });
         }
 
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             replaceMessageContent(events, BigInt(message.messageId), message.content)
         );
     }
@@ -600,7 +605,7 @@ export class ChatController {
                 userId: userId,
             });
         }
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             replaceMessageContent(events, BigInt(messageId), {
                 kind: "deleted_content",
                 deletedBy: userId,
@@ -621,7 +626,7 @@ export class ChatController {
         }
         unconfirmed.delete(this.chatId, messageId);
         messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
     }
@@ -748,7 +753,7 @@ export class ChatController {
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
-            eventsStore.update((events) =>
+            eventsStore.update(this.chatId, (events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
                         return confirmed;
@@ -844,7 +849,7 @@ export class ChatController {
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
-        currentChatMembers.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
@@ -862,7 +867,7 @@ export class ChatController {
     }
 
     private transferOwnershipLocally(me: string, them: string): void {
-        currentChatMembers.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: "owner" };
@@ -876,7 +881,7 @@ export class ChatController {
     }
 
     private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
-        currentChatMembers.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: theirRole };
@@ -909,7 +914,7 @@ export class ChatController {
     }
 
     makeAdmin(userId: string): Promise<void> {
-        currentChatMembers.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
         );
         return this.api
@@ -943,7 +948,7 @@ export class ChatController {
 
     private blockUserLocally(userId: string): void {
         this.blockedUsers.update((b) => b.add(userId));
-        currentChatMembers.update((p) => p.filter((p) => p.userId !== userId));
+        currentChatMembers.update(this.chatId, (p) => p.filter((p) => p.userId !== userId));
     }
 
     private unblockUserLocally(userId: string): void {
@@ -951,7 +956,7 @@ export class ChatController {
             b.delete(userId);
             return b;
         });
-        currentChatMembers.update((p) => [
+        currentChatMembers.update(this.chatId, (p) => [
             ...p,
             {
                 role: "participant",
@@ -998,7 +1003,7 @@ export class ChatController {
             toRemove = users.map((u) => u.userId);
         }
 
-        currentChatMembers.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.filter((p) => {
                 !toRemove.includes(p.userId);
             })
@@ -1018,7 +1023,7 @@ export class ChatController {
                 return b;
             });
         }
-        currentChatMembers.update((ps) => [
+        currentChatMembers.update(this.chatId, (ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
                 role: "participant" as MemberRole,

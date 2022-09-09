@@ -1,7 +1,6 @@
 import { containsReaction } from "../domain/chat/chat.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { Writable } from "svelte/store";
 import { overwriteCachedEvents } from "../utils/caching";
 import { rollbar } from "../utils/logging";
 import type {
@@ -11,6 +10,7 @@ import type {
     LocalReaction,
     Reaction,
 } from "../domain/chat/chat";
+import type { EventStoreUpdater } from "./chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
@@ -149,7 +149,7 @@ export function toggleReactionInEventList(
 
 export function selectReaction(
     api: ServiceContainer,
-    eventStore: Writable<EventWrapper<ChatEvent>[]>,
+    eventStoreUpdater: EventStoreUpdater,
     chat: ChatSummary,
     userId: string,
     messageId: bigint,
@@ -160,7 +160,7 @@ export function selectReaction(
 ): Promise<boolean> {
     const toggle = () =>
         // optimistic update
-        eventStore.update((events) =>
+        eventStoreUpdater(chat.chatId, (events) =>
             toggleReactionInEventList(
                 chat,
                 userId,

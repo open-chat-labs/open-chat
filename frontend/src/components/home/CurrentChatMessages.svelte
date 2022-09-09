@@ -41,7 +41,7 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import { eventsStore } from "../../stores/events";
+    import { eventsStore } from "../../stores/chat";
     import { focusMessageIndexStore } from "../../stores/focusMessageIndex";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -314,7 +314,7 @@
 
         selectReaction(
             controller.api,
-            eventsStore,
+            eventsStore.update,
             $chat,
             controller.user.userId,
             message.messageId,

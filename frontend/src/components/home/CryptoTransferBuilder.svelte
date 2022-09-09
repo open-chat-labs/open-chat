@@ -35,7 +35,7 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import { currentChatMembers } from "../../stores/members";
+    import { currentChatMembers } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 

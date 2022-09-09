@@ -32,8 +32,8 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { eventsStore } from "../../stores/events";
-    import { currentChatMembers } from "../../stores/members";
+    import { eventsStore } from "../../stores/chat";
+    import { currentChatMembers } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -65,8 +65,12 @@
     }
 
     function removeMember(ev: CustomEvent<string>): void {
-        currentChatMembers.update((ps) => ps.filter((p) => p.userId !== ev.detail));
-        controller?.removeMember(ev.detail);
+        if (controller !== undefined) {
+            currentChatMembers.update(controller.chatId, (ps) =>
+                ps.filter((p) => p.userId !== ev.detail)
+            );
+            controller.removeMember(ev.detail);
+        }
     }
 
     function popHistory() {
@@ -128,7 +132,7 @@
     }
 
     $: threadRootEvent =
-        lastState.kind === "message_thread_panel"
+        lastState.kind === "message_thread_panel" && chatId !== undefined
             ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
             : undefined;
 </script>

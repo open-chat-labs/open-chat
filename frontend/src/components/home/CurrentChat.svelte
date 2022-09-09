@@ -50,7 +50,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
-    import { currentChatMembers } from "../../stores/members";
+    import { currentChatMembers } from "../../stores/chat";
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;

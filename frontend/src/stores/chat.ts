@@ -1,7 +1,9 @@
 import type {
+    ChatEvent,
     ChatSummary,
     CurrentChatState,
     EventWrapper,
+    Member,
     Message,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
@@ -33,6 +35,7 @@ import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
+import { createChatSpecificStore } from "./dataByChatFactory";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -451,3 +454,13 @@ export function removeChat(chatId: string): void {
         }, {} as Record<string, ChatSummary>);
     });
 }
+
+export const eventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
+
+export type EventStore = typeof eventsStore;
+export type EventStoreUpdater = (
+    chatId: string,
+    fn: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]
+) => void;
+
+export const currentChatMembers = createChatSpecificStore<Member[]>([]);
