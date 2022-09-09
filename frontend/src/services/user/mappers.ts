@@ -303,7 +303,7 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     }
     if ("ParticipantLimitReached" in candid) {
         // todo - check if we need to deal with this in the UI
-        return { kind: "participant_limit_reached" };
+        return { kind: "member_limit_reached" };
     }
     if ("GroupNotFound" in candid) {
         return { kind: "group_not_found" };
@@ -542,7 +542,12 @@ export function getEventsResponse(
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        ensureReplicaIsUpToDate(chatId, undefined, latestClientEventIndexPreRequest, latestEventIndex);
+        ensureReplicaIsUpToDate(
+            chatId,
+            undefined,
+            latestClientEventIndexPreRequest,
+            latestEventIndex
+        );
 
         return {
             events: candid.Success.events.map(event),
@@ -554,7 +559,11 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
+        throw new ReplicaNotUpToDateError(
+            candid.ReplicaNotUpToDate,
+            latestClientEventIndexPreRequest ?? -1,
+            false
+        );
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
@@ -697,8 +706,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 canisterId: chatId,
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
-            participantCount: optional(candid.Group.participant_count, identity),
-            myRole: optional(candid.Group.role, participantRole),
+            memberCount: optional(candid.Group.participant_count, identity),
+            myRole: optional(candid.Group.role, memberRole),
             mentions: candid.Group.mentions
                 .filter((m) => m.thread_root_message_index.length === 0)
                 .map(mention),
@@ -748,7 +757,7 @@ function updatedSubtype(candid: ApiGroupSubtypeUpdate): GroupSubtypeUpdate {
     }
 }
 
-function participantRole(candid: ApiRole): MemberRole {
+function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
@@ -829,8 +838,8 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             canisterId: candid.chat_id.toString(),
         })),
         notificationsMuted: candid.notifications_muted,
-        participantCount: candid.participant_count,
-        myRole: participantRole(candid.role),
+        memberCount: candid.participant_count,
+        myRole: memberRole(candid.role),
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),

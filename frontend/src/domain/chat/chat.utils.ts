@@ -7,7 +7,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MessageContent,
-    Participant,
+    Member,
     TextContent,
     ChatSummaryUpdates,
     DirectChatSummaryUpdates,
@@ -28,7 +28,7 @@ import type {
     MemberRole,
     PermissionRole,
     CryptocurrencyContent,
-    AggregateParticipantsJoinedOrLeft,
+    AggregateMembersJoinedOrLeft,
     ChatMetrics,
     SendMessageSuccess,
     TransferSuccess,
@@ -136,11 +136,11 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     userIds.add(id)
                 );
                 break;
-            case "participant_joined":
-            case "participant_left":
-            case "participant_assumes_super_admin":
-            case "participant_relinquishes_super_admin":
-            case "participant_dismissed_as_super_admin":
+            case "member_joined":
+            case "member_left":
+            case "member_assumes_super_admin":
+            case "member_relinquishes_super_admin":
+            case "member_dismissed_as_super_admin":
                 userIds.add(e.event.userId);
                 break;
             case "name_changed":
@@ -155,10 +155,10 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "group_chat_created":
                 userIds.add(e.event.created_by);
                 break;
-            case "participants_added":
+            case "members_added":
                 userIds.add(e.event.addedBy);
                 break;
-            case "participants_removed":
+            case "members_removed":
                 userIds.add(e.event.removedBy);
                 break;
             case "users_blocked":
@@ -188,7 +188,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "poll_ended":
             case "thread_updated":
             case "proposals_updated":
-            case "aggregate_participants_joined_left":
+            case "aggregate_members_joined_left":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -265,9 +265,9 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
     switch (event.kind) {
         case "message":
             return event.sender;
-        case "participant_joined":
-        case "participant_assumes_super_admin":
-        case "participant_relinquishes_super_admin":
+        case "member_joined":
+        case "member_assumes_super_admin":
+        case "member_relinquishes_super_admin":
             return event.userId;
         case "name_changed":
         case "desc_changed":
@@ -279,9 +279,9 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
-        case "participants_added":
+        case "members_added":
             return event.addedBy;
-        case "participants_removed":
+        case "members_removed":
             return event.removedBy;
         case "users_blocked":
             return event.blockedBy;
@@ -301,12 +301,12 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "poll_vote_deleted":
             return event.message.updatedBy;
         case "direct_chat_created":
-        case "aggregate_participants_joined_left":
+        case "aggregate_members_joined_left":
         case "poll_ended":
         case "thread_updated":
         case "proposals_updated":
-        case "participant_dismissed_as_super_admin":
-        case "participant_left": // We exclude participant_left events since the user is no longer in the group
+        case "member_dismissed_as_super_admin":
+        case "member_left": // We exclude participant_left events since the user is no longer in the group
             return undefined;
         default:
             throw new UnsupportedValueError("Unexpected ChatEvent type received", event);
@@ -346,19 +346,19 @@ export function getTypingString(
     }
 }
 
-export function getParticipantsString(
+export function getMembersString(
     user: UserSummary,
     userLookup: UserLookup,
-    participantIds: string[],
+    memberIds: string[],
     unknownUser: string,
     you: string,
     compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number,
     truncate = true
 ): string {
-    if (truncate && participantIds.length > 5) {
-        return `${participantIds.length} members`;
+    if (truncate && memberIds.length > 5) {
+        return `${memberIds.length} members`;
     }
-    const sorted = participantIds
+    const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsersOnlineFirst)
         .map((p) => (p.userId === user.userId ? you : p.username));
@@ -477,10 +477,10 @@ export function mergeGroupChatDetails(
 ): GroupChatDetails {
     return {
         latestEventIndex: updates.latestEventIndex,
-        participants: mergeThings((p) => p.userId, mergeParticipants, previous.participants, {
+        members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
-            updated: updates.participantsAddedOrUpdated,
-            removed: updates.participantsRemoved,
+            updated: updates.membersAddedOrUpdated,
+            removed: updates.membersRemoved,
         }),
         blockedUsers: new Set<string>(
             mergeThings(identity, identity, [...previous.blockedUsers], {
@@ -518,7 +518,7 @@ export function mergeChatUpdates(
     }).sort(compareChats);
 }
 
-function mergeParticipants(_: Participant | undefined, updated: Participant) {
+function mergeParticipants(_: Member | undefined, updated: Member) {
     return updated;
 }
 
@@ -554,7 +554,7 @@ function mergeUpdatedGroupChat(
         latestMessage: getLatestMessage(chat, updatedChat),
         blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
-        participantCount: updatedChat.participantCount ?? chat.participantCount,
+        memberCount: updatedChat.memberCount ?? chat.memberCount,
         myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
         mentions: mergeMentions(chat.mentions, updatedChat.mentions),
         ownerId: updatedChat.ownerId ?? chat.ownerId,
@@ -777,20 +777,18 @@ export function groupEvents(
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
-    ): AggregateParticipantsJoinedOrLeft | undefined {
+    ): AggregateMembersJoinedOrLeft | undefined {
         if (events.length === 0) return undefined;
         const latest = events[events.length - 1];
-        return latest.event.kind === "aggregate_participants_joined_left"
-            ? latest.event
-            : undefined;
+        return latest.event.kind === "aggregate_members_joined_left" ? latest.event : undefined;
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
-        if (e.event.kind === "participant_joined" || e.event.kind === "participant_left") {
+        if (e.event.kind === "member_joined" || e.event.kind === "member_left") {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
                 agg = {
-                    kind: "aggregate_participants_joined_left",
+                    kind: "aggregate_members_joined_left",
                     users_joined: new Set(),
                     users_left: new Set(),
                 };
@@ -798,7 +796,7 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                 previous.pop();
             }
 
-            if (e.event.kind === "participant_joined") {
+            if (e.event.kind === "member_joined") {
                 if (agg.users_left.has(e.event.userId)) {
                     agg.users_left.delete(e.event.userId);
                 } else {
@@ -1170,7 +1168,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        participantCount: candidate.participants.length + 1, // +1 to include us
+        memberCount: candidate.members.length + 1, // +1 to include us
         myRole: "owner",
         mentions: [],
         ...candidate.avatar,

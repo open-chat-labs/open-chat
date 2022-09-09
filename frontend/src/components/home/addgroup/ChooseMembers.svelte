@@ -15,18 +15,18 @@
     export let candidateGroup: CandidateGroupChat;
     export let busy: boolean;
 
-    $: numParticipants = candidateGroup.participants.length;
-    $: selectedUsers = candidateGroup.participants.map((p) => p.user);
+    $: numMembers = candidateGroup.members.length;
+    $: selectedUsers = candidateGroup.members.map((m) => m.user);
 
-    function deleteParticipant(ev: CustomEvent<UserSummary>): void {
-        candidateGroup.participants = candidateGroup.participants.filter(
-            (p) => p.user.userId !== ev.detail.userId
+    function deleteMember(ev: CustomEvent<UserSummary>): void {
+        candidateGroup.members = candidateGroup.members.filter(
+            (m) => m.user.userId !== ev.detail.userId
         );
     }
 
-    function addParticipant(ev: CustomEvent<UserSummary>): void {
-        candidateGroup.participants = [
-            ...candidateGroup.participants,
+    function addMember(ev: CustomEvent<UserSummary>): void {
+        candidateGroup.members = [
+            ...candidateGroup.members,
             {
                 role: "participant",
                 user: ev.detail,
@@ -40,17 +40,17 @@
 </script>
 
 <SectionHeader flush={true}>
-    <h4>{$_("chooseParticipants")}</h4>
+    <h4>{$_("chooseMembers")}</h4>
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
 
-<div class="participants">
+<div class="members">
     <div class="form-fields">
         {#if !busy}
             <SelectUsers
                 mode={"add"}
-                on:deleteUser={deleteParticipant}
-                on:selectUser={addParticipant}
+                on:deleteUser={deleteMember}
+                on:selectUser={addMember}
                 {selectedUsers} />
         {:else}
             <Loading />
@@ -59,7 +59,7 @@
 
     <div class="cta">
         <Button disabled={busy} loading={busy} on:click={complete} fill={true}
-            >{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
+            >{$_(numMembers === 0 ? "skip" : "confirmMembers")}</Button>
     </div>
 </div>
 
@@ -73,9 +73,9 @@
         flex: 0 0 57px;
     }
 
-    .participants {
+    .members {
         flex: 1;
-        background-color: var(--participants-panel-bg);
+        background-color: var(--members-panel-bg);
         color: var(--section-txt);
         display: flex;
         flex-direction: column;

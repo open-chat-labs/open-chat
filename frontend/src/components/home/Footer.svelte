@@ -9,10 +9,10 @@
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
+        Member,
         Message,
         MessageAction,
         MessageContent,
-        Participant,
     } from "../../domain/chat/chat";
     import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
     import Loading from "../Loading.svelte";
@@ -30,7 +30,7 @@
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
-    export let participants: Participant[];
+    export let members: Member[];
     export let blockedUsers: Set<string>;
     export let user: UserSummary;
     export let mode: "thread" | "message" = "message";
@@ -131,7 +131,7 @@
         {editingEvent}
         {replyingTo}
         {textContent}
-        {participants}
+        {members}
         {blockedUsers}
         {chat}
         on:sendMessage

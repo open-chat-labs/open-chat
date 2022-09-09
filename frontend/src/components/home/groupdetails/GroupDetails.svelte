@@ -58,7 +58,7 @@
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let chat: GroupChatSummary;
-    export let participantCount: number;
+    export let memberCount: number;
 
     let originalGroup = { ...chat };
     let updatedGroup = {
@@ -167,8 +167,8 @@
         }
     }
 
-    function showParticipants() {
-        dispatch("showParticipants");
+    function showMembers() {
+        dispatch("showMembers");
     }
 
     function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
@@ -296,7 +296,7 @@
         on:close={closeUserProfile} />
 {/if}
 
-<GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={clickClose} />
+<GroupDetailsHeader {saving} on:showMembers={showMembers} on:close={clickClose} />
 
 <div class="group-details">
     <div class="inner">
@@ -316,7 +316,7 @@
 
                     <h3 class="group-name">{originalGroup.name}</h3>
                     <p class="members">
-                        {$_("memberCount", { values: { count: participantCount } })}
+                        {$_("memberCount", { values: { count: memberCount } })}
                     </p>
                     <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
                         {$_("ownedBy", {

@@ -73,7 +73,8 @@
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
-    import { threadsFollowedByMeStore } from "stores/chat";
+    import { threadsFollowedByMeStore } from "../../../stores/chat";
+    import { currentChatMembers } from "../../../stores/members";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -136,7 +137,6 @@
     $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
@@ -887,7 +887,7 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        participants={$participants}
+        members={$currentChatMembers}
         blockedUsers={$blockedUsers}
         user={controller.user}
         joining={undefined}

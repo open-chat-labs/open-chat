@@ -2,18 +2,17 @@
 import DRange from "drange";
 import { derived, get, readable, Readable, Writable } from "svelte/store";
 import type {
-    AddParticipantsResponse,
+    AddMembersResponse,
     ChatEvent,
     ChatSummary,
     EnhancedReplyContext,
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
-    FullParticipant,
+    FullMember,
     GroupChatDetails,
     Message,
     MessageContent,
-    Participant,
     MemberRole,
     SendMessageSuccess,
     TransferSuccess,
@@ -55,7 +54,8 @@ import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { eventsStore } from "../stores/events";
-import { focusMessageIndexStore } from "../stores/focusIndex";
+import { focusMessageIndexStore } from "../stores/focusMessageIndex";
+import { currentChatMembers } from "../stores/members";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -64,7 +64,6 @@ export class ChatController {
     public fileToAttach: Readable<MessageContent | undefined>;
     public editingEvent: Readable<EventWrapper<Message> | undefined>;
     public chatId: string;
-    public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
@@ -100,7 +99,6 @@ export class ChatController {
         const chat = get(this.chat);
         eventsStore.selectChat(chat.chatId);
         focusMessageIndexStore.set(_focusMessageIndex);
-        this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
         this.chatId = chat.chatId;
@@ -127,6 +125,7 @@ export class ChatController {
     destroy(): void {
         eventsStore.clear();
         focusMessageIndexStore.set(undefined);
+        currentChatMembers.set([]);
     }
 
     get chatVal(): ChatSummary {
@@ -169,7 +168,7 @@ export class ChatController {
                 );
                 if (resp !== "caller_not_in_group") {
                     this.groupDetails = resp;
-                    this.participants.set(resp.participants);
+                    currentChatMembers.set(resp.members);
                     this.blockedUsers.set(resp.blockedUsers);
                     this.pinnedMessages.set(resp.pinnedMessages);
                 }
@@ -190,7 +189,7 @@ export class ChatController {
                     this.chatId,
                     this.groupDetails
                 );
-                this.participants.set(this.groupDetails.participants);
+                currentChatMembers.set(this.groupDetails.members);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
                 await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
@@ -287,9 +286,9 @@ export class ChatController {
     }
 
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
-        const participantIds = get(this.participants).map((p) => p.userId);
+        const memberIds = get(currentChatMembers).map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
-        const allUserIds = [...participantIds, ...blockedIds, ...userIdsFromEvents];
+        const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
         allUserIds.forEach((u) => {
             if (u !== this.user.userId) {
                 this.chatUserIds.add(u);
@@ -845,7 +844,7 @@ export class ChatController {
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
-        this.participants.update((ps) =>
+        currentChatMembers.update((ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
@@ -863,7 +862,7 @@ export class ChatController {
     }
 
     private transferOwnershipLocally(me: string, them: string): void {
-        this.participants.update((ps) =>
+        currentChatMembers.update((ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: "owner" };
@@ -877,7 +876,7 @@ export class ChatController {
     }
 
     private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
-        this.participants.update((ps) =>
+        currentChatMembers.update((ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: theirRole };
@@ -890,7 +889,7 @@ export class ChatController {
         );
     }
 
-    transferOwnership(me: string, them: FullParticipant): Promise<boolean> {
+    transferOwnership(me: string, them: FullMember): Promise<boolean> {
         this.transferOwnershipLocally(me, them.userId);
         return this.api
             .changeRole(this.chatId, them.userId, "owner")
@@ -910,7 +909,7 @@ export class ChatController {
     }
 
     makeAdmin(userId: string): Promise<void> {
-        this.participants.update((ps) =>
+        currentChatMembers.update((ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
         );
         return this.api
@@ -927,24 +926,24 @@ export class ChatController {
             });
     }
 
-    removeParticipant(userId: string): Promise<void> {
+    removeMember(userId: string): Promise<void> {
         return this.api
-            .removeParticipant(this.chatId, userId)
+            .removeMember(this.chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to remove participant", resp);
-                    toastStore.showFailureToast("removeParticipantFailed");
+                    rollbar.warn("Unable to remove member", resp);
+                    toastStore.showFailureToast("removeMemberFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to remove participant", err);
-                toastStore.showFailureToast("removeParticipantFailed");
+                rollbar.error("Unable to remove member", err);
+                toastStore.showFailureToast("removeMemberFailed");
             });
     }
 
     private blockUserLocally(userId: string): void {
         this.blockedUsers.update((b) => b.add(userId));
-        this.participants.update((p) => p.filter((p) => p.userId !== userId));
+        currentChatMembers.update((p) => p.filter((p) => p.userId !== userId));
     }
 
     private unblockUserLocally(userId: string): void {
@@ -952,7 +951,7 @@ export class ChatController {
             b.delete(userId);
             return b;
         });
-        this.participants.update((p) => [
+        currentChatMembers.update((p) => [
             ...p,
             {
                 role: "participant",
@@ -981,15 +980,15 @@ export class ChatController {
             });
     }
 
-    private removeParticipantsLocally(
+    private removeMembersLocally(
         viaUnblock: boolean,
         users: UserSummary[],
-        resp: AddParticipantsResponse | { kind: "unknown" }
+        resp: AddMembersResponse | { kind: "unknown" }
     ): void {
-        if (resp.kind === "add_participants_success") return;
+        if (resp.kind === "add_members_success") return;
 
         let toRemove: string[] = [];
-        if (resp.kind === "add_participants_partial_success") {
+        if (resp.kind === "add_members_partial_success") {
             toRemove = [
                 ...resp.usersAlreadyInGroup,
                 ...resp.usersBlockedFromGroup,
@@ -999,7 +998,7 @@ export class ChatController {
             toRemove = users.map((u) => u.userId);
         }
 
-        this.participants.update((ps) =>
+        currentChatMembers.update((ps) =>
             ps.filter((p) => {
                 !toRemove.includes(p.userId);
             })
@@ -1012,14 +1011,14 @@ export class ChatController {
         }
     }
 
-    private addParticipantsLocally(viaUnblock: boolean, users: UserSummary[]): void {
+    private addMembersLocally(viaUnblock: boolean, users: UserSummary[]): void {
         if (viaUnblock) {
             this.blockedUsers.update((b) => {
                 users.forEach((u) => b.delete(u.userId));
                 return b;
             });
         }
-        this.participants.update((ps) => [
+        currentChatMembers.update((ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
                 role: "participant" as MemberRole,
@@ -1028,27 +1027,27 @@ export class ChatController {
         ]);
     }
 
-    addParticipants(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
-        this.addParticipantsLocally(viaUnblock, users);
+    addMembers(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
+        this.addMembersLocally(viaUnblock, users);
         return this.api
-            .addParticipants(
+            .addMembers(
                 this.chatId,
                 users.map((u) => u.userId),
                 this.user.username,
                 viaUnblock
             )
             .then((resp) => {
-                if (resp.kind === "add_participants_success") {
+                if (resp.kind === "add_members_success") {
                     return true;
                 } else {
-                    this.removeParticipantsLocally(viaUnblock, users, resp);
-                    rollbar.warn("AddParticipantsFailed", resp);
+                    this.removeMembersLocally(viaUnblock, users, resp);
+                    rollbar.warn("AddMembersFailed", resp);
                     return false;
                 }
             })
             .catch((err) => {
-                this.removeParticipantsLocally(viaUnblock, users, { kind: "unknown" });
-                rollbar.error("AddParticipantsFailed", err);
+                this.removeMembersLocally(viaUnblock, users, { kind: "unknown" });
+                rollbar.error("AddMembersFailed", err);
                 return false;
             });
     }

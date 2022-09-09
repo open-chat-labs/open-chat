@@ -60,7 +60,7 @@ export function lightTheme(): Theme {
             bd: "#dddddd",
         },
 
-        participants: {
+        members: {
             bg: "#ffffff",
             txt: "#191919",
             hv: "#eeeeee",

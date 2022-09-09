@@ -2,12 +2,12 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import { userStore } from "../../stores/user";
-    import type { Participant } from "../../domain/chat/chat";
+    import type { Member } from "../../domain/chat/chat";
     import Close from "svelte-material-icons/Close.svelte";
     import type { PartialUserSummary } from "../../domain/user/user";
 
     export let blockedUsers: Set<string>;
-    export let participants: Participant[];
+    export let members: Member[];
     export let autofocus: boolean;
     export let selectedReceiver: PartialUserSummary | undefined = undefined;
 
@@ -54,7 +54,7 @@
             on:mention={selectReceiver}
             border={true}
             prefix={textValue}
-            {participants} />
+            {members} />
     {/if}
     {#if selectedReceiver !== undefined}
         <div class="user-pill">

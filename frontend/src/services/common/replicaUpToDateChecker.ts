@@ -6,11 +6,12 @@ export function ensureReplicaIsUpToDate(
     chatId: string,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined,
-    latestEventIndex: number)
-{
-    const latestClientEventIndex = threadRootMessageIndex === undefined
-        ? get(serverChatSummariesStore)[chatId]?.latestEventIndex
-        : latestClientEventIndexPreRequest;
+    latestEventIndex: number
+): void {
+    const latestClientEventIndex =
+        threadRootMessageIndex === undefined
+            ? get(serverChatSummariesStore)[chatId]?.latestEventIndex
+            : latestClientEventIndexPreRequest;
 
     if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
         throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);

@@ -2,8 +2,8 @@ import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "../do
 
 export type RightPanelState =
     | GroupDetailsPanel
-    | AddParticipantsPanel
-    | ShowParticipantsPanel
+    | AddMembersPanel
+    | ShowMembersPanel
     | ShowPinnedPanel
     | UserProfilePanel
     | NewGroupPanel
@@ -33,12 +33,12 @@ export type NewGroupPanel = {
     kind: "new_group_panel";
 };
 
-export type AddParticipantsPanel = {
-    kind: "add_participants";
+export type AddMembersPanel = {
+    kind: "add_members";
 };
 
-export type ShowParticipantsPanel = {
-    kind: "show_participants";
+export type ShowMembersPanel = {
+    kind: "show_members";
 };
 
 export type ShowPinnedPanel = {

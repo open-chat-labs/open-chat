@@ -330,7 +330,11 @@ export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
     return { InternetComputer: null };
 }
 
-function cryptoTransfer(candid: ApiCryptoTransaction, sender: string, recipient: string): CryptocurrencyTransfer {
+function cryptoTransfer(
+    candid: ApiCryptoTransaction,
+    sender: string,
+    recipient: string
+): CryptocurrencyTransfer {
     if ("Pending" in candid) {
         return {
             kind: "pending",
@@ -719,7 +723,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                     fee: apiOptional(apiICP, domain.feeE8s),
                     memo: apiOptional(identity, domain.memo),
                 },
-            }
+            },
         };
     }
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));

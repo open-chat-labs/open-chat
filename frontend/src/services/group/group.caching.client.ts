@@ -1,10 +1,10 @@
 import type {
-    AddParticipantsResponse,
+    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     Message,
     SendMessageResponse,
-    RemoveParticipantResponse,
+    RemoveMemberResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,
@@ -98,14 +98,16 @@ export class CachingGroupClient implements IGroupClient {
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return getCachedEventsByIndex<GroupChatEvent>(
             this.db,
             eventIndexes,
             this.chatId,
             threadRootMessageIndex
-        ).then((res) => this.handleMissingEvents(res, threadRootMessageIndex, latestClientEventIndex));
+        ).then((res) =>
+            this.handleMissingEvents(res, threadRootMessageIndex, latestClientEventIndex)
+        );
     }
 
     @profile("groupCachingClient")
@@ -132,7 +134,11 @@ export class CachingGroupClient implements IGroupClient {
                 .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex, interrupt)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], undefined, latestClientEventIndex);
+            return this.handleMissingEvents(
+                [cachedEvents, missing],
+                undefined,
+                latestClientEventIndex
+            );
         }
     }
 
@@ -169,16 +175,20 @@ export class CachingGroupClient implements IGroupClient {
                 )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], threadRootMessageIndex, latestClientEventIndex);
+            return this.handleMissingEvents(
+                [cachedEvents, missing],
+                threadRootMessageIndex,
+                latestClientEventIndex
+            );
         }
     }
 
-    addParticipants(
+    addMembers(
         userIds: string[],
         myUsername: string,
         allowBlocked: boolean
-    ): Promise<AddParticipantsResponse> {
-        return this.client.addParticipants(userIds, myUsername, allowBlocked);
+    ): Promise<AddMembersResponse> {
+        return this.client.addMembers(userIds, myUsername, allowBlocked);
     }
 
     sendMessage(
@@ -200,8 +210,8 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.changeRole(userId, newRole);
     }
 
-    removeParticipant(userId: string): Promise<RemoveParticipantResponse> {
-        return this.client.removeParticipant(userId);
+    removeMember(userId: string): Promise<RemoveMemberResponse> {
+        return this.client.removeMember(userId);
     }
 
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
