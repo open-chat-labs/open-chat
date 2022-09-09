@@ -119,7 +119,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, this.chatId, threadRootMessageIndex, latestClientEventIndex),
             args
         );
     }
@@ -141,7 +141,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            resp => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, this.chatId, undefined, latestClientEventIndex),
             args,
             interrupt
         );
@@ -167,7 +167,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             };
             return this.handleQueryResponse(
                 () => this.groupService.events(args),
-                resp => getEventsResponse(resp, latestClientEventIndex),
+                (resp) => getEventsResponse(resp, this.chatId, threadRootMessageIndex, latestClientEventIndex),
                 args,
                 interrupt
             );
@@ -414,7 +414,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            resp => getMessagesByMessageIndexResponse(resp, latestClientEventIndex),
+            (resp) => getMessagesByMessageIndexResponse(resp, this.chatId, undefined, latestClientEventIndex),
             args
         );
     }
@@ -513,7 +513,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                     threads: new Uint32Array(threadRootMessageIndexes),
                     latest_client_event_index: apiOptional(identity, latestClientEventIndex)
                 }),
-            (resp) => threadPreviewsResponse(this.chatId, resp, latestClientEventIndex)
+            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientEventIndex)
         );
     }
 

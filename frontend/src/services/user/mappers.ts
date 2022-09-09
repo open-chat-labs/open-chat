@@ -85,6 +85,7 @@ import {
     token,
     updatedMessage,
 } from "../common/chatMappers";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type {
     MessageMatch,
     SearchDirectChatResponse,
@@ -535,20 +536,25 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 
 export function getEventsResponse(
     candid: ApiEventsResponse,
-    latestClientEventIndex: number | undefined
+    chatId: string,
+    latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
+        const latestEventIndex = candid.Success.latest_event_index;
+
+        ensureReplicaIsUpToDate(chatId, undefined, latestClientEventIndexPreRequest, latestEventIndex);
+
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
+        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
