@@ -285,6 +285,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
+    pub affected_events_v2: Vec<(EventIndex, TimestampMillis)>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
