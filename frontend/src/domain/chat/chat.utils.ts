@@ -230,7 +230,7 @@ export function getRecentlyActiveUsers(
 }
 
 export function getUsersToMakeRtcConnectionsWith(
-    userId: string,
+    myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[]
 ): string[] {
@@ -239,16 +239,16 @@ export function getUsersToMakeRtcConnectionsWith(
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(userId) ? Array.from(activeUsers).filter((u) => u !== userId) : [];
+    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId) : [];
 }
 
 export function makeRtcConnections(
-    userId: string,
+    myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup
 ): void {
-    const userIds = getUsersToMakeRtcConnectionsWith(userId, chat, events);
+    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
     if (userIds.length === 0) return;
 
     userIds
@@ -256,7 +256,7 @@ export function makeRtcConnections(
         .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
         .map((user) => user.userId)
         .forEach((userId) => {
-            rtcConnectionsManager.create(userId, userId);
+            rtcConnectionsManager.create(myUserId, userId);
         });
 }
 
