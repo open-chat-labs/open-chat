@@ -818,15 +818,16 @@ export interface ThreadPreview {
   'root_message' : MessageEventWrapper,
 }
 export interface ThreadPreviewsArgs {
-  'latest_client_event_index' : [] | [EventIndex],
+  'latest_client_thread_update' : [] | [TimestampMillis],
   'threads' : Uint32Array,
 }
-export type ThreadPreviewsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
+export type ThreadPreviewsResponse = {
+    'ReplicaNotUpToDate' : TimestampMillis
+  } |
   { 'CallerNotInGroup' : null } |
   {
     'Success' : {
       'threads' : Array<ThreadPreview>,
-      'latest_event_index' : EventIndex,
     }
   };
 export interface ThreadSummary {

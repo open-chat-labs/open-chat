@@ -104,7 +104,7 @@ export interface IGroupClient {
     resetInviteCode(): Promise<ResetInviteCodeResponse>;
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientEventIndex: number | undefined
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
 }

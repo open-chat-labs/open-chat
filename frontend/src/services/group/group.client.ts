@@ -523,15 +523,15 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientEventIndex: number | undefined
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.groupService.thread_previews({
                     threads: new Uint32Array(threadRootMessageIndexes),
-                    latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+                    latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
-            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientEventIndex)
+            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientThreadUpdate)
         );
     }
 

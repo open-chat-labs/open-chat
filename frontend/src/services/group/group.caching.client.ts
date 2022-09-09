@@ -355,9 +355,9 @@ export class CachingGroupClient implements IGroupClient {
 
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientEventIndex: number | undefined
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse> {
-        return this.client.threadPreviews(threadRootMessageIndexes, latestClientEventIndex);
+        return this.client.threadPreviews(threadRootMessageIndexes, latestClientThreadUpdate);
     }
 
     registerProposalVote(

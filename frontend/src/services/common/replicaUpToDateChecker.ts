@@ -14,6 +14,6 @@ export function ensureReplicaIsUpToDate(
             : latestClientEventIndexPreRequest;
 
     if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {
-        throw new ReplicaNotUpToDateError(latestEventIndex, latestClientEventIndex, true);
+        throw ReplicaNotUpToDateError.byEventIndex(latestEventIndex, latestClientEventIndex, true);
     }
 }

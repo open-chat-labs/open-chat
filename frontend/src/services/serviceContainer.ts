@@ -1170,11 +1170,16 @@ export class ServiceContainer implements MarkMessagesRead {
 
         return Promise.all(
             Object.entries(threadsByChat).map(
-                ([chatId, [threadSyncs, latestClientMainEventIndex]]) =>
-                    this.getGroupClient(chatId)
+                ([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
+                    const latestClientThreadUpdate = threadSyncs.reduce(
+                        (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
+                        BigInt(0)
+                    );
+
+                    return this.getGroupClient(chatId)
                         .threadPreviews(
                             threadSyncs.map((t) => t.threadRootMessageIndex),
-                            latestClientMainEventIndex
+                            latestClientThreadUpdate
                         )
                         .then(
                             (response) =>
@@ -1182,7 +1187,8 @@ export class ServiceContainer implements MarkMessagesRead {
                                     ThreadPreviewsResponse,
                                     number | undefined
                                 ]
-                        )
+                        );
+                }
             )
         ).then((responses) =>
             Promise.all(

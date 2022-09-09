@@ -559,7 +559,7 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(
+        throw ReplicaNotUpToDateError.byEventIndex(
             candid.ReplicaNotUpToDate,
             latestClientEventIndexPreRequest ?? -1,
             false

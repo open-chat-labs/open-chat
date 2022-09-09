@@ -3,7 +3,7 @@ use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use std::cmp::max;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use types::{
     EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, GroupSubtype, Mention, Message, OptionUpdate,
     TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
@@ -42,7 +42,8 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
             owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,
-            affected_events: updates_from_events.affected_events.into_iter().collect(),
+            affected_events: updates_from_events.affected_events.keys().copied().collect(),
+            affected_events_v2: updates_from_events.affected_events.into_iter().collect(),
             metrics: Some(runtime_state.data.events.metrics().clone()),
             my_metrics: runtime_state
                 .data
@@ -77,7 +78,7 @@ struct UpdatesFromEvents {
     mentions: Vec<Mention>,
     owner_id: Option<UserId>,
     permissions: Option<GroupPermissions>,
-    affected_events: HashSet<EventIndex>,
+    affected_events: HashMap<EventIndex, TimestampMillis>,
     is_public: Option<bool>,
     notifications_muted: Option<bool>,
 }
@@ -114,13 +115,18 @@ fn process_events(
         .rev()
         .take_while(|(&t, _)| t > since)
         .enumerate()
-        .flat_map(|(i, (&t, m))| {
+        .map(|(i, (&t, message_indexes))| {
             if i == 0 {
                 updates.latest_update = max(updates.latest_update, Some(t));
             }
-            m.iter().copied()
+            (t, message_indexes)
         })
-        .filter_map(|m| chat_events.get_event_index_by_message_index(m));
+        .flat_map(|(t, message_indexes)| {
+            message_indexes
+                .iter()
+                .filter_map(|m| chat_events.get_event_index_by_message_index(*m))
+                .map(move |e| (e, t))
+        });
 
     updates.affected_events.extend(new_proposal_votes);
 
@@ -133,7 +139,7 @@ fn process_events(
 
         for index in chat_events.affected_event_indexes(&event_wrapper.event) {
             if updates.affected_events.len() < 100 {
-                updates.affected_events.insert(index);
+                updates.affected_events.entry(index).or_insert(event_wrapper.timestamp);
             }
         }
 

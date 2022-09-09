@@ -342,7 +342,6 @@ type SelectedInitialArgs =
 
 type SelectedInitialSuccess =
     record {
-        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
@@ -362,7 +361,6 @@ type SelectedUpdatesArgs =
 
 type SelectedUpdatesSuccess =
     record {
-        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
@@ -372,16 +370,10 @@ type SelectedUpdatesSuccess =
         pinned_messages_removed: vec MessageIndex;
     };
 
-type SelectedUpdatesNoUpdates =
-    record {
-        timestamp: TimestampMillis;
-        latest_event_index: EventIndex;
-    };
-
 type SelectedUpdatesResponse =
     variant {
         Success: SelectedUpdatesSuccess;
-        SuccessNoUpdates: SelectedUpdatesNoUpdates;
+        SuccessNoUpdates: EventIndex;
         CallerNotInGroup;
     };
 
@@ -458,17 +450,17 @@ type MessagesByMessageIndexResponse =
 type ThreadPreviewsArgs =
     record {
         threads: vec MessageIndex;
-        latest_client_event_index: opt EventIndex;
+        latest_client_thread_update: opt TimestampMillis;
     };
 
 type ThreadPreviewsResponse =
     variant {
         Success: record {
             threads: vec ThreadPreview;
-            latest_event_index: EventIndex;
+            timestamp: TimestampMillis;
         };
         CallerNotInGroup;
-        ReplicaNotUpToDate: EventIndex;
+        ReplicaNotUpToDate: TimestampMillis;
     };
 
 type ThreadPreview =
