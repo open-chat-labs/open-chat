@@ -531,7 +531,7 @@ export function getMessagesByMessageIndexResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
@@ -574,7 +574,7 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
@@ -686,13 +686,9 @@ function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
 export function threadPreviewsResponse(
     candid: ApiThreadPreviewsResponse,
     chatId: string,
-    latestClientEventIndexPreRequest: number | undefined
+    latestClientThreadUpdate: bigint | undefined
 ): ThreadPreviewsResponse {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        ensureReplicaIsUpToDate(chatId, undefined, latestClientEventIndexPreRequest, latestEventIndex);
-
         return {
             kind: "thread_previews_success",
             threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
@@ -704,7 +700,7 @@ export function threadPreviewsResponse(
         };
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
+        throw ReplicaNotUpToDateError.byTimestamp(candid.ReplicaNotUpToDate, latestClientThreadUpdate ?? BigInt(-1));
     }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiThreadPreviewsResponse type received",

@@ -13,10 +13,10 @@ fn thread_previews(args: Args) -> Response {
 fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        let latest_event_index = runtime_state.data.events.main().last().index;
+        let now = runtime_state.env.now();
 
-        if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-            return ReplicaNotUpToDate(latest_event_index);
+        if args.latest_client_thread_update.map_or(false, |t| now < t) {
+            return ReplicaNotUpToDate(now);
         }
 
         Success(SuccessResult {
@@ -32,7 +32,7 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     )
                 })
                 .collect(),
-            latest_event_index,
+            timestamp: now,
         })
     } else {
         CallerNotInGroup

@@ -24,8 +24,27 @@ export class SessionExpiryError extends HttpError {
 }
 
 export class ReplicaNotUpToDateError extends Error {
-    constructor(public latestReplicaEventIndex: number, public latestClientEventIndex: number, failedPostCheck: boolean) {
-        super(`Replica not up to date. Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}. FailedPostCheck: ${failedPostCheck}`);
+    public static byEventIndex(
+        latestReplicaEventIndex: number,
+        latestClientEventIndex: number,
+        failedPostCheck: boolean
+    ): ReplicaNotUpToDateError {
+        const message = `Replica not up to date (event index). Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}. FailedPostCheck: ${failedPostCheck}`;
+
+        return new ReplicaNotUpToDateError(message);
+    }
+
+    public static byTimestamp(
+        replicaTimestamp: bigint,
+        clientTimestamp: bigint
+    ): ReplicaNotUpToDateError {
+        const message = `Replica not up to date (timestamp). Client: ${clientTimestamp}. Replica: ${replicaTimestamp}.`;
+
+        return new ReplicaNotUpToDateError(message);
+    }
+
+    private constructor(message: string) {
+        super(message);
     }
 }
 
