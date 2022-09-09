@@ -250,7 +250,7 @@ export function setSelectedChat(
         )
     );
 
-    resetFilteredProposalsStore(chat);
+    // resetFilteredProposalsStore(chat);
 }
 
 export function updateSummaryWithConfirmedMessage(

@@ -41,6 +41,7 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
+    import { eventsStore } from "../../stores/events";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -64,7 +65,6 @@
     export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
-    $: events = controller.events;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
@@ -150,7 +150,7 @@
         return relayUnsubscribe;
     });
 
-    beforeUpdate(() => previousScrollHeight = messagesDiv?.scrollHeight);
+    beforeUpdate(() => (previousScrollHeight = messagesDiv?.scrollHeight));
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
@@ -200,7 +200,7 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            const msgEvent = controller.findMessageEvent($events, index);
+            const msgEvent = controller.findMessageEvent($eventsStore, index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
                     dispatch("openThread", {
@@ -314,7 +314,7 @@
 
         selectReaction(
             controller.api,
-            controller.events,
+            eventsStore,
             $chat,
             controller.user.userId,
             message.messageId,
@@ -387,7 +387,9 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    $: groupedEvents = groupEvents($events, groupInner($filteredProposalsStore)).reverse();
+    $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
+
+    $: console.log("Grouped events: ", groupedEvents);
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -433,11 +435,17 @@
                                 if (newLatestMessage && insideFromBottomThreshold) {
                                     // only scroll if we are now within threshold from the bottom
                                     scrollBottom("smooth");
-                                } else if (messagesDiv?.scrollTop === 0 && previousScrollHeight !== undefined) {
-                                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
+                                } else if (
+                                    messagesDiv?.scrollTop === 0 &&
+                                    previousScrollHeight !== undefined
+                                ) {
+                                    const clientHeightChange =
+                                        messagesDiv.scrollHeight - previousScrollHeight;
                                     if (clientHeightChange > 0) {
                                         messagesDiv.scrollTop = -clientHeightChange;
-                                        console.log("scrollTop updated from 0 to " + messagesDiv.scrollTop);
+                                        console.log(
+                                            "scrollTop updated from 0 to " + messagesDiv.scrollTop
+                                        );
                                     }
                                 }
                             })
@@ -682,7 +690,7 @@
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if $chat.kind === "group_chat"}
-            <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+            <InitialGroupMessage group={$chat} noVisibleEvents={$eventsStore.length === 0} />
         {:else if isBot}
             <Robot />
         {/if}
