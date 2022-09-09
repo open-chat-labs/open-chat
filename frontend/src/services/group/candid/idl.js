@@ -720,7 +720,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
   });
   const ThreadPreviewsArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
+    'latest_client_thread_update' : IDL.Opt(TimestampMillis),
     'threads' : IDL.Vec(MessageIndex),
   });
   const ThreadPreview = IDL.Record({
@@ -729,11 +729,10 @@ export const idlFactory = ({ IDL }) => {
     'root_message' : MessageEventWrapper,
   });
   const ThreadPreviewsResponse = IDL.Variant({
-    'ReplicaNotUpToDate' : EventIndex,
+    'ReplicaNotUpToDate' : TimestampMillis,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'threads' : IDL.Vec(ThreadPreview),
-      'latest_event_index' : EventIndex,
     }),
   });
   const ToggleReactionArgs = IDL.Record({

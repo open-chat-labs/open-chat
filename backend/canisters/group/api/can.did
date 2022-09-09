@@ -450,17 +450,17 @@ type MessagesByMessageIndexResponse =
 type ThreadPreviewsArgs =
     record {
         threads: vec MessageIndex;
-        latest_client_event_index: opt EventIndex;
+        latest_client_thread_update: opt TimestampMillis;
     };
 
 type ThreadPreviewsResponse =
     variant {
         Success: record {
             threads: vec ThreadPreview;
-            latest_event_index: EventIndex;
+            timestamp: TimestampMillis;
         };
         CallerNotInGroup;
-        ReplicaNotUpToDate: EventIndex;
+        ReplicaNotUpToDate: TimestampMillis;
     };
 
 type ThreadPreview =

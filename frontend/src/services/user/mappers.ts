@@ -554,7 +554,7 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, latestClientEventIndexPreRequest ?? -1, false);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
