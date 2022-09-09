@@ -464,3 +464,4 @@ export type EventStoreUpdater = (
 ) => void;
 
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
+export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

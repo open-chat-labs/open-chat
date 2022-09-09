@@ -53,8 +53,7 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { eventsStore } from "../stores/chat";
-import { focusMessageIndexStore } from "../stores/focusMessageIndex";
+import { eventsStore, focusMessageIndex } from "../stores/chat";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -97,7 +96,7 @@ export class ChatController {
 
         const chat = get(this.chat);
         eventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
-        focusMessageIndexStore.set(_focusMessageIndex);
+        focusMessageIndex.set(chat.chatId, _focusMessageIndex);
         currentChatMembers.set(chat.chatId, []);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
@@ -124,7 +123,7 @@ export class ChatController {
 
     destroy(): void {
         eventsStore.clear(this.chatId);
-        focusMessageIndexStore.set(undefined);
+        focusMessageIndex.clear(this.chatId);
         currentChatMembers.clear(this.chatId);
     }
 
