@@ -49,6 +49,7 @@ export abstract class CandidService {
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
+                const debugInfo = `error: ${JSON.stringify(responseErr)}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof AuthError) &&
@@ -58,10 +59,9 @@ export abstract class CandidService {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
-                        const replica = responseErr.latestReplicaEventIndex;
-                        debug(`query: replica not up to date, retrying in ${delay}ms. replica: ${replica}, args: ${JSON.stringify(args)}, retries: ${retries}`);
+                        debug(`query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`);
                     } else {
-                        debug(`query: error occurred, retrying in ${delay}ms. retries: ${retries}`);
+                        debug(`query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`);
                     }
 
                     return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ export abstract class CandidService {
                         }, delay);
                     });
                 } else {
-                    debug(`query: Error performing query request: ${JSON.stringify(err)}, ${JSON.stringify(args)}, ${retries}`);
+                    debug(`query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`);
                     throw responseErr;
                 }
             });
