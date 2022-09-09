@@ -42,6 +42,7 @@
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
     import { eventsStore } from "../../stores/events";
+    import { focusMessageIndexStore } from "../../stores/focusIndex";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -65,7 +66,6 @@
     export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
-    $: focusMessageIndex = controller.focusMessageIndex;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
@@ -189,13 +189,13 @@
         focusThreadMessageIndex: number | undefined = undefined
     ) {
         if (index < 0) {
-            controller.clearFocusMessageIndex();
+            focusMessageIndexStore.set(undefined);
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        controller.setFocusMessageIndex(index);
+        focusMessageIndexStore.set(index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -213,7 +213,7 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    controller.clearFocusMessageIndex();
+                    focusMessageIndexStore.set(undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
@@ -222,8 +222,8 @@
     }
 
     function resetScroll() {
-        if ($focusMessageIndex !== undefined) {
-            scrollToMessageIndex($focusMessageIndex, false);
+        if ($focusMessageIndexStore !== undefined) {
+            scrollToMessageIndex($focusMessageIndexStore, false);
         }
         if (!initialised) {
             initialised = true;
@@ -635,7 +635,7 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $focusMessageIndex}
+                            evt.event.messageIndex === $focusMessageIndexStore}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem($chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}

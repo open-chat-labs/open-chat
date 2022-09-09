@@ -55,10 +55,10 @@ import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { eventsStore } from "../stores/events";
+import { focusMessageIndexStore } from "../stores/focusIndex";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
-    public focusMessageIndex: Writable<number | undefined>;
     public textContent: Readable<string | undefined>;
     public replyingTo: Readable<EnhancedReplyContext | undefined>;
     public fileToAttach: Readable<MessageContent | undefined>;
@@ -99,7 +99,7 @@ export class ChatController {
 
         const chat = get(this.chat);
         eventsStore.selectChat(chat.chatId);
-        this.focusMessageIndex = immutableStore(_focusMessageIndex);
+        focusMessageIndexStore.set(_focusMessageIndex);
         this.participants = immutableStore([]);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
@@ -126,6 +126,7 @@ export class ChatController {
 
     destroy(): void {
         eventsStore.clear();
+        focusMessageIndexStore.set(undefined);
     }
 
     get chatVal(): ChatSummary {
@@ -791,14 +792,6 @@ export class ChatController {
 
     isRead(messageIndex: number, messageId: bigint): boolean {
         return messagesRead.isRead(this.chatId, messageIndex, messageId);
-    }
-
-    setFocusMessageIndex(idx: number): void {
-        this.focusMessageIndex.set(idx);
-    }
-
-    clearFocusMessageIndex(): void {
-        this.focusMessageIndex.set(undefined);
     }
 
     earliestLoadedIndex(): number | undefined {
