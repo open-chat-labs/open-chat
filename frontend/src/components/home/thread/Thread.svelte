@@ -73,7 +73,7 @@
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
-    import { threadsFollowedByMeStore } from "stores/chat";
+    import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -136,7 +136,6 @@
     $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
@@ -700,6 +699,13 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
+    function eventsUpdater(
+        _chatId: string,
+        fn: (evs: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]
+    ): void {
+        events.update((evs) => fn(evs));
+    }
+
     function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (ev.detail.message === rootEvent.event) {
             relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
@@ -710,7 +716,7 @@
 
         selectReaction(
             api,
-            events,
+            eventsUpdater,
             $chat,
             currentUser.userId,
             ev.detail.message.messageId,
@@ -887,7 +893,7 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        participants={$participants}
+        members={$currentChatMembers}
         blockedUsers={$blockedUsers}
         user={controller.user}
         joining={undefined}

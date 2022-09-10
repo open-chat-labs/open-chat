@@ -13,7 +13,7 @@ import type {
 import {
     addVoteToPoll,
     enoughVisibleMessages,
-    getParticipantsString,
+    getMembersString,
     mergeChatMetrics,
     mergeChatUpdates,
     mergeUnconfirmedThreadsIntoSummary,
@@ -74,7 +74,7 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
     notificationsMuted: false,
-    participantCount: 10,
+    memberCount: 10,
     myRole: "admin",
     mentions: [],
     ownerId: "some_owner",
@@ -367,7 +367,7 @@ describe("enough visible messages", () => {
     });
 });
 
-describe("get participants string for group chat", () => {
+describe("get members string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
@@ -384,35 +384,17 @@ describe("get participants string for group chat", () => {
 
     const user = lookup.z as UserSummary;
 
-    test("up to five participants get listed", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withFewerThanSix,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("Mr B, Mr C, Mr D, You and Mr A");
+    test("up to five members get listed", () => {
+        const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");
+        expect(members).toEqual("Mr B, Mr C, Mr D, You and Mr A");
     });
     test("with unknown users", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withUnknown,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
+        const members = getMembersString(user, lookup, withUnknown, "Unknown User", "You");
+        expect(members).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
     });
-    test("with more than 5 participants", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withMoreThanSix,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("8 members");
+    test("with more than 5 members", () => {
+        const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");
+        expect(members).toEqual("8 members");
     });
 });
 

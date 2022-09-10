@@ -48,7 +48,7 @@
         if (group.description.length > 0) {
             return group.description;
         } else {
-            const number = group.participantCount;
+            const number = group.memberCount;
             return group.public
                 ? $_("publicGroupWithN", { values: { number } })
                 : $_("privateGroupWithN", { values: { number } });

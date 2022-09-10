@@ -50,6 +50,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
+    import { currentChatMembers } from "../../stores/chat";
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
@@ -77,7 +78,6 @@
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
     $: textContent = controller.textContent;
-    $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: blocked = isBlocked($chat, $directlyBlockedUsers);
 
@@ -348,10 +348,10 @@
             on:unblockUser
             on:markAllRead={markAllRead}
             on:toggleMuteNotifications
-            on:addParticipants
+            on:addMembers
             on:showGroupDetails
             on:showProposalFilters
-            on:showParticipants
+            on:showMembers
             on:leaveGroup
             on:showPinned
             on:createPoll={createPoll}
@@ -392,7 +392,7 @@
             editingEvent={$editingEvent}
             replyingTo={$replyingTo}
             textContent={$textContent}
-            participants={$participants}
+            members={$currentChatMembers}
             blockedUsers={$blockedUsers}
             user={controller.user}
             mode={"message"}

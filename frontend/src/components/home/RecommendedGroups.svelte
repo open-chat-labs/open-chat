@@ -107,7 +107,7 @@
                             <Markdown text={group.description} />
                         </p>
                         <p class="user-count">
-                            {$_("groupWithN", { values: { number: group.participantCount } })}
+                            {$_("groupWithN", { values: { number: group.memberCount } })}
                         </p>
                     </div>
                 </div>

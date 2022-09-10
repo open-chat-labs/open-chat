@@ -21,7 +21,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 39;
+const CACHE_VERSION = 40;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -422,9 +422,10 @@ export function mergeSuccessResponses<T extends ChatEvent>(
     return {
         events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
         affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
-        latestEventIndex: a.latestEventIndex === undefined && b.latestEventIndex === undefined
-            ? undefined
-            : Math.max(a.latestEventIndex ?? -1, b.latestEventIndex ?? -1),
+        latestEventIndex:
+            a.latestEventIndex === undefined && b.latestEventIndex === undefined
+                ? undefined
+                : Math.max(a.latestEventIndex ?? -1, b.latestEventIndex ?? -1),
     };
 }
 
@@ -536,8 +537,8 @@ export function setCachedMessageFromNotification(
     const chatId =
         notification.kind === "group_notification" ? notification.chatId : notification.sender;
 
-    setCachedMessage(db, chatId, notification.message, notification.threadRootMessageIndex).catch((err) =>
-        rollbar.error("Unable to write notification message to the cache", err)
+    setCachedMessage(db, chatId, notification.message, notification.threadRootMessageIndex).catch(
+        (err) => rollbar.error("Unable to write notification message to the cache", err)
     );
 }
 

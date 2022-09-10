@@ -5,11 +5,11 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
+    import type { BlockedMember, FullMember } from "../../../domain/chat/chat";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
 
-    export let me: FullParticipant | BlockedParticipant | undefined;
+    export let me: FullMember | BlockedMember | undefined;
     export let publicGroup: boolean;
     export let closeIcon: "close" | "back";
 
@@ -21,20 +21,20 @@
     }
 
     // todo - this is probably contingent on being an admin
-    function addParticipants() {
-        dispatch("addParticipants");
+    function addMembers() {
+        dispatch("addMembers");
     }
 </script>
 
 <SectionHeader>
     {#if canAdd}
-        <span title={$_("addParticipants")} class="add" on:click={addParticipants}>
+        <span title={$_("addMembers")} class="add" on:click={addMembers}>
             <HoverIcon>
                 <AccountPlusOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
-    <h4>{$_("participants")}</h4>
+    <h4>{$_("members")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}

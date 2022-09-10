@@ -1,7 +1,6 @@
 import { AuthProvider } from "../domain/auth";
-import { derived, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { userCreatedStore } from "./settings";
 import { enumFromStringValue } from "../utils/enums";
 import { IdbStorage, LocalStorage } from "@dfinity/auth-client";
 

@@ -3,7 +3,7 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Participant } from "../../domain/chat/chat";
+    import type { Member } from "../../domain/chat/chat";
     import { userStore } from "../../stores/user";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -18,7 +18,7 @@
     const user = getContext<CreatedUser>(currentUserKey);
 
     export let blockedUsers: Set<string>;
-    export let participants: Participant[];
+    export let members: Member[];
     export let prefix: string | undefined;
     export let offset: number;
     export let direction: "up" | "down" = "up";
@@ -30,9 +30,7 @@
     $: maxHeight =
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
-    $: unblocked = participants.filter(
-        (p) => !blockedUsers.has(p.userId) && p.userId !== user.userId
-    );
+    $: unblocked = members.filter((m) => !blockedUsers.has(m.userId) && m.userId !== user.userId);
 
     $: reverseLookup = unblocked.reduce((lookup, u) => {
         const user = $userStore[u.userId];

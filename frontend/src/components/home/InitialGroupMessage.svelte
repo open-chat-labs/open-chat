@@ -23,7 +23,7 @@
     </div>
     <div>
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
-            values: { number: group.participantCount },
+            values: { number: group.memberCount },
         })}
     </div>
     {#if noVisibleEvents}

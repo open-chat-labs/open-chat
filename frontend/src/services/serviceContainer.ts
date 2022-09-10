@@ -35,10 +35,10 @@ import type {
     ChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
-    AddParticipantsResponse,
+    AddMembersResponse,
     Message,
     SendMessageResponse,
-    RemoveParticipantResponse,
+    RemoveMemberResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
@@ -314,28 +314,33 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).updatePermissions(permissions);
     }
 
-    addParticipants(
+    addMembers(
         chatId: string,
         userIds: string[],
         myUsername: string,
         allowBlocked: boolean
-    ): Promise<AddParticipantsResponse> {
+    ): Promise<AddMembersResponse> {
         if (!userIds.length) {
-            return Promise.resolve<AddParticipantsResponse>({ kind: "add_participants_success" });
+            return Promise.resolve<AddMembersResponse>({ kind: "add_members_success" });
         }
-        return this.getGroupClient(chatId).addParticipants(userIds, myUsername, allowBlocked);
+        return this.getGroupClient(chatId).addMembers(userIds, myUsername, allowBlocked);
     }
 
     directChatEventsWindow(
         eventIndexRange: IndexRange,
         theirUserId: string,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined,
+        latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEventsWindow(eventIndexRange, theirUserId, messageIndex, latestClientMainEventIndex),
+            this.userClient.chatEventsWindow(
+                eventIndexRange,
+                theirUserId,
+                messageIndex,
+                latestClientMainEventIndex
+            ),
             undefined,
             latestClientMainEventIndex
         );
@@ -348,7 +353,7 @@ export class ServiceContainer implements MarkMessagesRead {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         return chat.kind === "group_chat"
             ? this.groupChatEvents(
@@ -375,7 +380,7 @@ export class ServiceContainer implements MarkMessagesRead {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
@@ -398,12 +403,17 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEventsByIndex(eventIndexes, theirUserId, threadRootMessageIndex, latestClientEventIndex),
+            this.userClient.chatEventsByIndex(
+                eventIndexes,
+                theirUserId,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ),
             threadRootMessageIndex,
             latestClientEventIndex
         );
@@ -413,12 +423,16 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexRange: IndexRange,
         chatId: string,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined,
+        latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEventsWindow(eventIndexRange, messageIndex, latestClientMainEventIndex),
+            this.getGroupClient(chatId).chatEventsWindow(
+                eventIndexRange,
+                messageIndex,
+                latestClientMainEventIndex
+            ),
             undefined,
             latestClientMainEventIndex
         );
@@ -430,7 +444,7 @@ export class ServiceContainer implements MarkMessagesRead {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
@@ -452,12 +466,16 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes, threadRootMessageIndex, latestClientEventIndex),
+            this.getGroupClient(chatId).chatEventsByIndex(
+                eventIndexes,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ),
             threadRootMessageIndex,
             latestClientEventIndex
         );
@@ -545,7 +563,7 @@ export class ServiceContainer implements MarkMessagesRead {
         currentChatId: string,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<Record<string, EventWrapper<Message>[]>> {
         const missing = this.findMissingEventIndexesByChat(currentChatId, events);
         const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
@@ -555,7 +573,12 @@ export class ServiceContainer implements MarkMessagesRead {
             if (chatId === currentChatId && chatType === "direct") {
                 missingMessages.push(
                     this.userClient
-                        .chatEventsByIndex(idxs, currentChatId, threadRootMessageIndex, latestClientEventIndex)
+                        .chatEventsByIndex(
+                            idxs,
+                            currentChatId,
+                            threadRootMessageIndex,
+                            latestClientEventIndex
+                        )
                         .then((resp) => this.messagesFromEventsResponse(chatId, resp))
                 );
             } else {
@@ -623,7 +646,7 @@ export class ServiceContainer implements MarkMessagesRead {
         currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
@@ -672,14 +695,14 @@ export class ServiceContainer implements MarkMessagesRead {
         currentChatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatType,
             currentChatId,
             [message],
             threadRootMessageIndex,
-            latestClientEventIndex,
+            latestClientEventIndex
         );
         [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
         [message] = this.reydrateEventList([message]);
@@ -844,8 +867,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).makeGroupPrivate();
     }
 
-    removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
-        return this.getGroupClient(chatId).removeParticipant(userId);
+    removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
+        return this.getGroupClient(chatId).removeMember(userId);
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
@@ -1035,12 +1058,15 @@ export class ServiceContainer implements MarkMessagesRead {
     getGroupMessagesByMessageIndex(
         chatId: string,
         messageIndexes: Set<number>,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).getMessagesByMessageIndex(messageIndexes, latestClientEventIndex),
+            this.getGroupClient(chatId).getMessagesByMessageIndex(
+                messageIndexes,
+                latestClientEventIndex
+            ),
             undefined,
             latestClientEventIndex
         );
@@ -1143,20 +1169,36 @@ export class ServiceContainer implements MarkMessagesRead {
         }
 
         return Promise.all(
-            Object.entries(threadsByChat).map(([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
-                const latestClientThreadUpdate = threadSyncs
-                    .reduce((curr, next) => next.lastUpdated > curr ? next.lastUpdated : curr, BigInt(0));
+            Object.entries(threadsByChat).map(
+                ([chatId, [threadSyncs, latestClientMainEventIndex]]) => {
+                    const latestClientThreadUpdate = threadSyncs.reduce(
+                        (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
+                        BigInt(0)
+                    );
 
-                return this.getGroupClient(chatId).threadPreviews(
-                    threadSyncs.map((t) => t.threadRootMessageIndex),
-                    latestClientThreadUpdate
-                ).then((response) => [response, latestClientMainEventIndex] as [ThreadPreviewsResponse, number | undefined])
-            })
+                    return this.getGroupClient(chatId)
+                        .threadPreviews(
+                            threadSyncs.map((t) => t.threadRootMessageIndex),
+                            latestClientThreadUpdate
+                        )
+                        .then(
+                            (response) =>
+                                [response, latestClientMainEventIndex] as [
+                                    ThreadPreviewsResponse,
+                                    number | undefined
+                                ]
+                        );
+                }
+            )
         ).then((responses) =>
             Promise.all(
                 responses.map(([r, latestClientMainEventIndex]) => {
                     return r.kind === "thread_previews_success"
-                        ? Promise.all(r.threads.map((t) => this.rehydrateThreadPreview(t, latestClientMainEventIndex)))
+                        ? Promise.all(
+                              r.threads.map((t) =>
+                                  this.rehydrateThreadPreview(t, latestClientMainEventIndex)
+                              )
+                          )
                         : [];
                 })
             ).then((threads) =>

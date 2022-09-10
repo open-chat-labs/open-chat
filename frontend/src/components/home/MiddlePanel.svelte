@@ -49,10 +49,10 @@
             on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
-            on:addParticipants
+            on:addMembers
             on:showGroupDetails
             on:showProposalFilters
-            on:showParticipants
+            on:showMembers
             on:chatWith
             on:joinGroup
             on:upgrade

@@ -732,9 +732,9 @@
         }
     }
 
-    function addParticipants() {
+    function addMembers() {
         if ($selectedChatStore !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "add_participants" }];
+            rightPanelHistory = [...rightPanelHistory, { kind: "add_members" }];
         }
     }
 
@@ -759,9 +759,9 @@
         modal = ModalType.SelectChat;
     }
 
-    function showParticipants() {
+    function showMembers() {
         if ($selectedChatStore !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
+            rightPanelHistory = [...rightPanelHistory, { kind: "show_members" }];
         }
     }
 
@@ -1033,11 +1033,11 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:addParticipants={addParticipants}
+            on:addMembers={addMembers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:openThread={openThread}
-            on:showParticipants={showParticipants}
+            on:showMembers={showMembers}
             on:updateChat={updateChat}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
@@ -1061,8 +1061,8 @@
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
-            on:addParticipants={addParticipants}
-            on:showParticipants={showParticipants}
+            on:addMembers={addMembers}
+            on:showMembers={showMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
             on:blockUser={blockUser}
@@ -1088,8 +1088,8 @@
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
-                on:addParticipants={addParticipants}
-                on:showParticipants={showParticipants}
+                on:addMembers={addMembers}
+                on:showMembers={showMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}

@@ -2,18 +2,17 @@
 import DRange from "drange";
 import { derived, get, readable, Readable, Writable } from "svelte/store";
 import type {
-    AddParticipantsResponse,
+    AddMembersResponse,
     ChatEvent,
     ChatSummary,
     EnhancedReplyContext,
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
-    FullParticipant,
+    FullMember,
     GroupChatDetails,
     Message,
     MessageContent,
-    Participant,
     MemberRole,
     SendMessageSuccess,
     TransferSuccess,
@@ -41,7 +40,7 @@ import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
-import type { ChatState } from "../stores/chat";
+import { ChatState, currentChatMembers } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -54,17 +53,15 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { eventsStore } from "../stores/events";
+import { eventsStore, focusMessageIndex } from "../stores/chat";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
-    public focusMessageIndex: Writable<number | undefined>;
     public textContent: Readable<string | undefined>;
     public replyingTo: Readable<EnhancedReplyContext | undefined>;
     public fileToAttach: Readable<MessageContent | undefined>;
     public editingEvent: Readable<EventWrapper<Message> | undefined>;
     public chatId: string;
-    public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
     public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
@@ -98,9 +95,9 @@ export class ChatController {
         );
 
         const chat = get(this.chat);
-        eventsStore.selectChat(chat.chatId);
-        this.focusMessageIndex = immutableStore(_focusMessageIndex);
-        this.participants = immutableStore([]);
+        eventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+        focusMessageIndex.set(chat.chatId, _focusMessageIndex);
+        currentChatMembers.set(chat.chatId, []);
         this.blockedUsers = immutableStore(new Set<string>());
         this.pinnedMessages = immutableStore(new Set<number>());
         this.chatId = chat.chatId;
@@ -125,7 +122,9 @@ export class ChatController {
     }
 
     destroy(): void {
-        eventsStore.clear();
+        eventsStore.clear(this.chatId);
+        focusMessageIndex.clear(this.chatId);
+        currentChatMembers.clear(this.chatId);
     }
 
     get chatVal(): ChatSummary {
@@ -168,11 +167,11 @@ export class ChatController {
                 );
                 if (resp !== "caller_not_in_group") {
                     this.groupDetails = resp;
-                    this.participants.set(resp.participants);
+                    currentChatMembers.set(this.chatId, resp.members);
                     this.blockedUsers.set(resp.blockedUsers);
                     this.pinnedMessages.set(resp.pinnedMessages);
                 }
-                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
+                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
             } else {
                 await this.updateDetails();
             }
@@ -189,10 +188,10 @@ export class ChatController {
                     this.chatId,
                     this.groupDetails
                 );
-                this.participants.set(this.groupDetails.participants);
+                currentChatMembers.set(this.chatId, this.groupDetails.members);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
-                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
+                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
             }
         }
     }
@@ -220,7 +219,7 @@ export class ChatController {
         answerIndex: number,
         type: "register" | "delete"
     ): void {
-        eventsStore.update((events) => {
+        eventsStore.update(this.chatId, (events) => {
             return events.map((evt) =>
                 updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
             );
@@ -286,9 +285,11 @@ export class ChatController {
     }
 
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
-        const participantIds = get(this.participants).map((p) => p.userId);
+        const members = get(currentChatMembers);
+        console.log("members: ", members);
+        const memberIds = members.map((p) => p.userId);
         const blockedIds = [...get(this.blockedUsers)];
-        const allUserIds = [...participantIds, ...blockedIds, ...userIdsFromEvents];
+        const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
         allUserIds.forEach((u) => {
             if (u !== this.user.userId) {
                 this.chatUserIds.add(u);
@@ -317,7 +318,7 @@ export class ChatController {
         if (resp === "events_failed") return;
 
         this.initialised = true;
-        const events = get(eventsStore);
+        const events = eventsStore.get();
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
@@ -340,7 +341,7 @@ export class ChatController {
         const userIds = userIdsFromEvents(updated);
         await this.updateUserStore(userIds);
 
-        eventsStore.set(updated);
+        eventsStore.set(this.chatId, updated);
 
         if (resp.events.length > 0) {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
@@ -476,13 +477,13 @@ export class ChatController {
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!upToDate(this.chatVal, get(eventsStore))) {
+        if (!upToDate(this.chatVal, eventsStore.get())) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
         if (get(this.editingEvent)) {
-            eventsStore.update((events) => {
+            eventsStore.update(this.chatId, (events) => {
                 return events.map((e) => {
                     if (
                         e.event.kind === "message" &&
@@ -544,7 +545,7 @@ export class ChatController {
                 latestEventIndex: undefined,
             });
         } else {
-            if (!upToDate(this.chatVal, get(eventsStore))) {
+            if (!upToDate(this.chatVal, eventsStore.get())) {
                 return;
             }
 
@@ -564,13 +565,16 @@ export class ChatController {
     }
 
     appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = get(eventsStore).find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-        );
+        const existing = eventsStore
+            .get()
+            .find(
+                (ev) =>
+                    ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+            );
 
         if (existing !== undefined) return false;
 
-        eventsStore.update((events) => [...events, message]);
+        eventsStore.update(this.chatId, (events) => [...events, message]);
         return true;
     }
 
@@ -585,7 +589,7 @@ export class ChatController {
             });
         }
 
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             replaceMessageContent(events, BigInt(message.messageId), message.content)
         );
     }
@@ -600,7 +604,7 @@ export class ChatController {
                 userId: userId,
             });
         }
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             replaceMessageContent(events, BigInt(messageId), {
                 kind: "deleted_content",
                 deletedBy: userId,
@@ -621,7 +625,7 @@ export class ChatController {
         }
         unconfirmed.delete(this.chatId, messageId);
         messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
-        eventsStore.update((events) =>
+        eventsStore.update(this.chatId, (events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
     }
@@ -748,7 +752,7 @@ export class ChatController {
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
-            eventsStore.update((events) =>
+            eventsStore.update(this.chatId, (events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
                         return confirmed;
@@ -791,14 +795,6 @@ export class ChatController {
 
     isRead(messageIndex: number, messageId: bigint): boolean {
         return messagesRead.isRead(this.chatId, messageIndex, messageId);
-    }
-
-    setFocusMessageIndex(idx: number): void {
-        this.focusMessageIndex.set(idx);
-    }
-
-    clearFocusMessageIndex(): void {
-        this.focusMessageIndex.set(undefined);
     }
 
     earliestLoadedIndex(): number | undefined {
@@ -852,7 +848,7 @@ export class ChatController {
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
-        this.participants.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
@@ -870,7 +866,7 @@ export class ChatController {
     }
 
     private transferOwnershipLocally(me: string, them: string): void {
-        this.participants.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: "owner" };
@@ -884,7 +880,7 @@ export class ChatController {
     }
 
     private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
-        this.participants.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: theirRole };
@@ -897,7 +893,7 @@ export class ChatController {
         );
     }
 
-    transferOwnership(me: string, them: FullParticipant): Promise<boolean> {
+    transferOwnership(me: string, them: FullMember): Promise<boolean> {
         this.transferOwnershipLocally(me, them.userId);
         return this.api
             .changeRole(this.chatId, them.userId, "owner")
@@ -917,7 +913,7 @@ export class ChatController {
     }
 
     makeAdmin(userId: string): Promise<void> {
-        this.participants.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
         );
         return this.api
@@ -934,24 +930,24 @@ export class ChatController {
             });
     }
 
-    removeParticipant(userId: string): Promise<void> {
+    removeMember(userId: string): Promise<void> {
         return this.api
-            .removeParticipant(this.chatId, userId)
+            .removeMember(this.chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to remove participant", resp);
-                    toastStore.showFailureToast("removeParticipantFailed");
+                    rollbar.warn("Unable to remove member", resp);
+                    toastStore.showFailureToast("removeMemberFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to remove participant", err);
-                toastStore.showFailureToast("removeParticipantFailed");
+                rollbar.error("Unable to remove member", err);
+                toastStore.showFailureToast("removeMemberFailed");
             });
     }
 
     private blockUserLocally(userId: string): void {
         this.blockedUsers.update((b) => b.add(userId));
-        this.participants.update((p) => p.filter((p) => p.userId !== userId));
+        currentChatMembers.update(this.chatId, (p) => p.filter((p) => p.userId !== userId));
     }
 
     private unblockUserLocally(userId: string): void {
@@ -959,7 +955,7 @@ export class ChatController {
             b.delete(userId);
             return b;
         });
-        this.participants.update((p) => [
+        currentChatMembers.update(this.chatId, (p) => [
             ...p,
             {
                 role: "participant",
@@ -988,15 +984,15 @@ export class ChatController {
             });
     }
 
-    private removeParticipantsLocally(
+    private removeMembersLocally(
         viaUnblock: boolean,
         users: UserSummary[],
-        resp: AddParticipantsResponse | { kind: "unknown" }
+        resp: AddMembersResponse | { kind: "unknown" }
     ): void {
-        if (resp.kind === "add_participants_success") return;
+        if (resp.kind === "add_members_success") return;
 
         let toRemove: string[] = [];
-        if (resp.kind === "add_participants_partial_success") {
+        if (resp.kind === "add_members_partial_success") {
             toRemove = [
                 ...resp.usersAlreadyInGroup,
                 ...resp.usersBlockedFromGroup,
@@ -1006,7 +1002,7 @@ export class ChatController {
             toRemove = users.map((u) => u.userId);
         }
 
-        this.participants.update((ps) =>
+        currentChatMembers.update(this.chatId, (ps) =>
             ps.filter((p) => {
                 !toRemove.includes(p.userId);
             })
@@ -1019,14 +1015,14 @@ export class ChatController {
         }
     }
 
-    private addParticipantsLocally(viaUnblock: boolean, users: UserSummary[]): void {
+    private addMembersLocally(viaUnblock: boolean, users: UserSummary[]): void {
         if (viaUnblock) {
             this.blockedUsers.update((b) => {
                 users.forEach((u) => b.delete(u.userId));
                 return b;
             });
         }
-        this.participants.update((ps) => [
+        currentChatMembers.update(this.chatId, (ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
                 role: "participant" as MemberRole,
@@ -1035,27 +1031,27 @@ export class ChatController {
         ]);
     }
 
-    addParticipants(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
-        this.addParticipantsLocally(viaUnblock, users);
+    addMembers(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
+        this.addMembersLocally(viaUnblock, users);
         return this.api
-            .addParticipants(
+            .addMembers(
                 this.chatId,
                 users.map((u) => u.userId),
                 this.user.username,
                 viaUnblock
             )
             .then((resp) => {
-                if (resp.kind === "add_participants_success") {
+                if (resp.kind === "add_members_success") {
                     return true;
                 } else {
-                    this.removeParticipantsLocally(viaUnblock, users, resp);
-                    rollbar.warn("AddParticipantsFailed", resp);
+                    this.removeMembersLocally(viaUnblock, users, resp);
+                    rollbar.warn("AddMembersFailed", resp);
                     return false;
                 }
             })
             .catch((err) => {
-                this.removeParticipantsLocally(viaUnblock, users, { kind: "unknown" });
-                rollbar.error("AddParticipantsFailed", err);
+                this.removeMembersLocally(viaUnblock, users, { kind: "unknown" });
+                rollbar.error("AddMembersFailed", err);
                 return false;
             });
     }

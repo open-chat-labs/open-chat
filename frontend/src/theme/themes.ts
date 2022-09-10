@@ -70,7 +70,7 @@ export interface Theme {
         bd: string;
     };
 
-    participants: {
+    members: {
         bg: string;
         txt: string;
         hv: string;

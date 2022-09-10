@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import { userAvatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
-    import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
+    import type { BlockedMember, FullMember } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { now } from "../../../stores/time";
@@ -25,7 +25,7 @@
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
-    export let participant: FullParticipant | BlockedParticipant;
+    export let member: FullMember | BlockedMember;
     export let canDismissAdmin: boolean = false;
     export let canMakeAdmin: boolean = false;
     export let canTransferOwnership: boolean = false;
@@ -44,38 +44,38 @@
         canBlockUser ||
         canUnblockUser;
 
-    $: isBlocked = participant.memberKind === "blocked_member";
+    $: isBlocked = member.memberKind === "blocked_member";
 
     function removeUser() {
-        dispatch("removeParticipant", participant.userId);
+        dispatch("removeMember", member.userId);
     }
 
     function transferOwnership() {
-        dispatch("transferOwnership", participant);
+        dispatch("transferOwnership", member);
     }
 
     function dismissAsAdmin() {
-        dispatch("dismissAsAdmin", participant.userId);
+        dispatch("dismissAsAdmin", member.userId);
     }
 
     function makeAdmin() {
-        dispatch("makeAdmin", participant.userId);
+        dispatch("makeAdmin", member.userId);
     }
 
-    function participantSelected() {
+    function memberSelected() {
         if (!me) {
             closeUserProfile();
-            dispatch("chatWith", participant.userId);
+            dispatch("chatWith", member.userId);
             dispatch("close");
         }
     }
 
     function blockUser() {
-        dispatch("blockUser", { userId: participant.userId });
+        dispatch("blockUser", { userId: member.userId });
     }
 
     function unblockUser() {
-        dispatch("unblockUser", participant);
+        dispatch("unblockUser", member);
     }
 
     function openUserProfile() {
@@ -91,13 +91,13 @@
 
 {#if viewProfile}
     <ViewUserProfile
-        userId={participant.userId}
-        on:openDirectChat={participantSelected}
+        userId={member.userId}
+        on:openDirectChat={memberSelected}
         on:close={closeUserProfile} />
 {/if}
 
 <div
-    class="participant"
+    class="member"
     class:me
     on:click={openUserProfile}
     role="button"
@@ -105,20 +105,20 @@
     on:mouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
-            statusBorder={hovering && !me ? "var(--participants-hv)" : "var(--participants-bg)"}
-            blocked={participant.memberKind === "blocked_member"}
-            url={userAvatarUrl(participant)}
-            status={getUserStatus($now, $userStore, participant.userId)}
+            statusBorder={hovering && !me ? "var(--members-hv)" : "var(--members-bg)"}
+            blocked={member.memberKind === "blocked_member"}
+            url={userAvatarUrl(member)}
+            status={getUserStatus($now, $userStore, member.userId)}
             size={AvatarSize.Small} />
     </span>
     <div class="details">
-        <h4 class:blocked={participant.memberKind === "blocked_member"}>
-            {me ? $_("you") : participant.username ?? $_("unknownUser")}
+        <h4 class:blocked={member.memberKind === "blocked_member"}>
+            {me ? $_("you") : member.username ?? $_("unknownUser")}
         </h4>
         <span class="role">
-            {#if participant.role === "owner"}
+            {#if member.role === "owner"}
                 ({$_("owner")})
-            {:else if participant.role === "admin"}
+            {:else if member.role === "admin"}
                 ({$_("admin")})
             {/if}
         </span>
@@ -198,13 +198,13 @@
 </div>
 
 <style type="text/scss">
-    .participant {
+    .member {
         display: flex;
         justify-content: center;
         align-items: center;
-        border-bottom: var(--participants-bd);
-        background-color: var(--participants-bg);
-        color: var(--participants-txt);
+        border-bottom: var(--members-bd);
+        background-color: var(--members-bg);
+        color: var(--members-txt);
         padding: $sp3;
         margin: 0 $sp3 0 $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
@@ -214,7 +214,7 @@
         }
 
         &:not(.me):hover {
-            background-color: var(--participants-hv);
+            background-color: var(--members-hv);
         }
 
         @include size-above(xl) {
