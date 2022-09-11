@@ -320,10 +320,10 @@
             remoteUserRemovedMessage(parsed);
         }
         if (kind === "remote_user_deleted_message") {
-            localMessageUpdates.markDeleted(parsed.messageId, parsed.userId);
+            localMessageUpdates.markDeleted(parsed.messageId.toString(), parsed.userId);
         }
         if (kind === "remote_user_undeleted_message") {
-            localMessageUpdates.markUndeleted(parsed.messageId);
+            localMessageUpdates.markUndeleted(parsed.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
             remoteUserSentMessage(parsed);

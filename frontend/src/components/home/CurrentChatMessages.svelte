@@ -20,7 +20,6 @@
     } from "../../domain/chat/chat";
     import { containsReaction, groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
-    import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import type { ChatController } from "../../fsm/chat.controller";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
