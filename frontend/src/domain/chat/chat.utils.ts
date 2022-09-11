@@ -1667,6 +1667,14 @@ function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates |
         };
     }
 
+    if (localUpdates.editedContent !== undefined) {
+        message = {
+            ...message,
+            content: localUpdates.editedContent,
+            edited: true
+        };
+    }
+
     if (localUpdates.reactions !== undefined) {
         let reactions = [...message.reactions];
         for (const localReaction of localUpdates.reactions) {

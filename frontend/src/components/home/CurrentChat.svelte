@@ -180,20 +180,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            api.editMessage($chat, msg!)
-                .then((resp) => {
-                    if (resp !== "success") {
-                        rollbar.warn("Error response editing", resp);
-                        toastStore.showFailureToast("errorEditingMessage");
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Exception sending message", err);
-                    toastStore.showFailureToast("errorEditingMessage");
-                });
-
-            const event = { ...editingEvent, event: msg! };
-            controller.sendMessage(event);
+            controller.editMessage(msg, undefined);
         }
     }
 

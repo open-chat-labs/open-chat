@@ -464,45 +464,53 @@ export class ChatController {
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        if (get(this.editingEvent)) {
-            serverEventsStore.update(this.chatId, (events) => {
-                return events.map((e) => {
-                    if (
-                        e.event.kind === "message" &&
-                        e.event.messageId === messageEvent.event.messageId
-                    ) {
-                        return messageEvent;
-                    }
-                    return e;
-                });
-            });
-        } else {
-            unconfirmed.add(this.chatId, messageEvent);
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                kind: "remote_user_sent_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatId,
-                messageEvent: serialiseMessageForRtc(messageEvent),
-                userId: this.user.userId,
-            });
+        unconfirmed.add(this.chatId, messageEvent);
+        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+            kind: "remote_user_sent_message",
+            chatType: this.chatVal.kind,
+            chatId: this.chatId,
+            messageEvent: serialiseMessageForRtc(messageEvent),
+            userId: this.user.userId,
+        });
 
-            // mark our own messages as read manually since we will not be observing them
-            messagesRead.markMessageRead(
-                this.chatId,
-                messageEvent.event.messageIndex,
-                messageEvent.event.messageId
-            );
-            this.appendMessage(messageEvent);
-            this.raiseEvent({
-                chatId: this.chatId,
-                event: {
-                    kind: "sending_message",
-                    scroll: jumping ? "auto" : "smooth",
-                },
-            });
-        }
+        // mark our own messages as read manually since we will not be observing them
+        messagesRead.markMessageRead(
+            this.chatId,
+            messageEvent.event.messageIndex,
+            messageEvent.event.messageId
+        );
+        this.appendMessage(messageEvent);
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: {
+                kind: "sending_message",
+                scroll: jumping ? "auto" : "smooth",
+            },
+        });
 
         draftMessages.delete(this.chatId);
+    }
+
+    async editMessage(msg: Message, threadRootMessageIndex: number | undefined): Promise<void> {
+        localMessageUpdates.markContentEdited(msg.messageId.toString(), msg.content);
+
+        if (threadRootMessageIndex === undefined) {
+            draftMessages.delete(this.chatId);
+        }
+
+        return this.api.editMessage(this.chatVal, msg, threadRootMessageIndex)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Error response editing", resp);
+                    toastStore.showFailureToast("errorEditingMessage");
+                    localMessageUpdates.revertEditedContent(msg.messageId.toString());
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Exception sending message", err);
+                toastStore.showFailureToast("errorEditingMessage");
+                localMessageUpdates.revertEditedContent(msg.messageId.toString());
+            });
     }
 
     public selectReaction(

@@ -359,6 +359,7 @@ export type LocalMessageUpdates = {
         deletedBy: string,
         timestamp: bigint,
     };
+    editedContent?: MessageContent,
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     lastUpdated: number;
