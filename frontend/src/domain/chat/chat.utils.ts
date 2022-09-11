@@ -54,10 +54,10 @@ import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
-import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import type { UnconfirmedMessages } from "../../stores/unconfirmed";
+import type { LocalMessageUpdates, LocalReaction } from "./chat";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -667,6 +667,7 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
+    localUpdates: Record<string, LocalMessageUpdates>,
     archivedLocally: boolean | undefined,
     mutedLocally: boolean | undefined
 ): ChatSummary {
@@ -687,6 +688,15 @@ export function mergeUnconfirmedIntoSummary(
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
             latestEventIndex = latestUnconfirmedMessage.index;
+        }
+    }
+    if (latestMessage !== undefined) {
+        const updates = localUpdates[latestMessage.event.messageId.toString()];
+        if (updates !== undefined) {
+            latestMessage = {
+                ...latestMessage,
+                event: mergeLocalUpdates(latestMessage.event, updates)
+            }
         }
     }
     const archived = archivedLocally ?? chatSummary.archived;
@@ -956,14 +966,11 @@ function mergeMessageEvents(
         incoming.event.kind === "message" &&
         existing.event.messageId === incoming.event.messageId
     ) {
-        const key = existing.event.messageId.toString();
-        const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
         return {
             ...existing,
             event: {
                 ...existing.event,
                 content: incoming.event.content,
-                reactions: merged,
                 thread: incoming.event.thread,
             },
         };
@@ -1201,30 +1208,22 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
     }
 }
 
-export function updateEventPollContent<T extends ChatEvent>(
-    messageIndex: number,
+function updateEventPollContent(
+    message: Message,
     answerIndex: number,
     type: "register" | "delete",
     userId: string,
-    evt: EventWrapper<T>
-): EventWrapper<T> {
-    if (
-        evt.event.kind === "message" &&
-        evt.event.messageIndex === messageIndex &&
-        evt.event.content.kind === "poll_content"
-    ) {
+): Message {
+    if (message.content.kind === "poll_content") {
         return {
-            ...evt,
-            event: {
-                ...evt.event,
-                content: {
-                    ...evt.event.content,
-                    votes: updatePollVotes(userId, evt.event.content, answerIndex, type),
-                },
+            ...message,
+            content: {
+                ...message.content,
+                votes: updatePollVotes(userId, message.content, answerIndex, type),
             },
         };
     }
-    return evt;
+    return message;
 }
 
 export function updatePollVotes(
@@ -1634,4 +1633,66 @@ export function markAllRead(chat: ChatSummary): void {
             latestMessageIndex
         );
     }
+}
+
+export function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates | undefined): Message {
+    if (localUpdates === undefined) return message;
+
+    if (localUpdates.deleted !== undefined) {
+        return {
+            ...message,
+            content: {
+                kind: "deleted_content",
+                deletedBy: localUpdates.deleted.deletedBy,
+                timestamp: localUpdates.deleted.timestamp
+            }
+        };
+    }
+
+    if (localUpdates.reactions !== undefined) {
+        let reactions = [...message.reactions];
+        for (const localReaction of localUpdates.reactions) {
+            reactions = applyLocalReaction(localReaction, reactions);
+        }
+        message = {
+            ...message,
+            reactions
+        };
+    }
+
+    if (localUpdates.pollVotes !== undefined) {
+        for (const pollVote of localUpdates.pollVotes) {
+            message = updateEventPollContent(message, pollVote.answerIndex, pollVote.type, pollVote.userId);
+        }
+    }
+
+    return message;
+}
+
+export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
+    const r = reactions.find((r) => r.reaction === local.reaction);
+    if (r === undefined) {
+        if (local.kind === "add") {
+            reactions.push({ reaction: local.reaction, userIds: new Set([local.userId]) });
+        }
+    } else {
+        if (local.kind === "add") {
+            r.userIds.add(local.userId);
+        } else {
+            r.userIds.delete(local.userId);
+            if (r.userIds.size === 0) {
+                reactions = reactions.filter((r) => r.reaction !== local.reaction);
+            }
+        }
+    }
+    return reactions;
+}
+
+export function findMessageById(messageId: bigint, events: EventWrapper<ChatEvent>[]): EventWrapper<Message> | undefined {
+    for (const event of events) {
+        if (event.event.kind === "message" && event.event.messageId === messageId) {
+            return event as EventWrapper<Message>;
+        }
+    }
+    return undefined;
 }

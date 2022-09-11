@@ -18,7 +18,7 @@
         Mention,
         ChatSummary,
     } from "../../domain/chat/chat";
-    import { groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
+    import { containsReaction, groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -29,7 +29,6 @@
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { userStore } from "../../stores/user";
-    import { selectReaction } from "../../stores/reactions";
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
@@ -139,6 +138,8 @@
 
             if (event.kind === "relayed_register_vote") {
                 controller.registerPollVote(
+                    undefined,
+                    event.data.messageId,
                     event.data.messageIndex,
                     event.data.answerIndex,
                     event.data.type
@@ -311,20 +312,14 @@
     function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
 
-        selectReaction(
-            controller.api,
-            eventsStore.update,
-            $chat,
-            controller.user.userId,
-            message.messageId,
-            reaction,
-            controller.chatUserIds,
-            controller.user.userId
-        ).then((added) => {
-            if (added) {
-                trackEvent("reacted_to_message");
-            }
-        });
+        const kind = containsReaction(controller.user.userId, reaction, message.reactions) ? "remove" : "add";
+
+        controller.selectReaction(undefined, message.messageId, reaction, kind)
+            .then((success) => {
+                if (success && kind === "add") {
+                    trackEvent("reacted_to_message");
+                }
+            });
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -550,9 +545,15 @@
     }
 
     function registerVote(
-        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+        ev: CustomEvent<{ messageId: bigint, messageIndex: number; answerIndex: number; type: "register" | "delete" }>
     ) {
-        controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
+        controller.registerPollVote(
+            undefined,
+            ev.detail.messageId,
+            ev.detail.messageIndex,
+            ev.detail.answerIndex,
+            ev.detail.type
+        );
     }
 
     function shareMessage(ev: CustomEvent<Message>) {

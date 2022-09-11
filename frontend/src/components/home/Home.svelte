@@ -82,7 +82,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
-    import { startPruningLocalReactions } from "../../stores/reactions";
+    import { startPruningLocalUpdates } from "stores/localMessageUpdates";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
@@ -169,7 +169,7 @@
         rtcConnectionsManager.init(user.userId);
         rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores(api, user.userId, (n) => notificationReceived(n));
-        startPruningLocalReactions();
+        startPruningLocalUpdates();
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {

@@ -15,6 +15,7 @@ import {
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
+    mergeLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
@@ -36,6 +37,7 @@ import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createChatSpecificStore } from "./dataByChatFactory";
+import { localMessageUpdates } from "stores/localMessageUpdates";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -87,8 +89,8 @@ export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore, archivedChatsStore, mutedChatsStore],
-    ([summaries, unconfirmed, currentUser, archivedChats, mutedChats]) => {
+    [serverChatSummariesStore, unconfirmed, currentUserStore, localMessageUpdates, archivedChatsStore, mutedChatsStore],
+    ([summaries, unconfirmed, currentUser, localUpdates, archivedChats, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
@@ -96,6 +98,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         currentUser.userId,
                         summary,
                         unconfirmed,
+                        localUpdates,
                         archivedChats.get(summary.chatId),
                         mutedChats.get(chatId)
                     );
@@ -455,13 +458,21 @@ export function removeChat(chatId: string): void {
     });
 }
 
-export const eventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
-
-export type EventStore = typeof eventsStore;
-export type EventStoreUpdater = (
-    chatId: string,
-    fn: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]
-) => void;
-
+export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
+export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
+    derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
+        return serverEvents.map((e) => {
+            if (e.event.kind === "message") {
+                const updates = localUpdates[e.event.messageId.toString()];
+                if (updates !== undefined) {
+                    return {
+                        ...e,
+                        event: mergeLocalUpdates(e.event, updates)
+                    };
+                }
+            }
+            return e;
+        })
+    });
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
 export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

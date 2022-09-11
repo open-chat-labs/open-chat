@@ -31,7 +31,9 @@
         canPinMessages,
         canReactToMessages,
         canReplyInThread,
+        containsReaction,
         createMessage,
+        findMessageById,
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
@@ -40,7 +42,6 @@
         replaceAffected,
         replaceLocal,
         serialiseMessageForRtc,
-        updateEventPollContent,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
@@ -56,7 +57,6 @@
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
-    import { selectReaction, toggleReactionInEventList } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
@@ -74,6 +74,7 @@
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
     import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
+    import { localMessageUpdates } from "stores/localMessageUpdates";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -340,18 +341,18 @@
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        events.update((events) =>
-            toggleReactionInEventList(
-                $chat,
-                message.userId,
-                events,
-                message.messageId,
-                message.reaction,
-                controller.chatUserIds,
-                currentUser.userId,
-                threadRootMessageIndex
-            )
-        );
+        const messageIdString = message.messageId.toString();
+        const matchingMessage = findMessageById(messageIdString, $events);
+
+        if (matchingMessage !== undefined) {
+            const exists = reactionExists(matchingMessage.event, message.reaction, message.userId);
+
+            localMessageUpdates.markReaction(messageIdString, {
+                reaction: message.reaction,
+                kind: exists ? "remove" : "add",
+                userId: message.userId
+            });
+        }
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
@@ -577,37 +578,12 @@
             return;
         }
 
-        events.update((events) =>
-            events.map((e) =>
-                updateEventPollContent(
-                    ev.detail.messageIndex,
-                    ev.detail.answerIndex,
-                    ev.detail.type,
-                    currentUser.userId,
-                    e
-                )
-            )
-        );
-
-        api.registerPollVote(
-            $chat.chatId,
+        controller.registerPollVote(
+            threadRootMessageIndex,
+            ev.detail.messageId,
             ev.detail.messageIndex,
             ev.detail.answerIndex,
-            ev.detail.type,
-            threadRootMessageIndex
-        )
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("poll.voteFailed");
-                    rollbar.error("Poll vote failed: ", resp);
-                    console.log("poll vote failed: ", resp);
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("poll.voteFailed");
-                rollbar.error("Poll vote failed: ", err);
-                console.log("poll vote failed: ", err);
-            });
+            ev.detail.type);
     }
 
     function undeleteMessage(message: Message): void {
@@ -619,7 +595,7 @@
             userId: currentUser.userId,
             threadRootMessageIndex,
         });
-        replaceMessageContent(BigInt(message.messageId), message.content);
+        localMessageUpdates.markUndeleted(message.messageId.toString());
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
@@ -630,11 +606,7 @@
 
         const messageId = ev.detail.messageId;
 
-        replaceMessageContent(messageId, {
-            kind: "deleted_content",
-            deletedBy: currentUser.userId,
-            timestamp: BigInt(Date.now()),
-        });
+        localMessageUpdates.markDeleted(messageId.toString(), currentUser.userId);
 
         api.deleteMessage($chat, messageId, threadRootMessageIndex)
             .then((resp) => {
@@ -657,17 +629,6 @@
             userId: currentUser.userId,
             threadRootMessageIndex,
         });
-    }
-
-    function replaceMessageContent(messageId: unknown, content: MessageContent) {
-        events.update((evts) =>
-            evts.map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    return { ...e, event: { ...e.event, content } };
-                }
-                return e;
-            })
-        );
     }
 
     function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
@@ -714,21 +675,16 @@
 
         if (!canReact) return;
 
-        selectReaction(
-            api,
-            eventsUpdater,
-            $chat,
-            currentUser.userId,
-            ev.detail.message.messageId,
-            ev.detail.reaction,
-            controller.chatUserIds,
-            currentUser.userId,
-            threadRootMessageIndex
-        ).then((added) => {
-            if (added) {
-                trackEvent("reacted_to_message");
-            }
-        });
+        const { message, reaction } = ev.detail;
+
+        const kind = containsReaction(currentUser.userId, reaction, message.reactions) ? "remove" : "add";
+
+        controller.selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
+            .then((success) => {
+                if (success && kind === "add") {
+                    trackEvent("reacted_to_message");
+                }
+            });
     }
 
     function goToMessageIndex(index: number) {
