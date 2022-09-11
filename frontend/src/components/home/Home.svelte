@@ -82,7 +82,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
-    import { startPruningLocalUpdates } from "stores/localMessageUpdates";
+    import { startPruningLocalUpdates } from "../../stores/localMessageUpdates";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
