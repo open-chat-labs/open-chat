@@ -37,7 +37,7 @@ import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createChatSpecificStore } from "./dataByChatFactory";
-import { localMessageUpdates } from "stores/localMessageUpdates";
+import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;

@@ -73,8 +73,8 @@
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
     import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
-    import { localMessageUpdates } from "stores/localMessageUpdates";
-    import { mergeServerEventsWithLocalUpdates } from "domain/chat/chat.utils";
+    import { localMessageUpdates } from "../../../stores/localMessageUpdates";
+    import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);

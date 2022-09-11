@@ -50,7 +50,7 @@ import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { eventsStore, focusMessageIndex } from "../stores/chat";
-import { localMessageUpdates } from "stores/localMessageUpdates";
+import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;

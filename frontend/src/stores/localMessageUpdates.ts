@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { LocalMessageUpdates, LocalPollVote, LocalReaction, MessageContent } from "domain/chat/chat";
+import type { LocalMessageUpdates, LocalPollVote, LocalReaction, MessageContent } from "../domain/chat/chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL: number = 30 * 1000;
 const store = writable<Record<string, LocalMessageUpdates>>({});
