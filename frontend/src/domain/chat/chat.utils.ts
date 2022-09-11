@@ -1635,7 +1635,25 @@ export function markAllRead(chat: ChatSummary): void {
     }
 }
 
-export function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates | undefined): Message {
+export function mergeServerEventsWithLocalUpdates(
+    events: EventWrapper<ChatEvent>[],
+    localUpdates: Record<string, LocalMessageUpdates>
+): EventWrapper<ChatEvent>[] {
+    return events.map((e) => {
+        if (e.event.kind === "message") {
+            const updates = localUpdates[e.event.messageId.toString()];
+            if (updates !== undefined) {
+                return {
+                    ...e,
+                    event: mergeLocalUpdates(e.event, updates)
+                };
+            }
+        }
+        return e;
+    })
+}
+
+function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates | undefined): Message {
     if (localUpdates === undefined) return message;
 
     if (localUpdates.deleted !== undefined) {

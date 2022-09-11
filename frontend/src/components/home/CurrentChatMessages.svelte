@@ -346,21 +346,7 @@
     function deleteMessage(message: Message) {
         if (!canDelete && controller.user.userId !== message.sender) return;
 
-        controller.deleteMessage(message.messageId, controller.user.userId);
-
-        controller.api
-            .deleteMessage($chat, message.messageId)
-            .then((resp) => {
-                // check it worked - undo if it didn't
-                if (resp !== "success") {
-                    toastStore.showFailureToast("deleteFailed");
-                    controller.undeleteMessage(message, controller.user.userId);
-                }
-            })
-            .catch((_err) => {
-                toastStore.showFailureToast("deleteFailed");
-                controller.undeleteMessage(message, controller.user.userId);
-            });
+        controller.deleteMessage(undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {

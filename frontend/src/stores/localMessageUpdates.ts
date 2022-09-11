@@ -59,7 +59,7 @@ function pruneLocalUpdates() {
             result[messageId] = updates;
         }
         return result;
-    }, {}));
+    }, {} as Record<string, LocalMessageUpdates>));
 }
 
 export function startPruningLocalUpdates() {

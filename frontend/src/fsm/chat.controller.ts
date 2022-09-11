@@ -597,30 +597,50 @@ export class ChatController {
         return true;
     }
 
-    undeleteMessage(message: Message, userId: string): void {
-        if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                kind: "remote_user_undeleted_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatVal.chatId,
-                message,
-                userId,
-            });
-        }
-        localMessageUpdates.markDeleted(message.messageId.toString(), userId);
-    }
+    deleteMessage(threadRootMessageIndex: number | undefined, messageId: bigint): Promise<boolean> {
+        const messageIdString = messageId.toString();
+        const userId = this.user.userId;
 
-    deleteMessage(messageId: bigint, userId: string): void {
-        if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                kind: "remote_user_deleted_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatVal.chatId,
+        localMessageUpdates.markDeleted(messageIdString, userId);
+
+        const recipients = [...this.chatUserIds];
+        const chat = this.chatVal;
+        const chatType = chat.kind;
+        const chatId = chat.chatId;
+
+        rtcConnectionsManager.sendMessage(recipients, {
+            kind: "remote_user_deleted_message",
+            chatType,
+            chatId,
+            messageId,
+            userId,
+            threadRootMessageIndex
+        });
+
+        function undelete() {
+            rtcConnectionsManager.sendMessage(recipients, {
+                kind: "remote_user_undeleted_message",
+                chatType,
+                chatId,
                 messageId,
                 userId,
+                threadRootMessageIndex
             });
+            localMessageUpdates.markUndeleted(messageIdString);
         }
-        localMessageUpdates.markDeleted(messageId.toString(), userId);
+
+        return this.api.deleteMessage(chat, messageId, threadRootMessageIndex)
+            .then((resp) => {
+                const success = resp === "success";
+                if (!success) {
+                    undelete();
+                }
+                return success;
+            })
+            .catch(_ => {
+                undelete();
+                return false;
+            });
     }
 
     removeMessage(messageId: bigint, userId: string): void {

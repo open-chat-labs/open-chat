@@ -15,7 +15,7 @@ import {
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
-    mergeLocalUpdates,
+    mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
@@ -461,18 +461,7 @@ export function removeChat(chatId: string): void {
 export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
     derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
-        return serverEvents.map((e) => {
-            if (e.event.kind === "message") {
-                const updates = localUpdates[e.event.messageId.toString()];
-                if (updates !== undefined) {
-                    return {
-                        ...e,
-                        event: mergeLocalUpdates(e.event, updates)
-                    };
-                }
-            }
-            return e;
-        })
+        mergeServerEventsWithLocalUpdates(serverEvents, localUpdates)
     });
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
 export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

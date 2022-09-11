@@ -75,6 +75,7 @@
     import { unconfirmed } from "../../../stores/unconfirmed";
     import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
     import { localMessageUpdates } from "stores/localMessageUpdates";
+    import { mergeServerEventsWithLocalUpdates } from "domain/chat/chat.utils";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -237,17 +238,19 @@
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
-
-        const updated = replaceAffected(
-            replaceLocal(
-                currentUser.userId,
-                $chat.chatId,
-                $chat.readByMe,
-                events,
-                resp.events,
-                threadRootMessageIndex
+        const updated = mergeServerEventsWithLocalUpdates(
+            replaceAffected(
+                replaceLocal(
+                    currentUser.userId,
+                    $chat.chatId,
+                    $chat.readByMe,
+                    events,
+                    resp.events,
+                    threadRootMessageIndex
+                ),
+                resp.affectedEvents
             ),
-            resp.affectedEvents
+            $localMessageUpdates
         );
 
         const userIds = userIdsFromEvents(updated);
@@ -317,10 +320,10 @@
             remoteUserRemovedMessage(parsed);
         }
         if (kind === "remote_user_deleted_message") {
-            remoteUserDeletedMessage(parsed);
+            localMessageUpdates.markDeleted(parsed.messageId, parsed.userId);
         }
         if (kind === "remote_user_undeleted_message") {
-            replaceMessageContent(parsed.message.messageId, parsed.message.content);
+            localMessageUpdates.markUndeleted(parsed.messageId);
         }
         if (kind === "remote_user_sent_message") {
             remoteUserSentMessage(parsed);
@@ -332,20 +335,12 @@
         removeMessage(message.messageId, message.userId);
     }
 
-    function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
-        replaceMessageContent(message.messageId, {
-            kind: "deleted_content",
-            deletedBy: currentUser.userId,
-            timestamp: BigInt(Date.now()),
-        });
-    }
-
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const messageIdString = message.messageId.toString();
-        const matchingMessage = findMessageById(messageIdString, $events);
+        const matchingMessage = findMessageById(message.messageId, $events);
 
         if (matchingMessage !== undefined) {
-            const exists = reactionExists(matchingMessage.event, message.reaction, message.userId);
+            const messageIdString = message.messageId.toString();
+            const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
 
             localMessageUpdates.markReaction(messageIdString, {
                 reaction: message.reaction,
@@ -586,49 +581,13 @@
             ev.detail.type);
     }
 
-    function undeleteMessage(message: Message): void {
-        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
-            kind: "remote_user_undeleted_message",
-            chatType: $chat.kind,
-            chatId: $chat.chatId,
-            message: message,
-            userId: currentUser.userId,
-            threadRootMessageIndex,
-        });
-        localMessageUpdates.markUndeleted(message.messageId.toString());
-    }
-
     function deleteMessage(ev: CustomEvent<Message>): void {
         if (ev.detail.messageId === rootEvent.event.messageId) {
             relayPublish({ kind: "relayed_delete_message", message: ev.detail });
             return;
         }
 
-        const messageId = ev.detail.messageId;
-
-        localMessageUpdates.markDeleted(messageId.toString(), currentUser.userId);
-
-        api.deleteMessage($chat, messageId, threadRootMessageIndex)
-            .then((resp) => {
-                // check it worked - undo if it didn't
-                if (resp !== "success") {
-                    toastStore.showFailureToast("deleteFailed");
-                    undeleteMessage(ev.detail);
-                }
-            })
-            .catch((_err) => {
-                toastStore.showFailureToast("deleteFailed");
-                undeleteMessage(ev.detail);
-            });
-
-        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
-            kind: "remote_user_deleted_message",
-            chatType: $chat.kind,
-            chatId: $chat.chatId,
-            messageId: messageId,
-            userId: currentUser.userId,
-            threadRootMessageIndex,
-        });
+        controller.deleteMessage(threadRootMessageIndex, ev.detail.messageId);
     }
 
     function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {

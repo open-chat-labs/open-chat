@@ -35,7 +35,7 @@ function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
 }
 
 function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
-    localMessageUpdates.markUndeleted(message.message.messageId.toString());
+    localMessageUpdates.markUndeleted(message.messageId.toString());
 }
 
 function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
