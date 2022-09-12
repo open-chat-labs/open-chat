@@ -6,22 +6,22 @@ const store = writable<Record<string, LocalMessageUpdates>>({});
 
 export const localMessageUpdates = {
     subscribe: store.subscribe,
-    markDeleted: (messageId: string, deletedBy: string) => {
+    markDeleted: (messageId: string, deletedBy: string): void => {
         applyUpdate(messageId, (_) => ({ deleted: { deletedBy, timestamp: BigInt(Date.now()) } }));
     },
-    markUndeleted: (messageId: string) => {
+    markUndeleted: (messageId: string): void => {
         applyUpdate(messageId, (_) => ({ deleted: undefined }));
     },
-    markContentEdited: (messageId: string, content: MessageContent) => {
+    markContentEdited: (messageId: string, content: MessageContent): void => {
         applyUpdate(messageId, (_) => ({ editedContent: content }));
     },
-    revertEditedContent: (messageId: string) => {
+    revertEditedContent: (messageId: string): void => {
         applyUpdate(messageId, (_) => ({ editedContent: undefined }));
     },
-    markReaction: (messageId: string, reaction: LocalReaction) => {
+    markReaction: (messageId: string, reaction: LocalReaction): void => {
         applyUpdate(messageId, (updates) => ({ reactions: [...updates?.reactions ?? [], reaction] }));
     },
-    markPollVote: (messageId: string, vote: LocalPollVote) => {
+    markPollVote: (messageId: string, vote: LocalPollVote): void => {
         applyUpdate(messageId, (updates) => ({ pollVotes: [...updates?.pollVotes ?? [], vote] }));
     }
 }
@@ -38,7 +38,7 @@ function applyUpdate(messageId: string, updateFn: (current: LocalMessageUpdates)
     })
 }
 
-function pruneLocalUpdates() {
+function pruneLocalUpdates(): void {
     const now = Date.now();
     store.update((state) => Object.entries(state).reduce((result, [messageId, updates]) => {
         // Only keep updates which are < 30 seconds old
@@ -49,6 +49,6 @@ function pruneLocalUpdates() {
     }, {} as Record<string, LocalMessageUpdates>));
 }
 
-export function startPruningLocalUpdates() {
+export function startPruningLocalUpdates(): void {
     window.setInterval(() => pruneLocalUpdates(), PRUNE_LOCAL_REACTIONS_INTERVAL);
 }
