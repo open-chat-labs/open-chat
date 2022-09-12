@@ -46,6 +46,7 @@ import {
     currentChatDraftMessage,
     serverEventsStore,
     currentChatReplyingTo,
+    currentChatUserIds,
 } from "../stores/chat";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -62,7 +63,6 @@ import { localMessageUpdates } from "../stores/localMessageUpdates";
 export class ChatController {
     public chat: Readable<ChatSummary>;
     public chatId: string;
-    public chatUserIds: Set<string>;
 
     private initialised = false;
     private groupDetails: GroupChatDetails | undefined;
@@ -91,9 +91,13 @@ export class ChatController {
         currentChatMembers.set(chat.chatId, []);
         currentChatBlockedUsers.set(chat.chatId, new Set<string>());
         currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+        currentChatUserIds.set(
+            chat.chatId,
+            new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
+        );
+
         this.chatId = chat.chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
-        this.chatUserIds = new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : []);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -106,11 +110,7 @@ export class ChatController {
     }
 
     destroy(): void {
-        serverEventsStore.clear(this.chatId);
-        focusMessageIndex.clear(this.chatId);
-        currentChatMembers.clear(this.chatId);
-        currentChatBlockedUsers.clear(this.chatId);
-        currentChatPinnedMessages.clear(this.chatId);
+        console.log("destroying chat controller");
     }
 
     get chatVal(): ChatSummary {
@@ -276,10 +276,14 @@ export class ChatController {
         const memberIds = members.map((p) => p.userId);
         const blockedIds = [...get(currentChatBlockedUsers)];
         const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
-        allUserIds.forEach((u) => {
-            if (u !== this.user.userId) {
-                this.chatUserIds.add(u);
-            }
+
+        currentChatUserIds.update(this.chatId, (userIds) => {
+            allUserIds.forEach((u) => {
+                if (u !== this.user.userId) {
+                    userIds.add(u);
+                }
+            });
+            return userIds;
         });
 
         const resp = await this.api.getUsers(
@@ -469,7 +473,7 @@ export class ChatController {
         }
 
         unconfirmed.add(this.chatId, messageEvent);
-        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
             kind: "remote_user_sent_message",
             chatType: this.chatVal.kind,
             chatId: this.chatId,
@@ -626,7 +630,7 @@ export class ChatController {
 
         localMessageUpdates.markDeleted(messageIdString, userId);
 
-        const recipients = [...this.chatUserIds];
+        const recipients = [...get(currentChatUserIds)];
         const chat = this.chatVal;
         const chatType = chat.kind;
         const chatId = chat.chatId;
@@ -669,7 +673,7 @@ export class ChatController {
 
     removeMessage(messageId: bigint, userId: string): void {
         if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+            rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
                 kind: "remote_user_removed_message",
                 chatType: this.chatVal.kind,
                 chatId: this.chatVal.chatId,
@@ -824,7 +828,7 @@ export class ChatController {
     }
 
     startTyping(threadRootMessageIndex?: number): void {
-        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
             kind: "remote_user_typing",
             chatType: this.kind,
             chatId: this.chatId,
@@ -834,7 +838,7 @@ export class ChatController {
     }
 
     stopTyping(threadRootMessageIndex?: number): void {
-        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
             kind: "remote_user_stopped_typing",
             chatType: this.kind,
             chatId: this.chatId,
@@ -1141,7 +1145,7 @@ export class ChatController {
                 userId: this.user.userId,
             };
 
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+            rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], rtc);
         }
     }
 

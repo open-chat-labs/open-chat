@@ -28,7 +28,7 @@
         chatSummariesListStore,
         chatSummariesStore,
         numberOfThreadsStore,
-        selectedChatStore,
+        selectedChatId,
     } from "../../stores/chat";
     import { messagesRead } from "../../stores/markRead";
     import { menuCloser } from "../../actions/closeMenu";
@@ -180,7 +180,7 @@
                         index={i}
                         {chatSummary}
                         {userId}
-                        selected={$selectedChatStore?.chatId === chatSummary.chatId}
+                        selected={$selectedChatId === chatSummary.chatId}
                         visible={searchTerm !== "" || !chatSummary.archived}
                         on:chatSelected={chatSelected}
                         on:pinChat

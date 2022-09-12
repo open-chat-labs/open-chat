@@ -69,7 +69,7 @@
         chatSummariesListStore,
         chatSummariesStore,
         chatsLoading,
-        selectedChatStore,
+        selectedChatControllerStore,
         chatsInitialised,
         createDirectChat,
         setSelectedChat,
@@ -251,7 +251,7 @@
 
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
-                    if (pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
+                    if (pathParams.chatId !== $selectedChatControllerStore?.chatId?.toString()) {
                         newChatSelected(
                             pathParams.chatId,
                             pathParams.messageIndex,
@@ -261,7 +261,7 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            $selectedChatStore?.goToMessageIndex(
+                            $selectedChatControllerStore?.goToMessageIndex(
                                 pathParams.messageIndex,
                                 false,
                                 pathParams.threadMessageIndex
@@ -270,7 +270,7 @@
                     }
                 } else {
                     // we do *not* have a chat in the url
-                    if ($selectedChatStore !== undefined) {
+                    if ($selectedChatControllerStore !== undefined) {
                         clearSelectedChat();
                     }
 
@@ -373,7 +373,7 @@
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
 
-            const selectedChat = $selectedChatStore;
+            const selectedChat = $selectedChatControllerStore;
             if (selectedChat?.chatId === chatId) {
                 selectedChat?.handleMessageSentByOther(m, true);
             }
@@ -400,7 +400,10 @@
     }
 
     function resetRightPanel() {
-        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore?.chatVal);
+        rightPanelHistory = filterByChatType(
+            rightPanelHistory,
+            $selectedChatControllerStore?.chatVal
+        );
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
@@ -433,7 +436,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        $selectedChatStore?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        $selectedChatControllerStore?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -572,7 +575,7 @@
             rollbar.error("Error archiving chat", err);
             archivedChatsStore.set(chatId, false);
         });
-        if (chatId === $selectedChatStore?.chatId) {
+        if (chatId === $selectedChatControllerStore?.chatId) {
             push("/");
         }
     }
@@ -725,15 +728,15 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (ev.detail.chatId === $selectedChatStore?.chatId) {
-            $selectedChatStore.externalGoToMessage(ev.detail.messageIndex);
+        if (ev.detail.chatId === $selectedChatControllerStore?.chatId) {
+            $selectedChatControllerStore.externalGoToMessage(ev.detail.messageIndex);
         } else {
             push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
     function addMembers() {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatControllerStore !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "add_members" }];
         }
     }
@@ -760,14 +763,14 @@
     }
 
     function showMembers() {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatControllerStore !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "show_members" }];
         }
     }
 
     function showProfile() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatControllerStore !== undefined) {
+            replace(`/${$selectedChatControllerStore.chatId}`);
         }
         rightPanelHistory = [{ kind: "user_profile" }];
     }
@@ -775,7 +778,7 @@
     function openThread(
         ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
     ) {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatControllerStore !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
@@ -789,16 +792,16 @@
     function initiateThread(
         ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
     ) {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatControllerStore !== undefined) {
             creatingThread = true;
-            replace(`/${$selectedChatStore.chatId}`);
+            replace(`/${$selectedChatControllerStore.chatId}`);
             openThread(ev);
         }
     }
 
     function showGroupDetails() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatControllerStore !== undefined) {
+            replace(`/${$selectedChatControllerStore.chatId}`);
             rightPanelHistory = [
                 {
                     kind: "group_details",
@@ -808,8 +811,8 @@
     }
 
     function showProposalFilters() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatControllerStore !== undefined) {
+            replace(`/${$selectedChatControllerStore.chatId}`);
             rightPanelHistory = [
                 {
                     kind: "proposal_filters",
@@ -823,8 +826,8 @@
     }
 
     function showPinned() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatControllerStore !== undefined) {
+            replace(`/${$selectedChatControllerStore.chatId}`);
             rightPanelHistory = [
                 {
                     kind: "show_pinned",
@@ -1025,7 +1028,7 @@
             {hotGroups}
             {joining}
             loadingChats={$chatsLoading}
-            controller={$selectedChatStore}
+            controller={$selectedChatControllerStore}
             on:initiateThread={initiateThread}
             on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
@@ -1054,7 +1057,7 @@
     {#if $numberOfColumns === 3}
         <RightPanel
             {userId}
-            controller={$selectedChatStore}
+            controller={$selectedChatControllerStore}
             metrics={combinedMetrics}
             bind:rightPanelHistory
             bind:thread={threadComponent}
@@ -1081,7 +1084,7 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
-                controller={$selectedChatStore}
+                controller={$selectedChatControllerStore}
                 metrics={combinedMetrics}
                 bind:rightPanelHistory
                 bind:thread={threadComponent}
@@ -1134,7 +1137,7 @@
             <SelectChatModal
                 chatsSummaries={filterChatSelection(
                     $chatSummariesListStore,
-                    $selectedChatStore?.chatId
+                    $selectedChatControllerStore?.chatId
                 )}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />

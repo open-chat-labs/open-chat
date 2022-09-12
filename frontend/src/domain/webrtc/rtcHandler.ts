@@ -1,6 +1,10 @@
 import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
 import type { ChatController } from "../../fsm/chat.controller";
-import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
+import {
+    chatSummariesListStore,
+    chatSummariesStore,
+    selectedChatControllerStore,
+} from "../../stores/chat";
 import { typing } from "../../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
 import { get } from "svelte/store";
@@ -21,12 +25,16 @@ function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
     const matchingMessage = findMessageById(message.messageId, get(eventsStore));
 
     if (matchingMessage !== undefined) {
-        const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
+        const exists = containsReaction(
+            message.userId,
+            message.reaction,
+            matchingMessage.event.reactions
+        );
 
         localMessageUpdates.markReaction(message.messageId.toString(), {
             reaction: message.reaction,
             kind: exists ? "remove" : "add",
-            userId: message.userId
+            userId: message.userId,
         });
     }
 }
@@ -65,7 +73,7 @@ function delegateToChatController(
 ): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = get(selectedChatControllerStore);
     if (selectedChat === undefined) return false;
     if (chat.chatId !== selectedChat.chatId) return false;
     fn(selectedChat);
@@ -90,7 +98,7 @@ function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
 
 export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     const fromChat = findChatByChatType(msg);
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = get(selectedChatControllerStore);
 
     // if the chat can't be found - ignore
     if (fromChat === undefined) {

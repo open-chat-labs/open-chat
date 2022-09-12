@@ -76,6 +76,7 @@
         threadsFollowedByMeStore,
         currentChatMembers,
         currentChatBlockedUsers,
+        currentChatUserIds,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
@@ -422,7 +423,7 @@
                     rollbar.error("Exception sending message", err);
                 });
 
-            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_sent_message",
                 chatType: $chat.kind,
                 chatId: $chat.chatId,
@@ -456,7 +457,7 @@
             evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
         );
         if (userId === currentUser.userId) {
-            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
                 chatType: $chat.kind,
                 chatId: $chat.chatId,

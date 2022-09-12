@@ -79,15 +79,18 @@ type LoadedEventWindow = {
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
-export const selectedChatStore = writable<ChatController | undefined>(undefined);
+export const selectedChatControllerStore = writable<ChatController | undefined>(undefined);
 
-export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
-    return (
-        $selectedChatStore !== undefined &&
-        $selectedChatStore.chatVal.kind === "group_chat" &&
-        $selectedChatStore.chatVal.subtype?.kind === "governance_proposals"
-    );
-});
+export const isProposalGroup = derived(
+    [selectedChatControllerStore],
+    ([$selectedChatControllerStore]) => {
+        return (
+            $selectedChatControllerStore !== undefined &&
+            $selectedChatControllerStore.chatVal.kind === "group_chat" &&
+            $selectedChatControllerStore.chatVal.subtype?.kind === "governance_proposals"
+        );
+    }
+);
 
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
@@ -158,7 +161,7 @@ export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsB
 });
 
 export const proposalTopicsStore = derived(
-    [selectedChatStore, snsFunctions],
+    [selectedChatControllerStore, snsFunctions],
     ([selectedChat, snsFunctions]): Map<number, string> => {
         if (selectedChat !== undefined) {
             const chat = get(selectedChat.chat);
@@ -200,8 +203,25 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
+export const selectedChatId = writable<string | undefined>(undefined);
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
+
+export const selectedServerChatStore = derived(
+    [serverChatSummariesStore, selectedChatId],
+    ([$serverChats, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $serverChats[$selectedChatId];
+    }
+);
+
+export const selectedChatStore = derived(
+    [chatSummariesStore, selectedChatId],
+    ([$chatSummaries, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $chatSummaries[$selectedChatId];
+    }
+);
 
 export function setSelectedChat(
     api: ServiceContainer,
@@ -255,7 +275,10 @@ export function setSelectedChat(
         })
     );
 
-    selectedChatStore.set(
+    resetFilteredProposalsStore(chat);
+    selectedChatId.set(chat.chatId);
+
+    selectedChatControllerStore.set(
         new ChatController(
             api,
             user,
@@ -265,8 +288,6 @@ export function setSelectedChat(
             (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
         )
     );
-
-    resetFilteredProposalsStore(chat);
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -314,12 +335,18 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
 
 export function clearSelectedChat(): void {
     filteredProposalsStore.set(undefined);
-    selectedChatStore.update((controller) => {
-        if (controller !== undefined) {
-            controller.destroy();
+    selectedChatId.set(undefined);
+    selectedChatId.update((chatId) => {
+        if (chatId !== undefined) {
+            serverEventsStore.clear(chatId);
+            focusMessageIndex.clear(chatId);
+            currentChatMembers.clear(chatId);
+            currentChatBlockedUsers.clear(chatId);
+            currentChatPinnedMessages.clear(chatId);
         }
         return undefined;
     });
+    selectedChatControllerStore.set(undefined);
 }
 
 async function loadChats(api: ServiceContainer) {
@@ -334,7 +361,7 @@ async function loadChats(api: ServiceContainer) {
 
         chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
-        const selectedChat = get(selectedChatStore);
+        const selectedChat = get(selectedChatControllerStore);
         const currentState: CurrentChatState = {
             chatSummaries: chats,
             blockedUsers: get(blockedUsers),
@@ -381,7 +408,7 @@ async function loadChats(api: ServiceContainer) {
                 pinnedChatsStore.set(chatsResponse.pinnedChats);
             }
 
-            const selectedChat = get(selectedChatStore);
+            const selectedChat = get(selectedChatControllerStore);
             let selectedChatInvalid = true;
 
             serverChatSummariesStore.set(
@@ -468,6 +495,8 @@ export function removeChat(chatId: string): void {
     });
 }
 
+// All of the below state is relative to the selected chat
+
 export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>([]);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [serverEventsStore, localMessageUpdates],
@@ -479,6 +508,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
+export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
 export const currentChatBlockedUsers = createChatSpecificDataStore<Set<string>>(new Set<string>());
 export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>>(
     new Set<number>()

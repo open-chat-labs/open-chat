@@ -300,8 +300,6 @@
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
     }
-
-    $: console.log("Editing event: ", $currentChatEditingEvent);
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
