@@ -50,7 +50,11 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
-    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
+    import {
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatPinnedMessages,
+    } from "../../stores/chat";
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
@@ -71,7 +75,6 @@
     let showSearchHeader = false;
     let searchTerm = "";
 
-    $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
@@ -346,7 +349,7 @@
             {preview}
             {unreadMessages}
             selectedChatSummary={chat}
-            hasPinned={$pinned.size > 0} />
+            hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     <CurrentChatMessages
         on:replyPrivatelyTo

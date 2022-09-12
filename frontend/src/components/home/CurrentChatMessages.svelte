@@ -18,7 +18,12 @@
         Mention,
         ChatSummary,
     } from "../../domain/chat/chat";
-    import { containsReaction, groupEvents, messageIsReadByThem, sameUser } from "../../domain/chat/chat.utils";
+    import {
+        containsReaction,
+        groupEvents,
+        messageIsReadByThem,
+        sameUser,
+    } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import type { ChatController } from "../../fsm/chat.controller";
@@ -39,7 +44,7 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import { eventsStore, focusMessageIndex } from "../../stores/chat";
+    import { eventsStore, focusMessageIndex, currentChatPinnedMessages } from "../../stores/chat";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -63,7 +68,6 @@
     export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
-    $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
 
@@ -311,14 +315,15 @@
     function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
 
-        const kind = containsReaction(controller.user.userId, reaction, message.reactions) ? "remove" : "add";
+        const kind = containsReaction(controller.user.userId, reaction, message.reactions)
+            ? "remove"
+            : "add";
 
-        controller.selectReaction(undefined, message.messageId, reaction, kind)
-            .then((success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
-            });
+        controller.selectReaction(undefined, message.messageId, reaction, kind).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
+            }
+        });
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -530,7 +535,12 @@
     }
 
     function registerVote(
-        ev: CustomEvent<{ messageId: bigint, messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+        ev: CustomEvent<{
+            messageId: bigint;
+            messageIndex: number;
+            answerIndex: number;
+            type: "register" | "delete";
+        }>
     ) {
         controller.registerPollVote(
             undefined,
@@ -644,7 +654,7 @@
                         inThread={false}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
-                        pinned={isPinned($pinned, evt)}
+                        pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$editingEvent === evt}
                         on:chatWith
                         on:initiateThread

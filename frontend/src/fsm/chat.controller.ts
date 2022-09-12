@@ -42,6 +42,7 @@ import {
     chatSummariesStore,
     currentChatBlockedUsers,
     currentChatMembers,
+    currentChatPinnedMessages,
     serverEventsStore,
 } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
@@ -65,7 +66,6 @@ export class ChatController {
     public fileToAttach: Readable<MessageContent | undefined>;
     public editingEvent: Readable<EventWrapper<Message> | undefined>;
     public chatId: string;
-    public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
 
     private initialised = false;
@@ -94,7 +94,7 @@ export class ChatController {
         focusMessageIndex.set(chat.chatId, _focusMessageIndex);
         currentChatMembers.set(chat.chatId, []);
         currentChatBlockedUsers.set(chat.chatId, new Set<string>());
-        this.pinnedMessages = immutableStore(new Set<number>());
+        currentChatPinnedMessages.set(chat.chatId, new Set<number>());
         this.chatId = chat.chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
         this.chatUserIds = new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : []);
@@ -120,6 +120,8 @@ export class ChatController {
         serverEventsStore.clear(this.chatId);
         focusMessageIndex.clear(this.chatId);
         currentChatMembers.clear(this.chatId);
+        currentChatBlockedUsers.clear(this.chatId);
+        currentChatPinnedMessages.clear(this.chatId);
     }
 
     get chatVal(): ChatSummary {
@@ -164,7 +166,7 @@ export class ChatController {
                     this.groupDetails = resp;
                     currentChatMembers.set(this.chatId, resp.members);
                     currentChatBlockedUsers.set(this.chatId, resp.blockedUsers);
-                    this.pinnedMessages.set(resp.pinnedMessages);
+                    currentChatPinnedMessages.set(this.chatId, resp.pinnedMessages);
                 }
                 await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             } else {
@@ -185,21 +187,21 @@ export class ChatController {
                 );
                 currentChatMembers.set(this.chatId, this.groupDetails.members);
                 currentChatBlockedUsers.set(this.chatId, this.groupDetails.blockedUsers);
-                this.pinnedMessages.set(this.groupDetails.pinnedMessages);
+                currentChatPinnedMessages.set(this.chatId, this.groupDetails.pinnedMessages);
                 await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             }
         }
     }
 
     private addPinnedMessage(messageIndex: number): void {
-        this.pinnedMessages.update((s) => {
+        currentChatPinnedMessages.update(this.chatId, (s) => {
             s.add(messageIndex);
             return new Set(s);
         });
     }
 
     private removePinnedMessage(messageIndex: number): void {
-        this.pinnedMessages.update((s) => {
+        currentChatPinnedMessages.update(this.chatId, (s) => {
             s.delete(messageIndex);
             return new Set(s);
         });

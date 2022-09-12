@@ -477,4 +477,5 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
 );
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
 export const currentChatBlockedUsers = createChatSpecificStore<Set<string>>(new Set<string>());
+export const currentChatPinnedMessages = createChatSpecificStore<Set<number>>(new Set<number>());
 export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

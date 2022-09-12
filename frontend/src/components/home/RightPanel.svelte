@@ -26,14 +26,18 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { Readable, writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { eventsStore } from "../../stores/chat";
-    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
+    import {
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatPinnedMessages,
+    } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -52,7 +56,6 @@
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
-    $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
@@ -174,7 +177,7 @@
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
             {chatId}
-            pinned={$pinned}
+            pinned={$currentChatPinnedMessages}
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
