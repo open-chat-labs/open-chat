@@ -460,8 +460,8 @@ export function removeChat(chatId: string): void {
 
 export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
-    derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
-        return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates)
+    derived([serverEventsStore, localMessageUpdates], ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
+        return mergeServerEventsWithLocalUpdates($serverEventsForSelectedChat, $localMessageUpdates)
     });
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
 export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

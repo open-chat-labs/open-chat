@@ -24,9 +24,9 @@ function updateDataForChat<T>(
 
 export function createChatSpecificStore<T>(empty: T) {
     const all: Writable<Record<string, T>> = immutableStore<Record<string, T>>({});
-    const byChat: Readable<T> = derived([selectedChatStore, all], ([selectedChat, all]) => {
-        if (selectedChat === undefined) return empty;
-        return all[selectedChat.chatId] ?? empty;
+    const byChat: Readable<T> = derived([selectedChatStore, all], ([$selectedChat, $all]) => {
+        if ($selectedChat === undefined) return empty;
+        return $all[$selectedChat.chatId] ?? empty;
     });
     return {
         subscribe: byChat.subscribe,
