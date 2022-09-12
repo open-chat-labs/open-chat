@@ -14,7 +14,8 @@ pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 const WELCOME_MESSAGES: &[&str] = &[
     "Welcome to OpenChat!",
     "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In the future you'll be able to ask me questions or send me commands.",
-    "To follow all the updates to OpenChat, join the [OpenChat Updates](/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
+    "To follow all the software updates to OpenChat, join the [OpenChat Updates](/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
+    "To follow announcements by the OpenChat team, join the [Announcements](/#/kvvn5-aiaaa-aaaaf-aqznq-cai) group.",
     "To request new features, join the [Feature Requests](/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
     "To report bugs, join the [Bug Reports](/#/sycha-wyaaa-aaaaf-aabka-cai) group.",
     "To provide feedback in general, join the [Product Feedback](/#/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
