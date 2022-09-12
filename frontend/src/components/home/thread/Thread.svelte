@@ -72,7 +72,11 @@
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
-    import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
+    import {
+        threadsFollowedByMeStore,
+        currentChatMembers,
+        currentChatBlockedUsers,
+    } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
 
@@ -102,9 +106,12 @@
 
     let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
-    $: events = derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
-        return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates)
-    });
+    $: events = derived(
+        [serverEventsStore, localMessageUpdates],
+        ([serverEvents, localUpdates]) => {
+            return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates);
+        }
+    );
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
@@ -141,8 +148,7 @@
     $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: blockedUsers = controller.blockedUsers;
-    $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+    $: blocked = $chat.kind === "direct_chat" && $currentChatBlockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
@@ -340,12 +346,16 @@
 
         if (matchingMessage !== undefined) {
             const messageIdString = message.messageId.toString();
-            const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
+            const exists = containsReaction(
+                message.userId,
+                message.reaction,
+                matchingMessage.event.reactions
+            );
 
             localMessageUpdates.markReaction(messageIdString, {
                 reaction: message.reaction,
                 kind: exists ? "remove" : "add",
-                userId: message.userId
+                userId: message.userId,
             });
         }
     }
@@ -560,7 +570,8 @@
             ev.detail.messageId,
             ev.detail.messageIndex,
             ev.detail.answerIndex,
-            ev.detail.type);
+            ev.detail.type
+        );
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
@@ -597,9 +608,12 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = containsReaction(currentUser.userId, reaction, message.reactions) ? "remove" : "add";
+        const kind = containsReaction(currentUser.userId, reaction, message.reactions)
+            ? "remove"
+            : "add";
 
-        controller.selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
+        controller
+            .selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
             .then((success) => {
                 if (success && kind === "add") {
                     trackEvent("reacted_to_message");
@@ -770,7 +784,7 @@
         replyingTo={$replyingTo}
         textContent={$textContent}
         members={$currentChatMembers}
-        blockedUsers={$blockedUsers}
+        blockedUsers={$currentChatBlockedUsers}
         user={controller.user}
         joining={undefined}
         {preview}

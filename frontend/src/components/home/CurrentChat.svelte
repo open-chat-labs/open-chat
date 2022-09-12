@@ -31,7 +31,7 @@
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import { remainingStorage } from "../../stores/storage";
     import { userStore } from "../../stores/user";
-    import { blockedUsers as directlyBlockedUsers } from "stores/blockedUsers";
+    import { blockedUsers as directlyBlockedUsers } from "../../stores/blockedUsers";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -50,7 +50,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
-    import { currentChatMembers } from "../../stores/chat";
+    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
@@ -78,7 +78,6 @@
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
     $: textContent = controller.textContent;
-    $: blockedUsers = controller.blockedUsers;
     $: blocked = isBlocked($chat, $directlyBlockedUsers);
 
     $: canSend = canSendMessages($chat, $userStore);
@@ -380,7 +379,7 @@
             replyingTo={$replyingTo}
             textContent={$textContent}
             members={$currentChatMembers}
-            blockedUsers={$blockedUsers}
+            blockedUsers={$currentChatBlockedUsers}
             user={controller.user}
             mode={"message"}
             {joining}

@@ -33,7 +33,7 @@
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { eventsStore } from "../../stores/chat";
-    import { currentChatMembers } from "../../stores/chat";
+    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -52,7 +52,6 @@
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
-    $: blockedUsers = controller?.blockedUsers ?? writable(new Set<string>());
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
 
@@ -160,7 +159,7 @@
             chat={groupChat}
             {userId}
             members={currentChatMembers}
-            {blockedUsers}
+            blockedUsers={currentChatBlockedUsers}
             on:close={popHistory}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}

@@ -35,7 +35,7 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import { currentChatMembers } from "../../stores/chat";
+    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -60,7 +60,6 @@
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: chat = controller.chat;
     $: group = $chat.kind === "group_chat";
-    $: blockedUsers = controller.blockedUsers;
     $: replyingTo = controller.replyingTo;
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
@@ -214,7 +213,7 @@
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 members={$currentChatMembers}
-                                blockedUsers={$blockedUsers}
+                                blockedUsers={$currentChatBlockedUsers}
                                 autofocus={group} />
                         </div>
                     {/if}

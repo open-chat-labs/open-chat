@@ -89,7 +89,14 @@ export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore, localMessageUpdates, archivedChatsStore, mutedChatsStore],
+    [
+        serverChatSummariesStore,
+        unconfirmed,
+        currentUserStore,
+        localMessageUpdates,
+        archivedChatsStore,
+        mutedChatsStore,
+    ],
     ([summaries, unconfirmed, currentUser, localUpdates, archivedChats, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
@@ -459,9 +466,15 @@ export function removeChat(chatId: string): void {
 }
 
 export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
-export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
-    derived([serverEventsStore, localMessageUpdates], ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
-        return mergeServerEventsWithLocalUpdates($serverEventsForSelectedChat, $localMessageUpdates)
-    });
+export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
+    [serverEventsStore, localMessageUpdates],
+    ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
+        return mergeServerEventsWithLocalUpdates(
+            $serverEventsForSelectedChat,
+            $localMessageUpdates
+        );
+    }
+);
 export const currentChatMembers = createChatSpecificStore<Member[]>([]);
+export const currentChatBlockedUsers = createChatSpecificStore<Set<string>>(new Set<string>());
 export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);
