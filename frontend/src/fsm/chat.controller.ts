@@ -23,13 +23,10 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
-    mergeUnconfirmedIntoSummary,
     replaceAffected,
     replaceLocal,
-    replaceMessageContent,
     serialiseMessageForRtc,
     userIdsFromEvents,
-    updateEventPollContent,
     mergeSendMessageResponse,
     makeRtcConnections,
     upToDate,
@@ -40,7 +37,7 @@ import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
-import { ChatState, currentChatMembers } from "../stores/chat";
+import { ChatState, chatSummariesStore, currentChatMembers, serverEventsStore } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -51,9 +48,9 @@ import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
-import { archivedChatsStore, mutedChatsStore } from "../stores/tempChatsStore";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { eventsStore, focusMessageIndex } from "../stores/chat";
+import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
@@ -82,20 +79,10 @@ export class ChatController {
         private _focusThreadMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
-        this.chat = derived(
-            [serverChatSummary, unconfirmed, archivedChatsStore, mutedChatsStore],
-            ([summary, unconfirmed, archivedChats, mutedChats]) =>
-                mergeUnconfirmedIntoSummary(
-                    user.userId,
-                    summary,
-                    unconfirmed,
-                    archivedChats.get(summary.chatId),
-                    mutedChats.get(summary.chatId)
-                )
-        );
+        this.chat = derived(chatSummariesStore, (chatSummaries) => chatSummaries[get(serverChatSummary).chatId]);
 
         const chat = get(this.chat);
-        eventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+        serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
         focusMessageIndex.set(chat.chatId, _focusMessageIndex);
         currentChatMembers.set(chat.chatId, []);
         this.blockedUsers = immutableStore(new Set<string>());
@@ -122,7 +109,7 @@ export class ChatController {
     }
 
     destroy(): void {
-        eventsStore.clear(this.chatId);
+        serverEventsStore.clear(this.chatId);
         focusMessageIndex.clear(this.chatId);
         currentChatMembers.clear(this.chatId);
     }
@@ -171,7 +158,7 @@ export class ChatController {
                     this.blockedUsers.set(resp.blockedUsers);
                     this.pinnedMessages.set(resp.pinnedMessages);
                 }
-                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
+                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             } else {
                 await this.updateDetails();
             }
@@ -191,7 +178,7 @@ export class ChatController {
                 currentChatMembers.set(this.chatId, this.groupDetails.members);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
-                await this.updateUserStore(userIdsFromEvents(eventsStore.get()));
+                await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             }
         }
     }
@@ -210,26 +197,21 @@ export class ChatController {
         });
     }
 
-    /**
-     * In order to get the UI to update immediately, we want to find the poll message that we are referring to,
-     * and update it to reflect the user's vote
-     */
-    private findAndUpdatePollContent(
+    registerPollVote(
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
         messageIndex: number,
         answerIndex: number,
         type: "register" | "delete"
     ): void {
-        eventsStore.update(this.chatId, (events) => {
-            return events.map((evt) =>
-                updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
-            );
+        localMessageUpdates.markPollVote(messageId.toString(), {
+            answerIndex,
+            type,
+            userId: this.user.userId
         });
-    }
 
-    registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
-        this.findAndUpdatePollContent(messageIndex, answerIndex, type);
         this.api
-            .registerPollVote(this.chatVal.chatId, messageIndex, answerIndex, type)
+            .registerPollVote(this.chatVal.chatId, messageIndex, answerIndex, type, threadRootMessageIndex)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
@@ -318,7 +300,7 @@ export class ChatController {
         if (resp === "events_failed") return;
 
         this.initialised = true;
-        const events = eventsStore.get();
+        const events = get(eventsStore);
         const chat = get(this.chat);
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
@@ -341,7 +323,7 @@ export class ChatController {
         const userIds = userIdsFromEvents(updated);
         await this.updateUserStore(userIds);
 
-        eventsStore.set(this.chatId, updated);
+        serverEventsStore.set(this.chatId, updated);
 
         if (resp.events.length > 0) {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
@@ -477,50 +459,96 @@ export class ChatController {
 
     async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (!upToDate(this.chatVal, eventsStore.get())) {
+        if (!upToDate(this.chatVal, get(eventsStore))) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        if (get(this.editingEvent)) {
-            eventsStore.update(this.chatId, (events) => {
-                return events.map((e) => {
-                    if (
-                        e.event.kind === "message" &&
-                        e.event.messageId === messageEvent.event.messageId
-                    ) {
-                        return messageEvent;
-                    }
-                    return e;
-                });
-            });
-        } else {
-            unconfirmed.add(this.chatId, messageEvent);
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                kind: "remote_user_sent_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatId,
-                messageEvent: serialiseMessageForRtc(messageEvent),
-                userId: this.user.userId,
-            });
+        unconfirmed.add(this.chatId, messageEvent);
+        rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+            kind: "remote_user_sent_message",
+            chatType: this.chatVal.kind,
+            chatId: this.chatId,
+            messageEvent: serialiseMessageForRtc(messageEvent),
+            userId: this.user.userId,
+        });
 
-            // mark our own messages as read manually since we will not be observing them
-            messagesRead.markMessageRead(
-                this.chatId,
-                messageEvent.event.messageIndex,
-                messageEvent.event.messageId
-            );
-            this.appendMessage(messageEvent);
-            this.raiseEvent({
-                chatId: this.chatId,
-                event: {
-                    kind: "sending_message",
-                    scroll: jumping ? "auto" : "smooth",
-                },
+        // mark our own messages as read manually since we will not be observing them
+        messagesRead.markMessageRead(
+            this.chatId,
+            messageEvent.event.messageIndex,
+            messageEvent.event.messageId
+        );
+        this.appendMessage(messageEvent);
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: {
+                kind: "sending_message",
+                scroll: jumping ? "auto" : "smooth",
+            },
+        });
+
+        draftMessages.delete(this.chatId);
+    }
+
+    async editMessage(msg: Message, threadRootMessageIndex: number | undefined): Promise<void> {
+        localMessageUpdates.markContentEdited(msg.messageId.toString(), msg.content);
+
+        if (threadRootMessageIndex === undefined) {
+            draftMessages.delete(this.chatId);
+        }
+
+        return this.api.editMessage(this.chatVal, msg, threadRootMessageIndex)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Error response editing", resp);
+                    toastStore.showFailureToast("errorEditingMessage");
+                    localMessageUpdates.revertEditedContent(msg.messageId.toString());
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Exception sending message", err);
+                toastStore.showFailureToast("errorEditingMessage");
+                localMessageUpdates.revertEditedContent(msg.messageId.toString());
+            });
+    }
+
+    public selectReaction(
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        reaction: string,
+        kind: "add" | "remove"
+    ): Promise<boolean> {
+        const userId = this.user.userId;
+
+        localMessageUpdates.markReaction(messageId.toString(), {
+            reaction,
+            kind,
+            userId
+        });
+
+        function undoLocally() {
+            localMessageUpdates.markReaction(messageId.toString(), {
+                reaction,
+                kind: kind === "add" ? "remove" : "add",
+                userId
             });
         }
 
-        draftMessages.delete(this.chatId);
+        return (this.chatVal.kind === "direct_chat"
+            ? this.api.toggleDirectChatReaction(this.chatId, messageId, reaction, threadRootMessageIndex)
+            : this.api.toggleGroupChatReaction(this.chatId, messageId, reaction, threadRootMessageIndex))
+            .then((resp) => {
+                if (resp !== "added" && resp !== "removed") {
+                    undoLocally();
+                    return false;
+                }
+                return true;
+            })
+            .catch(_ => {
+                undoLocally();
+                return false;
+            });
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
@@ -545,7 +573,7 @@ export class ChatController {
                 latestEventIndex: undefined,
             });
         } else {
-            if (!upToDate(this.chatVal, eventsStore.get())) {
+            if (!upToDate(this.chatVal, get(eventsStore))) {
                 return;
             }
 
@@ -565,8 +593,7 @@ export class ChatController {
     }
 
     appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = eventsStore
-            .get()
+        const existing = get(eventsStore)
             .find(
                 (ev) =>
                     ev.event.kind === "message" && ev.event.messageId === message.event.messageId
@@ -574,43 +601,54 @@ export class ChatController {
 
         if (existing !== undefined) return false;
 
-        eventsStore.update(this.chatId, (events) => [...events, message]);
+        serverEventsStore.update(this.chatId, (events) => [...events, message]);
         return true;
     }
 
-    undeleteMessage(message: Message, userId: string): void {
-        if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+    deleteMessage(threadRootMessageIndex: number | undefined, messageId: bigint): Promise<boolean> {
+        const messageIdString = messageId.toString();
+        const userId = this.user.userId;
+
+        localMessageUpdates.markDeleted(messageIdString, userId);
+
+        const recipients = [...this.chatUserIds];
+        const chat = this.chatVal;
+        const chatType = chat.kind;
+        const chatId = chat.chatId;
+
+        rtcConnectionsManager.sendMessage(recipients, {
+            kind: "remote_user_deleted_message",
+            chatType,
+            chatId,
+            messageId,
+            userId,
+            threadRootMessageIndex
+        });
+
+        function undelete() {
+            rtcConnectionsManager.sendMessage(recipients, {
                 kind: "remote_user_undeleted_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatVal.chatId,
-                message: message,
-                userId: userId,
+                chatType,
+                chatId,
+                messageId,
+                userId,
+                threadRootMessageIndex
             });
+            localMessageUpdates.markUndeleted(messageIdString);
         }
 
-        eventsStore.update(this.chatId, (events) =>
-            replaceMessageContent(events, BigInt(message.messageId), message.content)
-        );
-    }
-
-    deleteMessage(messageId: bigint, userId: string): void {
-        if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                kind: "remote_user_deleted_message",
-                chatType: this.chatVal.kind,
-                chatId: this.chatVal.chatId,
-                messageId: messageId,
-                userId: userId,
-            });
-        }
-        eventsStore.update(this.chatId, (events) =>
-            replaceMessageContent(events, BigInt(messageId), {
-                kind: "deleted_content",
-                deletedBy: userId,
-                timestamp: BigInt(Date.now()),
+        return this.api.deleteMessage(chat, messageId, threadRootMessageIndex)
+            .then((resp) => {
+                const success = resp === "success";
+                if (!success) {
+                    undelete();
+                }
+                return success;
             })
-        );
+            .catch(_ => {
+                undelete();
+                return false;
+            });
     }
 
     removeMessage(messageId: bigint, userId: string): void {
@@ -625,7 +663,7 @@ export class ChatController {
         }
         unconfirmed.delete(this.chatId, messageId);
         messagesRead.removeUnconfirmedMessage(this.chatId, messageId);
-        eventsStore.update(this.chatId, (events) =>
+        serverEventsStore.update(this.chatId, (events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
     }
@@ -752,7 +790,7 @@ export class ChatController {
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
-            eventsStore.update(this.chatId, (events) =>
+            serverEventsStore.update(this.chatId, (events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
                         return confirmed;

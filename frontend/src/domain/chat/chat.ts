@@ -339,7 +339,6 @@ export type ThreadSummary = {
 
 export type LocalReaction = {
     reaction: string;
-    timestamp: number;
     kind: "add" | "remove";
     userId: string; // this can actually be a remote user via rtc
 };
@@ -347,6 +346,23 @@ export type LocalReaction = {
 export type Reaction = {
     reaction: string;
     userIds: Set<string>;
+};
+
+export type LocalPollVote = {
+    answerIndex: number;
+    type: "register" | "delete";
+    userId: string;
+};
+
+export type LocalMessageUpdates = {
+    deleted?: {
+        deletedBy: string,
+        timestamp: bigint,
+    };
+    editedContent?: MessageContent,
+    reactions?: LocalReaction[];
+    pollVotes?: LocalPollVote[];
+    lastUpdated: number;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;

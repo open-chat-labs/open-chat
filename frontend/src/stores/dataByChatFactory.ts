@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { derived, get, Writable } from "svelte/store";
+import { derived, get, Readable, Writable } from "svelte/store";
 import { selectedChatStore } from "./chat";
 import { immutableStore } from "./immutable";
 
@@ -24,7 +24,7 @@ function updateDataForChat<T>(
 
 export function createChatSpecificStore<T>(empty: T) {
     const all: Writable<Record<string, T>> = immutableStore<Record<string, T>>({});
-    const byChat = derived([selectedChatStore, all], ([$selectedChat, $all]) => {
+    const byChat: Readable<T> = derived([selectedChatStore, all], ([$selectedChat, $all]) => {
         if ($selectedChat === undefined) return empty;
         return $all[$selectedChat.chatId] ?? empty;
     });
