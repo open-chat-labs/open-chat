@@ -5,7 +5,7 @@ import { unregister } from "../utils/notifications";
 import { closeDb } from "../utils/caching";
 import { initialiseTracking, startTrackingSession, endTrackingSession } from "../utils/tracking";
 import { AuthProvider } from "../domain/auth";
-import { idbAuthClientStore } from "../stores/authProviders";
+import { lsAuthClientStore } from "../stores/authProviders";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -15,7 +15,7 @@ const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
     },
-    storage: idbAuthClientStore,
+    storage: lsAuthClientStore,
 });
 
 initialiseTracking();
