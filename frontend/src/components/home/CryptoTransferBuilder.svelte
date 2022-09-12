@@ -35,7 +35,11 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import { currentChatMembers, currentChatBlockedUsers } from "../../stores/chat";
+    import {
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatReplyingTo,
+    } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -60,7 +64,6 @@
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: chat = controller.chat;
     $: group = $chat.kind === "group_chat";
-    $: replyingTo = controller.replyingTo;
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
@@ -74,8 +77,8 @@
 
     onMount(() => {
         // default the receiver to the reply sender if we are replying to a specific message
-        if ($replyingTo !== undefined) {
-            receiver = $userStore[$replyingTo.senderId];
+        if ($currentChatReplyingTo !== undefined) {
+            receiver = $userStore[$currentChatReplyingTo.senderId];
         }
     });
 

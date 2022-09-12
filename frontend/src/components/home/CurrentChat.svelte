@@ -54,6 +54,10 @@
         currentChatMembers,
         currentChatBlockedUsers,
         currentChatPinnedMessages,
+        currentChatFileToAttach,
+        currentChatEditingEvent,
+        currentChatReplyingTo,
+        currentChatTextContent,
     } from "../../stores/chat";
 
     export let controller: ChatController;
@@ -77,10 +81,6 @@
 
     $: showFooter = !showSearchHeader;
     $: chat = controller.chat;
-    $: fileToAttach = controller.fileToAttach;
-    $: editingEvent = controller.editingEvent;
-    $: replyingTo = controller.replyingTo;
-    $: textContent = controller.textContent;
     $: blocked = isBlocked($chat, $directlyBlockedUsers);
 
     $: canSend = canSendMessages($chat, $userStore);
@@ -163,10 +163,10 @@
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
-        if ($editingEvent !== undefined) {
-            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
+        if ($currentChatEditingEvent !== undefined) {
+            editMessageWithAttachment(text, $currentChatFileToAttach, $currentChatEditingEvent);
         } else {
-            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+            sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
         }
     }
 
@@ -300,6 +300,8 @@
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
     }
+
+    $: console.log("Editing event: ", $currentChatEditingEvent);
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -377,10 +379,10 @@
     {#if showFooter}
         <Footer
             chat={$chat}
-            fileToAttach={$fileToAttach}
-            editingEvent={$editingEvent}
-            replyingTo={$replyingTo}
-            textContent={$textContent}
+            fileToAttach={$currentChatFileToAttach}
+            editingEvent={$currentChatEditingEvent}
+            replyingTo={$currentChatReplyingTo}
+            textContent={$currentChatTextContent}
             members={$currentChatMembers}
             blockedUsers={$currentChatBlockedUsers}
             user={controller.user}

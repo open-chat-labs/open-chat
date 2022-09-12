@@ -44,7 +44,12 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import { eventsStore, focusMessageIndex, currentChatPinnedMessages } from "../../stores/chat";
+    import {
+        eventsStore,
+        focusMessageIndex,
+        currentChatPinnedMessages,
+        currentChatEditingEvent,
+    } from "../../stores/chat";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -68,7 +73,6 @@
     export let canReplyInThread: boolean;
 
     $: chat = controller.chat;
-    $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
 
     let loadingPrev = false;
@@ -655,7 +659,7 @@
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
-                        editing={$editingEvent === evt}
+                        editing={$currentChatEditingEvent === evt}
                         on:chatWith
                         on:initiateThread
                         on:replyTo={replyTo}

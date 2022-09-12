@@ -2,9 +2,11 @@ import type {
     ChatEvent,
     ChatSummary,
     CurrentChatState,
+    EnhancedReplyContext,
     EventWrapper,
     Member,
     Message,
+    MessageContent,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
@@ -36,8 +38,9 @@ import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { createChatSpecificStore } from "./dataByChatFactory";
+import { createChatSpecificDataStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
+import type { DraftMessage } from "./draftMessageFactory";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -465,7 +468,7 @@ export function removeChat(chatId: string): void {
     });
 }
 
-export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
+export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>([]);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [serverEventsStore, localMessageUpdates],
     ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
@@ -475,7 +478,44 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         );
     }
 );
-export const currentChatMembers = createChatSpecificStore<Member[]>([]);
-export const currentChatBlockedUsers = createChatSpecificStore<Set<string>>(new Set<string>());
-export const currentChatPinnedMessages = createChatSpecificStore<Set<number>>(new Set<number>());
-export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);
+export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
+export const currentChatBlockedUsers = createChatSpecificDataStore<Set<string>>(new Set<string>());
+export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>>(
+    new Set<number>()
+);
+export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
+
+const draftMessages = createChatSpecificDataStore<DraftMessage>({});
+export const currentChatDraftMessage = {
+    ...draftMessages,
+    setTextContent: (id: string, textContent: string | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ textContent } })),
+    setAttachment: (id: string, attachment: MessageContent | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ attachment } })),
+    setReplyingTo: (id: string, replyingTo: EnhancedReplyContext | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ replyingTo } })),
+    setEditing: (id: string, editingEvent: EventWrapper<Message>): void => {
+        const users = get(userStore);
+        const updated = {
+            editingEvent,
+            attachment:
+                editingEvent?.event.content.kind !== "text_content"
+                    ? editingEvent?.event.content
+                    : undefined,
+            replyingTo:
+                editingEvent.event.repliesTo &&
+                editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
+                    ? {
+                          ...editingEvent.event.repliesTo,
+                          content: editingEvent.event.content,
+                          sender: users[editingEvent.event.sender],
+                      }
+                    : undefined,
+        };
+        draftMessages.update(id, (d) => ({ ...d, ...updated }));
+    },
+};
+export const currentChatTextContent = derived(currentChatDraftMessage, (d) => d.textContent);
+export const currentChatReplyingTo = derived(currentChatDraftMessage, (d) => d.replyingTo);
+export const currentChatFileToAttach = derived(currentChatDraftMessage, (d) => d.attachment);
+export const currentChatEditingEvent = derived(currentChatDraftMessage, (d) => d.editingEvent);

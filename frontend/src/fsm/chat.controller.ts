@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
-import { derived, get, readable, Readable, Writable } from "svelte/store";
+import { derived, get, Readable } from "svelte/store";
 import type {
     AddMembersResponse,
     ChatEvent,
@@ -43,9 +43,10 @@ import {
     currentChatBlockedUsers,
     currentChatMembers,
     currentChatPinnedMessages,
+    currentChatDraftMessage,
     serverEventsStore,
+    currentChatReplyingTo,
 } from "../stores/chat";
-import { draftMessages } from "../stores/draftMessages";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { findLast } from "../utils/list";
@@ -53,7 +54,6 @@ import { rollbar } from "../utils/logging";
 import { indexIsInRanges } from "../utils/range";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
-import { immutableStore } from "../stores/immutable";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
 import { eventsStore, focusMessageIndex } from "../stores/chat";
@@ -61,10 +61,6 @@ import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 export class ChatController {
     public chat: Readable<ChatSummary>;
-    public textContent: Readable<string | undefined>;
-    public replyingTo: Readable<EnhancedReplyContext | undefined>;
-    public fileToAttach: Readable<MessageContent | undefined>;
-    public editingEvent: Readable<EventWrapper<Message> | undefined>;
     public chatId: string;
     public chatUserIds: Set<string>;
 
@@ -98,13 +94,6 @@ export class ChatController {
         this.chatId = chat.chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
         this.chatUserIds = new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : []);
-        const draftMessage = readable(draftMessages.get(chat.chatId), (set) =>
-            draftMessages.subscribe((d) => set(d[chat.chatId] ?? {}))
-        );
-        this.textContent = derived(draftMessage, (d) => d.textContent);
-        this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
-        this.fileToAttach = derived(draftMessage, (d) => d.attachment);
-        this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -503,14 +492,14 @@ export class ChatController {
             },
         });
 
-        draftMessages.delete(this.chatId);
+        currentChatDraftMessage.clear(this.chatId);
     }
 
     async editMessage(msg: Message, threadRootMessageIndex: number | undefined): Promise<void> {
         localMessageUpdates.markContentEdited(msg.messageId.toString(), msg.content);
 
         if (threadRootMessageIndex === undefined) {
-            draftMessages.delete(this.chatId);
+            currentChatDraftMessage.clear(this.chatId);
         }
 
         return this.api
@@ -776,11 +765,11 @@ export class ChatController {
     }
 
     setTextContent(text: string | undefined): void {
-        draftMessages.setTextContent(this.chatId, text);
+        currentChatDraftMessage.setTextContent(this.chatId, text);
     }
 
     cancelReply(): void {
-        draftMessages.setReplyingTo(this.chatId, undefined);
+        currentChatDraftMessage.setReplyingTo(this.chatId, undefined);
     }
 
     getNextMessageIndex(): number {
@@ -804,7 +793,7 @@ export class ChatController {
             this.user.userId,
             nextMessageIndex,
             textContent,
-            get(this.replyingTo),
+            get(currentChatReplyingTo),
             fileToAttach
         );
     }
@@ -831,7 +820,7 @@ export class ChatController {
     }
 
     attachFile(content: MessageContent): void {
-        draftMessages.setAttachment(this.chatId, content);
+        currentChatDraftMessage.setAttachment(this.chatId, content);
     }
 
     startTyping(threadRootMessageIndex?: number): void {
@@ -855,7 +844,7 @@ export class ChatController {
     }
 
     clearAttachment(): void {
-        draftMessages.setAttachment(this.chatId, undefined);
+        currentChatDraftMessage.setAttachment(this.chatId, undefined);
     }
 
     isRead(messageIndex: number, messageId: bigint): boolean {
@@ -901,15 +890,15 @@ export class ChatController {
     }
 
     replyTo(context: EnhancedReplyContext): void {
-        draftMessages.setReplyingTo(this.chatId, context);
+        currentChatDraftMessage.setReplyingTo(this.chatId, context);
     }
 
     cancelEditEvent(): void {
-        draftMessages.delete(this.chatId);
+        currentChatDraftMessage.clear(this.chatId);
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        draftMessages.setEditing(this.chatId, event);
+        currentChatDraftMessage.setEditing(this.chatId, event);
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
