@@ -1,6 +1,7 @@
+use candid::{CandidType, Principal};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::CanisterId;
+use types::{CanisterId, CanisterWasm, Version};
 
 pub mod operations;
 pub mod utils;
@@ -74,4 +75,29 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub open_storage_index: CanisterId,
     pub ledger: CanisterId,
+}
+
+#[derive(Debug)]
+pub enum OpenStorageCanisterName {
+    Index,
+    Bucket,
+}
+
+impl Display for OpenStorageCanisterName {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            OpenStorageCanisterName::Index => "index",
+            OpenStorageCanisterName::Bucket => "bucket",
+        };
+
+        f.write_str(name)
+    }
+}
+
+#[derive(CandidType, Debug)]
+pub struct OpenStorageInitArgs {
+    pub service_principals: Vec<Principal>,
+    pub bucket_canister_wasm: CanisterWasm,
+    pub wasm_version: Version,
+    pub test_mode: bool,
 }
