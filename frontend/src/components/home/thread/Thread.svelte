@@ -25,9 +25,12 @@
     import { rtlStore } from "../../../stores/rtl";
     import {
         ChatController,
+        deleteMessage,
+        editMessage,
         registerPollVote,
         startTyping,
         stopTyping,
+        updateUserStore,
     } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
     import {
@@ -269,7 +272,7 @@
 
         const userIds = userIdsFromEvents(updated);
         userIds.add(rootEvent.event.sender);
-        await controller.updateUserStore(userIds);
+        await updateUserStore(api, chat.chatId, currentUser.userId, userIds);
 
         return [updated, userIds];
     }
@@ -487,7 +490,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            controller.editMessage(msg, threadRootMessageIndex);
+            editMessage(api, chat, msg, threadRootMessageIndex);
         }
     }
 
@@ -587,13 +590,13 @@
         }
     }
 
-    function deleteMessage(ev: CustomEvent<Message>): void {
+    function onDeleteMessage(ev: CustomEvent<Message>): void {
         if (ev.detail.messageId === rootEvent.event.messageId) {
             relayPublish({ kind: "relayed_delete_message", message: ev.detail });
             return;
         }
 
-        controller.deleteMessage(threadRootMessageIndex, ev.detail.messageId);
+        deleteMessage(api, chat, currentUser.userId, threadRootMessageIndex, ev.detail.messageId);
     }
 
     function appendMessage(message: EventWrapper<Message>): boolean {
@@ -771,7 +774,7 @@
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:selectReaction={onSelectReaction}
-                            on:deleteMessage={deleteMessage}
+                            on:deleteMessage={onDeleteMessage}
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editMessage={() => editEvent(evt)}

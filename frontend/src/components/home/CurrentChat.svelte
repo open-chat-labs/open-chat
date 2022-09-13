@@ -7,7 +7,10 @@
     import { toastStore } from "../../stores/toast";
     import {
         ChatController,
+        editMessage,
+        getUnreadMessageCount,
         messageRead,
+        removeMessage,
         startTyping,
         stopTyping,
     } from "../../fsm/chat.controller";
@@ -97,7 +100,7 @@
         if (chatId !== previousChatId) {
             previousChatId = chatId;
             showSearchHeader = false;
-            unreadMessages = controller.unreadMessageCount;
+            unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = getFirstUnreadMention(chat);
             firstUnreadMessage = getFirstUnreadMessageIndex(chat);
 
@@ -111,7 +114,7 @@
     }
 
     let unsub = messagesRead.subscribe(() => {
-        unreadMessages = controller.unreadMessageCount;
+        unreadMessages = getUnreadMessageCount(chat);
         console.log("this should be running: ", unreadMessages);
         firstUnreadMention = getFirstUnreadMention(chat);
         firstUnreadMessage = getFirstUnreadMessageIndex(chat);
@@ -192,7 +195,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            controller.editMessage(msg, undefined);
+            editMessage(api, chat, msg, undefined);
         }
     }
 
@@ -234,13 +237,13 @@
                             trackEvent("replied_to_message");
                         }
                     } else {
-                        controller.removeMessage(msg.messageId, controller.user.userId);
+                        removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
                 })
                 .catch((err) => {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
+                    removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
                     console.log(err);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
@@ -286,13 +289,13 @@
                     controller.confirmMessage(msg, resp);
                     trackEvent("forward_message");
                 } else {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
+                    removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
                     rollbar.warn("Error response forwarding message", resp);
                     toastStore.showFailureToast("errorSendingMessage");
                 }
             })
             .catch((err) => {
-                controller.removeMessage(msg.messageId, controller.user.userId);
+                removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
                 console.log(err);
                 toastStore.showFailureToast("errorSendingMessage");
                 rollbar.error("Exception forwarding message", err);
@@ -304,7 +307,7 @@
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
-        controller.setTextContent(ev.detail);
+        currentChatDraftMessage.setTextContent(chat.chatId, ev.detail);
     }
 
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
@@ -402,7 +405,7 @@
             on:joinGroup
             on:cancelPreview
             on:upgrade
-            on:cancelReply={() => controller.cancelReply()}
+            on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.chatId, undefined)}
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
             on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
             on:setTextContent={setTextContent}

@@ -36,6 +36,7 @@
     import {
         blockUser,
         ChatController,
+        deleteMessage,
         findMessageEvent,
         pinMessage,
         registerPollVote,
@@ -154,7 +155,7 @@
         // this is where we pick up events that may be published from a thread
         relaySubscribe((event: RelayedEvent) => {
             if (event.kind === "relayed_delete_message") {
-                deleteMessage(event.message);
+                doDeleteMessage(event.message);
             }
 
             if (event.kind === "relayed_select_reaction") {
@@ -369,13 +370,13 @@
     }
 
     function onDeleteMessage(ev: CustomEvent<Message>) {
-        deleteMessage(ev.detail);
+        doDeleteMessage(ev.detail);
     }
 
-    function deleteMessage(message: Message) {
-        if (!canDelete && controller.user.userId !== message.sender) return;
+    function doDeleteMessage(message: Message) {
+        if (!canDelete && user.userId !== message.sender) return;
 
-        controller.deleteMessage(undefined, message.messageId);
+        deleteMessage(api, chat, user.userId, undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {

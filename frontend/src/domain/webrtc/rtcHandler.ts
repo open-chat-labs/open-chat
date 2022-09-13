@@ -1,9 +1,15 @@
 import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
-import type { ChatController } from "../../fsm/chat.controller";
+import {
+    ChatController,
+    isBlockedUser,
+    isDirectChatWith,
+    removeMessage,
+} from "../../fsm/chat.controller";
 import {
     chatSummariesListStore,
     chatSummariesStore,
     selectedChatControllerStore,
+    selectedChatStore,
 } from "../../stores/chat";
 import { typing } from "../../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -48,7 +54,7 @@ function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
 
 function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
     delegateToChatController(message, (chat) =>
-        chat.removeMessage(message.messageId, message.userId)
+        removeMessage(chat.chatVal, chat.user.userId, message.messageId, message.userId)
     );
 }
 
@@ -98,17 +104,17 @@ function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
 
 export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     const fromChat = findChatByChatType(msg);
-    const selectedChat = get(selectedChatControllerStore);
+    const selectedChat = get(selectedChatStore);
 
     // if the chat can't be found - ignore
-    if (fromChat === undefined) {
+    if (fromChat === undefined || selectedChat === undefined) {
         return undefined;
     }
 
     if (
-        fromChat.chatId === selectedChat?.chatId &&
-        selectedChat?.isDirectChatWith(msg.userId) &&
-        selectedChat?.isBlockedUser()
+        fromChat.chatId === selectedChat.chatId &&
+        isDirectChatWith(selectedChat, msg.userId) &&
+        isBlockedUser(selectedChat)
     ) {
         console.log("ignoring webrtc message from blocked user");
         return undefined;
