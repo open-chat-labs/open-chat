@@ -16,7 +16,7 @@
         GroupChatSummary,
         Message,
     } from "../../domain/chat/chat";
-    import type { ChatController } from "../../fsm/chat.controller";
+    import { addMembers, blockUser, ChatController } from "../../fsm/chat.controller";
     import { userStore } from "../../stores/user";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
@@ -32,7 +32,7 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { eventsStore } from "../../stores/chat";
+    import { eventsStore, selectedChatId } from "../../stores/chat";
     import {
         currentChatMembers,
         currentChatBlockedUsers,
@@ -56,7 +56,6 @@
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
-    $: chatId = controller?.chatId;
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -79,8 +78,10 @@
         rightPanelHistory = rightPanelHistory.slice(0, rightPanelHistory.length - 1);
     }
 
-    function blockUser(ev: CustomEvent<{ userId: string }>) {
-        controller?.blockUser(ev.detail.userId);
+    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
+        if ($selectedChatId !== undefined) {
+            blockUser(api, $selectedChatId, ev.detail.userId);
+        }
     }
 
     async function transferOwnership(ev: CustomEvent<FullMember>) {
@@ -93,23 +94,35 @@
     }
 
     async function unblockUser(ev: CustomEvent<UserSummary>) {
-        const success = await controller?.addMembers(true, [ev.detail]);
-        if (success) {
-            toastStore.showSuccessToast("unblockUserSucceeded");
-        } else {
-            toastStore.showFailureToast("unblockUserFailed");
+        if ($selectedChatId !== undefined) {
+            const success = await addMembers(api, $selectedChatId, currentUser.username, true, [
+                ev.detail,
+            ]);
+            if (success) {
+                toastStore.showSuccessToast("unblockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("unblockUserFailed");
+            }
         }
     }
 
     async function saveMembers(ev: CustomEvent<UserSummary[]>) {
-        savingMembers = true;
-        const success = await controller?.addMembers(false, ev.detail);
-        if (success) {
-            popHistory();
-        } else {
-            toastStore.showFailureToast("addMembersFailed");
+        if ($selectedChatId !== undefined) {
+            savingMembers = true;
+            const success = await addMembers(
+                api,
+                $selectedChatId,
+                currentUser.username,
+                false,
+                ev.detail
+            );
+            if (success) {
+                popHistory();
+            } else {
+                toastStore.showFailureToast("addMembersFailed");
+            }
+            savingMembers = false;
         }
-        savingMembers = false;
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
@@ -134,7 +147,7 @@
     }
 
     $: threadRootEvent =
-        lastState.kind === "message_thread_panel" && chatId !== undefined
+        lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
             : undefined;
 </script>
@@ -164,7 +177,7 @@
             members={currentChatMembers}
             blockedUsers={currentChatBlockedUsers}
             on:close={popHistory}
-            on:blockUser={blockUser}
+            on:blockUser={onBlockUser}
             on:unblockUser={unblockUser}
             on:transferOwnership={transferOwnership}
             on:chatWith
@@ -172,11 +185,11 @@
             on:dismissAsAdmin={dismissAsAdmin}
             on:removeMember={removeMember}
             on:makeAdmin={makeAdmin} />
-    {:else if lastState.kind === "show_pinned" && chatId !== undefined}
+    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
-            {chatId}
+            chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}

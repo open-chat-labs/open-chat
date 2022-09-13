@@ -182,20 +182,6 @@ export class ChatController {
         }
     }
 
-    private addPinnedMessage(messageIndex: number): void {
-        currentChatPinnedMessages.update(this.chatId, (s) => {
-            s.add(messageIndex);
-            return new Set(s);
-        });
-    }
-
-    private removePinnedMessage(messageIndex: number): void {
-        currentChatPinnedMessages.update(this.chatId, (s) => {
-            s.delete(messageIndex);
-            return new Set(s);
-        });
-    }
-
     registerPollVote(
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
@@ -229,46 +215,6 @@ export class ChatController {
                 rollbar.error("Poll vote failed: ", err);
                 console.log("poll vote failed: ", err);
             });
-    }
-
-    unpinMessage(messageIndex: number): void {
-        if (this.chatVal.kind === "group_chat") {
-            this.removePinnedMessage(messageIndex);
-            this.api
-                .unpinMessage(this.chatId, messageIndex)
-                .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
-                        toastStore.showFailureToast("unpinMessageFailed");
-                        rollbar.error("Unpin message failed: ", resp);
-                        this.addPinnedMessage(messageIndex);
-                    }
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast("unpinMessageFailed");
-                    rollbar.error("Unpin message failed: ", err);
-                    this.addPinnedMessage(messageIndex);
-                });
-        }
-    }
-
-    pinMessage(messageIndex: number): void {
-        if (this.chatVal.kind === "group_chat") {
-            this.addPinnedMessage(messageIndex);
-            this.api
-                .pinMessage(this.chatId, messageIndex)
-                .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
-                        toastStore.showFailureToast("pinMessageFailed");
-                        rollbar.error("Pin message failed: ", resp);
-                        this.removePinnedMessage(messageIndex);
-                    }
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast("pinMessageFailed");
-                    rollbar.error("Pin message failed: ", err);
-                    this.removePinnedMessage(messageIndex);
-                });
-        }
     }
 
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
@@ -1003,136 +949,6 @@ export class ChatController {
             });
     }
 
-    private blockUserLocally(userId: string): void {
-        currentChatBlockedUsers.update(this.chatId, (b) => b.add(userId));
-        currentChatMembers.update(this.chatId, (p) => p.filter((p) => p.userId !== userId));
-    }
-
-    private unblockUserLocally(userId: string): void {
-        currentChatBlockedUsers.update(this.chatId, (b) => {
-            b.delete(userId);
-            return b;
-        });
-        currentChatMembers.update(this.chatId, (p) => [
-            ...p,
-            {
-                role: "participant",
-                userId,
-                username: get(userStore)[userId]?.username ?? "unknown",
-            },
-        ]);
-    }
-
-    blockUser(userId: string): Promise<void> {
-        this.blockUserLocally(userId);
-        return this.api
-            .blockUserFromGroupChat(this.chatId, userId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("blockUserSucceeded");
-                } else {
-                    toastStore.showFailureToast("blockUserFailed");
-                    this.unblockUserLocally(userId);
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("blockUserFailed");
-                rollbar.error("Error blocking user", err);
-                this.unblockUserLocally(userId);
-            });
-    }
-
-    private removeMembersLocally(
-        viaUnblock: boolean,
-        users: UserSummary[],
-        resp: AddMembersResponse | { kind: "unknown" }
-    ): void {
-        if (resp.kind === "add_members_success") return;
-
-        let toRemove: string[] = [];
-        if (resp.kind === "add_members_partial_success") {
-            toRemove = [
-                ...resp.usersAlreadyInGroup,
-                ...resp.usersBlockedFromGroup,
-                ...resp.usersWhoBlockedRequest,
-            ];
-        } else {
-            toRemove = users.map((u) => u.userId);
-        }
-
-        currentChatMembers.update(this.chatId, (ps) =>
-            ps.filter((p) => {
-                !toRemove.includes(p.userId);
-            })
-        );
-
-        if (viaUnblock) {
-            currentChatBlockedUsers.update(this.chatId, (b) => {
-                return toRemove.reduce((blocked, u) => blocked.add(u), b);
-            });
-        }
-    }
-
-    private addMembersLocally(viaUnblock: boolean, users: UserSummary[]): void {
-        if (viaUnblock) {
-            currentChatBlockedUsers.update(this.chatId, (b) => {
-                users.forEach((u) => b.delete(u.userId));
-                return b;
-            });
-        }
-        currentChatMembers.update(this.chatId, (ps) => [
-            ...users.map((u) => ({
-                userId: u.userId,
-                role: "participant" as MemberRole,
-            })),
-            ...ps,
-        ]);
-    }
-
-    addMembers(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
-        this.addMembersLocally(viaUnblock, users);
-        return this.api
-            .addMembers(
-                this.chatId,
-                users.map((u) => u.userId),
-                this.user.username,
-                viaUnblock
-            )
-            .then((resp) => {
-                if (resp.kind === "add_members_success") {
-                    return true;
-                } else {
-                    this.removeMembersLocally(viaUnblock, users, resp);
-                    rollbar.warn("AddMembersFailed", resp);
-                    return false;
-                }
-            })
-            .catch((err) => {
-                this.removeMembersLocally(viaUnblock, users, { kind: "unknown" });
-                rollbar.error("AddMembersFailed", err);
-                return false;
-            });
-    }
-
-    unblockUser(userId: string): Promise<void> {
-        this.unblockUserLocally(userId);
-        return this.api
-            .unblockUserFromGroupChat(this.chatId, userId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("unblockUserSucceeded");
-                } else {
-                    toastStore.showFailureToast("unblockUserFailed");
-                    this.blockUserLocally(userId);
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("unblockUserFailed");
-                rollbar.error("Error unblocking user", err);
-                this.blockUserLocally(userId);
-            });
-    }
-
     messageRead(messageIndex: number, messageId: bigint): void {
         messagesRead.markMessageRead(this.chatId, messageIndex, messageId);
 
@@ -1170,14 +986,6 @@ export class ChatController {
     }
 
     // Returns the most recently active users, only considering users who have been active within the last 10 minutes
-    findMessageEvent(
-        events: EventWrapper<ChatEvent>[],
-        index: number
-    ): EventWrapper<Message> | undefined {
-        return events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
-        ) as EventWrapper<Message> | undefined;
-    }
 
     isContiguous(response: EventsSuccessResult<ChatEvent>): boolean {
         if (this.confirmedEventIndexesLoaded.length === 0 || response.events.length === 0)
@@ -1200,5 +1008,214 @@ export class ChatController {
         }
 
         return isContiguous;
+    }
+}
+
+/**
+ * Extract pure functions out of the chat controller and put them below here until there is no chat controller left
+ */
+
+function removeMembersLocally(
+    chatId: string,
+    viaUnblock: boolean,
+    users: UserSummary[],
+    resp: AddMembersResponse | { kind: "unknown" }
+): void {
+    if (resp.kind === "add_members_success") return;
+
+    let toRemove: string[] = [];
+    if (resp.kind === "add_members_partial_success") {
+        toRemove = [
+            ...resp.usersAlreadyInGroup,
+            ...resp.usersBlockedFromGroup,
+            ...resp.usersWhoBlockedRequest,
+        ];
+    } else {
+        toRemove = users.map((u) => u.userId);
+    }
+
+    currentChatMembers.update(chatId, (ps) =>
+        ps.filter((p) => {
+            !toRemove.includes(p.userId);
+        })
+    );
+
+    if (viaUnblock) {
+        currentChatBlockedUsers.update(chatId, (b) => {
+            return toRemove.reduce((blocked, u) => blocked.add(u), b);
+        });
+    }
+}
+
+function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
+    if (viaUnblock) {
+        currentChatBlockedUsers.update(chatId, (b) => {
+            users.forEach((u) => b.delete(u.userId));
+            return b;
+        });
+    }
+    currentChatMembers.update(chatId, (ps) => [
+        ...users.map((u) => ({
+            userId: u.userId,
+            role: "participant" as MemberRole,
+        })),
+        ...ps,
+    ]);
+}
+
+export function addMembers(
+    api: ServiceContainer,
+    chatId: string,
+    username: string,
+    viaUnblock: boolean,
+    users: UserSummary[]
+): Promise<boolean> {
+    addMembersLocally(chatId, viaUnblock, users);
+    return api
+        .addMembers(
+            chatId,
+            users.map((u) => u.userId),
+            username,
+            viaUnblock
+        )
+        .then((resp) => {
+            if (resp.kind === "add_members_success") {
+                return true;
+            } else {
+                removeMembersLocally(chatId, viaUnblock, users, resp);
+                rollbar.warn("AddMembersFailed", resp);
+                return false;
+            }
+        })
+        .catch((err) => {
+            removeMembersLocally(chatId, viaUnblock, users, { kind: "unknown" });
+            rollbar.error("AddMembersFailed", err);
+            return false;
+        });
+}
+
+function blockUserLocally(chatId: string, userId: string): void {
+    currentChatBlockedUsers.update(chatId, (b) => b.add(userId));
+    currentChatMembers.update(chatId, (p) => p.filter((p) => p.userId !== userId));
+}
+
+function unblockUserLocally(chatId: string, userId: string): void {
+    currentChatBlockedUsers.update(chatId, (b) => {
+        b.delete(userId);
+        return b;
+    });
+    currentChatMembers.update(chatId, (p) => [
+        ...p,
+        {
+            role: "participant",
+            userId,
+            username: get(userStore)[userId]?.username ?? "unknown",
+        },
+    ]);
+}
+
+export function blockUser(api: ServiceContainer, chatId: string, userId: string): Promise<void> {
+    blockUserLocally(chatId, userId);
+    return api
+        .blockUserFromGroupChat(chatId, userId)
+        .then((resp) => {
+            if (resp === "success") {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+                unblockUserLocally(chatId, userId);
+            }
+        })
+        .catch((err) => {
+            toastStore.showFailureToast("blockUserFailed");
+            rollbar.error("Error blocking user", err);
+            unblockUserLocally(chatId, userId);
+        });
+}
+export function unblockUser(api: ServiceContainer, chatId: string, userId: string): Promise<void> {
+    unblockUserLocally(chatId, userId);
+    return api
+        .unblockUserFromGroupChat(chatId, userId)
+        .then((resp) => {
+            if (resp === "success") {
+                toastStore.showSuccessToast("unblockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("unblockUserFailed");
+                blockUserLocally(chatId, userId);
+            }
+        })
+        .catch((err) => {
+            toastStore.showFailureToast("unblockUserFailed");
+            rollbar.error("Error unblocking user", err);
+            blockUserLocally(chatId, userId);
+        });
+}
+
+export function findMessageEvent(
+    events: EventWrapper<ChatEvent>[],
+    index: number
+): EventWrapper<Message> | undefined {
+    return events.find((ev) => ev.event.kind === "message" && ev.event.messageIndex === index) as
+        | EventWrapper<Message>
+        | undefined;
+}
+
+function addPinnedMessage(chatId: string, messageIndex: number): void {
+    currentChatPinnedMessages.update(chatId, (s) => {
+        s.add(messageIndex);
+        return new Set(s);
+    });
+}
+
+function removePinnedMessage(chatId: string, messageIndex: number): void {
+    currentChatPinnedMessages.update(chatId, (s) => {
+        s.delete(messageIndex);
+        return new Set(s);
+    });
+}
+
+export function unpinMessage(
+    api: ServiceContainer,
+    { kind, chatId }: ChatSummary,
+    messageIndex: number
+): void {
+    if (kind === "group_chat") {
+        removePinnedMessage(chatId, messageIndex);
+        api.unpinMessage(chatId, messageIndex)
+            .then((resp) => {
+                if (resp !== "success" && resp !== "no_change") {
+                    toastStore.showFailureToast("unpinMessageFailed");
+                    rollbar.error("Unpin message failed: ", resp);
+                    addPinnedMessage(chatId, messageIndex);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("unpinMessageFailed");
+                rollbar.error("Unpin message failed: ", err);
+                addPinnedMessage(chatId, messageIndex);
+            });
+    }
+}
+
+export function pinMessage(
+    api: ServiceContainer,
+    { kind, chatId }: ChatSummary,
+    messageIndex: number
+): void {
+    if (kind === "group_chat") {
+        addPinnedMessage(chatId, messageIndex);
+        api.pinMessage(chatId, messageIndex)
+            .then((resp) => {
+                if (resp !== "success" && resp !== "no_change") {
+                    toastStore.showFailureToast("pinMessageFailed");
+                    rollbar.error("Pin message failed: ", resp);
+                    removePinnedMessage(chatId, messageIndex);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("pinMessageFailed");
+                rollbar.error("Pin message failed: ", err);
+                removePinnedMessage(chatId, messageIndex);
+            });
     }
 }

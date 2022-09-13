@@ -36,7 +36,6 @@
     import Typing from "../Typing.svelte";
     import { byChat, TypersByKey } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { Readable } from "svelte/store";
     import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
@@ -47,7 +46,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: Readable<ChatSummary>;
+    export let selectedChatSummary: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
     export let unreadMessages: number;
@@ -55,18 +54,18 @@
 
     let viewProfile = false;
 
-    $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
-    $: isGroup = $selectedChatSummary.kind === "group_chat";
+    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
+    $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
-    $: pollsAllowed = isGroup && !isBot && canCreatePolls($selectedChatSummary);
+    $: pollsAllowed = isGroup && !isBot && canCreatePolls(selectedChatSummary);
 
     function clearSelection() {
         dispatch("clearSelection");
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: $selectedChatSummary.chatId, mute });
+        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.chatId, mute });
     }
 
     function searchChat() {
@@ -82,14 +81,14 @@
     }
 
     function blockUser() {
-        if ($selectedChatSummary.kind === "direct_chat") {
-            dispatch("blockUser", { userId: $selectedChatSummary.them });
+        if (selectedChatSummary.kind === "direct_chat") {
+            dispatch("blockUser", { userId: selectedChatSummary.them });
         }
     }
 
     function unblockUser() {
-        if ($selectedChatSummary.kind === "direct_chat") {
-            dispatch("unblockUser", { userId: $selectedChatSummary.them });
+        if (selectedChatSummary.kind === "direct_chat") {
+            dispatch("unblockUser", { userId: selectedChatSummary.them });
         }
     }
 
@@ -110,7 +109,7 @@
     }
 
     function leaveGroup() {
-        dispatch("leaveGroup", { kind: "leave", chatId: $selectedChatSummary.chatId });
+        dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.chatId });
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -148,7 +147,7 @@
         dispatch("showPinned");
     }
 
-    $: chat = normaliseChatSummary($now, $selectedChatSummary, $byChat);
+    $: chat = normaliseChatSummary($now, selectedChatSummary, $byChat);
 </script>
 
 <SectionHeader shadow flush>
@@ -236,7 +235,7 @@
                 </div>
                 <div slot="menu">
                     <Menu>
-                        {#if $selectedChatSummary.kind === "direct_chat" && !isBot}
+                        {#if selectedChatSummary.kind === "direct_chat" && !isBot}
                             {#if blocked}
                                 <MenuItem on:click={unblockUser}>
                                     <Cancel
@@ -254,7 +253,7 @@
                                     <div slot="text">{$_("blockUser")}</div>
                                 </MenuItem>
                             {/if}
-                        {:else if $selectedChatSummary.kind === "group_chat"}
+                        {:else if selectedChatSummary.kind === "group_chat"}
                             <MenuItem on:click={showGroupDetails}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
@@ -262,7 +261,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
-                            {#if canLeaveGroup($selectedChatSummary)}
+                            {#if canLeaveGroup(selectedChatSummary)}
                                 <MenuItem on:click={leaveGroup}>
                                     <LocationExit
                                         size={$iconSize}
@@ -278,7 +277,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("members")}</div>
                             </MenuItem>
-                            {#if canAddMembers($selectedChatSummary)}
+                            {#if canAddMembers(selectedChatSummary)}
                                 <MenuItem on:click={addMembers}>
                                     <AccountPlusOutline
                                         size={$iconSize}
@@ -308,7 +307,7 @@
                             </MenuItem>
                         {/if}
                         {#if notificationsSupported}
-                            {#if $selectedChatSummary.notificationsMuted === true}
+                            {#if selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                     <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                     <div slot="text">{$_("unmuteNotifications")}</div>

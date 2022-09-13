@@ -62,12 +62,14 @@
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
+    export let chat: ChatSummary;
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
     const createdUser = getContext<CreatedUser>(currentUserKey);
 
-    let chatId = controller.chatId;
+    $: chatId = chat.chatId;
+    let previousChatId: string | undefined = undefined;
     let unreadMessages = 0;
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
@@ -80,18 +82,17 @@
     let searchTerm = "";
 
     $: showFooter = !showSearchHeader;
-    $: chat = controller.chat;
-    $: blocked = isBlocked($chat, $directlyBlockedUsers);
+    $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = canSendMessages($chat, $userStore);
-    $: preview = isPreviewing($chat);
+    $: canSend = canSendMessages(chat, $userStore);
+    $: preview = isPreviewing(chat);
     $: {
-        if (chatId !== controller.chatId) {
+        if (chatId !== previousChatId) {
+            previousChatId = chatId;
             showSearchHeader = false;
-            chatId = controller.chatId;
             unreadMessages = controller.unreadMessageCount;
-            firstUnreadMention = getFirstUnreadMention(controller.chatVal);
-            firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
+            firstUnreadMention = getFirstUnreadMention(chat);
+            firstUnreadMessage = getFirstUnreadMessageIndex(chat);
 
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
@@ -101,6 +102,7 @@
             });
         }
     }
+
     let unsub = messagesRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
         firstUnreadMention = getFirstUnreadMention(controller.chatVal);
@@ -124,7 +126,7 @@
     }
 
     function createPoll() {
-        if (!canCreatePolls($chat)) return;
+        if (!canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -200,7 +202,7 @@
             }
 
             const msg = controller.createMessage(textContent, fileToAttach);
-            api.sendMessage($chat, controller.user, mentioned, msg)
+            api.sendMessage(chat, controller.user, mentioned, msg)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
@@ -210,10 +212,10 @@
                                 createdUser.cryptoAccount
                             );
                         }
-                        if ($chat.kind === "direct_chat") {
+                        if (chat.kind === "direct_chat") {
                             trackEvent("sent_direct_message");
                         } else {
-                            if ($chat.public) {
+                            if (chat.public) {
                                 trackEvent("sent_public_group_message");
                             } else {
                                 trackEvent("sent_private_group_message");
@@ -270,7 +272,7 @@
         };
 
         controller.api
-            .sendMessage($chat, controller.user, [], msg)
+            .sendMessage(chat, controller.user, [], msg)
             .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     controller.confirmMessage(msg, resp);
@@ -326,7 +328,7 @@
 <div class="wrapper">
     {#if showSearchHeader}
         <CurrentChatSearchHeader
-            chat={$chat}
+            {chat}
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
@@ -361,14 +363,15 @@
         on:forward
         on:closeThread
         on:initiateThread
+        {chat}
         {controller}
-        canPin={canPinMessages($chat)}
-        canBlockUser={canBlockUsers($chat)}
-        canDelete={canDeleteOtherUsersMessages($chat)}
-        canReplyInThread={canReplyInThread($chat)}
+        canPin={canPinMessages(chat)}
+        canBlockUser={canBlockUsers(chat)}
+        canDelete={canDeleteOtherUsersMessages(chat)}
+        canReplyInThread={canReplyInThread(chat)}
         {canSend}
-        canReact={canReactToMessages($chat)}
-        canInvite={canInviteUsers($chat)}
+        canReact={canReactToMessages(chat)}
+        canInvite={canInviteUsers(chat)}
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
@@ -376,7 +379,7 @@
         {unreadMessages} />
     {#if showFooter}
         <Footer
-            chat={$chat}
+            {chat}
             fileToAttach={$currentChatFileToAttach}
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}

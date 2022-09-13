@@ -1,7 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, beforeUpdate, createEventDispatcher, onMount, tick } from "svelte";
+    import {
+        afterUpdate,
+        beforeUpdate,
+        createEventDispatcher,
+        getContext,
+        onMount,
+        tick,
+    } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
@@ -26,7 +33,13 @@
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
-    import type { ChatController } from "../../fsm/chat.controller";
+    import {
+        blockUser,
+        ChatController,
+        findMessageEvent,
+        pinMessage,
+        unpinMessage,
+    } from "../../fsm/chat.controller";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -50,6 +63,7 @@
         currentChatPinnedMessages,
         currentChatEditingEvent,
     } from "../../stores/chat";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -57,8 +71,10 @@
     const MESSAGE_READ_THRESHOLD = 500;
 
     const dispatch = createEventDispatcher();
+    const api = getContext<ServiceContainer>(apiKey);
 
     export let controller: ChatController;
+    export let chat: ChatSummary;
     export let unreadMessages: number;
     export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
@@ -72,8 +88,7 @@
     export let footer: boolean;
     export let canReplyInThread: boolean;
 
-    $: chat = controller.chat;
-    $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
+    $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
 
     let loadingPrev = false;
     let loadingNew = false;
@@ -172,7 +187,7 @@
     }
 
     function scrollToNew() {
-        const idx = firstUnreadMessage ?? $chat.latestMessage?.event.messageIndex;
+        const idx = firstUnreadMessage ?? chat.latestMessage?.event.messageIndex;
 
         if (idx !== undefined) {
             scrollToMessageIndex(idx, false);
@@ -207,7 +222,7 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            const msgEvent = controller.findMessageEvent($eventsStore, index);
+            const msgEvent = findMessageEvent($eventsStore, index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
                     dispatch("openThread", {
@@ -370,9 +385,9 @@
         }
     }
 
-    function blockUser(ev: CustomEvent<{ userId: string }>) {
+    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
-        controller.blockUser(ev.detail.userId);
+        blockUser(api, chat.chatId, ev.detail.userId);
     }
 
     $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
@@ -513,7 +528,7 @@
         if (preview) return true;
 
         if (evt.event.kind === "message") {
-            return messagesRead.isRead($chat.chatId, evt.event.messageIndex, evt.event.messageId);
+            return messagesRead.isRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
         }
         return true;
     }
@@ -528,14 +543,14 @@
         return false;
     }
 
-    function pinMessage(ev: CustomEvent<Message>) {
+    function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        controller.pinMessage(ev.detail.messageIndex);
+        pinMessage(api, chat, ev.detail.messageIndex);
     }
 
-    function unpinMessage(ev: CustomEvent<Message>) {
+    function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        controller.unpinMessage(ev.detail.messageIndex);
+        unpinMessage(api, chat, ev.detail.messageIndex);
     }
 
     function registerVote(
@@ -636,7 +651,7 @@
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
-                        readByThem={isReadByThem($chat, $unconfirmedReadByThem, evt)}
+                        readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={controller.chatId}
                         chatType={controller.kind}
@@ -668,9 +683,9 @@
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={onSelectReactionEv}
-                        on:blockUser={blockUser}
-                        on:pinMessage={pinMessage}
-                        on:unpinMessage={unpinMessage}
+                        on:blockUser={onBlockUser}
+                        on:pinMessage={onPinMessage}
+                        on:unpinMessage={onUnpinMessage}
                         on:registerVote={registerVote}
                         on:copyMessageUrl={copyMessageUrl}
                         on:shareMessage={shareMessage}
@@ -686,8 +701,8 @@
     {#if initialised && !morePrevAvailable}
         {#if $isProposalGroup}
             <ProposalBot />
-        {:else if $chat.kind === "group_chat"}
-            <InitialGroupMessage group={$chat} noVisibleEvents={$eventsStore.length === 0} />
+        {:else if chat.kind === "group_chat"}
+            <InitialGroupMessage group={chat} noVisibleEvents={$eventsStore.length === 0} />
         {:else if isBot}
             <Robot />
         {/if}
