@@ -10,8 +10,10 @@ import { rollbar } from "./logging";
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
-export function permissionToStatus(permission: NotificationPermission): NotificationStatus {
+export function permissionToStatus(permission: NotificationPermission | "pending-init"): NotificationStatus {
     switch (permission) {
+        case "pending-init":
+            return "pending-init";
         case "denied":
             return "hard-denied";
         case "granted":
@@ -21,7 +23,9 @@ export function permissionToStatus(permission: NotificationPermission): Notifica
     }
 }
 
-export function supported(): boolean {
+export const notificationsSupported = supported();
+
+function supported(): boolean {
     return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 

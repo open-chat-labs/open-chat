@@ -8,12 +8,12 @@
             "name": "open_chat_frontend",
             "version": "2.0.0",
             "dependencies": {
-                "@dfinity/agent": "^0.13.2",
-                "@dfinity/auth-client": "^0.13.2",
-                "@dfinity/authentication": "^0.13.2",
-                "@dfinity/candid": "^0.13.2",
-                "@dfinity/identity": "^0.13.2",
-                "@dfinity/principal": "^0.13.2",
+                "@dfinity/agent": "^0.13.3",
+                "@dfinity/auth-client": "^0.13.3",
+                "@dfinity/authentication": "^0.13.3",
+                "@dfinity/candid": "^0.13.3",
+                "@dfinity/identity": "^0.13.3",
+                "@dfinity/principal": "^0.13.3",
                 "@fortawesome/free-solid-svg-icons": "^5.15.4",
                 "@open-ic/open-storage-agent": "^0.1.5",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
@@ -1856,9 +1856,9 @@
             }
         },
         "node_modules/@dfinity/agent": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.13.2.tgz",
-            "integrity": "sha512-wvlJS6bB731FQ0n8s+91N7NZMrGaVFGyTmGGMPqklv1H1CkxTpiRzi5vCfUsIJwFggsCXpk+Jjbpwbo9OWM48A==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.13.3.tgz",
+            "integrity": "sha512-Egg/73uIUx/gZsu+4PlSMprRerBtqhhuslyt7JDllhZStau7mvsZxfE3h8pjWQFZ2jMheQzi8mENN2Dsw9NX/w==",
             "dependencies": {
                 "base64-arraybuffer": "^0.2.0",
                 "bignumber.js": "^9.0.0",
@@ -1868,14 +1868,14 @@
                 "ts-node": "^10.8.2"
             },
             "peerDependencies": {
-                "@dfinity/candid": "^0.13.2",
-                "@dfinity/principal": "^0.13.2"
+                "@dfinity/candid": "^0.13.3",
+                "@dfinity/principal": "^0.13.3"
             }
         },
         "node_modules/@dfinity/auth-client": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.13.2.tgz",
-            "integrity": "sha512-c8rxKyg2MWD8Or4MAK2P3D8DTfzX6fre+E7dsQnyCIv5vIFJDkVZztrzU45tyoeGbiHvmB9ZX2y3DnwFSQQ4zw==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.13.3.tgz",
+            "integrity": "sha512-AVnZwJYbFKXa4MQp7F5opKtngEpxXONZmRgHv15XuKvkxpZb1kkllKHExSs6V6aF92ThDfJUZVMoYRG7PaLZqQ==",
             "dependencies": {
                 "@types/jest": "^28.1.4",
                 "idb": "^7.0.2",
@@ -1884,10 +1884,10 @@
                 "ts-node": "^10.8.2"
             },
             "peerDependencies": {
-                "@dfinity/agent": "^0.13.2",
-                "@dfinity/authentication": "^0.13.2",
-                "@dfinity/identity": "^0.13.2",
-                "@dfinity/principal": "^0.13.2"
+                "@dfinity/agent": "^0.13.3",
+                "@dfinity/authentication": "^0.13.3",
+                "@dfinity/identity": "^0.13.3",
+                "@dfinity/principal": "^0.13.3"
             }
         },
         "node_modules/@dfinity/auth-client/node_modules/@jest/console": {
@@ -2886,27 +2886,27 @@
             }
         },
         "node_modules/@dfinity/authentication": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.13.2.tgz",
-            "integrity": "sha512-hRV1DDJ8bZQGnoMf41Zl5BV4cOx61GLztixFtbC2XKXj3zEHUtJHso4FEISxxC445rRi0ClxRQDfzj1+sJnb8A==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.13.3.tgz",
+            "integrity": "sha512-zAfw9mfKgEiYeeESm5GnLw6N0NHJ+Veg5JdgtMy1SNXhBQvQCyw/vU+B+RPnnKcuXP8fIGhyjEhKm2QgW83JfA==",
             "peerDependencies": {
-                "@dfinity/agent": "^0.13.2",
-                "@dfinity/identity": "^0.13.2",
-                "@dfinity/principal": "^0.13.2"
+                "@dfinity/agent": "^0.13.3",
+                "@dfinity/identity": "^0.13.3",
+                "@dfinity/principal": "^0.13.3"
             }
         },
         "node_modules/@dfinity/candid": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.13.2.tgz",
-            "integrity": "sha512-PuzAgCvd41DYB2TlWFPKOKOT3LHR5C1ncYtCs9iQPVRv5CUtVnJTFBzy3gX/hq4VP131f7t0t8a+7IpVUnHw1w==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.13.3.tgz",
+            "integrity": "sha512-PLB5nH42Vk06iUinc4oqL8uzIST04ZQJ5UaQd7isVhYrhuSC+IU5IiAH00psTjGy8hIKm4y5mond3BrSLXIfqg==",
             "dependencies": {
                 "ts-node": "^10.8.2"
             }
         },
         "node_modules/@dfinity/identity": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.13.2.tgz",
-            "integrity": "sha512-ZmzSb7Ob+0Kybzvk18v9sf4PMz49Rb+iDuEvJwMpoWo6YjnUpvIaa6cO7hp7/Qkgt7vP0hjd+NsK8J1ePn+JcA==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.13.3.tgz",
+            "integrity": "sha512-yc4MrjRxoZGtgWj0OvIi71j4UYDc8yZRnw/mdTdkOrYMaealWdUovAZ+9qLJNkPfRGTx1vzVBf89MR38dnwD6Q==",
             "dependencies": {
                 "@peculiar/webcrypto": "^1.4.0",
                 "borc": "^2.1.1",
@@ -2917,14 +2917,14 @@
                 "vitest": "^0.18.0"
             },
             "peerDependencies": {
-                "@dfinity/agent": "^0.13.2",
-                "@dfinity/principal": "^0.13.2"
+                "@dfinity/agent": "^0.13.3",
+                "@dfinity/principal": "^0.13.3"
             }
         },
         "node_modules/@dfinity/principal": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.13.2.tgz",
-            "integrity": "sha512-sOpse3YJ3XboqE31KaLWk0T3QeSy50fmqxCzTe5ugxHTfBJ77NwBUHOHARA0UVo+9EkQnN51fLKfMARYfaTGMw==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.13.3.tgz",
+            "integrity": "sha512-HPUHVpIAaK14bUhZoxQ0X9r1qe2bIeyIr6hFlYvJqWdEjYo6dwGqiGR4rqnmOGQAhb76rRzTy3ppTtyx1TOIgw==",
             "dependencies": {
                 "ts-node": "^10.8.2"
             }
@@ -21189,9 +21189,9 @@
             }
         },
         "@dfinity/agent": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.13.2.tgz",
-            "integrity": "sha512-wvlJS6bB731FQ0n8s+91N7NZMrGaVFGyTmGGMPqklv1H1CkxTpiRzi5vCfUsIJwFggsCXpk+Jjbpwbo9OWM48A==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.13.3.tgz",
+            "integrity": "sha512-Egg/73uIUx/gZsu+4PlSMprRerBtqhhuslyt7JDllhZStau7mvsZxfE3h8pjWQFZ2jMheQzi8mENN2Dsw9NX/w==",
             "requires": {
                 "base64-arraybuffer": "^0.2.0",
                 "bignumber.js": "^9.0.0",
@@ -21202,9 +21202,9 @@
             }
         },
         "@dfinity/auth-client": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.13.2.tgz",
-            "integrity": "sha512-c8rxKyg2MWD8Or4MAK2P3D8DTfzX6fre+E7dsQnyCIv5vIFJDkVZztrzU45tyoeGbiHvmB9ZX2y3DnwFSQQ4zw==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.13.3.tgz",
+            "integrity": "sha512-AVnZwJYbFKXa4MQp7F5opKtngEpxXONZmRgHv15XuKvkxpZb1kkllKHExSs6V6aF92ThDfJUZVMoYRG7PaLZqQ==",
             "requires": {
                 "@types/jest": "^28.1.4",
                 "idb": "^7.0.2",
@@ -21958,23 +21958,23 @@
             }
         },
         "@dfinity/authentication": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.13.2.tgz",
-            "integrity": "sha512-hRV1DDJ8bZQGnoMf41Zl5BV4cOx61GLztixFtbC2XKXj3zEHUtJHso4FEISxxC445rRi0ClxRQDfzj1+sJnb8A==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.13.3.tgz",
+            "integrity": "sha512-zAfw9mfKgEiYeeESm5GnLw6N0NHJ+Veg5JdgtMy1SNXhBQvQCyw/vU+B+RPnnKcuXP8fIGhyjEhKm2QgW83JfA==",
             "requires": {}
         },
         "@dfinity/candid": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.13.2.tgz",
-            "integrity": "sha512-PuzAgCvd41DYB2TlWFPKOKOT3LHR5C1ncYtCs9iQPVRv5CUtVnJTFBzy3gX/hq4VP131f7t0t8a+7IpVUnHw1w==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.13.3.tgz",
+            "integrity": "sha512-PLB5nH42Vk06iUinc4oqL8uzIST04ZQJ5UaQd7isVhYrhuSC+IU5IiAH00psTjGy8hIKm4y5mond3BrSLXIfqg==",
             "requires": {
                 "ts-node": "^10.8.2"
             }
         },
         "@dfinity/identity": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.13.2.tgz",
-            "integrity": "sha512-ZmzSb7Ob+0Kybzvk18v9sf4PMz49Rb+iDuEvJwMpoWo6YjnUpvIaa6cO7hp7/Qkgt7vP0hjd+NsK8J1ePn+JcA==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.13.3.tgz",
+            "integrity": "sha512-yc4MrjRxoZGtgWj0OvIi71j4UYDc8yZRnw/mdTdkOrYMaealWdUovAZ+9qLJNkPfRGTx1vzVBf89MR38dnwD6Q==",
             "requires": {
                 "@peculiar/webcrypto": "^1.4.0",
                 "borc": "^2.1.1",
@@ -21986,9 +21986,9 @@
             }
         },
         "@dfinity/principal": {
-            "version": "0.13.2",
-            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.13.2.tgz",
-            "integrity": "sha512-sOpse3YJ3XboqE31KaLWk0T3QeSy50fmqxCzTe5ugxHTfBJ77NwBUHOHARA0UVo+9EkQnN51fLKfMARYfaTGMw==",
+            "version": "0.13.3",
+            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.13.3.tgz",
+            "integrity": "sha512-HPUHVpIAaK14bUhZoxQ0X9r1qe2bIeyIr6hFlYvJqWdEjYo6dwGqiGR4rqnmOGQAhb76rRzTy3ppTtyx1TOIgw==",
             "requires": {
                 "ts-node": "^10.8.2"
             }
