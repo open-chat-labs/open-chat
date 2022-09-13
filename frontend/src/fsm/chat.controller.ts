@@ -269,9 +269,10 @@ export class ChatController {
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
         const members = get(currentChatMembers);
         console.log("members: ", members);
-        const memberIds = members.map((p) => p.userId);
-        const blockedIds = [...get(this.blockedUsers)];
-        const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
+        const allUserIds = new Set<string>();
+        members.forEach((m) => allUserIds.add(m.userId));
+        get(this.blockedUsers).forEach((u) => allUserIds.add(u));
+        userIdsFromEvents.forEach((u) => allUserIds.add(u));
         allUserIds.forEach((u) => {
             if (u !== this.user.userId) {
                 this.chatUserIds.add(u);
@@ -282,7 +283,7 @@ export class ChatController {
             {
                 userGroups: [
                     {
-                        users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
+                        users: missingUserIds(get(userStore), allUserIds),
                         updatedSince: BigInt(0),
                     },
                 ],
