@@ -38,6 +38,7 @@
         ChatController,
         findMessageEvent,
         pinMessage,
+        registerPollVote,
         unpinMessage,
     } from "../../fsm/chat.controller";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
@@ -45,11 +46,11 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { userStore } from "../../stores/user";
+    import { currentUserKey, userStore } from "../../stores/user";
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
-    import { isProposalGroup } from "../../stores/chat";
+    import { currentChatDraftMessage, isProposalGroup } from "../../stores/chat";
     import {
         FilteredProposals,
         toggleProposalFilterMessageExpansion,
@@ -64,6 +65,7 @@
         currentChatEditingEvent,
     } from "../../stores/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
+    import type { CreatedUser } from "../../domain/user/user";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -72,6 +74,7 @@
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
     export let chat: ChatSummary;
@@ -159,7 +162,10 @@
             }
 
             if (event.kind === "relayed_register_vote") {
-                controller.registerPollVote(
+                registerPollVote(
+                    api,
+                    user.userId,
+                    chat.chatId,
                     undefined,
                     event.data.messageId,
                     event.data.messageIndex,
@@ -358,8 +364,8 @@
         dispatch("replyTo", ev.detail);
     }
 
-    function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        controller.editEvent(ev.detail);
+    function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
+        currentChatDraftMessage.setEditing(chat.chatId, ev.detail);
     }
 
     function onDeleteMessage(ev: CustomEvent<Message>) {
@@ -561,7 +567,10 @@
             type: "register" | "delete";
         }>
     ) {
-        controller.registerPollVote(
+        registerPollVote(
+            api,
+            user.userId,
+            chat.chatId,
             undefined,
             ev.detail.messageId,
             ev.detail.messageIndex,
@@ -653,8 +662,8 @@
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
-                        chatId={controller.chatId}
-                        chatType={controller.kind}
+                        chatId={chat.chatId}
+                        chatType={chat.kind}
                         user={controller.user}
                         me={isMe(evt)}
                         first={i === 0}
@@ -671,8 +680,7 @@
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
-                        publicGroup={controller.chatVal.kind === "group_chat" &&
-                            controller.chatVal.public}
+                        publicGroup={chat.kind === "group_chat" && chat.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith
@@ -680,7 +688,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
                         on:deleteMessage={onDeleteMessage}
-                        on:editEvent={editEvent}
+                        on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={onSelectReactionEv}
                         on:blockUser={onBlockUser}

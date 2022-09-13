@@ -4,6 +4,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import type {
         ChatEvent,
+        ChatSummary,
         EnhancedReplyContext,
         EventsResponse,
         EventWrapper,
@@ -22,7 +23,12 @@
     import { currentUserKey } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
-    import type { ChatController } from "../../../fsm/chat.controller";
+    import {
+        ChatController,
+        registerPollVote,
+        startTyping,
+        stopTyping,
+    } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
     import {
         canBlockUsers,
@@ -77,6 +83,7 @@
         currentChatMembers,
         currentChatBlockedUsers,
         currentChatUserIds,
+        selectedChatId,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
@@ -88,6 +95,7 @@
     export let controller: ChatController;
     export let rootEvent: EventWrapper<Message>;
     export let focusMessageIndex: number | undefined;
+    export let chat: ChatSummary;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
@@ -147,9 +155,8 @@
     }
 
     $: thread = rootEvent.event.thread;
-    $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: blocked = $chat.kind === "direct_chat" && $currentChatBlockedUsers.has($chat.them);
+    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
@@ -157,14 +164,14 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = canReplyInThread($chat);
-    $: canReact = canReactToMessages($chat);
+    $: canSend = canReplyInThread(chat);
+    $: canReact = canReactToMessages(chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
-    $: preview = isPreviewing($chat);
-    $: pollsAllowed = canCreatePolls($chat);
-    $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
+    $: preview = isPreviewing(chat);
+    $: pollsAllowed = canCreatePolls(chat);
+    $: unconfirmedKey = `${chat.chatId}_${threadRootMessageIndex}`;
     $: isFollowedByMe =
-        $threadsFollowedByMeStore[$chat.chatId]?.has(threadRootMessageIndex) ?? false;
+        $threadsFollowedByMeStore[chat.chatId]?.has(threadRootMessageIndex) ?? false;
 
     const dispatch = createEventDispatcher();
 
@@ -175,12 +182,12 @@
         threadRootMessageIndex: number,
         clearEvents: boolean
     ): Promise<void> {
-        if (thread === undefined || controller.chatVal === undefined) return;
+        if (thread === undefined || chat === undefined) return;
         loading = true;
 
         const chatId = controller.chatId;
         const eventsResponse = await api.chatEvents(
-            controller.chatVal,
+            chat,
             range,
             startIndex,
             ascending,
@@ -203,7 +210,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
-            makeRtcConnections(currentUser.userId, $chat, $events, $userStore);
+            makeRtcConnections(currentUser.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -217,7 +224,7 @@
                 const lastLoadedMessageIdx = lastMessageIndex($events);
                 if (lastLoadedMessageIdx !== undefined) {
                     messagesRead.markThreadRead(
-                        $chat.chatId,
+                        chat.chatId,
                         threadRootMessageIndex,
                         lastLoadedMessageIdx
                     );
@@ -251,8 +258,8 @@
         const updated = replaceAffected(
             replaceLocal(
                 currentUser.userId,
-                $chat.chatId,
-                $chat.readByMe,
+                chat.chatId,
+                chat.readByMe,
                 events,
                 resp.events,
                 threadRootMessageIndex
@@ -367,7 +374,7 @@
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
         messagesRead.markThreadRead(
-            $chat.chatId,
+            chat.chatId,
             threadRootMessageIndex,
             message.messageEvent.event.messageIndex
         );
@@ -395,9 +402,9 @@
             unconfirmed.add(unconfirmedKey, event);
             serverEventsStore.update((evts) => [...evts, event]);
             scrollBottom();
-            messagesRead.markThreadRead($chat.chatId, threadRootMessageIndex, nextMessageIndex);
+            messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
-            api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
+            api.sendMessage(chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
@@ -425,8 +432,8 @@
 
             rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_sent_message",
-                chatType: $chat.kind,
-                chatId: $chat.chatId,
+                chatType: chat.kind,
+                chatId: chat.chatId,
                 messageEvent: serialiseMessageForRtc(event),
                 userId: currentUser.userId,
                 threadRootMessageIndex,
@@ -459,8 +466,8 @@
         if (userId === currentUser.userId) {
             rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
-                chatType: $chat.kind,
-                chatId: $chat.chatId,
+                chatType: chat.kind,
+                chatId: chat.chatId,
                 messageId: messageId,
                 userId: userId,
                 threadRootMessageIndex,
@@ -514,12 +521,12 @@
         draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
-    function startTyping() {
-        controller.startTyping(threadRootMessageIndex);
+    function onStartTyping() {
+        startTyping(chat, currentUser.userId, threadRootMessageIndex);
     }
 
-    function stopTyping() {
-        controller.stopTyping(threadRootMessageIndex);
+    function onStopTyping() {
+        stopTyping(chat, currentUser.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -534,7 +541,7 @@
     }
 
     function createPoll() {
-        if (!canCreatePolls($chat)) return;
+        if (!canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -566,13 +573,18 @@
             return;
         }
 
-        controller.registerPollVote(
-            threadRootMessageIndex,
-            ev.detail.messageId,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type
-        );
+        if ($selectedChatId !== undefined) {
+            registerPollVote(
+                api,
+                currentUser.userId,
+                $selectedChatId,
+                threadRootMessageIndex,
+                ev.detail.messageId,
+                ev.detail.messageIndex,
+                ev.detail.answerIndex,
+                ev.detail.type
+            );
+        }
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
@@ -686,11 +698,11 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
         on:sendTransfer={sendMessageWithContent}
-        on:close={() => (creatingCryptoTransfer = undefined)}
-        {controller} />
+        on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 <div
@@ -709,7 +721,7 @@
     on:closeThread
     {rootEvent}
     {pollsAllowed}
-    chatSummary={$chat} />
+    chatSummary={chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -730,13 +742,13 @@
                             senderTyping={isTyping(
                                 $typing,
                                 evt.event.sender,
-                                $chat.chatId,
+                                chat.chatId,
                                 threadRootMessageIndex
                             )}
                             readByMe={true}
                             readByThem={true}
-                            chatId={$chat.chatId}
-                            chatType={$chat.kind}
+                            chatId={chat.chatId}
+                            chatType={chat.kind}
                             user={controller.user}
                             me={evt.event.sender === currentUser.userId}
                             first={i === 0}
@@ -746,13 +758,13 @@
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={canPinMessages($chat)}
-                            canBlockUser={canBlockUsers($chat)}
-                            canDelete={canDeleteOtherUsersMessages($chat)}
+                            canPin={canPinMessages(chat)}
+                            canBlockUser={canBlockUsers(chat)}
+                            canDelete={canDeleteOtherUsersMessages(chat)}
                             canQuoteReply={canSend}
-                            canReact={canReactToMessages($chat)}
+                            canReact={canReactToMessages(chat)}
                             canStartThread={false}
-                            publicGroup={$chat.kind === "group_chat" && $chat.public}
+                            publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith
                             on:goToMessageIndex={onGoToMessageIndex}
@@ -779,7 +791,7 @@
 
 {#if !preview}
     <Footer
-        chat={$chat}
+        {chat}
         fileToAttach={$fileToAttach}
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
@@ -798,8 +810,8 @@
         on:clearAttachment={clearAttachment}
         on:cancelEditEvent={cancelEditEvent}
         on:setTextContent={setTextContent}
-        on:startTyping={startTyping}
-        on:stopTyping={stopTyping}
+        on:startTyping={onStartTyping}
+        on:stopTyping={onStopTyping}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:sendMessage={sendMessage}

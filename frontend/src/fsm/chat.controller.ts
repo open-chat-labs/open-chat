@@ -117,10 +117,6 @@ export class ChatController {
         return get(this.chat);
     }
 
-    get notificationsMuted(): boolean {
-        return this.chatVal.notificationsMuted;
-    }
-
     get minVisibleMessageIndex(): number {
         return getMinVisibleMessageIndex(this.chatVal);
     }
@@ -133,10 +129,6 @@ export class ChatController {
             this.minVisibleMessageIndex,
             this.chatVal.latestMessage?.event.messageIndex
         );
-    }
-
-    get kind(): "direct_chat" | "group_chat" {
-        return this.chatVal.kind;
     }
 
     subscribe(fn: (evt: ChatState) => void): void {
@@ -180,41 +172,6 @@ export class ChatController {
                 await this.updateUserStore(userIdsFromEvents(get(eventsStore)));
             }
         }
-    }
-
-    registerPollVote(
-        threadRootMessageIndex: number | undefined,
-        messageId: bigint,
-        messageIndex: number,
-        answerIndex: number,
-        type: "register" | "delete"
-    ): void {
-        localMessageUpdates.markPollVote(messageId.toString(), {
-            answerIndex,
-            type,
-            userId: this.user.userId,
-        });
-
-        this.api
-            .registerPollVote(
-                this.chatVal.chatId,
-                messageIndex,
-                answerIndex,
-                type,
-                threadRootMessageIndex
-            )
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("poll.voteFailed");
-                    rollbar.error("Poll vote failed: ", resp);
-                    console.log("poll vote failed: ", resp);
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("poll.voteFailed");
-                rollbar.error("Poll vote failed: ", err);
-                console.log("poll vote failed: ", err);
-            });
     }
 
     async updateUserStore(userIdsFromEvents: Set<string>): Promise<void> {
@@ -769,34 +726,6 @@ export class ChatController {
         }
     }
 
-    attachFile(content: MessageContent): void {
-        currentChatDraftMessage.setAttachment(this.chatId, content);
-    }
-
-    startTyping(threadRootMessageIndex?: number): void {
-        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
-            kind: "remote_user_typing",
-            chatType: this.kind,
-            chatId: this.chatId,
-            userId: this.user.userId,
-            threadRootMessageIndex,
-        });
-    }
-
-    stopTyping(threadRootMessageIndex?: number): void {
-        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
-            kind: "remote_user_stopped_typing",
-            chatType: this.kind,
-            chatId: this.chatId,
-            userId: this.user.userId,
-            threadRootMessageIndex,
-        });
-    }
-
-    clearAttachment(): void {
-        currentChatDraftMessage.setAttachment(this.chatId, undefined);
-    }
-
     isRead(messageIndex: number, messageId: bigint): boolean {
         return messagesRead.isRead(this.chatId, messageIndex, messageId);
     }
@@ -837,132 +766,6 @@ export class ChatController {
 
     latestServerEventIndex(): number {
         return get(this.serverChatSummary).latestEventIndex;
-    }
-
-    replyTo(context: EnhancedReplyContext): void {
-        currentChatDraftMessage.setReplyingTo(this.chatId, context);
-    }
-
-    cancelEditEvent(): void {
-        currentChatDraftMessage.clear(this.chatId);
-    }
-
-    editEvent(event: EventWrapper<Message>): void {
-        currentChatDraftMessage.setEditing(this.chatId, event);
-    }
-
-    dismissAsAdmin(userId: string): Promise<void> {
-        currentChatMembers.update(this.chatId, (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
-        );
-        return this.api
-            .changeRole(this.chatId, userId, "participant")
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to dismiss as admin", resp);
-                    toastStore.showFailureToast("dismissAsAdminFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to dismiss as admin", err);
-                toastStore.showFailureToast("dismissAsAdminFailed");
-            });
-    }
-
-    private transferOwnershipLocally(me: string, them: string): void {
-        currentChatMembers.update(this.chatId, (ps) =>
-            ps.map((p) => {
-                if (p.userId === them) {
-                    return { ...p, role: "owner" };
-                }
-                if (p.userId === me) {
-                    return { ...p, role: "admin" };
-                }
-                return p;
-            })
-        );
-    }
-
-    private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
-        currentChatMembers.update(this.chatId, (ps) =>
-            ps.map((p) => {
-                if (p.userId === them) {
-                    return { ...p, role: theirRole };
-                }
-                if (p.userId === me) {
-                    return { ...p, role: "owner" };
-                }
-                return p;
-            })
-        );
-    }
-
-    transferOwnership(me: string, them: FullMember): Promise<boolean> {
-        this.transferOwnershipLocally(me, them.userId);
-        return this.api
-            .changeRole(this.chatId, them.userId, "owner")
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to transfer ownership", resp);
-                    this.undoTransferOwnershipLocally(me, them.userId, them.role);
-                    return false;
-                }
-                return true;
-            })
-            .catch((err) => {
-                this.undoTransferOwnershipLocally(me, them.userId, them.role);
-                rollbar.error("Unable to transfer ownership", err);
-                return false;
-            });
-    }
-
-    makeAdmin(userId: string): Promise<void> {
-        currentChatMembers.update(this.chatId, (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
-        );
-        return this.api
-            .changeRole(this.chatId, userId, "admin")
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to make admin", resp);
-                    toastStore.showFailureToast("makeAdminFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to make admin", err);
-                toastStore.showFailureToast("makeAdminFailed");
-            });
-    }
-
-    removeMember(userId: string): Promise<void> {
-        return this.api
-            .removeMember(this.chatId, userId)
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to remove member", resp);
-                    toastStore.showFailureToast("removeMemberFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to remove member", err);
-                toastStore.showFailureToast("removeMemberFailed");
-            });
-    }
-
-    messageRead(messageIndex: number, messageId: bigint): void {
-        messagesRead.markMessageRead(this.chatId, messageIndex, messageId);
-
-        if (this.chatVal.kind === "direct_chat") {
-            const rtc: WebRtcMessage = {
-                kind: "remote_user_read_message",
-                chatType: this.kind,
-                messageId,
-                chatId: this.chatId,
-                userId: this.user.userId,
-            };
-
-            rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], rtc);
-        }
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -1014,6 +817,198 @@ export class ChatController {
 /**
  * Extract pure functions out of the chat controller and put them below here until there is no chat controller left
  */
+
+export function messageRead(
+    { chatId, kind }: ChatSummary,
+    userId: string,
+    messageIndex: number,
+    messageId: bigint
+): void {
+    messagesRead.markMessageRead(chatId, messageIndex, messageId);
+
+    if (kind === "direct_chat") {
+        const rtc: WebRtcMessage = {
+            kind: "remote_user_read_message",
+            chatType: kind,
+            messageId,
+            chatId,
+            userId,
+        };
+
+        rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], rtc);
+    }
+}
+
+export function stopTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_stopped_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
+}
+
+export function startTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
+}
+
+function transferOwnershipLocally(chatId: string, me: string, them: string): void {
+    currentChatMembers.update(chatId, (ps) =>
+        ps.map((p) => {
+            if (p.userId === them) {
+                return { ...p, role: "owner" };
+            }
+            if (p.userId === me) {
+                return { ...p, role: "admin" };
+            }
+            return p;
+        })
+    );
+}
+
+function undoTransferOwnershipLocally(
+    chatId: string,
+    me: string,
+    them: string,
+    theirRole: MemberRole
+): void {
+    currentChatMembers.update(chatId, (ps) =>
+        ps.map((p) => {
+            if (p.userId === them) {
+                return { ...p, role: theirRole };
+            }
+            if (p.userId === me) {
+                return { ...p, role: "owner" };
+            }
+            return p;
+        })
+    );
+}
+
+export function transferOwnership(
+    api: ServiceContainer,
+    chatId: string,
+    me: string,
+    them: FullMember
+): Promise<boolean> {
+    transferOwnershipLocally(chatId, me, them.userId);
+    return api
+        .changeRole(chatId, them.userId, "owner")
+        .then((resp) => {
+            if (resp !== "success") {
+                rollbar.warn("Unable to transfer ownership", resp);
+                undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
+                return false;
+            }
+            return true;
+        })
+        .catch((err) => {
+            undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
+            rollbar.error("Unable to transfer ownership", err);
+            return false;
+        });
+}
+
+export function registerPollVote(
+    api: ServiceContainer,
+    userId: string,
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    messageId: bigint,
+    messageIndex: number,
+    answerIndex: number,
+    type: "register" | "delete"
+): void {
+    localMessageUpdates.markPollVote(messageId.toString(), {
+        answerIndex,
+        type,
+        userId,
+    });
+
+    api.registerPollVote(chatId, messageIndex, answerIndex, type, threadRootMessageIndex)
+        .then((resp) => {
+            if (resp !== "success") {
+                toastStore.showFailureToast("poll.voteFailed");
+                rollbar.error("Poll vote failed: ", resp);
+                console.log("poll vote failed: ", resp);
+            }
+        })
+        .catch((err) => {
+            toastStore.showFailureToast("poll.voteFailed");
+            rollbar.error("Poll vote failed: ", err);
+            console.log("poll vote failed: ", err);
+        });
+}
+
+export function dismissAsAdmin(
+    api: ServiceContainer,
+    chatId: string,
+    userId: string
+): Promise<void> {
+    currentChatMembers.update(chatId, (ps) =>
+        ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
+    );
+    return api
+        .changeRole(chatId, userId, "participant")
+        .then((resp) => {
+            if (resp !== "success") {
+                rollbar.warn("Unable to dismiss as admin", resp);
+                toastStore.showFailureToast("dismissAsAdminFailed");
+            }
+        })
+        .catch((err) => {
+            rollbar.error("Unable to dismiss as admin", err);
+            toastStore.showFailureToast("dismissAsAdminFailed");
+        });
+}
+
+export function makeAdmin(api: ServiceContainer, chatId: string, userId: string): Promise<void> {
+    currentChatMembers.update(chatId, (ps) =>
+        ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
+    );
+    return api
+        .changeRole(chatId, userId, "admin")
+        .then((resp) => {
+            if (resp !== "success") {
+                rollbar.warn("Unable to make admin", resp);
+                toastStore.showFailureToast("makeAdminFailed");
+            }
+        })
+        .catch((err) => {
+            rollbar.error("Unable to make admin", err);
+            toastStore.showFailureToast("makeAdminFailed");
+        });
+}
+
+export function removeMember(api: ServiceContainer, chatId: string, userId: string): Promise<void> {
+    return api
+        .removeMember(chatId, userId)
+        .then((resp) => {
+            if (resp !== "success") {
+                rollbar.warn("Unable to remove member", resp);
+                toastStore.showFailureToast("removeMemberFailed");
+            }
+        })
+        .catch((err) => {
+            rollbar.error("Unable to remove member", err);
+            toastStore.showFailureToast("removeMemberFailed");
+        });
+}
 
 function removeMembersLocally(
     chatId: string,

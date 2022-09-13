@@ -16,7 +16,15 @@
         GroupChatSummary,
         Message,
     } from "../../domain/chat/chat";
-    import { addMembers, blockUser, ChatController } from "../../fsm/chat.controller";
+    import {
+        addMembers,
+        blockUser,
+        ChatController,
+        dismissAsAdmin,
+        makeAdmin,
+        removeMember,
+        transferOwnership,
+    } from "../../fsm/chat.controller";
     import { userStore } from "../../stores/user";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
@@ -32,7 +40,7 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { eventsStore, selectedChatId } from "../../stores/chat";
+    import { eventsStore, selectedChatId, selectedChatStore } from "../../stores/chat";
     import {
         currentChatMembers,
         currentChatBlockedUsers,
@@ -57,20 +65,24 @@
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
 
-    function dismissAsAdmin(ev: CustomEvent<string>): void {
-        controller?.dismissAsAdmin(ev.detail);
+    function onDismissAsAdmin(ev: CustomEvent<string>): void {
+        if ($selectedChatId !== undefined) {
+            dismissAsAdmin(api, $selectedChatId, ev.detail);
+        }
     }
 
-    function makeAdmin(ev: CustomEvent<string>): void {
-        controller?.makeAdmin(ev.detail);
+    function onMakeAdmin(ev: CustomEvent<string>): void {
+        if ($selectedChatId !== undefined) {
+            makeAdmin(api, $selectedChatId, ev.detail);
+        }
     }
 
-    function removeMember(ev: CustomEvent<string>): void {
-        if (controller !== undefined) {
-            currentChatMembers.update(controller.chatId, (ps) =>
+    function onRemoveMember(ev: CustomEvent<string>): void {
+        if ($selectedChatId !== undefined) {
+            currentChatMembers.update($selectedChatId, (ps) =>
                 ps.filter((p) => p.userId !== ev.detail)
             );
-            controller.removeMember(ev.detail);
+            removeMember(api, $selectedChatId, ev.detail);
         }
     }
 
@@ -84,12 +96,14 @@
         }
     }
 
-    async function transferOwnership(ev: CustomEvent<FullMember>) {
-        const success = await controller?.transferOwnership(userId, ev.detail);
-        if (success) {
-            toastStore.showSuccessToast("transferOwnershipSucceeded");
-        } else {
-            toastStore.showFailureToast("transferOwnershipFailed");
+    async function onTransferOwnership(ev: CustomEvent<FullMember>) {
+        if ($selectedChatId !== undefined) {
+            const success = await transferOwnership(api, $selectedChatId, userId, ev.detail);
+            if (success) {
+                toastStore.showSuccessToast("transferOwnershipSucceeded");
+            } else {
+                toastStore.showFailureToast("transferOwnershipFailed");
+            }
         }
     }
 
@@ -179,12 +193,12 @@
             on:close={popHistory}
             on:blockUser={onBlockUser}
             on:unblockUser={unblockUser}
-            on:transferOwnership={transferOwnership}
+            on:transferOwnership={onTransferOwnership}
             on:chatWith
             on:addMembers
-            on:dismissAsAdmin={dismissAsAdmin}
-            on:removeMember={removeMember}
-            on:makeAdmin={makeAdmin} />
+            on:dismissAsAdmin={onDismissAsAdmin}
+            on:removeMember={onRemoveMember}
+            on:makeAdmin={onMakeAdmin} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}
         <PinnedMessages
             on:chatWith
@@ -203,7 +217,7 @@
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
-    {:else if threadRootEvent !== undefined && controller !== undefined}
+    {:else if threadRootEvent !== undefined && controller !== undefined && $selectedChatStore !== undefined}
         <Thread
             bind:this={thread}
             on:chatWith
@@ -213,6 +227,7 @@
                 ? lastState.focusThreadMessageIndex
                 : undefined}
             {controller}
+            chat={$selectedChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && controller !== undefined}
         <ProposalGroupFilters on:close={popHistory} />

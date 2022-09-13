@@ -5,7 +5,12 @@
     import { rollbar } from "../../utils/logging";
     import { closeNotificationsForChat } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
-    import type { ChatController } from "../../fsm/chat.controller";
+    import {
+        ChatController,
+        messageRead,
+        startTyping,
+        stopTyping,
+    } from "../../fsm/chat.controller";
     import { createEventDispatcher, getContext, onDestroy, tick } from "svelte";
     import {
         canForward,
@@ -15,6 +20,7 @@
         getFirstUnreadMessageIndex,
         getMessageContent,
         getStorageRequiredForMessage,
+        markAllRead,
         newMessageId,
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
@@ -58,6 +64,7 @@
         currentChatEditingEvent,
         currentChatReplyingTo,
         currentChatTextContent,
+        currentChatDraftMessage,
     } from "../../stores/chat";
 
     export let controller: ChatController;
@@ -105,8 +112,9 @@
 
     let unsub = messagesRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
-        firstUnreadMention = getFirstUnreadMention(controller.chatVal);
-        firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
+        console.log("this should be running: ", unreadMessages);
+        firstUnreadMention = getFirstUnreadMention(chat);
+        firstUnreadMessage = getFirstUnreadMessageIndex(chat);
     });
 
     function onWindowFocus() {
@@ -115,14 +123,14 @@
 
     onDestroy(unsub);
 
-    function markAllRead() {
-        controller.markAllRead();
+    function onMarkAllRead() {
+        markAllRead(chat);
     }
 
-    function messageRead(
+    function onMessageRead(
         ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
     ) {
-        controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
+        messageRead(chat, createdUser.userId, ev.detail.messageIndex, ev.detail.messageId);
     }
 
     function createPoll() {
@@ -142,7 +150,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        controller.attachFile(ev.detail);
+        currentChatDraftMessage.setAttachment(chat.chatId, ev.detail);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -154,7 +162,7 @@
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
-        controller.replyTo(ev.detail);
+        currentChatDraftMessage.setReplyingTo(chat.chatId, ev.detail);
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -313,11 +321,11 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
         on:sendTransfer={sendMessageWithContent}
-        on:close={() => (creatingCryptoTransfer = undefined)}
-        {controller} />
+        on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 <GiphySelector
@@ -337,7 +345,7 @@
             on:clearSelection
             on:blockUser
             on:unblockUser
-            on:markAllRead={markAllRead}
+            on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:addMembers
             on:showGroupDetails
@@ -357,7 +365,7 @@
         on:replyPrivatelyTo
         on:replyTo={replyTo}
         on:openThread
-        on:messageRead={messageRead}
+        on:messageRead={onMessageRead}
         on:chatWith
         on:upgrade
         on:forward
@@ -395,11 +403,11 @@
             on:cancelPreview
             on:upgrade
             on:cancelReply={() => controller.cancelReply()}
-            on:clearAttachment={() => controller.clearAttachment()}
-            on:cancelEditEvent={() => controller.cancelEditEvent()}
+            on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
+            on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => controller.startTyping()}
-            on:stopTyping={() => controller.stopTyping()}
+            on:startTyping={() => startTyping(chat, createdUser.userId)}
+            on:stopTyping={() => stopTyping(chat, createdUser.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}

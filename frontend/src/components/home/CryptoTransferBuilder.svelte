@@ -24,7 +24,6 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { cryptoBalance, lastCryptoSent } from "../../stores/crypto";
-    import type { ChatController } from "../../fsm/chat.controller";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import Link from "../Link.svelte";
     import {
@@ -40,12 +39,13 @@
         currentChatBlockedUsers,
         currentChatReplyingTo,
     } from "../../stores/chat";
+    import type { ChatSummary } from "../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
 
-    export let controller: ChatController;
     export let draftAmountE8s: bigint;
     export let token: Cryptocurrency;
+    export let chat: ChatSummary;
 
     const user = getContext<CreatedUser>(currentUserKey);
 
@@ -54,7 +54,7 @@
     let message = "";
     let confirming = false;
     let receiver: PartialUserSummary | undefined =
-        controller.chatVal.kind === "direct_chat" ? $userStore[controller.chatVal.them] : undefined;
+        chat.kind === "direct_chat" ? $userStore[chat.them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -62,8 +62,7 @@
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: chat = controller.chat;
-    $: group = $chat.kind === "group_chat";
+    $: group = chat.kind === "group_chat";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees

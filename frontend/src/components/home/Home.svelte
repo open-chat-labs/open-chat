@@ -70,6 +70,7 @@
         chatSummariesStore,
         chatsLoading,
         selectedChatControllerStore,
+        selectedChatStore,
         chatsInitialised,
         createDirectChat,
         setSelectedChat,
@@ -400,10 +401,7 @@
     }
 
     function resetRightPanel() {
-        rightPanelHistory = filterByChatType(
-            rightPanelHistory,
-            $selectedChatControllerStore?.chatVal
-        );
+        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore);
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
