@@ -28,6 +28,7 @@
         deleteMessage,
         editMessage,
         registerPollVote,
+        selectReaction,
         startTyping,
         stopTyping,
         updateUserStore,
@@ -628,13 +629,19 @@
             ? "remove"
             : "add";
 
-        controller
-            .selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
-            .then((success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
-            });
+        selectReaction(
+            api,
+            chat,
+            currentUser.userId,
+            threadRootMessageIndex,
+            message.messageId,
+            reaction,
+            kind
+        ).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
+            }
+        });
     }
 
     function goToMessageIndex(index: number) {

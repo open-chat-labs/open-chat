@@ -354,7 +354,7 @@ export class ChatController {
             messageEvent.event.messageIndex,
             messageEvent.event.messageId
         );
-        this.appendMessage(messageEvent);
+        appendMessage(this.chatId, messageEvent);
         this.raiseEvent({
             chatId: this.chatId,
             event: {
@@ -364,56 +364,6 @@ export class ChatController {
         });
 
         currentChatDraftMessage.clear(this.chatId);
-    }
-
-    public selectReaction(
-        threadRootMessageIndex: number | undefined,
-        messageId: bigint,
-        reaction: string,
-        kind: "add" | "remove"
-    ): Promise<boolean> {
-        const userId = this.user.userId;
-
-        localMessageUpdates.markReaction(messageId.toString(), {
-            reaction,
-            kind,
-            userId,
-        });
-
-        function undoLocally() {
-            localMessageUpdates.markReaction(messageId.toString(), {
-                reaction,
-                kind: kind === "add" ? "remove" : "add",
-                userId,
-            });
-        }
-
-        return (
-            this.chatVal.kind === "direct_chat"
-                ? this.api.toggleDirectChatReaction(
-                      this.chatId,
-                      messageId,
-                      reaction,
-                      threadRootMessageIndex
-                  )
-                : this.api.toggleGroupChatReaction(
-                      this.chatId,
-                      messageId,
-                      reaction,
-                      threadRootMessageIndex
-                  )
-        )
-            .then((resp) => {
-                if (resp !== "added" && resp !== "removed") {
-                    undoLocally();
-                    return false;
-                }
-                return true;
-            })
-            .catch((_) => {
-                undoLocally();
-                return false;
-            });
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
@@ -443,7 +393,7 @@ export class ChatController {
             }
 
             // If it is unconfirmed then we simply append it
-            if (this.appendMessage(messageEvent)) {
+            if (appendMessage(this.chatId, messageEvent)) {
                 unconfirmed.add(this.chatId, messageEvent);
             }
         }
@@ -455,17 +405,6 @@ export class ChatController {
                 newLatestMessage: true,
             },
         });
-    }
-
-    appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = get(eventsStore).find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-        );
-
-        if (existing !== undefined) return false;
-
-        serverEventsStore.update(this.chatId, (events) => [...events, message]);
-        return true;
     }
 
     async goToMessageIndex(
@@ -664,6 +603,58 @@ export class ChatController {
 /**
  * Extract pure functions out of the chat controller and put them below here until there is no chat controller left
  */
+
+export function selectReaction(
+    api: ServiceContainer,
+    chat: ChatSummary,
+    userId: string,
+    threadRootMessageIndex: number | undefined,
+    messageId: bigint,
+    reaction: string,
+    kind: "add" | "remove"
+): Promise<boolean> {
+    localMessageUpdates.markReaction(messageId.toString(), {
+        reaction,
+        kind,
+        userId,
+    });
+
+    function undoLocally() {
+        localMessageUpdates.markReaction(messageId.toString(), {
+            reaction,
+            kind: kind === "add" ? "remove" : "add",
+            userId,
+        });
+    }
+
+    return (
+        chat.kind === "direct_chat"
+            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+    )
+        .then((resp) => {
+            if (resp !== "added" && resp !== "removed") {
+                undoLocally();
+                return false;
+            }
+            return true;
+        })
+        .catch((_) => {
+            undoLocally();
+            return false;
+        });
+}
+
+function appendMessage(chatId: string, message: EventWrapper<Message>): boolean {
+    const existing = get(eventsStore).find(
+        (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+    );
+
+    if (existing !== undefined) return false;
+
+    serverEventsStore.update(chatId, (events) => [...events, message]);
+    return true;
+}
 
 export function deleteMessage(
     api: ServiceContainer,

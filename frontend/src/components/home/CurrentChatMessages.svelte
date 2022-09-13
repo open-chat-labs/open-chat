@@ -40,6 +40,7 @@
         findMessageEvent,
         pinMessage,
         registerPollVote,
+        selectReaction,
         unpinMessage,
     } from "../../fsm/chat.controller";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
@@ -345,11 +346,13 @@
             ? "remove"
             : "add";
 
-        controller.selectReaction(undefined, message.messageId, reaction, kind).then((success) => {
-            if (success && kind === "add") {
-                trackEvent("reacted_to_message");
+        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, kind).then(
+            (success) => {
+                if (success && kind === "add") {
+                    trackEvent("reacted_to_message");
+                }
             }
-        });
+        );
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
