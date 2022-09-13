@@ -4,7 +4,6 @@
 
 IDENTITY=$1
 INTERNET_IDENTITY_DIR=$2
-OPEN_STORAGE_DIR=$3
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -25,21 +24,10 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users_aggregator
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 callback
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 open_storage_index
 USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
-
-# Create the OpenStorage index canister
-pushd $OPEN_STORAGE_DIR
-rm -r .dfx/local
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 index
-OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id index)
-
-# Deploy OpenStorage canisters
-./deploy-local.sh $IDENTITY
-
-# Add user_index and group_index as OpenStorage service principals
-dfx --identity=$IDENTITY canister call index add_service_principals "(record { principals=vec { principal \"$USER_INDEX_CANISTER_ID\"; principal \"$GROUP_INDEX_CANISTER_ID\" } })"
-popd
+OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id open_storage_index)
 
 # Deploy OpenChat canisters
 ./scripts/deploy-local.sh $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID

@@ -1,4 +1,4 @@
-use crate::{CanisterName, TestIdentity};
+use crate::{CanisterName, OpenStorageCanisterName, TestIdentity};
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -90,6 +90,13 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
 
 pub fn get_canister_wasm(canister_name: CanisterName, version: Version) -> CanisterWasm {
     let file_name = canister_name.to_string() + "_canister_impl.wasm.gz";
+    let bytes = read_file_from_local_bin(&file_name);
+
+    CanisterWasm { module: bytes, version }
+}
+
+pub fn get_open_storage_canister_wasm(canister_name: OpenStorageCanisterName, version: Version) -> CanisterWasm {
+    let file_name = canister_name.to_string() + "_canister.wasm.gz";
     let bytes = read_file_from_local_bin(&file_name);
 
     CanisterWasm { module: bytes, version }
