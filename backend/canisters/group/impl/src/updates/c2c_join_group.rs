@@ -1,12 +1,12 @@
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_join_group_v2::{Response::*, *};
 use types::{CanisterId, EventIndex, MessageIndex, ParticipantJoined, UserId};
-use user_index_canister::c2c_is_super_admin;
 
 // Called via the user's user canister
 #[update_msgpack]
@@ -14,20 +14,23 @@ use user_index_canister::c2c_is_super_admin;
 async fn c2c_join_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = read_state(prepare);
-    let user_id = prepare_result.user_id;
+    let PrepareResult {
+        user_id,
+        user_index_canister_id,
+    } = read_state(prepare);
 
-    if args.as_super_admin {
-        let canister_id = prepare_result.user_index_canister_id;
-        let is_super_admin_args = c2c_is_super_admin::Args { user_id };
-        match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
-            Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => (),
-            Ok(user_index_canister::c2c_is_super_admin::Response::No) => return NotSuperAdmin,
-            Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_is_super_admin': {error:?}")),
-        };
+    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
+    match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
+        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => {
+            if !args.as_super_admin || r.is_super_admin {
+                mutate_state(|state| commit(args, user_id, r.principal, state))
+            } else {
+                NotSuperAdmin
+            }
+        }
+        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => UserNotFound,
+        Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_principal': {error:?}")),
     }
-
-    mutate_state(|state| commit(args, user_id, state))
 }
 
 struct PrepareResult {
@@ -42,7 +45,7 @@ fn prepare(runtime_state: &RuntimeState) -> PrepareResult {
     }
 }
 
-fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
+fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut RuntimeState) -> Response {
     if args.as_super_admin || runtime_state.data.is_accessible_by_non_member(args.invite_code) {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
             return ParticipantLimitReached(limit);
@@ -61,7 +64,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
 
         match runtime_state.data.participants.add(
             user_id,
-            args.principal,
+            principal,
             now,
             min_visible_event_index,
             min_visible_message_index,
