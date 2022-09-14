@@ -144,7 +144,11 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
     if runtime_state.data.rules.enabled != args.rules.enabled || runtime_state.data.rules.text != args.rules.text {
         events.push_main_event(
-            ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged { changed_by: my_user_id })),
+            ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged { 
+                enabled: args.rules.enabled,
+                prev_enabled: runtime_state.data.rules.enabled,
+                changed_by: my_user_id 
+            })),
             now,
         );
 

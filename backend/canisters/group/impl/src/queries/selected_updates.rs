@@ -100,7 +100,9 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 }
             }
             ChatEventInternal::GroupRulesChanged(_) => {
-                result.rules = Some(data.rules.clone());
+                if result.rules.is_none() {
+                    result.rules = Some(data.rules.clone());
+                }
             }
             _ => {}
         }

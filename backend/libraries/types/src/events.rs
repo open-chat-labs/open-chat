@@ -78,6 +78,8 @@ pub struct GroupDescriptionChanged {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupRulesChanged {
+    pub enabled: bool,
+    pub prev_enabled: bool,
     pub changed_by: UserId,
 }
 

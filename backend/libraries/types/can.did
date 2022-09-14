@@ -1014,5 +1014,7 @@ type GroupRules =
 
 type GroupRulesChanged =
     record {
+        enabled: bool;
+        prev_enabled: bool;
         changed_by: UserId;
     };
