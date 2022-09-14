@@ -29,7 +29,7 @@ fn post_upgrade(args: Args) {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
 
-    mutate_state(remove_invalid_users);
+    mutate_state(|state| remove_invalid_users(state, state.data.test_mode));
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
@@ -48,19 +48,23 @@ fn rehydrate_log_messages(
     }
 }
 
-fn remove_invalid_users(runtime_state: &mut RuntimeState) {
-    let invalid_users = invalid_users();
+fn remove_invalid_users(runtime_state: &mut RuntimeState, test_mode: bool) {
+    let test_users = test_users();
 
     let to_remove: Vec<UserId> = runtime_state
         .data
         .participants
         .iter()
-        .filter(|u| invalid_users.contains(&u.user_id))
+        .filter(|u| test_users.contains(&u.user_id) != test_mode)
         .map(|u| u.user_id)
         .collect();
 
-    for user_id in to_remove {
-        remove_user(user_id, runtime_state);
+    if !to_remove.is_empty() {
+        info!(?to_remove, "Removing invalid users");
+
+        for user_id in to_remove {
+            remove_user(user_id, runtime_state);
+        }
     }
 }
 
@@ -75,7 +79,7 @@ fn remove_user(user_id: UserId, runtime_state: &mut RuntimeState) {
         .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), runtime_state.env.now());
 }
 
-fn invalid_users() -> HashSet<UserId> {
+fn test_users() -> HashSet<UserId> {
     HashSet::from_iter([
         Principal::from_text("7m3yl-syaaa-aaaaf-ap4va-cai").unwrap().into(),
         Principal::from_text("nb6hs-saaaa-aaaaf-amdsa-cai").unwrap().into(),
