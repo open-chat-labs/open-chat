@@ -6,7 +6,7 @@ use ic_agent::Agent;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use types::{CanisterId, ChatId, MessageContent, TextContent, UserId};
+use types::{CanisterId, ChatId, GroupRules, MessageContent, TextContent, UserId};
 use utils::rand::get_random_item;
 
 #[tokio::main]
@@ -89,6 +89,7 @@ async fn run_data_generator(
                     is_public: rng.next_u32() % 2 == 0,
                     name: lipsum::lipsum_words_from_seed(2, rng.next_u64()),
                     description: lipsum::lipsum_words_from_seed(15, rng.next_u64()),
+                    rules: GroupRules::default(),
                     subtype: None,
                     history_visible_to_new_joiners: false,
                     avatar: None,

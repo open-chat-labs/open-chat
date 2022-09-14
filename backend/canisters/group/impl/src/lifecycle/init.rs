@@ -21,6 +21,7 @@ fn init(args: Args) {
         args.is_public,
         args.name,
         args.description,
+        args.rules,
         args.subtype,
         args.avatar,
         args.history_visible_to_new_joiners,

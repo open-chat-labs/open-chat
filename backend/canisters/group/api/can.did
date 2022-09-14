@@ -237,6 +237,7 @@ type UpdateGroupArgs =
         description: text;
         avatar: AvatarUpdate;
         permissions: opt GroupPermissions;
+        rules: GroupRules;
     };
 
 type UpdateGroupResponse =
@@ -251,6 +252,8 @@ type UpdateGroupResponse =
         AvatarTooBig: FieldTooLongResult;
         NameTaken;
         InternalError;
+        RulesTooLong: FieldTooLongResult;
+        RulesTooShort: FieldTooShortResult;
     };
 
 type UpdatePermissionsArgs =
@@ -346,6 +349,7 @@ type SelectedInitialSuccess =
         participants: vec Participant;
         blocked_users: vec UserId;
         pinned_messages: vec MessageIndex;
+        rules: GroupRules;
     };
 
 type SelectedInitialResponse =
@@ -368,6 +372,7 @@ type SelectedUpdatesSuccess =
         blocked_users_removed: vec UserId;
         pinned_messages_added: vec MessageIndex;
         pinned_messages_removed: vec MessageIndex;
+        rules: opt GroupRules;
     };
 
 type SelectedUpdatesResponse =
