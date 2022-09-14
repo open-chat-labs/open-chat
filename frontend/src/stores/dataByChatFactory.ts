@@ -31,7 +31,7 @@ export function createChatSpecificDataStore<T>(empty: T) {
     return {
         subscribe: byChat.subscribe,
         get: (): T => get(byChat),
-        update: (chatId: string, fn: (events: T) => T) => updateDataForChat(all, chatId, fn, empty),
+        update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, empty),
         set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
         clear: (chatId: string): void => setDataForChat(all, chatId, empty),
     };

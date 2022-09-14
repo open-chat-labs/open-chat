@@ -78,12 +78,12 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type {
     ArchiveChatResponse,
+    CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
-    UserSummary,
 } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
@@ -154,7 +154,7 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexes: number[],
         userId: string,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -200,7 +200,7 @@ export class UserClient extends CandidService implements IUserClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -337,7 +337,7 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     sendMessage(
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
@@ -371,7 +371,7 @@ export class UserClient extends CandidService implements IUserClient {
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         _threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {

@@ -67,6 +67,14 @@
         currentChatMembers,
         isProposalGroup,
         serverEventsStore,
+        selectedChatStore,
+        confirmedEventIndexesLoaded,
+        userGroupKeys,
+        groupDetails,
+        eventsStore,
+        focusMessageIndex,
+        currentChatPinnedMessages,
+        currentChatEditingEvent,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -75,12 +83,6 @@
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import {
-        eventsStore,
-        focusMessageIndex,
-        currentChatPinnedMessages,
-        currentChatEditingEvent,
-    } from "../../stores/chat";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { CreatedUser } from "../../domain/user/user";
 
@@ -126,10 +128,10 @@
     // FIXME - come back to this
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
-    let confirmedEventIndexesLoaded = new DRange();
-    // This set will contain 1 key for each rendered user event group which is used as that group's key
-    let userGroupKeys = new Set<string>();
-    let groupDetails: GroupChatDetails | undefined;
+
+    confirmedEventIndexesLoaded.subscribe((range) =>
+        console.log("XXX: confirmed ranges: ", range, $selectedChatStore?.chatId)
+    );
 
     onMount(() => {
         const options = {
@@ -292,7 +294,7 @@
     }
 
     function confirmedUpToEventIndex(): number {
-        const ranges = confirmedEventIndexesLoaded.subranges();
+        const ranges = $confirmedEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -489,8 +491,8 @@
         if (resp === "events_failed") return;
 
         if (!keepCurrentEvents) {
-            confirmedEventIndexesLoaded = new DRange();
-            userGroupKeys.clear();
+            confirmedEventIndexesLoaded.clear(chat.chatId);
+            userGroupKeys.clear(chat.chatId);
         } else if (!isContiguous(resp)) {
             return;
         }
@@ -511,27 +513,32 @@
 
         serverEventsStore.set(chat.chatId, updated);
 
-        if (resp.events.length > 0) {
-            resp.events.forEach((e) => confirmedEventIndexesLoaded.add(e.index));
-        }
+        confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
+            if (resp.events.length > 0) {
+                resp.events.forEach((e) => range.add(e.index));
+            }
+            return range;
+        });
+
+        console.log("XXX: events: ", $eventsStore);
 
         makeRtcConnections(user.userId, chat, updated, $userStore);
     }
 
     function isContiguous(response: EventsSuccessResult<ChatEventType>): boolean {
-        if (confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+        if ($confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
 
         const firstIndex = response.events[0].index;
         const lastIndex = response.events[response.events.length - 1].index;
         const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
         const isContiguous =
-            confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+            $confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
 
         if (!isContiguous) {
             console.log(
                 "Events in response are not contiguous with the loaded events",
-                confirmedEventIndexesLoaded,
+                $confirmedEventIndexesLoaded,
                 firstIndex,
                 lastIndex
             );
@@ -541,8 +548,8 @@
     }
 
     function earliestLoadedIndex(): number | undefined {
-        return confirmedEventIndexesLoaded.length > 0
-            ? confirmedEventIndexesLoaded.index(0)
+        return $confirmedEventIndexesLoaded.length > 0
+            ? $confirmedEventIndexesLoaded.index(0)
             : undefined;
     }
 
@@ -557,9 +564,17 @@
     function previousMessagesCriteria(): [number, boolean] | undefined {
         const minLoadedEventIndex = earliestLoadedIndex();
         if (minLoadedEventIndex === undefined) {
+            console.log("XXX: minLoadedEventIndex is undefined");
             return [latestServerEventIndex(), false];
         }
         const minVisibleEventIndex = earliestAvailableEventIndex();
+        console.log(
+            "XXX: previous message criteria: ",
+            minLoadedEventIndex,
+            minVisibleEventIndex,
+            chat.chatId,
+            $confirmedEventIndexesLoaded
+        );
         return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
             ? [minLoadedEventIndex - 1, false]
             : undefined;
@@ -569,6 +584,7 @@
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<ChatEventType>> {
+        console.log("XXX: loading events", startIndex, ascending);
         return api.chatEvents(
             chat,
             indexRangeForChat(serverChat),
@@ -581,10 +597,12 @@
 
     async function loadPreviousMessages(): Promise<void> {
         const criteria = previousMessagesCriteria();
+        console.log("XXX: previous criteria: ", criteria);
 
         const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            console.log("XXX: events response: ", eventsResponse);
             return;
         }
 
@@ -598,10 +616,10 @@
     async function loadDetails(): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (chat.kind === "group_chat") {
-            if (groupDetails === undefined) {
+            if ($groupDetails === undefined) {
                 const resp = await api.getGroupDetails(chat.chatId, chat.latestEventIndex);
                 if (resp !== "caller_not_in_group") {
-                    groupDetails = resp;
+                    groupDetails.set(chat.chatId, resp);
                     currentChatMembers.set(chat.chatId, resp.members);
                     currentChatBlockedUsers.set(chat.chatId, resp.blockedUsers);
                     currentChatPinnedMessages.set(chat.chatId, resp.pinnedMessages);
@@ -621,13 +639,14 @@
     async function updateDetails(): Promise<void> {
         if (chat.kind === "group_chat") {
             if (
-                groupDetails !== undefined &&
-                groupDetails.latestEventIndex < chat.latestEventIndex
+                $groupDetails !== undefined &&
+                $groupDetails.latestEventIndex < chat.latestEventIndex
             ) {
-                groupDetails = await api.getGroupDetailsUpdates(chat.chatId, groupDetails);
-                currentChatMembers.set(chat.chatId, groupDetails.members);
-                currentChatBlockedUsers.set(chat.chatId, groupDetails.blockedUsers);
-                currentChatPinnedMessages.set(chat.chatId, groupDetails.pinnedMessages);
+                const gd = await api.getGroupDetailsUpdates(chat.chatId, $groupDetails);
+                currentChatMembers.set(chat.chatId, gd.members);
+                currentChatBlockedUsers.set(chat.chatId, gd.blockedUsers);
+                currentChatPinnedMessages.set(chat.chatId, gd.pinnedMessages);
+                groupDetails.set(chat.chatId, gd);
                 await updateUserStore(
                     api,
                     chat.chatId,
@@ -660,12 +679,15 @@
         }
         for (const { index } of group) {
             const key = prefix + index;
-            if (userGroupKeys.has(key)) {
+            if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.add(firstKey);
+        userGroupKeys.update(chat.chatId, (keys) => {
+            keys.add(firstKey);
+            return keys;
+        });
         return firstKey;
     }
 
@@ -676,11 +698,12 @@
             currentChatId = chat.chatId;
             initialised = false;
 
-            console.log("new chat selected - this is our constructor");
+            console.log("XXX: new chat selected - this is our constructor");
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow($focusMessageIndex);
             } else {
+                console.log("XXX: loading previous");
                 loadPreviousMessages();
             }
             loadDetails();
