@@ -1,5 +1,7 @@
-use crate::utils::{build_ic_agent, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
-use crate::{CanisterIds, CanisterName};
+use crate::utils::{
+    build_ic_agent, create_empty_canister, get_canister_wasm, get_open_storage_canister_wasm, install_wasm, set_controllers,
+};
+use crate::{CanisterIds, CanisterName, OpenStorageCanisterName, OpenStorageInitArgs};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
@@ -81,7 +83,8 @@ async fn install_service_canisters_impl(
             controllers.clone(),
         ),
         set_controllers(management_canister, &canister_ids.callback, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.proposals_bot, controllers),
+        set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
     ])
     .await;
 
@@ -146,7 +149,15 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    futures::future::join4(
+    let open_storage_index_canister_wasm = get_open_storage_canister_wasm(OpenStorageCanisterName::Index, version);
+    let open_storage_index_init_args = OpenStorageInitArgs {
+        service_principals: vec![principal, canister_ids.user_index, canister_ids.group_index],
+        bucket_canister_wasm: get_open_storage_canister_wasm(OpenStorageCanisterName::Bucket, version),
+        wasm_version: version,
+        test_mode,
+    };
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.user_index,
@@ -171,21 +182,27 @@ async fn install_service_canisters_impl(
             &online_users_aggregator_canister_wasm.module,
             online_users_aggregator_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join(
         install_wasm(
             management_canister,
             &canister_ids.callback,
             &callback_canister_wasm.module,
             callback_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
             proposals_bot_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.open_storage_index,
+            &open_storage_index_canister_wasm.module,
+            open_storage_index_init_args,
         ),
     )
     .await;

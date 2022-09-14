@@ -38,7 +38,13 @@ export function userIsOnline(now: number, users: UserLookup, userId: string): bo
 }
 
 export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
-    return Array.from(userIds).filter((userId) => userLookup[userId] === undefined);
+    const missing: string[] = [];
+    userIds.forEach((u) => {
+        if (userLookup[u] === undefined) {
+            missing.push(u);
+        }
+    });
+    return missing;
 }
 
 export function compareUsersOnlineFirst(u1: PartialUserSummary, u2: PartialUserSummary): number {

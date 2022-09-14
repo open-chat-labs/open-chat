@@ -736,10 +736,10 @@ export async function updateUserStore(
     userId: string,
     userIdsFromEvents: Set<string>
 ): Promise<void> {
-    const members = get(currentChatMembers);
-    const memberIds = members.map((p) => p.userId);
-    const blockedIds = [...get(currentChatBlockedUsers)];
-    const allUserIds = [...memberIds, ...blockedIds, ...userIdsFromEvents];
+    const allUserIds = new Set<string>();
+    get(currentChatMembers).forEach((m) => allUserIds.add(m.userId));
+    get(currentChatBlockedUsers).forEach((u) => allUserIds.add(u));
+    userIdsFromEvents.forEach((u) => allUserIds.add(u));
 
     currentChatUserIds.update(chatId, (userIds) => {
         allUserIds.forEach((u) => {

@@ -57,6 +57,12 @@
       "wasm": "backend/canisters/ledger/ledger.wasm",
       "candid": "backend/canisters/ledger/ledger.private.did",
       "build": ""
+    },
+    "open_storage_index": {
+      "type": "custom",
+      "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
+      "candid": "backend/canisters/open_storage/index.init.did",
+      "build": ""
     }
   },
   "defaults": {
