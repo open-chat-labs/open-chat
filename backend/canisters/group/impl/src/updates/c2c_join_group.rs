@@ -22,10 +22,10 @@ async fn c2c_join_group_v2(args: Args) -> Response {
     let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
     match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
         Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => {
-            if !args.as_super_admin || r.is_super_admin {
-                mutate_state(|state| commit(args, user_id, r.principal, state))
-            } else {
+            if args.as_super_admin && !r.is_super_admin {
                 NotSuperAdmin
+            } else {
+                mutate_state(|state| commit(args, user_id, r.principal, state))
             }
         }
         Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => UserNotFound,
