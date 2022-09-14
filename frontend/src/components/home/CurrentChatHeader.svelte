@@ -43,7 +43,7 @@
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
     import { isProposalGroup } from "../../stores/chat";
-    import { notificationsSupported } from "../../stores/notifications";
+    import { notificationsSupported } from "../../utils/notifications";
 
     const dispatch = createEventDispatcher();
 
@@ -307,7 +307,7 @@
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
-                        {#if $notificationsSupported}
+                        {#if notificationsSupported}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                     <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />

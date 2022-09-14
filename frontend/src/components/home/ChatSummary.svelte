@@ -41,7 +41,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import { notificationsSupported } from "../../stores/notifications";
+    import { notificationsSupported } from "../../utils/notifications";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -246,7 +246,7 @@
             {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
         {#if !preview}
-            {#if muted && $notificationsSupported}
+            {#if muted && notificationsSupported}
                 <div class="mute icon" class:rtl={$rtlStore}>
                     <MutedIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                 </div>
@@ -302,7 +302,7 @@
                                     <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if $notificationsSupported}
+                            {#if notificationsSupported}
                                 {#if muted}
                                     <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                         <BellIcon
