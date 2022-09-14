@@ -35,6 +35,7 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import { currentChatMembers } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -60,7 +61,6 @@
     $: chat = controller.chat;
     $: group = $chat.kind === "group_chat";
     $: blockedUsers = controller.blockedUsers;
-    $: participants = controller.participants;
     $: replyingTo = controller.replyingTo;
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
@@ -213,7 +213,7 @@
                             <Legend>{$_("tokenTransfer.receiver")}</Legend>
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
-                                participants={$participants}
+                                members={$currentChatMembers}
                                 blockedUsers={$blockedUsers}
                                 autofocus={group} />
                         </div>

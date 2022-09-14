@@ -1,7 +1,9 @@
 import type {
+    ChatEvent,
     ChatSummary,
     CurrentChatState,
     EventWrapper,
+    Member,
     Message,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
@@ -13,6 +15,7 @@ import {
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
+    mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
@@ -33,6 +36,8 @@ import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
+import { createChatSpecificStore } from "./dataByChatFactory";
+import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -84,8 +89,8 @@ export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore, archivedChatsStore, mutedChatsStore],
-    ([summaries, unconfirmed, currentUser, archivedChats, mutedChats]) => {
+    [serverChatSummariesStore, unconfirmed, currentUserStore, localMessageUpdates, archivedChatsStore, mutedChatsStore],
+    ([summaries, unconfirmed, currentUser, localUpdates, archivedChats, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
@@ -93,6 +98,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         currentUser.userId,
                         summary,
                         unconfirmed,
+                        localUpdates,
                         archivedChats.get(summary.chatId),
                         mutedChats.get(chatId)
                     );
@@ -451,3 +457,11 @@ export function removeChat(chatId: string): void {
         }, {} as Record<string, ChatSummary>);
     });
 }
+
+export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
+export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
+    derived([serverEventsStore, localMessageUpdates], ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
+        return mergeServerEventsWithLocalUpdates($serverEventsForSelectedChat, $localMessageUpdates)
+    });
+export const currentChatMembers = createChatSpecificStore<Member[]>([]);
+export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);

@@ -7,7 +7,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MessageContent,
-    Participant,
+    Member,
     TextContent,
     ChatSummaryUpdates,
     DirectChatSummaryUpdates,
@@ -28,7 +28,7 @@ import type {
     MemberRole,
     PermissionRole,
     CryptocurrencyContent,
-    AggregateParticipantsJoinedOrLeft,
+    AggregateMembersJoinedOrLeft,
     ChatMetrics,
     SendMessageSuccess,
     TransferSuccess,
@@ -48,15 +48,16 @@ import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
+import { indexIsInRanges } from "../../utils/range";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { emptyChatMetrics } from "./chat.utils.shared";
-import { localReactions, mergeReactions } from "../../stores/reactions";
 import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import type { UnconfirmedMessages } from "../../stores/unconfirmed";
+import type { LocalMessageUpdates, LocalReaction } from "./chat";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -135,11 +136,11 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     userIds.add(id)
                 );
                 break;
-            case "participant_joined":
-            case "participant_left":
-            case "participant_assumes_super_admin":
-            case "participant_relinquishes_super_admin":
-            case "participant_dismissed_as_super_admin":
+            case "member_joined":
+            case "member_left":
+            case "member_assumes_super_admin":
+            case "member_relinquishes_super_admin":
+            case "member_dismissed_as_super_admin":
                 userIds.add(e.event.userId);
                 break;
             case "name_changed":
@@ -154,10 +155,10 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "group_chat_created":
                 userIds.add(e.event.created_by);
                 break;
-            case "participants_added":
+            case "members_added":
                 userIds.add(e.event.addedBy);
                 break;
-            case "participants_removed":
+            case "members_removed":
                 userIds.add(e.event.removedBy);
                 break;
             case "users_blocked":
@@ -187,7 +188,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "poll_ended":
             case "thread_updated":
             case "proposals_updated":
-            case "aggregate_participants_joined_left":
+            case "aggregate_members_joined_left":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -229,7 +230,7 @@ export function getRecentlyActiveUsers(
 }
 
 export function getUsersToMakeRtcConnectionsWith(
-    userId: string,
+    myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[]
 ): string[] {
@@ -238,16 +239,16 @@ export function getUsersToMakeRtcConnectionsWith(
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(userId) ? Array.from(activeUsers).filter((u) => u !== userId) : [];
+    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId) : [];
 }
 
 export function makeRtcConnections(
-    userId: string,
+    myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup
 ): void {
-    const userIds = getUsersToMakeRtcConnectionsWith(userId, chat, events);
+    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
     if (userIds.length === 0) return;
 
     userIds
@@ -255,7 +256,7 @@ export function makeRtcConnections(
         .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
         .map((user) => user.userId)
         .forEach((userId) => {
-            rtcConnectionsManager.create(userId, userId);
+            rtcConnectionsManager.create(myUserId, userId);
         });
 }
 
@@ -264,9 +265,9 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
     switch (event.kind) {
         case "message":
             return event.sender;
-        case "participant_joined":
-        case "participant_assumes_super_admin":
-        case "participant_relinquishes_super_admin":
+        case "member_joined":
+        case "member_assumes_super_admin":
+        case "member_relinquishes_super_admin":
             return event.userId;
         case "name_changed":
         case "desc_changed":
@@ -278,9 +279,9 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
-        case "participants_added":
+        case "members_added":
             return event.addedBy;
-        case "participants_removed":
+        case "members_removed":
             return event.removedBy;
         case "users_blocked":
             return event.blockedBy;
@@ -300,12 +301,12 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "poll_vote_deleted":
             return event.message.updatedBy;
         case "direct_chat_created":
-        case "aggregate_participants_joined_left":
+        case "aggregate_members_joined_left":
         case "poll_ended":
         case "thread_updated":
         case "proposals_updated":
-        case "participant_dismissed_as_super_admin":
-        case "participant_left": // We exclude participant_left events since the user is no longer in the group
+        case "member_dismissed_as_super_admin":
+        case "member_left": // We exclude participant_left events since the user is no longer in the group
             return undefined;
         default:
             throw new UnsupportedValueError("Unexpected ChatEvent type received", event);
@@ -320,14 +321,6 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
 export function getMinVisibleEventIndex(chat: ChatSummary): number {
     if (chat.kind === "direct_chat") return 0;
     return chat.minVisibleEventIndex;
-}
-
-export function indexIsInRanges(index: number, ranges: DRange): boolean {
-    for (const range of ranges.subranges()) {
-        if (range.low <= index && index <= range.high) return true;
-        if (range.low > index) break;
-    }
-    return false;
 }
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
@@ -353,19 +346,19 @@ export function getTypingString(
     }
 }
 
-export function getParticipantsString(
+export function getMembersString(
     user: UserSummary,
     userLookup: UserLookup,
-    participantIds: string[],
+    memberIds: string[],
     unknownUser: string,
     you: string,
     compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number,
     truncate = true
 ): string {
-    if (truncate && participantIds.length > 5) {
-        return `${participantIds.length} members`;
+    if (truncate && memberIds.length > 5) {
+        return `${memberIds.length} members`;
     }
-    const sorted = participantIds
+    const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsersOnlineFirst)
         .map((p) => (p.userId === user.userId ? you : p.username));
@@ -484,10 +477,10 @@ export function mergeGroupChatDetails(
 ): GroupChatDetails {
     return {
         latestEventIndex: updates.latestEventIndex,
-        participants: mergeThings((p) => p.userId, mergeParticipants, previous.participants, {
+        members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
-            updated: updates.participantsAddedOrUpdated,
-            removed: updates.participantsRemoved,
+            updated: updates.membersAddedOrUpdated,
+            removed: updates.membersRemoved,
         }),
         blockedUsers: new Set<string>(
             mergeThings(identity, identity, [...previous.blockedUsers], {
@@ -525,7 +518,7 @@ export function mergeChatUpdates(
     }).sort(compareChats);
 }
 
-function mergeParticipants(_: Participant | undefined, updated: Participant) {
+function mergeParticipants(_: Member | undefined, updated: Member) {
     return updated;
 }
 
@@ -561,7 +554,7 @@ function mergeUpdatedGroupChat(
         latestMessage: getLatestMessage(chat, updatedChat),
         blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
-        participantCount: updatedChat.participantCount ?? chat.participantCount,
+        memberCount: updatedChat.memberCount ?? chat.memberCount,
         myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
         mentions: mergeMentions(chat.mentions, updatedChat.mentions),
         ownerId: updatedChat.ownerId ?? chat.ownerId,
@@ -590,9 +583,9 @@ function mergeThreadSyncDetails(
                         threadRootMessageIndex: thread.threadRootMessageIndex,
                         lastUpdated: thread.lastUpdated,
                         readUpTo: thread.readUpTo ?? existing?.readUpTo,
-                        latestEventIndex: thread.latestEventIndex ?? existing!.latestEventIndex,
+                        latestEventIndex: thread.latestEventIndex ?? existing.latestEventIndex,
                         latestMessageIndex:
-                            thread.latestMessageIndex ?? existing!.latestMessageIndex,
+                            thread.latestMessageIndex ?? existing.latestMessageIndex,
                     };
                 }
                 return merged;
@@ -674,6 +667,7 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
+    localUpdates: Record<string, LocalMessageUpdates>,
     archivedLocally: boolean | undefined,
     mutedLocally: boolean | undefined
 ): ChatSummary {
@@ -694,6 +688,15 @@ export function mergeUnconfirmedIntoSummary(
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
             latestEventIndex = latestUnconfirmedMessage.index;
+        }
+    }
+    if (latestMessage !== undefined) {
+        const updates = localUpdates[latestMessage.event.messageId.toString()];
+        if (updates !== undefined) {
+            latestMessage = {
+                ...latestMessage,
+                event: mergeLocalUpdates(latestMessage.event, updates)
+            }
         }
     }
     const archived = archivedLocally ?? chatSummary.archived;
@@ -784,20 +787,18 @@ export function groupEvents(
 function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
-    ): AggregateParticipantsJoinedOrLeft | undefined {
+    ): AggregateMembersJoinedOrLeft | undefined {
         if (events.length === 0) return undefined;
         const latest = events[events.length - 1];
-        return latest.event.kind === "aggregate_participants_joined_left"
-            ? latest.event
-            : undefined;
+        return latest.event.kind === "aggregate_members_joined_left" ? latest.event : undefined;
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
-        if (e.event.kind === "participant_joined" || e.event.kind === "participant_left") {
+        if (e.event.kind === "member_joined" || e.event.kind === "member_left") {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
                 agg = {
-                    kind: "aggregate_participants_joined_left",
+                    kind: "aggregate_members_joined_left",
                     users_joined: new Set(),
                     users_left: new Set(),
                 };
@@ -805,7 +806,7 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                 previous.pop();
             }
 
-            if (e.event.kind === "participant_joined") {
+            if (e.event.kind === "member_joined") {
                 if (agg.users_left.has(e.event.userId)) {
                     agg.users_left.delete(e.event.userId);
                 } else {
@@ -965,14 +966,11 @@ function mergeMessageEvents(
         incoming.event.kind === "message" &&
         existing.event.messageId === incoming.event.messageId
     ) {
-        const key = existing.event.messageId.toString();
-        const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
         return {
             ...existing,
             event: {
                 ...existing.event,
                 content: incoming.event.content,
-                reactions: merged,
                 thread: incoming.event.thread,
             },
         };
@@ -1177,7 +1175,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        participantCount: candidate.participants.length + 1, // +1 to include us
+        memberCount: candidate.members.length + 1, // +1 to include us
         myRole: "owner",
         mentions: [],
         ...candidate.avatar,
@@ -1210,30 +1208,22 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
     }
 }
 
-export function updateEventPollContent<T extends ChatEvent>(
-    messageIndex: number,
+function updateEventPollContent(
+    message: Message,
     answerIndex: number,
     type: "register" | "delete",
     userId: string,
-    evt: EventWrapper<T>
-): EventWrapper<T> {
-    if (
-        evt.event.kind === "message" &&
-        evt.event.messageIndex === messageIndex &&
-        evt.event.content.kind === "poll_content"
-    ) {
+): Message {
+    if (message.content.kind === "poll_content") {
         return {
-            ...evt,
-            event: {
-                ...evt.event,
-                content: {
-                    ...evt.event.content,
-                    votes: updatePollVotes(userId, evt.event.content, answerIndex, type),
-                },
+            ...message,
+            content: {
+                ...message.content,
+                votes: updatePollVotes(userId, message.content, answerIndex, type),
             },
         };
     }
-    return evt;
+    return message;
 }
 
 export function updatePollVotes(
@@ -1643,4 +1633,92 @@ export function markAllRead(chat: ChatSummary): void {
             latestMessageIndex
         );
     }
+}
+
+export function mergeServerEventsWithLocalUpdates(
+    events: EventWrapper<ChatEvent>[],
+    localUpdates: Record<string, LocalMessageUpdates>
+): EventWrapper<ChatEvent>[] {
+    return events.map((e) => {
+        if (e.event.kind === "message") {
+            const updates = localUpdates[e.event.messageId.toString()];
+            if (updates !== undefined) {
+                return {
+                    ...e,
+                    event: mergeLocalUpdates(e.event, updates)
+                };
+            }
+        }
+        return e;
+    })
+}
+
+function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates | undefined): Message {
+    if (localUpdates === undefined) return message;
+
+    if (localUpdates.deleted !== undefined) {
+        return {
+            ...message,
+            content: {
+                kind: "deleted_content",
+                deletedBy: localUpdates.deleted.deletedBy,
+                timestamp: localUpdates.deleted.timestamp
+            }
+        };
+    }
+
+    if (localUpdates.editedContent !== undefined) {
+        message = {
+            ...message,
+            content: localUpdates.editedContent,
+            edited: true
+        };
+    }
+
+    if (localUpdates.reactions !== undefined) {
+        let reactions = [...message.reactions];
+        for (const localReaction of localUpdates.reactions) {
+            reactions = applyLocalReaction(localReaction, reactions);
+        }
+        message = {
+            ...message,
+            reactions
+        };
+    }
+
+    if (localUpdates.pollVotes !== undefined) {
+        for (const pollVote of localUpdates.pollVotes) {
+            message = updateEventPollContent(message, pollVote.answerIndex, pollVote.type, pollVote.userId);
+        }
+    }
+
+    return message;
+}
+
+export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
+    const r = reactions.find((r) => r.reaction === local.reaction);
+    if (r === undefined) {
+        if (local.kind === "add") {
+            reactions.push({ reaction: local.reaction, userIds: new Set([local.userId]) });
+        }
+    } else {
+        if (local.kind === "add") {
+            r.userIds.add(local.userId);
+        } else {
+            r.userIds.delete(local.userId);
+            if (r.userIds.size === 0) {
+                reactions = reactions.filter((r) => r.reaction !== local.reaction);
+            }
+        }
+    }
+    return reactions;
+}
+
+export function findMessageById(messageId: bigint, events: EventWrapper<ChatEvent>[]): EventWrapper<Message> | undefined {
+    for (const event of events) {
+        if (event.event.kind === "message" && event.event.messageId === messageId) {
+            return event as EventWrapper<Message>;
+        }
+    }
+    return undefined;
 }

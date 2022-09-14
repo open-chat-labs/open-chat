@@ -4,7 +4,7 @@
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
-    import { getParticipantsString } from "../../domain/chat/chat.utils";
+    import { getMembersString } from "../../domain/chat/chat.utils";
     import { compareIsNotYouThenUsername, compareUsername } from "../../domain/user/user.utils";
     import { userStore } from "../../stores/user";
 
@@ -16,7 +16,7 @@
 
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
-    $: participants = getParticipantsString(
+    $: members = getMembersString(
         user!,
         $userStore,
         changed,
@@ -27,7 +27,7 @@
 
     $: text = $_(resourceKey, {
         values: {
-            changed: participants,
+            changed: members,
             changedBy: changedByStr,
         },
     });

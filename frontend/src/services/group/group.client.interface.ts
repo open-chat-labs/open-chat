@@ -1,10 +1,10 @@
 import type { User } from "../../domain/user/user";
 import type {
-    AddParticipantsResponse,
+    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     SendMessageResponse,
-    RemoveParticipantResponse,
+    RemoveMemberResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,
@@ -54,11 +54,11 @@ export interface IGroupClient {
         latestClientEventIndex: number | undefined,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
-    addParticipants(
+    addMembers(
         userIds: string[],
         myUsername: string,
         allowBlocked: boolean
-    ): Promise<AddParticipantsResponse>;
+    ): Promise<AddMembersResponse>;
     sendMessage(
         senderName: string,
         mentioned: User[],
@@ -67,7 +67,7 @@ export interface IGroupClient {
     ): Promise<[SendMessageResponse, Message]>;
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
-    removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
+    removeMember(userId: string): Promise<RemoveMemberResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse>;
     toggleReaction(
@@ -104,7 +104,7 @@ export interface IGroupClient {
     resetInviteCode(): Promise<ResetInviteCodeResponse>;
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientEventIndex: number | undefined
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
 }

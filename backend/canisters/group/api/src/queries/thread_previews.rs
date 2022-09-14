@@ -1,24 +1,24 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, EventWrapper, Message, MessageIndex};
+use types::{EventWrapper, Message, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub threads: Vec<MessageIndex>,
-    pub latest_client_event_index: Option<EventIndex>,
+    pub latest_client_thread_update: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
-    ReplicaNotUpToDate(EventIndex),
+    ReplicaNotUpToDate(TimestampMillis),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub threads: Vec<ThreadPreview>,
-    pub latest_event_index: EventIndex,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

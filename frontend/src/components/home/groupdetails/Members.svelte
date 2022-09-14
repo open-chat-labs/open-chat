@@ -1,13 +1,13 @@
 <script lang="ts">
     import Search from "../../Search.svelte";
-    import Participant from "./Participant.svelte";
-    import ParticipantsHeader from "./ParticipantsHeader.svelte";
+    import Member from "./Member.svelte";
+    import MembersHeader from "./MembersHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
     import type {
-        BlockedParticipant,
-        FullParticipant,
+        BlockedMember,
+        FullMember,
         GroupChatSummary,
-        Participant as ParticipantType,
+        Member as MemberType,
     } from "../../../domain/chat/chat";
     import {
         canBlockUsers,
@@ -22,19 +22,19 @@
 
     export let userId: string;
     export let closeIcon: "close" | "back";
-    export let participants: Readable<ParticipantType[]>;
+    export let members: Readable<MemberType[]>;
     export let blockedUsers: Readable<Set<string>>;
     export let chat: Readable<GroupChatSummary>;
 
-    $: knownUsers = getKnownUsers($userStore, $participants, $blockedUsers);
+    $: knownUsers = getKnownUsers($userStore, $members, $blockedUsers);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: others = knownUsers
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
-        .sort(compareParticipants);
+        .sort(compareMembers);
     $: publicGroup = $chat.public;
 
     let searchTerm = "";
-    let participantList: VirtualList;
+    let membersList: VirtualList;
 
     const dispatch = createEventDispatcher();
 
@@ -42,14 +42,11 @@
         dispatch("close");
     }
 
-    function addParticipants() {
-        dispatch("addParticipants");
+    function addMembers() {
+        dispatch("addMembers");
     }
 
-    function matchesSearch(
-        searchTerm: string,
-        user: FullParticipant | BlockedParticipant
-    ): boolean {
+    function matchesSearch(searchTerm: string, user: FullMember | BlockedMember): boolean {
         if (searchTerm === "") return true;
         if (user.username === undefined) return true;
         return user.username.toLowerCase().includes(searchTerm.toLowerCase());
@@ -57,11 +54,11 @@
 
     function getKnownUsers(
         userStore: UserLookup,
-        participants: ParticipantType[],
+        members: MemberType[],
         blockedUsers: Set<string>
-    ): (FullParticipant | BlockedParticipant)[] {
-        const users: (FullParticipant | BlockedParticipant)[] = [];
-        participants.forEach((p) => {
+    ): (FullMember | BlockedMember)[] {
+        const users: (FullMember | BlockedMember)[] = [];
+        members.forEach((p) => {
             const user = userStore[p.userId];
             if (user) {
                 users.push({
@@ -86,10 +83,7 @@
         return users;
     }
 
-    function compareParticipants(
-        a: FullParticipant | BlockedParticipant,
-        b: FullParticipant | BlockedParticipant
-    ): number {
+    function compareMembers(a: FullMember | BlockedMember, b: FullMember | BlockedMember): number {
         if (a.memberKind !== b.memberKind) {
             return a.memberKind === "full_member" ? -1 : 1;
         }
@@ -103,29 +97,24 @@
     }
 </script>
 
-<ParticipantsHeader
-    {closeIcon}
-    {publicGroup}
-    {me}
-    on:close={close}
-    on:addParticipants={addParticipants} />
+<MembersHeader {closeIcon} {publicGroup} {me} on:close={close} on:addMembers={addMembers} />
 
 <div class="search">
     <Search
-        on:searchEntered={() => participantList.reset()}
+        on:searchEntered={() => membersList.reset()}
         searching={false}
         bind:searchTerm
-        placeholder={"filterParticipants"} />
+        placeholder={"filterMembers"} />
 </div>
 
 {#if me !== undefined && me.memberKind === "full_member"}
-    <Participant me={true} participant={me} />
+    <Member me={true} member={me} />
 {/if}
 
-<VirtualList bind:this={participantList} keyFn={(user) => user.userId} items={others} let:item>
-    <Participant
+<VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={others} let:item>
+    <Member
         me={false}
-        participant={item}
+        member={item}
         canTransferOwnership={canChangeRoles($chat, item.role, "owner")}
         canMakeAdmin={canChangeRoles($chat, item.role, "admin")}
         canDismissAdmin={item.role === "admin" && canChangeRoles($chat, "admin", "participant")}
@@ -138,7 +127,7 @@
         on:dismissAsAdmin
         on:makeAdmin
         on:transferOwnership
-        on:removeParticipant
+        on:removeMember
         on:close={close} />
 </VirtualList>
 

@@ -13,33 +13,29 @@ import type {
     RemoteUserUndeletedMessage,
     WebRtcMessage,
 } from "./webrtc";
-import { toggleReactionInEventList } from "../../stores/reactions";
+import { eventsStore } from "../../stores/chat";
+import { containsReaction, findMessageById } from "domain/chat/chat.utils";
+import { localMessageUpdates } from "stores/localMessageUpdates";
 
 function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-    delegateToChatController(message, (chat) =>
-        chat.events.update((events) =>
-            toggleReactionInEventList(
-                chat.chatVal,
-                message.userId,
-                events,
-                message.messageId,
-                message.reaction,
-                chat.chatUserIds,
-                chat.user.userId
-            )
-        )
-    );
+    const matchingMessage = findMessageById(message.messageId, get(eventsStore));
+
+    if (matchingMessage !== undefined) {
+        const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
+
+        localMessageUpdates.markReaction(message.messageId.toString(), {
+            reaction: message.reaction,
+            kind: exists ? "remove" : "add",
+            userId: message.userId
+        });
+    }
 }
 function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
-    delegateToChatController(message, (chat) =>
-        chat.deleteMessage(message.messageId, message.userId)
-    );
+    localMessageUpdates.markDeleted(message.messageId.toString(), message.userId);
 }
 
 function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
-    delegateToChatController(message, (chat) =>
-        chat.undeleteMessage(message.message, message.userId)
-    );
+    localMessageUpdates.markUndeleted(message.messageId.toString());
 }
 
 function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {

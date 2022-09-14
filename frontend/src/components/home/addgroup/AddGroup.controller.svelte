@@ -1,6 +1,6 @@
 <script lang="ts">
     import NewGroup from "./NewGroup.svelte";
-    import ChooseParticipants from "./ChooseParticipants.svelte";
+    import ChooseMembers from "./ChooseMembers.svelte";
     import type { NewGroupState } from "../../../fsm/newGroup";
     import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
     import type { User } from "../../../domain/user/user";
@@ -33,7 +33,7 @@
             description: "",
             historyVisible: true,
             isPublic: false,
-            participants: [],
+            members: [],
             permissions: {
                 changePermissions: "admins",
                 changeRoles: "admins",
@@ -76,13 +76,13 @@
                     if (err) toastStore.showFailureToast(err);
                     newGroupState = "group_form";
                 } else {
-                    return optionallyAddParticipants(resp.canisterId)
+                    return optionallyAddMembers(resp.canisterId)
                         .then(() => {
                             onGroupCreated(resp.canisterId);
                         })
                         .catch((err) => {
-                            rollbar.error("Unable to add participants to group", err);
-                            toastStore.showFailureToast("addParticipantsFailed");
+                            rollbar.error("Unable to add members to group", err);
+                            toastStore.showFailureToast("addMembersFailed");
                             newGroupState = "group_form";
                         });
                 }
@@ -95,27 +95,27 @@
             .finally(() => (busy = false));
     }
 
-    function optionallyAddParticipants(canisterId: string): Promise<void> {
-        if (candidateGroup.participants.length === 0) {
+    function optionallyAddMembers(canisterId: string): Promise<void> {
+        if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
         return api
-            .addParticipants(
+            .addMembers(
                 canisterId,
-                candidateGroup.participants.map((p) => p.user.userId),
+                candidateGroup.members.map((m) => m.user.userId),
                 currentUser.username,
                 false
             )
             .then((resp) => {
-                if (resp.kind !== "add_participants_success") {
-                    Promise.reject("Unable to add participants to the new group");
+                if (resp.kind !== "add_members_success") {
+                    Promise.reject("Unable to add members to the new group");
                 }
             });
     }
 
-    function createOrChooseParticipants() {
+    function createOrChooseMembers() {
         if (!candidateGroup.isPublic) {
-            newGroupState = "choosing_participants";
+            newGroupState = "choosing_members";
         } else {
             createGroup();
         }
@@ -135,11 +135,7 @@
 </script>
 
 {#if newGroupState === "group_form"}
-    <NewGroup
-        {busy}
-        bind:candidateGroup
-        on:cancelNewGroup
-        on:createGroup={createOrChooseParticipants} />
-{:else if newGroupState === "choosing_participants"}
-    <ChooseParticipants {busy} bind:candidateGroup on:complete={createGroup} />
+    <NewGroup {busy} bind:candidateGroup on:cancelNewGroup on:createGroup={createOrChooseMembers} />
+{:else if newGroupState === "choosing_members"}
+    <ChooseMembers {busy} bind:candidateGroup on:complete={createGroup} />
 {/if}

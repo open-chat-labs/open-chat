@@ -1,14 +1,14 @@
 import { AuthProvider } from "../domain/auth";
-import { derived, readable, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { userCreatedStore } from "./settings";
 import { enumFromStringValue } from "../utils/enums";
+import { IdbStorage, LocalStorage } from "@dfinity/auth-client";
 
 export const selectedAuthProviderStore = createStore();
 
 function createStore() {
     const key = configKeys.selectedAuthProvider;
-    const def = AuthProvider.NFID;
+    const def = AuthProvider.II;
     const stored = localStorage.getItem(key);
     const initial = stored !== null ? enumFromStringValue(AuthProvider, stored, def) : def;
 
@@ -34,11 +34,5 @@ function createStore() {
     };
 }
 
-const hasIISessionStore = readable<boolean>(localStorage.getItem("ic-delegation") !== null);
-
-export const showAuthProvidersStore = derived(
-    [userCreatedStore, hasIISessionStore],
-    ([userCreated, hasIISession]) => {
-        return !userCreated && !hasIISession;
-    }
-);
+export const idbAuthClientStore = new IdbStorage();
+export const lsAuthClientStore = new LocalStorage();

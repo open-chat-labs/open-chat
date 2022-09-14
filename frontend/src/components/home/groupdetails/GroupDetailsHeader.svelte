@@ -16,15 +16,15 @@
             dispatch("close");
         }
     }
-    function showParticipants() {
+    function showMembers() {
         if (!saving) {
-            dispatch("showParticipants");
+            dispatch("showMembers");
         }
     }
 </script>
 
 <SectionHeader flush={!$mobileWidth} shadow={true}>
-    <span title={$_("participants")} class="participants" on:click={showParticipants}>
+    <span title={$_("members")} class="members" on:click={showMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -44,7 +44,7 @@
         text-align: center;
     }
     .close,
-    .participants {
+    .members {
         flex: 0 0 30px;
     }
 </style>

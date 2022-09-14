@@ -13,8 +13,7 @@ import type {
 import {
     addVoteToPoll,
     enoughVisibleMessages,
-    getParticipantsString,
-    indexIsInRanges,
+    getMembersString,
     mergeChatMetrics,
     mergeChatUpdates,
     mergeUnconfirmedThreadsIntoSummary,
@@ -75,7 +74,7 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
     notificationsMuted: false,
-    participantCount: 10,
+    memberCount: 10,
     myRole: "admin",
     mentions: [],
     ownerId: "some_owner",
@@ -368,7 +367,7 @@ describe("enough visible messages", () => {
     });
 });
 
-describe("get participants string for group chat", () => {
+describe("get members string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
@@ -385,35 +384,17 @@ describe("get participants string for group chat", () => {
 
     const user = lookup.z as UserSummary;
 
-    test("up to five participants get listed", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withFewerThanSix,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("Mr B, Mr C, Mr D, You and Mr A");
+    test("up to five members get listed", () => {
+        const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");
+        expect(members).toEqual("Mr B, Mr C, Mr D, You and Mr A");
     });
     test("with unknown users", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withUnknown,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
+        const members = getMembersString(user, lookup, withUnknown, "Unknown User", "You");
+        expect(members).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
     });
-    test("with more than 5 participants", () => {
-        const participants = getParticipantsString(
-            user,
-            lookup,
-            withMoreThanSix,
-            "Unknown User",
-            "You"
-        );
-        expect(participants).toEqual("8 members");
+    test("with more than 5 members", () => {
+        const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");
+        expect(members).toEqual("8 members");
     });
 });
 
@@ -611,17 +592,5 @@ describe("message ranges are equal", () => {
         const a = new DRange(0, 10).add(12, 20).add(100, 250);
         const b = new DRange(0, 10).add(12, 20).add(100, 260);
         expect(rangesAreEqual(a, b)).toBe(false);
-    });
-});
-
-describe("index is in ranges", () => {
-    test("where index is not in ranges", () => {
-        expect(indexIsInRanges(15, new DRange(11, 13))).toEqual(false);
-    });
-    test("where index is in ranges", () => {
-        expect(indexIsInRanges(15, new DRange(11, 13).add(15, 20))).toEqual(true);
-    });
-    test("where there are no ranges", () => {
-        expect(indexIsInRanges(15, new DRange())).toEqual(false);
     });
 });

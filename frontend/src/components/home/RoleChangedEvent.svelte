@@ -4,7 +4,7 @@
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
-    import { getParticipantsString } from "../../domain/chat/chat.utils";
+    import { getMembersString } from "../../domain/chat/chat.utils";
     import { compareIsNotYouThenUsername, compareUsername } from "../../domain/user/user.utils";
     import { userStore } from "../../stores/user";
     import type { RoleChanged } from "../../domain/chat/chat";
@@ -15,7 +15,7 @@
 
     $: me = event.changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[event.changedBy]?.username ?? $_("unknownUser");
-    $: participants = getParticipantsString(
+    $: members = getMembersString(
         user!,
         $userStore,
         event.userIds,
@@ -27,7 +27,7 @@
 
     $: text = $_(meChanged ? "yourRoleChanged" : "roleChanged", {
         values: {
-            changed: participants,
+            changed: members,
             changedBy: changedByStr,
             oldRole: $_(event.oldRole),
             newRole: $_(event.newRole),

@@ -1,12 +1,12 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, GroupService } from "./candid/idl";
 import type {
-    AddParticipantsResponse,
+    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     Message,
     SendMessageResponse,
-    RemoveParticipantResponse,
+    RemoveMemberResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,
@@ -36,11 +36,11 @@ import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
     apiRole,
-    addParticipantsResponse,
+    addMembersResponse,
     getEventsResponse,
     changeRoleResponse,
     sendMessageResponse,
-    removeParticipantResponse,
+    removeMemberResponse,
     updateGroupResponse,
     toggleReactionResponse,
     deleteMessageResponse,
@@ -119,7 +119,13 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            (resp) => getEventsResponse(resp, latestClientEventIndex),
+            (resp) =>
+                getEventsResponse(
+                    resp,
+                    this.chatId,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                ),
             args
         );
     }
@@ -141,7 +147,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            (resp) => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, this.chatId, undefined, latestClientEventIndex),
             args,
             interrupt
         );
@@ -167,7 +173,13 @@ export class GroupClient extends CandidService implements IGroupClient {
             };
             return this.handleQueryResponse(
                 () => this.groupService.events(args),
-                (resp) => getEventsResponse(resp, latestClientEventIndex),
+                (resp) =>
+                    getEventsResponse(
+                        resp,
+                        this.chatId,
+                        threadRootMessageIndex,
+                        latestClientEventIndex
+                    ),
                 args,
                 interrupt
             );
@@ -177,18 +189,18 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    addParticipants(
+    addMembers(
         userIds: string[],
         myUsername: string,
         allowBlocked: boolean
-    ): Promise<AddParticipantsResponse> {
+    ): Promise<AddMembersResponse> {
         return this.handleResponse(
             this.groupService.add_participants({
                 user_ids: userIds.map((u) => Principal.fromText(u)),
                 added_by_name: myUsername,
                 allow_blocked_users: allowBlocked,
             }),
-            addParticipantsResponse
+            addMembersResponse
         );
     }
 
@@ -208,12 +220,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    removeParticipant(userId: string): Promise<RemoveParticipantResponse> {
+    removeMember(userId: string): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.groupService.remove_participant({
                 user_id: Principal.fromText(userId),
             }),
-            removeParticipantResponse
+            removeMemberResponse
         );
     }
 
@@ -418,7 +430,13 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            (resp) => getMessagesByMessageIndexResponse(resp, latestClientEventIndex),
+            (resp) =>
+                getMessagesByMessageIndexResponse(
+                    resp,
+                    this.chatId,
+                    undefined,
+                    latestClientEventIndex
+                ),
             args
         );
     }
@@ -509,15 +527,15 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientEventIndex: number | undefined
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.groupService.thread_previews({
                     threads: new Uint32Array(threadRootMessageIndexes),
-                    latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+                    latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
-            (resp) => threadPreviewsResponse(this.chatId, resp, latestClientEventIndex)
+            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientThreadUpdate)
         );
     }
 

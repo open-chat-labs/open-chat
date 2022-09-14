@@ -82,7 +82,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
-    import { startPruningLocalReactions } from "../../stores/reactions";
+    import { startPruningLocalUpdates } from "../../stores/localMessageUpdates";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
@@ -169,7 +169,7 @@
         rtcConnectionsManager.init(user.userId);
         rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores(api, user.userId, (n) => notificationReceived(n));
-        startPruningLocalReactions();
+        startPruningLocalUpdates();
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
@@ -732,9 +732,9 @@
         }
     }
 
-    function addParticipants() {
+    function addMembers() {
         if ($selectedChatStore !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "add_participants" }];
+            rightPanelHistory = [...rightPanelHistory, { kind: "add_members" }];
         }
     }
 
@@ -759,9 +759,9 @@
         modal = ModalType.SelectChat;
     }
 
-    function showParticipants() {
+    function showMembers() {
         if ($selectedChatStore !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
+            rightPanelHistory = [...rightPanelHistory, { kind: "show_members" }];
         }
     }
 
@@ -1033,11 +1033,11 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:addParticipants={addParticipants}
+            on:addMembers={addMembers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:openThread={openThread}
-            on:showParticipants={showParticipants}
+            on:showMembers={showMembers}
             on:updateChat={updateChat}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
@@ -1061,8 +1061,8 @@
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
-            on:addParticipants={addParticipants}
-            on:showParticipants={showParticipants}
+            on:addMembers={addMembers}
+            on:showMembers={showMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
             on:blockUser={blockUser}
@@ -1088,8 +1088,8 @@
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
-                on:addParticipants={addParticipants}
-                on:showParticipants={showParticipants}
+                on:addMembers={addMembers}
+                on:showMembers={showMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}

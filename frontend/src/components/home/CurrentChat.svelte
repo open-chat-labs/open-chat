@@ -50,6 +50,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
+    import { currentChatMembers } from "../../stores/chat";
 
     export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
@@ -77,7 +78,6 @@
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
     $: textContent = controller.textContent;
-    $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: blocked = isBlocked($chat, $directlyBlockedUsers);
 
@@ -180,20 +180,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            api.editMessage($chat, msg!)
-                .then((resp) => {
-                    if (resp !== "success") {
-                        rollbar.warn("Error response editing", resp);
-                        toastStore.showFailureToast("errorEditingMessage");
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Exception sending message", err);
-                    toastStore.showFailureToast("errorEditingMessage");
-                });
-
-            const event = { ...editingEvent, event: msg! };
-            controller.sendMessage(event);
+            controller.editMessage(msg, undefined);
         }
     }
 
@@ -348,10 +335,10 @@
             on:unblockUser
             on:markAllRead={markAllRead}
             on:toggleMuteNotifications
-            on:addParticipants
+            on:addMembers
             on:showGroupDetails
             on:showProposalFilters
-            on:showParticipants
+            on:showMembers
             on:leaveGroup
             on:showPinned
             on:createPoll={createPoll}
@@ -392,7 +379,7 @@
             editingEvent={$editingEvent}
             replyingTo={$replyingTo}
             textContent={$textContent}
-            participants={$participants}
+            members={$currentChatMembers}
             blockedUsers={$blockedUsers}
             user={controller.user}
             mode={"message"}

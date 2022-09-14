@@ -19,7 +19,7 @@
     import Stats from "../Stats.svelte";
     import {
         askForNotificationPermission,
-        supported as notificationsSupported,
+        notificationsSupported,
     } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -66,7 +66,6 @@
     let selectedLocale = ($locale as string).substring(0, 2);
     let usernameError: string | undefined = undefined;
     let bioError: string | undefined = undefined;
-    let supportsNotifications = notificationsSupported();
     let saving = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
@@ -318,7 +317,7 @@
                 on:change={() => enterSend.toggle()}
                 label={$_("enterToSend")}
                 checked={$enterSend} />
-            {#if supportsNotifications}
+            {#if notificationsSupported}
                 <Toggle
                     id={"notifications"}
                     disabled={$notificationStatus === "hard-denied"}
@@ -534,24 +533,6 @@
         @include size-above(xl) {
             padding: $sp3 0 0 0;
         }
-    }
-
-    .icp-balance {
-        display: flex;
-        gap: $sp3;
-        justify-content: space-between;
-    }
-
-    .icp-balance-value {
-        @include font(book, normal, fs-120);
-        color: var(--input-txt);
-        height: 45px;
-        padding: $sp3;
-        width: 100%;
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
-        border-radius: $sp2;
-        text-align: right;
     }
 
     .accounts {

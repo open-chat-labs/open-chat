@@ -28,22 +28,22 @@ import type {
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
     ApiRegisterPollVoteResponse,
-	ApiRegisterProposalVoteResponse,
+    ApiRegisterProposalVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
-    AddParticipantsResponse,
+    AddMembersResponse,
     SendMessageResponse,
-    RemoveParticipantResponse,
+    RemoveMemberResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
-    Participant,
+    Member,
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
@@ -61,11 +61,12 @@ import type {
     ThreadPreviewsResponse,
     ThreadPreview,
     RegisterPollVoteResponse,
-	RegisterProposalVoteResponse,
+    RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { groupPermissions, message, updatedMessage } from "../common/chatMappers";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
@@ -90,7 +91,7 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
     }
 }
 
-function participantRole(candid: ApiRole): MemberRole {
+function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
@@ -106,9 +107,9 @@ function participantRole(candid: ApiRole): MemberRole {
     throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 
-function participant(candid: ApiParticipant): Participant {
+function member(candid: ApiParticipant): Member {
     return {
-        role: participantRole(candid.role),
+        role: memberRole(candid.role),
         userId: candid.user_id.toString(),
     };
 }
@@ -128,11 +129,8 @@ export function groupDetailsUpdatesResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
-            participantsAddedOrUpdated:
-                candid.Success.participants_added_or_updated.map(participant),
-            participantsRemoved: new Set(
-                candid.Success.participants_removed.map((u) => u.toString())
-            ),
+            membersAddedOrUpdated: candid.Success.participants_added_or_updated.map(member),
+            membersRemoved: new Set(candid.Success.participants_removed.map((u) => u.toString())),
             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
             blockedUsersRemoved: new Set(
                 candid.Success.blocked_users_removed.map((u) => u.toString())
@@ -151,7 +149,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
     }
     if ("Success" in candid) {
         return {
-            participants: candid.Success.participants.map(participant),
+            members: candid.Success.participants.map(member),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
@@ -385,10 +383,7 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleRes
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
-export function removeParticipantResponse(
-    candid: ApiRemoveParticipantResponse
-): RemoveParticipantResponse {
-    console.debug(candid);
+export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -416,12 +411,10 @@ export function removeParticipantResponse(
     );
 }
 
-export function addParticipantsResponse(
-    candid: ApiAddParticipantsResponse
-): AddParticipantsResponse {
+export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembersResponse {
     if ("Failed" in candid) {
         return {
-            kind: "add_participants_failed",
+            kind: "add_members_failed",
             usersAlreadyInGroup: candid.Failed.users_already_in_group.map(principalToString),
             usersBlockedFromGroup: candid.Failed.users_blocked_from_group.map(principalToString),
             usersWhoBlockedRequest: candid.Failed.users_who_blocked_request.map(principalToString),
@@ -430,7 +423,7 @@ export function addParticipantsResponse(
     }
     if ("PartialSuccess" in candid) {
         return {
-            kind: "add_participants_partial_success",
+            kind: "add_members_partial_success",
             usersAdded: candid.PartialSuccess.users_added.map(principalToString),
             usersAlreadyInGroup:
                 candid.PartialSuccess.users_already_in_group.map(principalToString),
@@ -443,23 +436,23 @@ export function addParticipantsResponse(
     }
     if ("NotAuthorized" in candid) {
         return {
-            kind: "add_participants_not_authorised",
+            kind: "add_members_not_authorised",
         };
     }
     if ("ParticipantLimitReached" in candid) {
         return {
             // todo - need some UI changes to deal with this properly
-            kind: "participant_limit_reached",
+            kind: "member_limit_reached",
         };
     }
     if ("Success" in candid) {
         return {
-            kind: "add_participants_success",
+            kind: "add_members_success",
         };
     }
     if ("CallerNotInGroup" in candid) {
         return {
-            kind: "add_participants_not_in_group",
+            kind: "add_members_not_in_group",
         };
     }
     throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
@@ -508,13 +501,24 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 
 export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse,
-    latestClientEventIndex: number | undefined
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<Message> {
     if ("Success" in candid) {
+        const latestEventIndex = candid.Success.latest_event_index;
+
+        ensureReplicaIsUpToDate(
+            chatId,
+            threadRootMessageIndex,
+            latestClientEventIndexPreRequest,
+            latestEventIndex
+        );
+
         return {
             events: candid.Success.messages.map(messageWrapper),
             affectedEvents: [],
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -524,7 +528,11 @@ export function getMessagesByMessageIndexResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
+        throw ReplicaNotUpToDateError.byEventIndex(
+            candid.ReplicaNotUpToDate,
+            latestClientEventIndexPreRequest ?? -1,
+            false
+        );
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
@@ -542,13 +550,24 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 
 export function getEventsResponse(
     candid: ApiEventsResponse,
-    latestClientEventIndex: number | undefined
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
+        const latestEventIndex = candid.Success.latest_event_index;
+
+        ensureReplicaIsUpToDate(
+            chatId,
+            threadRootMessageIndex,
+            latestClientEventIndexPreRequest,
+            latestEventIndex
+        );
+
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
-            latestEventIndex: candid.Success.latest_event_index,
+            latestEventIndex,
         };
     }
     if ("ChatNotFound" in candid) {
@@ -561,7 +580,11 @@ export function getEventsResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
+        throw ReplicaNotUpToDateError.byEventIndex(
+            candid.ReplicaNotUpToDate,
+            latestClientEventIndexPreRequest ?? -1,
+            false
+        );
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
@@ -671,9 +694,9 @@ function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Message> {
 }
 
 export function threadPreviewsResponse(
-    chatId: string,
     candid: ApiThreadPreviewsResponse,
-    latestClientEventIndex: number | undefined
+    chatId: string,
+    latestClientThreadUpdate: bigint | undefined
 ): ThreadPreviewsResponse {
     if ("Success" in candid) {
         return {
@@ -687,7 +710,10 @@ export function threadPreviewsResponse(
         };
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw new ReplicaNotUpToDateError(candid.ReplicaNotUpToDate, latestClientEventIndex ?? -1);
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDate,
+            latestClientThreadUpdate ?? BigInt(-1)
+        );
     }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiThreadPreviewsResponse type received",
@@ -761,27 +787,27 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     }
     if ("ParticipantsAdded" in candid) {
         return {
-            kind: "participants_added",
+            kind: "members_added",
             userIds: candid.ParticipantsAdded.user_ids.map((p) => p.toString()),
             addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
     if ("ParticipantJoined" in candid) {
         return {
-            kind: "participant_joined",
+            kind: "member_joined",
             userId: candid.ParticipantJoined.user_id.toString(),
         };
     }
     if ("ParticipantsRemoved" in candid) {
         return {
-            kind: "participants_removed",
+            kind: "members_removed",
             userIds: candid.ParticipantsRemoved.user_ids.map((p) => p.toString()),
             removedBy: candid.ParticipantsRemoved.removed_by.toString(),
         };
     }
     if ("ParticipantLeft" in candid) {
         return {
-            kind: "participant_left",
+            kind: "member_left",
             userId: candid.ParticipantLeft.user_id.toString(),
         };
     }
@@ -861,21 +887,21 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
 
     if ("ParticipantAssumesSuperAdmin" in candid) {
         return {
-            kind: "participant_assumes_super_admin",
+            kind: "member_assumes_super_admin",
             userId: candid.ParticipantAssumesSuperAdmin.user_id.toString(),
         };
     }
 
     if ("ParticipantDismissedAsSuperAdmin" in candid) {
         return {
-            kind: "participant_dismissed_as_super_admin",
+            kind: "member_dismissed_as_super_admin",
             userId: candid.ParticipantDismissedAsSuperAdmin.user_id.toString(),
         };
     }
 
     if ("ParticipantRelinquishesSuperAdmin" in candid) {
         return {
-            kind: "participant_relinquishes_super_admin",
+            kind: "member_relinquishes_super_admin",
             userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
         };
     }
@@ -885,8 +911,8 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "role_changed",
             userIds: candid.RoleChanged.user_ids.map((p) => p.toString()),
             changedBy: candid.RoleChanged.changed_by.toString(),
-            oldRole: participantRole(candid.RoleChanged.old_role),
-            newRole: participantRole(candid.RoleChanged.new_role),
+            oldRole: memberRole(candid.RoleChanged.old_role),
+            newRole: memberRole(candid.RoleChanged.new_role),
         };
     }
 

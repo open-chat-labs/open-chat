@@ -168,7 +168,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, userId, latestClientEventIndex),
             args
         );
     }
@@ -191,7 +191,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(resp, latestClientEventIndex),
+            (resp) => getEventsResponse(resp, userId, latestClientEventIndex),
             args,
             interrupt
         );
@@ -218,7 +218,7 @@ export class UserClient extends CandidService implements IUserClient {
 
             return this.handleQueryResponse(
                 () => this.userService.events(args),
-                (resp) => getEventsResponse(resp, latestClientEventIndex),
+                (resp) => getEventsResponse(resp, userId, latestClientEventIndex),
                 args
             );
         };

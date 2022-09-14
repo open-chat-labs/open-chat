@@ -29,7 +29,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: candid.last_updated,
-        participantCount: candid.participant_count,
+        memberCount: candid.participant_count,
         myRole: "previewer",
         mentions: [],
         blobReference: optional(candid.avatar_id, (blobId) => ({

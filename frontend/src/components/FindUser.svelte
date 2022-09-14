@@ -33,7 +33,7 @@
     });
 
     /**
-     * This is used both for starting a new direct chat and also for adding a participant to a group chat
+     * This is used both for starting a new direct chat and also for adding a member to a group chat
      */
 
     function onSelect(user: UserSummary) {
@@ -95,9 +95,7 @@
                 on:mouseleave={() => (hovering = false)}>
                 <span class="avatar">
                     <Avatar
-                        statusBorder={hovering
-                            ? "var(--participants-hv)"
-                            : "var(--participants-bg)"}
+                        statusBorder={hovering ? "var(--members-hv)" : "var(--members-bg)"}
                         url={userAvatarUrl(user)}
                         status={userStatus($now, user)}
                         size={AvatarSize.Small} />
@@ -152,17 +150,17 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border: var(--participants-bd);
-        border-bottom: var(--participants-bdb);
-        background-color: var(--participants-bg);
-        color: var(--participants-txt);
+        border: var(--members-bd);
+        border-bottom: var(--members-bdb);
+        background-color: var(--members-bg);
+        color: var(--members-txt);
         padding: $sp3;
         margin: 0 0 $sp3 0;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
 
         &:hover {
-            background-color: var(--participants-hv);
+            background-color: var(--members-hv);
         }
     }
     .avatar {

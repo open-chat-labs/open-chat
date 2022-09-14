@@ -34,6 +34,7 @@ export type GroupNotification = {
 export type SubscriptionExistsResponse = boolean;
 
 export type NotificationStatus =
+    | "pending-init"
     | "unsupported"
     | "prompt"
     | "soft-denied"

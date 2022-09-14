@@ -39,7 +39,7 @@ export class RtcConnectionsManager {
             });
 
             this._peer.on("connection", (conn) => {
-                console.log("p: connection receieved on the peer: ", conn.peer);
+                console.log("p: connection received on the peer: ", conn.peer);
                 this.cacheConnection(me, conn.peer, conn);
             });
 

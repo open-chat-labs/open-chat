@@ -17,12 +17,12 @@
     const dispatch = createEventDispatcher();
     let usersToAdd: UserSummary[] = [];
 
-    function cancelAddParticipant() {
-        dispatch("cancelAddParticipants");
+    function cancelAddMember() {
+        dispatch("cancelAddMembers");
     }
 
-    function saveParticipants() {
-        dispatch("saveParticipants", usersToAdd);
+    function saveMembers() {
+        dispatch("saveMembers", usersToAdd);
     }
 
     function deleteUser(ev: CustomEvent<UserSummary>) {
@@ -35,8 +35,8 @@
 </script>
 
 <SectionHeader flush={true}>
-    <h4>{$_("addParticipants")}</h4>
-    <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
+    <h4>{$_("addMembers")}</h4>
+    <span title={$_("close")} class="close" on:click={cancelAddMember}>
         <HoverIcon>
             {#if closeIcon === "close"}
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -65,8 +65,8 @@
     <Button
         disabled={busy || usersToAdd.length === 0}
         loading={busy}
-        on:click={saveParticipants}
-        fill={true}>{$_("addParticipants")}</Button>
+        on:click={saveMembers}
+        fill={true}>{$_("addMembers")}</Button>
 </div>
 
 <style type="text/scss">

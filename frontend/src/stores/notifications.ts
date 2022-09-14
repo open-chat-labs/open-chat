@@ -1,23 +1,17 @@
-import { derived, readable, writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import type { Notification } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { getSoftDisabled } from "../utils/caching";
 import {
+    notificationsSupported,
     permissionStateToNotificationPermission,
     permissionToStatus,
-    supported,
     trySubscribe,
 } from "../utils/notifications";
 
-const isSupported = supported();
-
-export const notificationsSupported = readable<boolean>(isSupported);
-
 export const notificationsSoftDisabled = writable<boolean>(false);
 
-export const notificationPermission = writable<NotificationPermission>(
-    isSupported ? "default" : "denied"
-);
+export const notificationPermission = writable<NotificationPermission | "pending-init">("pending-init");
 
 function convertAndSubscribe(
     api: ServiceContainer,
@@ -37,7 +31,10 @@ export async function initNotificationStores(
     userId: string,
     onNotification: (notification: Notification) => void
 ): Promise<void> {
-    if (!isSupported) return;
+    if (!notificationsSupported) {
+        notificationPermission.set("denied");
+        return;
+    }
     const softDisabled = await getSoftDisabled();
     notificationsSoftDisabled.set(softDisabled);
     if (navigator.permissions) {
@@ -57,10 +54,9 @@ export async function initNotificationStores(
 }
 
 export const notificationStatus = derived(
-    [notificationsSupported, notificationsSoftDisabled, notificationPermission],
-
-    ([$supported, $softDisabled, $perm]) => {
-        if (!$supported) {
+    [notificationsSoftDisabled, notificationPermission],
+    ([$softDisabled, $perm]) => {
+        if (!notificationsSupported) {
             return "unsupported";
         }
         if ($softDisabled) {

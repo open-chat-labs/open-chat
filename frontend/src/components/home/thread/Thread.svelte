@@ -31,7 +31,9 @@
         canPinMessages,
         canReactToMessages,
         canReplyInThread,
+        containsReaction,
         createMessage,
+        findMessageById,
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
@@ -40,7 +42,6 @@
         replaceAffected,
         replaceLocal,
         serialiseMessageForRtc,
-        updateEventPollContent,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
@@ -56,7 +57,6 @@
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
-    import { selectReaction, toggleReactionInEventList } from "../../../stores/reactions";
     import { immutableStore } from "../../../stores/immutable";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
@@ -64,7 +64,6 @@
     import { isTyping, typing } from "../../../stores/typing";
     import { rtcConnectionsManager } from "../../../domain/webrtc/RtcConnectionsManager";
     import type {
-        RemoteUserDeletedMessage,
         RemoteUserRemovedMessage,
         RemoteUserSentMessage,
         RemoteUserToggledReaction,
@@ -73,7 +72,9 @@
     import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
-    import { threadsFollowedByMeStore } from "stores/chat";
+    import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
+    import { localMessageUpdates } from "../../../stores/localMessageUpdates";
+    import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -99,7 +100,11 @@
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
-    let events: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
+    let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
+
+    $: events = derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
+        return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates)
+    });
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
@@ -114,7 +119,7 @@
                     true
                 );
             } else {
-                events.set([]);
+                serverEventsStore.set([]);
             }
         } else {
             // we haven't changed the thread we are looking at, but the thread's latest index has changed (i.e. an event has been added by someone else)
@@ -136,7 +141,6 @@
     $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
@@ -183,10 +187,10 @@
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
             if (clearEvents) {
-                events.set([]);
+                serverEventsStore.set([]);
             }
             const [updated, _] = await handleEventsResponse($events, eventsResponse);
-            events.set(
+            serverEventsStore.set(
                 dedupe(
                     (a, b) => a.index === b.index,
                     updated.sort((a, b) => a.index - b.index)
@@ -237,7 +241,6 @@
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
-
         const updated = replaceAffected(
             replaceLocal(
                 currentUser.userId,
@@ -317,10 +320,10 @@
             remoteUserRemovedMessage(parsed);
         }
         if (kind === "remote_user_deleted_message") {
-            remoteUserDeletedMessage(parsed);
+            localMessageUpdates.markDeleted(parsed.messageId.toString(), parsed.userId);
         }
         if (kind === "remote_user_undeleted_message") {
-            replaceMessageContent(parsed.message.messageId, parsed.message.content);
+            localMessageUpdates.markUndeleted(parsed.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
             remoteUserSentMessage(parsed);
@@ -332,27 +335,19 @@
         removeMessage(message.messageId, message.userId);
     }
 
-    function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
-        replaceMessageContent(message.messageId, {
-            kind: "deleted_content",
-            deletedBy: currentUser.userId,
-            timestamp: BigInt(Date.now()),
-        });
-    }
-
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        events.update((events) =>
-            toggleReactionInEventList(
-                $chat,
-                message.userId,
-                events,
-                message.messageId,
-                message.reaction,
-                controller.chatUserIds,
-                currentUser.userId,
-                threadRootMessageIndex
-            )
-        );
+        const matchingMessage = findMessageById(message.messageId, $events);
+
+        if (matchingMessage !== undefined) {
+            const messageIdString = message.messageId.toString();
+            const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
+
+            localMessageUpdates.markReaction(messageIdString, {
+                reaction: message.reaction,
+                kind: exists ? "remove" : "add",
+                userId: message.userId
+            });
+        }
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
@@ -387,7 +382,7 @@
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             unconfirmed.add(unconfirmedKey, event);
-            events.update((evts) => [...evts, event]);
+            serverEventsStore.update((evts) => [...evts, event]);
             scrollBottom();
             messagesRead.markThreadRead($chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
@@ -435,7 +430,7 @@
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
-            events.update((events) =>
+            serverEventsStore.update((events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
                         return confirmed;
@@ -447,7 +442,7 @@
     }
 
     function removeMessage(messageId: bigint, userId: string) {
-        events.update((evts) =>
+        serverEventsStore.update((evts) =>
             evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
         );
         if (userId === currentUser.userId) {
@@ -474,25 +469,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            const event = { ...editingEvent, event: msg! };
-            const original = replaceEvent(event);
-            api.editMessage($chat, msg, threadRootMessageIndex)
-                .then((resp) => {
-                    if (resp !== "success") {
-                        rollbar.warn("Error response editing", resp);
-                        toastStore.showFailureToast("errorEditingMessage");
-                        if (original !== undefined) {
-                            replaceEvent(original);
-                        }
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Exception sending message", err);
-                    toastStore.showFailureToast("errorEditingMessage");
-                    if (original !== undefined) {
-                        replaceEvent(original);
-                    }
-                });
+            controller.editMessage(msg, threadRootMessageIndex);
         }
     }
 
@@ -578,49 +555,12 @@
             return;
         }
 
-        events.update((events) =>
-            events.map((e) =>
-                updateEventPollContent(
-                    ev.detail.messageIndex,
-                    ev.detail.answerIndex,
-                    ev.detail.type,
-                    currentUser.userId,
-                    e
-                )
-            )
-        );
-
-        api.registerPollVote(
-            $chat.chatId,
+        controller.registerPollVote(
+            threadRootMessageIndex,
+            ev.detail.messageId,
             ev.detail.messageIndex,
             ev.detail.answerIndex,
-            ev.detail.type,
-            threadRootMessageIndex
-        )
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("poll.voteFailed");
-                    rollbar.error("Poll vote failed: ", resp);
-                    console.log("poll vote failed: ", resp);
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("poll.voteFailed");
-                rollbar.error("Poll vote failed: ", err);
-                console.log("poll vote failed: ", err);
-            });
-    }
-
-    function undeleteMessage(message: Message): void {
-        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
-            kind: "remote_user_undeleted_message",
-            chatType: $chat.kind,
-            chatId: $chat.chatId,
-            message: message,
-            userId: currentUser.userId,
-            threadRootMessageIndex,
-        });
-        replaceMessageContent(BigInt(message.messageId), message.content);
+            ev.detail.type);
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
@@ -629,60 +569,7 @@
             return;
         }
 
-        const messageId = ev.detail.messageId;
-
-        replaceMessageContent(messageId, {
-            kind: "deleted_content",
-            deletedBy: currentUser.userId,
-            timestamp: BigInt(Date.now()),
-        });
-
-        api.deleteMessage($chat, messageId, threadRootMessageIndex)
-            .then((resp) => {
-                // check it worked - undo if it didn't
-                if (resp !== "success") {
-                    toastStore.showFailureToast("deleteFailed");
-                    undeleteMessage(ev.detail);
-                }
-            })
-            .catch((_err) => {
-                toastStore.showFailureToast("deleteFailed");
-                undeleteMessage(ev.detail);
-            });
-
-        rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
-            kind: "remote_user_deleted_message",
-            chatType: $chat.kind,
-            chatId: $chat.chatId,
-            messageId: messageId,
-            userId: currentUser.userId,
-            threadRootMessageIndex,
-        });
-    }
-
-    function replaceMessageContent(messageId: unknown, content: MessageContent) {
-        events.update((evts) =>
-            evts.map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    return { ...e, event: { ...e.event, content } };
-                }
-                return e;
-            })
-        );
-    }
-
-    function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
-        let original: EventWrapper<ChatEvent> | undefined = undefined;
-        events.update((evts) =>
-            evts.map((e) => {
-                if (e.index === evt.index) {
-                    original = e;
-                    return evt;
-                }
-                return e;
-            })
-        );
-        return original;
+        controller.deleteMessage(threadRootMessageIndex, ev.detail.messageId);
     }
 
     function appendMessage(message: EventWrapper<Message>): boolean {
@@ -692,7 +579,7 @@
 
         if (existing !== undefined) return false;
 
-        events.update((events) => [...events, message]);
+        serverEventsStore.update((events) => [...events, message]);
         return true;
     }
 
@@ -708,21 +595,16 @@
 
         if (!canReact) return;
 
-        selectReaction(
-            api,
-            events,
-            $chat,
-            currentUser.userId,
-            ev.detail.message.messageId,
-            ev.detail.reaction,
-            controller.chatUserIds,
-            currentUser.userId,
-            threadRootMessageIndex
-        ).then((added) => {
-            if (added) {
-                trackEvent("reacted_to_message");
-            }
-        });
+        const { message, reaction } = ev.detail;
+
+        const kind = containsReaction(currentUser.userId, reaction, message.reactions) ? "remove" : "add";
+
+        controller.selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
+            .then((success) => {
+                if (success && kind === "add") {
+                    trackEvent("reacted_to_message");
+                }
+            });
     }
 
     function goToMessageIndex(index: number) {
@@ -887,7 +769,7 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        participants={$participants}
+        members={$currentChatMembers}
         blockedUsers={$blockedUsers}
         user={controller.user}
         joining={undefined}

@@ -24,7 +24,7 @@
         Message,
         MessageAction,
         MessageContent,
-        Participant,
+        Member,
     } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -41,7 +41,7 @@
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
-    export let participants: Participant[];
+    export let members: Member[];
     export let blockedUsers: Set<string>;
     export let mode: "thread" | "message" = "message";
 
@@ -424,7 +424,7 @@
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
-        {participants} />
+        {members} />
 {/if}
 
 {#if showEmojiSearch}

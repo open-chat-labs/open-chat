@@ -73,8 +73,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bd: dark25,
         },
 
-        participants: {
-            ...defaultTheme.participants,
+        members: {
+            ...defaultTheme.members,
             bg: cardBg,
             txt: txtHigh,
             hv: dark15,

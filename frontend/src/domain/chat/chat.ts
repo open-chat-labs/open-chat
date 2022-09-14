@@ -339,7 +339,6 @@ export type ThreadSummary = {
 
 export type LocalReaction = {
     reaction: string;
-    timestamp: number;
     kind: "add" | "remove";
     userId: string; // this can actually be a remote user via rtc
 };
@@ -347,6 +346,23 @@ export type LocalReaction = {
 export type Reaction = {
     reaction: string;
     userIds: Set<string>;
+};
+
+export type LocalPollVote = {
+    answerIndex: number;
+    type: "register" | "delete";
+    userId: string;
+};
+
+export type LocalMessageUpdates = {
+    deleted?: {
+        deletedBy: string,
+        timestamp: bigint,
+    };
+    editedContent?: MessageContent,
+    reactions?: LocalReaction[];
+    pollVotes?: LocalPollVote[];
+    lastUpdated: number;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
@@ -366,11 +382,11 @@ export type DirectChatEvent =
 export type GroupChatEvent =
     | Message
     | GroupChatCreated
-    | ParticipantsAdded
-    | ParticipantJoined
-    | AggregateParticipantsJoinedOrLeft
-    | ParticipantsRemoved
-    | ParticipantLeft
+    | MembersAdded
+    | MemberJoined
+    | AggregateMembersJoinedOrLeft
+    | MembersRemoved
+    | MemberLeft
     | GroupNameChanged
     | AvatarChanged
     | MessageDeleted
@@ -380,9 +396,9 @@ export type GroupChatEvent =
     | GroupDescChanged
     | UsersBlocked
     | UsersUnblocked
-    | ParticipantAssumesSuperAdmin
-    | ParticipantRelinquishesSuperAdmin
-    | ParticipantDismissedAsSuperAdmin
+    | MemberAssumesSuperAdmin
+    | MemberRelinquishesSuperAdmin
+    | MemberDismissedAsSuperAdmin
     | RoleChanged
     | OwnershipTransferred
     | MessagePinned
@@ -399,25 +415,25 @@ export type GroupChatEvent =
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
-export type ParticipantsAdded = {
-    kind: "participants_added";
+export type MembersAdded = {
+    kind: "members_added";
     userIds: string[];
     addedBy: string;
 };
 
-export type AggregateParticipantsJoinedOrLeft = {
-    kind: "aggregate_participants_joined_left";
+export type AggregateMembersJoinedOrLeft = {
+    kind: "aggregate_members_joined_left";
     users_joined: Set<string>;
     users_left: Set<string>;
 };
 
-export type ParticipantJoined = {
-    kind: "participant_joined";
+export type MemberJoined = {
+    kind: "member_joined";
     userId: string;
 };
 
-export type ParticipantLeft = {
-    kind: "participant_left";
+export type MemberLeft = {
+    kind: "member_left";
     userId: string;
 };
 
@@ -474,8 +490,8 @@ export type UsersUnblocked = {
     unblockedBy: string;
 };
 
-export type ParticipantsRemoved = {
-    kind: "participants_removed";
+export type MembersRemoved = {
+    kind: "members_removed";
     userIds: string[];
     removedBy: string;
 };
@@ -486,18 +502,18 @@ export type OwnershipTransferred = {
     newOwner: string;
 };
 
-export type ParticipantAssumesSuperAdmin = {
-    kind: "participant_assumes_super_admin";
+export type MemberAssumesSuperAdmin = {
+    kind: "member_assumes_super_admin";
     userId: string;
 };
 
-export type ParticipantRelinquishesSuperAdmin = {
-    kind: "participant_relinquishes_super_admin";
+export type MemberRelinquishesSuperAdmin = {
+    kind: "member_relinquishes_super_admin";
     userId: string;
 };
 
-export type ParticipantDismissedAsSuperAdmin = {
-    kind: "participant_dismissed_as_super_admin";
+export type MemberDismissedAsSuperAdmin = {
+    kind: "member_dismissed_as_super_admin";
     userId: string;
 };
 
@@ -676,7 +692,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     name?: string;
     description?: string;
     avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
-    participantCount?: number;
+    memberCount?: number;
     myRole?: MemberRole;
     mentions: Mention[];
     ownerId?: string;
@@ -709,14 +725,13 @@ export type ThreadSyncDetails = {
 
 export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
 
-export type Participant = {
+export type Member = {
     role: MemberRole;
     userId: string;
 };
 
-export type FullParticipant = Participant & PartialUserSummary & { memberKind: "full_member" };
-export type BlockedParticipant = Participant &
-    PartialUserSummary & { memberKind: "blocked_member" };
+export type FullMember = Member & PartialUserSummary & { memberKind: "full_member" };
+export type BlockedMember = Member & PartialUserSummary & { memberKind: "blocked_member" };
 
 export type PermissionRole = "owner" | "admins" | "members";
 
@@ -744,15 +759,15 @@ export type GroupChatDetailsUpdatesResponse =
     | "caller_not_in_group";
 
 export type GroupChatDetails = {
-    participants: Participant[];
+    members: Member[];
     blockedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
 };
 
 export type GroupChatDetailsUpdates = {
-    participantsAddedOrUpdated: Participant[];
-    participantsRemoved: Set<string>;
+    membersAddedOrUpdated: Member[];
+    membersRemoved: Set<string>;
     blockedUsersAdded: Set<string>;
     blockedUsersRemoved: Set<string>;
     pinnedMessagesRemoved: Set<number>;
@@ -789,7 +804,7 @@ export type GroupChatSummary = DataContent &
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
-        participantCount: number;
+        memberCount: number;
         mentions: Mention[];
         ownerId: string;
         public: boolean;
@@ -815,7 +830,7 @@ export type Mention = {
     messageIndex: number;
 };
 
-export type CandidateParticipant = {
+export type CandidateMember = {
     role: MemberRole;
     user: UserSummary;
 };
@@ -825,7 +840,7 @@ export type CandidateGroupChat = {
     description: string;
     historyVisible: boolean;
     isPublic: boolean;
-    participants: CandidateParticipant[];
+    members: CandidateMember[];
     avatar?: DataContent;
     permissions: GroupPermissions;
 };
@@ -886,32 +901,32 @@ export type CreateGroupThrottled = {
     kind: "throttled";
 };
 
-export type AddParticipantsResponse =
-    | AddParticipantsSuccess
-    | AddParticipantsNotAuthorised
-    | ParticipantLimitReached
-    | AddParticipantsPartialSuccess
-    | AddParticipantsFailed
-    | AddParticipantsNotInGroup;
+export type AddMembersResponse =
+    | AddMembersSuccess
+    | AddMembersNotAuthorised
+    | MemberLimitReached
+    | AddMembersPartialSuccess
+    | AddMembersFailed
+    | AddMembersNotInGroup;
 
-export type AddParticipantsSuccess = {
-    kind: "add_participants_success";
+export type AddMembersSuccess = {
+    kind: "add_members_success";
 };
 
-export type AddParticipantsNotInGroup = {
-    kind: "add_participants_not_in_group";
+export type AddMembersNotInGroup = {
+    kind: "add_members_not_in_group";
 };
 
-export type AddParticipantsNotAuthorised = {
-    kind: "add_participants_not_authorised";
+export type AddMembersNotAuthorised = {
+    kind: "add_members_not_authorised";
 };
 
-export type ParticipantLimitReached = {
-    kind: "participant_limit_reached";
+export type MemberLimitReached = {
+    kind: "member_limit_reached";
 };
 
-export type AddParticipantsPartialSuccess = {
-    kind: "add_participants_partial_success";
+export type AddMembersPartialSuccess = {
+    kind: "add_members_partial_success";
     usersAdded: string[];
     usersAlreadyInGroup: string[];
     usersBlockedFromGroup: string[];
@@ -919,8 +934,8 @@ export type AddParticipantsPartialSuccess = {
     errors: string[];
 };
 
-export type AddParticipantsFailed = {
-    kind: "add_participants_failed";
+export type AddMembersFailed = {
+    kind: "add_members_failed";
     usersAlreadyInGroup: string[];
     usersBlockedFromGroup: string[];
     usersWhoBlockedRequest: string[];
@@ -1038,7 +1053,7 @@ export type MakeGroupPrivateResponse =
     | "already_private"
     | "success";
 
-export type RemoveParticipantResponse =
+export type RemoveMemberResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
@@ -1079,7 +1094,7 @@ export type JoinGroupResponse =
     | { kind: "group_not_public" }
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
-    | { kind: "participant_limit_reached" }
+    | { kind: "member_limit_reached" }
     | InternalError;
 
 export type MarkReadRequest = {

@@ -43,7 +43,7 @@
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
     import { isProposalGroup } from "../../stores/chat";
-    import { notificationsSupported } from "../../stores/notifications";
+    import { notificationsSupported } from "../../utils/notifications";
 
     const dispatch = createEventDispatcher();
 
@@ -101,12 +101,12 @@
         dispatch("showProposalFilters");
     }
 
-    function showParticipants() {
-        dispatch("showParticipants");
+    function showMembers() {
+        dispatch("showMembers");
     }
 
-    function addParticipants() {
-        dispatch("addParticipants");
+    function addMembers() {
+        dispatch("addMembers");
     }
 
     function leaveGroup() {
@@ -128,8 +128,8 @@
             userStatus: UserStatus.None,
             avatarUrl: groupAvatarUrl(chatSummary),
             subtext: chatSummary.public
-                ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
-                : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
+                ? $_("publicGroupWithN", { values: { number: chatSummary.memberCount } })
+                : $_("privateGroupWithN", { values: { number: chatSummary.memberCount } }),
             typing: getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
@@ -197,7 +197,7 @@
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isGroup}
-                <Link on:click={showParticipants}>
+                <Link on:click={showMembers}>
                     {chat.subtext}
                 </Link>
             {:else}
@@ -271,20 +271,20 @@
                                     <div slot="text">{$_("leaveGroup")}</div>
                                 </MenuItem>
                             {/if}
-                            <MenuItem on:click={showParticipants}>
+                            <MenuItem on:click={showMembers}>
                                 <AccountMultiple
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("participants")}</div>
+                                <div slot="text">{$_("members")}</div>
                             </MenuItem>
                             {#if canAddMembers($selectedChatSummary)}
-                                <MenuItem on:click={addParticipants}>
+                                <MenuItem on:click={addMembers}>
                                     <AccountPlusOutline
                                         size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("addParticipants")}</div>
+                                    <div slot="text">{$_("addMembers")}</div>
                                 </MenuItem>
                             {/if}
                             {#if $isProposalGroup}
@@ -307,7 +307,7 @@
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
-                        {#if $notificationsSupported}
+                        {#if notificationsSupported}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                     <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
