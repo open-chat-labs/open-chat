@@ -29,7 +29,7 @@ async fn c2c_join_group_v2(args: Args) -> Response {
             }
         }
         Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => UserNotFound,
-        Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_principal': {error:?}")),
+        Err(error) => InternalError(format!("Failed to call 'user_index::c2c_lookup_principal': {error:?}")),
     }
 }
 
