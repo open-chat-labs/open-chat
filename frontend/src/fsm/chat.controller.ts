@@ -45,6 +45,7 @@ import {
     serverEventsStore,
     currentChatReplyingTo,
     currentChatUserIds,
+    nextMessageIndex,
 } from "../stores/chat";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -405,6 +406,7 @@ export class ChatController {
         preserveFocus: boolean,
         focusThreadMessageIndex?: number
     ): Promise<void> {
+        // FIXME - I don't remember what this is being used for
         this._focusThreadMessageIndex = focusThreadMessageIndex;
         return this.loadEventWindow(messageIndex, preserveFocus);
     }
@@ -477,21 +479,6 @@ export class ChatController {
 
     getNextEventIndex(): number {
         return getNextEventIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
-    }
-
-    createMessage(
-        textContent: string | undefined,
-        fileToAttach: MessageContent | undefined
-    ): Message {
-        const nextMessageIndex = this.getNextMessageIndex();
-
-        return createMessage(
-            this.user.userId,
-            nextMessageIndex,
-            textContent,
-            get(currentChatReplyingTo),
-            fileToAttach
-        );
     }
 
     confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
@@ -638,7 +625,7 @@ export function selectReaction(
         });
 }
 
-function appendMessage(chatId: string, message: EventWrapper<Message>): boolean {
+export function appendMessage(chatId: string, message: EventWrapper<Message>): boolean {
     const existing = get(eventsStore).find(
         (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
     );
@@ -1198,4 +1185,18 @@ export function pinMessage(
                 removePinnedMessage(chatId, messageIndex);
             });
     }
+}
+
+export function createNew(
+    userId: string,
+    textContent: string | undefined,
+    fileToAttach: MessageContent | undefined
+): Message {
+    return createMessage(
+        userId,
+        get(nextMessageIndex),
+        textContent,
+        get(currentChatReplyingTo),
+        fileToAttach
+    );
 }

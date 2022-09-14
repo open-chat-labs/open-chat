@@ -18,6 +18,8 @@ import {
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
+    getNextEventIndex,
+    getNextMessageIndex,
     mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
@@ -127,6 +129,8 @@ export const chatSummariesListStore = derived(
 export const selectedChatId = writable<string | undefined>(undefined);
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
+export const chatUpdatedStore: Writable<{ affectedEvents: number[] } | undefined> =
+    writable(undefined);
 
 export const selectedServerChatStore = derived(
     [serverChatSummariesStore, selectedChatId],
@@ -143,6 +147,22 @@ export const selectedChatStore = derived(
         return $chatSummaries[$selectedChatId];
     }
 );
+
+export const nextMessageIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+    if ($selectedServerChatStore === undefined) return 0;
+    return getNextMessageIndex(
+        $selectedServerChatStore,
+        unconfirmed.getMessages($selectedServerChatStore.chatId)
+    );
+});
+
+export const nextEventIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+    if ($selectedServerChatStore === undefined) return 0;
+    return getNextEventIndex(
+        $selectedServerChatStore,
+        unconfirmed.getMessages($selectedServerChatStore.chatId)
+    );
+});
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
     return (
@@ -436,8 +456,9 @@ async function loadChats(api: ServiceContainer) {
             if (selectedChatInvalid) {
                 clearSelectedChat();
             } else if (selectedChat !== undefined) {
-                // FIXME - this is a tricky one
-                // selectedChat.chatUpdated(chatsResponse.affectedEvents[selectedChat.chatId] ?? []);
+                chatUpdatedStore.set({
+                    affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
+                });
             }
 
             if (chatsResponse.avatarIdUpdate !== undefined) {
