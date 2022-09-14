@@ -402,3 +402,9 @@ pub struct GovernanceProposalsSubtype {
     pub is_nns: bool,
     pub governance_canister_id: CanisterId,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct GroupRules {
+    pub text: String,
+    pub enabled: bool,
+}

@@ -4,12 +4,12 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::update_group::*;
-use group_index_canister::{c2c_update_group, MAX_GROUP_DESCRIPTION_LENGTH};
+use group_index_canister::{c2c_update_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_RULES_LENGTH};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged,
-    PermissionsChanged, UserId, MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupNameChanged, GroupRulesChanged, PermissionsChanged, UserId, MAX_AVATAR_SIZE,
 };
 use utils::group_validation::{validate_name, NameValidationError};
 
@@ -20,6 +20,7 @@ async fn update_group(mut args: Args) -> Response {
 
     args.name = args.name.trim().to_string();
     args.description = args.description.trim().to_string();
+    args.rules.text = args.rules.text.trim().to_string();
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -76,6 +77,16 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
+    } else if args.rules.enabled && args.rules.text.is_empty() {
+        Err(RulesTooShort(FieldTooShortResult {
+            length_provided: args.rules.text.len() as u32,
+            min_length: 1,
+        }))
+    } else if args.rules.text.len() > MAX_GROUP_RULES_LENGTH as usize {
+        Err(RulesTooLong(FieldTooLongResult {
+            length_provided: args.rules.text.len() as u32,
+            max_length: MAX_GROUP_RULES_LENGTH,
+        }))
     } else if avatar_update_size > MAX_AVATAR_SIZE {
         Err(AvatarTooBig(FieldTooLongResult {
             length_provided: avatar_update_size,
@@ -129,6 +140,19 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         );
 
         runtime_state.data.description = args.description;
+    }
+
+    if runtime_state.data.rules.enabled != args.rules.enabled || runtime_state.data.rules.text != args.rules.text {
+        events.push_main_event(
+            ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
+                enabled: args.rules.enabled,
+                prev_enabled: runtime_state.data.rules.enabled,
+                changed_by: my_user_id,
+            })),
+            now,
+        );
+
+        runtime_state.data.rules = args.rules;
     }
 
     if let Some(avatar) = args.avatar.expand() {

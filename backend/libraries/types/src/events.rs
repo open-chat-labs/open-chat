@@ -9,6 +9,7 @@ pub enum ChatEvent {
     DirectChatCreated(DirectChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
+    GroupRulesChanged(GroupRulesChanged),
     AvatarChanged(AvatarChanged),
     OwnershipTransferred(OwnershipTransferred),
     ParticipantsAdded(ParticipantsAdded),
@@ -72,6 +73,13 @@ pub struct GroupNameChanged {
 pub struct GroupDescriptionChanged {
     pub new_description: String,
     pub previous_description: String,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupRulesChanged {
+    pub enabled: bool,
+    pub prev_enabled: bool,
     pub changed_by: UserId,
 }
 

@@ -1199,6 +1199,7 @@ impl ChatEvents {
             ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
             ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g.clone()),
             ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g.clone()),
+            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g.clone()),
             ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g.clone()),
             ChatEventInternal::OwnershipTransferred(e) => ChatEvent::OwnershipTransferred(*e.clone()),
             ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p.clone()),

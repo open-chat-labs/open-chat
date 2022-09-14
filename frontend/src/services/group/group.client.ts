@@ -297,6 +297,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                               },
                           },
                 permissions: [],
+                rules: {
+                    text: "",
+                    enabled: false,
+                },
             }),
             updateGroupResponse
         );

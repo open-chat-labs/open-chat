@@ -5,11 +5,11 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
-    GroupInviteCodeChanged, GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
-    ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
-    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
-    UsersBlocked, UsersUnblocked,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged, MessageContentInternal, MessageId,
+    MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin,
+    ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded,
+    ParticipantsRemoved, PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary,
+    TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -23,6 +23,7 @@ pub enum ChatEventInternal {
     GroupChatCreated(Box<GroupChatCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
     GroupDescriptionChanged(Box<GroupDescriptionChanged>),
+    GroupRulesChanged(Box<GroupRulesChanged>),
     AvatarChanged(Box<AvatarChanged>),
     OwnershipTransferred(Box<OwnershipTransferred>),
     ParticipantsAdded(Box<ParticipantsAdded>),
@@ -75,6 +76,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupChatCreated(_)
                 | ChatEventInternal::GroupNameChanged(_)
                 | ChatEventInternal::GroupDescriptionChanged(_)
+                | ChatEventInternal::GroupRulesChanged(_)
                 | ChatEventInternal::AvatarChanged(_)
                 | ChatEventInternal::OwnershipTransferred(_)
                 | ChatEventInternal::ParticipantsAdded(_)
@@ -179,6 +181,7 @@ impl ChatEventInternal {
             ChatEventInternal::GroupChatCreated(g) => Some(g.created_by),
             ChatEventInternal::GroupNameChanged(n) => Some(n.changed_by),
             ChatEventInternal::GroupDescriptionChanged(d) => Some(d.changed_by),
+            ChatEventInternal::GroupRulesChanged(d) => Some(d.changed_by),
             ChatEventInternal::AvatarChanged(a) => Some(a.changed_by),
             ChatEventInternal::OwnershipTransferred(o) => Some(o.old_owner),
             ChatEventInternal::ParticipantsAdded(p) => Some(p.added_by),
