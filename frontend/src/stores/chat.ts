@@ -10,7 +10,7 @@ import type {
     ThreadSyncDetails,
 } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
-import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
+import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     compareChats,
@@ -30,9 +30,8 @@ import { pinnedChatsStore } from "./pinnedChats";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
-import type { CreatedUser, UserSummary } from "../domain/user/user";
+import type { CreatedUser } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
-import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
@@ -79,19 +78,6 @@ type LoadedEventWindow = {
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
-export const selectedChatControllerStore = writable<ChatController | undefined>(undefined);
-
-export const isProposalGroup = derived(
-    [selectedChatControllerStore],
-    ([$selectedChatControllerStore]) => {
-        return (
-            $selectedChatControllerStore !== undefined &&
-            $selectedChatControllerStore.chatVal.kind === "group_chat" &&
-            $selectedChatControllerStore.chatVal.subtype?.kind === "governance_proposals"
-        );
-    }
-);
-
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
@@ -137,6 +123,34 @@ export const chatSummariesListStore = derived(
     }
 );
 
+export const selectedChatId = writable<string | undefined>(undefined);
+export const chatsLoading = writable(false);
+export const chatsInitialised = writable(false);
+
+export const selectedServerChatStore = derived(
+    [serverChatSummariesStore, selectedChatId],
+    ([$serverChats, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $serverChats[$selectedChatId];
+    }
+);
+
+export const selectedChatStore = derived(
+    [chatSummariesStore, selectedChatId],
+    ([$chatSummaries, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $chatSummaries[$selectedChatId];
+    }
+);
+
+export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
+    return (
+        $selectedChat !== undefined &&
+        $selectedChat.kind === "group_chat" &&
+        $selectedChat.subtype?.kind === "governance_proposals"
+    );
+});
+
 export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
     return summaries.reduce((result, chat) => {
         if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
@@ -161,29 +175,32 @@ export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsB
 });
 
 export const proposalTopicsStore = derived(
-    [selectedChatControllerStore, snsFunctions],
-    ([selectedChat, snsFunctions]): Map<number, string> => {
-        if (selectedChat !== undefined) {
-            const chat = get(selectedChat.chat);
-            if (chat.kind === "group_chat" && chat.subtype !== undefined) {
-                if (chat.subtype.isNns) {
-                    return new Map([
-                        [1, "Neuron Management"],
-                        [3, "Network Economics"],
-                        [4, "Governance"],
-                        [5, "Node Admin"],
-                        [6, "Participant Management"],
-                        [7, "Subnet Management"],
-                        [8, "Network Canister Management"],
-                        [9, "KYC"],
-                        [10, "Node Provider Rewards"],
-                        [11, "SNS Decentralization Sale"],
-                    ]);
-                } else {
-                    const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
-                    if (snsFunctionsMap !== undefined) {
-                        return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
-                    }
+    [selectedChatStore, snsFunctions],
+    ([$selectedChat, $snsFunctions]): Map<number, string> => {
+        if (
+            $selectedChat !== undefined &&
+            $selectedChat.kind === "group_chat" &&
+            $selectedChat.subtype !== undefined
+        ) {
+            if ($selectedChat.subtype.isNns) {
+                return new Map([
+                    [1, "Neuron Management"],
+                    [3, "Network Economics"],
+                    [4, "Governance"],
+                    [5, "Node Admin"],
+                    [6, "Participant Management"],
+                    [7, "Subnet Management"],
+                    [8, "Network Canister Management"],
+                    [9, "KYC"],
+                    [10, "Node Provider Rewards"],
+                    [11, "SNS Decentralization Sale"],
+                ]);
+            } else {
+                const snsFunctionsMap = $snsFunctions.get(
+                    $selectedChat.subtype.governanceCanisterId
+                );
+                if (snsFunctionsMap !== undefined) {
+                    return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
                 }
             }
         }
@@ -203,44 +220,25 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
-export const selectedChatId = writable<string | undefined>(undefined);
-export const chatsLoading = writable(false);
-export const chatsInitialised = writable(false);
-
-export const selectedServerChatStore = derived(
-    [serverChatSummariesStore, selectedChatId],
-    ([$serverChats, $selectedChatId]) => {
-        if ($selectedChatId === undefined) return undefined;
-        return $serverChats[$selectedChatId];
-    }
-);
-
-export const selectedChatStore = derived(
-    [chatSummariesStore, selectedChatId],
-    ([$chatSummaries, $selectedChatId]) => {
-        if ($selectedChatId === undefined) return undefined;
-        return $chatSummaries[$selectedChatId];
-    }
-);
-
 export function setSelectedChat(
     api: ServiceContainer,
-    chatId: string,
+    chat: ChatSummary,
     messageIndex?: number,
     threadMessageIndex?: number
 ): void {
-    const summaries = get(chatSummariesStore);
-    const currentUser = get(currentUserStore);
+    // const summaries = get(chatSummariesStore);
+    // const currentUser = get(currentUserStore);
     const currentScrollStrategy = get(scrollStrategy);
 
-    if (currentUser === undefined) return;
+    // if (currentUser === undefined) return;
 
-    const chat = summaries[chatId];
+    // const chat = summaries[chatId];
 
-    if (chat === undefined) return;
+    // if (chat === undefined) return;
 
-    closeNotificationsForChat(chatId);
+    closeNotificationsForChat(chat.chatId);
 
+    // TODO don't think this should be in here really
     if (
         chat.kind === "group_chat" &&
         chat.subtype?.kind === "governance_proposals" &&
@@ -249,13 +247,13 @@ export function setSelectedChat(
         api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
     }
 
-    const user: UserSummary = {
-        kind: "user",
-        userId: currentUser.userId,
-        username: currentUser.username,
-        lastOnline: Date.now(),
-        updated: BigInt(Date.now()),
-    };
+    // const user: UserSummary = {
+    //     kind: "user",
+    //     userId: currentUser.userId,
+    //     username: currentUser.username,
+    //     lastOnline: Date.now(),
+    //     updated: BigInt(Date.now()),
+    // };
 
     if (messageIndex === undefined) {
         if (currentScrollStrategy === "firstMention") {
@@ -267,27 +265,39 @@ export function setSelectedChat(
         }
     }
 
-    const readableChatSummary = readable(chat, (set) =>
-        serverChatSummariesStore.subscribe((summaries) => {
-            if (summaries[chat.chatId] !== undefined) {
-                set(summaries[chat.chatId]);
-            }
-        })
-    );
+    // const readableChatSummary = readable(chat, (set) =>
+    //     serverChatSummariesStore.subscribe((summaries) => {
+    //         if (summaries[chat.chatId] !== undefined) {
+    //             set(summaries[chat.chatId]);
+    //         }
+    //     })
+    // );
 
+    // initialise a bunch of stores
+    serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+    focusMessageIndex.set(chat.chatId, messageIndex);
+    currentChatMembers.set(chat.chatId, []);
+    currentChatBlockedUsers.set(chat.chatId, new Set<string>());
+    currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+    currentChatUserIds.set(
+        chat.chatId,
+        new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
+    );
     resetFilteredProposalsStore(chat);
     selectedChatId.set(chat.chatId);
 
-    selectedChatControllerStore.set(
-        new ChatController(
-            api,
-            user,
-            readableChatSummary,
-            messageIndex,
-            threadMessageIndex,
-            (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
-        )
-    );
+    console.log("would have constructed chat controller");
+
+    // selectedChatControllerStore.set(
+    //     new ChatController(
+    //         api,
+    //         user,
+    //         readableChatSummary,
+    //         messageIndex,
+    //         threadMessageIndex,
+    //         (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
+    //     )
+    // );
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -346,7 +356,6 @@ export function clearSelectedChat(): void {
         }
         return undefined;
     });
-    selectedChatControllerStore.set(undefined);
 }
 
 async function loadChats(api: ServiceContainer) {
@@ -361,7 +370,7 @@ async function loadChats(api: ServiceContainer) {
 
         chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
-        const selectedChat = get(selectedChatControllerStore);
+        const selectedChat = get(selectedChatStore);
         const currentState: CurrentChatState = {
             chatSummaries: chats,
             blockedUsers: get(blockedUsers),
@@ -408,7 +417,7 @@ async function loadChats(api: ServiceContainer) {
                 pinnedChatsStore.set(chatsResponse.pinnedChats);
             }
 
-            const selectedChat = get(selectedChatControllerStore);
+            const selectedChat = get(selectedChatStore);
             let selectedChatInvalid = true;
 
             serverChatSummariesStore.set(
@@ -424,7 +433,8 @@ async function loadChats(api: ServiceContainer) {
             if (selectedChatInvalid) {
                 clearSelectedChat();
             } else if (selectedChat !== undefined) {
-                selectedChat.chatUpdated(chatsResponse.affectedEvents[selectedChat.chatId] ?? []);
+                // FIXME - this is a tricky one
+                // selectedChat.chatUpdated(chatsResponse.affectedEvents[selectedChat.chatId] ?? []);
             }
 
             if (chatsResponse.avatarIdUpdate !== undefined) {

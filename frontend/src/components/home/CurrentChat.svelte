@@ -70,13 +70,13 @@
         currentChatDraftMessage,
     } from "../../stores/chat";
 
-    export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
+    export let currentChatMessages: CurrentChatMessages | undefined;
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
-    const createdUser = getContext<CreatedUser>(currentUserKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
     $: chatId = chat.chatId;
     let previousChatId: string | undefined = undefined;
@@ -115,7 +115,6 @@
 
     let unsub = messagesRead.subscribe(() => {
         unreadMessages = getUnreadMessageCount(chat);
-        console.log("this should be running: ", unreadMessages);
         firstUnreadMention = getFirstUnreadMention(chat);
         firstUnreadMessage = getFirstUnreadMessageIndex(chat);
     });
@@ -133,7 +132,7 @@
     function onMessageRead(
         ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
     ) {
-        messageRead(chat, createdUser.userId, ev.detail.messageIndex, ev.detail.messageId);
+        messageRead(chat, user.userId, ev.detail.messageIndex, ev.detail.messageId);
     }
 
     function createPoll() {
@@ -212,46 +211,47 @@
                 return;
             }
 
-            const msg = controller.createMessage(textContent, fileToAttach);
-            api.sendMessage(chat, controller.user, mentioned, msg)
-                .then(([resp, msg]) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        controller.confirmMessage(msg, resp);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            api.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                createdUser.cryptoAccount
-                            );
-                        }
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
-                        } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
-                        }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-                    } else {
-                        removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                    }
-                })
-                .catch((err) => {
-                    removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
-                    console.log(err);
-                    toastStore.showFailureToast("errorSendingMessage");
-                    rollbar.error("Exception sending message", err);
-                });
+            // FIXME - come back to this
+            // const msg = controller.createMessage(textContent, fileToAttach);
+            // api.sendMessage(chat, controller.user, mentioned, msg)
+            //     .then(([resp, msg]) => {
+            //         if (resp.kind === "success" || resp.kind === "transfer_success") {
+            //             controller.confirmMessage(msg, resp);
+            //             if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+            //                 api.refreshAccountBalance(
+            //                     msg.content.transfer.token,
+            //                     createdUser.cryptoAccount
+            //                 );
+            //             }
+            //             if (chat.kind === "direct_chat") {
+            //                 trackEvent("sent_direct_message");
+            //             } else {
+            //                 if (chat.public) {
+            //                     trackEvent("sent_public_group_message");
+            //                 } else {
+            //                     trackEvent("sent_private_group_message");
+            //                 }
+            //             }
+            //             if (msg.repliesTo !== undefined) {
+            //                 // double counting here which I think is OK since we are limited to string events
+            //                 trackEvent("replied_to_message");
+            //             }
+            //         } else {
+            //             removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
+            //             rollbar.warn("Error response sending message", resp);
+            //             toastStore.showFailureToast("errorSendingMessage");
+            //         }
+            //     })
+            //     .catch((err) => {
+            //         removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
+            //         console.log(err);
+            //         toastStore.showFailureToast("errorSendingMessage");
+            //         rollbar.error("Exception sending message", err);
+            //     });
 
-            const nextEventIndex = controller.getNextEventIndex();
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            controller.sendMessage(event);
+            // const nextEventIndex = controller.getNextEventIndex();
+            // const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+            // controller.sendMessage(event);
         }
     }
 
@@ -270,40 +270,41 @@
             content.caption = "";
         }
 
-        msg = {
-            kind: "message",
-            messageId: newMessageId(),
-            messageIndex: controller.getNextMessageIndex(),
-            sender: controller.user.userId,
-            content,
-            repliesTo: undefined,
-            reactions: [],
-            edited: false,
-            forwarded: msg.content.kind !== "giphy_content",
-        };
+        // FIXME - come back to this
+        // msg = {
+        //     kind: "message",
+        //     messageId: newMessageId(),
+        //     messageIndex: controller.getNextMessageIndex(),
+        //     sender: controller.user.userId,
+        //     content,
+        //     repliesTo: undefined,
+        //     reactions: [],
+        //     edited: false,
+        //     forwarded: msg.content.kind !== "giphy_content",
+        // };
 
-        controller.api
-            .sendMessage(chat, controller.user, [], msg)
-            .then(([resp, msg]) => {
-                if (resp.kind === "success") {
-                    controller.confirmMessage(msg, resp);
-                    trackEvent("forward_message");
-                } else {
-                    removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
-                    rollbar.warn("Error response forwarding message", resp);
-                    toastStore.showFailureToast("errorSendingMessage");
-                }
-            })
-            .catch((err) => {
-                removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
-                console.log(err);
-                toastStore.showFailureToast("errorSendingMessage");
-                rollbar.error("Exception forwarding message", err);
-            });
+        // controller.api
+        //     .sendMessage(chat, controller.user, [], msg)
+        //     .then(([resp, msg]) => {
+        //         if (resp.kind === "success") {
+        //             controller.confirmMessage(msg, resp);
+        //             trackEvent("forward_message");
+        //         } else {
+        //             removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
+        //             rollbar.warn("Error response forwarding message", resp);
+        //             toastStore.showFailureToast("errorSendingMessage");
+        //         }
+        //     })
+        //     .catch((err) => {
+        //         removeMessage(chat, createdUser.userId, msg.messageId, createdUser.userId);
+        //         console.log(err);
+        //         toastStore.showFailureToast("errorSendingMessage");
+        //         rollbar.error("Exception forwarding message", err);
+        //     });
 
-        const nextEventIndex = controller.getNextEventIndex();
-        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-        controller.sendMessage(event);
+        // const nextEventIndex = controller.getNextEventIndex();
+        // const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+        // controller.sendMessage(event);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -365,6 +366,7 @@
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     <CurrentChatMessages
+        bind:this={currentChatMessages}
         on:replyPrivatelyTo
         on:replyTo={replyTo}
         on:openThread
@@ -375,7 +377,6 @@
         on:closeThread
         on:initiateThread
         {chat}
-        {controller}
         canPin={canPinMessages(chat)}
         canBlockUser={canBlockUsers(chat)}
         canDelete={canDeleteOtherUsersMessages(chat)}
@@ -397,7 +398,7 @@
             textContent={$currentChatTextContent}
             members={$currentChatMembers}
             blockedUsers={$currentChatBlockedUsers}
-            user={controller.user}
+            {user}
             mode={"message"}
             {joining}
             {preview}
@@ -409,8 +410,8 @@
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
             on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => startTyping(chat, createdUser.userId)}
-            on:stopTyping={() => stopTyping(chat, createdUser.userId)}
+            on:startTyping={() => startTyping(chat, user.userId)}
+            on:stopTyping={() => stopTyping(chat, user.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}

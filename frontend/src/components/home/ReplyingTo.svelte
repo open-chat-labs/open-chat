@@ -6,14 +6,14 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser } from "../../domain/user/user";
     import { iconSize } from "../../stores/iconSize";
     import { toTitleCase } from "../../utils/string";
 
     const dispatch = createEventDispatcher();
 
     export let replyingTo: EnhancedReplyContext;
-    export let user: UserSummary;
+    export let user: CreatedUser;
     export let preview: boolean;
     export let groupChat: boolean;
     export let chatId: string;

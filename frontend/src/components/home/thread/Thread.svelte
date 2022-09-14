@@ -24,7 +24,6 @@
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
     import {
-        ChatController,
         deleteMessage,
         editMessage,
         registerPollVote,
@@ -94,9 +93,8 @@
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
-    export let controller: ChatController;
     export let rootEvent: EventWrapper<Message>;
     export let focusMessageIndex: number | undefined;
     export let chat: ChatSummary;
@@ -189,7 +187,7 @@
         if (thread === undefined || chat === undefined) return;
         loading = true;
 
-        const chatId = controller.chatId;
+        const chatId = chat.chatId;
         const eventsResponse = await api.chatEvents(
             chat,
             range,
@@ -198,7 +196,7 @@
             threadRootMessageIndex,
             thread.latestEventIndex
         );
-        if (chatId !== controller.chatId) {
+        if (chatId !== chat.chatId) {
             // the chat has changed while we were loading the messages
             return;
         }
@@ -214,7 +212,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
-            makeRtcConnections(currentUser.userId, chat, $events, $userStore);
+            makeRtcConnections(user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -261,7 +259,7 @@
         if (resp === "events_failed") return [[], new Set()];
         const updated = replaceAffected(
             replaceLocal(
-                currentUser.userId,
+                user.userId,
                 chat.chatId,
                 chat.readByMe,
                 events,
@@ -273,7 +271,7 @@
 
         const userIds = userIdsFromEvents(updated);
         userIds.add(rootEvent.event.sender);
-        await updateUserStore(api, chat.chatId, currentUser.userId, userIds);
+        await updateUserStore(api, chat.chatId, user.userId, userIds);
 
         return [updated, userIds];
     }
@@ -303,13 +301,7 @@
         fileToAttach: MessageContent | undefined,
         nextMessageIndex: number
     ): Message {
-        return createMessage(
-            currentUser.userId,
-            nextMessageIndex,
-            textContent,
-            $replyingTo,
-            fileToAttach
-        );
+        return createMessage(user.userId, nextMessageIndex, textContent, $replyingTo, fileToAttach);
     }
 
     export function handleWebRtcMessage(msg: WebRtcMessage): void {
@@ -317,7 +309,7 @@
         if (chatId === undefined) return;
 
         // make sure the chatId matches
-        if (chatId !== controller.chatId) return;
+        if (chatId !== chat.chatId) return;
 
         // make sure that the root message index matches
         if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
@@ -408,20 +400,20 @@
             scrollBottom();
             messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
-            api.sendMessage(chat, controller.user, mentioned, msg, threadRootMessageIndex)
+            api.sendMessage(chat, user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             api.refreshAccountBalance(
                                 msg.content.transfer.token,
-                                currentUser.cryptoAccount
+                                user.cryptoAccount
                             );
                         }
                         trackEvent("sent_threaded_message");
                     } else {
                         unconfirmed.delete(unconfirmedKey, msg.messageId);
-                        removeMessage(msg.messageId, currentUser.userId);
+                        removeMessage(msg.messageId, user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
@@ -429,7 +421,7 @@
                 .catch((err) => {
                     console.log(err);
                     unconfirmed.delete(unconfirmedKey, msg.messageId);
-                    removeMessage(msg.messageId, currentUser.userId);
+                    removeMessage(msg.messageId, user.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
                 });
@@ -439,7 +431,7 @@
                 chatType: chat.kind,
                 chatId: chat.chatId,
                 messageEvent: serialiseMessageForRtc(event),
-                userId: currentUser.userId,
+                userId: user.userId,
                 threadRootMessageIndex,
             });
         }
@@ -467,7 +459,7 @@
         serverEventsStore.update((evts) =>
             evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
         );
-        if (userId === currentUser.userId) {
+        if (userId === user.userId) {
             rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
                 chatType: chat.kind,
@@ -526,11 +518,11 @@
     }
 
     function onStartTyping() {
-        startTyping(chat, currentUser.userId, threadRootMessageIndex);
+        startTyping(chat, user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        stopTyping(chat, currentUser.userId, threadRootMessageIndex);
+        stopTyping(chat, user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -580,7 +572,7 @@
         if ($selectedChatId !== undefined) {
             registerPollVote(
                 api,
-                currentUser.userId,
+                user.userId,
                 $selectedChatId,
                 threadRootMessageIndex,
                 ev.detail.messageId,
@@ -597,7 +589,7 @@
             return;
         }
 
-        deleteMessage(api, chat, currentUser.userId, threadRootMessageIndex, ev.detail.messageId);
+        deleteMessage(api, chat, user.userId, threadRootMessageIndex, ev.detail.messageId);
     }
 
     function appendMessage(message: EventWrapper<Message>): boolean {
@@ -625,14 +617,12 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = containsReaction(currentUser.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
+        const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
         selectReaction(
             api,
             chat,
-            currentUser.userId,
+            user.userId,
             threadRootMessageIndex,
             message.messageId,
             reaction,
@@ -680,19 +670,11 @@
     }
 
     function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(
-            controller.user.userId,
-            ev.detail.sender === controller.user.userId,
-            ev.detail
-        );
+        shareFunctions.shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
     function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(
-            controller.chatId,
-            ev.detail.messageIndex,
-            threadRootMessageIndex
-        );
+        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
     }
 </script>
 
@@ -759,8 +741,8 @@
                             readByThem={true}
                             chatId={chat.chatId}
                             chatType={chat.kind}
-                            user={controller.user}
-                            me={evt.event.sender === currentUser.userId}
+                            {user}
+                            me={evt.event.sender === user.userId}
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             {preview}
@@ -808,7 +790,7 @@
         textContent={$textContent}
         members={$currentChatMembers}
         blockedUsers={$currentChatBlockedUsers}
-        user={controller.user}
+        {user}
         joining={undefined}
         {preview}
         mode={"thread"}

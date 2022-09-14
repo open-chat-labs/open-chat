@@ -6,7 +6,7 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateMembersJoinedOrLeftEvent from "./AggregateMembersJoinedOrLeftEvent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
@@ -20,7 +20,7 @@
 
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
-    export let user: UserSummary;
+    export let user: CreatedUser;
     export let event: EventWrapper<ChatEvent>;
     export let first: boolean;
     export let last: boolean;
@@ -45,6 +45,14 @@
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
     export let collapsed: boolean;
+
+    $: userSummary = {
+        kind: "user",
+        userId: user.userId,
+        username: user.username,
+        lastOnline: Date.now(),
+        updated: BigInt(0),
+    } as UserSummary;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -117,80 +125,80 @@
     <DirectChatCreatedEvent timestamp={event.timestamp} />
 {:else if event.event.kind === "members_added"}
     <MembersChangedEvent
-        {user}
+        user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.addedBy}
         resourceKey={"addedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "members_removed"}
     <MembersChangedEvent
-        {user}
+        user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.removedBy}
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_members_joined_left"}
     <AggregateMembersJoinedOrLeftEvent
-        {user}
+        user={userSummary}
         joined={event.event.users_joined}
         left={event.event.users_left} />
 {:else if event.event.kind === "role_changed"}
-    <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
+    <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
     <MembersChangedEvent
-        {user}
+        user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.blockedBy}
         resourceKey={"blockedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "users_unblocked"}
     <MembersChangedEvent
-        {user}
+        user={userSummary}
         changed={event.event.userIds}
         changedBy={event.event.unblockedBy}
         resourceKey={"unblockedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "ownership_transferred"}
     <MembersChangedEvent
-        {user}
+        user={userSummary}
         changed={[event.event.newOwner]}
         changedBy={event.event.oldOwner}
         resourceKey={"ownershipTransferredBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "name_changed"}
     <GroupChangedEvent
-        {user}
+        user={userSummary}
         changedBy={event.event.changedBy}
         property={$_("groupName")}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "desc_changed"}
     <GroupChangedEvent
-        {user}
+        user={userSummary}
         changedBy={event.event.changedBy}
         property={$_("groupDesc")}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "avatar_changed"}
     <GroupChangedEvent
-        {user}
+        user={userSummary}
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent
-        {user}
+        user={userSummary}
         nowPublic={event.event.nowPublic}
         changedBy={event.event.changedBy}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_invite_code_changed"}
     {#if canInvite}
         <GroupInviteCodeChangedEvent
-            {user}
+            user={userSummary}
             change={event.event.change}
             changedBy={event.event.changedBy}
             timestamp={event.timestamp} />
     {/if}
 {:else if event.event.kind === "permissions_changed"}
-    <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />
+    <PermissionsChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left"}
     <div>Unexpected event type</div>
 {/if}

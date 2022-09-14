@@ -35,7 +35,6 @@
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import {
         blockUser,
-        ChatController,
         deleteMessage,
         findMessageEvent,
         pinMessage,
@@ -78,7 +77,6 @@
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
 
-    export let controller: ChatController;
     export let chat: ChatSummary;
     export let unreadMessages: number;
     export let preview: boolean;
@@ -97,6 +95,7 @@
 
     let loadingPrev = false;
     let loadingNew = false;
+    let previousChatId: string | undefined;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -108,8 +107,15 @@
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
     let insideFromBottomThreshold: boolean = false;
-    let morePrevAvailable = controller.morePreviousMessagesAvailable();
+    // FIXME - come back to this
+    // let morePrevAvailable = controller.morePreviousMessagesAvailable();
     let previousScrollHeight: number | undefined = undefined;
+
+    $: {
+        if (chat.chatId !== previousChatId) {
+            console.log("new chat selected - this is our constructor");
+        }
+    }
 
     onMount(() => {
         const options = {
@@ -132,9 +138,9 @@
 
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
-                        const chatId = controller.chatId;
+                        const chatId = chat.chatId;
                         const timer = window.setTimeout(() => {
-                            if (chatId === controller.chatId) {
+                            if (chatId === chat.chatId) {
                                 dispatch("messageRead", {
                                     chatId,
                                     messageIndex: idx,
@@ -184,7 +190,8 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = controller.morePreviousMessagesAvailable();
+        // FIXME
+        // morePrevAvailable = controller.morePreviousMessagesAvailable();
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
@@ -219,13 +226,13 @@
         focusThreadMessageIndex: number | undefined = undefined
     ) {
         if (index < 0) {
-            focusMessageIndex.set(controller.chatId, undefined);
+            focusMessageIndex.set(chat.chatId, undefined);
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        focusMessageIndex.set(controller.chatId, index);
+        focusMessageIndex.set(chat.chatId, index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -243,11 +250,12 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    focusMessageIndex.set(controller.chatId, undefined);
+                    focusMessageIndex.set(chat.chatId, undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            controller.goToMessageIndex(index, preserveFocus);
+            // FIXME
+            // controller.goToMessageIndex(index, preserveFocus);
         }
     }
 
@@ -261,16 +269,20 @@
     }
 
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = controller.morePreviousMessagesAvailable();
-        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        // FIXME
+        // morePrevAvailable = controller.morePreviousMessagesAvailable();
+        // return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        return false;
     }
 
     function shouldLoadNewMessages() {
-        return (
-            !loadingNew &&
-            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            controller.moreNewMessagesAvailable()
-        );
+        // FIXME
+        // return (
+        //     !loadingNew &&
+        //     calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
+        //     controller.moreNewMessagesAvailable()
+        // );
+        return false;
     }
 
     let expectedScrollTop: number | undefined = undefined;
@@ -315,7 +327,8 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            controller.loadPreviousMessages();
+            // FIXME
+            // controller.loadPreviousMessages();
         }
 
         if (shouldLoadNewMessages()) {
@@ -323,7 +336,8 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            controller.loadNewMessages();
+            // FIXME
+            // controller.loadNewMessages();
         }
 
         setIfInsideFromBottomThreshold();
@@ -342,9 +356,7 @@
     function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
 
-        const kind = containsReaction(controller.user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
+        const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
         selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, kind).then(
             (success) => {
@@ -400,82 +412,93 @@
         blockUser(api, chat.chatId, ev.detail.userId);
     }
 
+    export function externalGoToMessage(messageIndex: number): void {
+        tick()
+            .then(() => (initialised = true))
+            .then(() => {
+                expectedScrollTop = undefined;
+                scrollToMessageIndex(messageIndex, false, true);
+            })
+            .then(loadMoreIfRequired);
+    }
+
     $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
 
     $: {
-        if (controller.chatId !== currentChatId) {
-            currentChatId = controller.chatId;
+        if (chat.chatId !== currentChatId) {
+            currentChatId = chat.chatId;
             initialised = false;
 
-            controller.subscribe((evt) => {
-                switch (evt.event.kind) {
-                    case "loaded_previous_events":
-                        tick()
-                            .then(() => (initialised = true))
-                            .then(resetScroll)
-                            .then(() => {
-                                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
-                            })
-                            .then(() => (loadingPrev = false))
-                            .then(loadMoreIfRequired);
-                        break;
-                    case "loaded_event_window":
-                        const index = evt.event.messageIndex;
-                        const preserveFocus = evt.event.preserveFocus;
-                        const allowRecursion = evt.event.allowRecursion;
-                        const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
-                        tick()
-                            .then(() => (initialised = true))
-                            .then(() => {
-                                expectedScrollTop = undefined;
-                                scrollToMessageIndex(
-                                    index,
-                                    preserveFocus,
-                                    allowRecursion,
-                                    focusThreadMessageIndex
-                                );
-                            })
-                            .then(loadMoreIfRequired);
-                        break;
-                    case "loaded_new_events":
-                        const newLatestMessage = evt.event.newLatestMessage;
-                        // wait until the events are rendered
-                        tick()
-                            .then(() => {
-                                setIfInsideFromBottomThreshold();
-                                if (newLatestMessage && insideFromBottomThreshold) {
-                                    // only scroll if we are now within threshold from the bottom
-                                    scrollBottom("smooth");
-                                } else if (
-                                    messagesDiv?.scrollTop === 0 &&
-                                    previousScrollHeight !== undefined
-                                ) {
-                                    const clientHeightChange =
-                                        messagesDiv.scrollHeight - previousScrollHeight;
-                                    if (clientHeightChange > 0) {
-                                        messagesDiv.scrollTop = -clientHeightChange;
-                                        console.log(
-                                            "scrollTop updated from 0 to " + messagesDiv.scrollTop
-                                        );
-                                    }
-                                }
-                            })
-                            .then(() => (loadingNew = false))
-                            .then(loadMoreIfRequired);
-                        break;
-                    case "sending_message":
-                        // smooth scroll doesn't work here when we are leaping from the top
-                        // which means we are stuck with abrupt scroll which is disappointing
-                        const { scroll } = evt.event;
-                        tick().then(() => scrollBottom(scroll));
-                        break;
-                    case "chat_updated":
-                        if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {
-                            controller.loadNewMessages();
-                        }
-                        break;
-                }
-            });
+            // FIXME
+            // controller.subscribe((evt) => {
+            //     switch (evt.event.kind) {
+            //         case "loaded_previous_events":
+            //             tick()
+            //                 .then(() => (initialised = true))
+            //                 .then(resetScroll)
+            //                 .then(() => {
+            //                     expectedScrollTop = messagesDiv?.scrollTop ?? 0;
+            //                 })
+            //                 .then(() => (loadingPrev = false))
+            //                 .then(loadMoreIfRequired);
+            //             break;
+            //         case "loaded_event_window":
+            //             const index = evt.event.messageIndex;
+            //             const preserveFocus = evt.event.preserveFocus;
+            //             const allowRecursion = evt.event.allowRecursion;
+            //             const focusThreadMessageIndex = evt.event.focusThreadMessageIndex;
+            //             tick()
+            //                 .then(() => (initialised = true))
+            //                 .then(() => {
+            //                     expectedScrollTop = undefined;
+            //                     scrollToMessageIndex(
+            //                         index,
+            //                         preserveFocus,
+            //                         allowRecursion,
+            //                         focusThreadMessageIndex
+            //                     );
+            //                 })
+            //                 .then(loadMoreIfRequired);
+            //             break;
+            //         case "loaded_new_events":
+            //             const newLatestMessage = evt.event.newLatestMessage;
+            //             // wait until the events are rendered
+            //             tick()
+            //                 .then(() => {
+            //                     setIfInsideFromBottomThreshold();
+            //                     if (newLatestMessage && insideFromBottomThreshold) {
+            //                         // only scroll if we are now within threshold from the bottom
+            //                         scrollBottom("smooth");
+            //                     } else if (
+            //                         messagesDiv?.scrollTop === 0 &&
+            //                         previousScrollHeight !== undefined
+            //                     ) {
+            //                         const clientHeightChange =
+            //                             messagesDiv.scrollHeight - previousScrollHeight;
+            //                         if (clientHeightChange > 0) {
+            //                             messagesDiv.scrollTop = -clientHeightChange;
+            //                             console.log(
+            //                                 "scrollTop updated from 0 to " + messagesDiv.scrollTop
+            //                             );
+            //                         }
+            //                     }
+            //                 })
+            //                 .then(() => (loadingNew = false))
+            //                 .then(loadMoreIfRequired);
+            //             break;
+            //         case "sending_message":
+            //             // smooth scroll doesn't work here when we are leaping from the top
+            //             // which means we are stuck with abrupt scroll which is disappointing
+            //             const { scroll } = evt.event;
+            //             tick().then(() => scrollBottom(scroll));
+            //             break;
+            //         case "chat_updated":
+            //             if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {
+            //                 controller.loadNewMessages();
+            //             }
+            //             break;
+            //     }
+            // });
         }
     }
 
@@ -485,10 +508,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === controller.user?.userId;
+            return evt.event.sender === user.userId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === controller.user?.userId;
+            return evt.event.created_by === user.userId;
         }
         return false;
     }
@@ -504,17 +527,19 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            controller.loadNewMessages();
+            // FIXME
+            // controller.loadNewMessages();
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            controller.loadPreviousMessages();
+            // FIXME
+            // controller.loadPreviousMessages();
         }
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.contains(controller.chatId, evt.event.messageId);
+            return !unconfirmed.contains(chat.chatId, evt.event.messageId);
         }
         return true;
     }
@@ -584,15 +609,11 @@
     }
 
     function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(
-            controller.user.userId,
-            ev.detail.sender === controller.user.userId,
-            ev.detail
-        );
+        shareFunctions.shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
     function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(controller.chatId, ev.detail.messageIndex);
+        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex);
     }
 
     function isCollapsed(
@@ -646,7 +667,7 @@
     }
 </script>
 
-<div
+<!-- FIXME <div
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
@@ -668,7 +689,7 @@
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.chatId}
                         chatType={chat.kind}
-                        user={controller.user}
+                        user={user}
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === innerGroup.length}
@@ -719,7 +740,7 @@
             <Robot />
         {/if}
     {/if}
-</div>
+</div> -->
 {#if !preview}
     <div
         title={$_("goToFirstMention")}

@@ -16,7 +16,7 @@
     } from "../../domain/chat/chat";
     import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
     import Loading from "../Loading.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
     import { userStore } from "../../stores/user";
@@ -32,7 +32,7 @@
     export let textContent: string | undefined;
     export let members: Member[];
     export let blockedUsers: Set<string>;
-    export let user: UserSummary;
+    export let user: CreatedUser;
     export let mode: "thread" | "message" = "message";
 
     const dispatch = createEventDispatcher();

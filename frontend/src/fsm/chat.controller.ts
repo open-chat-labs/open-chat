@@ -55,7 +55,7 @@ import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
-import { eventsStore, focusMessageIndex } from "../stores/chat";
+import { eventsStore } from "../stores/chat";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 
 export class ChatController {
@@ -84,15 +84,6 @@ export class ChatController {
         );
 
         const chat = get(this.chat);
-        serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
-        focusMessageIndex.set(chat.chatId, _focusMessageIndex);
-        currentChatMembers.set(chat.chatId, []);
-        currentChatBlockedUsers.set(chat.chatId, new Set<string>());
-        currentChatPinnedMessages.set(chat.chatId, new Set<number>());
-        currentChatUserIds.set(
-            chat.chatId,
-            new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
-        );
 
         this.chatId = chat.chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
@@ -105,6 +96,8 @@ export class ChatController {
             }
             this.loadDetails();
         }
+
+        console.log("constructing chat controller");
     }
 
     destroy(): void {

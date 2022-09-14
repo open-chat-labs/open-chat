@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
@@ -62,7 +62,7 @@
 
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
-    export let user: UserSummary;
+    export let user: CreatedUser;
     export let senderId: string;
     export let msg: Message;
     export let me: boolean;

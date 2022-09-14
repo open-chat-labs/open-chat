@@ -112,7 +112,6 @@
         }
     }
 
-    // todo - doubt this will react properly
     $: placeholder =
         fileToAttach !== undefined
             ? $_("enterCaption")

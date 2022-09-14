@@ -49,7 +49,6 @@
 
     const dispatch = createEventDispatcher();
 
-    export let controller: ChatController | undefined;
     export let rightPanelHistory: RightPanelState[];
     export let userId: string;
     export let metrics: ChatMetrics;
@@ -63,7 +62,7 @@
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
-    $: groupChat = controller?.chat as Readable<GroupChatSummary>;
+    $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
 
     function onDismissAsAdmin(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
@@ -167,7 +166,7 @@
 </script>
 
 <Panel right>
-    {#if lastState.kind === "group_details" && controller !== undefined}
+    {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
             chat={$groupChat}
             memberCount={$currentChatMembers.length}
@@ -183,7 +182,7 @@
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             on:saveMembers={saveMembers}
             on:cancelAddMembers={popHistory} />
-    {:else if lastState.kind === "show_members" && controller !== undefined}
+    {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             chat={groupChat}
@@ -217,7 +216,7 @@
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
-    {:else if threadRootEvent !== undefined && controller !== undefined && $selectedChatStore !== undefined}
+    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             bind:this={thread}
             on:chatWith
@@ -226,10 +225,9 @@
             focusMessageIndex={lastState.kind === "message_thread_panel"
                 ? lastState.focusThreadMessageIndex
                 : undefined}
-            {controller}
             chat={$selectedChatStore}
             on:closeThread={closeThread} />
-    {:else if lastState.kind === "proposal_filters" && controller !== undefined}
+    {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}

@@ -5,12 +5,7 @@ import {
     isDirectChatWith,
     removeMessage,
 } from "../../fsm/chat.controller";
-import {
-    chatSummariesListStore,
-    chatSummariesStore,
-    selectedChatControllerStore,
-    selectedChatStore,
-} from "../../stores/chat";
+import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
 import { typing } from "../../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
 import { get } from "svelte/store";
@@ -53,20 +48,22 @@ function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
 }
 
 function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-    delegateToChatController(message, (chat) =>
-        removeMessage(chat.chatVal, chat.user.userId, message.messageId, message.userId)
-    );
+    // FIXME - need to get the current user from somewhere
+    // delegateToChatController(message, (chat) =>
+    //     removeMessage(chat, chat.user.userId, message.messageId, message.userId)
+    // );
 }
 
 function remoteUserSentMessage(message: RemoteUserSentMessage): void {
     console.log("remote user sent message");
-    if (
-        !delegateToChatController(message, (chat) =>
-            chat.handleMessageSentByOther(message.messageEvent, false)
-        )
-    ) {
-        unconfirmed.add(message.chatId, message.messageEvent);
-    }
+    // FIXME - not sure how we're going to deal with this
+    // if (
+    //     !delegateToChatController(message, (chat) =>
+    //         chat.handleMessageSentByOther(message.messageEvent, false)
+    //     )
+    // ) {
+    //     unconfirmed.add(message.chatId, message.messageEvent);
+    // }
 }
 
 function remoteUserReadMessage(message: RemoteUserReadMessage): void {
@@ -75,11 +72,11 @@ function remoteUserReadMessage(message: RemoteUserReadMessage): void {
 
 function delegateToChatController(
     msg: WebRtcMessage,
-    fn: (selectedChat: ChatController) => void
+    fn: (selectedChat: ChatSummary) => void
 ): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
-    const selectedChat = get(selectedChatControllerStore);
+    const selectedChat = get(selectedChatStore);
     if (selectedChat === undefined) return false;
     if (chat.chatId !== selectedChat.chatId) return false;
     fn(selectedChat);
