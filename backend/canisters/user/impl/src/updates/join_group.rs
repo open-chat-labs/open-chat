@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::c2c_join_group_v2 as c2c_join_group;
 use ic_cdk_macros::update;
@@ -11,10 +11,7 @@ use user_canister::join_group_v2::{Response::*, *};
 async fn join_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    let principal = read_state(|state| state.env.caller());
-
     let c2c_args = c2c_join_group::Args {
-        principal,
         as_super_admin: args.as_super_admin,
         invite_code: args.invite_code,
     };
@@ -40,6 +37,7 @@ async fn join_group_v2(args: Args) -> Response {
             c2c_join_group::Response::Blocked => Blocked,
             c2c_join_group::Response::ParticipantLimitReached(limit) => ParticipantLimitReached(limit),
             c2c_join_group::Response::NotSuperAdmin => NotSuperAdmin,
+            c2c_join_group::Response::UserNotFound => unreachable!(),
             c2c_join_group::Response::InternalError(error) => {
                 InternalError(format!("Failed to call 'group::c2c_join_group': {error:?}"))
             }
