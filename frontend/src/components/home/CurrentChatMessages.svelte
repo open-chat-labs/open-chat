@@ -17,6 +17,7 @@
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { formatMessageDate } from "../../utils/date";
+    import DRange from "drange";
     import type {
         EventWrapper,
         EnhancedReplyContext,
@@ -24,12 +25,20 @@
         Message,
         Mention,
         ChatSummary,
+        EventsResponse,
+        EventsSuccessResult,
+        GroupChatDetails,
     } from "../../domain/chat/chat";
     import {
         containsReaction,
         groupEvents,
+        indexRangeForChat,
+        makeRtcConnections,
         messageIsReadByThem,
+        replaceAffected,
+        replaceLocal,
         sameUser,
+        userIdsFromEvents,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -41,6 +50,7 @@
         registerPollVote,
         selectReaction,
         unpinMessage,
+        updateUserStore,
     } from "../../fsm/chat.controller";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
@@ -51,7 +61,13 @@
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
-    import { currentChatDraftMessage, isProposalGroup } from "../../stores/chat";
+    import {
+        currentChatBlockedUsers,
+        currentChatDraftMessage,
+        currentChatMembers,
+        isProposalGroup,
+        serverEventsStore,
+    } from "../../stores/chat";
     import {
         FilteredProposals,
         toggleProposalFilterMessageExpansion,
@@ -78,6 +94,7 @@
     const user = getContext<CreatedUser>(currentUserKey);
 
     export let chat: ChatSummary;
+    export let serverChat: ChatSummary;
     export let unreadMessages: number;
     export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
@@ -95,7 +112,6 @@
 
     let loadingPrev = false;
     let loadingNew = false;
-    let previousChatId: string | undefined;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -108,14 +124,12 @@
     let messageReadTimers: Record<number, number> = {};
     let insideFromBottomThreshold: boolean = false;
     // FIXME - come back to this
-    // let morePrevAvailable = controller.morePreviousMessagesAvailable();
+    let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
-
-    $: {
-        if (chat.chatId !== previousChatId) {
-            console.log("new chat selected - this is our constructor");
-        }
-    }
+    let confirmedEventIndexesLoaded = new DRange();
+    // This set will contain 1 key for each rendered user event group which is used as that group's key
+    let userGroupKeys = new Set<string>();
+    let groupDetails: GroupChatDetails | undefined;
 
     onMount(() => {
         const options = {
@@ -123,6 +137,8 @@
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
+
+        morePrevAvailable = morePreviousMessagesAvailable();
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -190,8 +206,7 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        // FIXME
-        // morePrevAvailable = controller.morePreviousMessagesAvailable();
+        morePrevAvailable = morePreviousMessagesAvailable();
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
@@ -268,21 +283,33 @@
         }
     }
 
+    function morePreviousMessagesAvailable(): boolean {
+        return (earliestLoadedIndex() ?? Number.MAX_VALUE) > earliestAvailableEventIndex();
+    }
+
+    function moreNewMessagesAvailable(): boolean {
+        return confirmedUpToEventIndex() < latestServerEventIndex();
+    }
+
+    function confirmedUpToEventIndex(): number {
+        const ranges = confirmedEventIndexesLoaded.subranges();
+        if (ranges.length > 0) {
+            return ranges[0].high;
+        }
+        return -1;
+    }
+
     function shouldLoadPreviousMessages() {
-        // FIXME
-        // morePrevAvailable = controller.morePreviousMessagesAvailable();
-        // return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
-        return false;
+        morePrevAvailable = morePreviousMessagesAvailable();
+        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
-        // FIXME
-        // return (
-        //     !loadingNew &&
-        //     calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-        //     controller.moreNewMessagesAvailable()
-        // );
-        return false;
+        return (
+            !loadingNew &&
+            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
+            moreNewMessagesAvailable()
+        );
     }
 
     let expectedScrollTop: number | undefined = undefined;
@@ -412,7 +439,7 @@
         blockUser(api, chat.chatId, ev.detail.userId);
     }
 
-    export function externalGoToMessage(messageIndex: number): void {
+    function onMessageWindowLoaded(messageIndex: number) {
         tick()
             .then(() => (initialised = true))
             .then(() => {
@@ -422,12 +449,241 @@
             .then(loadMoreIfRequired);
     }
 
+    export function externalGoToMessage(messageIndex: number): void {
+        onMessageWindowLoaded(messageIndex);
+    }
+
+    async function loadEventWindow(messageIndex: number, preserveFocus = false) {
+        if (messageIndex >= 0) {
+            const range = indexRangeForChat(serverChat);
+            const eventsPromise: Promise<EventsResponse<ChatEventType>> =
+                chat.kind === "direct_chat"
+                    ? api.directChatEventsWindow(
+                          range,
+                          chat.them,
+                          messageIndex,
+                          chat.latestEventIndex
+                      )
+                    : api.groupChatEventsWindow(
+                          range,
+                          chat.chatId,
+                          messageIndex,
+                          chat.latestEventIndex
+                      );
+            const eventsResponse = await eventsPromise;
+
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
+            await handleEventsResponse(eventsResponse, false);
+
+            onMessageWindowLoaded(messageIndex);
+        }
+    }
+
+    async function handleEventsResponse(
+        resp: EventsResponse<ChatEventType>,
+        keepCurrentEvents = true
+    ): Promise<void> {
+        if (resp === "events_failed") return;
+
+        if (!keepCurrentEvents) {
+            confirmedEventIndexesLoaded = new DRange();
+            userGroupKeys.clear();
+        } else if (!isContiguous(resp)) {
+            return;
+        }
+
+        const updated = replaceAffected(
+            replaceLocal(
+                user.userId,
+                chat.chatId,
+                chat.readByMe,
+                keepCurrentEvents ? $eventsStore : [],
+                resp.events
+            ),
+            resp.affectedEvents
+        );
+
+        const userIds = userIdsFromEvents(updated);
+        await updateUserStore(api, chat.chatId, user.userId, userIds);
+
+        serverEventsStore.set(chat.chatId, updated);
+
+        if (resp.events.length > 0) {
+            resp.events.forEach((e) => confirmedEventIndexesLoaded.add(e.index));
+        }
+
+        makeRtcConnections(user.userId, chat, updated, $userStore);
+    }
+
+    function isContiguous(response: EventsSuccessResult<ChatEventType>): boolean {
+        if (confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+
+        const firstIndex = response.events[0].index;
+        const lastIndex = response.events[response.events.length - 1].index;
+        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
+
+        const isContiguous =
+            confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+
+        if (!isContiguous) {
+            console.log(
+                "Events in response are not contiguous with the loaded events",
+                confirmedEventIndexesLoaded,
+                firstIndex,
+                lastIndex
+            );
+        }
+
+        return isContiguous;
+    }
+
+    function earliestLoadedIndex(): number | undefined {
+        return confirmedEventIndexesLoaded.length > 0
+            ? confirmedEventIndexesLoaded.index(0)
+            : undefined;
+    }
+
+    function latestServerEventIndex(): number {
+        return serverChat.latestEventIndex;
+    }
+
+    function earliestAvailableEventIndex(): number {
+        return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
+    }
+
+    function previousMessagesCriteria(): [number, boolean] | undefined {
+        const minLoadedEventIndex = earliestLoadedIndex();
+        if (minLoadedEventIndex === undefined) {
+            return [latestServerEventIndex(), false];
+        }
+        const minVisibleEventIndex = earliestAvailableEventIndex();
+        return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
+            ? [minLoadedEventIndex - 1, false]
+            : undefined;
+    }
+
+    function loadEvents(
+        startIndex: number,
+        ascending: boolean
+    ): Promise<EventsResponse<ChatEventType>> {
+        return api.chatEvents(
+            chat,
+            indexRangeForChat(serverChat),
+            startIndex,
+            ascending,
+            undefined,
+            chat.latestEventIndex
+        );
+    }
+
+    async function loadPreviousMessages(): Promise<void> {
+        const criteria = previousMessagesCriteria();
+
+        const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return;
+        }
+
+        await handleEventsResponse(eventsResponse);
+
+        onLoadedPreviousMessages();
+
+        return;
+    }
+
+    async function loadDetails(): Promise<void> {
+        // currently this is only meaningful for group chats, but we'll set it up generically just in case
+        if (chat.kind === "group_chat") {
+            if (groupDetails === undefined) {
+                const resp = await api.getGroupDetails(chat.chatId, chat.latestEventIndex);
+                if (resp !== "caller_not_in_group") {
+                    groupDetails = resp;
+                    currentChatMembers.set(chat.chatId, resp.members);
+                    currentChatBlockedUsers.set(chat.chatId, resp.blockedUsers);
+                    currentChatPinnedMessages.set(chat.chatId, resp.pinnedMessages);
+                }
+                await updateUserStore(
+                    api,
+                    chat.chatId,
+                    user.userId,
+                    userIdsFromEvents($eventsStore)
+                );
+            } else {
+                await updateDetails();
+            }
+        }
+    }
+
+    async function updateDetails(): Promise<void> {
+        if (chat.kind === "group_chat") {
+            if (
+                groupDetails !== undefined &&
+                groupDetails.latestEventIndex < chat.latestEventIndex
+            ) {
+                groupDetails = await api.getGroupDetailsUpdates(chat.chatId, groupDetails);
+                currentChatMembers.set(chat.chatId, groupDetails.members);
+                currentChatBlockedUsers.set(chat.chatId, groupDetails.blockedUsers);
+                currentChatPinnedMessages.set(chat.chatId, groupDetails.pinnedMessages);
+                await updateUserStore(
+                    api,
+                    chat.chatId,
+                    user.userId,
+                    userIdsFromEvents($eventsStore)
+                );
+            }
+        }
+    }
+
+    function onLoadedPreviousMessages() {
+        tick()
+            .then(() => (initialised = true))
+            .then(resetScroll)
+            .then(() => {
+                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
+            })
+            .then(() => (loadingPrev = false))
+            .then(loadMoreIfRequired);
+    }
+
+    // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
+    // new version with the old version, if not, a new key will be created for the group.
+    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
+        const first = group[0];
+        let prefix = "";
+        if (first.event.kind === "message") {
+            const sender = first.event.sender;
+            prefix = sender + "_";
+        }
+        for (const { index } of group) {
+            const key = prefix + index;
+            if (userGroupKeys.has(key)) {
+                return key;
+            }
+        }
+        const firstKey = prefix + first.index;
+        userGroupKeys.add(firstKey);
+        return firstKey;
+    }
+
     $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
+
+            console.log("new chat selected - this is our constructor");
+
+            if ($focusMessageIndex !== undefined) {
+                loadEventWindow($focusMessageIndex);
+            } else {
+                loadPreviousMessages();
+            }
+            loadDetails();
 
             // FIXME
             // controller.subscribe((evt) => {
@@ -667,7 +923,7 @@
     }
 </script>
 
-<!-- FIXME <div
+<div
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
@@ -678,7 +934,7 @@
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as innerGroup, _ui (controller.userGroupKey(innerGroup))}
+            {#each dayGroup as innerGroup, _ui (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
@@ -689,7 +945,7 @@
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.chatId}
                         chatType={chat.kind}
-                        user={user}
+                        {user}
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === innerGroup.length}
@@ -740,7 +996,7 @@
             <Robot />
         {/if}
     {/if}
-</div> -->
+</div>
 {#if !preview}
     <div
         title={$_("goToFirstMention")}

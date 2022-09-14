@@ -72,6 +72,7 @@
 
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
+    export let serverChat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
     const dispatch = createEventDispatcher();
@@ -377,6 +378,7 @@
         on:closeThread
         on:initiateThread
         {chat}
+        {serverChat}
         canPin={canPinMessages(chat)}
         canBlockUser={canBlockUsers(chat)}
         canDelete={canDeleteOtherUsersMessages(chat)}

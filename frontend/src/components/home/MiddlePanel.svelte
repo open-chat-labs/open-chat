@@ -10,7 +10,7 @@
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import { pathParams } from "../../stores/routing";
-    import { selectedChatStore, selectedChatId } from "../../stores/chat";
+    import { selectedChatStore, selectedChatId, selectedServerChatStore } from "../../stores/chat";
 
     export let loadingChats: boolean = false;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
@@ -40,11 +40,12 @@
                 <NoChatSelected on:recommend on:newchat />
             </div>
         {/if}
-    {:else if $selectedChatStore !== undefined}
+    {:else if $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
         <CurrentChat
             bind:currentChatMessages
             {joining}
             chat={$selectedChatStore}
+            serverChat={$selectedServerChatStore}
             on:initiateThread
             on:unblockUser
             on:clearSelection
