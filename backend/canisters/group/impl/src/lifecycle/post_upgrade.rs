@@ -59,8 +59,12 @@ fn remove_invalid_users(runtime_state: &mut RuntimeState, test_mode: bool) {
         .map(|u| u.user_id)
         .collect();
 
-    for user_id in to_remove {
-        remove_user(user_id, runtime_state);
+    if !to_remove.is_empty() {
+        info!(?to_remove, "Removing invalid users");
+
+        for user_id in to_remove {
+            remove_user(user_id, runtime_state);
+        }
     }
 }
 
