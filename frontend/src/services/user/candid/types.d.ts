@@ -139,6 +139,7 @@ export interface CreateGroupArgs {
   'name' : string,
   'description' : string,
   'history_visible_to_new_joiners' : boolean,
+  'rules' : GroupRules,
   'avatar' : [] | [Avatar],
 }
 export type CreateGroupResponse = { 'NameReserved' : null } |
@@ -402,6 +403,7 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export interface GroupRules { 'text' : string, 'enabled' : boolean }
 export type GroupSubtype = {
     'GovernanceProposals' : GovernanceProposalsSubtype
   };

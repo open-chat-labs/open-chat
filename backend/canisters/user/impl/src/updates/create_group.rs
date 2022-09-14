@@ -1,10 +1,10 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH};
+use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_RULES_LENGTH};
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 use utils::group_validation::{validate_name, NameValidationError};
 
@@ -15,6 +15,7 @@ async fn create_group(mut args: Args) -> Response {
 
     args.name = args.name.trim().to_string();
     args.description = args.description.trim().to_string();
+    args.rules.text = args.rules.text.trim().to_string();
 
     let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
@@ -69,6 +70,16 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
+    } else if args.rules.enabled && args.rules.text.is_empty() {
+        Err(RulesTooShort(FieldTooShortResult {
+            length_provided: args.rules.text.len() as u32,
+            min_length: 1,
+        }))
+    } else if args.rules.text.len() > MAX_GROUP_RULES_LENGTH as usize {
+        Err(RulesTooLong(FieldTooLongResult {
+            length_provided: args.rules.text.len() as u32,
+            max_length: MAX_GROUP_RULES_LENGTH,
+        }))
     } else if args
         .avatar
         .as_ref()
@@ -84,6 +95,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             creator_principal: runtime_state.env.caller(),
             name: args.name,
             description: args.description,
+            rules: args.rules,
             subtype: args.subtype,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,

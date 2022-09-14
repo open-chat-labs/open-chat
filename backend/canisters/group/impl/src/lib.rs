@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, GroupRules, GroupSubtype,
+    MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -144,6 +144,8 @@ struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,
+    #[serde(default)]
+    pub rules: GroupRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
@@ -171,6 +173,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
+        rules: GroupRules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
@@ -192,6 +195,7 @@ impl Data {
             is_public,
             name,
             description,
+            rules,
             subtype: Timestamped::new(subtype, now),
             avatar,
             history_visible_to_new_joiners,

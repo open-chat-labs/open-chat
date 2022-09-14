@@ -134,6 +134,10 @@ export class UserClient extends CandidService implements IUserClient {
                     };
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
+                rules: {
+                    text: "",
+                    enabled: false,
+                },
             }),
             createGroupResponse
         );

@@ -1,10 +1,9 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::GroupChatSummaryInternal;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub principal: Principal,
     pub as_super_admin: bool,
     pub invite_code: Option<u64>,
 }
@@ -18,5 +17,6 @@ pub enum Response {
     Blocked,
     ParticipantLimitReached(u32),
     NotSuperAdmin,
+    UserNotFound,
     InternalError(String),
 }
