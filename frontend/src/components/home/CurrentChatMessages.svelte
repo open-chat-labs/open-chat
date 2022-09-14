@@ -27,7 +27,6 @@
         ChatSummary,
         EventsResponse,
         EventsSuccessResult,
-        GroupChatDetails,
     } from "../../domain/chat/chat";
     import {
         containsReaction,
@@ -67,9 +66,6 @@
         currentChatMembers,
         isProposalGroup,
         serverEventsStore,
-        selectedChatStore,
-        confirmedEventIndexesLoaded,
-        userGroupKeys,
         groupDetails,
         eventsStore,
         focusMessageIndex,
@@ -81,7 +77,7 @@
         toggleProposalFilterMessageExpansion,
         filteredProposalsStore,
     } from "../../stores/filteredProposals";
-    import { groupWhile } from "../../utils/list";
+    import { findLast, groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { CreatedUser } from "../../domain/user/user";
@@ -128,10 +124,8 @@
     // FIXME - come back to this
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
-
-    confirmedEventIndexesLoaded.subscribe((range) =>
-        console.log("XXX: confirmed ranges: ", range, $selectedChatStore?.chatId)
-    );
+    let confirmedEventIndexesLoaded = new DRange();
+    let userGroupKeys = new Set<string>();
 
     onMount(() => {
         const options = {
@@ -294,7 +288,7 @@
     }
 
     function confirmedUpToEventIndex(): number {
-        const ranges = $confirmedEventIndexesLoaded.subranges();
+        const ranges = confirmedEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -356,8 +350,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            // FIXME
-            // controller.loadPreviousMessages();
+            loadPreviousMessages();
         }
 
         if (shouldLoadNewMessages()) {
@@ -365,8 +358,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            // FIXME
-            // controller.loadNewMessages();
+            loadNewMessages();
         }
 
         setIfInsideFromBottomThreshold();
@@ -491,8 +483,8 @@
         if (resp === "events_failed") return;
 
         if (!keepCurrentEvents) {
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
+            confirmedEventIndexesLoaded = new DRange();
+            userGroupKeys = new Set<string>();
         } else if (!isContiguous(resp)) {
             return;
         }
@@ -513,32 +505,27 @@
 
         serverEventsStore.set(chat.chatId, updated);
 
-        confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
-            if (resp.events.length > 0) {
-                resp.events.forEach((e) => range.add(e.index));
-            }
-            return range;
-        });
-
-        console.log("XXX: events: ", $eventsStore);
+        if (resp.events.length > 0) {
+            resp.events.forEach((e) => confirmedEventIndexesLoaded.add(e.index));
+        }
 
         makeRtcConnections(user.userId, chat, updated, $userStore);
     }
 
     function isContiguous(response: EventsSuccessResult<ChatEventType>): boolean {
-        if ($confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+        if (confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
 
         const firstIndex = response.events[0].index;
         const lastIndex = response.events[response.events.length - 1].index;
         const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
         const isContiguous =
-            $confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+            confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
 
         if (!isContiguous) {
             console.log(
                 "Events in response are not contiguous with the loaded events",
-                $confirmedEventIndexesLoaded,
+                confirmedEventIndexesLoaded,
                 firstIndex,
                 lastIndex
             );
@@ -548,8 +535,8 @@
     }
 
     function earliestLoadedIndex(): number | undefined {
-        return $confirmedEventIndexesLoaded.length > 0
-            ? $confirmedEventIndexesLoaded.index(0)
+        return confirmedEventIndexesLoaded.length > 0
+            ? confirmedEventIndexesLoaded.index(0)
             : undefined;
     }
 
@@ -564,17 +551,9 @@
     function previousMessagesCriteria(): [number, boolean] | undefined {
         const minLoadedEventIndex = earliestLoadedIndex();
         if (minLoadedEventIndex === undefined) {
-            console.log("XXX: minLoadedEventIndex is undefined");
             return [latestServerEventIndex(), false];
         }
         const minVisibleEventIndex = earliestAvailableEventIndex();
-        console.log(
-            "XXX: previous message criteria: ",
-            minLoadedEventIndex,
-            minVisibleEventIndex,
-            chat.chatId,
-            $confirmedEventIndexesLoaded
-        );
         return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
             ? [minLoadedEventIndex - 1, false]
             : undefined;
@@ -584,7 +563,6 @@
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<ChatEventType>> {
-        console.log("XXX: loading events", startIndex, ascending);
         return api.chatEvents(
             chat,
             indexRangeForChat(serverChat),
@@ -597,12 +575,10 @@
 
     async function loadPreviousMessages(): Promise<void> {
         const criteria = previousMessagesCriteria();
-        console.log("XXX: previous criteria: ", criteria);
 
         const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            console.log("XXX: events response: ", eventsResponse);
             return;
         }
 
@@ -611,6 +587,38 @@
         onLoadedPreviousMessages();
 
         return;
+    }
+
+    async function loadNewMessages(): Promise<void> {
+        const criteria = newMessageCriteria();
+
+        const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return undefined;
+        }
+
+        await handleEventsResponse(eventsResponse);
+
+        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
+        // if so, we update the chat summary to show the correct latest message.
+        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
+        const newLatestMessage =
+            latestMessage !== undefined && latestMessage.index > latestServerEventIndex();
+
+        if (newLatestMessage) {
+            // FIXME - gah
+            // this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
+        }
+
+        onLoadedNewMessages(newLatestMessage);
+    }
+
+    function newMessageCriteria(): [number, boolean] | undefined {
+        const maxServerEventIndex = latestServerEventIndex();
+        const loadedUpTo = confirmedUpToEventIndex();
+
+        return loadedUpTo < maxServerEventIndex ? [loadedUpTo + 1, true] : undefined;
     }
 
     async function loadDetails(): Promise<void> {
@@ -668,6 +676,25 @@
             .then(loadMoreIfRequired);
     }
 
+    function onLoadedNewMessages(newLatestMessage: boolean) {
+        tick()
+            .then(() => {
+                setIfInsideFromBottomThreshold();
+                if (newLatestMessage && insideFromBottomThreshold) {
+                    // only scroll if we are now within threshold from the bottom
+                    scrollBottom("smooth");
+                } else if (messagesDiv?.scrollTop === 0 && previousScrollHeight !== undefined) {
+                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
+                    if (clientHeightChange > 0) {
+                        messagesDiv.scrollTop = -clientHeightChange;
+                        console.log("scrollTop updated from 0 to " + messagesDiv.scrollTop);
+                    }
+                }
+            })
+            .then(() => (loadingNew = false))
+            .then(loadMoreIfRequired);
+    }
+
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
     // new version with the old version, if not, a new key will be created for the group.
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
@@ -679,15 +706,12 @@
         }
         for (const { index } of group) {
             const key = prefix + index;
-            if ($userGroupKeys.has(key)) {
+            if (userGroupKeys.has(key)) {
                 return key;
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.update(chat.chatId, (keys) => {
-            keys.add(firstKey);
-            return keys;
-        });
+        userGroupKeys.add(firstKey);
         return firstKey;
     }
 
@@ -697,13 +721,12 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-
-            console.log("XXX: new chat selected - this is our constructor");
+            confirmedEventIndexesLoaded = new DRange();
+            userGroupKeys = new Set<string>();
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow($focusMessageIndex);
             } else {
-                console.log("XXX: loading previous");
                 loadPreviousMessages();
             }
             loadDetails();
@@ -806,13 +829,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            // FIXME
-            // controller.loadNewMessages();
+            loadNewMessages();
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            // FIXME
-            // controller.loadPreviousMessages();
+            loadPreviousMessages();
         }
     }
 

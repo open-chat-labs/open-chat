@@ -274,6 +274,8 @@ export function setSelectedChat(
     //     })
     // );
 
+    clearSelectedChat();
+
     // initialise a bunch of stores
     serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
     focusMessageIndex.set(chat.chatId, messageIndex);
@@ -346,19 +348,14 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
 
 export function clearSelectedChat(): void {
     filteredProposalsStore.set(undefined);
-    selectedChatId.set(undefined);
     selectedChatId.update((chatId) => {
         if (chatId !== undefined) {
-            confirmedEventIndexesLoaded.clear(chatId);
-            userGroupKeys.clear(chatId);
             groupDetails.clear(chatId);
             serverEventsStore.clear(chatId);
             focusMessageIndex.clear(chatId);
             currentChatMembers.clear(chatId);
             currentChatBlockedUsers.clear(chatId);
             currentChatPinnedMessages.clear(chatId);
-
-            console.log("XXX: clearing the previous chat: ", chatId);
         }
         return undefined;
     });
@@ -530,9 +527,7 @@ export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>
     new Set<number>()
 );
 export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
-export const confirmedEventIndexesLoaded = createChatSpecificDataStore<DRange>(new DRange());
 // This set will contain 1 key for each rendered user event group which is used as that group's key
-export const userGroupKeys = createChatSpecificDataStore<Set<string>>(new Set<string>());
 export const groupDetails = createChatSpecificDataStore<GroupChatDetails | undefined>(undefined);
 
 const draftMessages = createChatSpecificDataStore<DraftMessage>({});
