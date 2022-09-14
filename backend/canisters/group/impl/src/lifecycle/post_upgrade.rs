@@ -29,7 +29,11 @@ fn post_upgrade(args: Args) {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
 
-    mutate_state(remove_invalid_users);
+    mutate_state(|state| {
+        if !state.data.test_mode {
+            remove_invalid_users(state);
+        }
+    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
