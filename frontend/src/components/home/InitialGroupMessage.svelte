@@ -18,7 +18,7 @@
             {group.description}
         </div>
     {/if}
-    <div>
+    <div class="pop">
         <Avatar url={groupAvatarUrl(group)} status={UserStatus.None} size={AvatarSize.ExtraLarge} />
     </div>
     <div>
@@ -42,6 +42,10 @@
         color: var(--timeline-txt);
         @include font(book, normal, fs-70);
         max-width: 480px;
+    }
+
+    .pop {
+        @include pop(400ms);
     }
 
     .name {

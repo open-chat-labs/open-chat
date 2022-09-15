@@ -169,8 +169,8 @@ $sp11: 192px;
     animation: pulse 1s linear infinite;
 }
 
-@mixin pop() {
-    animation: pop 150ms ease-out;
+@mixin pop($duration: 150ms) {
+    animation: pop $duration ease-out;
 }
 
 @mixin loading-spinner(
