@@ -83,12 +83,17 @@
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
-    import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
+    import {
+        delegateToChatController,
+        filterWebRtcMessage,
+        parseWebRtcMessage,
+    } from "../../utils/rtc";
     import { startPruningLocalUpdates } from "../../stores/localMessageUpdates";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
     import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
+    import { unconfirmed } from "stores/unconfirmed";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -176,11 +181,21 @@
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
-        if (msg.threadRootMessageIndex !== undefined) {
+        const fromChatId = filterWebRtcMessage(msg);
+        if (fromChatId === undefined) return;
+        const parsedMsg = parseWebRtcMessage(fromChatId, msg);
+
+        if (parsedMsg.threadRootMessageIndex !== undefined) {
             // do we have the thread window open for this thread
-            threadComponent?.handleWebRtcMessage(msg);
+            threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
         } else {
-            handleWebRtcMessage(msg);
+            if (delegateToChatController(parsedMsg)) {
+                currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
+            } else {
+                if (parsedMsg.kind === "remote_user_sent_message") {
+                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
+                }
+            }
         }
     }
 
@@ -269,12 +284,12 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            // FIXME - how do we translate this into a call to a function exposed from deep in the component tree
-                            // $selectedChatControllerStore?.goToMessageIndex(
-                            //     pathParams.messageIndex,
-                            //     false,
-                            //     pathParams.threadMessageIndex
-                            // );
+                            currentChatMessages?.scrollToMessageIndex(
+                                pathParams.messageIndex,
+                                false,
+                                true,
+                                pathParams.threadMessageIndex
+                            );
                         }
                     }
                 } else {
@@ -383,8 +398,7 @@
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if ($selectedChatId === chatId) {
-                // FIXME - need an alternative mechanism
-                // selectedChat?.handleMessageSentByOther(m, true);
+                currentChatMessages?.handleMessageSentByOther(m, true);
             }
         });
     }
@@ -442,8 +456,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        // FIXME - we need a new gotomessageindex mechanism
-        // $selectedChatControllerStore?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        currentChatMessages?.scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -851,16 +864,12 @@
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
-                    // FIXME - don't think this is necessary
-                    // setSelectedChat(api, group.chatId);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    // FIXME - don't think this is necessary
-                    // setSelectedChat(api, group.chatId);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {

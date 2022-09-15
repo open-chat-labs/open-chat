@@ -1,85 +1,15 @@
-import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
-import {
-    ChatController,
-    isBlockedUser,
-    isDirectChatWith,
-    removeMessage,
-} from "../../fsm/chat.controller";
-import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
-import { typing } from "../../stores/typing";
-import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
+import type { ChatSummary, DirectChatSummary, MessageContent } from "../domain/chat/chat";
+import { isBlockedUser, isDirectChatWith } from "../fsm/chat.controller";
+import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
-import type {
-    RemoteUserDeletedMessage,
-    RemoteUserReadMessage,
-    RemoteUserRemovedMessage,
-    RemoteUserSentMessage,
-    RemoteUserToggledReaction,
-    RemoteUserUndeletedMessage,
-    WebRtcMessage,
-} from "./webrtc";
-import { eventsStore } from "../../stores/chat";
-import { containsReaction, findMessageById } from "domain/chat/chat.utils";
-import { localMessageUpdates } from "stores/localMessageUpdates";
+import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 
-function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-    const matchingMessage = findMessageById(message.messageId, get(eventsStore));
-
-    if (matchingMessage !== undefined) {
-        const exists = containsReaction(
-            message.userId,
-            message.reaction,
-            matchingMessage.event.reactions
-        );
-
-        localMessageUpdates.markReaction(message.messageId.toString(), {
-            reaction: message.reaction,
-            kind: exists ? "remove" : "add",
-            userId: message.userId,
-        });
-    }
-}
-function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
-    localMessageUpdates.markDeleted(message.messageId.toString(), message.userId);
-}
-
-function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
-    localMessageUpdates.markUndeleted(message.messageId.toString());
-}
-
-function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-    // FIXME - need to get the current user from somewhere
-    // delegateToChatController(message, (chat) =>
-    //     removeMessage(chat, chat.user.userId, message.messageId, message.userId)
-    // );
-}
-
-function remoteUserSentMessage(message: RemoteUserSentMessage): void {
-    console.log("remote user sent message");
-    // FIXME - not sure how we're going to deal with this
-    // if (
-    //     !delegateToChatController(message, (chat) =>
-    //         chat.handleMessageSentByOther(message.messageEvent, false)
-    //     )
-    // ) {
-    //     unconfirmed.add(message.chatId, message.messageEvent);
-    // }
-}
-
-function remoteUserReadMessage(message: RemoteUserReadMessage): void {
-    unconfirmedReadByThem.add(BigInt(message.messageId));
-}
-
-function delegateToChatController(
-    msg: WebRtcMessage,
-    fn: (selectedChat: ChatSummary) => void
-): boolean {
+export function delegateToChatController(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
     const selectedChat = get(selectedChatStore);
     if (selectedChat === undefined) return false;
     if (chat.chatId !== selectedChat.chatId) return false;
-    fn(selectedChat);
     return true;
 }
 
@@ -194,36 +124,4 @@ export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMe
         };
     }
     return msg;
-}
-
-export function handleWebRtcMessage(msg: WebRtcMessage): void {
-    const chatId = filterWebRtcMessage(msg);
-    if (chatId === undefined) return;
-    const parsed = parseWebRtcMessage(chatId, msg);
-    const { kind } = parsed;
-
-    if (kind === "remote_user_typing") {
-        typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
-    }
-    if (kind === "remote_user_stopped_typing") {
-        typing.stopTyping(msg.userId);
-    }
-    if (kind === "remote_user_toggled_reaction") {
-        remoteUserToggledReaction(parsed);
-    }
-    if (kind === "remote_user_deleted_message") {
-        remoteUserDeletedMessage(parsed);
-    }
-    if (kind === "remote_user_removed_message") {
-        remoteUserRemovedMessage(parsed);
-    }
-    if (kind === "remote_user_undeleted_message") {
-        remoteUserUndeletedMessage(parsed);
-    }
-    if (kind === "remote_user_sent_message") {
-        remoteUserSentMessage(parsed);
-    }
-    if (kind === "remote_user_read_message") {
-        remoteUserReadMessage(parsed);
-    }
 }

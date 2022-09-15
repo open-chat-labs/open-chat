@@ -78,7 +78,6 @@
         RemoteUserToggledReaction,
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
-    import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
@@ -304,39 +303,35 @@
         return createMessage(user.userId, nextMessageIndex, textContent, $replyingTo, fileToAttach);
     }
 
-    export function handleWebRtcMessage(msg: WebRtcMessage): void {
-        const chatId = filterWebRtcMessage(msg);
-        if (chatId === undefined) return;
-
+    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
         // make sure the chatId matches
-        if (chatId !== chat.chatId) return;
+        if (fromChatId !== chat.chatId) return;
 
         // make sure that the root message index matches
         if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
 
-        const parsed = parseWebRtcMessage(chatId, msg);
-        const { kind } = parsed;
+        const { kind } = msg;
 
         if (kind === "remote_user_typing") {
-            typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
+            typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
         }
         if (kind === "remote_user_stopped_typing") {
-            typing.stopTyping(parsed.userId);
+            typing.stopTyping(msg.userId);
         }
         if (kind === "remote_user_toggled_reaction") {
-            remoteUserToggledReaction(parsed);
+            remoteUserToggledReaction(msg);
         }
         if (kind === "remote_user_removed_message") {
-            remoteUserRemovedMessage(parsed);
+            remoteUserRemovedMessage(msg);
         }
         if (kind === "remote_user_deleted_message") {
-            localMessageUpdates.markDeleted(parsed.messageId.toString(), parsed.userId);
+            localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
         }
         if (kind === "remote_user_undeleted_message") {
-            localMessageUpdates.markUndeleted(parsed.messageId.toString());
+            localMessageUpdates.markUndeleted(msg.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
-            remoteUserSentMessage(parsed);
+            remoteUserSentMessage(msg);
         }
     }
 

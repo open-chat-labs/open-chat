@@ -36,6 +36,7 @@
         canForward,
         containsReaction,
         createMessage,
+        findMessageById,
         getStorageRequiredForMessage,
         groupEvents,
         indexRangeForChat,
@@ -104,6 +105,9 @@
     import { toastStore } from "stores/toast";
     import { rtcConnectionsManager } from "domain/webrtc/RtcConnectionsManager";
     import { indexIsInRanges } from "utils/range";
+    import type { RemoteUserToggledReaction, WebRtcMessage } from "domain/webrtc/webrtc";
+    import { typing } from "stores/typing";
+    import { localMessageUpdates } from "stores/localMessageUpdates";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -252,7 +256,7 @@
         }
     }
 
-    function scrollToMessageIndex(
+    export function scrollToMessageIndex(
         index: number,
         preserveFocus: boolean,
         loadWindowIfMissing: boolean = true,
@@ -776,7 +780,7 @@
         return eventsPromise.then((resp) => handleEventsResponse(resp));
     }
 
-    function handleMessageSentByOther(
+    export function handleMessageSentByOther(
         messageEvent: EventWrapper<Message>,
         confirmed: boolean
     ): void {
@@ -839,23 +843,6 @@
                 loadPreviousMessages();
             }
             loadDetails();
-
-            // FIXME
-            // controller.subscribe((evt) => {
-            //     switch (evt.event.kind) {
-            //         case "sending_message":
-            //             // smooth scroll doesn't work here when we are leaping from the top
-            //             // which means we are stuck with abrupt scroll which is disappointing
-            //             const { scroll } = evt.event;
-            //             tick().then(() => scrollBottom(scroll));
-            //             break;
-            //         case "chat_updated":
-            //             if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {
-            //                 controller.loadNewMessages();
-            //             }
-            //             break;
-            //     }
-            // });
         }
     }
 
@@ -1176,6 +1163,55 @@
 
         const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
         sendMessage(event);
+    }
+
+    function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
+        console.log("XXX: toggling reaction");
+        const matchingMessage = findMessageById(message.messageId, $eventsStore);
+
+        if (matchingMessage !== undefined) {
+            console.log("XXX: toggling reaction: found message");
+            const exists = containsReaction(
+                message.userId,
+                message.reaction,
+                matchingMessage.event.reactions
+            );
+
+            localMessageUpdates.markReaction(message.messageId.toString(), {
+                reaction: message.reaction,
+                kind: exists ? "remove" : "add",
+                userId: message.userId,
+            });
+        }
+    }
+
+    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
+        const { kind } = msg;
+
+        if (kind === "remote_user_typing") {
+            typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
+        }
+        if (kind === "remote_user_stopped_typing") {
+            typing.stopTyping(msg.userId);
+        }
+        if (kind === "remote_user_toggled_reaction") {
+            remoteUserToggledReaction(msg);
+        }
+        if (kind === "remote_user_deleted_message") {
+            localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
+        }
+        if (kind === "remote_user_removed_message") {
+            removeMessage(chat, user.userId, msg.messageId, msg.userId);
+        }
+        if (kind === "remote_user_undeleted_message") {
+            localMessageUpdates.markUndeleted(msg.messageId.toString());
+        }
+        if (kind === "remote_user_sent_message") {
+            handleMessageSentByOther(msg.messageEvent, false);
+        }
+        if (kind === "remote_user_read_message") {
+            unconfirmedReadByThem.add(BigInt(msg.messageId));
+        }
     }
 </script>
 
