@@ -11,4 +11,4 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-./upgrade-canister.sh local http://127.0.0.1:8000/ $IDENTITY $CANISTER_NAME $VERSION
+./upgrade-canister.sh local http://127.0.0.1:8080/ $IDENTITY $CANISTER_NAME $VERSION

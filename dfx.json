@@ -52,12 +52,6 @@
       "source": ["frontend/build", "frontend/public"],
       "type": "assets"
     },
-    "ledger": {
-      "type": "custom",
-      "wasm": "backend/canisters/ledger/ledger.wasm",
-      "candid": "backend/canisters/ledger/ledger.private.did",
-      "build": ""
-    },
     "open_storage_index": {
       "type": "custom",
       "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
@@ -65,18 +59,13 @@
       "build": ""
     }
   },
-  "defaults": {
-    "build": {
-      "packtool": ""
-    },
-    "replica": {
-      "subnet_type": "verifiedapplication"
-    }
-  },
   "networks": {
     "local": {
-      "bind": "127.0.0.1:8000",
-      "type": "ephemeral"
+      "bind": "127.0.0.1:8080",
+      "type": "ephemeral",
+      "replica": {
+        "subnet_type": "system"
+      }
     },
     "ic": {
       "providers": [
