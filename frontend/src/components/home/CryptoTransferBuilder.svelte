@@ -39,7 +39,7 @@
         currentChatBlockedUsers,
         currentChatReplyingTo,
     } from "../../stores/chat";
-    import type { ChatSummary } from "../../domain/chat/chat";
+    import type { ChatSummary, DirectChatSummary } from "../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -54,7 +54,7 @@
     let message = "";
     let confirming = false;
     let receiver: PartialUserSummary | undefined =
-        chat.kind === "direct_chat" ? $userStore[chat.them] : undefined;
+        chat.kind === "direct_chat" ? $userStore[(chat as DirectChatSummary).them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;

@@ -15,6 +15,7 @@
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import { push } from "svelte-spa-router";
     import { typing, isTyping } from "../../stores/typing";
+    import { derived } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
@@ -46,13 +47,17 @@
     export let supportsReply: boolean;
     export let collapsed: boolean;
 
-    $: userSummary = {
-        kind: "user",
-        userId: user.userId,
-        username: user.username,
-        lastOnline: Date.now(),
-        updated: BigInt(0),
-    } as UserSummary;
+    let userSummary: UserSummary | undefined = undefined;
+
+    $: {
+        userSummary = {
+            kind: "user",
+            userId: user.userId,
+            username: user.username,
+            lastOnline: Date.now(),
+            updated: BigInt(0),
+        };
+    }
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);

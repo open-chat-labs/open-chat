@@ -24,7 +24,7 @@
     import { messagesRead } from "../../../stores/markRead";
     import { toDatetimeString } from "../../../utils/date";
 
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
@@ -45,13 +45,6 @@
     $: chatData = {
         name: chat.name,
         avatarUrl: groupAvatarUrl(chat),
-    };
-    $: user = {
-        kind: "user" as "user",
-        userId: currentUser.userId,
-        username: currentUser.username,
-        lastOnline: Date.now(),
-        updated: BigInt(Date.now()),
     };
 
     $: grouped = groupBySender(thread.latestReplies);
@@ -140,7 +133,7 @@
                         chatId={thread.chatId}
                         chatType={chat.kind}
                         {user}
-                        me={thread.rootMessage.event.sender === currentUser.userId}
+                        me={thread.rootMessage.event.sender === user.userId}
                         first={true}
                         last={true}
                         preview={true}
@@ -181,7 +174,7 @@
                             chatId={thread.chatId}
                             chatType={chat.kind}
                             {user}
-                            me={evt.event.sender === currentUser.userId}
+                            me={evt.event.sender === user.userId}
                             first={i === 0}
                             last={i === userGroup.length - 1}
                             preview={true}
