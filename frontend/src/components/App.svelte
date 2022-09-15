@@ -24,7 +24,7 @@
     import type { Identity } from "@dfinity/agent";
     import { ServiceContainer } from "../services/serviceContainer";
     import type { CreatedUser } from "../domain/user/user";
-    import { Poller } from "../fsm/poller";
+    import { Poller } from "../services/poller";
     import { getIdentity, login, logout, startSession } from "../services/auth";
     import { clearSelectedChat, currentUserStore, startChatPoller } from "../stores/chat";
     import { apiStore } from "../stores/api";

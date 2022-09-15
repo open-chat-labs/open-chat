@@ -37,7 +37,7 @@
     import { userStore } from "../../stores/user";
     import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
-    import { filterByChatType, RightPanelState } from "../../fsm/rightPanel";
+    import { filterByChatType, RightPanelState } from "../../domain/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,

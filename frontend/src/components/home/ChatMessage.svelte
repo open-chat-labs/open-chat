@@ -462,8 +462,7 @@
                             size={$iconSize}
                             color={me
                                 ? "var(--currentChat-msg-me-muted)"
-                                : "var(--currentChat-msg-muted)"}
-                            slot="icon" />
+                                : "var(--currentChat-msg-muted)"} />
                     </div>
                     <div class="text">{"Forwarded"}</div>
                 </div>

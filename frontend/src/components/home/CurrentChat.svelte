@@ -3,21 +3,18 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import {
-        editMessage,
-        getUnreadMessageCount,
-        messageRead,
-        startTyping,
-        stopTyping,
-    } from "../../fsm/chat.controller";
-    import { createEventDispatcher, getContext, onDestroy, tick } from "svelte";
+    import { editMessage } from "../../services/common/chatThread";
+    import { getContext, onDestroy, tick } from "svelte";
     import {
         canInviteUsers,
         canReplyInThread,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         getMessageContent,
+        getMinVisibleMessageIndex,
         markAllRead,
+        startTyping,
+        stopTyping,
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
@@ -66,7 +63,6 @@
     export let serverChat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
-    const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
 
@@ -111,6 +107,16 @@
         firstUnreadMessage = getFirstUnreadMessageIndex(chat);
     });
 
+    function getUnreadMessageCount(chat: ChatSummary): number {
+        if (isPreviewing(chat)) return 0;
+
+        return messagesRead.unreadMessageCount(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex
+        );
+    }
+
     function onWindowFocus() {
         closeNotificationsForChat(chatId);
     }
@@ -119,12 +125,6 @@
 
     function onMarkAllRead() {
         markAllRead(chat);
-    }
-
-    function onMessageRead(
-        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
-    ) {
-        messageRead(chat, user.userId, ev.detail.messageIndex, ev.detail.messageId);
     }
 
     function createPoll() {
@@ -269,7 +269,6 @@
         on:replyPrivatelyTo
         on:replyTo={replyTo}
         on:openThread
-        on:messageRead={onMessageRead}
         on:chatWith
         on:upgrade
         on:forward

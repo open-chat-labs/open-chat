@@ -1,8 +1,8 @@
 import type { ChatSummary, DirectChatSummary, MessageContent } from "../domain/chat/chat";
-import { isBlockedUser, isDirectChatWith } from "../fsm/chat.controller";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
+import { blockedUsers } from "../stores/blockedUsers";
 
 export function delegateToChatController(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
@@ -27,6 +27,14 @@ function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     return msg.chatType === "group_chat"
         ? findChatById(msg.chatId)
         : findDirectChatByUserId(msg.userId);
+}
+
+function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
+    return chat.kind === "direct_chat" && chat.them === userId;
+}
+
+function isBlockedUser(chat: ChatSummary): boolean {
+    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them);
 }
 
 export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {

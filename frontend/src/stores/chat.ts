@@ -25,7 +25,7 @@ import {
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
 import { userStore } from "./user";
-import { Poller } from "../fsm/poller";
+import { Poller } from "../services/poller";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { blockedUsers } from "./blockedUsers";

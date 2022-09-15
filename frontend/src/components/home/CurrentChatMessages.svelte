@@ -56,15 +56,10 @@
     import {
         blockUser,
         deleteMessage,
-        findMessageEvent,
-        pinMessage,
         registerPollVote,
-        removeMessage,
         selectReaction,
-        unpinMessage,
         updateUserStore,
-        appendMessage,
-    } from "../../fsm/chat.controller";
+    } from "../../services/common/chatThread";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -179,11 +174,21 @@
                         const chatId = chat.chatId;
                         const timer = window.setTimeout(() => {
                             if (chatId === chat.chatId) {
-                                dispatch("messageRead", {
-                                    chatId,
-                                    messageIndex: idx,
-                                    messageId: id,
-                                });
+                                messagesRead.markMessageRead(chat.chatId, idx, id);
+
+                                if (chat.kind === "direct_chat") {
+                                    const rtc: WebRtcMessage = {
+                                        kind: "remote_user_read_message",
+                                        chatType: chat.kind,
+                                        messageId: id,
+                                        chatId: chat.chatId,
+                                        userId: user.userId,
+                                    };
+                                    rtcConnectionsManager.sendMessage(
+                                        [...$currentChatUserIds],
+                                        rtc
+                                    );
+                                }
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -256,6 +261,12 @@
         }
     }
 
+    function findMessageEvent(index: number): EventWrapper<Message> | undefined {
+        return $eventsStore.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+        ) as EventWrapper<Message> | undefined;
+    }
+
     export function scrollToMessageIndex(
         index: number,
         preserveFocus: boolean,
@@ -274,7 +285,7 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            const msgEvent = findMessageEvent($eventsStore, index);
+            const msgEvent = findMessageEvent(index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
                     dispatch("openThread", {
@@ -411,6 +422,15 @@
                 }
             }
         );
+
+        rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
+            kind: "remote_user_toggled_reaction",
+            chatType: chat.kind,
+            chatId: chat.chatId,
+            messageId: message.messageId,
+            reaction,
+            userId: user.userId,
+        });
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -809,7 +829,7 @@
             }
 
             // If it is unconfirmed then we simply append it
-            if (appendMessage(chat.chatId, messageEvent)) {
+            if (appendMessage(messageEvent)) {
                 unconfirmed.add(chat.chatId, messageEvent);
             }
         }
@@ -922,12 +942,64 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        pinMessage(api, chat, ev.detail.messageIndex);
+        pinMessage(ev.detail.messageIndex);
     }
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        unpinMessage(api, chat, ev.detail.messageIndex);
+        unpinMessage(ev.detail.messageIndex);
+    }
+
+    function addPinnedMessage(chatId: string, messageIndex: number): void {
+        currentChatPinnedMessages.update(chatId, (s) => {
+            s.add(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    function removePinnedMessage(chatId: string, messageIndex: number): void {
+        currentChatPinnedMessages.update(chatId, (s) => {
+            s.delete(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    function unpinMessage(messageIndex: number): void {
+        if (chat.kind === "group_chat") {
+            removePinnedMessage(chat.chatId, messageIndex);
+            api.unpinMessage(chat.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        toastStore.showFailureToast("unpinMessageFailed");
+                        rollbar.error("Unpin message failed: ", resp);
+                        addPinnedMessage(chat.chatId, messageIndex);
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("unpinMessageFailed");
+                    rollbar.error("Unpin message failed: ", err);
+                    addPinnedMessage(chat.chatId, messageIndex);
+                });
+        }
+    }
+
+    function pinMessage(messageIndex: number): void {
+        if (chat.kind === "group_chat") {
+            addPinnedMessage(chat.chatId, messageIndex);
+            api.pinMessage(chat.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        toastStore.showFailureToast("pinMessageFailed");
+                        rollbar.error("Pin message failed: ", resp);
+                        removePinnedMessage(chat.chatId, messageIndex);
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("pinMessageFailed");
+                    rollbar.error("Pin message failed: ", err);
+                    removePinnedMessage(chat.chatId, messageIndex);
+                });
+        }
     }
 
     function registerVote(
@@ -1053,13 +1125,13 @@
                             trackEvent("replied_to_message");
                         }
                     } else {
-                        removeMessage(chat, user.userId, msg.messageId, user.userId);
+                        removeMessage(msg.messageId, user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
                 })
                 .catch((err) => {
-                    removeMessage(chat, user.userId, msg.messageId, user.userId);
+                    removeMessage(msg.messageId, user.userId);
                     console.log(err);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
@@ -1113,7 +1185,7 @@
             messageEvent.event.messageIndex,
             messageEvent.event.messageId
         );
-        appendMessage(chat.chatId, messageEvent);
+        appendMessage(messageEvent);
 
         currentChatDraftMessage.clear(chat.chatId);
 
@@ -1149,13 +1221,13 @@
                     confirmMessage(msg, resp);
                     trackEvent("forward_message");
                 } else {
-                    removeMessage(chat, user.userId, msg.messageId, user.userId);
+                    removeMessage(msg.messageId, user.userId);
                     rollbar.warn("Error response forwarding message", resp);
                     toastStore.showFailureToast("errorSendingMessage");
                 }
             })
             .catch((err) => {
-                removeMessage(chat, user.userId, msg.messageId, user.userId);
+                removeMessage(msg.messageId, user.userId);
                 console.log(err);
                 toastStore.showFailureToast("errorSendingMessage");
                 rollbar.error("Exception forwarding message", err);
@@ -1166,11 +1238,9 @@
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        console.log("XXX: toggling reaction");
         const matchingMessage = findMessageById(message.messageId, $eventsStore);
 
         if (matchingMessage !== undefined) {
-            console.log("XXX: toggling reaction: found message");
             const exists = containsReaction(
                 message.userId,
                 message.reaction,
@@ -1201,7 +1271,7 @@
             localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
         }
         if (kind === "remote_user_removed_message") {
-            removeMessage(chat, user.userId, msg.messageId, msg.userId);
+            removeMessage(msg.messageId, msg.userId);
         }
         if (kind === "remote_user_undeleted_message") {
             localMessageUpdates.markUndeleted(msg.messageId.toString());
@@ -1212,6 +1282,34 @@
         if (kind === "remote_user_read_message") {
             unconfirmedReadByThem.add(BigInt(msg.messageId));
         }
+    }
+
+    function appendMessage(message: EventWrapper<Message>): boolean {
+        const existing = $eventsStore.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+        );
+
+        if (existing !== undefined) return false;
+
+        serverEventsStore.update(chat.chatId, (events) => [...events, message]);
+        return true;
+    }
+
+    function removeMessage(messageId: bigint, userId: string): void {
+        if (userId === user.userId) {
+            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
+                kind: "remote_user_removed_message",
+                chatType: chat.kind,
+                chatId: chat.chatId,
+                messageId: messageId,
+                userId: userId,
+            });
+        }
+        unconfirmed.delete(chat.chatId, messageId);
+        messagesRead.removeUnconfirmedMessage(chat.chatId, messageId);
+        serverEventsStore.update(chat.chatId, (events) =>
+            events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
+        );
     }
 </script>
 

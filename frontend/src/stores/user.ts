@@ -1,4 +1,4 @@
-import { Poller } from "../fsm/poller";
+import { Poller } from "../services/poller";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { get } from "svelte/store";
 import { chunk, groupBy } from "../utils/list";

@@ -1,4 +1,4 @@
-import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "../domain/chat/chat";
+import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "./chat/chat";
 
 export type RightPanelState =
     | GroupDetailsPanel

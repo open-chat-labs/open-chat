@@ -7,24 +7,18 @@
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import type { RightPanelState } from "../../fsm/rightPanel";
+    import type { RightPanelState } from "../../domain/rightPanel";
     import type {
+        AddMembersResponse,
         ChatEvent,
         ChatMetrics,
         EventWrapper,
         FullMember,
         GroupChatSummary,
+        MemberRole,
         Message,
     } from "../../domain/chat/chat";
-    import {
-        addMembers,
-        blockUser,
-        ChatController,
-        dismissAsAdmin,
-        makeAdmin,
-        removeMember,
-        transferOwnership,
-    } from "../../fsm/chat.controller";
+    import { blockUser } from "../../services/common/chatThread";
     import { userStore } from "../../stores/user";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
@@ -46,6 +40,7 @@
         currentChatBlockedUsers,
         currentChatPinnedMessages,
     } from "../../stores/chat";
+    import { rollbar } from "../../utils/logging";
 
     const dispatch = createEventDispatcher();
 
@@ -66,13 +61,13 @@
 
     function onDismissAsAdmin(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
-            dismissAsAdmin(api, $selectedChatId, ev.detail);
+            dismissAsAdmin($selectedChatId, ev.detail);
         }
     }
 
     function onMakeAdmin(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
-            makeAdmin(api, $selectedChatId, ev.detail);
+            makeAdmin($selectedChatId, ev.detail);
         }
     }
 
@@ -81,7 +76,7 @@
             currentChatMembers.update($selectedChatId, (ps) =>
                 ps.filter((p) => p.userId !== ev.detail)
             );
-            removeMember(api, $selectedChatId, ev.detail);
+            removeMember($selectedChatId, ev.detail);
         }
     }
 
@@ -97,7 +92,7 @@
 
     async function onTransferOwnership(ev: CustomEvent<FullMember>) {
         if ($selectedChatId !== undefined) {
-            const success = await transferOwnership(api, $selectedChatId, userId, ev.detail);
+            const success = await transferOwnership($selectedChatId, userId, ev.detail);
             if (success) {
                 toastStore.showSuccessToast("transferOwnershipSucceeded");
             } else {
@@ -108,9 +103,7 @@
 
     async function unblockUser(ev: CustomEvent<UserSummary>) {
         if ($selectedChatId !== undefined) {
-            const success = await addMembers(api, $selectedChatId, currentUser.username, true, [
-                ev.detail,
-            ]);
+            const success = await addMembers($selectedChatId, true, [ev.detail]);
             if (success) {
                 toastStore.showSuccessToast("unblockUserSucceeded");
             } else {
@@ -122,13 +115,7 @@
     async function saveMembers(ev: CustomEvent<UserSummary[]>) {
         if ($selectedChatId !== undefined) {
             savingMembers = true;
-            const success = await addMembers(
-                api,
-                $selectedChatId,
-                currentUser.username,
-                false,
-                ev.detail
-            );
+            const success = await addMembers($selectedChatId, false, ev.detail);
             if (success) {
                 popHistory();
             } else {
@@ -157,6 +144,186 @@
         return events.find((e) => {
             return e.event.kind === "message" && e.event.messageId === messageId;
         }) as EventWrapper<Message> | undefined;
+    }
+
+    function transferOwnershipLocally(chatId: string, me: string, them: string): void {
+        currentChatMembers.update(chatId, (ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: "owner" };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "admin" };
+                }
+                return p;
+            })
+        );
+    }
+
+    function undoTransferOwnershipLocally(
+        chatId: string,
+        me: string,
+        them: string,
+        theirRole: MemberRole
+    ): void {
+        currentChatMembers.update(chatId, (ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: theirRole };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "owner" };
+                }
+                return p;
+            })
+        );
+    }
+
+    function transferOwnership(chatId: string, me: string, them: FullMember): Promise<boolean> {
+        transferOwnershipLocally(chatId, me, them.userId);
+        return api
+            .changeRole(chatId, them.userId, "owner")
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to transfer ownership", resp);
+                    undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
+                rollbar.error("Unable to transfer ownership", err);
+                return false;
+            });
+    }
+
+    function dismissAsAdmin(chatId: string, userId: string): Promise<void> {
+        currentChatMembers.update(chatId, (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
+        );
+        return api
+            .changeRole(chatId, userId, "participant")
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to dismiss as admin", resp);
+                    toastStore.showFailureToast("dismissAsAdminFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to dismiss as admin", err);
+                toastStore.showFailureToast("dismissAsAdminFailed");
+            });
+    }
+
+    function makeAdmin(chatId: string, userId: string): Promise<void> {
+        currentChatMembers.update(chatId, (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
+        );
+        return api
+            .changeRole(chatId, userId, "admin")
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to make admin", resp);
+                    toastStore.showFailureToast("makeAdminFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to make admin", err);
+                toastStore.showFailureToast("makeAdminFailed");
+            });
+    }
+
+    function removeMember(chatId: string, userId: string): Promise<void> {
+        return api
+            .removeMember(chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to remove member", resp);
+                    toastStore.showFailureToast("removeMemberFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to remove member", err);
+                toastStore.showFailureToast("removeMemberFailed");
+            });
+    }
+
+    function removeMembersLocally(
+        chatId: string,
+        viaUnblock: boolean,
+        users: UserSummary[],
+        resp: AddMembersResponse | { kind: "unknown" }
+    ): void {
+        if (resp.kind === "add_members_success") return;
+
+        let toRemove: string[] = [];
+        if (resp.kind === "add_members_partial_success") {
+            toRemove = [
+                ...resp.usersAlreadyInGroup,
+                ...resp.usersBlockedFromGroup,
+                ...resp.usersWhoBlockedRequest,
+            ];
+        } else {
+            toRemove = users.map((u) => u.userId);
+        }
+
+        currentChatMembers.update(chatId, (ps) =>
+            ps.filter((p) => {
+                !toRemove.includes(p.userId);
+            })
+        );
+
+        if (viaUnblock) {
+            currentChatBlockedUsers.update(chatId, (b) => {
+                return toRemove.reduce((blocked, u) => blocked.add(u), b);
+            });
+        }
+    }
+
+    function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
+        if (viaUnblock) {
+            currentChatBlockedUsers.update(chatId, (b) => {
+                users.forEach((u) => b.delete(u.userId));
+                return b;
+            });
+        }
+        currentChatMembers.update(chatId, (ps) => [
+            ...users.map((u) => ({
+                userId: u.userId,
+                role: "participant" as MemberRole,
+            })),
+            ...ps,
+        ]);
+    }
+
+    function addMembers(
+        chatId: string,
+        viaUnblock: boolean,
+        users: UserSummary[]
+    ): Promise<boolean> {
+        addMembersLocally(chatId, viaUnblock, users);
+        return api
+            .addMembers(
+                chatId,
+                users.map((u) => u.userId),
+                currentUser.username,
+                viaUnblock
+            )
+            .then((resp) => {
+                if (resp.kind === "add_members_success") {
+                    return true;
+                } else {
+                    removeMembersLocally(chatId, viaUnblock, users, resp);
+                    rollbar.warn("AddMembersFailed", resp);
+                    return false;
+                }
+            })
+            .catch((err) => {
+                removeMembersLocally(chatId, viaUnblock, users, { kind: "unknown" });
+                rollbar.error("AddMembersFailed", err);
+                return false;
+            });
     }
 
     $: threadRootEvent =

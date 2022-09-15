@@ -28,10 +28,8 @@
         editMessage,
         registerPollVote,
         selectReaction,
-        startTyping,
-        stopTyping,
         updateUserStore,
-    } from "../../../fsm/chat.controller";
+    } from "../../../services/common/chatThread";
     import ChatMessage from "../ChatMessage.svelte";
     import {
         canBlockUsers,
@@ -51,6 +49,8 @@
         replaceAffected,
         replaceLocal,
         serialiseMessageForRtc,
+        startTyping,
+        stopTyping,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
