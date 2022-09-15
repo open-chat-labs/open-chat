@@ -84,7 +84,7 @@
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import {
-        delegateToChatController,
+        delegateToChatComponent,
         filterWebRtcMessage,
         parseWebRtcMessage,
     } from "../../utils/rtc";
@@ -189,7 +189,7 @@
             // do we have the thread window open for this thread
             threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
         } else {
-            if (delegateToChatController(parsedMsg)) {
+            if (delegateToChatComponent(parsedMsg)) {
                 currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
             } else {
                 if (parsedMsg.kind === "remote_user_sent_message") {

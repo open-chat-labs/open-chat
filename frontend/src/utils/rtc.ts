@@ -4,7 +4,7 @@ import { get } from "svelte/store";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { blockedUsers } from "../stores/blockedUsers";
 
-export function delegateToChatController(msg: WebRtcMessage): boolean {
+export function delegateToChatComponent(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
     const selectedChat = get(selectedChatStore);
