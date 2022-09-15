@@ -26,8 +26,3 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id open_storage_index)
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local http://127.0.0.1:8080/ $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID $LEDGER_CANISTER_ID true
-
-# Send the first user 10 ICP
-pushd frontend
-npm run mint_test_icp 2f3bc10b71600f18d656ed1b51d87634c400dab244088245d9923216a10bf2e8 1000000000
-popd

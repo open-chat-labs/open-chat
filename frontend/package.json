@@ -15,8 +15,7 @@
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "codegen": "sh ./codegen.sh",
         "typecheck": "tsc --noEmit",
-        "sync_lang": "node ./generate.js",
-        "mint_test_icp": "node ./mintTestIcp.js"
+        "sync_lang": "node ./generate.js"
     },
     "devDependencies": {
         "@babel/core": "^7.17.9",
@@ -47,7 +46,6 @@
         "babel-loader": "^8.2.4",
         "buffer": "6.0.3",
         "core-js": "^3.21.1",
-        "cross-fetch": "^3.1.5",
         "dompurify": "^2.3.10",
         "dotenv": "^10.0.0",
         "eslint": "^7.32.0",
@@ -59,6 +57,7 @@
         "js-sha256": "^0.9.0",
         "lodash": "^4.17.21",
         "marked": "^4.0.18",
+        "node-fetch": "^3.2.3",
         "postcss": "^8.4.12",
         "prettier": "^2.6.2",
         "process": "^0.11.10",
@@ -90,9 +89,7 @@
         "@dfinity/authentication": "^0.13.3",
         "@dfinity/candid": "^0.13.3",
         "@dfinity/identity": "^0.13.3",
-        "@dfinity/nns": "next",
         "@dfinity/principal": "^0.13.3",
-        "@dfinity/utils": "next",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",
         "@open-ic/open-storage-agent": "^0.1.5",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
