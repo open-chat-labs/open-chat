@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Pass in network name, IC url, identity name, canister name, and version
-# eg './upgrade-canister.sh local http://127.0.0.1:8000/ openchat user_index 1.0.0'
+# eg './upgrade-canister.sh local http://127.0.0.1:8080/ openchat user_index 1.0.0'
 
 NETWORK=$1
 IC_URL=$2
