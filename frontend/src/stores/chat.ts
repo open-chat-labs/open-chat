@@ -245,18 +245,9 @@ export function setSelectedChat(
     api: ServiceContainer,
     chat: ChatSummary,
     messageIndex?: number,
-    threadMessageIndex?: number
+    threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
 ): void {
-    // const summaries = get(chatSummariesStore);
-    // const currentUser = get(currentUserStore);
     const currentScrollStrategy = get(scrollStrategy);
-
-    // if (currentUser === undefined) return;
-
-    // const chat = summaries[chatId];
-
-    // if (chat === undefined) return;
-
     closeNotificationsForChat(chat.chatId);
 
     // TODO don't think this should be in here really
@@ -268,14 +259,6 @@ export function setSelectedChat(
         api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
     }
 
-    // const user: UserSummary = {
-    //     kind: "user",
-    //     userId: currentUser.userId,
-    //     username: currentUser.username,
-    //     lastOnline: Date.now(),
-    //     updated: BigInt(Date.now()),
-    // };
-
     if (messageIndex === undefined) {
         if (currentScrollStrategy === "firstMention") {
             messageIndex =
@@ -285,14 +268,6 @@ export function setSelectedChat(
             messageIndex = getFirstUnreadMessageIndex(chat);
         }
     }
-
-    // const readableChatSummary = readable(chat, (set) =>
-    //     serverChatSummariesStore.subscribe((summaries) => {
-    //         if (summaries[chat.chatId] !== undefined) {
-    //             set(summaries[chat.chatId]);
-    //         }
-    //     })
-    // );
 
     clearSelectedChat();
 
@@ -308,19 +283,6 @@ export function setSelectedChat(
     );
     resetFilteredProposalsStore(chat);
     selectedChatId.set(chat.chatId);
-
-    console.log("would have constructed chat controller");
-
-    // selectedChatControllerStore.set(
-    //     new ChatController(
-    //         api,
-    //         user,
-    //         readableChatSummary,
-    //         messageIndex,
-    //         threadMessageIndex,
-    //         (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
-    //     )
-    // );
 }
 
 export function updateSummaryWithConfirmedMessage(
