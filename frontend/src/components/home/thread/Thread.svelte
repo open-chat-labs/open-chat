@@ -86,6 +86,7 @@
         currentChatBlockedUsers,
         currentChatUserIds,
         selectedChatId,
+        focusThreadMessageIndex,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
@@ -629,9 +630,14 @@
         });
     }
 
+    function clearFocusIndex() {
+        focusMessageIndex = undefined;
+        focusThreadMessageIndex.clear(chat.chatId);
+    }
+
     function goToMessageIndex(index: number) {
         if (index < 0) {
-            focusMessageIndex = undefined;
+            clearFocusIndex();
             return;
         }
 
@@ -640,7 +646,7 @@
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
             setTimeout(() => {
-                focusMessageIndex = undefined;
+                clearFocusIndex();
             }, 200);
         } else {
             console.log(`message index ${index} not found`);

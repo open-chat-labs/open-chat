@@ -80,6 +80,7 @@
         removeChat,
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
+        focusThreadMessageIndex,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -284,11 +285,14 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
+                            focusThreadMessageIndex.set(
+                                pathParams.chatId,
+                                pathParams.threadMessageIndex
+                            );
                             currentChatMessages?.scrollToMessageIndex(
                                 pathParams.messageIndex,
                                 false,
-                                true,
-                                pathParams.threadMessageIndex
+                                true
                             );
                         }
                     }
@@ -795,15 +799,12 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
-    ) {
+    function openThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
         if ($selectedChatId !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
                     rootEvent: ev.detail.rootEvent,
-                    focusThreadMessageIndex: ev.detail.focusThreadMessageIndex,
                 },
             ];
         }

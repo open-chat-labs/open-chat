@@ -270,8 +270,7 @@
     export function scrollToMessageIndex(
         index: number,
         preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true,
-        focusThreadMessageIndex: number | undefined = undefined
+        loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
             focusMessageIndex.set(chat.chatId, undefined);
@@ -290,7 +289,6 @@
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
                     dispatch("openThread", {
                         rootEvent: msgEvent,
-                        focusThreadMessageIndex,
                     });
                 } else {
                     dispatch("closeThread");

@@ -274,6 +274,7 @@ export function setSelectedChat(
     // initialise a bunch of stores
     serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
     focusMessageIndex.set(chat.chatId, messageIndex);
+    focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
     currentChatMembers.set(chat.chatId, []);
     currentChatBlockedUsers.set(chat.chatId, new Set<string>());
     currentChatPinnedMessages.set(chat.chatId, new Set<number>());
@@ -335,6 +336,7 @@ export function clearSelectedChat(): void {
             groupDetails.clear(chatId);
             serverEventsStore.clear(chatId);
             focusMessageIndex.clear(chatId);
+            focusThreadMessageIndex.clear(chatId);
             currentChatMembers.clear(chatId);
             currentChatBlockedUsers.clear(chatId);
             currentChatPinnedMessages.clear(chatId);
@@ -510,6 +512,7 @@ export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>
     new Set<number>()
 );
 export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
+export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 // This set will contain 1 key for each rendered user event group which is used as that group's key
 export const groupDetails = createChatSpecificDataStore<GroupChatDetails | undefined>(undefined);
 

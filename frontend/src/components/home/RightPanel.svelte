@@ -39,6 +39,7 @@
         currentChatMembers,
         currentChatBlockedUsers,
         currentChatPinnedMessages,
+        focusThreadMessageIndex,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
 
@@ -389,9 +390,7 @@
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
-            focusMessageIndex={lastState.kind === "message_thread_panel"
-                ? lastState.focusThreadMessageIndex
-                : undefined}
+            focusMessageIndex={$focusThreadMessageIndex}
             chat={$selectedChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
