@@ -52,12 +52,12 @@ import {
 import type { BlobReference } from "../../domain/data/data";
 import type {
     ArchiveChatResponse,
+    CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
-    UserSummary,
 } from "../../domain/user/user";
 import type {
     SearchDirectChatResponse,
@@ -123,7 +123,12 @@ export class CachingUserClient implements IUserClient {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing], userId, threadRootMessageIndex, latestClientEventIndex)
+                .chatEventsByIndex(
+                    [...missing],
+                    userId,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                )
                 .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
@@ -139,14 +144,16 @@ export class CachingUserClient implements IUserClient {
         eventIndexes: number[],
         userId: string,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return getCachedEventsByIndex<DirectChatEvent>(
             this.db,
             eventIndexes,
             userId,
             threadRootMessageIndex
-        ).then((res) => this.handleMissingEvents(userId, res, threadRootMessageIndex, latestClientEventIndex));
+        ).then((res) =>
+            this.handleMissingEvents(userId, res, threadRootMessageIndex, latestClientEventIndex)
+        );
     }
 
     @profile("userCachingClient")
@@ -171,10 +178,21 @@ export class CachingUserClient implements IUserClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, userId, messageIndex, latestClientEventIndex, interrupt)
+                .chatEventsWindow(
+                    eventIndexRange,
+                    userId,
+                    messageIndex,
+                    latestClientEventIndex,
+                    interrupt
+                )
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
-            return this.handleMissingEvents(userId, [cachedEvents, missing], undefined, latestClientEventIndex);
+            return this.handleMissingEvents(
+                userId,
+                [cachedEvents, missing],
+                undefined,
+                latestClientEventIndex
+            );
         }
     }
 
@@ -284,7 +302,12 @@ export class CachingUserClient implements IUserClient {
                     );
 
                     return targetMessageIndex !== undefined
-                        ? groupClient.chatEventsWindow(range, targetMessageIndex, chat.latestEventIndex, () => true)
+                        ? groupClient.chatEventsWindow(
+                              range,
+                              targetMessageIndex,
+                              chat.latestEventIndex,
+                              () => true
+                          )
                         : groupClient.chatEvents(
                               range,
                               chat.latestEventIndex,
@@ -295,7 +318,13 @@ export class CachingUserClient implements IUserClient {
                           );
                 } else {
                     return targetMessageIndex !== undefined
-                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, chat.latestEventIndex, () => true)
+                        ? this.chatEventsWindow(
+                              range,
+                              chat.chatId,
+                              targetMessageIndex,
+                              chat.latestEventIndex,
+                              () => true
+                          )
                         : this.chatEvents(
                               range,
                               chat.chatId,
@@ -403,7 +432,7 @@ export class CachingUserClient implements IUserClient {
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
@@ -415,7 +444,7 @@ export class CachingUserClient implements IUserClient {
     @profile("userCachingClient")
     sendMessage(
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number

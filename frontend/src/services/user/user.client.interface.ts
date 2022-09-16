@@ -31,6 +31,7 @@ import type {
 } from "../../domain/search/search";
 import type {
     ArchiveChatResponse,
+    CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -59,7 +60,7 @@ export interface IUserClient {
         eventIndexes: number[],
         userId: string,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
@@ -79,7 +80,7 @@ export interface IUserClient {
     ): Promise<EditMessageResponse>;
     sendMessage(
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
@@ -87,7 +88,7 @@ export interface IUserClient {
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;

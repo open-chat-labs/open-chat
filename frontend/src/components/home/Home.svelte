@@ -2,6 +2,7 @@
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
+    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
     import FaqModal from "../FaqModal.svelte";
@@ -36,7 +37,7 @@
     import { userStore } from "../../stores/user";
     import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
-    import { filterByChatType, RightPanelState } from "../../fsm/rightPanel";
+    import { filterByChatType, RightPanelState } from "../../domain/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,
@@ -70,6 +71,7 @@
         chatSummariesStore,
         chatsLoading,
         selectedChatStore,
+        selectedChatId,
         chatsInitialised,
         createDirectChat,
         setSelectedChat,
@@ -78,15 +80,21 @@
         removeChat,
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
+        focusThreadMessageIndex,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
-    import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
+    import {
+        delegateToChatComponent,
+        filterWebRtcMessage,
+        parseWebRtcMessage,
+    } from "../../utils/rtc";
     import { startPruningLocalUpdates } from "../../stores/localMessageUpdates";
     import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
     import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
+    import { unconfirmed } from "stores/unconfirmed";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -128,6 +136,7 @@
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let threadComponent: Thread | undefined;
+    let currentChatMessages: CurrentChatMessages | undefined;
 
     $: userId = user.userId;
     $: wasmVersion = user.wasmVersion;
@@ -173,21 +182,31 @@
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
-        if (msg.threadRootMessageIndex !== undefined) {
+        const fromChatId = filterWebRtcMessage(msg);
+        if (fromChatId === undefined) return;
+        const parsedMsg = parseWebRtcMessage(fromChatId, msg);
+
+        if (parsedMsg.threadRootMessageIndex !== undefined) {
             // do we have the thread window open for this thread
-            threadComponent?.handleWebRtcMessage(msg);
+            threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
         } else {
-            handleWebRtcMessage(msg);
+            if (delegateToChatComponent(parsedMsg)) {
+                currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
+            } else {
+                if (parsedMsg.kind === "remote_user_sent_message") {
+                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
+                }
+            }
         }
     }
 
     function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
         interruptRecommended = true;
 
-        const summary = $chatSummariesStore[chatId];
+        const chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
-        if (summary === undefined) {
+        if (chat === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
@@ -201,7 +220,12 @@
                 }
                 previewChat(chatId).then((canPreview) => {
                     if (canPreview) {
-                        setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
+                        setSelectedChat(
+                            api,
+                            $chatSummariesStore[chatId],
+                            messageIndex,
+                            threadMessageIndex
+                        );
                         resetRightPanel();
                         hotGroups = { kind: "idle" };
                     } else {
@@ -211,12 +235,12 @@
             }
         } else {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-            if (summary.archived) {
+            if (chat.archived) {
                 unarchiveChat(chatId);
             }
 
             // if it's a known chat let's select it
-            setSelectedChat(api, chatId, messageIndex, threadMessageIndex);
+            setSelectedChat(api, chat, messageIndex, threadMessageIndex);
             resetRightPanel();
             hotGroups = { kind: "idle" };
         }
@@ -251,7 +275,7 @@
 
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
-                    if (pathParams.chatId !== $selectedChatStore?.chatId?.toString()) {
+                    if (pathParams.chatId !== $selectedChatId?.toString()) {
                         newChatSelected(
                             pathParams.chatId,
                             pathParams.messageIndex,
@@ -261,16 +285,20 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            $selectedChatStore?.goToMessageIndex(
+                            focusThreadMessageIndex.set(
+                                pathParams.chatId,
+                                pathParams.threadMessageIndex
+                            );
+                            currentChatMessages?.scrollToMessageIndex(
                                 pathParams.messageIndex,
                                 false,
-                                pathParams.threadMessageIndex
+                                true
                             );
                         }
                     }
                 } else {
                     // we do *not* have a chat in the url
-                    if ($selectedChatStore !== undefined) {
+                    if ($selectedChatId !== undefined) {
                         clearSelectedChat();
                     }
 
@@ -373,9 +401,8 @@
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
 
-            const selectedChat = $selectedChatStore;
-            if (selectedChat?.chatId === chatId) {
-                selectedChat?.handleMessageSentByOther(m, true);
+            if ($selectedChatId === chatId) {
+                currentChatMessages?.handleMessageSentByOther(m, true);
             }
         });
     }
@@ -400,7 +427,7 @@
     }
 
     function resetRightPanel() {
-        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore?.chatVal);
+        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore);
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
@@ -433,7 +460,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        $selectedChatStore?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        currentChatMessages?.scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -572,7 +599,7 @@
             rollbar.error("Error archiving chat", err);
             archivedChatsStore.set(chatId, false);
         });
-        if (chatId === $selectedChatStore?.chatId) {
+        if (chatId === $selectedChatId) {
             push("/");
         }
     }
@@ -725,15 +752,15 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        if (ev.detail.chatId === $selectedChatStore?.chatId) {
-            $selectedChatStore.externalGoToMessage(ev.detail.messageIndex);
+        if (ev.detail.chatId === $selectedChatId) {
+            currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
             push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
     function addMembers() {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatId !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "add_members" }];
         }
     }
@@ -760,27 +787,24 @@
     }
 
     function showMembers() {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatId !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "show_members" }];
         }
     }
 
     function showProfile() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatId !== undefined) {
+            replace(`/${$selectedChatId}`);
         }
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
-    ) {
-        if ($selectedChatStore !== undefined) {
+    function openThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+        if ($selectedChatId !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
                     rootEvent: ev.detail.rootEvent,
-                    focusThreadMessageIndex: ev.detail.focusThreadMessageIndex,
                 },
             ];
         }
@@ -789,16 +813,16 @@
     function initiateThread(
         ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
     ) {
-        if ($selectedChatStore !== undefined) {
+        if ($selectedChatId !== undefined) {
             creatingThread = true;
-            replace(`/${$selectedChatStore.chatId}`);
+            replace(`/${$selectedChatId}`);
             openThread(ev);
         }
     }
 
     function showGroupDetails() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatId !== undefined) {
+            replace(`/${$selectedChatId}`);
             rightPanelHistory = [
                 {
                     kind: "group_details",
@@ -808,8 +832,8 @@
     }
 
     function showProposalFilters() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatId !== undefined) {
+            replace(`/${$selectedChatId}`);
             rightPanelHistory = [
                 {
                     kind: "proposal_filters",
@@ -823,8 +847,8 @@
     }
 
     function showPinned() {
-        if ($selectedChatStore !== undefined) {
-            replace(`/${$selectedChatStore.chatId}`);
+        if ($selectedChatId !== undefined) {
+            replace(`/${$selectedChatId}`);
             rightPanelHistory = [
                 {
                     kind: "show_pinned",
@@ -841,14 +865,12 @@
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
-                    setSelectedChat(api, group.chatId);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    setSelectedChat(api, group.chatId);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {
@@ -1024,8 +1046,8 @@
         <MiddlePanel
             {hotGroups}
             {joining}
+            bind:currentChatMessages
             loadingChats={$chatsLoading}
-            controller={$selectedChatStore}
             on:initiateThread={initiateThread}
             on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
@@ -1054,7 +1076,6 @@
     {#if $numberOfColumns === 3}
         <RightPanel
             {userId}
-            controller={$selectedChatStore}
             metrics={combinedMetrics}
             bind:rightPanelHistory
             bind:thread={threadComponent}
@@ -1081,7 +1102,6 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
-                controller={$selectedChatStore}
                 metrics={combinedMetrics}
                 bind:rightPanelHistory
                 bind:thread={threadComponent}
@@ -1132,10 +1152,7 @@
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
-                chatsSummaries={filterChatSelection(
-                    $chatSummariesListStore,
-                    $selectedChatStore?.chatId
-                )}
+                chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
         {/if}

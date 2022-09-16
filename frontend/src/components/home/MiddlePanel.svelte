@@ -5,16 +5,17 @@
     import { fade } from "svelte/transition";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
+    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { ChatController } from "../../fsm/chat.controller";
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import { pathParams } from "../../stores/routing";
+    import { selectedChatStore, selectedChatId, selectedServerChatStore } from "../../stores/chat";
 
-    export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
+    export let currentChatMessages: CurrentChatMessages | undefined;
 
     $: noChat = $pathParams.chatId === undefined;
     $: showThreads = $pathParams.chatId === "threads";
@@ -25,7 +26,7 @@
         <Loading />
     {:else if showThreads}
         <ThreadPreviews />
-    {:else if controller === undefined}
+    {:else if $selectedChatId === undefined}
         {#if hotGroups.kind === "success"}
             <RecommendedGroups
                 {joining}
@@ -39,10 +40,12 @@
                 <NoChatSelected on:recommend on:newchat />
             </div>
         {/if}
-    {:else}
+    {:else if $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
         <CurrentChat
+            bind:currentChatMessages
             {joining}
-            {controller}
+            chat={$selectedChatStore}
+            serverChat={$selectedServerChatStore}
             on:initiateThread
             on:unblockUser
             on:clearSelection

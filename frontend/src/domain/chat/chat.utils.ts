@@ -50,6 +50,7 @@ import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
 import { indexIsInRanges } from "../../utils/range";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
+import { currentChatUserIds } from "../../stores/chat";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -695,8 +696,8 @@ export function mergeUnconfirmedIntoSummary(
         if (updates !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates)
-            }
+                event: mergeLocalUpdates(latestMessage.event, updates),
+            };
         }
     }
     const archived = archivedLocally ?? chatSummary.archived;
@@ -1212,7 +1213,7 @@ function updateEventPollContent(
     message: Message,
     answerIndex: number,
     type: "register" | "delete",
-    userId: string,
+    userId: string
 ): Message {
     if (message.content.kind === "poll_content") {
         return {
@@ -1645,15 +1646,18 @@ export function mergeServerEventsWithLocalUpdates(
             if (updates !== undefined) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates)
+                    event: mergeLocalUpdates(e.event, updates),
                 };
             }
         }
         return e;
-    })
+    });
 }
 
-function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates | undefined): Message {
+function mergeLocalUpdates(
+    message: Message,
+    localUpdates: LocalMessageUpdates | undefined
+): Message {
     if (localUpdates === undefined) return message;
 
     if (localUpdates.deleted !== undefined) {
@@ -1662,8 +1666,8 @@ function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates |
             content: {
                 kind: "deleted_content",
                 deletedBy: localUpdates.deleted.deletedBy,
-                timestamp: localUpdates.deleted.timestamp
-            }
+                timestamp: localUpdates.deleted.timestamp,
+            },
         };
     }
 
@@ -1671,7 +1675,7 @@ function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates |
         message = {
             ...message,
             content: localUpdates.editedContent,
-            edited: true
+            edited: true,
         };
     }
 
@@ -1682,13 +1686,18 @@ function mergeLocalUpdates(message: Message, localUpdates: LocalMessageUpdates |
         }
         message = {
             ...message,
-            reactions
+            reactions,
         };
     }
 
     if (localUpdates.pollVotes !== undefined) {
         for (const pollVote of localUpdates.pollVotes) {
-            message = updateEventPollContent(message, pollVote.answerIndex, pollVote.type, pollVote.userId);
+            message = updateEventPollContent(
+                message,
+                pollVote.answerIndex,
+                pollVote.type,
+                pollVote.userId
+            );
         }
     }
 
@@ -1714,11 +1723,42 @@ export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]):
     return reactions;
 }
 
-export function findMessageById(messageId: bigint, events: EventWrapper<ChatEvent>[]): EventWrapper<Message> | undefined {
+export function findMessageById(
+    messageId: bigint,
+    events: EventWrapper<ChatEvent>[]
+): EventWrapper<Message> | undefined {
     for (const event of events) {
         if (event.event.kind === "message" && event.event.messageId === messageId) {
             return event as EventWrapper<Message>;
         }
     }
     return undefined;
+}
+
+export function stopTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_stopped_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
+}
+
+export function startTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
 }

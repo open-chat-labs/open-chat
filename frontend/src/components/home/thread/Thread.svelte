@@ -4,6 +4,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import type {
         ChatEvent,
+        ChatSummary,
         EnhancedReplyContext,
         EventsResponse,
         EventWrapper,
@@ -22,7 +23,13 @@
     import { currentUserKey } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
-    import type { ChatController } from "../../../fsm/chat.controller";
+    import {
+        deleteMessage,
+        editMessage,
+        registerPollVote,
+        selectReaction,
+        updateUserStore,
+    } from "../../../services/common/chatThread";
     import ChatMessage from "../ChatMessage.svelte";
     import {
         canBlockUsers,
@@ -42,6 +49,8 @@
         replaceAffected,
         replaceLocal,
         serialiseMessageForRtc,
+        startTyping,
+        stopTyping,
         userIdsFromEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
@@ -69,20 +78,26 @@
         RemoteUserToggledReaction,
         WebRtcMessage,
     } from "../../../domain/webrtc/webrtc";
-    import { filterWebRtcMessage, parseWebRtcMessage } from "../../../domain/webrtc/rtcHandler";
     import { messagesRead } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
-    import { threadsFollowedByMeStore, currentChatMembers } from "../../../stores/chat";
+    import {
+        threadsFollowedByMeStore,
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatUserIds,
+        selectedChatId,
+        focusThreadMessageIndex,
+    } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
-    export let controller: ChatController;
     export let rootEvent: EventWrapper<Message>;
     export let focusMessageIndex: number | undefined;
+    export let chat: ChatSummary;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
@@ -102,9 +117,12 @@
 
     let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
-    $: events = derived([serverEventsStore, localMessageUpdates], ([serverEvents, localUpdates]) => {
-        return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates)
-    });
+    $: events = derived(
+        [serverEventsStore, localMessageUpdates],
+        ([serverEvents, localUpdates]) => {
+            return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates);
+        }
+    );
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
@@ -139,10 +157,8 @@
     }
 
     $: thread = rootEvent.event.thread;
-    $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: blockedUsers = controller.blockedUsers;
-    $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
@@ -150,14 +166,14 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = canReplyInThread($chat);
-    $: canReact = canReactToMessages($chat);
+    $: canSend = canReplyInThread(chat);
+    $: canReact = canReactToMessages(chat);
     $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
-    $: preview = isPreviewing($chat);
-    $: pollsAllowed = canCreatePolls($chat);
-    $: unconfirmedKey = `${$chat.chatId}_${threadRootMessageIndex}`;
+    $: preview = isPreviewing(chat);
+    $: pollsAllowed = canCreatePolls(chat);
+    $: unconfirmedKey = `${chat.chatId}_${threadRootMessageIndex}`;
     $: isFollowedByMe =
-        $threadsFollowedByMeStore[$chat.chatId]?.has(threadRootMessageIndex) ?? false;
+        $threadsFollowedByMeStore[chat.chatId]?.has(threadRootMessageIndex) ?? false;
 
     const dispatch = createEventDispatcher();
 
@@ -168,19 +184,19 @@
         threadRootMessageIndex: number,
         clearEvents: boolean
     ): Promise<void> {
-        if (thread === undefined || controller.chatVal === undefined) return;
+        if (thread === undefined || chat === undefined) return;
         loading = true;
 
-        const chatId = controller.chatId;
+        const chatId = chat.chatId;
         const eventsResponse = await api.chatEvents(
-            controller.chatVal,
+            chat,
             range,
             startIndex,
             ascending,
             threadRootMessageIndex,
             thread.latestEventIndex
         );
-        if (chatId !== controller.chatId) {
+        if (chatId !== chat.chatId) {
             // the chat has changed while we were loading the messages
             return;
         }
@@ -196,7 +212,7 @@
                     updated.sort((a, b) => a.index - b.index)
                 )
             );
-            makeRtcConnections(currentUser.userId, $chat, $events, $userStore);
+            makeRtcConnections(user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -210,7 +226,7 @@
                 const lastLoadedMessageIdx = lastMessageIndex($events);
                 if (lastLoadedMessageIdx !== undefined) {
                     messagesRead.markThreadRead(
-                        $chat.chatId,
+                        chat.chatId,
                         threadRootMessageIndex,
                         lastLoadedMessageIdx
                     );
@@ -243,9 +259,9 @@
         if (resp === "events_failed") return [[], new Set()];
         const updated = replaceAffected(
             replaceLocal(
-                currentUser.userId,
-                $chat.chatId,
-                $chat.readByMe,
+                user.userId,
+                chat.chatId,
+                chat.readByMe,
                 events,
                 resp.events,
                 threadRootMessageIndex
@@ -255,7 +271,7 @@
 
         const userIds = userIdsFromEvents(updated);
         userIds.add(rootEvent.event.sender);
-        await controller.updateUserStore(userIds);
+        await updateUserStore(api, chat.chatId, user.userId, userIds);
 
         return [updated, userIds];
     }
@@ -285,48 +301,38 @@
         fileToAttach: MessageContent | undefined,
         nextMessageIndex: number
     ): Message {
-        return createMessage(
-            currentUser.userId,
-            nextMessageIndex,
-            textContent,
-            $replyingTo,
-            fileToAttach
-        );
+        return createMessage(user.userId, nextMessageIndex, textContent, $replyingTo, fileToAttach);
     }
 
-    export function handleWebRtcMessage(msg: WebRtcMessage): void {
-        const chatId = filterWebRtcMessage(msg);
-        if (chatId === undefined) return;
-
+    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
         // make sure the chatId matches
-        if (chatId !== controller.chatId) return;
+        if (fromChatId !== chat.chatId) return;
 
         // make sure that the root message index matches
         if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
 
-        const parsed = parseWebRtcMessage(chatId, msg);
-        const { kind } = parsed;
+        const { kind } = msg;
 
         if (kind === "remote_user_typing") {
-            typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
+            typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
         }
         if (kind === "remote_user_stopped_typing") {
-            typing.stopTyping(parsed.userId);
+            typing.stopTyping(msg.userId);
         }
         if (kind === "remote_user_toggled_reaction") {
-            remoteUserToggledReaction(parsed);
+            remoteUserToggledReaction(msg);
         }
         if (kind === "remote_user_removed_message") {
-            remoteUserRemovedMessage(parsed);
+            remoteUserRemovedMessage(msg);
         }
         if (kind === "remote_user_deleted_message") {
-            localMessageUpdates.markDeleted(parsed.messageId.toString(), parsed.userId);
+            localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
         }
         if (kind === "remote_user_undeleted_message") {
-            localMessageUpdates.markUndeleted(parsed.messageId.toString());
+            localMessageUpdates.markUndeleted(msg.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
-            remoteUserSentMessage(parsed);
+            remoteUserSentMessage(msg);
         }
     }
 
@@ -340,12 +346,16 @@
 
         if (matchingMessage !== undefined) {
             const messageIdString = message.messageId.toString();
-            const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
+            const exists = containsReaction(
+                message.userId,
+                message.reaction,
+                matchingMessage.event.reactions
+            );
 
             localMessageUpdates.markReaction(messageIdString, {
                 reaction: message.reaction,
                 kind: exists ? "remove" : "add",
-                userId: message.userId
+                userId: message.userId,
             });
         }
     }
@@ -356,7 +366,7 @@
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
         messagesRead.markThreadRead(
-            $chat.chatId,
+            chat.chatId,
             threadRootMessageIndex,
             message.messageEvent.event.messageIndex
         );
@@ -384,22 +394,22 @@
             unconfirmed.add(unconfirmedKey, event);
             serverEventsStore.update((evts) => [...evts, event]);
             scrollBottom();
-            messagesRead.markThreadRead($chat.chatId, threadRootMessageIndex, nextMessageIndex);
+            messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
-            api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
+            api.sendMessage(chat, user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             api.refreshAccountBalance(
                                 msg.content.transfer.token,
-                                currentUser.cryptoAccount
+                                user.cryptoAccount
                             );
                         }
                         trackEvent("sent_threaded_message");
                     } else {
                         unconfirmed.delete(unconfirmedKey, msg.messageId);
-                        removeMessage(msg.messageId, currentUser.userId);
+                        removeMessage(msg.messageId, user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
@@ -407,17 +417,17 @@
                 .catch((err) => {
                     console.log(err);
                     unconfirmed.delete(unconfirmedKey, msg.messageId);
-                    removeMessage(msg.messageId, currentUser.userId);
+                    removeMessage(msg.messageId, user.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
                 });
 
-            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_sent_message",
-                chatType: $chat.kind,
-                chatId: $chat.chatId,
+                chatType: chat.kind,
+                chatId: chat.chatId,
                 messageEvent: serialiseMessageForRtc(event),
-                userId: currentUser.userId,
+                userId: user.userId,
                 threadRootMessageIndex,
             });
         }
@@ -445,11 +455,11 @@
         serverEventsStore.update((evts) =>
             evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
         );
-        if (userId === currentUser.userId) {
-            rtcConnectionsManager.sendMessage([...controller.chatUserIds], {
+        if (userId === user.userId) {
+            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
-                chatType: $chat.kind,
-                chatId: $chat.chatId,
+                chatType: chat.kind,
+                chatId: chat.chatId,
                 messageId: messageId,
                 userId: userId,
                 threadRootMessageIndex,
@@ -469,7 +479,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            controller.editMessage(msg, threadRootMessageIndex);
+            editMessage(api, chat, msg, threadRootMessageIndex);
         }
     }
 
@@ -503,12 +513,12 @@
         draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
-    function startTyping() {
-        controller.startTyping(threadRootMessageIndex);
+    function onStartTyping() {
+        startTyping(chat, user.userId, threadRootMessageIndex);
     }
 
-    function stopTyping() {
-        controller.stopTyping(threadRootMessageIndex);
+    function onStopTyping() {
+        stopTyping(chat, user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -523,7 +533,7 @@
     }
 
     function createPoll() {
-        if (!canCreatePolls($chat)) return;
+        if (!canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -555,21 +565,27 @@
             return;
         }
 
-        controller.registerPollVote(
-            threadRootMessageIndex,
-            ev.detail.messageId,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type);
+        if ($selectedChatId !== undefined) {
+            registerPollVote(
+                api,
+                user.userId,
+                $selectedChatId,
+                threadRootMessageIndex,
+                ev.detail.messageId,
+                ev.detail.messageIndex,
+                ev.detail.answerIndex,
+                ev.detail.type
+            );
+        }
     }
 
-    function deleteMessage(ev: CustomEvent<Message>): void {
+    function onDeleteMessage(ev: CustomEvent<Message>): void {
         if (ev.detail.messageId === rootEvent.event.messageId) {
             relayPublish({ kind: "relayed_delete_message", message: ev.detail });
             return;
         }
 
-        controller.deleteMessage(threadRootMessageIndex, ev.detail.messageId);
+        deleteMessage(api, chat, user.userId, threadRootMessageIndex, ev.detail.messageId);
     }
 
     function appendMessage(message: EventWrapper<Message>): boolean {
@@ -597,19 +613,31 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = containsReaction(currentUser.userId, reaction, message.reactions) ? "remove" : "add";
+        const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
-        controller.selectReaction(threadRootMessageIndex, message.messageId, reaction, kind)
-            .then((success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
-            });
+        selectReaction(
+            api,
+            chat,
+            user.userId,
+            threadRootMessageIndex,
+            message.messageId,
+            reaction,
+            kind
+        ).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
+            }
+        });
+    }
+
+    function clearFocusIndex() {
+        focusMessageIndex = undefined;
+        focusThreadMessageIndex.clear(chat.chatId);
     }
 
     function goToMessageIndex(index: number) {
         if (index < 0) {
-            focusMessageIndex = undefined;
+            clearFocusIndex();
             return;
         }
 
@@ -618,7 +646,7 @@
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
             setTimeout(() => {
-                focusMessageIndex = undefined;
+                clearFocusIndex();
             }, 200);
         } else {
             console.log(`message index ${index} not found`);
@@ -643,19 +671,11 @@
     }
 
     function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(
-            controller.user.userId,
-            ev.detail.sender === controller.user.userId,
-            ev.detail
-        );
+        shareFunctions.shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
     function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(
-            controller.chatId,
-            ev.detail.messageIndex,
-            threadRootMessageIndex
-        );
+        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
     }
 </script>
 
@@ -671,11 +691,11 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
         on:sendTransfer={sendMessageWithContent}
-        on:close={() => (creatingCryptoTransfer = undefined)}
-        {controller} />
+        on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 <div
@@ -694,7 +714,7 @@
     on:closeThread
     {rootEvent}
     {pollsAllowed}
-    chatSummary={$chat} />
+    chatSummary={chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
     {#if loading && !initialised}
@@ -715,15 +735,15 @@
                             senderTyping={isTyping(
                                 $typing,
                                 evt.event.sender,
-                                $chat.chatId,
+                                chat.chatId,
                                 threadRootMessageIndex
                             )}
                             readByMe={true}
                             readByThem={true}
-                            chatId={$chat.chatId}
-                            chatType={$chat.kind}
-                            user={controller.user}
-                            me={evt.event.sender === currentUser.userId}
+                            chatId={chat.chatId}
+                            chatType={chat.kind}
+                            {user}
+                            me={evt.event.sender === user.userId}
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             {preview}
@@ -731,20 +751,20 @@
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={canPinMessages($chat)}
-                            canBlockUser={canBlockUsers($chat)}
-                            canDelete={canDeleteOtherUsersMessages($chat)}
+                            canPin={canPinMessages(chat)}
+                            canBlockUser={canBlockUsers(chat)}
+                            canDelete={canDeleteOtherUsersMessages(chat)}
                             canQuoteReply={canSend}
-                            canReact={canReactToMessages($chat)}
+                            canReact={canReactToMessages(chat)}
                             canStartThread={false}
-                            publicGroup={$chat.kind === "group_chat" && $chat.public}
+                            publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}
                             on:chatWith
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:selectReaction={onSelectReaction}
-                            on:deleteMessage={deleteMessage}
+                            on:deleteMessage={onDeleteMessage}
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editMessage={() => editEvent(evt)}
@@ -764,14 +784,14 @@
 
 {#if !preview}
     <Footer
-        chat={$chat}
+        {chat}
         fileToAttach={$fileToAttach}
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
         members={$currentChatMembers}
-        blockedUsers={$blockedUsers}
-        user={controller.user}
+        blockedUsers={$currentChatBlockedUsers}
+        {user}
         joining={undefined}
         {preview}
         mode={"thread"}
@@ -783,8 +803,8 @@
         on:clearAttachment={clearAttachment}
         on:cancelEditEvent={cancelEditEvent}
         on:setTextContent={setTextContent}
-        on:startTyping={startTyping}
-        on:stopTyping={stopTyping}
+        on:startTyping={onStartTyping}
+        on:stopTyping={onStopTyping}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:sendMessage={sendMessage}

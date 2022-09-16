@@ -24,7 +24,6 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { cryptoBalance, lastCryptoSent } from "../../stores/crypto";
-    import type { ChatController } from "../../fsm/chat.controller";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import Link from "../Link.svelte";
     import {
@@ -35,13 +34,18 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import { currentChatMembers } from "../../stores/chat";
+    import {
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatReplyingTo,
+    } from "../../stores/chat";
+    import type { ChatSummary, DirectChatSummary } from "../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
 
-    export let controller: ChatController;
     export let draftAmountE8s: bigint;
     export let token: Cryptocurrency;
+    export let chat: ChatSummary;
 
     const user = getContext<CreatedUser>(currentUserKey);
 
@@ -50,7 +54,7 @@
     let message = "";
     let confirming = false;
     let receiver: PartialUserSummary | undefined =
-        controller.chatVal.kind === "direct_chat" ? $userStore[controller.chatVal.them] : undefined;
+        chat.kind === "direct_chat" ? $userStore[(chat as DirectChatSummary).them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -58,10 +62,7 @@
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: chat = controller.chat;
-    $: group = $chat.kind === "group_chat";
-    $: blockedUsers = controller.blockedUsers;
-    $: replyingTo = controller.replyingTo;
+    $: group = chat.kind === "group_chat";
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
@@ -75,8 +76,8 @@
 
     onMount(() => {
         // default the receiver to the reply sender if we are replying to a specific message
-        if ($replyingTo !== undefined) {
-            receiver = $userStore[$replyingTo.senderId];
+        if ($currentChatReplyingTo !== undefined) {
+            receiver = $userStore[$currentChatReplyingTo.senderId];
         }
     });
 
@@ -214,7 +215,7 @@
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 members={$currentChatMembers}
-                                blockedUsers={$blockedUsers}
+                                blockedUsers={$currentChatBlockedUsers}
                                 autofocus={group} />
                         </div>
                     {/if}

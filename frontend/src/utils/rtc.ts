@@ -1,74 +1,15 @@
-import type { ChatSummary, DirectChatSummary, MessageContent } from "../chat/chat";
-import type { ChatController } from "../../fsm/chat.controller";
-import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../../stores/chat";
-import { typing } from "../../stores/typing";
-import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
+import type { ChatSummary, DirectChatSummary, MessageContent } from "../domain/chat/chat";
+import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
-import type {
-    RemoteUserDeletedMessage,
-    RemoteUserReadMessage,
-    RemoteUserRemovedMessage,
-    RemoteUserSentMessage,
-    RemoteUserToggledReaction,
-    RemoteUserUndeletedMessage,
-    WebRtcMessage,
-} from "./webrtc";
-import { eventsStore } from "../../stores/chat";
-import { containsReaction, findMessageById } from "domain/chat/chat.utils";
-import { localMessageUpdates } from "stores/localMessageUpdates";
+import type { WebRtcMessage } from "../domain/webrtc/webrtc";
+import { blockedUsers } from "../stores/blockedUsers";
 
-function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-    const matchingMessage = findMessageById(message.messageId, get(eventsStore));
-
-    if (matchingMessage !== undefined) {
-        const exists = containsReaction(message.userId, message.reaction, matchingMessage.event.reactions);
-
-        localMessageUpdates.markReaction(message.messageId.toString(), {
-            reaction: message.reaction,
-            kind: exists ? "remove" : "add",
-            userId: message.userId
-        });
-    }
-}
-function remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
-    localMessageUpdates.markDeleted(message.messageId.toString(), message.userId);
-}
-
-function remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
-    localMessageUpdates.markUndeleted(message.messageId.toString());
-}
-
-function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-    delegateToChatController(message, (chat) =>
-        chat.removeMessage(message.messageId, message.userId)
-    );
-}
-
-function remoteUserSentMessage(message: RemoteUserSentMessage): void {
-    console.log("remote user sent message");
-    if (
-        !delegateToChatController(message, (chat) =>
-            chat.handleMessageSentByOther(message.messageEvent, false)
-        )
-    ) {
-        unconfirmed.add(message.chatId, message.messageEvent);
-    }
-}
-
-function remoteUserReadMessage(message: RemoteUserReadMessage): void {
-    unconfirmedReadByThem.add(BigInt(message.messageId));
-}
-
-function delegateToChatController(
-    msg: WebRtcMessage,
-    fn: (selectedChat: ChatController) => void
-): boolean {
+export function delegateToChatComponent(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
     const selectedChat = get(selectedChatStore);
     if (selectedChat === undefined) return false;
     if (chat.chatId !== selectedChat.chatId) return false;
-    fn(selectedChat);
     return true;
 }
 
@@ -88,19 +29,27 @@ function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
         : findDirectChatByUserId(msg.userId);
 }
 
+function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
+    return chat.kind === "direct_chat" && chat.them === userId;
+}
+
+function isBlockedUser(chat: ChatSummary): boolean {
+    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them);
+}
+
 export function filterWebRtcMessage(msg: WebRtcMessage): string | undefined {
     const fromChat = findChatByChatType(msg);
     const selectedChat = get(selectedChatStore);
 
     // if the chat can't be found - ignore
-    if (fromChat === undefined) {
+    if (fromChat === undefined || selectedChat === undefined) {
         return undefined;
     }
 
     if (
-        fromChat.chatId === selectedChat?.chatId &&
-        selectedChat?.isDirectChatWith(msg.userId) &&
-        selectedChat?.isBlockedUser()
+        fromChat.chatId === selectedChat.chatId &&
+        isDirectChatWith(selectedChat, msg.userId) &&
+        isBlockedUser(selectedChat)
     ) {
         console.log("ignoring webrtc message from blocked user");
         return undefined;
@@ -183,36 +132,4 @@ export function parseWebRtcMessage(chatId: string, msg: WebRtcMessage): WebRtcMe
         };
     }
     return msg;
-}
-
-export function handleWebRtcMessage(msg: WebRtcMessage): void {
-    const chatId = filterWebRtcMessage(msg);
-    if (chatId === undefined) return;
-    const parsed = parseWebRtcMessage(chatId, msg);
-    const { kind } = parsed;
-
-    if (kind === "remote_user_typing") {
-        typing.startTyping(chatId, parsed.userId, parsed.threadRootMessageIndex);
-    }
-    if (kind === "remote_user_stopped_typing") {
-        typing.stopTyping(msg.userId);
-    }
-    if (kind === "remote_user_toggled_reaction") {
-        remoteUserToggledReaction(parsed);
-    }
-    if (kind === "remote_user_deleted_message") {
-        remoteUserDeletedMessage(parsed);
-    }
-    if (kind === "remote_user_removed_message") {
-        remoteUserRemovedMessage(parsed);
-    }
-    if (kind === "remote_user_undeleted_message") {
-        remoteUserUndeletedMessage(parsed);
-    }
-    if (kind === "remote_user_sent_message") {
-        remoteUserSentMessage(parsed);
-    }
-    if (kind === "remote_user_read_message") {
-        remoteUserReadMessage(parsed);
-    }
 }

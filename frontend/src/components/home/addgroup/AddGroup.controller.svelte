@@ -1,7 +1,7 @@
 <script lang="ts">
     import NewGroup from "./NewGroup.svelte";
     import ChooseMembers from "./ChooseMembers.svelte";
-    import type { NewGroupState } from "../../../fsm/newGroup";
+    import type { NewGroupState } from "../../../domain/newGroup";
     import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
     import type { User } from "../../../domain/user/user";
     import { toastStore } from "../../../stores/toast";

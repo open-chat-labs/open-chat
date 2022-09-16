@@ -20,7 +20,6 @@
         dispatch("close");
     }
 
-    // todo - this is probably contingent on being an admin
     function addMembers() {
         dispatch("addMembers");
     }

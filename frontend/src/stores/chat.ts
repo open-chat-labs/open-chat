@@ -2,25 +2,30 @@ import type {
     ChatEvent,
     ChatSummary,
     CurrentChatState,
+    EnhancedReplyContext,
     EventWrapper,
+    GroupChatDetails,
     Member,
     Message,
+    MessageContent,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
-import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
+import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     compareChats,
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
+    getNextEventIndex,
+    getNextMessageIndex,
     mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
 import { userStore } from "./user";
-import { Poller } from "../fsm/poller";
+import { Poller } from "../services/poller";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { blockedUsers } from "./blockedUsers";
@@ -28,16 +33,16 @@ import { pinnedChatsStore } from "./pinnedChats";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
-import type { CreatedUser, UserSummary } from "../domain/user/user";
+import type { CreatedUser } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
-import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { createChatSpecificStore } from "./dataByChatFactory";
+import { createChatSpecificDataStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
+import type { DraftMessage } from "./draftMessageFactory";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -76,20 +81,17 @@ type LoadedEventWindow = {
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
-export const selectedChatStore = writable<ChatController | undefined>(undefined);
-
-export const isProposalGroup = derived([selectedChatStore], ([$selectedChatStore]) => {
-    return (
-        $selectedChatStore !== undefined &&
-        $selectedChatStore.chatVal.kind === "group_chat" &&
-        $selectedChatStore.chatVal.subtype?.kind === "governance_proposals"
-    );
-});
-
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [serverChatSummariesStore, unconfirmed, currentUserStore, localMessageUpdates, archivedChatsStore, mutedChatsStore],
+    [
+        serverChatSummariesStore,
+        unconfirmed,
+        currentUserStore,
+        localMessageUpdates,
+        archivedChatsStore,
+        mutedChatsStore,
+    ],
     ([summaries, unconfirmed, currentUser, localUpdates, archivedChats, mutedChats]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
@@ -124,6 +126,52 @@ export const chatSummariesListStore = derived(
     }
 );
 
+export const selectedChatId = writable<string | undefined>(undefined);
+export const chatsLoading = writable(false);
+export const chatsInitialised = writable(false);
+export const chatUpdatedStore: Writable<{ affectedEvents: number[] } | undefined> =
+    writable(undefined);
+
+export const selectedServerChatStore = derived(
+    [serverChatSummariesStore, selectedChatId],
+    ([$serverChats, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $serverChats[$selectedChatId];
+    }
+);
+
+export const selectedChatStore = derived(
+    [chatSummariesStore, selectedChatId],
+    ([$chatSummaries, $selectedChatId]) => {
+        if ($selectedChatId === undefined) return undefined;
+        return $chatSummaries[$selectedChatId];
+    }
+);
+
+export const nextMessageIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+    if ($selectedServerChatStore === undefined) return 0;
+    return getNextMessageIndex(
+        $selectedServerChatStore,
+        unconfirmed.getMessages($selectedServerChatStore.chatId)
+    );
+});
+
+export const nextEventIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+    if ($selectedServerChatStore === undefined) return 0;
+    return getNextEventIndex(
+        $selectedServerChatStore,
+        unconfirmed.getMessages($selectedServerChatStore.chatId)
+    );
+});
+
+export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
+    return (
+        $selectedChat !== undefined &&
+        $selectedChat.kind === "group_chat" &&
+        $selectedChat.subtype?.kind === "governance_proposals"
+    );
+});
+
 export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
     return summaries.reduce((result, chat) => {
         if (chat.kind === "group_chat" && chat.latestThreads.length > 0) {
@@ -149,28 +197,31 @@ export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsB
 
 export const proposalTopicsStore = derived(
     [selectedChatStore, snsFunctions],
-    ([selectedChat, snsFunctions]): Map<number, string> => {
-        if (selectedChat !== undefined) {
-            const chat = get(selectedChat.chat);
-            if (chat.kind === "group_chat" && chat.subtype !== undefined) {
-                if (chat.subtype.isNns) {
-                    return new Map([
-                        [1, "Neuron Management"],
-                        [3, "Network Economics"],
-                        [4, "Governance"],
-                        [5, "Node Admin"],
-                        [6, "Participant Management"],
-                        [7, "Subnet Management"],
-                        [8, "Network Canister Management"],
-                        [9, "KYC"],
-                        [10, "Node Provider Rewards"],
-                        [11, "SNS Decentralization Sale"],
-                    ]);
-                } else {
-                    const snsFunctionsMap = snsFunctions.get(chat.subtype.governanceCanisterId);
-                    if (snsFunctionsMap !== undefined) {
-                        return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
-                    }
+    ([$selectedChat, $snsFunctions]): Map<number, string> => {
+        if (
+            $selectedChat !== undefined &&
+            $selectedChat.kind === "group_chat" &&
+            $selectedChat.subtype !== undefined
+        ) {
+            if ($selectedChat.subtype.isNns) {
+                return new Map([
+                    [1, "Neuron Management"],
+                    [3, "Network Economics"],
+                    [4, "Governance"],
+                    [5, "Node Admin"],
+                    [6, "Participant Management"],
+                    [7, "Subnet Management"],
+                    [8, "Network Canister Management"],
+                    [9, "KYC"],
+                    [10, "Node Provider Rewards"],
+                    [11, "SNS Decentralization Sale"],
+                ]);
+            } else {
+                const snsFunctionsMap = $snsFunctions.get(
+                    $selectedChat.subtype.governanceCanisterId
+                );
+                if (snsFunctionsMap !== undefined) {
+                    return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
                 }
             }
         }
@@ -190,27 +241,16 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
-export const chatsLoading = writable(false);
-export const chatsInitialised = writable(false);
-
 export function setSelectedChat(
     api: ServiceContainer,
-    chatId: string,
+    chat: ChatSummary,
     messageIndex?: number,
-    threadMessageIndex?: number
+    threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
 ): void {
-    const summaries = get(chatSummariesStore);
-    const currentUser = get(currentUserStore);
     const currentScrollStrategy = get(scrollStrategy);
+    closeNotificationsForChat(chat.chatId);
 
-    if (currentUser === undefined) return;
-
-    const chat = summaries[chatId];
-
-    if (chat === undefined) return;
-
-    closeNotificationsForChat(chatId);
-
+    // TODO don't think this should be in here really
     if (
         chat.kind === "group_chat" &&
         chat.subtype?.kind === "governance_proposals" &&
@@ -218,14 +258,6 @@ export function setSelectedChat(
     ) {
         api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
     }
-
-    const user: UserSummary = {
-        kind: "user",
-        userId: currentUser.userId,
-        username: currentUser.username,
-        lastOnline: Date.now(),
-        updated: BigInt(Date.now()),
-    };
 
     if (messageIndex === undefined) {
         if (currentScrollStrategy === "firstMention") {
@@ -237,26 +269,21 @@ export function setSelectedChat(
         }
     }
 
-    const readableChatSummary = readable(chat, (set) =>
-        serverChatSummariesStore.subscribe((summaries) => {
-            if (summaries[chat.chatId] !== undefined) {
-                set(summaries[chat.chatId]);
-            }
-        })
-    );
+    clearSelectedChat();
 
-    selectedChatStore.set(
-        new ChatController(
-            api,
-            user,
-            readableChatSummary,
-            messageIndex,
-            threadMessageIndex,
-            (message) => updateSummaryWithConfirmedMessage(chat.chatId, message)
-        )
+    // initialise a bunch of stores
+    serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+    focusMessageIndex.set(chat.chatId, messageIndex);
+    focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
+    currentChatMembers.set(chat.chatId, []);
+    currentChatBlockedUsers.set(chat.chatId, new Set<string>());
+    currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+    currentChatUserIds.set(
+        chat.chatId,
+        new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
     );
-
     resetFilteredProposalsStore(chat);
+    selectedChatId.set(chat.chatId);
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -304,9 +331,15 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
 
 export function clearSelectedChat(): void {
     filteredProposalsStore.set(undefined);
-    selectedChatStore.update((controller) => {
-        if (controller !== undefined) {
-            controller.destroy();
+    selectedChatId.update((chatId) => {
+        if (chatId !== undefined) {
+            groupDetails.clear(chatId);
+            serverEventsStore.clear(chatId);
+            focusMessageIndex.clear(chatId);
+            focusThreadMessageIndex.clear(chatId);
+            currentChatMembers.clear(chatId);
+            currentChatBlockedUsers.clear(chatId);
+            currentChatPinnedMessages.clear(chatId);
         }
         return undefined;
     });
@@ -387,7 +420,9 @@ async function loadChats(api: ServiceContainer) {
             if (selectedChatInvalid) {
                 clearSelectedChat();
             } else if (selectedChat !== undefined) {
-                selectedChat.chatUpdated(chatsResponse.affectedEvents[selectedChat.chatId] ?? []);
+                chatUpdatedStore.set({
+                    affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
+                });
             }
 
             if (chatsResponse.avatarIdUpdate !== undefined) {
@@ -458,10 +493,60 @@ export function removeChat(chatId: string): void {
     });
 }
 
-export const serverEventsStore = createChatSpecificStore<EventWrapper<ChatEvent>[]>([]);
-export const eventsStore: Readable<EventWrapper<ChatEvent>[]> =
-    derived([serverEventsStore, localMessageUpdates], ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
-        return mergeServerEventsWithLocalUpdates($serverEventsForSelectedChat, $localMessageUpdates)
-    });
-export const currentChatMembers = createChatSpecificStore<Member[]>([]);
-export const focusMessageIndex = createChatSpecificStore<number | undefined>(undefined);
+// All of the below state is relative to the selected chat
+
+export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>([]);
+export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
+    [serverEventsStore, localMessageUpdates],
+    ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
+        return mergeServerEventsWithLocalUpdates(
+            $serverEventsForSelectedChat,
+            $localMessageUpdates
+        );
+    }
+);
+export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
+export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
+export const currentChatBlockedUsers = createChatSpecificDataStore<Set<string>>(new Set<string>());
+export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>>(
+    new Set<number>()
+);
+export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
+export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
+// This set will contain 1 key for each rendered user event group which is used as that group's key
+export const groupDetails = createChatSpecificDataStore<GroupChatDetails | undefined>(undefined);
+
+const draftMessages = createChatSpecificDataStore<DraftMessage>({});
+export const currentChatDraftMessage = {
+    ...draftMessages,
+    setTextContent: (id: string, textContent: string | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ textContent } })),
+    setAttachment: (id: string, attachment: MessageContent | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ attachment } })),
+    setReplyingTo: (id: string, replyingTo: EnhancedReplyContext | undefined): void =>
+        draftMessages.update(id, (d) => ({ ...d, ...{ replyingTo } })),
+    setEditing: (id: string, editingEvent: EventWrapper<Message>): void => {
+        const users = get(userStore);
+        const updated = {
+            editingEvent,
+            attachment:
+                editingEvent?.event.content.kind !== "text_content"
+                    ? editingEvent?.event.content
+                    : undefined,
+            replyingTo:
+                editingEvent.event.repliesTo &&
+                editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
+                    ? {
+                          ...editingEvent.event.repliesTo,
+                          content: editingEvent.event.content,
+                          sender: users[editingEvent.event.sender],
+                      }
+                    : undefined,
+        };
+        draftMessages.update(id, (d) => ({ ...d, ...updated }));
+    },
+};
+export const currentChatTextContent = derived(currentChatDraftMessage, (d) => d.textContent);
+export const currentChatReplyingTo = derived(currentChatDraftMessage, (d) => d.replyingTo);
+export const currentChatFileToAttach = derived(currentChatDraftMessage, (d) => d.attachment);
+export const currentChatEditingEvent = derived(currentChatDraftMessage, (d) => d.editingEvent);

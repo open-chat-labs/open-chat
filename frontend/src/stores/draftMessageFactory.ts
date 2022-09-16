@@ -22,6 +22,8 @@ export type DraftMessage = {
 
 /**
  * There are two scenarios. The draft message can either be at the chat level or for a specific thread
+ *
+ * FIXME - come back to this because this is no longer used for chat level drafts
  */
 export function createDraftMessages<T extends KeyType>() {
     const store = writable<DraftMessagesByKey<T>>({} as DraftMessagesByKey<T>);

@@ -78,12 +78,12 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type {
     ArchiveChatResponse,
+    CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
-    UserSummary,
 } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
@@ -341,7 +341,7 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     sendMessage(
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
@@ -375,7 +375,7 @@ export class UserClient extends CandidService implements IUserClient {
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         _threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {

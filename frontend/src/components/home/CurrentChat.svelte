@@ -2,20 +2,19 @@
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
-    import { rollbar } from "../../utils/logging";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { toastStore } from "../../stores/toast";
-    import type { ChatController } from "../../fsm/chat.controller";
-    import { createEventDispatcher, getContext, onDestroy, tick } from "svelte";
+    import { editMessage } from "../../services/common/chatThread";
+    import { getContext, onDestroy, tick } from "svelte";
     import {
-        canForward,
         canInviteUsers,
         canReplyInThread,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         getMessageContent,
-        getStorageRequiredForMessage,
-        newMessageId,
+        getMinVisibleMessageIndex,
+        markAllRead,
+        startTyping,
+        stopTyping,
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
@@ -29,9 +28,8 @@
     } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-    import { remainingStorage } from "../../stores/storage";
     import { userStore } from "../../stores/user";
-    import { blockedUsers as directlyBlockedUsers } from "stores/blockedUsers";
+    import { blockedUsers as directlyBlockedUsers } from "../../stores/blockedUsers";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -44,22 +42,32 @@
     import GiphySelector from "./GiphySelector.svelte";
     import type { Cryptocurrency } from "../../domain/crypto";
     import { lastCryptoSent } from "../../stores/crypto";
-    import { trackEvent } from "../../utils/tracking";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { CreatedUser, User } from "../../domain/user/user";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
-    import { currentChatMembers } from "../../stores/chat";
+    import {
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatPinnedMessages,
+        currentChatFileToAttach,
+        currentChatEditingEvent,
+        currentChatReplyingTo,
+        currentChatTextContent,
+        currentChatDraftMessage,
+    } from "../../stores/chat";
 
-    export let controller: ChatController;
     export let joining: GroupChatSummary | undefined;
+    export let chat: ChatSummary;
+    export let serverChat: ChatSummary;
+    export let currentChatMessages: CurrentChatMessages | undefined;
 
-    const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);
-    const createdUser = getContext<CreatedUser>(currentUserKey);
+    const user = getContext<CreatedUser>(currentUserKey);
 
-    let chatId = controller.chatId;
+    $: chatId = chat.chatId;
+    let previousChatId: string | undefined = undefined;
     let unreadMessages = 0;
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
@@ -71,25 +79,18 @@
     let showSearchHeader = false;
     let searchTerm = "";
 
-    $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
-    $: chat = controller.chat;
-    $: fileToAttach = controller.fileToAttach;
-    $: editingEvent = controller.editingEvent;
-    $: replyingTo = controller.replyingTo;
-    $: textContent = controller.textContent;
-    $: blockedUsers = controller.blockedUsers;
-    $: blocked = isBlocked($chat, $directlyBlockedUsers);
+    $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = canSendMessages($chat, $userStore);
-    $: preview = isPreviewing($chat);
+    $: canSend = canSendMessages(chat, $userStore);
+    $: preview = isPreviewing(chat);
     $: {
-        if (chatId !== controller.chatId) {
+        if (chatId !== previousChatId) {
+            previousChatId = chatId;
             showSearchHeader = false;
-            chatId = controller.chatId;
-            unreadMessages = controller.unreadMessageCount;
-            firstUnreadMention = getFirstUnreadMention(controller.chatVal);
-            firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
+            unreadMessages = getUnreadMessageCount(chat);
+            firstUnreadMention = getFirstUnreadMention(chat);
+            firstUnreadMessage = getFirstUnreadMessageIndex(chat);
 
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
@@ -99,11 +100,22 @@
             });
         }
     }
+
     let unsub = messagesRead.subscribe(() => {
-        unreadMessages = controller.unreadMessageCount;
-        firstUnreadMention = getFirstUnreadMention(controller.chatVal);
-        firstUnreadMessage = getFirstUnreadMessageIndex(controller.chatVal);
+        unreadMessages = getUnreadMessageCount(chat);
+        firstUnreadMention = getFirstUnreadMention(chat);
+        firstUnreadMessage = getFirstUnreadMessageIndex(chat);
     });
+
+    function getUnreadMessageCount(chat: ChatSummary): number {
+        if (isPreviewing(chat)) return 0;
+
+        return messagesRead.unreadMessageCount(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex
+        );
+    }
 
     function onWindowFocus() {
         closeNotificationsForChat(chatId);
@@ -111,18 +123,12 @@
 
     onDestroy(unsub);
 
-    function markAllRead() {
-        controller.markAllRead();
-    }
-
-    function messageRead(
-        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
-    ) {
-        controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
+    function onMarkAllRead() {
+        markAllRead(chat);
     }
 
     function createPoll() {
-        if (!canCreatePolls($chat)) return;
+        if (!canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -138,7 +144,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        controller.attachFile(ev.detail);
+        currentChatDraftMessage.setAttachment(chat.chatId, ev.detail);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -150,7 +156,7 @@
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
-        controller.replyTo(ev.detail);
+        currentChatDraftMessage.setReplyingTo(chat.chatId, ev.detail);
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -161,10 +167,10 @@
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
-        if ($editingEvent !== undefined) {
-            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
+        if ($currentChatEditingEvent !== undefined) {
+            editMessageWithAttachment(text, $currentChatFileToAttach, $currentChatEditingEvent);
         } else {
-            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+            sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
         }
     }
 
@@ -180,7 +186,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            controller.editMessage(msg, undefined);
+            editMessage(api, chat, msg, undefined);
         }
     }
 
@@ -189,55 +195,7 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
-        if (!canSend) return;
-        if (textContent || fileToAttach) {
-            const storageRequired = getStorageRequiredForMessage(fileToAttach);
-            if ($remainingStorage < storageRequired) {
-                dispatch("upgrade", "explain");
-                return;
-            }
-
-            const msg = controller.createMessage(textContent, fileToAttach);
-            api.sendMessage($chat, controller.user, mentioned, msg)
-                .then(([resp, msg]) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        controller.confirmMessage(msg, resp);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            api.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                createdUser.cryptoAccount
-                            );
-                        }
-                        if ($chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
-                        } else {
-                            if ($chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
-                        }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-                    } else {
-                        controller.removeMessage(msg.messageId, controller.user.userId);
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                    }
-                })
-                .catch((err) => {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
-                    console.log(err);
-                    toastStore.showFailureToast("errorSendingMessage");
-                    rollbar.error("Exception sending message", err);
-                });
-
-            const nextEventIndex = controller.getNextEventIndex();
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            controller.sendMessage(event);
-        }
+        currentChatMessages?.sendMessageWithAttachment(textContent, mentioned, fileToAttach);
     }
 
     export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
@@ -245,54 +203,11 @@
     }
 
     function forwardMessage(msg: Message) {
-        if (!canSend || !canForward(msg.content)) return;
-
-        // TODO check storage requirements
-
-        // Only forward the primary content not the caption
-        let content = { ...msg.content };
-        if ("caption" in content) {
-            content.caption = "";
-        }
-
-        msg = {
-            kind: "message",
-            messageId: newMessageId(),
-            messageIndex: controller.getNextMessageIndex(),
-            sender: controller.user.userId,
-            content,
-            repliesTo: undefined,
-            reactions: [],
-            edited: false,
-            forwarded: msg.content.kind !== "giphy_content",
-        };
-
-        controller.api
-            .sendMessage($chat, controller.user, [], msg)
-            .then(([resp, msg]) => {
-                if (resp.kind === "success") {
-                    controller.confirmMessage(msg, resp);
-                    trackEvent("forward_message");
-                } else {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
-                    rollbar.warn("Error response forwarding message", resp);
-                    toastStore.showFailureToast("errorSendingMessage");
-                }
-            })
-            .catch((err) => {
-                controller.removeMessage(msg.messageId, controller.user.userId);
-                console.log(err);
-                toastStore.showFailureToast("errorSendingMessage");
-                rollbar.error("Exception forwarding message", err);
-            });
-
-        const nextEventIndex = controller.getNextEventIndex();
-        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-        controller.sendMessage(event);
+        currentChatMessages?.forwardMessage(msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
-        controller.setTextContent(ev.detail);
+        currentChatDraftMessage.setTextContent(chat.chatId, ev.detail);
     }
 
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
@@ -309,11 +224,11 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
+        {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
         on:sendTransfer={sendMessageWithContent}
-        on:close={() => (creatingCryptoTransfer = undefined)}
-        {controller} />
+        on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 <GiphySelector
@@ -324,7 +239,7 @@
 <div class="wrapper">
     {#if showSearchHeader}
         <CurrentChatSearchHeader
-            chat={$chat}
+            {chat}
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
@@ -333,7 +248,7 @@
             on:clearSelection
             on:blockUser
             on:unblockUser
-            on:markAllRead={markAllRead}
+            on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:addMembers
             on:showGroupDetails
@@ -347,26 +262,27 @@
             {preview}
             {unreadMessages}
             selectedChatSummary={chat}
-            hasPinned={$pinned.size > 0} />
+            hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     <CurrentChatMessages
+        bind:this={currentChatMessages}
         on:replyPrivatelyTo
         on:replyTo={replyTo}
         on:openThread
-        on:messageRead={messageRead}
         on:chatWith
         on:upgrade
         on:forward
         on:closeThread
         on:initiateThread
-        {controller}
-        canPin={canPinMessages($chat)}
-        canBlockUser={canBlockUsers($chat)}
-        canDelete={canDeleteOtherUsersMessages($chat)}
-        canReplyInThread={canReplyInThread($chat)}
+        {chat}
+        {serverChat}
+        canPin={canPinMessages(chat)}
+        canBlockUser={canBlockUsers(chat)}
+        canDelete={canDeleteOtherUsersMessages(chat)}
+        canReplyInThread={canReplyInThread(chat)}
         {canSend}
-        canReact={canReactToMessages($chat)}
-        canInvite={canInviteUsers($chat)}
+        canReact={canReactToMessages(chat)}
+        canInvite={canInviteUsers(chat)}
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
@@ -374,14 +290,14 @@
         {unreadMessages} />
     {#if showFooter}
         <Footer
-            chat={$chat}
-            fileToAttach={$fileToAttach}
-            editingEvent={$editingEvent}
-            replyingTo={$replyingTo}
-            textContent={$textContent}
+            {chat}
+            fileToAttach={$currentChatFileToAttach}
+            editingEvent={$currentChatEditingEvent}
+            replyingTo={$currentChatReplyingTo}
+            textContent={$currentChatTextContent}
             members={$currentChatMembers}
-            blockedUsers={$blockedUsers}
-            user={controller.user}
+            blockedUsers={$currentChatBlockedUsers}
+            {user}
             mode={"message"}
             {joining}
             {preview}
@@ -389,12 +305,12 @@
             on:joinGroup
             on:cancelPreview
             on:upgrade
-            on:cancelReply={() => controller.cancelReply()}
-            on:clearAttachment={() => controller.clearAttachment()}
-            on:cancelEditEvent={() => controller.cancelEditEvent()}
+            on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.chatId, undefined)}
+            on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
+            on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => controller.startTyping()}
-            on:stopTyping={() => controller.stopTyping()}
+            on:startTyping={() => startTyping(chat, user.userId)}
+            on:stopTyping={() => stopTyping(chat, user.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}

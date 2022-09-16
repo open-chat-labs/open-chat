@@ -22,6 +22,7 @@ import type {
     UnpinChatResponse,
     MigrateUserPrincipalResponse,
     ArchiveChatResponse,
+    CreatedUser,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -206,14 +207,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     sendMessage(
         chat: ChatSummary,
-        user: UserSummary,
+        user: CreatedUser,
         mentioned: User[],
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
-                // TODO - this doesn't look like it's going to work in threads
+                // FIXME - this doesn't look like it's going to work in threads
                 return this.userClient.sendGroupICPTransfer(
                     chat.chatId,
                     msg.content.transfer.recipient,
@@ -272,7 +273,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
     private sendDirectMessage(
         recipientId: string,
-        sender: UserSummary,
+        sender: CreatedUser,
         message: Message,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
