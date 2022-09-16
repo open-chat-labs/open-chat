@@ -22,7 +22,8 @@ export const configKeys = {
     groupAdvancedSection: "openchat_group_advanced_section",
     theme: "openchat_theme",
     scrollStrategy: "openchat_scrollstrategy",
-	expandWindow: "openchat_expand_window",
+    expandWindow: "openchat_expand_window",
     selectedAuthProvider: "openchat_selected_auth_provider",
     userCreated: "openchat_user_created",
+    indexedDbAuth: "openchat_indexeddb_auth",
 };
