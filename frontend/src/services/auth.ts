@@ -5,17 +5,27 @@ import { unregister } from "../utils/notifications";
 import { closeDb } from "../utils/caching";
 import { initialiseTracking, startTrackingSession, endTrackingSession } from "../utils/tracking";
 import { AuthProvider } from "../domain/auth";
-import { lsAuthClientStore } from "../stores/authProviders";
+import { lsAuthClientStore, idbAuthClientStore } from "../stores/authProviders";
+import { configKeys } from "../utils/config";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 
+const useIdbAuth = localStorage.getItem(configKeys.indexedDbAuth) === "true";
+
+if (useIdbAuth) {
+    // TODO we need to do this at the moment as there is a bug in the current version of the auth client
+    // it means that existing users will get signed out
+    localStorage.removeItem("ic-delegation");
+    localStorage.removeItem("ic-identity");
+}
+
 const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
     },
-    storage: lsAuthClientStore,
+    storage: useIdbAuth ? idbAuthClientStore : lsAuthClientStore,
 });
 
 initialiseTracking();
