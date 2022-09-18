@@ -1,6 +1,5 @@
 use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
-use candid::Encode;
 use futures::future;
 use index_store::IndexStore;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -99,8 +98,7 @@ fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>
     }
 
     for n in envelopes {
-        let notification_bytes = Encode!(&n.value.notification).unwrap();
-        let base64 = Rc::new(base64::encode(notification_bytes));
+        let base64 = Rc::new(base64::encode(n.value.notification_bytes));
         for u in n.value.recipients {
             assign_notification_to_user(&mut grouped_by_user, u, base64.clone());
         }
@@ -118,7 +116,7 @@ async fn push_notifications_to_user(
 ) -> Result<(UserId, Vec<String>), Error> {
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
-        for notification in &notifications {
+        for notification in notifications.iter() {
             let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
             let vapid_signature = sig_builder.build()?;
             let mut builder = WebPushMessageBuilder::new(subscription)?;
