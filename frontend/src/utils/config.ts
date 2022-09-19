@@ -24,5 +24,4 @@ export const configKeys = {
     scrollStrategy: "openchat_scrollstrategy",
     selectedAuthProvider: "openchat_selected_auth_provider",
     userCreated: "openchat_user_created",
-    indexedDbAuth: "openchat_indexeddb_auth",
 };
