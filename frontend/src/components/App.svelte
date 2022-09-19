@@ -41,8 +41,7 @@
         | "registering"
         | "logging_in"
         | "upgrading_user"
-        | "upgrade_user"
-        | "expired";
+        | "upgrade_user";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let profileTrace = showTrace();
@@ -186,8 +185,6 @@
     <Register on:logout={logout} on:createdUser={registeredUser} {api} {referredBy} />
 {:else if $identityState === "logged_in" && $currentUserStore !== undefined}
     <Router routes={allRoutes} />
-{:else if $identityState == "expired"}
-    <SessionExpired on:login={() => acknowledgeExpiry()} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else}

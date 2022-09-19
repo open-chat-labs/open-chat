@@ -4,15 +4,8 @@
     import { locale } from "svelte-i18n";
     import { onMount } from "svelte";
     export let minHeight: string | undefined = undefined;
-    export let bgClass:
-        | "none"
-        | "underwater"
-        | "woods"
-        | "sunset"
-        | "error"
-        | "expired"
-        | "upgrade"
-        | "empty" = "underwater";
+    export let bgClass: "none" | "underwater" | "woods" | "sunset" | "error" | "upgrade" | "empty" =
+        "underwater";
 
     onMount(() => {
         document.body.classList.add("fill");
@@ -92,10 +85,6 @@
 
         &.error {
             @include fullScreenImg("../assets/error.jpg");
-        }
-
-        &.expired {
-            @include fullScreenImg("../assets/expired.jpg");
         }
 
         &.upgrade {
