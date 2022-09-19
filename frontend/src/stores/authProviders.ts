@@ -8,7 +8,7 @@ export const selectedAuthProviderStore = createStore();
 
 function createStore() {
     const key = configKeys.selectedAuthProvider;
-    const def = AuthProvider.NFID;
+    const def = AuthProvider.II;
     const stored = localStorage.getItem(key);
     const initial = stored !== null ? enumFromStringValue(AuthProvider, stored, def) : def;
 
