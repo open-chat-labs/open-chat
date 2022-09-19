@@ -4,6 +4,7 @@
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
+    import EmojiPicker from "./EmojiPicker.svelte";
     import type {
         ChatSummary,
         EnhancedReplyContext,
@@ -108,13 +109,7 @@
             </div>
         {/if}
         {#if messageAction === "emoji"}
-            {#await import("./EmojiPicker.svelte")}
-                <div class="loading-emoji"><Loading /></div>
-            {:then picker}
-                <svelte:component this={picker.default} {mode} on:emojiSelected={emojiSelected} />
-            {:catch _error}
-                <Reload>{$_("unableToLoadEmojiPicker")}</Reload>
-            {/await}
+            <EmojiPicker {mode} on:emojiSelected={emojiSelected} />
         {/if}
     </div>
     <MessageEntry
