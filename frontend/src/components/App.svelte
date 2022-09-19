@@ -11,7 +11,6 @@
     import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
-    import SessionExpired from "./sessionExpired/SessionExpired.svelte";
     import { SessionExpiryError } from "../services/error";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
