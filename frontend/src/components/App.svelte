@@ -11,7 +11,6 @@
     import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
-    import SessionExpired from "./sessionExpired/SessionExpired.svelte";
     import { SessionExpiryError } from "../services/error";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -26,7 +25,7 @@
     import type { CreatedUser } from "../domain/user/user";
     import { Poller } from "../services/poller";
     import { getIdentity, login, logout, startSession } from "../services/auth";
-    import { clearSelectedChat, currentUserStore, startChatPoller } from "../stores/chat";
+    import { currentUserStore, startChatPoller } from "../stores/chat";
     import { apiStore } from "../stores/api";
     import { startUserUpdatePoller } from "../stores/user";
     import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
@@ -41,8 +40,7 @@
         | "registering"
         | "logging_in"
         | "upgrading_user"
-        | "upgrade_user"
-        | "expired";
+        | "upgrade_user";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let profileTrace = showTrace();
@@ -130,31 +128,12 @@
             api?.createUserClient(user.userId);
             startMessagesReadTracker(api!);
             startOnlinePoller();
-            startSession(id).then(() => endSession());
+            startSession(id).then(logout);
             chatPoller = startChatPoller(api!);
             usersPoller = startUserUpdatePoller(api);
             api.getUserStorageLimits();
             identityState.set("logged_in");
         }
-    }
-
-    function endSession(): void {
-        performLogout().then(() => identityState.set("expired"));
-    }
-
-    function performLogout(): Promise<void> {
-        console.log("logging out");
-        return logout().then(() => {
-            identityState.set("requires_login");
-            currentUserStore.set(undefined);
-            apiStore.set(undefined);
-            messagesRead?.stop();
-            chatPoller?.stop();
-            usersPoller?.stop();
-            markOnlinePoller?.stop();
-            clearSelectedChat();
-            return;
-        });
     }
 
     function startOnlinePoller() {
@@ -187,12 +166,12 @@
 
     function unhandledError(ev: Event) {
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
-            endSession();
+            logout();
             ev.preventDefault();
         }
     }
 
-    const allRoutes = routes(performLogout);
+    const allRoutes = routes();
 </script>
 
 <svelte:head>
@@ -202,11 +181,9 @@
 {#if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
 {:else if $identityState === "registering"}
-    <Register on:logout={performLogout} on:createdUser={registeredUser} {api} {referredBy} />
+    <Register on:logout={logout} on:createdUser={registeredUser} {api} {referredBy} />
 {:else if $identityState === "logged_in" && $currentUserStore !== undefined}
     <Router routes={allRoutes} />
-{:else if $identityState == "expired"}
-    <SessionExpired on:login={() => acknowledgeExpiry()} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else}
