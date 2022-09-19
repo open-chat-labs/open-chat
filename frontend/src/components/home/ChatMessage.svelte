@@ -2,7 +2,8 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
+    import type { CreatedUser } from "../../domain/user/user";
+    import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
@@ -357,27 +358,18 @@
     <Overlay on:close={() => (showEmojiPicker = false)} dismissible={true}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
-                {#await import("./EmojiPicker.svelte")}
-                    <div class="loading-emoji"><Loading /></div>
-                {:then picker}
-                    <div class="emoji-header">
-                        <h4>{$_("chooseReaction")}</h4>
-                        <span
-                            title={$_("close")}
-                            class="close-emoji"
-                            on:click={() => (showEmojiPicker = false)}>
-                            <HoverIcon>
-                                <Close size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </span>
-                    </div>
-                    <svelte:component
-                        this={picker.default}
-                        on:emojiSelected={selectReaction}
-                        mode={"reaction"} />
-                {:catch _error}
-                    <Reload>{$_("unableToLoadEmojiPicker")}</Reload>
-                {/await}
+                <div class="emoji-header">
+                    <h4>{$_("chooseReaction")}</h4>
+                    <span
+                        title={$_("close")}
+                        class="close-emoji"
+                        on:click={() => (showEmojiPicker = false)}>
+                        <HoverIcon>
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                </div>
+                <EmojiPicker on:emojiSelected={selectReaction} mode={"reaction"} />
             </span>
             <span slot="footer" />
         </ModalContent>
