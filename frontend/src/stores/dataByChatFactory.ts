@@ -22,17 +22,20 @@ function updateDataForChat<T>(
     }));
 }
 
-export function createChatSpecificDataStore<T>(empty: T) {
+export function createChatSpecificDataStore<T>(empty: T, initFn?: () => T) {
+    function init() {
+        return initFn ? initFn() : empty;
+    }
     const all: Writable<Record<string, T>> = immutableStore<Record<string, T>>({});
     const byChat: Readable<T> = derived([selectedChatId, all], ([$selectedChatId, $all]) => {
-        if ($selectedChatId === undefined) return empty;
-        return $all[$selectedChatId] ?? empty;
+        if ($selectedChatId === undefined) return init();
+        return $all[$selectedChatId] ?? init();
     });
     return {
         subscribe: byChat.subscribe,
         get: (): T => get(byChat),
-        update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, empty),
+        update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, init()),
         set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
-        clear: (chatId: string): void => setDataForChat(all, chatId, empty),
+        clear: (chatId: string): void => setDataForChat(all, chatId, init()),
     };
 }

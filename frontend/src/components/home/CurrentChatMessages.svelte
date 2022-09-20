@@ -86,6 +86,8 @@
         nextMessageIndex,
         currentChatReplyingTo,
         chatUpdatedStore,
+        userGroupKeys,
+        confirmedEventIndexesLoaded,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -145,8 +147,6 @@
     let insideFromBottomThreshold: boolean = false;
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
-    let confirmedEventIndexesLoaded = new DRange();
-    let userGroupKeys = new Set<string>();
 
     onMount(() => {
         const options = {
@@ -322,7 +322,7 @@
     }
 
     function confirmedUpToEventIndex(): number {
-        const ranges = confirmedEventIndexesLoaded.subranges();
+        const ranges = $confirmedEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -526,8 +526,8 @@
         if (resp === "events_failed") return;
 
         if (!keepCurrentEvents) {
-            confirmedEventIndexesLoaded = new DRange();
-            userGroupKeys = new Set<string>();
+            confirmedEventIndexesLoaded.clear(chat.chatId);
+            userGroupKeys.clear(chat.chatId);
         } else if (!isContiguous(resp)) {
             return;
         }
@@ -549,21 +549,23 @@
         serverEventsStore.set(chat.chatId, updated);
 
         if (resp.events.length > 0) {
-            resp.events.forEach((e) => confirmedEventIndexesLoaded.add(e.index));
+            const range = $confirmedEventIndexesLoaded.clone();
+            resp.events.forEach((e) => range.add(e.index));
+            confirmedEventIndexesLoaded.set(chat.chatId, range);
         }
 
         makeRtcConnections(user.userId, chat, updated, $userStore);
     }
 
     function isContiguous(response: EventsSuccessResult<ChatEventType>): boolean {
-        if (confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
+        if ($confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
 
         const firstIndex = response.events[0].index;
         const lastIndex = response.events[response.events.length - 1].index;
         const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
         const isContiguous =
-            confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
+            $confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
 
         if (!isContiguous) {
             console.log(
@@ -578,8 +580,8 @@
     }
 
     function earliestLoadedIndex(): number | undefined {
-        return confirmedEventIndexesLoaded.length > 0
-            ? confirmedEventIndexesLoaded.index(0)
+        return $confirmedEventIndexesLoaded.length > 0
+            ? $confirmedEventIndexesLoaded.index(0)
             : undefined;
     }
 
@@ -748,12 +750,15 @@
         }
         for (const { index } of group) {
             const key = prefix + index;
-            if (userGroupKeys.has(key)) {
+            if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.add(firstKey);
+        userGroupKeys.update(chat.chatId, (keys) => {
+            keys.add(firstKey);
+            return keys;
+        });
         return firstKey;
     }
 
@@ -774,7 +779,7 @@
 
     function refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
         const filtered = affectedEventIndexes.filter((e) =>
-            indexIsInRanges(e, confirmedEventIndexesLoaded)
+            indexIsInRanges(e, $confirmedEventIndexesLoaded)
         );
         if (filtered.length === 0) {
             return Promise.resolve();
@@ -802,15 +807,15 @@
         messageEvent: EventWrapper<Message>,
         confirmed: boolean
     ): void {
-        if (indexIsInRanges(messageEvent.index, confirmedEventIndexesLoaded)) {
+        if (indexIsInRanges(messageEvent.index, $confirmedEventIndexesLoaded)) {
             // We already have this confirmed message
             return;
         }
 
         if (confirmed) {
             const isAdjacentToAlreadyLoadedEvents =
-                indexIsInRanges(messageEvent.index - 1, confirmedEventIndexesLoaded) ||
-                indexIsInRanges(messageEvent.index + 1, confirmedEventIndexesLoaded);
+                indexIsInRanges(messageEvent.index - 1, $confirmedEventIndexesLoaded) ||
+                indexIsInRanges(messageEvent.index + 1, $confirmedEventIndexesLoaded);
 
             if (!isAdjacentToAlreadyLoadedEvents) {
                 return;
@@ -852,8 +857,8 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-            confirmedEventIndexesLoaded = new DRange();
-            userGroupKeys = new Set<string>();
+            confirmedEventIndexesLoaded.clear(chat.chatId);
+            userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow($focusMessageIndex);
@@ -1156,7 +1161,11 @@
                     return e;
                 })
             );
-            confirmedEventIndexesLoaded.add(resp.eventIndex);
+            confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
+                const r = range.clone();
+                r.add(resp.eventIndex);
+                return r;
+            });
             updateSummaryWithConfirmedMessage(chat.chatId, confirmed);
         }
     }
