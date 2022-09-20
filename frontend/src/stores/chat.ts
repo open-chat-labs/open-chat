@@ -43,6 +43,7 @@ import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredP
 import { createChatSpecificDataStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
+import { tick } from "svelte";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -271,18 +272,25 @@ export function setSelectedChat(
 
     clearSelectedChat(chat.chatId);
 
-    // initialise a bunch of stores
-    serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
-    focusMessageIndex.set(chat.chatId, messageIndex);
-    focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
-    currentChatMembers.set(chat.chatId, []);
-    currentChatBlockedUsers.set(chat.chatId, new Set<string>());
-    currentChatPinnedMessages.set(chat.chatId, new Set<number>());
-    currentChatUserIds.set(
-        chat.chatId,
-        new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
-    );
-    resetFilteredProposalsStore(chat);
+    // TODO - there is a race condition here. The changes to the stores below take effect within
+    // CurrentChatMessage *before* the selected chat change does. Not clear why that is, but it
+    // requires us to slightly defer the initialisation of the other stores.
+    // We need to get a better understanding of what's going on here and find a better solution
+    // but this will temporarily prevent the problem.
+    tick().then(() => {
+        // initialise a bunch of stores
+        serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+        focusMessageIndex.set(chat.chatId, messageIndex);
+        focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
+        currentChatMembers.set(chat.chatId, []);
+        currentChatBlockedUsers.set(chat.chatId, new Set<string>());
+        currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+        currentChatUserIds.set(
+            chat.chatId,
+            new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
+        );
+        resetFilteredProposalsStore(chat);
+    });
 }
 
 export function updateSummaryWithConfirmedMessage(
