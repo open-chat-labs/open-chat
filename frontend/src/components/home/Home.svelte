@@ -402,7 +402,7 @@
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if ($selectedChatId === chatId) {
-                currentChatMessages?.handleMessageSentByOther(m, true);
+                currentChatMessages?.handleMessageSentByOtherExternal(m, true);
             }
         });
     }
@@ -1186,26 +1186,6 @@
                 max-width: 1792px;
             }
         }
-    }
-    :global(body) {
-        transition: color ease-in-out 150ms, padding ease-in-out 150ms;
-        padding: $sp4;
-        --background-color: var(--theme-background);
-        --text-color: var(--theme-text);
-        color: var(--theme-text);
-
-        @include size-below(lg) {
-            padding: $sp3;
-        }
-
-        @include mobile() {
-            padding: 0;
-        }
-    }
-
-    :global(body.fill) {
-        transition: none;
-        padding: 0;
     }
 
     .right-wrapper {

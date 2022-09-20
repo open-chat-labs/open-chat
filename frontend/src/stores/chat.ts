@@ -514,6 +514,14 @@ export const focusMessageIndex = createChatSpecificDataStore<number | undefined>
 export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 // This set will contain 1 key for each rendered user event group which is used as that group's key
 export const groupDetails = createChatSpecificDataStore<GroupChatDetails | undefined>(undefined);
+export const userGroupKeys = createChatSpecificDataStore<Set<string>>(
+    new Set<string>(),
+    () => new Set<string>()
+);
+export const confirmedEventIndexesLoaded = createChatSpecificDataStore<DRange>(
+    new DRange(),
+    () => new DRange()
+);
 
 const draftMessages = createChatSpecificDataStore<DraftMessage>({});
 export const currentChatDraftMessage = {
