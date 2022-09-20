@@ -850,19 +850,25 @@ function confirmMessage(
             index: resp.eventIndex,
             timestamp: resp.timestamp,
         };
+        let found = false;
         serverEventsStore.update(chatId, (events) =>
             events.map((e) => {
                 if (e.event === candidate) {
+                    found = true;
                     return confirmed;
                 }
                 return e;
             })
         );
-        confirmedEventIndexesLoaded.update(chatId, (range) => {
-            const r = range.clone();
-            r.add(resp.eventIndex);
-            return r;
-        });
+
+        if (found) {
+            confirmedEventIndexesLoaded.update(chatId, (range) => {
+                const r = range.clone();
+                r.add(resp.eventIndex);
+                return r;
+            });
+        }
+
         updateSummaryWithConfirmedMessage(chatId, confirmed);
     }
 }
