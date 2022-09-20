@@ -94,7 +94,7 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { base64ToBigint } from "../../utils/base64";
+import { textToCode } from "../../domain/inviteCodes";
 import type { GroupInvite } from "../../services/serviceContainer";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -434,7 +434,7 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.join_group_v2({
                 as_super_admin: false,
                 chat_id: Principal.fromText(chatId),
-                invite_code: apiOptional(base64ToBigint, inviteCode),
+                invite_code: apiOptional(textToCode, inviteCode),
             }),
             joinGroupResponse
         );

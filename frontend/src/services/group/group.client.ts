@@ -79,7 +79,7 @@ import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { base64ToBigint } from "../../utils/base64";
+import { textToCode } from "../../domain/inviteCodes";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 
 export class GroupClient extends CandidService implements IGroupClient {
@@ -114,7 +114,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
-            invite_code: apiOptional(base64ToBigint, this.inviteCode),
+            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -142,7 +142,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             thread_root_message_index,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
-            invite_code: apiOptional(base64ToBigint, this.inviteCode),
+            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -168,7 +168,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 max_events: MAX_EVENTS,
                 ascending: asc,
                 start_index: index,
-                invite_code: apiOptional(base64ToBigint, this.inviteCode),
+                invite_code: apiOptional(textToCode, this.inviteCode),
                 latest_client_event_index: apiOptional(identity, latestClientEventIndex),
             };
             return this.handleQueryResponse(
@@ -404,7 +404,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
-        const args = { invite_code: apiOptional(base64ToBigint, this.inviteCode) };
+        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
