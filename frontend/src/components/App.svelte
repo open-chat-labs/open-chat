@@ -197,3 +197,220 @@
 <UpgradeBanner />
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
+
+<style type="text/scss">
+    :global {
+        html,
+        body,
+        div,
+        span,
+        object,
+        iframe,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        blockquote,
+        pre,
+        abbr,
+        address,
+        cite,
+        code,
+        del,
+        dfn,
+        em,
+        img,
+        ins,
+        kbd,
+        q,
+        samp,
+        small,
+        strong,
+        sub,
+        sup,
+        var,
+        b,
+        i,
+        dl,
+        dt,
+        dd,
+        ol,
+        ul,
+        li,
+        fieldset,
+        form,
+        label,
+        legend,
+        table,
+        caption,
+        tbody,
+        tfoot,
+        thead,
+        tr,
+        th,
+        td,
+        article,
+        aside,
+        canvas,
+        details,
+        figcaption,
+        figure,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        section,
+        summary,
+        time,
+        mark,
+        audio,
+        video {
+            margin: 0;
+            outline: 0;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            vertical-align: baseline;
+            font-size: 100%;
+        }
+
+        article,
+        aside,
+        details,
+        figcaption,
+        figure,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        section {
+            display: block;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        blockquote,
+        q {
+            quotes: none;
+        }
+
+        blockquote::before,
+        blockquote::after,
+        q::before,
+        q::after {
+            content: "";
+        }
+
+        a {
+            margin: 0;
+            background: transparent;
+            cursor: pointer;
+            padding: 0;
+            vertical-align: baseline;
+            text-decoration: none;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        ins {
+            background-color: none;
+            text-decoration: none;
+            color: currentColor;
+        }
+
+        mark {
+            background-color: none;
+            color: inherit;
+            font-weight: bold;
+        }
+
+        del {
+            text-decoration: line-through;
+        }
+
+        abbr[title],
+        dfn[title] {
+            border: none;
+            cursor: help;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        hr {
+            display: block;
+            margin: 0;
+            border: 0;
+            border-top: 1px solid currentColor;
+            padding: 0;
+            height: 1px;
+        }
+
+        input,
+        select {
+            vertical-align: middle;
+        }
+
+        html,
+        body {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        :root {
+            --font-size: 16px;
+        }
+
+        html {
+            box-sizing: border-box;
+            font-size: var(--font-size);
+        }
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            transition: background ease-in-out 300ms;
+            background: var(--bg);
+            color: var(--txt);
+            margin: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+                Cantarell, "Helvetica Neue", sans-serif;
+            display: flex;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+        }
+
+        textarea {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+                Cantarell, "Helvetica Neue", sans-serif;
+        }
+
+        a {
+            color: #22a7f2;
+        }
+
+        .iti__flag {
+            background-image: url("assets/flags.png") !important;
+        }
+
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .iti__flag {
+                background-image: url("assets/flags@2x.png") !important;
+            }
+        }
+    }
+</style>

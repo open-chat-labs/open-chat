@@ -257,7 +257,6 @@ export default [
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
-                                <link rel="stylesheet" href="/global.css" />
                                 <link rel="stylesheet" href="/${cssFile}" />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
