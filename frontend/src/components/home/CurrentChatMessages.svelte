@@ -73,7 +73,6 @@
         currentChatDraftMessage,
         isProposalGroup,
         currentChatUserIds,
-        eventsStore,
         focusMessageIndex,
         currentChatPinnedMessages,
         currentChatEditingEvent,
@@ -121,6 +120,7 @@
     export let canInvite: boolean;
     export let footer: boolean;
     export let canReplyInThread: boolean;
+    export let events: EventWrapper<ChatEventType>[];
 
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
 
@@ -254,7 +254,7 @@
     }
 
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
-        return $eventsStore.find(
+        return events.find(
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
         ) as EventWrapper<Message> | undefined;
     }
@@ -292,9 +292,7 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            loadEventWindow(api, user, serverChat, chat, $eventsStore, index).then(
-                onMessageWindowLoaded
-            );
+            loadEventWindow(api, user, serverChat, chat, events, index).then(onMessageWindowLoaded);
         }
     }
 
@@ -362,7 +360,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+            loadPreviousMessages(api, user, serverChat, chat, events).then(
                 onLoadedPreviousMessages
             );
         }
@@ -372,7 +370,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, $eventsStore).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -528,14 +526,14 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            handleMessageSentByOther(api, user, chat, $eventsStore, latestMessage, true);
+            handleMessageSentByOther(api, user, chat, events, latestMessage, true);
         }
 
-        refreshAffectedEvents(api, user, chat, $eventsStore, affectedEvents);
-        updateDetails(api, user, chat, $eventsStore);
+        refreshAffectedEvents(api, user, chat, events, affectedEvents);
+        updateDetails(api, user, chat, events);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            loadNewMessages(api, user, serverChat, chat, $eventsStore);
+            loadNewMessages(api, user, serverChat, chat, events);
         }
     }
 
@@ -543,12 +541,12 @@
         messageEvent: EventWrapper<Message>,
         confirmed: boolean
     ): void {
-        handleMessageSentByOther(api, user, chat, $eventsStore, messageEvent, confirmed).then(() =>
+        handleMessageSentByOther(api, user, chat, events, messageEvent, confirmed).then(() =>
             onLoadedNewMessages(true)
         );
     }
 
-    $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
+    $: groupedEvents = groupEvents(events, groupInner($filteredProposalsStore)).reverse();
 
     $: {
         if ($chatUpdatedStore !== undefined) {
@@ -569,15 +567,15 @@
             userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
-                loadEventWindow(api, user, serverChat, chat, $eventsStore, $focusMessageIndex).then(
+                loadEventWindow(api, user, serverChat, chat, events, $focusMessageIndex).then(
                     onMessageWindowLoaded
                 );
             } else {
-                loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+                loadPreviousMessages(api, user, serverChat, chat, events).then(
                     onLoadedPreviousMessages
                 );
             }
-            loadDetails(api, user, chat, $eventsStore);
+            loadDetails(api, user, chat, events);
         }
     }
 
@@ -606,11 +604,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, $eventsStore).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+            loadPreviousMessages(api, user, serverChat, chat, events).then(
                 onLoadedPreviousMessages
             );
         }
@@ -767,15 +765,9 @@
             );
             const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            sendMessageWithAttachment(
-                api,
-                user,
-                serverChat,
-                chat,
-                $eventsStore,
-                event,
-                mentioned
-            ).then(afterSendMessage);
+            sendMessageWithAttachment(api, user, serverChat, chat, events, event, mentioned).then(
+                afterSendMessage
+            );
         }
     }
 
@@ -811,11 +803,11 @@
         };
         const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
 
-        forwardMessage(api, user, serverChat, chat, $eventsStore, event).then(afterSendMessage);
+        forwardMessage(api, user, serverChat, chat, events, event).then(afterSendMessage);
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const matchingMessage = findMessageById(message.messageId, $eventsStore);
+        const matchingMessage = findMessageById(message.messageId, events);
 
         if (matchingMessage !== undefined) {
             const exists = containsReaction(
@@ -854,7 +846,7 @@
             localMessageUpdates.markUndeleted(msg.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
-            handleMessageSentByOther(api, user, chat, $eventsStore, msg.messageEvent, false);
+            handleMessageSentByOther(api, user, chat, events, msg.messageEvent, false);
         }
         if (kind === "remote_user_read_message") {
             unconfirmedReadByThem.add(BigInt(msg.messageId));
@@ -930,7 +922,7 @@
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
-            <InitialGroupMessage group={chat} noVisibleEvents={$eventsStore.length === 0} />
+            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
         {:else if isBot}
             <Robot />
         {/if}
