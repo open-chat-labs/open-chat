@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NotificationEnvelope {
     pub recipients: Vec<UserId>,
-    pub notification: Notification,
+    pub notification_bytes: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

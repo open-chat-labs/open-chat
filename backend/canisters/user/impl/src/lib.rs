@@ -8,7 +8,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
-use notifications_canister::c2c_push_notification;
+use notifications_canister::c2c_push_notification_v2;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -76,15 +76,15 @@ impl RuntimeState {
         let random = self.env.random_u32() as usize;
 
         if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification::Args {
+            let args = c2c_push_notification_v2::Args {
                 recipients,
-                notification,
+                notification_bytes: candid::encode_one(&notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
 
-        async fn push_notification_inner(canister_id: CanisterId, args: notifications_canister::c2c_push_notification::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification_v2::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification_v2(canister_id, &args).await;
         }
     }
 
