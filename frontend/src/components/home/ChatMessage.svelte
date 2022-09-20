@@ -869,6 +869,7 @@
         max-width: 80%;
         min-width: 90px;
         overflow: hidden;
+        overflow-wrap: break-word;
 
         @include size-above(xl) {
             max-width: 70%;
