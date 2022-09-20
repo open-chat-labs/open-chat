@@ -30,8 +30,7 @@
     let confirmReset = false;
 
     $: link =
-        `${window.location.origin}/#/${group.chatId}` +
-        (!group.public ? `/?code=${code !== undefined ? encodeURIComponent(code) : "nocode"}` : "");
+        `${window.location.origin}/#/${group.chatId}` + (!group.public ? `/?code=${code}` : "");
 
     $: spinner = loading && code === undefined;
 

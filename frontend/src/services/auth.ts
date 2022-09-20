@@ -2,8 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
-import { closeDb } from "../utils/caching";
-import { initialiseTracking, startTrackingSession, endTrackingSession } from "../utils/tracking";
+import { initialiseTracking, startTrackingSession } from "../utils/tracking";
 import { AuthProvider } from "../domain/auth";
 import { idbAuthClientStore } from "../stores/authProviders";
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
