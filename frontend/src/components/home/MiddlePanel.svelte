@@ -10,7 +10,12 @@
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import { pathParams } from "../../stores/routing";
-    import { selectedChatStore, selectedChatId, selectedServerChatStore } from "../../stores/chat";
+    import {
+        selectedChatStore,
+        selectedChatId,
+        selectedServerChatStore,
+        eventsStore,
+    } from "../../stores/chat";
 
     export let loadingChats: boolean = false;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
@@ -46,6 +51,7 @@
             {joining}
             chat={$selectedChatStore}
             serverChat={$selectedServerChatStore}
+            events={$eventsStore}
             on:initiateThread
             on:unblockUser
             on:clearSelection

@@ -18,6 +18,7 @@
     } from "../../domain/chat/chat.utils";
     import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
+        ChatEvent,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
@@ -62,6 +63,7 @@
     export let chat: ChatSummary;
     export let serverChat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
+    export let events: EventWrapper<ChatEvent>[];
 
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
@@ -280,6 +282,7 @@
         on:initiateThread
         {chat}
         {serverChat}
+        {events}
         canPin={canPinMessages(chat)}
         canBlockUser={canBlockUsers(chat)}
         canDelete={canDeleteOtherUsersMessages(chat)}
