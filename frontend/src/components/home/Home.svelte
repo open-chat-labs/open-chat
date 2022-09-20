@@ -402,7 +402,7 @@
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if ($selectedChatId === chatId) {
-                currentChatMessages?.handleMessageSentByOther(m, true);
+                currentChatMessages?.handleMessageSentByOtherExternal(m, true);
             }
         });
     }

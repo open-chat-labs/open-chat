@@ -17,7 +17,6 @@
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { formatMessageDate } from "../../utils/date";
-    import DRange from "drange";
     import type {
         EventWrapper,
         EnhancedReplyContext,
@@ -25,11 +24,7 @@
         Message,
         Mention,
         ChatSummary,
-        EventsResponse,
-        EventsSuccessResult,
         MessageContent,
-        SendMessageSuccess,
-        TransferSuccess,
     } from "../../domain/chat/chat";
     import { remainingStorage } from "../../stores/storage";
     import {
@@ -39,26 +34,31 @@
         findMessageById,
         getStorageRequiredForMessage,
         groupEvents,
-        indexRangeForChat,
-        makeRtcConnections,
-        mergeSendMessageResponse,
         messageIsReadByThem,
         newMessageId,
-        replaceAffected,
-        replaceLocal,
         sameUser,
-        serialiseMessageForRtc,
-        upToDate,
-        userIdsFromEvents,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import {
         blockUser,
         deleteMessage,
+        forwardMessage,
+        handleMessageSentByOther,
+        loadDetails,
+        loadEventWindow,
+        loadNewMessages,
+        loadPreviousMessages,
+        moreNewMessagesAvailable,
+        morePreviousMessagesAvailable,
+        pinMessage,
+        refreshAffectedEvents,
         registerPollVote,
+        removeMessage,
         selectReaction,
-        updateUserStore,
+        sendMessageWithAttachment,
+        unpinMessage,
+        updateDetails,
     } from "../../services/common/chatThread";
     import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
@@ -70,18 +70,13 @@
     import { trackEvent } from "../../utils/tracking";
     import * as shareFunctions from "../../domain/share";
     import {
-        currentChatBlockedUsers,
         currentChatDraftMessage,
-        currentChatMembers,
         isProposalGroup,
         currentChatUserIds,
-        serverEventsStore,
-        groupDetails,
         eventsStore,
         focusMessageIndex,
         currentChatPinnedMessages,
         currentChatEditingEvent,
-        updateSummaryWithConfirmedMessage,
         nextEventIndex,
         nextMessageIndex,
         currentChatReplyingTo,
@@ -94,17 +89,14 @@
         toggleProposalFilterMessageExpansion,
         filteredProposalsStore,
     } from "../../stores/filteredProposals";
-    import { findLast, groupWhile } from "../../utils/list";
+    import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { CreatedUser, User } from "../../domain/user/user";
-    import { rollbar } from "utils/logging";
-    import { toastStore } from "stores/toast";
-    import { rtcConnectionsManager } from "domain/webrtc/RtcConnectionsManager";
-    import { indexIsInRanges } from "utils/range";
-    import type { RemoteUserToggledReaction, WebRtcMessage } from "domain/webrtc/webrtc";
-    import { typing } from "stores/typing";
-    import { localMessageUpdates } from "stores/localMessageUpdates";
+    import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
+    import type { RemoteUserToggledReaction, WebRtcMessage } from "../../domain/webrtc/webrtc";
+    import { typing } from "../../stores/typing";
+    import { localMessageUpdates } from "../../stores/localMessageUpdates";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -155,7 +147,7 @@
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
-        morePrevAvailable = morePreviousMessagesAvailable();
+        morePrevAvailable = morePreviousMessagesAvailable(chat);
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -233,7 +225,7 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = morePreviousMessagesAvailable();
+        morePrevAvailable = morePreviousMessagesAvailable(chat);
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
@@ -300,7 +292,9 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            loadEventWindow(index, preserveFocus);
+            loadEventWindow(api, user, serverChat, chat, $eventsStore, index).then(
+                onMessageWindowLoaded
+            );
         }
     }
 
@@ -313,24 +307,8 @@
         }
     }
 
-    function morePreviousMessagesAvailable(): boolean {
-        return (earliestLoadedIndex() ?? Number.MAX_VALUE) > earliestAvailableEventIndex();
-    }
-
-    function moreNewMessagesAvailable(): boolean {
-        return confirmedUpToEventIndex() < latestServerEventIndex();
-    }
-
-    function confirmedUpToEventIndex(): number {
-        const ranges = $confirmedEventIndexesLoaded.subranges();
-        if (ranges.length > 0) {
-            return ranges[0].high;
-        }
-        return -1;
-    }
-
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = morePreviousMessagesAvailable();
+        morePrevAvailable = morePreviousMessagesAvailable(chat);
         return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
@@ -338,7 +316,7 @@
         return (
             !loadingNew &&
             calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            moreNewMessagesAvailable()
+            moreNewMessagesAvailable(serverChat)
         );
     }
 
@@ -384,7 +362,9 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages();
+            loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+                onLoadedPreviousMessages
+            );
         }
 
         if (shouldLoadNewMessages()) {
@@ -392,7 +372,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            loadNewMessages();
+            loadNewMessages(api, user, serverChat, chat, $eventsStore).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -476,7 +456,8 @@
         blockUser(api, chat.chatId, ev.detail.userId);
     }
 
-    function onMessageWindowLoaded(messageIndex: number) {
+    function onMessageWindowLoaded(messageIndex: number | undefined) {
+        if (messageIndex === undefined) return;
         tick()
             .then(() => (initialised = true))
             .then(() => {
@@ -488,225 +469,6 @@
 
     export function externalGoToMessage(messageIndex: number): void {
         onMessageWindowLoaded(messageIndex);
-    }
-
-    async function loadEventWindow(messageIndex: number, preserveFocus = false) {
-        if (messageIndex >= 0) {
-            const range = indexRangeForChat(serverChat);
-            const eventsPromise: Promise<EventsResponse<ChatEventType>> =
-                chat.kind === "direct_chat"
-                    ? api.directChatEventsWindow(
-                          range,
-                          chat.them,
-                          messageIndex,
-                          chat.latestEventIndex
-                      )
-                    : api.groupChatEventsWindow(
-                          range,
-                          chat.chatId,
-                          messageIndex,
-                          chat.latestEventIndex
-                      );
-            const eventsResponse = await eventsPromise;
-
-            if (eventsResponse === undefined || eventsResponse === "events_failed") {
-                return undefined;
-            }
-
-            await handleEventsResponse(eventsResponse, false);
-
-            onMessageWindowLoaded(messageIndex);
-        }
-    }
-
-    async function handleEventsResponse(
-        resp: EventsResponse<ChatEventType>,
-        keepCurrentEvents = true
-    ): Promise<void> {
-        if (resp === "events_failed") return;
-
-        if (!keepCurrentEvents) {
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
-        } else if (!isContiguous(resp)) {
-            return;
-        }
-
-        const updated = replaceAffected(
-            replaceLocal(
-                user.userId,
-                chat.chatId,
-                chat.readByMe,
-                keepCurrentEvents ? $eventsStore : [],
-                resp.events
-            ),
-            resp.affectedEvents
-        );
-
-        const userIds = userIdsFromEvents(updated);
-        await updateUserStore(api, chat.chatId, user.userId, userIds);
-
-        serverEventsStore.set(chat.chatId, updated);
-
-        if (resp.events.length > 0) {
-            const range = $confirmedEventIndexesLoaded.clone();
-            resp.events.forEach((e) => range.add(e.index));
-            confirmedEventIndexesLoaded.set(chat.chatId, range);
-        }
-
-        makeRtcConnections(user.userId, chat, updated, $userStore);
-    }
-
-    function isContiguous(response: EventsSuccessResult<ChatEventType>): boolean {
-        if ($confirmedEventIndexesLoaded.length === 0 || response.events.length === 0) return true;
-
-        const firstIndex = response.events[0].index;
-        const lastIndex = response.events[response.events.length - 1].index;
-        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
-
-        const isContiguous =
-            $confirmedEventIndexesLoaded.clone().intersect(contiguousCheck).length > 0;
-
-        if (!isContiguous) {
-            console.log(
-                "Events in response are not contiguous with the loaded events",
-                confirmedEventIndexesLoaded,
-                firstIndex,
-                lastIndex
-            );
-        }
-
-        return isContiguous;
-    }
-
-    function earliestLoadedIndex(): number | undefined {
-        return $confirmedEventIndexesLoaded.length > 0
-            ? $confirmedEventIndexesLoaded.index(0)
-            : undefined;
-    }
-
-    function latestServerEventIndex(): number {
-        return serverChat.latestEventIndex;
-    }
-
-    function earliestAvailableEventIndex(): number {
-        return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
-    }
-
-    function previousMessagesCriteria(): [number, boolean] | undefined {
-        const minLoadedEventIndex = earliestLoadedIndex();
-        if (minLoadedEventIndex === undefined) {
-            return [latestServerEventIndex(), false];
-        }
-        const minVisibleEventIndex = earliestAvailableEventIndex();
-        return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
-            ? [minLoadedEventIndex - 1, false]
-            : undefined;
-    }
-
-    function loadEvents(
-        startIndex: number,
-        ascending: boolean
-    ): Promise<EventsResponse<ChatEventType>> {
-        return api.chatEvents(
-            chat,
-            indexRangeForChat(serverChat),
-            startIndex,
-            ascending,
-            undefined,
-            chat.latestEventIndex
-        );
-    }
-
-    async function loadPreviousMessages(): Promise<void> {
-        const criteria = previousMessagesCriteria();
-
-        const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
-
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return;
-        }
-
-        await handleEventsResponse(eventsResponse);
-
-        onLoadedPreviousMessages();
-
-        return;
-    }
-
-    async function loadNewMessages(): Promise<void> {
-        const criteria = newMessageCriteria();
-
-        const eventsResponse = criteria ? await loadEvents(criteria[0], criteria[1]) : undefined;
-
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return undefined;
-        }
-
-        await handleEventsResponse(eventsResponse);
-
-        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
-        // if so, we update the chat summary to show the correct latest message.
-        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
-        const newLatestMessage =
-            latestMessage !== undefined && latestMessage.index > latestServerEventIndex();
-
-        if (newLatestMessage) {
-            updateSummaryWithConfirmedMessage(chat.chatId, latestMessage as EventWrapper<Message>);
-        }
-
-        onLoadedNewMessages(newLatestMessage);
-    }
-
-    function newMessageCriteria(): [number, boolean] | undefined {
-        const maxServerEventIndex = latestServerEventIndex();
-        const loadedUpTo = confirmedUpToEventIndex();
-
-        return loadedUpTo < maxServerEventIndex ? [loadedUpTo + 1, true] : undefined;
-    }
-
-    async function loadDetails(): Promise<void> {
-        // currently this is only meaningful for group chats, but we'll set it up generically just in case
-        if (chat.kind === "group_chat") {
-            if ($groupDetails === undefined) {
-                const resp = await api.getGroupDetails(chat.chatId, chat.latestEventIndex);
-                if (resp !== "caller_not_in_group") {
-                    groupDetails.set(chat.chatId, resp);
-                    currentChatMembers.set(chat.chatId, resp.members);
-                    currentChatBlockedUsers.set(chat.chatId, resp.blockedUsers);
-                    currentChatPinnedMessages.set(chat.chatId, resp.pinnedMessages);
-                }
-                await updateUserStore(
-                    api,
-                    chat.chatId,
-                    user.userId,
-                    userIdsFromEvents($eventsStore)
-                );
-            } else {
-                await updateDetails();
-            }
-        }
-    }
-
-    async function updateDetails(): Promise<void> {
-        if (chat.kind === "group_chat") {
-            if (
-                $groupDetails !== undefined &&
-                $groupDetails.latestEventIndex < chat.latestEventIndex
-            ) {
-                const gd = await api.getGroupDetailsUpdates(chat.chatId, $groupDetails);
-                currentChatMembers.set(chat.chatId, gd.members);
-                currentChatBlockedUsers.set(chat.chatId, gd.blockedUsers);
-                currentChatPinnedMessages.set(chat.chatId, gd.pinnedMessages);
-                groupDetails.set(chat.chatId, gd);
-                await updateUserStore(
-                    api,
-                    chat.chatId,
-                    user.userId,
-                    userIdsFromEvents($eventsStore)
-                );
-            }
-        }
     }
 
     function onLoadedPreviousMessages() {
@@ -766,78 +528,24 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            handleMessageSentByOther(latestMessage, true);
+            handleMessageSentByOther(api, user, chat, $eventsStore, latestMessage, true);
         }
 
-        refreshAffectedEvents(affectedEvents);
-        updateDetails();
+        refreshAffectedEvents(api, user, chat, $eventsStore, affectedEvents);
+        updateDetails(api, user, chat, $eventsStore);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            loadNewMessages();
+            loadNewMessages(api, user, serverChat, chat, $eventsStore);
         }
     }
 
-    function refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
-        const filtered = affectedEventIndexes.filter((e) =>
-            indexIsInRanges(e, $confirmedEventIndexesLoaded)
-        );
-        if (filtered.length === 0) {
-            return Promise.resolve();
-        }
-
-        const eventsPromise =
-            chat.kind === "direct_chat"
-                ? api.directChatEventsByEventIndex(
-                      chat.them,
-                      filtered,
-                      undefined,
-                      chat.latestEventIndex
-                  )
-                : api.groupChatEventsByEventIndex(
-                      chat.chatId,
-                      filtered,
-                      undefined,
-                      chat.latestEventIndex
-                  );
-
-        return eventsPromise.then((resp) => handleEventsResponse(resp));
-    }
-
-    export function handleMessageSentByOther(
+    export function handleMessageSentByOtherExternal(
         messageEvent: EventWrapper<Message>,
         confirmed: boolean
     ): void {
-        if (indexIsInRanges(messageEvent.index, $confirmedEventIndexesLoaded)) {
-            // We already have this confirmed message
-            return;
-        }
-
-        if (confirmed) {
-            const isAdjacentToAlreadyLoadedEvents =
-                indexIsInRanges(messageEvent.index - 1, $confirmedEventIndexesLoaded) ||
-                indexIsInRanges(messageEvent.index + 1, $confirmedEventIndexesLoaded);
-
-            if (!isAdjacentToAlreadyLoadedEvents) {
-                return;
-            }
-
-            handleEventsResponse({
-                events: [messageEvent],
-                affectedEvents: [],
-                latestEventIndex: undefined,
-            });
-        } else {
-            if (!upToDate(chat, $eventsStore)) {
-                return;
-            }
-
-            // If it is unconfirmed then we simply append it
-            if (appendMessage(messageEvent)) {
-                unconfirmed.add(chat.chatId, messageEvent);
-            }
-        }
-
-        onLoadedNewMessages(true);
+        handleMessageSentByOther(api, user, chat, $eventsStore, messageEvent, confirmed).then(() =>
+            onLoadedNewMessages(true)
+        );
     }
 
     $: groupedEvents = groupEvents($eventsStore, groupInner($filteredProposalsStore)).reverse();
@@ -861,11 +569,15 @@
             userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
-                loadEventWindow($focusMessageIndex);
+                loadEventWindow(api, user, serverChat, chat, $eventsStore, $focusMessageIndex).then(
+                    onMessageWindowLoaded
+                );
             } else {
-                loadPreviousMessages();
+                loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+                    onLoadedPreviousMessages
+                );
             }
-            loadDetails();
+            loadDetails(api, user, chat, $eventsStore);
         }
     }
 
@@ -894,11 +606,13 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadNewMessages();
+            loadNewMessages(api, user, serverChat, chat, $eventsStore).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages();
+            loadPreviousMessages(api, user, serverChat, chat, $eventsStore).then(
+                onLoadedPreviousMessages
+            );
         }
     }
 
@@ -945,64 +659,12 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        pinMessage(ev.detail.messageIndex);
+        pinMessage(api, chat, ev.detail.messageIndex);
     }
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        unpinMessage(ev.detail.messageIndex);
-    }
-
-    function addPinnedMessage(chatId: string, messageIndex: number): void {
-        currentChatPinnedMessages.update(chatId, (s) => {
-            s.add(messageIndex);
-            return new Set(s);
-        });
-    }
-
-    function removePinnedMessage(chatId: string, messageIndex: number): void {
-        currentChatPinnedMessages.update(chatId, (s) => {
-            s.delete(messageIndex);
-            return new Set(s);
-        });
-    }
-
-    function unpinMessage(messageIndex: number): void {
-        if (chat.kind === "group_chat") {
-            removePinnedMessage(chat.chatId, messageIndex);
-            api.unpinMessage(chat.chatId, messageIndex)
-                .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
-                        toastStore.showFailureToast("unpinMessageFailed");
-                        rollbar.error("Unpin message failed: ", resp);
-                        addPinnedMessage(chat.chatId, messageIndex);
-                    }
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast("unpinMessageFailed");
-                    rollbar.error("Unpin message failed: ", err);
-                    addPinnedMessage(chat.chatId, messageIndex);
-                });
-        }
-    }
-
-    function pinMessage(messageIndex: number): void {
-        if (chat.kind === "group_chat") {
-            addPinnedMessage(chat.chatId, messageIndex);
-            api.pinMessage(chat.chatId, messageIndex)
-                .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
-                        toastStore.showFailureToast("pinMessageFailed");
-                        rollbar.error("Pin message failed: ", resp);
-                        removePinnedMessage(chat.chatId, messageIndex);
-                    }
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast("pinMessageFailed");
-                    rollbar.error("Pin message failed: ", err);
-                    removePinnedMessage(chat.chatId, messageIndex);
-                });
-        }
+        unpinMessage(api, chat, ev.detail.messageIndex);
     }
 
     function registerVote(
@@ -1083,7 +745,7 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    export function sendMessageWithAttachment(
+    export function sendMessageWithAttachmentExternal(
         textContent: string | undefined,
         mentioned: User[],
         fileToAttach: MessageContent | undefined
@@ -1103,103 +765,29 @@
                 $currentChatReplyingTo,
                 fileToAttach
             );
-
-            api.sendMessage(chat, user, mentioned, msg)
-                .then(([resp, msg]) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        confirmMessage(msg, resp);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            api.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                user.cryptoAccount
-                            );
-                        }
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
-                        } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
-                        }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-                    } else {
-                        removeMessage(msg.messageId, user.userId);
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                    }
-                })
-                .catch((err) => {
-                    removeMessage(msg.messageId, user.userId);
-                    console.log(err);
-                    toastStore.showFailureToast("errorSendingMessage");
-                    rollbar.error("Exception sending message", err);
-                });
-
             const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
-            sendMessage(event);
+
+            sendMessageWithAttachment(
+                api,
+                user,
+                serverChat,
+                chat,
+                $eventsStore,
+                event,
+                mentioned
+            ).then(afterSendMessage);
         }
     }
 
-    function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
-        if (unconfirmed.delete(chat.chatId, candidate.messageId)) {
-            messagesRead.confirmMessage(chat.chatId, resp.messageIndex, candidate.messageId);
-            const confirmed = {
-                event: mergeSendMessageResponse(candidate, resp),
-                index: resp.eventIndex,
-                timestamp: resp.timestamp,
-            };
-            serverEventsStore.update(chat.chatId, (events) =>
-                events.map((e) => {
-                    if (e.event === candidate) {
-                        return confirmed;
-                    }
-                    return e;
-                })
-            );
-            confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
-                const r = range.clone();
-                r.add(resp.eventIndex);
-                return r;
-            });
-            updateSummaryWithConfirmedMessage(chat.chatId, confirmed);
+    function afterSendMessage(jumpingTo: number | undefined) {
+        if (jumpingTo !== undefined) {
+            onMessageWindowLoaded(jumpingTo);
+        } else {
+            tick().then(() => scrollBottom("smooth"));
         }
     }
 
-    async function sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
-        let jumping = false;
-        if (!upToDate(chat, $eventsStore)) {
-            jumping = true;
-            await loadEventWindow(chat.latestMessage!.event.messageIndex);
-        }
-
-        unconfirmed.add(chat.chatId, messageEvent);
-        rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
-            kind: "remote_user_sent_message",
-            chatType: chat.kind,
-            chatId: chat.chatId,
-            messageEvent: serialiseMessageForRtc(messageEvent),
-            userId: user.userId,
-        });
-
-        // mark our own messages as read manually since we will not be observing them
-        messagesRead.markMessageRead(
-            chat.chatId,
-            messageEvent.event.messageIndex,
-            messageEvent.event.messageId
-        );
-        appendMessage(messageEvent);
-
-        currentChatDraftMessage.clear(chat.chatId);
-
-        tick().then(() => scrollBottom(jumping ? "auto" : "smooth"));
-    }
-
-    export function forwardMessage(msg: Message) {
+    export function forwardMessageExternal(msg: Message) {
         if (!canSend || !canForward(msg.content)) return;
 
         // TODO check storage requirements
@@ -1221,27 +809,9 @@
             edited: false,
             forwarded: msg.content.kind !== "giphy_content",
         };
-
-        api.sendMessage(chat, user, [], msg)
-            .then(([resp, msg]) => {
-                if (resp.kind === "success") {
-                    confirmMessage(msg, resp);
-                    trackEvent("forward_message");
-                } else {
-                    removeMessage(msg.messageId, user.userId);
-                    rollbar.warn("Error response forwarding message", resp);
-                    toastStore.showFailureToast("errorSendingMessage");
-                }
-            })
-            .catch((err) => {
-                removeMessage(msg.messageId, user.userId);
-                console.log(err);
-                toastStore.showFailureToast("errorSendingMessage");
-                rollbar.error("Exception forwarding message", err);
-            });
-
         const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
-        sendMessage(event);
+
+        forwardMessage(api, user, serverChat, chat, $eventsStore, event).then(afterSendMessage);
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
@@ -1278,45 +848,17 @@
             localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
         }
         if (kind === "remote_user_removed_message") {
-            removeMessage(msg.messageId, msg.userId);
+            removeMessage(user.userId, chat, msg.messageId, msg.userId);
         }
         if (kind === "remote_user_undeleted_message") {
             localMessageUpdates.markUndeleted(msg.messageId.toString());
         }
         if (kind === "remote_user_sent_message") {
-            handleMessageSentByOther(msg.messageEvent, false);
+            handleMessageSentByOther(api, user, chat, $eventsStore, msg.messageEvent, false);
         }
         if (kind === "remote_user_read_message") {
             unconfirmedReadByThem.add(BigInt(msg.messageId));
         }
-    }
-
-    function appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = $eventsStore.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-        );
-
-        if (existing !== undefined) return false;
-
-        serverEventsStore.update(chat.chatId, (events) => [...events, message]);
-        return true;
-    }
-
-    function removeMessage(messageId: bigint, userId: string): void {
-        if (userId === user.userId) {
-            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
-                kind: "remote_user_removed_message",
-                chatType: chat.kind,
-                chatId: chat.chatId,
-                messageId: messageId,
-                userId: userId,
-            });
-        }
-        unconfirmed.delete(chat.chatId, messageId);
-        messagesRead.removeUnconfirmedMessage(chat.chatId, messageId);
-        serverEventsStore.update(chat.chatId, (events) =>
-            events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
-        );
     }
 </script>
 
