@@ -195,7 +195,11 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
-        currentChatMessages?.sendMessageWithAttachment(textContent, mentioned, fileToAttach);
+        currentChatMessages?.sendMessageWithAttachmentExternal(
+            textContent,
+            mentioned,
+            fileToAttach
+        );
     }
 
     export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
@@ -203,7 +207,7 @@
     }
 
     function forwardMessage(msg: Message) {
-        currentChatMessages?.forwardMessage(msg);
+        currentChatMessages?.forwardMessageExternal(msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {

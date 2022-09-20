@@ -382,7 +382,9 @@
         }
 
         body {
-            transition: background ease-in-out 300ms;
+            transition: background ease-in-out 300ms, color ease-in-out 150ms,
+                padding ease-in-out 150ms;
+            padding: $sp4;
             background: var(--bg);
             color: var(--txt);
             margin: 0;
@@ -392,6 +394,19 @@
             display: flex;
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
+
+            @include size-below(lg) {
+                padding: $sp3;
+            }
+
+            @include mobile() {
+                padding: 0;
+            }
+
+            &.fill {
+                transition: none;
+                padding: 0;
+            }
         }
 
         textarea {
