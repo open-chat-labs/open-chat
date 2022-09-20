@@ -71,7 +71,7 @@ import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/cand
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { optional } from "../../utils/mapping";
-import { bigintToBase64 } from "utils/base64";
+import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 
 function principalToString(p: Principal): string {
@@ -628,7 +628,7 @@ export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeRes
     if ("Success" in candid) {
         return {
             kind: "success",
-            code: optional(candid.Success.code, bigintToBase64),
+            code: optional(candid.Success.code, codeToText),
         };
     }
     if ("NotAuthorized" in candid) {
@@ -645,7 +645,7 @@ export function enableInviteCodeResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
-            code: bigintToBase64(candid.Success.code),
+            code: codeToText(candid.Success.code),
         };
     }
     if ("NotAuthorized" in candid) {
@@ -727,7 +727,7 @@ export function resetInviteCodeResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
-            code: bigintToBase64(candid.Success.code),
+            code: codeToText(candid.Success.code),
         };
     }
     if ("NotAuthorized" in candid) {
