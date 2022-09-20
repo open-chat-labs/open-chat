@@ -30,7 +30,8 @@
     let confirmReset = false;
 
     $: link =
-        `${window.location.origin}/#/${group.chatId}` + (!group.public ? `/?code=${code}` : "");
+        `${window.location.origin}/#/${group.chatId}` +
+        (!group.public ? `/?code=${code !== undefined ? encodeURIComponent(code) : "nocode"}` : "");
 
     $: spinner = loading && code === undefined;
 
@@ -166,14 +167,14 @@
                     (group.public ? "" : $_("group.invite.shareMessageTrust"))}
             </div>
             <div class="action">
-                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                 <Link on:click={onCopy}>
                     {$_("copy")}
                 </Link>
             </div>
             {#if shareFunctions.canShare()}
                 <div class="action">
-                    <ShareIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link on:click={onShare}>
                         {$_("share")}
                     </Link>
@@ -181,7 +182,7 @@
             {/if}
             {#if !group.public}
                 <div class="action">
-                    <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link
                         on:click={() => {
                             confirmReset = true;
