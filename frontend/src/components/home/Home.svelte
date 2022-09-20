@@ -194,7 +194,7 @@
                 currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
             } else {
                 if (parsedMsg.kind === "remote_user_sent_message") {
-                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
+                    unconfirmed.add(fromChatId, parsedMsg.messageEvent);
                 }
             }
         }

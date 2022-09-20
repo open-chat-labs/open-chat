@@ -82,7 +82,6 @@
         currentChatReplyingTo,
         chatUpdatedStore,
         userGroupKeys,
-        confirmedEventIndexesLoaded,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -565,8 +564,6 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow(api, user, serverChat, chat, $eventsStore, $focusMessageIndex).then(

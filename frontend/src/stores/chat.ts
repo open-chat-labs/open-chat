@@ -43,6 +43,7 @@ import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredP
 import { createChatSpecificDataStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
+import { tick } from "svelte";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -271,18 +272,24 @@ export function setSelectedChat(
 
     clearSelectedChat(chat.chatId);
 
-    // initialise a bunch of stores
-    serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
-    focusMessageIndex.set(chat.chatId, messageIndex);
-    focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
-    currentChatMembers.set(chat.chatId, []);
-    currentChatBlockedUsers.set(chat.chatId, new Set<string>());
-    currentChatPinnedMessages.set(chat.chatId, new Set<number>());
-    currentChatUserIds.set(
-        chat.chatId,
-        new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
-    );
-    resetFilteredProposalsStore(chat);
+    // Note this is horrible but we need to defer the initialisation of other stores here
+    // to allow the $selectedChatStore change to filter down to CurrentChatMessages
+    // We *must* come up with something better but this is the only simple thing
+    // I can come up with that works at the moment
+    tick().then(() => {
+        // initialise a bunch of stores
+        serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+        focusMessageIndex.set(chat.chatId, messageIndex);
+        focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
+        currentChatMembers.set(chat.chatId, []);
+        currentChatBlockedUsers.set(chat.chatId, new Set<string>());
+        currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+        currentChatUserIds.set(
+            chat.chatId,
+            new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
+        );
+        resetFilteredProposalsStore(chat);
+    });
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -339,6 +346,8 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
             currentChatMembers.clear(chatId);
             currentChatBlockedUsers.clear(chatId);
             currentChatPinnedMessages.clear(chatId);
+            confirmedEventIndexesLoaded.clear(chatId);
+            userGroupKeys.clear(chatId);
         }
         return newSelectedChatId;
     });
