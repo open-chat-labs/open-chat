@@ -269,7 +269,7 @@ export function setSelectedChat(
         }
     }
 
-    clearSelectedChat();
+    clearSelectedChat(chat.chatId);
 
     // initialise a bunch of stores
     serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
@@ -283,7 +283,6 @@ export function setSelectedChat(
         new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
     );
     resetFilteredProposalsStore(chat);
-    selectedChatId.set(chat.chatId);
 }
 
 export function updateSummaryWithConfirmedMessage(
@@ -329,7 +328,7 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-export function clearSelectedChat(): void {
+export function clearSelectedChat(newSelectedChatId?: string): void {
     filteredProposalsStore.set(undefined);
     selectedChatId.update((chatId) => {
         if (chatId !== undefined) {
@@ -341,7 +340,7 @@ export function clearSelectedChat(): void {
             currentChatBlockedUsers.clear(chatId);
             currentChatPinnedMessages.clear(chatId);
         }
-        return undefined;
+        return newSelectedChatId;
     });
 }
 

@@ -54,7 +54,6 @@
     import type { Questions } from "../../domain/faq";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
-    import { draftMessages } from "../../stores/draftMessages";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import {
@@ -81,6 +80,7 @@
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
         focusThreadMessageIndex,
+        currentChatDraftMessage,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -771,8 +771,8 @@
         });
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? ev.detail.sender!.userId;
-        draftMessages.delete(chatId);
-        draftMessages.setReplyingTo(chatId, ev.detail);
+        currentChatDraftMessage.setTextContent(chatId, "");
+        currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
@@ -953,7 +953,7 @@
             text += shareUrl;
         }
 
-        draftMessages.setTextContent(chatId, text);
+        currentChatDraftMessage.setTextContent(chatId, text);
     }
 
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {
