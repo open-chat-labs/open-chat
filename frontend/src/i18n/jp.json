@@ -591,5 +591,9 @@
     "archiveChat": "アーカイブ チャット",
     "archiveChatFailed": "チャットをアーカイブできませんでした",
     "unarchiveChatFailed": "チャットのアーカイブを解除できませんでした",
-    "unarchiveChat": "猫のアーカイブを解除"
+    "unarchiveChat": "猫のアーカイブを解除",
+    "removeMemberFailed": "メンバーを削除できません",
+    "groupRules": "グループルール",
+    "groupRulesEnabled": "{changedBy} がグループ ルールを有効にしました",
+    "groupRulesDisabled": "{changedBy} はグループ ルールを無効にしました"
 }

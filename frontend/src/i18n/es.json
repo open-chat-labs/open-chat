@@ -592,5 +592,8 @@
     "archiveChat": "Archivar chat",
     "archiveChatFailed": "No se pudo archivar el chat",
     "unarchiveChatFailed": "No se pudo desarchivar el chat",
-    "unarchiveChat": "desarchivar gato"
+    "unarchiveChat": "desarchivar gato",
+    "groupRules": "reglas de grupo",
+    "groupRulesEnabled": "{changedBy} habilitó las reglas del grupo",
+    "groupRulesDisabled": "{changedBy} inhabilitó las reglas del grupo"
 }

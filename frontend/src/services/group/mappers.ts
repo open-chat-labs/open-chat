@@ -826,6 +826,15 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("GroupRulesChanged" in candid) {
+        return {
+            kind: "rules_changed",
+            enabled: candid.GroupRulesChanged.enabled,
+            enabledPrev: candid.GroupRulesChanged.prev_enabled,
+            changedBy: candid.GroupRulesChanged.changed_by.toString(),
+        };
+    }
+
     if ("AvatarChanged" in candid) {
         return {
             kind: "avatar_changed",

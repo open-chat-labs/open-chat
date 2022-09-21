@@ -591,5 +591,8 @@
     "archiveChat": "Chat archivieren",
     "archiveChatFailed": "Chat konnte nicht archiviert werden",
     "unarchiveChatFailed": "Archivierung des Chats fehlgeschlagen",
-    "unarchiveChat": "entarchivieren kat"
+    "unarchiveChat": "entarchivieren kat",
+    "groupRules": "Gruppenregeln",
+    "groupRulesEnabled": "{changedBy} hat die Gruppenregeln aktiviert",
+    "groupRulesDisabled": "{changedBy} hat die Gruppenregeln deaktiviert"
 }

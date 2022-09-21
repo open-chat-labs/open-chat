@@ -592,5 +592,8 @@
     "archiveChat": "Lưu trữ trò chuyện",
     "archiveChatFailed": "Không lưu trữ được cuộc trò chuyện",
     "unarchiveChatFailed": "Không thể hủy lưu trữ cuộc trò chuyện",
-    "unarchiveChat": "giải nén con mèo"
+    "unarchiveChat": "giải nén con mèo",
+    "groupRules": "quy tắc nhóm",
+    "groupRulesEnabled": "{changedBy} đã bật quy tắc nhóm",
+    "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm"
 }

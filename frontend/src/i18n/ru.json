@@ -591,5 +591,8 @@
     "archiveChat": "Архив чата",
     "archiveChatFailed": "Не удалось заархивировать чат",
     "unarchiveChatFailed": "Не удалось разархивировать чат",
-    "unarchiveChat": "разархивировать кота"
+    "unarchiveChat": "разархивировать кота",
+    "groupRules": "групповые правила",
+    "groupRulesEnabled": "{changedBy} включил правила группы",
+    "groupRulesDisabled": "{changedBy} отключил правила группы"
 }

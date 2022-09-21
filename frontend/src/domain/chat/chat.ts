@@ -356,10 +356,10 @@ export type LocalPollVote = {
 
 export type LocalMessageUpdates = {
     deleted?: {
-        deletedBy: string,
-        timestamp: bigint,
+        deletedBy: string;
+        timestamp: bigint;
     };
-    editedContent?: MessageContent,
+    editedContent?: MessageContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     lastUpdated: number;
@@ -394,6 +394,7 @@ export type GroupChatEvent =
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
+    | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
     | MemberAssumesSuperAdmin
@@ -444,6 +445,13 @@ export type GroupNameChanged = {
 
 export type GroupDescChanged = {
     kind: "desc_changed";
+    changedBy: string;
+};
+
+export type GroupRulesChanged = {
+    kind: "rules_changed";
+    enabled: boolean;
+    enabledPrev: boolean;
     changedBy: string;
 };
 

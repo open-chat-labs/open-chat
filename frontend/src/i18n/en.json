@@ -589,5 +589,8 @@
     "archiveChat": "Archive chat",
     "archiveChatFailed": "Failed to archive chat",
     "unarchiveChatFailed": "Failed to un-archive chat",
-    "unarchiveChat": "Un-archive chat"
+    "unarchiveChat": "Un-archive chat",
+    "groupRules": "group rules",
+    "groupRulesEnabled": "{changedBy} enabled the group rules",
+    "groupRulesDisabled": "{changedBy} disabled the group rules"
 }
