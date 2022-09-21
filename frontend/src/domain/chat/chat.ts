@@ -771,6 +771,12 @@ export type GroupChatDetails = {
     blockedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
+    rules: GroupRules;
+};
+
+export type GroupRules = {
+    text: string;
+    enabled: boolean;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -781,6 +787,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
+    rules?: GroupRules;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;

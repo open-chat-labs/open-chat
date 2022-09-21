@@ -55,6 +55,7 @@ import {
     ThreadPreviewsResponse,
     ThreadPreview,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -111,6 +112,7 @@ export {
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
     ThreadPreview as ApiThreadPreview,
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
+    GroupRules as ApiGroupRules,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

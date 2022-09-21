@@ -29,6 +29,7 @@ import type {
     ApiThreadPreview,
     ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
+    ApiGroupRules,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -62,6 +63,7 @@ import type {
     ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -114,6 +116,13 @@ function member(candid: ApiParticipant): Member {
     };
 }
 
+function rules(candid: ApiGroupRules): GroupRules {
+    return {
+        text: candid.text,
+        enabled: candid.enabled,
+    };
+}
+
 export function groupDetailsUpdatesResponse(
     candid: ApiSelectedUpdatesResponse
 ): GroupChatDetailsUpdatesResponse {
@@ -138,6 +147,7 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
+            rules: optional(candid.Success.rules, rules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -153,6 +163,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
+            rules: rules(candid.Success.rules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
