@@ -58,12 +58,14 @@
         currentChatTextContent,
         currentChatDraftMessage,
     } from "../../stores/chat";
+    import type { FilteredProposals } from "../../stores/filteredProposals";
 
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
     export let serverChat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
     export let events: EventWrapper<ChatEvent>[];
+    export let filteredProposals: FilteredProposals | undefined;
 
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
@@ -283,6 +285,7 @@
         {chat}
         {serverChat}
         {events}
+        {filteredProposals}
         canPin={canPinMessages(chat)}
         canBlockUser={canBlockUsers(chat)}
         canDelete={canDeleteOtherUsersMessages(chat)}
