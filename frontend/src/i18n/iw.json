@@ -512,7 +512,6 @@
     "thisIsPrivateGroupWithN": "זוהי קבוצה פרטית עם חברי {number}",
     "copy": "עותק",
     "failedToShareLink": "שיתוף הקישור נכשל",
-    "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה",
     "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫",
     "memberIsTyping": "{username} מקליד",
@@ -594,5 +593,6 @@
     "groupRulesEnabled": "{changedBy} הפעילה את כללי הקבוצה",
     "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה",
     "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
-    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי"
+    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי",
+    "groupInviteChangedBy": "{changedBy} {changed} קישור ההזמנה לקבוצה"
 }

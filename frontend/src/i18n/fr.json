@@ -514,7 +514,6 @@
     "thisIsPrivateGroupWithN": "Ceci est un groupe privé avec {number} membres",
     "copy": "Copie",
     "failedToShareLink": "Impossible de partager le lien",
-    "groupInviteChangedBy": "{changedBy} {changed} l'invitation du groupe",
     "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe",
     "historyOffInfo": "Les nouveaux membres ne verront les messages arriver qu'après leur adhésion. 🤫",
     "memberIsTyping": "{username} est en train de taper",
@@ -596,5 +595,6 @@
     "groupRulesEnabled": "{changedBy} a activé les règles de groupe",
     "groupRulesDisabled": "{changedBy} a désactivé les règles de groupe",
     "groupRulesTooShort": "Les règles du groupe ne doivent pas être vides",
-    "groupRulesTooLong": "Les règles du groupe sont trop longues"
+    "groupRulesTooLong": "Les règles du groupe sont trop longues",
+    "groupInviteChangedBy": "{changedBy} {changed} le lien d'invitation du groupe"
 }

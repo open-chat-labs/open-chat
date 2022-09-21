@@ -522,7 +522,7 @@
     },
     "copy": "Copy",
     "failedToShareLink": "Failed to share link",
-    "groupInviteChangedBy": "{changedBy} {changed} the group invite",
+    "groupInviteChangedBy": "{changedBy} {changed} the group invite link",
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",

@@ -514,7 +514,6 @@
     "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群组",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
-    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请",
     "failedToLeaveGroup": "尝试将您从群组中移除时出错",
     "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫",
     "memberIsTyping": "{username} 正在输入",
@@ -597,5 +596,6 @@
     "groupRulesEnabled": "{changedBy} 启用组规则",
     "groupRulesDisabled": "{changedBy} 禁用组规则",
     "groupRulesTooShort": "组规则不能为空",
-    "groupRulesTooLong": "群规太长"
+    "groupRulesTooLong": "群规太长",
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请链接"
 }

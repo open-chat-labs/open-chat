@@ -514,7 +514,6 @@
     "thisIsPrivateGroupWithN": "これは{number}メンバーのプライベートグループです",
     "copy": "コピー",
     "failedToShareLink": "リンクの共有に失敗しました",
-    "groupInviteChangedBy": "{changedBy}{changed}グループの招待",
     "failedToLeaveGroup": "グループからあなたを削除しようとしてエラーが発生しました",
     "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫",
     "memberIsTyping": "{username}は入力中です",
@@ -597,5 +596,6 @@
     "groupRulesEnabled": "{changedBy} がグループ ルールを有効にしました",
     "groupRulesDisabled": "{changedBy} はグループ ルールを無効にしました",
     "groupRulesTooShort": "グループ ルールを空にすることはできません",
-    "groupRulesTooLong": "グループ ルールが長すぎます"
+    "groupRulesTooLong": "グループ ルールが長すぎます",
+    "groupInviteChangedBy": "{changedBy} {changed} グループ招待リンク"
 }
