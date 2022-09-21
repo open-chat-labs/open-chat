@@ -412,6 +412,11 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
+  const GroupRulesChanged = IDL.Record({
+    'changed_by' : UserId,
+    'enabled' : IDL.Bool,
+    'prev_enabled' : IDL.Bool,
+  });
   const ParticipantDismissedAsSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -468,6 +473,7 @@ export const idlFactory = ({ IDL }) => {
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
+    'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
@@ -667,6 +673,7 @@ export const idlFactory = ({ IDL }) => {
     'blocked_users' : IDL.Vec(UserId),
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
+    'rules' : GroupRules,
   });
   const SelectedInitialResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -680,6 +687,7 @@ export const idlFactory = ({ IDL }) => {
     'participants_removed' : IDL.Vec(UserId),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
+    'rules' : IDL.Opt(GroupRules),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesResponse = IDL.Variant({
@@ -792,12 +800,14 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateGroupResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
+    'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Null,
+    'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,

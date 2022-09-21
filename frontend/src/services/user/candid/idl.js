@@ -74,11 +74,13 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
+    'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,
+    'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
     'MaxGroupsCreated' : IDL.Nat32,
@@ -416,6 +418,11 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
+  const GroupRulesChanged = IDL.Record({
+    'changed_by' : UserId,
+    'enabled' : IDL.Bool,
+    'prev_enabled' : IDL.Bool,
+  });
   const ParticipantDismissedAsSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -482,6 +489,7 @@ export const idlFactory = ({ IDL }) => {
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
+    'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
