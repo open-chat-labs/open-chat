@@ -16,6 +16,7 @@
         selectedServerChatStore,
         eventsStore,
     } from "../../stores/chat";
+    import { filteredProposalsStore } from "../../stores/filteredProposals";
 
     export let loadingChats: boolean = false;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
@@ -52,6 +53,7 @@
             chat={$selectedChatStore}
             serverChat={$selectedServerChatStore}
             events={$eventsStore}
+            filteredProposals={$filteredProposalsStore}
             on:initiateThread
             on:unblockUser
             on:clearSelection
