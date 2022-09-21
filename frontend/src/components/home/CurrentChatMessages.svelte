@@ -86,7 +86,6 @@
     import {
         FilteredProposals,
         toggleProposalFilterMessageExpansion,
-        filteredProposalsStore,
     } from "../../stores/filteredProposals";
     import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
@@ -121,6 +120,7 @@
     export let footer: boolean;
     export let canReplyInThread: boolean;
     export let events: EventWrapper<ChatEventType>[];
+    export let filteredProposals: FilteredProposals | undefined;
 
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
 
@@ -546,7 +546,7 @@
         );
     }
 
-    $: groupedEvents = groupEvents(events, groupInner($filteredProposalsStore)).reverse();
+    $: groupedEvents = groupEvents(events, groupInner(filteredProposals)).reverse();
 
     $: {
         if ($chatUpdatedStore !== undefined) {
@@ -888,7 +888,7 @@
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
-                        collapsed={isCollapsed(evt, $filteredProposalsStore)}
+                        collapsed={isCollapsed(evt, filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
                         inThread={false}
