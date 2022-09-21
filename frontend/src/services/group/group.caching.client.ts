@@ -225,9 +225,10 @@ export class CachingGroupClient implements IGroupClient {
     toggleReaction(
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(messageId, reaction, threadRootMessageIndex);
+        return this.client.toggleReaction(messageId, reaction, username, threadRootMessageIndex);
     }
 
     deleteMessage(

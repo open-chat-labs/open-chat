@@ -485,9 +485,10 @@ export class CachingUserClient implements IUserClient {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(otherUserId, messageId, reaction, threadRootMessageIndex);
+        return this.client.toggleReaction(otherUserId, messageId, reaction, username, threadRootMessageIndex);
     }
 
     deleteMessage(

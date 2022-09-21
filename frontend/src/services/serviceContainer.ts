@@ -913,11 +913,13 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.getGroupClient(chatId).toggleReaction(
             messageId,
             reaction,
+            username,
             threadRootMessageIndex
         );
     }
@@ -926,12 +928,14 @@ export class ServiceContainer implements MarkMessagesRead {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.userClient.toggleReaction(
             otherUserId,
             messageId,
             reaction,
+            username,
             threadRootMessageIndex
         );
     }

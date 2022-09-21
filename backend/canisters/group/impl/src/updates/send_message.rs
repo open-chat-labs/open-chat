@@ -151,7 +151,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             sender_name: args.sender_name,
             message: message_event,
             mentioned: args.mentioned,
-            hide: false,
         });
 
         runtime_state.push_notification(notification_recipients, notification);

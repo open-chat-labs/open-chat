@@ -213,6 +213,13 @@ export interface DirectMessageNotification {
   'sender_name' : string,
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface DirectReactionAddedNotification {
+  'username' : string,
+  'them' : UserId,
+  'message' : MessageEventWrapper,
+  'timestamp' : TimestampMillis,
+  'reaction' : string,
+}
 export type DisableInviteCodeArgs = {};
 export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
@@ -397,6 +404,16 @@ export interface GroupPermissions {
   'reply_in_thread' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
+export interface GroupReactionAddedNotification {
+  'added_by_name' : string,
+  'added_by' : UserId,
+  'message' : MessageEventWrapper,
+  'timestamp' : TimestampMillis,
+  'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'group_name' : string,
+  'reaction' : string,
+}
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface GroupRules { 'text' : string, 'enabled' : boolean }
 export type GroupSubtype = {
@@ -564,9 +581,11 @@ export interface NnsProposal {
 export type NnsUserOrAccount = { 'User' : UserId } |
   { 'Account' : AccountIdentifier };
 export type Notification = {
-    'DirectMessageNotification' : DirectMessageNotification
+    'DirectReactionAddedNotification' : DirectReactionAddedNotification
   } |
+  { 'DirectMessageNotification' : DirectMessageNotification } |
   { 'GroupMessageNotification' : GroupMessageNotification } |
+  { 'GroupReactionAddedNotification' : GroupReactionAddedNotification } |
   { 'AddedToGroupNotification' : AddedToGroupNotification };
 export interface NotificationEnvelope {
   'notification' : Notification,
@@ -852,6 +871,7 @@ export interface ThreadUpdated {
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
+  'username' : string,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,

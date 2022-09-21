@@ -318,6 +318,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     toggleReaction(
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
@@ -325,6 +326,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
+                username,
             }),
             toggleReactionResponse
         );

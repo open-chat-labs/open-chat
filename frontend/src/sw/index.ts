@@ -123,6 +123,16 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path = notification.chatId;
         timestamp = Number(notification.message.timestamp);
+    } else if (notification.kind === "direct_reaction") {
+        title += notification.username;
+        body = `Reacted '${notification.reaction}' to your message`;
+        path = `${notification.them}/${notification.message.event.messageIndex}`;
+        timestamp = Number(notification.timestamp);
+    } else if (notification.kind === "group_reaction") {
+        title += notification.groupName;
+        body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        path = `${notification.chatId}/${notification.message.event.messageIndex}`;
+        timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
         title += notification.groupName;
