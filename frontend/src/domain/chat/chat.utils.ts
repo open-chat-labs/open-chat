@@ -497,6 +497,7 @@ export function mergeGroupChatDetails(
             updates.pinnedMessagesAdded,
             updates.pinnedMessagesRemoved
         ),
+        rules: updates.rules ?? previous.rules,
     };
 }
 
