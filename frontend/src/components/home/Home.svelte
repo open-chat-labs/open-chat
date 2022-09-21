@@ -373,20 +373,26 @@
 
     function notificationReceived(notification: Notification): void {
         let chatId: string;
+        let threadRootMessageIndex: number | undefined = undefined;
         let message: EventWrapper<Message>;
         switch (notification.kind) {
-            case "direct_notification": {
-                chatId = notification.sender;
-                message = notification.message;
-                break;
-            }
+            case "direct_notification":
             case "group_notification": {
-                chatId = notification.chatId;
+                chatId = notification.sender;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
                 message = notification.message;
                 break;
             }
-            case "direct_reaction":
+            case "direct_reaction": {
+                chatId = notification.them;
+                message = notification.message;
+                break;
+            }
             case "group_reaction":
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
             case "added_to_group_notification":
                 return;
         }
@@ -395,8 +401,10 @@
         if (chat === undefined) {
             return;
         }
+
+        setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
-        setCachedMessageFromNotification(notification);
         Promise.all([
             api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
             addMissingUsersFromMessage(message),
