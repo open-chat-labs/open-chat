@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::ToggleReactionResult;
 use group_canister::toggle_reaction::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{GroupReactionAddedNotification, Notification};
+use types::{GroupReactionAddedNotification, Notification, TimestampMillis, UserId};
 
 #[update]
 #[trace]
@@ -51,42 +51,55 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         handle_activity_notification(runtime_state);
 
         if added {
-            if let Some(message) = runtime_state.data.events.get(args.thread_root_message_index).and_then(|e| {
-                e.get_message_index(args.message_id)
-                    // We pass in `None` in place of `my_user_id` because we don't want to hydrate
-                    // the notification with data for the current user (eg. their poll votes).
-                    .and_then(|m| e.message_by_message_index(m, None))
-            }) {
-                if message.event.sender != user_id {
-                    let notifications_muted = runtime_state
-                        .data
-                        .participants
-                        .get_by_user_id(&message.event.sender)
-                        .map_or(true, |p| p.notifications_muted.value);
-
-                    if !notifications_muted {
-                        runtime_state.push_notification(
-                            vec![message.event.sender],
-                            Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
-                                chat_id: runtime_state.env.canister_id().into(),
-                                thread_root_message_index: args.thread_root_message_index,
-                                group_name: runtime_state.data.name.clone(),
-                                added_by: user_id,
-                                added_by_name: args.username,
-                                message,
-                                reaction: args.reaction,
-                                timestamp: now,
-                            }),
-                        );
-                    }
-                }
-            }
-
+            handle_notification(args, user_id, now, runtime_state);
             Added(event_index)
         } else {
             Removed(event_index)
         }
     } else {
         CallerNotInGroup
+    }
+}
+
+fn handle_notification(
+    Args {
+        thread_root_message_index,
+        message_id,
+        reaction,
+        username,
+    }: Args,
+    user_id: UserId,
+    now: TimestampMillis,
+    runtime_state: &mut RuntimeState,
+) {
+    if let Some(message) = runtime_state.data.events.get(thread_root_message_index).and_then(|e| {
+        e.get_message_index(message_id)
+            // We pass in `None` in place of `my_user_id` because we don't want to hydrate
+            // the notification with data for the current user (eg. their poll votes).
+            .and_then(|m| e.message_by_message_index(m, None))
+    }) {
+        if message.event.sender != user_id {
+            let notifications_muted = runtime_state
+                .data
+                .participants
+                .get_by_user_id(&message.event.sender)
+                .map_or(true, |p| p.notifications_muted.value);
+
+            if !notifications_muted {
+                runtime_state.push_notification(
+                    vec![message.event.sender],
+                    Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
+                        chat_id: runtime_state.env.canister_id().into(),
+                        thread_root_message_index,
+                        group_name: runtime_state.data.name.clone(),
+                        added_by: user_id,
+                        added_by_name: username,
+                        message,
+                        reaction,
+                        timestamp: now,
+                    }),
+                );
+            }
+        }
     }
 }
