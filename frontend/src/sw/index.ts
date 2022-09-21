@@ -125,7 +125,7 @@ async function showNotification(notification: Notification): Promise<void> {
         timestamp = Number(notification.message.timestamp);
     } else if (notification.kind === "direct_reaction") {
         title += notification.username;
-        body = `Reacted '${notification.reaction}' to your message`;
+        body = `${notification.username} reacted '${notification.reaction}' to your message`;
         path = `${notification.them}/${notification.message.event.messageIndex}`;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "group_reaction") {

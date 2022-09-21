@@ -622,6 +622,7 @@
             threadRootMessageIndex,
             message.messageId,
             reaction,
+            user.username,
             kind
         ).then((success) => {
             if (success && kind === "add") {
