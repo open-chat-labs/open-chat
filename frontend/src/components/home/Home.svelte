@@ -385,6 +385,8 @@
                 message = notification.message;
                 break;
             }
+            case "direct_reaction":
+            case "group_reaction":
             case "added_to_group_notification":
                 return;
         }
