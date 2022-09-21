@@ -864,7 +864,9 @@ export type CreateGroupResponse =
     | GroupNameTaken
     | AvatarTooBig
     | MaxGroupsCreated
-    | CreateGroupThrottled;
+    | CreateGroupThrottled
+    | GroupRulesTooShort
+    | GroupRulesTooLong;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -899,6 +901,14 @@ export type GroupNameTaken = {
 
 export type AvatarTooBig = {
     kind: "avatar_too_big";
+};
+
+export type GroupRulesTooLong = {
+    kind: "rules_too_long";
+};
+
+export type GroupRulesTooShort = {
+    kind: "rules_too_short";
 };
 
 export type MaxGroupsCreated = {
@@ -1129,6 +1139,8 @@ export type UpdateGroupResponse =
     | "name_taken"
     | "not_in_group"
     | "avatar_too_big"
+    | "rules_too_short"
+    | "rules_too_long"
     | "internal_error";
 
 export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group";

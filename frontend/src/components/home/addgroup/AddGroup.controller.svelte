@@ -63,6 +63,8 @@
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
         if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
+        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 

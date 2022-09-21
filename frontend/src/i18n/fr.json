@@ -594,5 +594,7 @@
     "unarchiveChat": "Un-archive chat",
     "groupRules": "règles de groupe",
     "groupRulesEnabled": "{changedBy} a activé les règles de groupe",
-    "groupRulesDisabled": "{changedBy} a désactivé les règles de groupe"
+    "groupRulesDisabled": "{changedBy} a désactivé les règles de groupe",
+    "groupRulesTooShort": "Les règles du groupe ne doivent pas être vides",
+    "groupRulesTooLong": "Les règles du groupe sont trop longues"
 }

@@ -293,6 +293,12 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("AvatarTooBig" in candid) {
         return "avatar_too_big";
     }
+    if ("RulesTooLong" in candid) {
+        return "rules_too_long";
+    }
+    if ("RulesTooShort" in candid) {
+        return "rules_too_long";
+    }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
 

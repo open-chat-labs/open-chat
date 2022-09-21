@@ -208,6 +208,8 @@
         if (resp === "internal_error") return "groupUpdateFailed";
         if (resp === "not_authorised") return "groupUpdateFailed";
         if (resp === "avatar_too_big") return "avatarTooBig";
+        if (resp === "rules_too_short") return "groupRulesTooShort";
+        if (resp === "rules_too_long") return "groupRulesTooLong";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 

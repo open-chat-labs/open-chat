@@ -592,5 +592,7 @@
     "unarchiveChat": "בטל מהארכיון של הצ'אט",
     "groupRules": "חוקי הקבוצה",
     "groupRulesEnabled": "{changedBy} הפעילה את כללי הקבוצה",
-    "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה"
+    "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה",
+    "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
+    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי"
 }

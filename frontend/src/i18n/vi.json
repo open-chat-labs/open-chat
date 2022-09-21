@@ -595,5 +595,7 @@
     "unarchiveChat": "giải nén con mèo",
     "groupRules": "quy tắc nhóm",
     "groupRulesEnabled": "{changedBy} đã bật quy tắc nhóm",
-    "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm"
+    "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm",
+    "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
+    "groupRulesTooLong": "Nội quy nhóm quá dài"
 }

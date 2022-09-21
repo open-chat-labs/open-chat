@@ -594,5 +594,7 @@
     "unarchiveChat": "entarchivieren kat",
     "groupRules": "Gruppenregeln",
     "groupRulesEnabled": "{changedBy} hat die Gruppenregeln aktiviert",
-    "groupRulesDisabled": "{changedBy} hat die Gruppenregeln deaktiviert"
+    "groupRulesDisabled": "{changedBy} hat die Gruppenregeln deaktiviert",
+    "groupRulesTooShort": "Die Gruppenregeln dürfen nicht leer sein",
+    "groupRulesTooLong": "Die Gruppenregeln sind zu lang"
 }

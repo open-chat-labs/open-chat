@@ -518,6 +518,14 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "max_groups_created" };
     }
 
+    if ("RulesTooLong" in candid) {
+        return { kind: "rules_too_long" };
+    }
+
+    if ("RulesTooShort" in candid) {
+        return { kind: "rules_too_short" };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 

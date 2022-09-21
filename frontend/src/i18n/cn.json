@@ -595,5 +595,7 @@
     "removeMemberFailed": "无法删除成员",
     "groupRules": "组规则",
     "groupRulesEnabled": "{changedBy} 启用组规则",
-    "groupRulesDisabled": "{changedBy} 禁用组规则"
+    "groupRulesDisabled": "{changedBy} 禁用组规则",
+    "groupRulesTooShort": "组规则不能为空",
+    "groupRulesTooLong": "群规太长"
 }
