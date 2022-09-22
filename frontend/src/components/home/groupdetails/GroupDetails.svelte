@@ -15,6 +15,7 @@
     import type {
         GroupChatSummary,
         GroupPermissions,
+        GroupRules,
         UpdateGroupResponse,
     } from "../../../domain/chat/chat";
     import {
@@ -48,10 +49,12 @@
     import { rollbar } from "../../../utils/logging";
     import { currentUserKey } from "../../../stores/user";
     import { UnsupportedValueError } from "utils/error";
+    import Checkbox from "../../Checkbox.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
+    const MAX_RULES_LENGTH = 1024;
     const dispatch = createEventDispatcher();
 
     const api = getContext<ServiceContainer>(apiKey);
@@ -59,6 +62,7 @@
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
+    export let rules: GroupRules;
 
     let originalGroup = { ...chat };
     let updatedGroup = {
@@ -72,6 +76,7 @@
               }
             : undefined,
         permissions: { ...chat.permissions },
+        rules,
     };
 
     $: {
@@ -104,6 +109,7 @@
                   }
                 : undefined,
             permissions: { ...chat.permissions },
+            rules,
         };
         originalGroup = { ...chat };
         if (canInvite) {
@@ -219,6 +225,7 @@
                 updatedGroup.chatId,
                 updatedGroup.name,
                 updatedGroup.desc,
+                updatedGroup.rules,
                 updatedGroup.avatar?.blobData
             )
             .then((resp) => {
@@ -332,13 +339,11 @@
 
             {#if canEdit}
                 <Input
-                    invalid={false}
                     disabled={saving || !canEdit}
-                    autofocus={false}
                     bind:value={updatedGroup.name}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
-                    countdown={true}
+                    countdown
                     placeholder={$_("newGroupName")} />
 
                 <TextArea
@@ -348,6 +353,18 @@
                     maxlength={MAX_DESC_LENGTH}
                     placeholder={$_("newGroupDesc")} />
 
+                <TextArea
+                    disabled={saving || !canEdit || !updatedGroup.rules.enabled}
+                    bind:value={updatedGroup.rules.text}
+                    minlength={0}
+                    maxlength={MAX_RULES_LENGTH}
+                    placeholder={$_("group.rules.placeholder")} />
+
+                <Checkbox
+                    id="enable-rules"
+                    label={$_("group.rules.enable")}
+                    checked={updatedGroup.rules.enabled} />
+
                 {#if canEdit}
                     <Button
                         on:click={updateInfo}
@@ -355,13 +372,23 @@
                         disabled={!canEdit || !dirty || saving}
                         loading={saving}>{$_("update")}</Button>
                 {/if}
-            {:else if originalGroup.description !== ""}
-                <fieldset>
-                    <legend>
-                        <Legend>{$_("groupDesc")}</Legend>
-                    </legend>
-                    <Markdown text={description()} />
-                </fieldset>
+            {:else}
+                {#if originalGroup.description !== ""}
+                    <fieldset>
+                        <legend>
+                            <Legend>{$_("groupDesc")}</Legend>
+                        </legend>
+                        <Markdown text={description()} />
+                    </fieldset>
+                {/if}
+                {#if rules.enabled}
+                    <fieldset>
+                        <legend>
+                            <Legend>{$_("groupRules")}</Legend>
+                        </legend>
+                        <Markdown text={rules.text} />
+                    </fieldset>
+                {/if}
             {/if}
         </CollapsibleCard>
         <CollapsibleCard

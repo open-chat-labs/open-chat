@@ -77,6 +77,7 @@ import type {
     RegisterProposalVoteResponse,
     ListNervousSystemFunctionsResponse,
     ThreadPreviewsResponse,
+    GroupRules,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, getAllUsers, initDb } from "../utils/caching";
@@ -303,9 +304,10 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         name: string,
         desc: string,
+        rules: GroupRules,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
+        return this.getGroupClient(chatId).updateGroup(name, desc, rules, avatar);
     }
 
     updatePermissions(

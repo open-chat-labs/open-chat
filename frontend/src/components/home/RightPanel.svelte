@@ -39,6 +39,7 @@
         currentChatMembers,
         currentChatBlockedUsers,
         currentChatPinnedMessages,
+        currentChatRules,
         focusThreadMessageIndex,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
@@ -338,6 +339,7 @@
         <GroupDetails
             chat={$groupChat}
             memberCount={$currentChatMembers.length}
+            rules={$currentChatRules}
             on:close={popHistory}
             on:deleteGroup
             on:makeGroupPrivate

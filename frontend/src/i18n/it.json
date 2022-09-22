@@ -414,7 +414,11 @@
         "welcome": "Benvenuto a",
         "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri",
         "privateGroupInfo": "Gli utenti non possono unirsi a questo gruppo liberamente. Devono essere aggiunti o invitati da un membro autorizzato.",
-        "permissionsUpdateFailed": "Aggiornamento delle autorizzazioni non riuscito"
+        "permissionsUpdateFailed": "Aggiornamento delle autorizzazioni non riuscito",
+        "rules": {
+            "enable": "Abilita regole",
+            "placeholder": "quali sono le regole del gruppo?"
+        }
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",

@@ -23,6 +23,7 @@ import {
     updateSummaryWithConfirmedMessage,
     groupDetails,
     currentChatPinnedMessages,
+    currentChatRules,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -545,6 +546,7 @@ export async function loadDetails(
                 currentChatMembers.set(clientChat.chatId, resp.members);
                 currentChatBlockedUsers.set(clientChat.chatId, resp.blockedUsers);
                 currentChatPinnedMessages.set(clientChat.chatId, resp.pinnedMessages);
+                currentChatRules.set(clientChat.chatId, resp.rules);
             }
             await updateUserStore(
                 api,
@@ -571,6 +573,7 @@ export async function updateDetails(
             currentChatMembers.set(clientChat.chatId, gd.members);
             currentChatBlockedUsers.set(clientChat.chatId, gd.blockedUsers);
             currentChatPinnedMessages.set(clientChat.chatId, gd.pinnedMessages);
+            currentChatRules.set(clientChat.chatId, gd.rules);
             groupDetails.set(clientChat.chatId, gd);
             await updateUserStore(
                 api,

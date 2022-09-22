@@ -414,7 +414,11 @@
         "welcome": "ようこそ",
         "historyPrivateMessage": "古いメッセージは新しいメンバーには表示されません",
         "privateGroupInfo": "ユーザーはこのグループに自由に参加できません。それらは、許可されたメンバーによって追加または招待される必要があります。",
-        "permissionsUpdateFailed": "権限の更新に失敗しました"
+        "permissionsUpdateFailed": "権限の更新に失敗しました",
+        "rules": {
+            "enable": "ルールを有効にする",
+            "placeholder": "グループのルールは？"
+        }
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",

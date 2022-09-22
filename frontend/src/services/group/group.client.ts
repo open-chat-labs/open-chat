@@ -31,6 +31,7 @@ import type {
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -281,7 +282,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+    updateGroup(
+        name: string,
+        desc: string,
+        rules: GroupRules,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group({
                 name: name,
@@ -297,10 +303,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                               },
                           },
                 permissions: [],
-                rules: {
-                    text: "",
-                    enabled: false,
-                },
+                rules,
             }),
             updateGroupResponse
         );

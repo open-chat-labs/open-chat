@@ -21,6 +21,7 @@
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
+    const MAX_RULES_LENGTH = 1024;
 
     export let candidateGroup: CandidateGroupChat;
     export let busy: boolean;
@@ -52,6 +53,10 @@
             blobData: ev.detail.data,
         };
     }
+
+    function toggleRules() {
+        candidateGroup.rules.enabled = !candidateGroup.rules.enabled;
+    }
 </script>
 
 <SectionHeader flush={true} shadow={true}>
@@ -74,19 +79,26 @@
                 <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
             </div>
             <Input
-                invalid={false}
-                autofocus={false}
                 bind:value={candidateGroup.name}
                 minlength={MIN_LENGTH}
                 maxlength={MAX_LENGTH}
-                countdown={true}
+                countdown
                 placeholder={$_("newGroupName")} />
             <TextArea
                 rows={3}
-                invalid={false}
                 bind:value={candidateGroup.description}
                 maxlength={MAX_DESC_LENGTH}
                 placeholder={$_("newGroupDesc")} />
+            <TextArea
+                bind:value={candidateGroup.rules.text}
+                minlength={0}
+                maxlength={MAX_RULES_LENGTH}
+                placeholder={$_("group.rules.placeholder")} />
+            <Checkbox
+                id="enable-rules"
+                on:change={toggleRules}
+                label={$_("group.rules.enable")}
+                checked={candidateGroup.rules.enabled} />
         </CollapsibleCard>
         <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
             <div class="sub-section">
@@ -153,10 +165,6 @@
 <style type="text/scss">
     :global(.group-form .form-fields .card) {
         margin-bottom: $sp3;
-    }
-
-    :global(.group-form .form-fields .card .outer-wrapper) {
-        margin-bottom: 0;
     }
 
     h4 {

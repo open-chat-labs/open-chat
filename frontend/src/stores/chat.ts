@@ -5,6 +5,7 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     GroupChatDetails,
+    GroupRules,
     Member,
     Message,
     MessageContent,
@@ -522,6 +523,10 @@ export const confirmedEventIndexesLoaded = createChatSpecificDataStore<DRange>(
     new DRange(),
     () => new DRange()
 );
+export const currentChatRules = createChatSpecificDataStore<GroupRules>({
+    text: "",
+    enabled: false,
+});
 
 const draftMessages = createChatSpecificDataStore<DraftMessage>({});
 export const currentChatDraftMessage = {

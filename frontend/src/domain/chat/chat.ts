@@ -779,6 +779,15 @@ export type GroupRules = {
     enabled: boolean;
 };
 
+export const defaultGroupRules = `- No harassment or bigotry
+- No incitement of violence or promotion of violent ideologies
+- No violent or suggestive material involving minors
+- No impersonating other people in a deceptive or misleading manner
+- Do not share intentionally false or misleading information
+- Keep messages relevant to the group
+- Giphy's discouraged
+- If you break the rules you might be blocked and/or have your message(s) deleted`;
+
 export type GroupChatDetailsUpdates = {
     membersAddedOrUpdated: Member[];
     membersRemoved: Set<string>;
@@ -853,6 +862,7 @@ export type CandidateMember = {
 export type CandidateGroupChat = {
     name: string;
     description: string;
+    rules: GroupRules;
     historyVisible: boolean;
     isPublic: boolean;
     members: CandidateMember[];

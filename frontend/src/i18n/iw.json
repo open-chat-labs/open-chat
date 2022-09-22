@@ -426,7 +426,11 @@
         "welcome": "ברוך הבא ל",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף לקבוצה זו באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
-        "permissionsUpdateFailed": "עדכון ההרשאות נכשל"
+        "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
+        "rules": {
+            "enable": "אפשר כללים",
+            "placeholder": "מה הם חוקי הקבוצה?"
+        }
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
