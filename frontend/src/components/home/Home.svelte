@@ -594,6 +594,7 @@
 
     function unpinChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
+        pinnedChatsStore.unpin(chatId);
         api.unpinChat(chatId).catch((err) => {
             toastStore.showFailureToast("pinChat.unpinFailed");
             rollbar.error("Error unpinning chat", err);
