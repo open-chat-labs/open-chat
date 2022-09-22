@@ -1,4 +1,3 @@
-import { get } from "svelte/store";
 import { immutableStore } from "./immutable";
 
 export const pinnedChatsStore = createStore();
@@ -8,8 +7,8 @@ function createStore() {
     return {
         subscribe: store.subscribe,
         set: store.set,
-        pin: (chat_id: string): boolean => {
-            if (!get(store).includes(chat_id)) {
+        pin: (chat_id: string, pinned: string[]): boolean => {
+            if (!pinned.includes(chat_id)) {
                 store.update((ids) => {
                     const ids_clone = [...ids];
                     ids_clone.unshift(chat_id);
@@ -19,8 +18,8 @@ function createStore() {
             }
             return false;
         },
-        unpin: (chat_id: string): boolean => {
-            const index = get(store).indexOf(chat_id);
+        unpin: (chat_id: string, pinned: string[]): boolean => {
+            const index = pinned.indexOf(chat_id);
             if (index >= 0) {
                 store.update((ids) => {
                     const ids_clone = [...ids];

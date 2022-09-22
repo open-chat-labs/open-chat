@@ -565,29 +565,30 @@
         }
 
         const chatId = ev.detail;
-        pinnedChatsStore.pin(chatId);
+        pinnedChatsStore.pin(chatId, $pinnedChatsStore);
         api.pinChat(chatId)
             .then((resp) => {
                 if (resp.kind === "pinned_limit_reached") {
                     toastStore.showFailureToast("pinChat.limitExceeded", {
                         values: { limit: resp.limit },
                     });
-                    pinnedChatsStore.unpin(chatId);
+                    pinnedChatsStore.unpin(chatId, $pinnedChatsStore);
                 }
             })
             .catch((err) => {
                 toastStore.showFailureToast("pinChat.failed");
                 rollbar.error("Error pinning chat", err);
-                pinnedChatsStore.unpin(chatId);
+                pinnedChatsStore.unpin(chatId, $pinnedChatsStore);
             });
     }
 
     function unpinChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
+        pinnedChatsStore.unpin(chatId, $pinnedChatsStore);
         api.unpinChat(chatId).catch((err) => {
             toastStore.showFailureToast("pinChat.unpinFailed");
             rollbar.error("Error unpinning chat", err);
-            pinnedChatsStore.pin(chatId);
+            pinnedChatsStore.pin(chatId, $pinnedChatsStore);
         });
     }
 
