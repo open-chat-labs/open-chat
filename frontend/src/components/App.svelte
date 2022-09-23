@@ -8,6 +8,7 @@
     import Router from "svelte-spa-router";
     import { routes } from "../routes";
     import Login from "./Login.svelte";
+    import SwitchDomain from "./SwitchDomain.svelte";
     import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
@@ -30,6 +31,8 @@
     import { startUserUpdatePoller } from "../stores/user";
     import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
     import { selectedAuthProviderStore } from "../stores/authProviders";
+    import { isCanisterUrl } from "../utils/urls";
+    import { unsubscribeNotifications } from "../utils/notifications";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -53,6 +56,7 @@
     let usersPoller: Poller | undefined;
     let referredBy: string | undefined = undefined;
     let messagesRead: MessageReadTracker;
+    let dismissedDomainWarning = false;
 
     onMount(() => {
         referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
@@ -133,6 +137,10 @@
             usersPoller = startUserUpdatePoller(api);
             api.getUserStorageLimits();
             identityState.set("logged_in");
+
+            if (isCanisterUrl) {
+                unsubscribeNotifications(api, user.userId);
+            }
         }
     }
 
@@ -147,10 +155,6 @@
     function doLogin(): void {
         identityState.set("logging_in");
         login($selectedAuthProviderStore).then((id) => loadedIdentity(id));
-    }
-
-    function acknowledgeExpiry(): void {
-        doLogin();
     }
 
     function calculateHeight() {
@@ -178,7 +182,9 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
-{#if $identityState === "requires_login" || $identityState === "logging_in"}
+{#if isCanisterUrl && !dismissedDomainWarning}
+    <SwitchDomain on:dismissDomainWarning={() => (dismissedDomainWarning = true)} />
+{:else if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
 {:else if $identityState === "registering"}
     <Register on:logout={logout} on:createdUser={registeredUser} {api} {referredBy} />

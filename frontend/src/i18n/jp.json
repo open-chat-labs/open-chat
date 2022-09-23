@@ -591,5 +591,11 @@
     "archiveChat": "アーカイブ チャット",
     "archiveChatFailed": "チャットをアーカイブできませんでした",
     "unarchiveChatFailed": "チャットのアーカイブを解除できませんでした",
-    "unarchiveChat": "猫のアーカイブを解除"
+    "unarchiveChat": "猫のアーカイブを解除",
+    "removeMemberFailed": "メンバーを削除できません",
+    "switchDomain": {
+        "title": "新しいドメインに切り替えてください",
+        "continue": "継続する",
+        "blurb": "現在、[{currentDomain}]({currentDomain}) ドメインを使用しています。<br /><br />このレガシー ドメインからの通知は受信されず、間もなく完全に廃止されます。<br /><br /> *OpenChat を引き続き使用し、継続的なパフォーマンスの最適化から十分に利益を得るには、新しいドメイン [https://oc.app](https://oc.app)* に切り替えてください。<br /><br />サイトをホーム画面に保存した場合は、削除/アンインストールして、新しいドメインから再度ホーム画面に保存する必要があります。<br/><br/>"
+    }
 }

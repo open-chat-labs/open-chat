@@ -10,6 +10,9 @@ export const openChatFriendlyUrl =
     process.env.DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
 export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${openChatFriendlyUrl})`);
 
+// detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/
+export const isCanisterUrl = /https:\/\/.*\.ic0\.app/.test(window.location.origin);
+
 function replaceQueryString(qs: URLSearchParams): string {
     const qsStr = [...qs.keys()].length > 0 ? `?${qs}` : "";
     const hash = window.location.hash.replace("#", "");
