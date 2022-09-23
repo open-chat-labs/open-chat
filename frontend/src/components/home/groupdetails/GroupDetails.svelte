@@ -218,7 +218,7 @@
                 nameDirty ? updatedGroup.name : undefined,
                 descDirty ? updatedGroup.desc : undefined,
                 undefined,
-                nameDirty ? updatedGroup.avatar?.blobData : undefined
+                avatarDirty ? updatedGroup.avatar?.blobData : undefined
             )
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
