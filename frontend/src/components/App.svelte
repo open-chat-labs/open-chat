@@ -31,7 +31,7 @@
     import { startUserUpdatePoller } from "../stores/user";
     import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
     import { selectedAuthProviderStore } from "../stores/authProviders";
-    import { canisterUrl } from "../utils/urls";
+    import { isCanisterUrl } from "../utils/urls";
     import { unsubscribeNotifications } from "../utils/notifications";
 
     const UPGRADE_POLL_INTERVAL = 1000;
@@ -138,7 +138,7 @@
             api.getUserStorageLimits();
             identityState.set("logged_in");
 
-            if (canisterUrl) {
+            if (isCanisterUrl) {
                 unsubscribeNotifications(api, user.userId);
             }
         }
@@ -182,7 +182,7 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
-{#if canisterUrl && !dismissedDomainWarning}
+{#if isCanisterUrl && !dismissedDomainWarning}
     <SwitchDomain on:dismissDomainWarning={() => (dismissedDomainWarning = true)} />
 {:else if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
