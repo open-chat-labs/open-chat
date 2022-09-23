@@ -592,7 +592,7 @@
     "unarchiveChat": "Un-archive chat",
     "switchDomain": {
         "title": "Please switch to our new domain",
-        "blurb": "You are currently using the [{currentDomain}]({currentDomain}) domain.<br /><br />This is a legacy domain. You will not receive notifications from this domain and it will soon be retired altogether.<br /><br /> *To continue using OpenChat and benefit fully from ongoing performance optimisations please switch to our new domain [https://oc.app](https://oc.app)*<br /><br />If you have saved the site to your home screen you will need to delete/uninstall and save to home screen again from the new domain.<br/><br/>",
+        "blurb": "You are currently using the [{currentDomain}]({currentDomain}) domain.<br /><br />You will not receive notifications from this legacy domain and it will soon be retired altogether.<br /><br /> *To continue using OpenChat and benefit fully from ongoing performance optimisations please switch to our new domain [https://oc.app](https://oc.app)*<br /><br />If you have saved the site to your home screen you will need to delete/uninstall and save to home screen again from the new domain.<br/><br/>",
         "continue": "Continue"
     }
 }

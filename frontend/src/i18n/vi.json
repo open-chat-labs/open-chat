@@ -595,7 +595,7 @@
     "unarchiveChat": "giải nén con mèo",
     "switchDomain": {
         "title": "Vui lòng chuyển sang miền mới của chúng tôi",
-        "blurb": "Bạn hiện đang sử dụng miền [{currentDomain}] ({currentDomain}). <br /> <br /> Đây là miền kế thừa. Bạn sẽ không nhận được thông báo từ miền này và miền này sẽ sớm bị gỡ bỏ hoàn toàn. <br /> <br /> * Để tiếp tục sử dụng OpenChat và hưởng lợi đầy đủ từ việc tối ưu hóa hiệu suất liên tục, vui lòng chuyển sang miền mới của chúng tôi [https://oc.app ] (https://oc.app) * <br /> <br />",
-        "continue": "Tiếp tục"
+        "continue": "Tiếp tục",
+        "blurb": "Bạn hiện đang sử dụng miền [{currentDomain}] ({currentDomain}).<br /><br /> Bạn sẽ không nhận được thông báo từ miền kế thừa này và miền này sẽ sớm bị gỡ bỏ hoàn toàn.<br /><br /> * Để tiếp tục sử dụng OpenChat và hưởng lợi đầy đủ từ việc tối ưu hóa hiệu suất liên tục, vui lòng chuyển sang miền mới của chúng tôi [https://oc.app] (https://oc.app) *<br /><br /> Nếu bạn đã lưu trang web vào màn hình chính của mình, bạn sẽ cần phải xóa / gỡ cài đặt và lưu lại vào màn hình chính từ miền mới.<br/><br/>"
     }
 }

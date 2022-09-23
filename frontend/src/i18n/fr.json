@@ -594,7 +594,7 @@
     "unarchiveChat": "Un-archive chat",
     "switchDomain": {
         "title": "Veuillez passer à notre nouveau domaine",
-        "blurb": "Vous utilisez actuellement le domaine [{currentDomain}]({currentDomain}).<br /><br />Il s'agit d'un ancien domaine. Vous ne recevrez pas de notifications de ce domaine et il sera bientôt supprimé.<br /><br /> *Pour continuer à utiliser OpenChat et bénéficier pleinement des optimisations de performances en cours, veuillez passer à notre nouveau domaine [https://oc.app ](https://oc.app)*<br /><br />",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "blurb": "Vous utilisez actuellement le domaine [{currentDomain}]({currentDomain}).<br /><br /> Vous ne recevrez pas de notifications de cet ancien domaine et il sera bientôt supprimé.<br /><br /> *Pour continuer à utiliser OpenChat et bénéficier pleinement des optimisations de performances en cours, veuillez passer à notre nouveau domaine [https://oc.app](https://oc.app)*<br /><br /> Si vous avez enregistré le site sur votre écran d&#39;accueil, vous devrez supprimer/désinstaller et enregistrer à nouveau sur l&#39;écran d&#39;accueil à partir du nouveau domaine.<br/><br/>"
     }
 }
