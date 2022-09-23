@@ -526,7 +526,9 @@ export function setCachedMessageFromSendResponse(
 }
 
 export function setCachedMessageFromNotification(
-    notification: DirectNotification | GroupNotification
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    message: EventWrapper<Message>
 ): void {
     if (!process.env.CLIENT_CACHING) return;
 
@@ -534,10 +536,7 @@ export function setCachedMessageFromNotification(
         throw new Error("Unable to open indexDB, cannot set message from notification");
     }
 
-    const chatId =
-        notification.kind === "group_notification" ? notification.chatId : notification.sender;
-
-    setCachedMessage(db, chatId, notification.message, notification.threadRootMessageIndex).catch(
+    setCachedMessage(db, chatId, message, threadRootMessageIndex).catch(
         (err) => rollbar.error("Unable to write notification message to the cache", err)
     );
 }

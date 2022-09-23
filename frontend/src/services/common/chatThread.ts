@@ -55,6 +55,7 @@ export function selectReaction(
     threadRootMessageIndex: number | undefined,
     messageId: bigint,
     reaction: string,
+    username: string,
     kind: "add" | "remove"
 ): Promise<boolean> {
     localMessageUpdates.markReaction(messageId.toString(), {
@@ -73,8 +74,8 @@ export function selectReaction(
 
     return (
         chat.kind === "direct_chat"
-            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
-            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
+            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
     )
         .then((resp) => {
             if (resp !== "added" && resp !== "removed") {

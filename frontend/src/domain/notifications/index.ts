@@ -1,7 +1,7 @@
 import type { User } from "../../domain/user/user";
 import type { EventWrapper, Message } from "../chat/chat";
 
-export type Notification = AddedToGroupNotification | DirectNotification | GroupNotification;
+export type Notification = AddedToGroupNotification | DirectNotification | GroupNotification | DirectReaction | GroupReaction;
 
 export type AddedToGroupNotification = {
     kind: "added_to_group_notification";
@@ -29,6 +29,27 @@ export type GroupNotification = {
     chatId: string;
     groupName: string;
     mentioned: User[];
+};
+
+export type DirectReaction = {
+    kind: "direct_reaction";
+    them: string;
+    username: string;
+    message: EventWrapper<Message>;
+    reaction: string;
+    timestamp: bigint;
+};
+
+export type GroupReaction = {
+    kind: "group_reaction";
+    chatId: string;
+    threadRootMessageIndex: number | undefined;
+    groupName: string;
+    addedBy: string;
+    addedByName: string;
+    message: EventWrapper<Message>;
+    reaction: string;
+    timestamp: bigint;
 };
 
 export type SubscriptionExistsResponse = boolean;

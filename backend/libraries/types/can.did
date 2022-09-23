@@ -158,6 +158,15 @@ type DirectMessageNotification =
         message: MessageEventWrapper;
     };
 
+type DirectReactionAddedNotification =
+    record {
+        them: UserId;
+        username: text;
+        message: MessageEventWrapper;
+        reaction: text;
+        timestamp: TimestampMillis;
+    };
+
 type FieldTooShortResult =
     record {
         length_provided: nat32;
@@ -360,6 +369,18 @@ type GroupNameChanged =
         changed_by: UserId;
     };
 
+type GroupReactionAddedNotification =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        group_name: text;
+        added_by: UserId;
+        added_by_name: text;
+        message: MessageEventWrapper;
+        reaction: text;
+        timestamp: TimestampMillis;
+    };
+
 type GroupReplyContext =
     record {
         event_index: EventIndex;
@@ -508,6 +529,8 @@ type Notification =
         AddedToGroupNotification: AddedToGroupNotification;
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
+        DirectReactionAddedNotification: DirectReactionAddedNotification;
+        GroupReactionAddedNotification: GroupReactionAddedNotification;
     };
 
 type NotificationEnvelope =

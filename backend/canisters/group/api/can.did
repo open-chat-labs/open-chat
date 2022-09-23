@@ -76,6 +76,7 @@ type ToggleReactionArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
+        username: text;
     };
 
 type ToggleReactionResponse =

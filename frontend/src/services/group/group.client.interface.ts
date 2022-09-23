@@ -73,6 +73,7 @@ export interface IGroupClient {
     toggleReaction(
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse>;
     deleteMessage(

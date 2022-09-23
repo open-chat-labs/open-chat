@@ -1,7 +1,9 @@
 import type {
     AddedToGroupNotification,
     DirectNotification,
+    DirectReaction,
     GroupNotification,
+    GroupReaction,
     Notification,
     SubscriptionExistsResponse,
     ToggleMuteNotificationResponse,
@@ -15,7 +17,9 @@ import type {
 import type {
     ApiAddedToGroupNotification,
     ApiDirectMessageNotification,
+    ApiDirectReactionAddedNotification,
     ApiGroupMessageNotification,
+    ApiGroupReactionAddedNotification,
     ApiNotification,
     ApiSubscriptionExistsResponse,
 } from "./candid/idl";
@@ -64,6 +68,12 @@ export function notification(candid: ApiNotification): Notification {
     if ("DirectMessageNotification" in candid) {
         return directNotification(candid.DirectMessageNotification);
     }
+    if ("GroupReactionAddedNotification" in candid) {
+        return groupReactionNotification(candid.GroupReactionAddedNotification);
+    }
+    if ("DirectReactionAddedNotification" in candid) {
+        return directReactionNotification(candid.DirectReactionAddedNotification);
+    }
     throw new Error(`Unexpected ApiNotification type received, ${candid}`);
 }
 
@@ -111,5 +121,38 @@ export function directNotification(candid: ApiDirectMessageNotification): Direct
             event: message(candid.message.event),
         },
         senderName: candid.sender_name,
+    };
+}
+
+function groupReactionNotification(candid: ApiGroupReactionAddedNotification): GroupReaction {
+    return {
+        kind: "group_reaction",
+        chatId: candid.chat_id.toString(),
+        threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
+        groupName: candid.group_name,
+        addedBy: candid.added_by.toString(),
+        addedByName: candid.added_by_name,
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
+        reaction: candid.reaction,
+        timestamp: candid.timestamp
+    };
+}
+
+function directReactionNotification(candid: ApiDirectReactionAddedNotification): DirectReaction {
+    return {
+        kind: "direct_reaction",
+        them: candid.them.toString(),
+        username: candid.username,
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
+        reaction: candid.reaction,
+        timestamp: candid.timestamp
     };
 }
