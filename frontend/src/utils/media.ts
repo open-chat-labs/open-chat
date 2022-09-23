@@ -257,9 +257,14 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
 export const twitterLinkRegex = (): RegExp =>
     /https?:\/\/twitter\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
 
-/** Youtube link handling */
+/** Youtube link handling - various formats
+ * https://youtu.be/SWgxgpGZerc
+ * https://www.youtube.com/watch?v=SWgxgpGZerc
+ * https://youtube.com/shorts/u1I0Z8ePtKM?feature=share
+ * https://www.youtube.com/shorts/u1I0Z8ePtKM
+ */
 export const youtubeRegex = (): RegExp =>
-    /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*))/i;
+    /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
 
 export function isYoutubeLink(text: string): boolean {
     return matchesLink(text, text.match(youtubeRegex()));

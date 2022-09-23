@@ -30,6 +30,8 @@
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
     $: socialVideoMatch = content.text.match(youtubeRegex());
     $: twitterLinkMatch = text.match(twitterLinkRegex());
+
+    $: console.log("Social match: ", socialVideoMatch);
 </script>
 
 {#if !socialVideoMatch}
@@ -54,7 +56,9 @@
             class:fill
             width="100%"
             {height}
-            src={`https://www.youtube.com/embed/${socialVideoMatch[1] ?? socialVideoMatch[2]}`}
+            src={`https://www.youtube.com/embed/${
+                socialVideoMatch[1] ?? socialVideoMatch[2] ?? socialVideoMatch[3]
+            }`}
             title="YouTube video player"
             frameborder="0"
             allow="accelerometer;
