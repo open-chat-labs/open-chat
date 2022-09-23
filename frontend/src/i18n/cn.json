@@ -591,5 +591,11 @@
     "archiveChat": "存档聊天",
     "archiveChatFailed": "无法存档聊天",
     "unarchiveChatFailed": "无法取消归档聊天",
-    "unarchiveChat": "解压猫"
+    "unarchiveChat": "解压猫",
+    "removeMemberFailed": "无法删除成员",
+    "switchDomain": {
+        "title": "请切换到我们的新域",
+        "blurb": "您目前正在使用 [{currentDomain}]({currentDomain}) 域。<br /><br />这是一个旧域。您将不会收到来自此域的通知，并且很快将完全停用。<br /><br /> *要继续使用 OpenChat 并充分受益于持续的性能优化，请切换到我们的新域 [https://oc.app ](https://oc.app)*<br /><br />",
+        "continue": "继续"
+    }
 }

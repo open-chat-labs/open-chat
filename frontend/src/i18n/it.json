@@ -591,5 +591,10 @@
     "archiveChat": "Archivia chat",
     "archiveChatFailed": "Impossibile archiviare la chat",
     "unarchiveChatFailed": "Impossibile annullare l'archiviazione della chat",
-    "unarchiveChat": "un archivio cat"
+    "unarchiveChat": "un archivio cat",
+    "switchDomain": {
+        "title": "Si prega di passare al nostro nuovo dominio",
+        "blurb": "Stai attualmente utilizzando il dominio [{currentDomain}]({currentDomain}).<br /><br />Questo è un dominio legacy. Non riceverai notifiche da questo dominio e presto verrà ritirato del tutto.<br /><br /> *Per continuare a utilizzare OpenChat e beneficiare appieno delle continue ottimizzazioni delle prestazioni, passa al nostro nuovo dominio [https://oc.app ](https://oc.app)*<br /><br />",
+        "continue": "Continua"
+    }
 }

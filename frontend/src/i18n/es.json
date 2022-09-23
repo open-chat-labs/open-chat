@@ -592,5 +592,10 @@
     "archiveChat": "Archivar chat",
     "archiveChatFailed": "No se pudo archivar el chat",
     "unarchiveChatFailed": "No se pudo desarchivar el chat",
-    "unarchiveChat": "desarchivar gato"
+    "unarchiveChat": "desarchivar gato",
+    "switchDomain": {
+        "title": "Cambia a nuestro nuevo dominio",
+        "blurb": "Actualmente está utilizando el dominio [{currentDomain}]({currentDomain}).<br /><br />Este es un dominio heredado. No recibirá notificaciones de este dominio y pronto se retirará por completo.<br /><br /> *Para continuar usando OpenChat y beneficiarse plenamente de las optimizaciones de rendimiento en curso, cambie a nuestro nuevo dominio [https://oc.app ](https://oc.app)*<br /><br />",
+        "continue": "Continuar"
+    }
 }
