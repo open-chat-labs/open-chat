@@ -16,7 +16,7 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
         let messages: Vec<_> = args
             .messages
             .into_iter()
-            .filter_map(|m| chat_events.message_by_message_index(m, Some(my_user_id)))
+            .filter_map(|m| chat_events.message_event_by_message_index(m, Some(my_user_id)))
             .collect();
 
         let latest_event_index = chat_events.last().index;

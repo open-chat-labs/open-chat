@@ -216,24 +216,22 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     updateGroup(
-        name: string,
-        desc: string,
-        rules: GroupRules,
+        name?: string,
+        description?: string,
+		rules?: GroupRules,
+        permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, desc, rules, avatar);
-    }
-
-    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse> {
-        return this.client.updatePermissions(permissions);
+        return this.client.updateGroup(name, description, rules, permissions, avatar);
     }
 
     toggleReaction(
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(messageId, reaction, threadRootMessageIndex);
+        return this.client.toggleReaction(messageId, reaction, username, threadRootMessageIndex);
     }
 
     deleteMessage(

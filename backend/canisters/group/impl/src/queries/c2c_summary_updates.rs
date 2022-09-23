@@ -124,7 +124,7 @@ fn process_events(
         .flat_map(|(t, message_indexes)| {
             message_indexes
                 .iter()
-                .filter_map(|m| chat_events.get_event_index_by_message_index(*m))
+                .filter_map(|m| chat_events.event_index_by_message_index(*m))
                 .map(move |e| (e, t))
         });
 

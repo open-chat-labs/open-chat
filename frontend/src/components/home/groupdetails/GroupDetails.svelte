@@ -223,10 +223,10 @@
         return api
             .updateGroup(
                 updatedGroup.chatId,
-                updatedGroup.name,
-                updatedGroup.desc,
-                updatedGroup.rules,
-                updatedGroup.avatar?.blobData
+                nameDirty ? updatedGroup.name : undefined,
+                descDirty ? updatedGroup.desc : undefined,
+                undefined,
+                nameDirty ? updatedGroup.avatar?.blobData : undefined
             )
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
@@ -257,11 +257,14 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        const args = mergeKeepingOnlyChanged(originalGroup.permissions, updatedGroup.permissions);
-        console.log("Changed permissions: ", args);
+        const optionalPermissions = mergeKeepingOnlyChanged(
+            originalGroup.permissions,
+            updatedGroup.permissions
+        );
+        console.log("Changed permissions: ", optionalPermissions);
 
         return api
-            .updatePermissions(updatedGroup.chatId, args)
+            .updateGroup(updatedGroup.chatId, undefined, undefined, optionalPermissions, undefined)
             .then((resp) => {
                 if (resp === "success") {
                     originalGroup = {

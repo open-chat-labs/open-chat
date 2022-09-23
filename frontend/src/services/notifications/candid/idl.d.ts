@@ -6,6 +6,8 @@ import {
     AddedToGroupNotification,
     DirectMessageNotification,
     GroupMessageNotification,
+    DirectReactionAddedNotification,
+    GroupReactionAddedNotification,
     SubscriptionExistsResponse,
     User,
 } from "./types";
@@ -16,6 +18,8 @@ export {
     AddedToGroupNotification as ApiAddedToGroupNotification,
     DirectMessageNotification as ApiDirectMessageNotification,
     GroupMessageNotification as ApiGroupMessageNotification,
+    DirectReactionAddedNotification as ApiDirectReactionAddedNotification,
+    GroupReactionAddedNotification as ApiGroupReactionAddedNotification,
     SubscriptionExistsResponse as ApiSubscriptionExistsResponse,
     User as ApiUser,
 };

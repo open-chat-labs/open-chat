@@ -62,7 +62,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         .events
         .main()
         .message_internal_by_message_index(args.message_index)
-        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.event.content { Some(p) } else { None })
+        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {
         if let Some(vote) = proposal.votes.get(&participant.user_id) {
             Err(AlreadyVoted(*vote))

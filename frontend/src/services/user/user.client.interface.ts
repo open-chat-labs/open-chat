@@ -102,6 +102,7 @@ export interface IUserClient {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse>;
     deleteMessage(

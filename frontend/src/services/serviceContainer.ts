@@ -70,7 +70,6 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    UpdatePermissionsResponse,
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
@@ -302,19 +301,13 @@ export class ServiceContainer implements MarkMessagesRead {
 
     updateGroup(
         chatId: string,
-        name: string,
-        desc: string,
-        rules: GroupRules,
+        name?: string,
+        desc?: string,
+		rules?: GroupRules,
+        permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, rules, avatar);
-    }
-
-    updatePermissions(
-        chatId: string,
-        permissions: Partial<GroupPermissions>
-    ): Promise<UpdatePermissionsResponse> {
-        return this.getGroupClient(chatId).updatePermissions(permissions);
+        return this.getGroupClient(chatId).updateGroup(name, desc, rules, permissions, avatar);
     }
 
     addMembers(
@@ -915,11 +908,13 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.getGroupClient(chatId).toggleReaction(
             messageId,
             reaction,
+            username,
             threadRootMessageIndex
         );
     }
@@ -928,12 +923,14 @@ export class ServiceContainer implements MarkMessagesRead {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.userClient.toggleReaction(
             otherUserId,
             messageId,
             reaction,
+            username,
             threadRootMessageIndex
         );
     }

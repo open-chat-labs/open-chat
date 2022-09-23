@@ -268,6 +268,14 @@ export function setSelectedChat(
         if (currentScrollStrategy === "firstMessage") {
             messageIndex = getFirstUnreadMessageIndex(chat);
         }
+        if (messageIndex !== undefined) {
+            const latestServerMessageIndex =
+                get(serverChatSummariesStore)[chat.chatId]?.latestMessage?.event.messageIndex ?? 0;
+
+            if (messageIndex > latestServerMessageIndex) {
+                messageIndex = undefined;
+            }
+        }
     }
 
     clearSelectedChat(chat.chatId);

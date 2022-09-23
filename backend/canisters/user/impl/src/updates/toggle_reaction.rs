@@ -34,6 +34,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     args.message_id,
                     args.reaction,
                     true,
+                    args.username,
                 ));
                 Added(e)
             }
@@ -43,6 +44,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     args.message_id,
                     args.reaction,
                     false,
+                    args.username,
                 ));
                 Removed(e)
             }
@@ -58,11 +60,13 @@ async fn toggle_reaction_on_recipients_canister(
     message_id: MessageId,
     reaction: Reaction,
     added: bool,
+    username: String,
 ) {
     let args = c2c_toggle_reaction::Args {
         message_id,
         reaction,
         added,
+        username,
     };
     let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
 }

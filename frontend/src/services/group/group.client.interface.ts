@@ -27,7 +27,6 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
@@ -70,15 +69,16 @@ export interface IGroupClient {
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeMember(userId: string): Promise<RemoveMemberResponse>;
     updateGroup(
-        name: string,
-        desc: string,
-        rules: GroupRules,
+        name?: string,
+        desc?: string,
+		rules?: GroupRules,
+        permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse>;
-    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse>;
     toggleReaction(
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse>;
     deleteMessage(

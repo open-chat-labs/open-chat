@@ -30,12 +30,13 @@
             <li>
                 <del>Special groups for viewing/discussing/voting on NNS and SNS proposals</del>
             </li>
+            <li><del>Performance enhancements - faster time to load with asset caching</del></li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
-            <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
+            <li>Performance enhancements - WebRTC improvements</li>
             <li>Streamlined sign-in</li>
             <li>Achievement badges</li>
-            <li>Usage rewards</li>
+            <li>User rewards</li>
             <li>Communities (think Slack workspaces or Discord servers)</li>
             <li>2-way voice calls</li>
             <li>2-way video calls</li>

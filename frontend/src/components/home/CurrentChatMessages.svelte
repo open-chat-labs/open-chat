@@ -391,7 +391,7 @@
 
         const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
-        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, kind).then(
+        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, user.username, kind).then(
             (success) => {
                 if (success && kind === "add") {
                     trackEvent("reacted_to_message");

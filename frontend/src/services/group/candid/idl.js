@@ -745,6 +745,7 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const ToggleReactionArgs = IDL.Record({
+    'username' : IDL.Text,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
@@ -799,6 +800,42 @@ export const idlFactory = ({ IDL }) => {
     'min_length' : IDL.Nat32,
   });
   const UpdateGroupResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
+    'RulesTooLong' : FieldTooLongResult,
+    'DescriptionTooLong' : FieldTooLongResult,
+    'NameTooShort' : FieldTooShortResult,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'AvatarTooBig' : FieldTooLongResult,
+    'Success' : IDL.Null,
+    'RulesTooShort' : FieldTooShortResult,
+    'NameTooLong' : FieldTooLongResult,
+    'NameTaken' : IDL.Null,
+    'InternalError' : IDL.Null,
+  });
+  const OptionalGroupPermissions = IDL.Record({
+    'block_users' : IDL.Opt(PermissionRole),
+    'change_permissions' : IDL.Opt(PermissionRole),
+    'delete_messages' : IDL.Opt(PermissionRole),
+    'send_messages' : IDL.Opt(PermissionRole),
+    'remove_members' : IDL.Opt(PermissionRole),
+    'update_group' : IDL.Opt(PermissionRole),
+    'invite_users' : IDL.Opt(PermissionRole),
+    'change_roles' : IDL.Opt(PermissionRole),
+    'add_members' : IDL.Opt(PermissionRole),
+    'create_polls' : IDL.Opt(PermissionRole),
+    'pin_messages' : IDL.Opt(PermissionRole),
+    'reply_in_thread' : IDL.Opt(PermissionRole),
+    'react_to_messages' : IDL.Opt(PermissionRole),
+  });
+  const UpdateGroupV2Args = IDL.Record({
+    'permissions' : IDL.Opt(OptionalGroupPermissions),
+    'name' : IDL.Opt(IDL.Text),
+    'description' : IDL.Opt(IDL.Text),
+    'rules' : IDL.Opt(GroupRules),
+    'avatar' : AvatarUpdate,
+  });
+  const UpdateGroupV2Response = IDL.Variant({
     'NameReserved' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
@@ -926,6 +963,11 @@ export const idlFactory = ({ IDL }) => {
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),
     'update_group' : IDL.Func([UpdateGroupArgs], [UpdateGroupResponse], []),
+    'update_group_v2' : IDL.Func(
+        [UpdateGroupV2Args],
+        [UpdateGroupV2Response],
+        [],
+      ),
     'update_permissions' : IDL.Func(
         [UpdatePermissionsArgs],
         [UpdatePermissionsResponse],

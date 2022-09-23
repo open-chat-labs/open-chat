@@ -24,7 +24,6 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
-    ApiUpdatePermissionsResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
     ApiRegisterPollVoteResponse,
@@ -58,16 +57,22 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
-    UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     GroupRules,
+	GroupPermissions,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
-import { groupPermissions, message, updatedMessage } from "../common/chatMappers";
+import {
+    apiOptional,
+    apiPermissionRole,
+    groupPermissions,
+    message,
+    updatedMessage,
+} from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
@@ -75,6 +80,8 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { optional } from "../../utils/mapping";
 import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
+import type { OptionalGroupPermissions } from "./candid/types";
+import { identity } from "domain/chat/chat.utils";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -91,6 +98,26 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
         default:
             return undefined;
     }
+}
+
+export function apiOptionalGroupPermissions(
+    permissions: Partial<GroupPermissions>
+): OptionalGroupPermissions {
+    return {
+        block_users: apiOptional(apiPermissionRole, permissions.blockUsers),
+        change_permissions: apiOptional(apiPermissionRole, permissions.changePermissions),
+        delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
+        send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
+        remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
+        update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
+        invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
+        change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
+        add_members: apiOptional(apiPermissionRole, permissions.addMembers),
+        create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
+        pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
+        reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
+        react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
+    };
 }
 
 function memberRole(candid: ApiRole): MemberRole {
@@ -311,24 +338,6 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "rules_too_long";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-}
-
-export function updatePermissionsResponse(
-    candid: ApiUpdatePermissionsResponse
-): UpdatePermissionsResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "not_in_group";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiUpdatePermissionsResponse type received",
-        candid
-    );
 }
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {

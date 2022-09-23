@@ -102,6 +102,10 @@ async function showNotification(notification: Notification): Promise<void> {
     let body: string;
     let path: string;
     let timestamp: number;
+    // If true, we close existing notifications where the `path` matches, this ensures this new notification will
+    // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
+    // notification will be silent
+    let closeExistingNotifications = false;
     if (notification.kind === "direct_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
@@ -112,6 +116,7 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path = notification.sender;
         timestamp = Number(notification.message.timestamp);
+        closeExistingNotifications = true;
     } else if (notification.kind === "group_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
@@ -123,6 +128,17 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path = notification.chatId;
         timestamp = Number(notification.message.timestamp);
+        closeExistingNotifications = true;
+    } else if (notification.kind === "direct_reaction") {
+        title += notification.username;
+        body = `${notification.username} reacted '${notification.reaction}' to your message`;
+        path = `${notification.them}/${notification.message.event.messageIndex}`;
+        timestamp = Number(notification.timestamp);
+    } else if (notification.kind === "group_reaction") {
+        title += notification.groupName;
+        body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
+        path = `${notification.chatId}/${notification.message.event.messageIndex}`;
+        timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
         title += notification.groupName;
@@ -133,11 +149,13 @@ async function showNotification(notification: Notification): Promise<void> {
         throw new UnsupportedValueError("Unexpected notification type received", notification);
     }
 
-    // We need to close any exiting notifications for the same tag otherwise the new notification will not be shown
-    const existing = await self.registration.getNotifications({
-        tag: path,
-    });
-    existing.forEach((n) => n.close());
+    if (closeExistingNotifications) {
+        // We need to close any exiting notifications for the same tag otherwise the new notification will not be shown
+        const existing = await self.registration.getNotifications({
+            tag: path,
+        });
+        existing.forEach((n) => n.close());
+    }
 
     await self.registration.showNotification(title, {
         body,

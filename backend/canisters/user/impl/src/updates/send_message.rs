@@ -110,7 +110,12 @@ fn send_message_impl(
                     .data
                     .direct_chats
                     .get(&args.recipient.into())
-                    .and_then(|chat| chat.events.main().get_message_id_by_event_index(r.event_index))
+                    .and_then(|chat| {
+                        chat.events
+                            .main()
+                            .message_internal_by_event_index(r.event_index)
+                            .map(|m| m.message_id)
+                    })
                     .map(C2CReplyContext::ThisChat)
             }
         }),

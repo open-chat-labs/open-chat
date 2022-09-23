@@ -56,6 +56,7 @@ export function selectReaction(
     threadRootMessageIndex: number | undefined,
     messageId: bigint,
     reaction: string,
+    username: string,
     kind: "add" | "remove"
 ): Promise<boolean> {
     localMessageUpdates.markReaction(messageId.toString(), {
@@ -74,8 +75,8 @@ export function selectReaction(
 
     return (
         chat.kind === "direct_chat"
-            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
-            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
+            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
     )
         .then((resp) => {
             if (resp !== "added" && resp !== "removed") {
@@ -476,15 +477,19 @@ function newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefi
     const maxServerEventIndex = latestServerEventIndex(serverChat);
     const loadedUpTo = confirmedUpToEventIndex(serverChat.chatId);
 
+    if (loadedUpTo === undefined) {
+        return [maxServerEventIndex, false];
+    }
+
     return loadedUpTo < maxServerEventIndex ? [loadedUpTo + 1, true] : undefined;
 }
 
-function confirmedUpToEventIndex(chatId: string): number {
+function confirmedUpToEventIndex(chatId: string): number | undefined {
     const ranges = confirmedEventIndexesLoaded.get(chatId).subranges();
     if (ranges.length > 0) {
         return ranges[0].high;
     }
-    return -1;
+    return undefined;
 }
 
 export function morePreviousMessagesAvailable(clientChat: ChatSummary): boolean {
@@ -495,7 +500,7 @@ export function morePreviousMessagesAvailable(clientChat: ChatSummary): boolean 
 }
 
 export function moreNewMessagesAvailable(serverChat: ChatSummary): boolean {
-    return confirmedUpToEventIndex(serverChat.chatId) < latestServerEventIndex(serverChat);
+    return (confirmedUpToEventIndex(serverChat.chatId) ?? -1) < latestServerEventIndex(serverChat);
 }
 
 export function refreshAffectedEvents(
