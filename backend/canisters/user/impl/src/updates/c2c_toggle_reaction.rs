@@ -66,21 +66,20 @@ fn build_notification(
         return None;
     }
 
-    chat.events.get(None).and_then(|e| {
-        e.get_message_index(message_id)
-            .and_then(|m| e.message_by_message_index(m, None))
-            .filter(|m| m.event.sender != chat.them)
-            .map(|message| {
-                (
-                    vec![message.event.sender],
-                    Notification::DirectReactionAddedNotification(DirectReactionAddedNotification {
-                        them: chat.them,
-                        username,
-                        message,
-                        reaction,
-                        timestamp: now,
-                    }),
-                )
-            })
-    })
+    chat.events
+        .main()
+        .message_event_by_message_id(message_id, None)
+        .filter(|m| m.event.sender != chat.them)
+        .map(|message| {
+            (
+                vec![message.event.sender],
+                Notification::DirectReactionAddedNotification(DirectReactionAddedNotification {
+                    them: chat.them,
+                    username,
+                    message,
+                    reaction,
+                    timestamp: now,
+                }),
+            )
+        })
 }

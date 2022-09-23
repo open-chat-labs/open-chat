@@ -95,17 +95,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let mut notification_recipients = HashSet::new();
         let mut thread_participants = None;
 
-        if let Some(thread_root_message) = args
-            .thread_root_message_index
-            .and_then(|root_message_index| {
-                runtime_state
-                    .data
-                    .events
-                    .main()
-                    .message_internal_by_message_index(root_message_index)
-            })
-            .map(|e| e.event)
-        {
+        if let Some(thread_root_message) = args.thread_root_message_index.and_then(|root_message_index| {
+            runtime_state
+                .data
+                .events
+                .main()
+                .message_internal_by_message_index(root_message_index)
+        }) {
             notification_recipients.insert(thread_root_message.sender);
 
             if let Some(thread_summary) = &thread_root_message.thread_summary {
