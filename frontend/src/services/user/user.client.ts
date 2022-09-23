@@ -465,6 +465,7 @@ export class UserClient extends CandidService implements IUserClient {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
+        username: string,
         threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
@@ -473,6 +474,7 @@ export class UserClient extends CandidService implements IUserClient {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
+                username,
             }),
             toggleReactionResponse
         );

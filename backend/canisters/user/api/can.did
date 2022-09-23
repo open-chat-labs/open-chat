@@ -71,6 +71,7 @@ type ToggleReactionArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
+        username: text;
     };
 
 type ToggleReactionResponse =
@@ -582,7 +583,7 @@ type PublicProfileResponse =
         Success: PublicProfile;
     };
 
-type PublicProfile = 
+type PublicProfile =
     record {
         username: text;
         avatar_id: opt nat;

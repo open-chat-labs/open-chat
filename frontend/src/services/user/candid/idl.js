@@ -836,6 +836,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const ToggleReactionArgs = IDL.Record({
+    'username' : IDL.Text,
     'user_id' : UserId,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
