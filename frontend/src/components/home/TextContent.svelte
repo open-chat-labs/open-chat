@@ -30,8 +30,6 @@
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
     $: socialVideoMatch = content.text.match(youtubeRegex());
     $: twitterLinkMatch = text.match(twitterLinkRegex());
-
-    $: console.log("Social match: ", socialVideoMatch);
 </script>
 
 {#if !socialVideoMatch}
