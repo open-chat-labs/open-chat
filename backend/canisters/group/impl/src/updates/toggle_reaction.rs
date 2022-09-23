@@ -72,12 +72,14 @@ fn handle_notification(
     now: TimestampMillis,
     runtime_state: &mut RuntimeState,
 ) {
-    if let Some(message) = runtime_state.data.events.get(thread_root_message_index).and_then(|e| {
-        e.get_message_index(message_id)
-            // We pass in `None` in place of `my_user_id` because we don't want to hydrate
-            // the notification with data for the current user (eg. their poll votes).
-            .and_then(|m| e.message_by_message_index(m, None))
-    }) {
+    if let Some(message) = runtime_state
+        .data
+        .events
+        .get(thread_root_message_index)
+        // We pass in `None` in place of `my_user_id` because we don't want to hydrate
+        // the notification with data for the current user (eg. their poll votes).
+        .and_then(|chat_events| chat_events.message_event_by_message_id(message_id, None))
+    {
         if message.event.sender != user_id {
             let notifications_muted = runtime_state
                 .data

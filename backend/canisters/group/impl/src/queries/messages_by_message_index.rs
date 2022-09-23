@@ -26,7 +26,7 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
             let messages: Vec<_> = args
                 .messages
                 .into_iter()
-                .filter_map(|m| chat_events.message_by_message_index(m, user_id))
+                .filter_map(|m| chat_events.message_event_by_message_index(m, user_id))
                 .filter(|m| m.index >= min_visible_event_index)
                 .collect();
 

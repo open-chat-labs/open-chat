@@ -30,7 +30,13 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         if args.thread_root_message_index.is_none() {
             for message_id in args.message_ids.iter() {
-                if let Some(message_index) = runtime_state.data.events.main().get_message_index(*message_id) {
+                if let Some(message_index) = runtime_state
+                    .data
+                    .events
+                    .main()
+                    .message_internal_by_message_id(*message_id)
+                    .map(|m| m.message_index)
+                {
                     // If the message being deleted is pinned, unpin it
                     if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
                         runtime_state.data.pinned_messages.remove(index);
