@@ -1049,16 +1049,12 @@ impl ChatEvents {
     }
 
     pub fn message_internal_mut_by_message_index(&mut self, message_index: MessageIndex) -> Option<&mut MessageInternal> {
-        self.message_index_map
-            .get(&message_index)
-            .copied()
+        self.event_index_by_message_index(message_index)
             .and_then(|e| self.message_internal_mut_by_event_index(e))
     }
 
     pub fn message_internal_mut_by_message_id(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
-        self.message_id_map
-            .get(&message_id)
-            .copied()
+        self.event_index_by_message_id(message_id)
             .and_then(|e| self.message_internal_mut_by_event_index(e))
     }
 
