@@ -38,6 +38,7 @@
         groupInfoOpen,
         groupInviteUsersOpen,
         groupPermissionsOpen,
+        groupRulesOpen,
         groupStatsOpen,
         groupVisibilityOpen,
     } from "../../../stores/settings";
@@ -130,6 +131,8 @@
     $: myGroup = currentUser.userId === originalGroup.ownerId;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
+    $: rulesDirty =
+        updatedGroup.rules.enabled !== rules.enabled || updatedGroup.rules.text !== rules.text;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
     $: permissionsDirty = havePermissionsChanged(
         originalGroup.permissions,
@@ -202,6 +205,12 @@
         doUpdateInfo().finally(() => (saving = false));
     }
 
+    function updateRules() {
+        if (!rulesDirty) return;
+        saving = true;
+        doUpdateRules().finally(() => (saving = false));
+    }
+
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
         if (resp === "unchanged") return undefined;
@@ -226,7 +235,8 @@
                 nameDirty ? updatedGroup.name : undefined,
                 descDirty ? updatedGroup.desc : undefined,
                 undefined,
-                nameDirty ? updatedGroup.avatar?.blobData : undefined
+                undefined,
+                avatarDirty ? updatedGroup.avatar?.blobData : undefined
             )
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
@@ -248,6 +258,33 @@
             });
     }
 
+    function doUpdateRules(): Promise<void> {
+        return api
+            .updateGroup(
+                updatedGroup.chatId,
+                undefined,
+                undefined,
+                rulesDirty ? updatedGroup.rules : undefined,
+                undefined,
+                undefined
+            )
+            .then((resp) => {
+                if (resp === "success") {
+                    rules = updatedGroup.rules;
+                    dispatch("updateGroupRules", {
+                        chatId: updatedGroup.chatId,
+                        rules: updatedGroup.rules,
+                    });
+                } else {
+                    toastStore.showFailureToast("group.rulesUpdateFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update group rules failed: ", err);
+                toastStore.showFailureToast("group.rulesUpdateFailed");
+            });
+    }
+
     function updatePermissions() {
         if (!permissionsDirty) return;
 
@@ -264,7 +301,14 @@
         console.log("Changed permissions: ", optionalPermissions);
 
         return api
-            .updateGroup(updatedGroup.chatId, undefined, undefined, optionalPermissions, undefined)
+            .updateGroup(
+                updatedGroup.chatId,
+                undefined,
+                undefined,
+                undefined,
+                optionalPermissions,
+                undefined
+            )
             .then((resp) => {
                 if (resp === "success") {
                     originalGroup = {
@@ -356,42 +400,18 @@
                     maxlength={MAX_DESC_LENGTH}
                     placeholder={$_("newGroupDesc")} />
 
-                <TextArea
-                    disabled={saving || !canEdit || !updatedGroup.rules.enabled}
-                    bind:value={updatedGroup.rules.text}
-                    minlength={0}
-                    maxlength={MAX_RULES_LENGTH}
-                    placeholder={$_("group.rules.placeholder")} />
-
-                <Checkbox
-                    id="enable-rules"
-                    label={$_("group.rules.enable")}
-                    checked={updatedGroup.rules.enabled} />
-
-                {#if canEdit}
-                    <Button
-                        on:click={updateInfo}
-                        fill
-                        disabled={!canEdit || !dirty || saving}
-                        loading={saving}>{$_("update")}</Button>
-                {/if}
-            {:else}
-                {#if originalGroup.description !== ""}
-                    <fieldset>
-                        <legend>
-                            <Legend>{$_("groupDesc")}</Legend>
-                        </legend>
-                        <Markdown text={description()} />
-                    </fieldset>
-                {/if}
-                {#if rules.enabled}
-                    <fieldset>
-                        <legend>
-                            <Legend>{$_("groupRules")}</Legend>
-                        </legend>
-                        <Markdown text={rules.text} />
-                    </fieldset>
-                {/if}
+                <Button
+                    on:click={updateInfo}
+                    fill
+                    disabled={!canEdit || !dirty || saving}
+                    loading={saving}>{$_("update")}</Button>
+            {:else if originalGroup.description !== ""}
+                <fieldset>
+                    <legend>
+                        <Legend>{$_("groupDesc")}</Legend>
+                    </legend>
+                    <Markdown text={description()} />
+                </fieldset>
             {/if}
         </CollapsibleCard>
         <CollapsibleCard
@@ -417,6 +437,37 @@
                     {/if}
                 {/if}
             </div>
+        </CollapsibleCard>
+        <CollapsibleCard
+            on:toggle={groupRulesOpen.toggle}
+            open={$groupRulesOpen}
+            headerText={$_("group.groupRules")}>
+            {#if canEdit}
+                <TextArea
+                    disabled={saving || !canEdit || !updatedGroup.rules.enabled}
+                    bind:value={updatedGroup.rules.text}
+                    minlength={0}
+                    maxlength={MAX_RULES_LENGTH}
+                    placeholder={$_("group.rules.placeholder")} />
+
+                <Checkbox
+                    id="enable-rules"
+                    label={$_("group.rules.enable")}
+                    checked={updatedGroup.rules.enabled} />
+
+                <Button
+                    on:click={updateRules}
+                    fill
+                    disabled={!canEdit || !rulesDirty || saving}
+                    loading={saving}>{$_("update")}</Button>
+            {:else if rules.enabled}
+                <fieldset>
+                    <legend>
+                        <Legend>{$_("groupRules")}</Legend>
+                    </legend>
+                    <Markdown text={rules.text} />
+                </fieldset>
+            {/if}
         </CollapsibleCard>
         {#if canInvite}
             <CollapsibleCard

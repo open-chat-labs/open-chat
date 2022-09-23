@@ -62,6 +62,7 @@ import {
     registerPollVoteResponse,
     registerProposalVoteResponse,
     apiOptionalGroupPermissions,
+    apiGroupRules,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -279,7 +280,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
-		rules?: GroupRules
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
@@ -298,7 +299,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                               },
                           },
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
-                rules: apiOptional(identity, rules),
+                rules: apiOptional(apiGroupRules, rules),
             }),
             updateGroupResponse
         );

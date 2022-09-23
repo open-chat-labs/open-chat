@@ -442,7 +442,9 @@
         "rules": {
             "enable": "Enable rules",
             "placeholder": "what are the group rules?"
-        }
+        },
+        "groupRules": "Group rules",
+        "rulesUpdateFailed": "Sorry we were unable to update your group rules"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

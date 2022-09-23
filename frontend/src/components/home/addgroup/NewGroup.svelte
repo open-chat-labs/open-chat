@@ -28,6 +28,7 @@
 
     let groupInfoOpen = true;
     let visibilityOpen = true;
+    let groupRulesOpen = true;
     let permissionsOpen = false;
 
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
@@ -89,16 +90,6 @@
                 bind:value={candidateGroup.description}
                 maxlength={MAX_DESC_LENGTH}
                 placeholder={$_("newGroupDesc")} />
-            <TextArea
-                bind:value={candidateGroup.rules.text}
-                minlength={0}
-                maxlength={MAX_RULES_LENGTH}
-                placeholder={$_("group.rules.placeholder")} />
-            <Checkbox
-                id="enable-rules"
-                on:change={toggleRules}
-                label={$_("group.rules.enable")}
-                checked={candidateGroup.rules.enabled} />
         </CollapsibleCard>
         <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
             <div class="sub-section">
@@ -149,6 +140,19 @@
                     {/if}
                 </div>
             </div>
+        </CollapsibleCard>
+        <CollapsibleCard open={groupRulesOpen} headerText={$_("group.groupRules")}>
+            <TextArea
+                bind:value={candidateGroup.rules.text}
+                minlength={0}
+                maxlength={MAX_RULES_LENGTH}
+                rows={12}
+                placeholder={$_("group.rules.placeholder")} />
+            <Checkbox
+                id="enable-rules"
+                on:change={toggleRules}
+                label={$_("group.rules.enable")}
+                checked={candidateGroup.rules.enabled} />
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
             <GroupPermissionsEditor

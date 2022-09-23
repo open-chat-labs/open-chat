@@ -62,7 +62,7 @@ import type {
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-	GroupPermissions,
+    GroupPermissions,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -81,7 +81,6 @@ import { optional } from "../../utils/mapping";
 import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
-import { identity } from "domain/chat/chat.utils";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -143,10 +142,17 @@ function member(candid: ApiParticipant): Member {
     };
 }
 
-function rules(candid: ApiGroupRules): GroupRules {
+function groupRules(candid: ApiGroupRules): GroupRules {
     return {
         text: candid.text,
         enabled: candid.enabled,
+    };
+}
+
+export function apiGroupRules(rules: GroupRules): ApiGroupRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
     };
 }
 
@@ -174,7 +180,7 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
-            rules: optional(candid.Success.rules, rules),
+            rules: optional(candid.Success.rules, groupRules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -190,7 +196,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
-            rules: rules(candid.Success.rules),
+            rules: groupRules(candid.Success.rules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);

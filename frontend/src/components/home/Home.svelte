@@ -44,6 +44,7 @@
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
+        GroupRules,
         MemberRole,
         Message,
     } from "../../domain/chat/chat";
@@ -81,6 +82,7 @@
         clearSelectedChat,
         focusThreadMessageIndex,
         currentChatDraftMessage,
+        currentChatRules,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -862,6 +864,10 @@
         addOrReplaceChat(ev.detail);
     }
 
+    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
+        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
+    }
+
     function showPinned() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
@@ -1106,6 +1112,7 @@
             on:deleteGroup={triggerConfirm}
             on:makeGroupPrivate={triggerConfirm}
             on:updateChat={updateChat}
+            on:updateGroupRules={updateGroupRules}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
