@@ -15,6 +15,7 @@ fn main() {
     generate_candid_method!(user, updates, query);
 
     generate_candid_method!(user, add_recommended_group_exclusions, update);
+    generate_candid_method!(user, add_reaction, update);
     generate_candid_method!(user, archive_chat, update);
     generate_candid_method!(user, assume_group_super_admin, update);
     generate_candid_method!(user, block_user, update);
@@ -30,6 +31,7 @@ fn main() {
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat, update);
     generate_candid_method!(user, relinquish_group_super_admin, update);
+    generate_candid_method!(user, remove_reaction, update);
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);

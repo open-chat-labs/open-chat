@@ -339,6 +339,94 @@ impl AllChatEvents {
         }
     }
 
+    pub fn add_reaction(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        reaction: Reaction,
+        now: TimestampMillis,
+    ) -> AddRemoveReactionResult {
+        if !reaction.is_valid() {
+            // This should never happen because we validate earlier
+            panic!("Invalid reaction: {reaction:?}");
+        }
+
+        if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
+            let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                users.insert(user_id)
+            } else {
+                message.reactions.push((reaction, vec![user_id].into_iter().collect()));
+                true
+            };
+
+            if !added {
+                return AddRemoveReactionResult::NoChange;
+            }
+
+            message.last_updated = Some(now);
+
+            let new_event_index = self.push_event(
+                thread_root_message_index,
+                ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                    updated_by: user_id,
+                    message_id,
+                })),
+                now,
+            );
+
+            if let Some(root_message_index) = thread_root_message_index {
+                self.main
+                    .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
+            }
+
+            AddRemoveReactionResult::Success(new_event_index)
+        } else {
+            AddRemoveReactionResult::MessageNotFound
+        }
+    }
+
+    pub fn remove_reaction(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        reaction: Reaction,
+        now: TimestampMillis,
+    ) -> AddRemoveReactionResult {
+        if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
+            let removed = message
+                .reactions
+                .iter_mut()
+                .find(|(r, _)| *r == reaction)
+                .map_or(false, |(_, u)| u.remove(&user_id));
+
+            if !removed {
+                return AddRemoveReactionResult::NoChange;
+            }
+
+            message.last_updated = Some(now);
+
+            let new_event_index = self.push_event(
+                thread_root_message_index,
+                ChatEventInternal::MessageReactionRemoved(Box::new(UpdatedMessageInternal {
+                    updated_by: user_id,
+                    message_id,
+                })),
+                now,
+            );
+
+            if let Some(root_message_index) = thread_root_message_index {
+                self.main
+                    .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
+            }
+
+            AddRemoveReactionResult::Success(new_event_index)
+        } else {
+            AddRemoveReactionResult::MessageNotFound
+        }
+    }
+
     pub fn update_thread_summary(
         &mut self,
         thread_root_message_index: MessageIndex,
@@ -738,6 +826,12 @@ pub enum RecordProposalVoteResult {
 pub enum ToggleReactionResult {
     Added(EventIndex),
     Removed(EventIndex),
+    MessageNotFound,
+}
+
+pub enum AddRemoveReactionResult {
+    Success(EventIndex),
+    NoChange,
     MessageNotFound,
 }
 
