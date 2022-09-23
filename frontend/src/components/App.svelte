@@ -31,8 +31,8 @@
     import { startUserUpdatePoller } from "../stores/user";
     import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
     import { selectedAuthProviderStore } from "../stores/authProviders";
-    import { canisterUrl } from "utils/urls";
-    import { unsubscribeNotifications } from "utils/notifications";
+    import { canisterUrl } from "../utils/urls";
+    import { unsubscribeNotifications } from "../utils/notifications";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
