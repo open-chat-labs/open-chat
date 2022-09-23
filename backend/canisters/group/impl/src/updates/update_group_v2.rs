@@ -19,12 +19,7 @@ use utils::group_validation::{validate_name, NameValidationError};
 async fn update_group_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    args.name = args.name.map(|name| name.trim().to_string());
-    args.description = args.description.map(|desc| desc.trim().to_string());
-    args.rules = args.rules.map(|mut rules| {
-        rules.text = rules.text.trim().to_string();
-        rules
-    });
+    clean_args(&mut args);
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -55,6 +50,15 @@ async fn update_group_v2(mut args: Args) -> Response {
 
     mutate_state(|state| commit(prepare_result.my_user_id, args, state));
     Success
+}
+
+fn clean_args(args: &mut Args) {
+    args.name = args.name.as_ref().map(|name| name.trim().to_string());
+    args.description = args.description.as_ref().map(|desc| desc.trim().to_string());
+
+    if let Some(rules) = &mut args.rules {
+        rules.text = rules.text.trim().to_string();
+    }
 }
 
 struct PrepareResult {
