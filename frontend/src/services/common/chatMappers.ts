@@ -1,6 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
-import type { ApiUpdatePermissionsArgs } from "../group/candid/idl";
 import type {
     FileContent,
     ImageContent,
@@ -491,26 +490,6 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
         send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         reply_in_thread: apiPermissionRole(permissions.replyInThread),
-    };
-}
-
-export function apiUpdatePermissions(
-    permissions: Partial<GroupPermissions>
-): ApiUpdatePermissionsArgs {
-    return {
-        change_permissions: apiOptional(apiPermissionRole, permissions.changePermissions),
-        change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-        add_members: apiOptional(apiPermissionRole, permissions.addMembers),
-        remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
-        block_users: apiOptional(apiPermissionRole, permissions.blockUsers),
-        delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-        update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
-        pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-        invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
-        create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
-        send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
-        react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
-        reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
     };
 }
 
