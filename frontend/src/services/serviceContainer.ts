@@ -70,7 +70,6 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    UpdatePermissionsResponse,
     CurrentChatState,
     ThreadPreview,
     ThreadSyncDetails,
@@ -301,18 +300,12 @@ export class ServiceContainer implements MarkMessagesRead {
 
     updateGroup(
         chatId: string,
-        name: string,
-        desc: string,
+        name?: string,
+        desc?: string,
+        permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
-    }
-
-    updatePermissions(
-        chatId: string,
-        permissions: Partial<GroupPermissions>
-    ): Promise<UpdatePermissionsResponse> {
-        return this.getGroupClient(chatId).updatePermissions(permissions);
+        return this.getGroupClient(chatId).updateGroup(name, desc, permissions, avatar);
     }
 
     addMembers(

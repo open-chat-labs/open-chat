@@ -591,6 +591,21 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export interface OptionalGroupPermissions {
+  'block_users' : [] | [PermissionRole],
+  'change_permissions' : [] | [PermissionRole],
+  'delete_messages' : [] | [PermissionRole],
+  'send_messages' : [] | [PermissionRole],
+  'remove_members' : [] | [PermissionRole],
+  'update_group' : [] | [PermissionRole],
+  'invite_users' : [] | [PermissionRole],
+  'change_roles' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
+  'create_polls' : [] | [PermissionRole],
+  'pin_messages' : [] | [PermissionRole],
+  'reply_in_thread' : [] | [PermissionRole],
+  'react_to_messages' : [] | [PermissionRole],
+}
 export interface OwnershipTransferred {
   'old_owner' : UserId,
   'new_owner' : UserId,
@@ -907,6 +922,26 @@ export interface UpdateGroupArgs {
   'avatar' : AvatarUpdate,
 }
 export type UpdateGroupResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'InternalError' : null };
+export interface UpdateGroupV2Args {
+  'permissions' : [] | [OptionalGroupPermissions],
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'rules' : [] | [GroupRules],
+  'avatar' : AvatarUpdate,
+}
+export type UpdateGroupV2Response = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'CallerNotInGroup' : null } |
@@ -1031,6 +1066,7 @@ export interface _SERVICE {
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group' : ActorMethod<[UpdateGroupArgs], UpdateGroupResponse>,
+  'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
   'update_permissions' : ActorMethod<
     [UpdatePermissionsArgs],
     UpdatePermissionsResponse,
