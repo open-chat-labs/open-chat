@@ -376,9 +376,14 @@
         let threadRootMessageIndex: number | undefined = undefined;
         let message: EventWrapper<Message>;
         switch (notification.kind) {
-            case "direct_notification":
-            case "group_notification": {
+            case "direct_notification": {
                 chatId = notification.sender;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            }
+            case "group_notification": {
+                chatId = notification.chatId;
                 threadRootMessageIndex = notification.threadRootMessageIndex;
                 message = notification.message;
                 break;
