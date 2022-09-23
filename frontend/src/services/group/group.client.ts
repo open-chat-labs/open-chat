@@ -28,7 +28,6 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
 } from "../../domain/chat/chat";
@@ -58,21 +57,16 @@ import {
     enableInviteCodeResponse,
     disableInviteCodeResponse,
     resetInviteCodeResponse,
-    updatePermissionsResponse,
     threadPreviewsResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
+    apiOptionalGroupPermissions,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
-import {
-    apiMessageContent,
-    apiOptional,
-    apiUpdatePermissions,
-    apiUser,
-} from "../common/chatMappers";
+import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
 import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
@@ -281,11 +275,16 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+    updateGroup(
+        name?: string,
+        description?: string,
+        permissions?: Partial<GroupPermissions>,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
-            this.groupService.update_group({
-                name: name,
-                description: desc,
+            this.groupService.update_group_v2({
+                name: apiOptional(identity, name),
+                description: apiOptional(identity, description),
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -296,21 +295,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                                   data: avatar,
                               },
                           },
-                permissions: [],
-                rules: {
-                    text: "",
-                    enabled: false,
-                },
+                permissions: apiOptional(apiOptionalGroupPermissions, permissions),
+                rules: [],
             }),
             updateGroupResponse
-        );
-    }
-
-    @profile("groupClient")
-    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse> {
-        return this.handleResponse(
-            this.groupService.update_permissions(apiUpdatePermissions(permissions)),
-            updatePermissionsResponse
         );
     }
 
