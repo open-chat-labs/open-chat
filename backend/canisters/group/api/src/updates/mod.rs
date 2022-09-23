@@ -26,4 +26,5 @@ pub mod toggle_reaction;
 pub mod unblock_user;
 pub mod unpin_message;
 pub mod update_group;
+pub mod update_group_v2;
 pub mod update_permissions;
