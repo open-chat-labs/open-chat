@@ -9,6 +9,7 @@ mod http_request;
 mod invite_code;
 mod messages_by_message_index;
 mod public_summary;
+mod rules;
 mod search_messages;
 mod selected_initial;
 mod selected_updates;
