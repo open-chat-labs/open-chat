@@ -13,7 +13,7 @@ import type {
     MarkReadResponse,
     Message,
     IndexRange,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
@@ -98,13 +98,19 @@ export interface IUserClient {
     joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse>;
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
-    toggleReaction(
+    addReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse>;
+    ): Promise<AddRemoveReactionResponse>;
+    removeReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse>;
     deleteMessage(
         otherUserId: string,
         messageId: bigint,
