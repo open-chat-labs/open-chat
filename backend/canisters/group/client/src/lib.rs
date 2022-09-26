@@ -10,6 +10,7 @@ generate_query_call!(selected_updates);
 
 // Updates
 generate_update_call!(add_participants);
+generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
 generate_update_call!(delete_messages);
@@ -17,6 +18,6 @@ generate_update_call!(edit_message);
 generate_update_call!(pin_message);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
+generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
-generate_update_call!(toggle_reaction);
 generate_update_call!(unpin_message);

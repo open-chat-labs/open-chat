@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use types::{CanisterId, Milliseconds, PublicGroupActivity, TimestampMillis};
 
 mod add_participants;
+mod add_reaction;
 mod block_user;
 mod c2c_assume_super_admin;
 mod c2c_delete_group;
@@ -26,6 +27,7 @@ mod pin_message;
 mod register_poll_vote;
 mod register_proposal_vote;
 mod remove_participant;
+mod remove_reaction;
 mod send_message;
 mod toggle_reaction;
 mod unblock_user;

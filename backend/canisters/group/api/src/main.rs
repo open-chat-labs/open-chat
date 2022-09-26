@@ -14,6 +14,7 @@ fn main() {
     generate_candid_method!(group, selected_updates, query);
 
     generate_candid_method!(group, add_participants, update);
+    generate_candid_method!(group, add_reaction, update);
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);
     generate_candid_method!(group, delete_messages, update);
@@ -25,6 +26,7 @@ fn main() {
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);
     generate_candid_method!(group, remove_participant, update);
+    generate_candid_method!(group, remove_reaction, update);
     generate_candid_method!(group, reset_invite_code, update);
     generate_candid_method!(group, send_message, update);
     generate_candid_method!(group, toggle_reaction, update);
