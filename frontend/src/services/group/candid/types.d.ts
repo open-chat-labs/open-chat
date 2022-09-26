@@ -772,6 +772,10 @@ export interface RoleChanged {
   'old_role' : Role,
   'new_role' : Role,
 }
+export interface RulesArgs { 'invite_code' : [] | [bigint] }
+export type RulesResponse = { 'NotAuthorized' : null } |
+  { 'Success' : RulesSuccess };
+export interface RulesSuccess { 'rules' : [] | [string] }
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
@@ -1060,6 +1064,7 @@ export interface _SERVICE {
     [ResetInviteCodeArgs],
     ResetInviteCodeResponse,
   >,
+  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],

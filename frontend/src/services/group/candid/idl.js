@@ -640,6 +640,12 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
   });
+  const RulesArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
+  const RulesSuccess = IDL.Record({ 'rules' : IDL.Opt(IDL.Text) });
+  const RulesResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : RulesSuccess,
+  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
