@@ -1,3 +1,4 @@
+pub mod add_reaction;
 pub mod add_recommended_group_exclusions;
 pub mod archive_chat;
 pub mod assume_group_super_admin;
@@ -29,6 +30,7 @@ pub mod migrate_user_principal;
 pub mod mute_notifications;
 pub mod pin_chat;
 pub mod relinquish_group_super_admin;
+pub mod remove_reaction;
 pub mod send_message;
 pub mod set_avatar;
 pub mod set_bio;

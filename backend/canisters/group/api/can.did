@@ -89,6 +89,40 @@ type ToggleReactionResponse =
         NotAuthorized;
     };
 
+type AddReactionArgs =
+    record {
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        reaction: text;
+        username: text;
+    };
+
+type AddReactionResponse =
+    variant {
+        Success: EventIndex;
+        NoChange;
+        InvalidReaction;
+        MessageNotFound;
+        CallerNotInGroup;
+        NotAuthorized;
+    };
+
+type RemoveReactionArgs =
+    record {
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type RemoveReactionResponse =
+    variant {
+        Success: EventIndex;
+        NoChange;
+        MessageNotFound;
+        CallerNotInGroup;
+        NotAuthorized;
+    };
+
 type BlockUserArgs =
     record {
         user_id: UserId;
@@ -582,6 +616,8 @@ service: {
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
+    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
+    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;

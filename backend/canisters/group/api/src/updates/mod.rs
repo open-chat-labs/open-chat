@@ -1,4 +1,5 @@
 pub mod add_participants;
+pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_assume_super_admin;
 pub mod c2c_delete_group;
@@ -20,6 +21,7 @@ pub mod pin_message;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;
 pub mod remove_participant;
+pub mod remove_reaction;
 pub mod reset_invite_code;
 pub mod send_message;
 pub mod toggle_reaction;

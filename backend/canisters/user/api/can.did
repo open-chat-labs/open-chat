@@ -83,6 +83,40 @@ type ToggleReactionResponse =
         ChatNotFound;
     };
 
+type AddReactionArgs =
+    record {
+        user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        reaction: text;
+        username: text;
+    };
+
+type AddReactionResponse =
+    variant {
+        Success: EventIndex;
+        NoChange;
+        InvalidReaction;
+        MessageNotFound;
+        ChatNotFound;
+    };
+
+type RemoveReactionArgs =
+    record {
+        user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type RemoveReactionResponse =
+    variant {
+        Success: EventIndex;
+        NoChange;
+        MessageNotFound;
+        ChatNotFound;
+    };
+
 type MarkReadArgs =
     record {
         messages_read: vec ChatMessagesRead;
@@ -598,6 +632,8 @@ service: {
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
+    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
+    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
