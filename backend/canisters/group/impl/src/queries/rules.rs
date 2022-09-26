@@ -14,6 +14,6 @@ fn rules_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let data = &runtime_state.data;
-    let rules = if data.rules.enabled { Some(data.rules.text.clone()) } else { None };
+    let rules = data.rules.enabled.then_some(data.rules.text.clone());
     Success(SuccessResult { rules })
 }
