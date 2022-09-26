@@ -30,7 +30,6 @@ import { rollbar } from "../../utils/logging";
 import { toastStore } from "../../stores/toast";
 import { localMessageUpdates } from "../../stores/localMessageUpdates";
 import {
-    getStorageRequiredForMessage,
     indexRangeForChat,
     makeRtcConnections,
     mergeSendMessageResponse,
@@ -75,8 +74,20 @@ export function selectReaction(
 
     return (
         chat.kind === "direct_chat"
-            ? api.toggleDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
-            : api.toggleGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
+            ? api.toggleDirectChatReaction(
+                  chat.chatId,
+                  messageId,
+                  reaction,
+                  username,
+                  threadRootMessageIndex
+              )
+            : api.toggleGroupChatReaction(
+                  chat.chatId,
+                  messageId,
+                  reaction,
+                  username,
+                  threadRootMessageIndex
+              )
     )
         .then((resp) => {
             if (resp !== "added" && resp !== "removed") {

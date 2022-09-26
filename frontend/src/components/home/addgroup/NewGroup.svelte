@@ -16,12 +16,12 @@
     import { iconSize } from "../../../stores/iconSize";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import Rules from "../groupdetails/Rules.svelte";
 
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
-    const MAX_RULES_LENGTH = 1024;
 
     export let candidateGroup: CandidateGroupChat;
     export let busy: boolean;
@@ -53,10 +53,6 @@
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
-    }
-
-    function toggleRules() {
-        candidateGroup.rules.enabled = !candidateGroup.rules.enabled;
     }
 </script>
 
@@ -102,7 +98,7 @@
 
                     <Checkbox
                         id="is-public"
-                        toggle={true}
+                        toggle
                         on:change={toggleScope}
                         label={$_("group.public")}
                         checked={candidateGroup.isPublic} />
@@ -142,17 +138,7 @@
             </div>
         </CollapsibleCard>
         <CollapsibleCard open={groupRulesOpen} headerText={$_("group.groupRules")}>
-            <TextArea
-                bind:value={candidateGroup.rules.text}
-                minlength={0}
-                maxlength={MAX_RULES_LENGTH}
-                rows={12}
-                placeholder={$_("group.rules.placeholder")} />
-            <Checkbox
-                id="enable-rules"
-                on:change={toggleRules}
-                label={$_("group.rules.enable")}
-                checked={candidateGroup.rules.enabled} />
+            <Rules bind:rules={candidateGroup.rules} />
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
             <GroupPermissionsEditor

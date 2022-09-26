@@ -417,7 +417,8 @@
         "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen",
         "rules": {
             "enable": "Regeln aktivieren",
-            "placeholder": "wie lauten die Gruppenregeln?"
+            "placeholder": "wie lauten die Gruppenregeln?",
+            "instructions": "Wenn diese Option aktiviert ist, müssen neue Benutzer den Regeln zustimmen, bevor sie der Gruppe beitreten können"
         },
         "groupRules": "Gruppenregeln",
         "rulesUpdateFailed": "Leider konnten wir Ihre Gruppenregeln nicht aktualisieren"

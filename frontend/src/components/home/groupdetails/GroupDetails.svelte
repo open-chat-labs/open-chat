@@ -50,12 +50,11 @@
     import { rollbar } from "../../../utils/logging";
     import { currentUserKey } from "../../../stores/user";
     import { UnsupportedValueError } from "utils/error";
-    import Checkbox from "../../Checkbox.svelte";
+    import Rules from "./Rules.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
-    const MAX_RULES_LENGTH = 1024;
     const dispatch = createEventDispatcher();
 
     const api = getContext<ServiceContainer>(apiKey);
@@ -77,7 +76,7 @@
               }
             : undefined,
         permissions: { ...chat.permissions },
-        rules,
+        rules: { ...rules },
     };
 
     $: {
@@ -110,7 +109,7 @@
                   }
                 : undefined,
             permissions: { ...chat.permissions },
-            rules,
+            rules: { ...rules },
         };
         originalGroup = { ...chat };
         if (canInvite) {
@@ -443,23 +442,14 @@
             open={$groupRulesOpen}
             headerText={$_("group.groupRules")}>
             {#if canEdit}
-                <TextArea
-                    disabled={saving || !canEdit || !updatedGroup.rules.enabled}
-                    bind:value={updatedGroup.rules.text}
-                    minlength={0}
-                    maxlength={MAX_RULES_LENGTH}
-                    placeholder={$_("group.rules.placeholder")} />
-
-                <Checkbox
-                    id="enable-rules"
-                    label={$_("group.rules.enable")}
-                    checked={updatedGroup.rules.enabled} />
-
-                <Button
-                    on:click={updateRules}
-                    fill
-                    disabled={!canEdit || !rulesDirty || saving}
-                    loading={saving}>{$_("update")}</Button>
+                <Rules bind:rules={updatedGroup.rules} />
+                <div class="rules-button">
+                    <Button
+                        on:click={updateRules}
+                        fill
+                        disabled={!canEdit || !rulesDirty || saving}
+                        loading={saving}>{$_("update")}</Button>
+                </div>
             {:else if rules.enabled}
                 <fieldset>
                     <legend>
@@ -632,6 +622,10 @@
     }
 
     .update-permissions {
+        margin-top: $sp4;
+    }
+
+    .rules-button {
         margin-top: $sp4;
     }
 </style>

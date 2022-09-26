@@ -418,7 +418,8 @@
         "permissionsUpdateFailed": "Actualización de permisos fallida",
         "rules": {
             "enable": "Habilitar reglas",
-            "placeholder": "¿Cuáles son las reglas del grupo?"
+            "placeholder": "¿Cuáles son las reglas del grupo?",
+            "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo"
         },
         "groupRules": "Reglas de grupo",
         "rulesUpdateFailed": "Lo sentimos, no pudimos actualizar las reglas de su grupo."

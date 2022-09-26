@@ -416,7 +416,8 @@
         "permissionsUpdateFailed": "La mise à jour des autorisations a échoué",
         "rules": {
             "enable": "Activer les règles",
-            "placeholder": "quelles sont les règles du groupe?"
+            "placeholder": "quelles sont les règles du groupe?",
+            "instructions": "Si cette option est activée, les nouveaux utilisateurs doivent accepter les règles avant de pouvoir rejoindre le groupe"
         },
         "groupRules": "Règles de groupe",
         "rulesUpdateFailed": "Désolé, nous n'avons pas pu mettre à jour les règles de votre groupe"

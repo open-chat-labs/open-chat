@@ -417,7 +417,8 @@
         "permissionsUpdateFailed": "権限の更新に失敗しました",
         "rules": {
             "enable": "ルールを有効にする",
-            "placeholder": "グループのルールは？"
+            "placeholder": "グループのルールは？",
+            "instructions": "有効にすると、新しいユーザーはグループに参加する前にルールに同意する必要があります"
         },
         "groupRules": "グループルール",
         "rulesUpdateFailed": "グループ ルールを更新できませんでした"

@@ -418,7 +418,8 @@
         "permissionsUpdateFailed": "Cập nhật quyền không thành công",
         "rules": {
             "enable": "Bật quy tắc",
-            "placeholder": "các quy tắc nhóm là gì?"
+            "placeholder": "các quy tắc nhóm là gì?",
+            "instructions": "Nếu được bật, người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia nhóm"
         },
         "groupRules": "Quy tắc nhóm",
         "rulesUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật các quy tắc nhóm của bạn"

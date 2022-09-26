@@ -23,6 +23,7 @@ export interface Theme {
     error: string;
     accent: string;
     accentDarker: string;
+    disabledTxt: string;
 
     placeholder: string;
 

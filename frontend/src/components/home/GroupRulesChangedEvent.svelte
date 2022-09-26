@@ -15,7 +15,7 @@
     $: changedByStr = me ? $_("you") : $userStore[event.changedBy]?.username ?? $_("unknownUser");
     $: templateValues = {
         values: {
-            changed: "groupRules",
+            changed: $_("groupRules"),
             changedBy: changedByStr,
         },
     };
