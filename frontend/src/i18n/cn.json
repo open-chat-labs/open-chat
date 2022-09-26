@@ -418,7 +418,9 @@
         "rules": {
             "enable": "启用规则",
             "placeholder": "什么是小组规则？"
-        }
+        },
+        "groupRules": "组规则",
+        "rulesUpdateFailed": "抱歉，我们无法更新您的群组规则"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -600,5 +602,11 @@
         "title": "请切换到我们的新域",
         "continue": "继续",
         "blurb": "您当前正在使用 [{currentDomain}]({currentDomain}) 域。<br /><br />您将不会收到来自此旧域的通知，并且很快将完全停用。<br /><br /> *要继续使用 OpenChat 并充分受益于持续的性能优化，请切换到我们的新域 [https://oc.app](https://oc.app)*<br /><br />如果您已将站点保存到主屏幕，则需要从新域中删除/卸载并再次保存到主屏幕。<br/><br/>"
-    }
+    },
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请链接",
+    "groupRules": "组规则",
+    "groupRulesEnabled": "{changedBy} 启用组规则",
+    "groupRulesDisabled": "{changedBy} 禁用组规则",
+    "groupRulesTooShort": "组规则不能为空",
+    "groupRulesTooLong": "群规太长"
 }

@@ -415,7 +415,13 @@
         "welcome": "Chào mừng bạn đến",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
-        "permissionsUpdateFailed": "Cập nhật quyền không thành công"
+        "permissionsUpdateFailed": "Cập nhật quyền không thành công",
+        "rules": {
+            "enable": "Bật quy tắc",
+            "placeholder": "các quy tắc nhóm là gì?"
+        },
+        "groupRules": "Quy tắc nhóm",
+        "rulesUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật các quy tắc nhóm của bạn"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -597,5 +603,10 @@
         "title": "Vui lòng chuyển sang miền mới của chúng tôi",
         "continue": "Tiếp tục",
         "blurb": "Bạn hiện đang sử dụng miền [{currentDomain}] ({currentDomain}).<br /><br /> Bạn sẽ không nhận được thông báo từ miền kế thừa này và miền này sẽ sớm bị gỡ bỏ hoàn toàn.<br /><br /> * Để tiếp tục sử dụng OpenChat và hưởng lợi đầy đủ từ việc tối ưu hóa hiệu suất liên tục, vui lòng chuyển sang miền mới của chúng tôi [https://oc.app] (https://oc.app) *<br /><br /> Nếu bạn đã lưu trang web vào màn hình chính của mình, bạn sẽ cần phải xóa / gỡ cài đặt và lưu lại vào màn hình chính từ miền mới.<br/><br/>"
-    }
+    },
+    "groupRules": "quy tắc nhóm",
+    "groupRulesEnabled": "{changedBy} đã bật quy tắc nhóm",
+    "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm",
+    "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
+    "groupRulesTooLong": "Nội quy nhóm quá dài"
 }

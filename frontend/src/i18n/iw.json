@@ -426,7 +426,13 @@
         "welcome": "ברוך הבא ל",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף לקבוצה זו באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
-        "permissionsUpdateFailed": "עדכון ההרשאות נכשל"
+        "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
+        "rules": {
+            "enable": "אפשר כללים",
+            "placeholder": "מה הם חוקי הקבוצה?"
+        },
+        "groupRules": "חוקי הקבוצה",
+        "rulesUpdateFailed": "מצטערים שלא הצלחנו לעדכן את חוקי הקבוצה שלך"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -594,5 +600,10 @@
         "title": "נא לעבור לדומיין החדש שלנו",
         "continue": "לְהַמשִׁיך",
         "blurb": "אתה משתמש כרגע בדומיין [{currentDomain}]({currentDomain}).<br /><br /> לא תקבל התראות מדומיין מדור קודם זה ובקרוב הוא יופסק לחלוטין.<br /><br /> *כדי להמשיך להשתמש ב-OpenChat ולהפיק תועלת מלאה מאופטימיזציית ביצועים מתמשכת, עבור לדומיין החדש שלנו [https://oc.app](https://oc.app)*<br /><br /> אם שמרת את האתר במסך הבית שלך תצטרך למחוק/להסיר את ההתקנה ולשמור שוב במסך הבית מהדומיין החדש.<br/><br/>"
-    }
+    },
+    "groupRules": "חוקי הקבוצה",
+    "groupRulesEnabled": "{changedBy} הפעילה את כללי הקבוצה",
+    "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה",
+    "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
+    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי"
 }
