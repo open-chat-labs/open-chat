@@ -21,7 +21,7 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     IndexRange,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
@@ -51,7 +51,7 @@ import {
     sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
-    toggleReactionResponse,
+    addRemoveReactionResponse,
     unblockResponse,
     withdrawCryptoResponse,
     transferWithinGroupResponse,
@@ -461,22 +461,40 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    toggleReaction(
+    addReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
+    ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
-            this.userService.toggle_reaction({
+            this.userService.add_reaction({
                 user_id: Principal.fromText(otherUserId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
                 username,
             }),
-            toggleReactionResponse
+            addRemoveReactionResponse
+        );
+    }
+
+    @profile("userClient")
+    removeReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.handleResponse(
+            this.userService.remove_reaction({
+                user_id: Principal.fromText(otherUserId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                reaction,
+            }),
+            addRemoveReactionResponse
         );
     }
 

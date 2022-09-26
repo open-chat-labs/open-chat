@@ -29,6 +29,18 @@ export type AddParticipantsResponse = {
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'ParticipantLimitReached' : number };
+export interface AddReactionArgs {
+  'username' : string,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type AddReactionResponse = { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : EventIndex } |
+  { 'InvalidReaction' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -749,6 +761,16 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CannotRemoveSelf' : null } |
   { 'CannotRemoveUser' : null } |
   { 'InternalError' : string };
+export interface RemoveReactionArgs {
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type RemoveReactionResponse = { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : EventIndex };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -1011,6 +1033,7 @@ export interface _SERVICE {
     [AddParticipantsArgs],
     AddParticipantsResponse,
   >,
+  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
@@ -1047,6 +1070,7 @@ export interface _SERVICE {
     [RemoveParticipantArgs],
     RemoveParticipantResponse,
   >,
+  'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'reset_invite_code' : ActorMethod<
     [ResetInviteCodeArgs],
     ResetInviteCodeResponse,
