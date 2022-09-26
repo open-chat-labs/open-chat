@@ -9,6 +9,7 @@ fn main() {
     generate_candid_method!(group, thread_previews, query);
     generate_candid_method!(group, invite_code, query);
     generate_candid_method!(group, public_summary, query);
+    generate_candid_method!(group, rules, query);
     generate_candid_method!(group, search_messages, query);
     generate_candid_method!(group, selected_initial, query);
     generate_candid_method!(group, selected_updates, query);
