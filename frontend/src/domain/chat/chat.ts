@@ -779,10 +779,7 @@ export type GroupRules = {
     enabled: boolean;
 };
 
-export const defaultGroupRules = `- No harassment or bigotry
-- No incitement of violence or promotion of violent ideologies
-- No violent or suggestive material involving minors
-- No impersonating other people in a deceptive or misleading manner
+export const defaultGroupRules = `- No impersonating other people in a deceptive or misleading manner
 - Do not share intentionally false or misleading information
 - Keep messages relevant to the group
 

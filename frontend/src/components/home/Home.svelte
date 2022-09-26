@@ -102,12 +102,33 @@
     export let user: CreatedUser;
     export let logout: () => void;
 
-    type ConfirmAction = "leave" | "delete" | "makePrivate";
-    type ConfirmActionEvent = {
-        kind: ConfirmAction;
+    type ConfirmActionEvent =
+        | ConfirmLeaveEvent
+        | ConfirmDeleteEvent
+        | ConfirmMakePrivateEvent
+        | ConfirmRulesEvent;
+
+    interface ConfirmLeaveEvent {
+        kind: "leave";
         chatId: string;
-        doubleCheck: { challenge: string; response: string } | undefined;
-    };
+    }
+
+    interface ConfirmDeleteEvent {
+        kind: "delete";
+        chatId: string;
+        doubleCheck: { challenge: string; response: string };
+    }
+
+    interface ConfirmMakePrivateEvent {
+        kind: "makePrivate";
+        chatId: string;
+    }
+
+    interface ConfirmRulesEvent {
+        kind: "rules";
+        group: GroupChatSummary;
+        select: boolean;
+    }
 
     enum ModalType {
         None,
@@ -645,6 +666,10 @@
                 return $_("irreversible");
             case "makePrivate":
                 return $_("confirmMakeGroupPrivate");
+            case "rules": {
+                const agreeMessage = $_("group.rules.agree");
+                return `${agreeMessage}\n\n${$currentChatRules.text}`;
+            }
         }
     }
 
@@ -672,6 +697,8 @@
                 return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
+            case "rules":
+                return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
                 return Promise.reject();
         }
@@ -880,10 +907,23 @@
     }
 
     function joinGroup(ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>) {
-        joining = ev.detail.group;
         const group = ev.detail.group;
+        const select = ev.detail.select;
+        if (!$currentChatRules.enabled) {
+            doJoinGroup(group, select);
+        } else {
+            confirmActionEvent = {
+                kind: "rules",
+                group,
+                select,
+            };
+        }
+    }
 
-        api.joinGroup(group.chatId)
+    async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
+        joining = group;
+        await api
+            .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
@@ -904,9 +944,9 @@
                 }
             })
             .then((success) => {
-                if (success && ev.detail.select) {
+                if (success && select) {
                     hotGroups = { kind: "idle" };
-                    push(`/${ev.detail.group.chatId}`);
+                    push(`/${group.chatId}`);
                 }
             })
             .catch((err) => {
@@ -1146,7 +1186,9 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.doubleCheck}
+        doubleCheck={confirmActionEvent.kind === "delete"
+            ? confirmActionEvent.doubleCheck
+            : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}

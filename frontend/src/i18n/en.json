@@ -442,7 +442,8 @@
         "rules": {
             "enable": "Enable rules",
             "placeholder": "what are the group rules?",
-            "instructions": "If enabled, new users must agree to the rules before they can join the group"
+            "instructions": "If enabled, new users must agree to the rules before they can join the group",
+            "agree": "To join this group you must first agree to these rules."
         },
         "groupRules": "Group rules",
         "rulesUpdateFailed": "Sorry we were unable to update your group rules"
