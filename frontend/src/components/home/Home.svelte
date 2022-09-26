@@ -403,7 +403,7 @@
         }
 
         const chat = $serverChatSummariesStore[chatId];
-        if (chat === undefined) {
+        if (chat === undefined || chat.latestEventIndex >= message.index) {
             return;
         }
 
