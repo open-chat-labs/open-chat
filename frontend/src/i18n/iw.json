@@ -426,11 +426,7 @@
         "welcome": "ברוך הבא ל",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף לקבוצה זו באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
-        "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
-        "rules": {
-            "enable": "אפשר כללים",
-            "placeholder": "מה הם חוקי הקבוצה?"
-        }
+        "permissionsUpdateFailed": "עדכון ההרשאות נכשל"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -516,6 +512,7 @@
     "thisIsPrivateGroupWithN": "זוהי קבוצה פרטית עם חברי {number}",
     "copy": "עותק",
     "failedToShareLink": "שיתוף הקישור נכשל",
+    "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה",
     "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫",
     "memberIsTyping": "{username} מקליד",
@@ -593,10 +590,9 @@
     "archiveChatFailed": "העברת הצ'אט לארכיון נכשלה",
     "unarchiveChatFailed": "ביטול הארכיון של הצ'אט נכשל",
     "unarchiveChat": "בטל מהארכיון של הצ'אט",
-    "groupRules": "חוקי הקבוצה",
-    "groupRulesEnabled": "{changedBy} הפעילה את כללי הקבוצה",
-    "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה",
-    "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
-    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי",
-    "groupInviteChangedBy": "{changedBy} {changed} קישור ההזמנה לקבוצה"
+    "switchDomain": {
+        "title": "נא לעבור לדומיין החדש שלנו",
+        "continue": "לְהַמשִׁיך",
+        "blurb": "אתה משתמש כרגע בדומיין [{currentDomain}]({currentDomain}).<br /><br /> לא תקבל התראות מדומיין מדור קודם זה ובקרוב הוא יופסק לחלוטין.<br /><br /> *כדי להמשיך להשתמש ב-OpenChat ולהפיק תועלת מלאה מאופטימיזציית ביצועים מתמשכת, עבור לדומיין החדש שלנו [https://oc.app](https://oc.app)*<br /><br /> אם שמרת את האתר במסך הבית שלך תצטרך למחוק/להסיר את ההתקנה ולשמור שוב במסך הבית מהדומיין החדש.<br/><br/>"
+    }
 }

@@ -415,11 +415,7 @@
         "welcome": "Chào mừng bạn đến",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
-        "permissionsUpdateFailed": "Cập nhật quyền không thành công",
-        "rules": {
-            "enable": "Bật quy tắc",
-            "placeholder": "các quy tắc nhóm là gì?"
-        }
+        "permissionsUpdateFailed": "Cập nhật quyền không thành công"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -519,6 +515,7 @@
     "thisIsPrivateGroupWithN": "Đây là một nhóm riêng tư có {number} thành viên",
     "copy": "Sao chép",
     "failedToShareLink": "Không chia sẻ được liên kết",
+    "groupInviteChangedBy": "{changedBy} {changed} mời nhóm",
     "failedToLeaveGroup": "Đã xảy ra lỗi khi cố gắng xóa bạn khỏi nhóm",
     "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫",
     "memberIsTyping": "{username} đang nhập",
@@ -596,10 +593,9 @@
     "archiveChatFailed": "Không lưu trữ được cuộc trò chuyện",
     "unarchiveChatFailed": "Không thể hủy lưu trữ cuộc trò chuyện",
     "unarchiveChat": "giải nén con mèo",
-    "groupRules": "quy tắc nhóm",
-    "groupRulesEnabled": "{changedBy} đã bật quy tắc nhóm",
-    "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm",
-    "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
-    "groupRulesTooLong": "Nội quy nhóm quá dài",
-    "groupInviteChangedBy": "{changedBy} {changed} liên kết mời nhóm"
+    "switchDomain": {
+        "title": "Vui lòng chuyển sang miền mới của chúng tôi",
+        "continue": "Tiếp tục",
+        "blurb": "Bạn hiện đang sử dụng miền [{currentDomain}] ({currentDomain}).<br /><br /> Bạn sẽ không nhận được thông báo từ miền kế thừa này và miền này sẽ sớm bị gỡ bỏ hoàn toàn.<br /><br /> * Để tiếp tục sử dụng OpenChat và hưởng lợi đầy đủ từ việc tối ưu hóa hiệu suất liên tục, vui lòng chuyển sang miền mới của chúng tôi [https://oc.app] (https://oc.app) *<br /><br /> Nếu bạn đã lưu trang web vào màn hình chính của mình, bạn sẽ cần phải xóa / gỡ cài đặt và lưu lại vào màn hình chính từ miền mới.<br/><br/>"
+    }
 }

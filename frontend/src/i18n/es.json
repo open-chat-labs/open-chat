@@ -415,11 +415,7 @@
         "welcome": "Bienvenido a",
         "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros.",
         "privateGroupInfo": "Los usuarios no pueden unirse a este grupo libremente. Deben ser agregados o invitados por un miembro autorizado.",
-        "permissionsUpdateFailed": "Actualización de permisos fallida",
-        "rules": {
-            "enable": "Habilitar reglas",
-            "placeholder": "¿Cuáles son las reglas del grupo?"
-        }
+        "permissionsUpdateFailed": "Actualización de permisos fallida"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -519,6 +515,7 @@
     "thisIsPrivateGroupWithN": "Este es un grupo privado con miembros {number}",
     "copy": "Dupdo",
     "failedToShareLink": "No se pudo compartir el enlace",
+    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo",
     "failedToLeaveGroup": "Se ha producido un error al intentar eliminarte del grupo.",
     "historyOffInfo": "Los nuevos miembros solo verán los mensajes que lleguen después de unirse. 🤫",
     "memberIsTyping": "{username} está escribiendo",
@@ -596,10 +593,9 @@
     "archiveChatFailed": "No se pudo archivar el chat",
     "unarchiveChatFailed": "No se pudo desarchivar el chat",
     "unarchiveChat": "desarchivar gato",
-    "groupRules": "reglas de grupo",
-    "groupRulesEnabled": "{changedBy} habilitó las reglas del grupo",
-    "groupRulesDisabled": "{changedBy} inhabilitó las reglas del grupo",
-    "groupRulesTooShort": "Las reglas del grupo no deben estar vacías.",
-    "groupRulesTooLong": "Las reglas del grupo son demasiado largas.",
-    "groupInviteChangedBy": "{changedBy} {changed} el enlace de invitación del grupo"
+    "switchDomain": {
+        "title": "Cambia a nuestro nuevo dominio",
+        "continue": "Continuar",
+        "blurb": "Actualmente estás usando el dominio [{currentDomain}]({currentDomain}).<br /><br /> No recibirá notificaciones de este dominio heredado y pronto se retirará por completo.<br /><br /> *Para continuar usando OpenChat y beneficiarse plenamente de las optimizaciones de rendimiento en curso, cambie a nuestro nuevo dominio [https://oc.app](https://oc.app)*<br /><br /> Si guardó el sitio en su pantalla de inicio, deberá eliminar/desinstalar y guardar en la pantalla de inicio nuevamente desde el nuevo dominio.<br/><br/>"
+    }
 }

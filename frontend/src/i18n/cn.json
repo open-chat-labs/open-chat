@@ -596,10 +596,9 @@
     "unarchiveChatFailed": "无法取消归档聊天",
     "unarchiveChat": "解压猫",
     "removeMemberFailed": "无法删除成员",
-    "groupRules": "组规则",
-    "groupRulesEnabled": "{changedBy} 启用组规则",
-    "groupRulesDisabled": "{changedBy} 禁用组规则",
-    "groupRulesTooShort": "组规则不能为空",
-    "groupRulesTooLong": "群规太长",
-    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请链接"
+    "switchDomain": {
+        "title": "请切换到我们的新域",
+        "continue": "继续",
+        "blurb": "您当前正在使用 [{currentDomain}]({currentDomain}) 域。<br /><br />您将不会收到来自此旧域的通知，并且很快将完全停用。<br /><br /> *要继续使用 OpenChat 并充分受益于持续的性能优化，请切换到我们的新域 [https://oc.app](https://oc.app)*<br /><br />如果您已将站点保存到主屏幕，则需要从新域中删除/卸载并再次保存到主屏幕。<br/><br/>"
+    }
 }

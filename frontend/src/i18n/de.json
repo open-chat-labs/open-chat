@@ -414,11 +414,7 @@
         "welcome": "Willkommen zu",
         "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar",
         "privateGroupInfo": "Benutzer können dieser Gruppe nicht frei beitreten. Sie müssen entweder hinzugefügt oder von einem autorisierten Mitglied eingeladen werden.",
-        "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen",
-        "rules": {
-            "enable": "Regeln aktivieren",
-            "placeholder": "wie lauten die Gruppenregeln?"
-        }
+        "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
@@ -518,6 +514,7 @@
     "thisIsPrivateGroupWithN": "Dies ist eine private Gruppe mit {number} Mitgliedern",
     "copy": "Kopieren",
     "failedToShareLink": "Link konnte nicht geteilt werden",
+    "groupInviteChangedBy": "{changedBy} {changed} die Gruppeneinladung",
     "failedToLeaveGroup": "Beim Versuch, Sie aus der Gruppe zu entfernen, ist ein Fehler aufgetreten",
     "historyOffInfo": "Neue Teilnehmer sehen nur Nachrichten, die nach ihrem Beitritt eingehen. 🤫",
     "memberIsTyping": "{username} tippt",
@@ -595,10 +592,9 @@
     "archiveChatFailed": "Chat konnte nicht archiviert werden",
     "unarchiveChatFailed": "Archivierung des Chats fehlgeschlagen",
     "unarchiveChat": "entarchivieren kat",
-    "groupRules": "Gruppenregeln",
-    "groupRulesEnabled": "{changedBy} hat die Gruppenregeln aktiviert",
-    "groupRulesDisabled": "{changedBy} hat die Gruppenregeln deaktiviert",
-    "groupRulesTooShort": "Die Gruppenregeln dürfen nicht leer sein",
-    "groupRulesTooLong": "Die Gruppenregeln sind zu lang",
-    "groupInviteChangedBy": "{changedBy} {changed} der Gruppeneinladungslink"
+    "switchDomain": {
+        "title": "Bitte wechseln Sie zu unserer neuen Domain",
+        "continue": "Fortsetzen",
+        "blurb": "Sie verwenden derzeit die Domain [{currentDomain}]({currentDomain}).<br /><br /> Sie erhalten keine Benachrichtigungen von dieser Legacy-Domain und sie wird bald vollständig eingestellt.<br /><br /> *Um OpenChat weiterhin zu nutzen und von den laufenden Leistungsoptimierungen voll zu profitieren, wechseln Sie bitte zu unserer neuen Domain [https://oc.app](https://oc.app)*<br /><br /> Wenn Sie die Website auf Ihrem Startbildschirm gespeichert haben, müssen Sie sie von der neuen Domain löschen/deinstallieren und erneut auf dem Startbildschirm speichern.<br/><br/>"
+    }
 }

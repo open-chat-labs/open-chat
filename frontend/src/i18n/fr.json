@@ -413,11 +413,7 @@
         "welcome": "Bienvenue à",
         "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
         "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé.",
-        "permissionsUpdateFailed": "La mise à jour des autorisations a échoué",
-        "rules": {
-            "enable": "Activer les règles",
-            "placeholder": "quelles sont les règles du groupe?"
-        }
+        "permissionsUpdateFailed": "La mise à jour des autorisations a échoué"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",
@@ -518,6 +514,7 @@
     "thisIsPrivateGroupWithN": "Ceci est un groupe privé avec {number} membres",
     "copy": "Copie",
     "failedToShareLink": "Impossible de partager le lien",
+    "groupInviteChangedBy": "{changedBy} {changed} l'invitation du groupe",
     "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe",
     "historyOffInfo": "Les nouveaux membres ne verront les messages arriver qu'après leur adhésion. 🤫",
     "memberIsTyping": "{username} est en train de taper",
@@ -595,10 +592,9 @@
     "archiveChatFailed": "Échec de l'archivage du chat",
     "unarchiveChatFailed": "Impossible de désarchiver le chat",
     "unarchiveChat": "Un-archive chat",
-    "groupRules": "règles de groupe",
-    "groupRulesEnabled": "{changedBy} a activé les règles de groupe",
-    "groupRulesDisabled": "{changedBy} a désactivé les règles de groupe",
-    "groupRulesTooShort": "Les règles du groupe ne doivent pas être vides",
-    "groupRulesTooLong": "Les règles du groupe sont trop longues",
-    "groupInviteChangedBy": "{changedBy} {changed} le lien d'invitation du groupe"
+    "switchDomain": {
+        "title": "Veuillez passer à notre nouveau domaine",
+        "continue": "Continuer",
+        "blurb": "Vous utilisez actuellement le domaine [{currentDomain}]({currentDomain}).<br /><br /> Vous ne recevrez pas de notifications de cet ancien domaine et il sera bientôt supprimé.<br /><br /> *Pour continuer à utiliser OpenChat et bénéficier pleinement des optimisations de performances en cours, veuillez passer à notre nouveau domaine [https://oc.app](https://oc.app)*<br /><br /> Si vous avez enregistré le site sur votre écran d&#39;accueil, vous devrez supprimer/désinstaller et enregistrer à nouveau sur l&#39;écran d&#39;accueil à partir du nouveau domaine.<br/><br/>"
+    }
 }
