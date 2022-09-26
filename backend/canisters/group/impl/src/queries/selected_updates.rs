@@ -114,6 +114,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         && result.blocked_users_removed.is_empty()
         && result.pinned_messages_added.is_empty()
         && result.pinned_messages_removed.is_empty()
+        && result.rules.is_none()
     {
         SuccessNoUpdates(latest_event_index)
     } else {
