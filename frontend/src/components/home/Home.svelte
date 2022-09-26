@@ -82,7 +82,6 @@
         focusThreadMessageIndex,
         currentChatDraftMessage,
     } from "../../stores/chat";
-    import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import {
         delegateToChatComponent,
