@@ -588,6 +588,22 @@ type PublicSummarySuccess =
         summary: PublicGroupSummary;
     };
 
+type RulesArgs =
+    record {
+        invite_code: opt nat64;
+    };
+
+type RulesResponse =
+    variant {
+        Success: RulesSuccess;
+        NotAuthorized;
+    };
+
+type RulesSuccess =
+    record {
+        rules: opt text;
+    };
+
 service: {
     // Owner only
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
@@ -633,4 +649,5 @@ service: {
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
     public_summary: (PublicSummaryArgs) -> (PublicSummaryResponse) query;
+    rules: (RulesArgs) -> (RulesResponse) query;
 }
