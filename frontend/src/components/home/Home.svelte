@@ -407,8 +407,6 @@
             return;
         }
 
-        setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
-
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         Promise.all([
             api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),

@@ -525,22 +525,6 @@ export function setCachedMessageFromSendResponse(
     };
 }
 
-export function setCachedMessageFromNotification(
-    chatId: string,
-    threadRootMessageIndex: number | undefined,
-    message: EventWrapper<Message>
-): void {
-    if (!process.env.CLIENT_CACHING) return;
-
-    if (db === undefined) {
-        throw new Error("Unable to open indexDB, cannot set message from notification");
-    }
-
-    setCachedMessage(db, chatId, message, threadRootMessageIndex).catch(
-        (err) => rollbar.error("Unable to write notification message to the cache", err)
-    );
-}
-
 async function setCachedMessage(
     db: Database,
     chatId: string,
