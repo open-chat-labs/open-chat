@@ -71,8 +71,8 @@ export function filterByChatType(
         }
         if (
             chat.kind == "group_chat" &&
-            !(chat.subtype?.isNns ?? false) &&
-            panel.kind === "proposal_filters"
+            (chat.previewed ||
+                (!(chat.subtype?.isNns ?? false) && panel.kind === "proposal_filters"))
         ) {
             return false;
         }

@@ -226,16 +226,21 @@
         }
     }
 
-    function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
+    async function newChatSelected(
+        chatId: string,
+        messageIndex?: number,
+        threadMessageIndex?: number
+    ): Promise<void> {
         interruptRecommended = true;
 
-        const chat = $chatSummariesStore[chatId];
+        let chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
+                return;
             } else {
                 const code = qs.get("code");
                 if (code) {
@@ -244,32 +249,24 @@
                         code,
                     };
                 }
-                previewChat(chatId).then((canPreview) => {
-                    if (canPreview) {
-                        setSelectedChat(
-                            api,
-                            $chatSummariesStore[chatId],
-                            messageIndex,
-                            threadMessageIndex
-                        );
-                        resetRightPanel();
-                        hotGroups = { kind: "idle" };
-                    } else {
-                        replace("/");
-                    }
-                });
-            }
-        } else {
-            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-            if (chat.archived) {
-                unarchiveChat(chatId);
-            }
+                if (!(await previewChat(chatId))) {
+                    replace("/");
+                    return;
+                }
 
-            // if it's a known chat let's select it
-            setSelectedChat(api, chat, messageIndex, threadMessageIndex);
-            resetRightPanel();
-            hotGroups = { kind: "idle" };
+                chat = $chatSummariesStore[chatId];
+            }
         }
+
+        // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+        if (chat.archived) {
+            unarchiveChat(chat.chatId);
+        }
+
+        // if it's a known chat let's select it
+        setSelectedChat(api, chat, messageIndex, threadMessageIndex);
+        resetRightPanel();
+        hotGroups = { kind: "idle" };
     }
 
     // extracting to a function to try to control more tightly what this reacts to
@@ -918,7 +915,7 @@
         const rules = await api.getGroupRules(group.chatId);
 
         if (rules === undefined) {
-            toastStore.showFailureToast("group.rules.getRulesFailed");
+            toastStore.showFailureToast("group.getRulesFailed");
             return;
         }
 

@@ -1190,6 +1190,7 @@ export function groupChatFromCandidate(
         latestThreads: [],
         subtype: undefined,
         archived: false,
+        previewed: false,
     };
 }
 

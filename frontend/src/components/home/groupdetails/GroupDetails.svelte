@@ -63,6 +63,7 @@
     export let chat: GroupChatSummary;
     export let memberCount: number;
     export let rules: GroupRules;
+    export let preview: boolean;
 
     let originalGroup = { ...chat };
     let updatedGroup = {
@@ -451,12 +452,7 @@
                         loading={saving}>{$_("update")}</Button>
                 </div>
             {:else if rules.enabled}
-                <fieldset>
-                    <legend>
-                        <Legend>{$_("groupRules")}</Legend>
-                    </legend>
-                    <Markdown text={rules.text} />
-                </fieldset>
+                <Markdown inline={false} text={rules.text} />
             {/if}
         </CollapsibleCard>
         {#if canInvite}

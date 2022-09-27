@@ -418,12 +418,12 @@
         "rules": {
             "enable": "Regeln aktivieren",
             "placeholder": "wie lauten die Gruppenregeln?",
-            "instructions": "Wenn diese Option aktiviert ist, müssen neue Benutzer den Regeln zustimmen, bevor sie der Gruppe beitreten können",
             "agree": "Um dieser Gruppe beizutreten, müssen Sie zuerst diesen Regeln zustimmen.",
-            "getRulesFailed": "Gruppenregeln konnten nicht abgerufen werden"
+            "instructions": "Neue Benutzer müssen den Regeln zustimmen, bevor sie der Gruppe beitreten können."
         },
         "groupRules": "Gruppenregeln",
-        "rulesUpdateFailed": "Leider konnten wir Ihre Gruppenregeln nicht aktualisieren"
+        "rulesUpdateFailed": "Leider konnten wir Ihre Gruppenregeln nicht aktualisieren",
+        "getRulesFailed": "Gruppenregeln konnten nicht abgerufen werden"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",

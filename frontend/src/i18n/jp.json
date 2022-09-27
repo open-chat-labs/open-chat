@@ -418,12 +418,12 @@
         "rules": {
             "enable": "ルールを有効にする",
             "placeholder": "グループのルールは？",
-            "instructions": "有効にすると、新しいユーザーはグループに参加する前にルールに同意する必要があります",
             "agree": "このグループに参加するには、まずこれらのルールに同意する必要があります。",
-            "getRulesFailed": "グループ ルールの取得に失敗しました"
+            "instructions": "新しいユーザーは、グループに参加する前にルールに同意する必要があります。"
         },
         "groupRules": "グループルール",
-        "rulesUpdateFailed": "グループ ルールを更新できませんでした"
+        "rulesUpdateFailed": "グループ ルールを更新できませんでした",
+        "getRulesFailed": "グループ ルールの取得に失敗しました"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",

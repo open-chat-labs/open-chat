@@ -779,8 +779,8 @@ export type GroupRules = {
     enabled: boolean;
 };
 
-export const defaultGroupRules = `- No impersonating other people in a deceptive or misleading manner
-- Do not share intentionally false or misleading information
+export const defaultGroupRules = `- Do not impersonate others in a deceptive or misleading manner
+- Do not intentionally share false or misleading information
 - Keep messages relevant to the group
 
 If you break the rules you might be blocked and/or have your message(s) deleted.`;
@@ -834,6 +834,7 @@ export type GroupChatSummary = DataContent &
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
+        previewed: boolean;
     };
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;

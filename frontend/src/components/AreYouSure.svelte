@@ -32,7 +32,7 @@
         <span slot="header">{$_("areYouSure")}</span>
         <span slot="body">
             <p>
-                <Markdown text={message} />
+                <Markdown inline={false} text={message} />
             </p>
 
             {#if doubleCheck !== undefined}
