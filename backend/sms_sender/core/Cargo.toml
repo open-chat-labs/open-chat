@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.53"
-candid = "0.7.15"
+candid = "0.7.17"
 futures = "0.3.21"
 garcon = "0.2.3"
 ic-agent = "0.20.0"
