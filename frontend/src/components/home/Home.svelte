@@ -37,6 +37,7 @@
     import { userStore } from "../../stores/user";
     import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
+    import { initNotificationsServiceWorker } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "../../domain/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
@@ -177,7 +178,8 @@
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(user.userId);
         rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
-        initNotificationStores(api, user.userId, (n) => notificationReceived(n));
+        initNotificationStores();
+        initNotificationsServiceWorker(api, user.userId, (n) => notificationReceived(n));
         startPruningLocalUpdates();
     });
 

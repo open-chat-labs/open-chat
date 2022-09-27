@@ -1,7 +1,7 @@
 import { push } from "svelte-spa-router";
 import type { Notification, NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { notificationsSoftDisabled } from "../stores/notifications";
+import { notificationsSoftDisabled, notificationStatus } from "../stores/notifications";
 import { toUint8Array } from "./base64";
 import { storeSoftDisabled } from "./caching";
 import { rollbar } from "./logging";
@@ -9,6 +9,38 @@ import { rollbar } from "./logging";
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
+
+export async function initNotificationsServiceWorker(
+    api: ServiceContainer,
+    userId: string,
+    onNotification: (notification: Notification) => void) : Promise<boolean>
+{
+    // Register a service worker if it hasn't already been done
+    const registration = await registerServiceWorker();
+    if (registration == null) {
+        return false;
+    }
+    // Ensure the service worker is updated to the latest version
+    registration.update();
+
+    navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "NOTIFICATION_RECEIVED") {
+            onNotification(event.data.data as Notification);
+        } else if (event.data.type === "NOTIFICATION_CLICKED") {
+            push(`/${event.data.path}`);
+        }
+    });
+
+    notificationStatus.subscribe((status) => {
+        if (status === "granted") {
+            trySubscribe(api, userId)
+        } else if (status === "soft-denied") {
+            unsubscribeNotifications(api, userId);
+        }
+    });
+
+    return true;
+}
 
 export function permissionToStatus(permission: NotificationPermission | "pending-init"): NotificationStatus {
     switch (permission) {
@@ -43,11 +75,11 @@ export function permissionStateToNotificationPermission(
 }
 
 export async function closeNotificationsForChat(chatId: string): Promise<void> {
-    const registration = await registerServiceWorker();
+    const registration = await getRegistration();
     if (registration != null) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
-            if (notification.data?.path === chatId) {
+            if (notification.data?.path.startsWith(chatId)) {
                 notification.close();
             }
         }
@@ -55,7 +87,7 @@ export async function closeNotificationsForChat(chatId: string): Promise<void> {
 }
 
 export async function unregister(): Promise<boolean> {
-    const registration = await registerServiceWorker();
+    const registration = await getRegistration();
     if (registration == null) {
         return false;
     }
@@ -64,7 +96,7 @@ export async function unregister(): Promise<boolean> {
 
 async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
     // Does the browser have all the support needed for web push
-    if (!supported()) {
+    if (!notificationsSupported) {
         return undefined;
     }
 
@@ -76,34 +108,14 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 }
 
-export async function trySubscribe(
+async function trySubscribe(
     api: ServiceContainer,
     userId: string,
-    onNotification: (notification: Notification) => void
 ): Promise<boolean> {
-    // Register a service worker if it hasn't already been done
-    const registration = await registerServiceWorker();
-    if (registration == null) {
+    const registration = await getRegistration();
+    if (!registration) {
         return false;
     }
-
-    // Ensure the service worker is updated to the latest version
-    registration.update();
-
-    // When a notification is received, if it contains a message, update the relevant chat
-    navigator.serviceWorker.addEventListener("message", (event) => {
-        if (event.data.type === "NOTIFICATION_RECEIVED") {
-            onNotification(event.data.data as Notification);
-        }
-    });
-
-    // When a notification is clicked the service worker sends us a message
-    // with the chat to select
-    navigator.serviceWorker.addEventListener("message", (event) => {
-        if (event.data.type === "NOTIFICATION_CLICKED") {
-            push(`/${event.data.path}`);
-        }
-    });
 
     // Check if the user has subscribed already
     let pushSubscription = await registration.pushManager.getSubscription();
@@ -173,12 +185,13 @@ export async function unsubscribeNotifications(
     api: ServiceContainer,
     userId: string
 ): Promise<void> {
-    await setSoftDisabled(true);
-    const registration = await registerServiceWorker();
-    if (registration != null) {
+    const registration = await getRegistration();
+    if (registration) {
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
-            await api.removeSubscription(userId, pushSubscription);
+            if (await api.subscriptionExists(userId, extract_p256dh_key(pushSubscription))) {
+                await api.removeSubscription(userId, pushSubscription);
+            }
         }
     }
 }
@@ -191,4 +204,8 @@ export async function setSoftDisabled(softDisabled: boolean): Promise<void> {
 
     // add to svelte store
     notificationsSoftDisabled.set(softDisabled);
+}
+
+async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
+    return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }

@@ -159,7 +159,6 @@
         on:showFaq
         on:showRoadmap
         {user}
-        on:unsubscribeNotifications
         on:profile
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
