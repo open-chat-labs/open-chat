@@ -3,13 +3,13 @@ use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_fondue::ic_manager::IcHandle;
-use types::{MessageContent, TextContent};
+use types::{GroupRules, MessageContent, TextContent};
 
-pub fn get_updates_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn get_updates_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(get_updates_tests_impl(handle, ctx));
 }
 
-async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn get_updates_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -34,6 +34,8 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         avatar: None,
         history_visible_to_new_joiners: false,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
     let chat_id1 = create_group(&user1_agent, user1_id, &create_group_args1, vec![user2_id, user3_id]).await;
 
@@ -44,6 +46,8 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         avatar: None,
         history_visible_to_new_joiners: false,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
     let chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
 
@@ -91,7 +95,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
-    let initial_state_args = user_canister::initial_state::Args {};
+    let initial_state_args = user_canister::initial_state::Args { disable_cache: None };
     let initial_state_response = user_canister_client::initial_state(&user1_agent, &user1_id.into(), &initial_state_args)
         .await
         .unwrap();

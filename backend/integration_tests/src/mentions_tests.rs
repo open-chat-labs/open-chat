@@ -6,16 +6,16 @@ use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
 use types::{
-    CanisterId, ChatEvent, ChatSummary, ChatSummaryUpdates, MessageContent, SubscriptionInfo, SubscriptionKeys, TextContent,
-    User, UserId,
+    CanisterId, ChatEvent, ChatSummary, ChatSummaryUpdates, GroupRules, MessageContent, SubscriptionInfo, SubscriptionKeys,
+    TextContent, User, UserId,
 };
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
-pub fn mentions_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn mentions_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(mentions_tests_impl(handle, ctx));
 }
 
-async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -50,6 +50,8 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         avatar: None,
         history_visible_to_new_joiners: false,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
@@ -146,7 +148,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let last_updated;
     {
         print!("7. Confirm user::initial_state contains the mention... ");
-        let args = user_canister::initial_state::Args {};
+        let args = user_canister::initial_state::Args { disable_cache: None };
         match user_canister_client::initial_state(&user1_agent, &user1_id.into(), &args)
             .await
             .unwrap()
@@ -224,6 +226,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             from_index: 0.into(),
             to_index: 10.into(),
             invite_code: None,
+            latest_client_event_index: None,
         };
         match group_canister_client::events_range(&user1_agent, &chat_id.into(), &args)
             .await
