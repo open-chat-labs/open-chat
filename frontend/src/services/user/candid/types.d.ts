@@ -2,6 +2,18 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export type AccountIdentifier = Uint8Array;
+export interface AddReactionArgs {
+  'username' : string,
+  'user_id' : UserId,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type AddReactionResponse = { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : EventIndex } |
+  { 'InvalidReaction' : null };
 export interface AddRecommendedGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
   'groups' : Array<ChatId>,
@@ -769,6 +781,16 @@ export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
   { 'InternalError' : string };
+export interface RemoveReactionArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type RemoveReactionResponse = { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : EventIndex };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -1008,6 +1030,7 @@ export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
+  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'add_recommended_group_exclusions' : ActorMethod<
     [AddRecommendedGroupExclusionsArgs],
     AddRecommendedGroupExclusionsResponse,
@@ -1057,6 +1080,7 @@ export interface _SERVICE {
     [RelinquishGroupSuperAdminArgs],
     RelinquishGroupSuperAdminResponse,
   >,
+  'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_all_messages' : ActorMethod<
     [SearchAllMessagesArgs],
     SearchAllMessagesResponse,

@@ -406,6 +406,7 @@
             messageId: message.messageId,
             reaction,
             userId: user.userId,
+            added: kind === "add"
         });
     }
 
@@ -810,15 +811,9 @@
         const matchingMessage = findMessageById(message.messageId, events);
 
         if (matchingMessage !== undefined) {
-            const exists = containsReaction(
-                message.userId,
-                message.reaction,
-                matchingMessage.event.reactions
-            );
-
             localMessageUpdates.markReaction(message.messageId.toString(), {
                 reaction: message.reaction,
-                kind: exists ? "remove" : "add",
+                kind: message.added ? "add" : "remove",
                 userId: message.userId,
             });
         }

@@ -37,6 +37,7 @@ export type RemoteUserToggledReaction = WebRtcMessageCommon & {
     kind: "remote_user_toggled_reaction";
     messageId: bigint;
     reaction: string;
+    added: boolean;
 };
 
 export type RemoteUserRemovedMessage = WebRtcMessageCommon & {

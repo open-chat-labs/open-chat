@@ -13,7 +13,7 @@ import type {
     MarkReadResponse,
     Message,
     IndexRange,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
@@ -481,14 +481,23 @@ export class CachingUserClient implements IUserClient {
         return this.client.setAvatar(data);
     }
 
-    toggleReaction(
+    addReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(otherUserId, messageId, reaction, username, threadRootMessageIndex);
+    ): Promise<AddRemoveReactionResponse> {
+        return this.client.addReaction(otherUserId, messageId, reaction, username, threadRootMessageIndex);
+    }
+
+    removeReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.client.removeReaction(otherUserId, messageId, reaction, threadRootMessageIndex);
     }
 
     deleteMessage(

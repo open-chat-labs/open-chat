@@ -345,16 +345,9 @@
         const matchingMessage = findMessageById(message.messageId, $events);
 
         if (matchingMessage !== undefined) {
-            const messageIdString = message.messageId.toString();
-            const exists = containsReaction(
-                message.userId,
-                message.reaction,
-                matchingMessage.event.reactions
-            );
-
-            localMessageUpdates.markReaction(messageIdString, {
+            localMessageUpdates.markReaction(message.messageId.toString(), {
                 reaction: message.reaction,
-                kind: exists ? "remove" : "add",
+                kind: message.added ? "add" : "remove",
                 userId: message.userId,
             });
         }

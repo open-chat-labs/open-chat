@@ -12,7 +12,8 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiToggleReactionResponse,
+    ApiAddReactionResponse,
+    ApiRemoveReactionResponse,
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiJoinGroupResponse,
@@ -56,7 +57,7 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
@@ -225,12 +226,12 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
-    if ("Added" in candid) {
-        return "added";
+export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRemoveReactionResponse): AddRemoveReactionResponse {
+    if ("Success" in candid) {
+        return "success";
     }
-    if ("Removed" in candid) {
-        return "removed";
+    if ("NoChange" in candid) {
+        return "no_change";
     }
     if ("InvalidReaction" in candid) {
         return "invalid";
@@ -241,7 +242,10 @@ export function toggleReactionResponse(candid: ApiToggleReactionResponse): Toggl
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
-    throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiAddRemoveReactionResponse type received", candid);
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {

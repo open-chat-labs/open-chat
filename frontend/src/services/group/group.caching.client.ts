@@ -6,7 +6,7 @@ import type {
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     IndexRange,
     DeleteMessageResponse,
     EditMessageResponse,
@@ -225,13 +225,21 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.updateGroup(name, description, rules, permissions, avatar);
     }
 
-    toggleReaction(
+    addReaction(
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(messageId, reaction, username, threadRootMessageIndex);
+    ): Promise<AddRemoveReactionResponse> {
+        return this.client.addReaction(messageId, reaction, username, threadRootMessageIndex);
+    }
+
+    removeReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.client.removeReaction(messageId, reaction, threadRootMessageIndex);
     }
 
     deleteMessage(

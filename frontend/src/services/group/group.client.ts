@@ -8,7 +8,7 @@ import type {
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     IndexRange,
     DeleteMessageResponse,
     EditMessageResponse,
@@ -42,7 +42,7 @@ import {
     sendMessageResponse,
     removeMemberResponse,
     updateGroupResponse,
-    toggleReactionResponse,
+    addRemoveReactionResponse,
     deleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
@@ -306,20 +306,36 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    toggleReaction(
+    addReaction(
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
+    ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
-            this.groupService.toggle_reaction({
+            this.groupService.add_reaction({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
                 username,
             }),
-            toggleReactionResponse
+            addRemoveReactionResponse
+        );
+    }
+
+    @profile("groupClient")
+    removeReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.handleResponse(
+            this.groupService.remove_reaction({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                reaction,
+            }),
+            addRemoveReactionResponse
         );
     }
 

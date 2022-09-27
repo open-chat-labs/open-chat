@@ -1,6 +1,24 @@
 export const idlFactory = ({ IDL }) => {
-  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
+  const UserId = CanisterId;
+  const MessageId = IDL.Nat;
+  const MessageIndex = IDL.Nat32;
+  const AddReactionArgs = IDL.Record({
+    'username' : IDL.Text,
+    'user_id' : UserId,
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'reaction' : IDL.Text,
+  });
+  const EventIndex = IDL.Nat32;
+  const AddReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'Success' : EventIndex,
+    'InvalidReaction' : IDL.Null,
+  });
+  const Milliseconds = IDL.Nat64;
   const ChatId = CanisterId;
   const AddRecommendedGroupExclusionsArgs = IDL.Record({
     'duration' : IDL.Opt(Milliseconds),
@@ -25,7 +43,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const BioArgs = IDL.Record({});
   const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
-  const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const PermissionRole = IDL.Variant({
@@ -92,8 +109,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const MessageId = IDL.Nat;
-  const MessageIndex = IDL.Nat32;
   const DeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
@@ -318,7 +333,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
-  const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
@@ -761,6 +775,18 @@ export const idlFactory = ({ IDL }) => {
     'NotSuperAdmin' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RemoveReactionArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'reaction' : IDL.Text,
+  });
+  const RemoveReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'Success' : EventIndex,
+  });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -983,6 +1009,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CompletedCryptoTransaction,
   });
   return IDL.Service({
+    'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'add_recommended_group_exclusions' : IDL.Func(
         [AddRecommendedGroupExclusionsArgs],
         [AddRecommendedGroupExclusionsResponse],
@@ -1054,6 +1081,11 @@ export const idlFactory = ({ IDL }) => {
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],
         [RelinquishGroupSuperAdminResponse],
+        [],
+      ),
+    'remove_reaction' : IDL.Func(
+        [RemoveReactionArgs],
+        [RemoveReactionResponse],
         [],
       ),
     'search_all_messages' : IDL.Func(

@@ -6,7 +6,7 @@ import type {
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     IndexRange,
     Message,
     DeleteMessageResponse,
@@ -75,12 +75,17 @@ export interface IGroupClient {
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse>;
-    toggleReaction(
+    addReaction(
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse>;
+    ): Promise<AddRemoveReactionResponse>;
+    removeReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse>;
     deleteMessage(
         messageId: bigint,
         threadRootMessageIndex?: number

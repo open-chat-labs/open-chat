@@ -45,7 +45,7 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     UpdateGroupResponse,
-    ToggleReactionResponse,
+    AddRemoveReactionResponse,
     IndexRange,
     EventWrapper,
     DeleteMessageResponse,
@@ -904,14 +904,14 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.setAvatar(data);
     }
 
-    toggleGroupChatReaction(
+    addGroupChatReaction(
         chatId: string,
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
-        return this.getGroupClient(chatId).toggleReaction(
+    ): Promise<AddRemoveReactionResponse> {
+        return this.getGroupClient(chatId).addReaction(
             messageId,
             reaction,
             username,
@@ -919,18 +919,45 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
-    toggleDirectChatReaction(
+    removeGroupChatReaction(
+        chatId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.getGroupClient(chatId).removeReaction(
+            messageId,
+            reaction,
+            threadRootMessageIndex
+        );
+    }
+
+    addDirectChatReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
         username: string,
         threadRootMessageIndex?: number
-    ): Promise<ToggleReactionResponse> {
-        return this.userClient.toggleReaction(
+    ): Promise<AddRemoveReactionResponse> {
+        return this.userClient.addReaction(
             otherUserId,
             messageId,
             reaction,
             username,
+            threadRootMessageIndex
+        );
+    }
+
+    removeDirectChatReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.userClient.removeReaction(
+            otherUserId,
+            messageId,
+            reaction,
             threadRootMessageIndex
         );
     }

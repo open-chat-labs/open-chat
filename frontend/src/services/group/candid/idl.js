@@ -28,6 +28,23 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
   });
+  const MessageId = IDL.Nat;
+  const MessageIndex = IDL.Nat32;
+  const AddReactionArgs = IDL.Record({
+    'username' : IDL.Text,
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'reaction' : IDL.Text,
+  });
+  const EventIndex = IDL.Nat32;
+  const AddReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : EventIndex,
+    'InvalidReaction' : IDL.Null,
+  });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -57,8 +74,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const MessageId = IDL.Nat;
-  const MessageIndex = IDL.Nat32;
   const DeleteMessagesArgs = IDL.Record({
     'message_ids' : IDL.Vec(MessageId),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -291,7 +306,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
   });
-  const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'invite_code' : IDL.Opt(IDL.Nat64),
@@ -635,6 +649,18 @@ export const idlFactory = ({ IDL }) => {
     'CannotRemoveUser' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RemoveReactionArgs = IDL.Record({
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'reaction' : IDL.Text,
+  });
+  const RemoveReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : EventIndex,
+  });
   const ResetInviteCodeArgs = IDL.Record({});
   const ResetInviteCodeResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -881,6 +907,7 @@ export const idlFactory = ({ IDL }) => {
         [AddParticipantsResponse],
         [],
       ),
+    'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'delete_messages' : IDL.Func(
@@ -933,6 +960,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
+        [],
+      ),
+    'remove_reaction' : IDL.Func(
+        [RemoveReactionArgs],
+        [RemoveReactionResponse],
         [],
       ),
     'reset_invite_code' : IDL.Func(

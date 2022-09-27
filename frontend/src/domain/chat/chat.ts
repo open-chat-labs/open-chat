@@ -1159,9 +1159,9 @@ export type UpdateGroupResponse =
 
 export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group";
 
-export type ToggleReactionResponse =
-    | "added"
-    | "removed"
+export type AddRemoveReactionResponse =
+    | "success"
+    | "no_change"
     | "invalid"
     | "message_not_found"
     | "not_in_group"

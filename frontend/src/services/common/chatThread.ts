@@ -74,23 +74,15 @@ export function selectReaction(
 
     return (
         chat.kind === "direct_chat"
-            ? api.toggleDirectChatReaction(
-                  chat.chatId,
-                  messageId,
-                  reaction,
-                  username,
-                  threadRootMessageIndex
-              )
-            : api.toggleGroupChatReaction(
-                  chat.chatId,
-                  messageId,
-                  reaction,
-                  username,
-                  threadRootMessageIndex
-              )
+            ? kind == "add"
+                ? api.addDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
+                : api.removeDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            : kind === "add"
+                ? api.addGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
+                : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
     )
         .then((resp) => {
-            if (resp !== "added" && resp !== "removed") {
+            if (resp !== "success" && resp !== "no_change") {
                 undoLocally();
                 return false;
             }
