@@ -972,6 +972,7 @@ export const idlFactory = ({ IDL }) => {
         [ResetInviteCodeResponse],
         [],
       ),
+    'rules' : IDL.Func([RulesArgs], [RulesResponse], ['query']),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],

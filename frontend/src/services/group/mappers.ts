@@ -30,6 +30,7 @@ import type {
     ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
+    ApiRulesResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -78,7 +79,7 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
-import { optional } from "../../utils/mapping";
+import { identity, optional } from "../../utils/mapping";
 import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
@@ -279,7 +280,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRemoveReactionResponse): AddRemoveReactionResponse {
+export function addRemoveReactionResponse(
+    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
+): AddRemoveReactionResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -298,7 +301,10 @@ export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRe
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
-    throw new UnsupportedValueError("Unexpected ApiAddRemoveReactionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddRemoveReactionResponse type received",
+        candid
+    );
 }
 
 export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
@@ -1082,4 +1088,14 @@ export function registerProposalVoteResponse(
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
+}
+
+export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined {
+    if ("Success" in candid) {
+        const rules = optional(candid.Success.rules, identity);
+        return {
+            text: rules ?? "",
+            enabled: rules !== undefined,
+        };
+    }
 }

@@ -418,7 +418,9 @@
         "rules": {
             "enable": "启用规则",
             "placeholder": "什么是小组规则？",
-            "instructions": "如果启用，新用户必须同意规则才能加入群组"
+            "instructions": "如果启用，新用户必须同意规则才能加入群组",
+            "agree": "要加入此群组，您必须首先同意这些规则。",
+            "getRulesFailed": "获取组规则失败"
         },
         "groupRules": "组规则",
         "rulesUpdateFailed": "抱歉，我们无法更新您的群组规则"

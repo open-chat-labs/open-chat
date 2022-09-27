@@ -134,10 +134,10 @@
 
     function onGroupCreated(canisterId: string) {
         const url = `/${canisterId}`;
-        dispatch(
-            "groupCreated",
-            groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup)
-        );
+        dispatch("groupCreated", {
+            group: groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup),
+            rules: candidateGroup.rules,
+        });
         reset();
 
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route

@@ -71,7 +71,7 @@ export interface IGroupClient {
     updateGroup(
         name?: string,
         desc?: string,
-		rules?: GroupRules,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse>;
@@ -96,6 +96,7 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
+    getRules(): Promise<GroupRules | undefined>;
     getMessagesByMessageIndex(
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined

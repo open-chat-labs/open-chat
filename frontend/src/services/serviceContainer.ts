@@ -303,7 +303,7 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         name?: string,
         desc?: string,
-		rules?: GroupRules,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
@@ -1024,6 +1024,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getPublicGroupSummary(chatId: string): Promise<GroupChatSummary | undefined> {
         return this.getGroupClient(chatId).getPublicSummary();
+    }
+
+    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+        return this.getGroupClient(chatId).getRules();
     }
 
     getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {

@@ -63,6 +63,7 @@ import {
     registerProposalVoteResponse,
     apiOptionalGroupPermissions,
     apiGroupRules,
+    rulesResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -420,6 +421,19 @@ export class GroupClient extends CandidService implements IGroupClient {
             args
         ).catch((_err) => {
             // whatever error we get, just assume that we cannot get hold of the group
+            return undefined;
+        });
+    }
+
+    @profile("groupClient")
+    getRules(): Promise<GroupRules | undefined> {
+        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
+        return this.handleQueryResponse(
+            () => this.groupService.rules(args),
+            rulesResponse,
+            args
+        ).catch((_err) => {
+            // whatever error we get, just assume that we cannot get hold of the rules
             return undefined;
         });
     }

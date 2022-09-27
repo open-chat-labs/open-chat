@@ -218,7 +218,7 @@ export class CachingGroupClient implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
-		rules?: GroupRules,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
@@ -290,6 +290,10 @@ export class CachingGroupClient implements IGroupClient {
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
         return this.client.getPublicSummary();
+    }
+
+    getRules(): Promise<GroupRules | undefined> {
+        return this.client.getRules();
     }
 
     /**

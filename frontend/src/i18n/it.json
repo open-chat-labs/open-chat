@@ -418,7 +418,9 @@
         "rules": {
             "enable": "Abilita regole",
             "placeholder": "quali sono le regole del gruppo?",
-            "instructions": "Se abilitato, i nuovi utenti devono accettare le regole prima di poter entrare nel gruppo"
+            "instructions": "Se abilitato, i nuovi utenti devono accettare le regole prima di poter entrare nel gruppo",
+            "agree": "Per entrare a far parte di questo gruppo devi prima accettare queste regole.",
+            "getRulesFailed": "Impossibile ottenere le regole del gruppo"
         },
         "groupRules": "Regole di gruppo",
         "rulesUpdateFailed": "Spiacenti, non siamo riusciti ad aggiornare le regole del tuo gruppo"

@@ -128,6 +128,7 @@
         kind: "rules";
         group: GroupChatSummary;
         select: boolean;
+        rules: string;
     }
 
     enum ModalType {
@@ -668,7 +669,7 @@
                 return $_("confirmMakeGroupPrivate");
             case "rules": {
                 const agreeMessage = $_("group.rules.agree");
-                return `${agreeMessage}\n\n${$currentChatRules.text}`;
+                return `${agreeMessage}\n\n${confirmActionEvent.rules}`;
             }
         }
     }
@@ -906,16 +907,27 @@
         }
     }
 
-    function joinGroup(ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>) {
+    async function joinGroup(
+        ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>
+    ): Promise<void> {
         const group = ev.detail.group;
         const select = ev.detail.select;
-        if (!$currentChatRules.enabled) {
+
+        const rules = await api.getGroupRules(group.chatId);
+
+        if (rules === undefined) {
+            toastStore.showFailureToast("group.rules.getRulesFailed");
+            return;
+        }
+
+        if (!rules.enabled) {
             doJoinGroup(group, select);
         } else {
             confirmActionEvent = {
                 kind: "rules",
                 group,
                 select,
+                rules: rules.text,
             };
         }
     }
@@ -1018,9 +1030,12 @@
         currentChatDraftMessage.setTextContent(chatId, text);
     }
 
-    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
-        addOrReplaceChat(ev.detail);
-        if (ev.detail.public) {
+    function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
+        const group = ev.detail.group;
+        const rules = ev.detail.rules;
+        currentChatRules.set(group.chatId, rules);
+        addOrReplaceChat(group);
+        if (group.public) {
             trackEvent("public_group_created");
         } else {
             trackEvent("private_group_created");

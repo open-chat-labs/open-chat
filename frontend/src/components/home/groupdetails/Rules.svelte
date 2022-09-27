@@ -19,7 +19,7 @@
         bind:value={rules.text}
         minlength={0}
         maxlength={MAX_RULES_LENGTH}
-        rows={12}
+        rows={8}
         placeholder={$_("group.rules.placeholder")} />
     <div class="enabled">
         <Checkbox

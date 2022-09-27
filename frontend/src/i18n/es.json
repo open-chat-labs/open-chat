@@ -419,7 +419,9 @@
         "rules": {
             "enable": "Habilitar reglas",
             "placeholder": "¿Cuáles son las reglas del grupo?",
-            "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo"
+            "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo",
+            "agree": "Para unirse a este grupo, primero debe aceptar estas reglas.",
+            "getRulesFailed": "Error al obtener las reglas del grupo"
         },
         "groupRules": "Reglas de grupo",
         "rulesUpdateFailed": "Lo sentimos, no pudimos actualizar las reglas de su grupo."
