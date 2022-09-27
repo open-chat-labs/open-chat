@@ -199,6 +199,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: "transparent",
             },
 
+            date: {
+                bg: "rgba(100,100,100,0.7)",
+                txt: "inherit",
+            },
+
             msg: {
                 bg: cardBg,
                 txt: txtMed,
