@@ -9,7 +9,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.15"
+candid = "0.7.17"
 canister_client = { path = "../libraries/canister_client" }
 fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 futures = "0.3.21"
@@ -23,7 +23,7 @@ ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf
 ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
-ic-utils = "0.15.0"
+ic-utils = "0.20.0"
 itertools = "0.10.3"
 nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 notifications_canister = { path = "../canisters/notifications/api" }
@@ -41,7 +41,7 @@ user_index_canister = { path = "../canisters/user_index/api" }
 user_index_canister_client = { path = "../canisters/user_index/client" }
 
 [patch.crates-io]
-ic-agent = { git = "https://github.com/hpeebles/agent-rs", rev = "5631f655afb9970742f5356b94f15ab8c1dcf35d" }
+ic-agent = { git = "https://github.com/dfinity/agent-rs", rev = "ec59fc0f5034efd9e29bc8ee6e35d8a906239d2d" }
 
 [patch."https://github.com/dfinity-lab/lmdb-rs"]
 lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }
