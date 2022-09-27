@@ -33,7 +33,6 @@
     import { selectedAuthProviderStore } from "../stores/authProviders";
     import { isCanisterUrl } from "../utils/urls";
     import { unsubscribeNotifications } from "../utils/notifications";
-    import { notificationPermission } from "../stores/notifications";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -140,7 +139,6 @@
             identityState.set("logged_in");
 
             if (isCanisterUrl) {
-                notificationPermission.set("denied");
                 unsubscribeNotifications(api);
             }
         }

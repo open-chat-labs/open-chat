@@ -1,10 +1,9 @@
 import { push } from "svelte-spa-router";
 import type { Notification, NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { notificationsSoftDisabled, notificationStatus } from "../stores/notifications";
+import { notificationStatus, setSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
-import { storeSoftDisabled } from "./caching";
-import { rollbar } from "./logging";
+import { isCanisterUrl } from "../utils/urls";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
@@ -62,7 +61,7 @@ export function permissionToStatus(permission: NotificationPermission | "pending
 export const notificationsSupported = supported();
 
 function supported(): boolean {
-    return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    return !isCanisterUrl && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
 export function permissionStateToNotificationPermission(
@@ -190,16 +189,6 @@ export async function unsubscribeNotifications(api: ServiceContainer): Promise<v
             }
         }
     }
-}
-
-export async function setSoftDisabled(softDisabled: boolean): Promise<void> {
-    // add to indexdb so service worker has access
-    storeSoftDisabled(softDisabled).catch((err) =>
-        rollbar.error("Failed to set soft disabled", err)
-    );
-
-    // add to svelte store
-    notificationsSoftDisabled.set(softDisabled);
 }
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {

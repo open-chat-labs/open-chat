@@ -1,43 +1,52 @@
 import { derived, writable } from "svelte/store";
-import { getSoftDisabled } from "../utils/caching";
+import { getSoftDisabled, storeSoftDisabled } from "../utils/caching";
+import { rollbar } from "../utils/logging";
 import {
     notificationsSupported,
     permissionStateToNotificationPermission,
     permissionToStatus,
 } from "../utils/notifications";
 
-export const notificationsSoftDisabled = writable<boolean>(false);
-
-export const notificationPermission = writable<NotificationPermission | "pending-init">("pending-init");
+const softDisabledStore = writable<boolean>(false);
+const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
 
 export async function initNotificationStores(): Promise<void> {
     if (!notificationsSupported) {
-        notificationPermission.set("denied");
         return;
     }
 
     const softDisabled = await getSoftDisabled();
-    notificationsSoftDisabled.set(softDisabled);
+    softDisabledStore.set(softDisabled);
 
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
-            notificationPermission.set(permissionStateToNotificationPermission(perm.state));
-            perm.onchange = () => notificationPermission.set(permissionStateToNotificationPermission(perm.state));
+            browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
+            perm.onchange = () => browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
         });
     } else {
-        notificationPermission.set(Notification.permission);
+        browserPermissionStore.set(Notification.permission);
     }
 }
 
+export function setSoftDisabled(softDisabled: boolean): void {
+    // add to indexdb so service worker has access
+    storeSoftDisabled(softDisabled).catch((err) =>
+        rollbar.error("Failed to set soft disabled", err)
+    );
+
+    // add to svelte store
+    softDisabledStore.set(softDisabled);
+}
+
 export const notificationStatus = derived(
-    [notificationsSoftDisabled, notificationPermission],
-    ([$softDisabled, $perm]) => {
+    [softDisabledStore, browserPermissionStore],
+    ([softDisabled, browserPermission]) => {
         if (!notificationsSupported) {
             return "unsupported";
         }
-        if ($softDisabled) {
+        if (softDisabled) {
             return "soft-denied";
         }
-        return permissionToStatus($perm);
+        return permissionToStatus(browserPermission);
     }
 );

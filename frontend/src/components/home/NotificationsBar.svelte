@@ -1,9 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
-    import { askForNotificationPermission, setSoftDisabled } from "../../utils/notifications";
+    import { askForNotificationPermission } from "../../utils/notifications";
     import Link from "../Link.svelte";
-    import { notificationStatus } from "../../stores/notifications";
+    import { notificationStatus, setSoftDisabled } from "../../stores/notifications";
 
     $: console.log("STATUS: ", $notificationStatus);
 </script>

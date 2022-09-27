@@ -41,7 +41,7 @@
         focusThreadMessageIndex,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
-    import { setSoftDisabled } from "../../utils/notifications";
+    import { setSoftDisabled } from "../../stores/notifications";
 
     const dispatch = createEventDispatcher();
 
