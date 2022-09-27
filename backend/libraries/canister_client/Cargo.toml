@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 callback_canister = { path = "../../canisters/callback/api" }
-candid = "0.7.15"
+candid = "0.7.17"
 canister_client_macros = { path = "../canister_client_macros", features = ["ingress"] }
 dirs = "3.0.2"
 futures = "0.3.21"

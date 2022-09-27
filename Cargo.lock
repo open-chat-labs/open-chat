@@ -522,6 +522,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bls12_381"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62250ece575fa9b22068b3a8d59586f01d426dd7785522efd97632959e71c986"
+dependencies = [
+ "digest 0.9.0",
+ "ff",
+ "group",
+ "pairing",
+ "rand_core",
+ "subtle",
+]
+
+[[package]]
 name = "bucket_canister"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=aec9c57d0cac24850475549d1b8c14dd337a83ae#aec9c57d0cac24850475549d1b8c14dd337a83ae"
@@ -643,9 +657,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.7.16"
+version = "0.7.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7e4287605536419ac6ce9d76d3aa5733677ca8c7c2891079b2c71a345cc17a3"
+checksum = "f5e129401e8480393ca7060debaf75e07f0b150aa05ef043325515f5353ced57"
 dependencies = [
  "anyhow",
  "binread",
@@ -1667,6 +1681,7 @@ version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7391856def869c1c81063a03457c676fbcd419709c3dfb33d8d319de484b154d"
 dependencies = [
+ "byteorder",
  "ff",
  "rand_core",
  "subtle",
@@ -2036,8 +2051,7 @@ dependencies = [
 [[package]]
 name = "ic-agent"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "665da6fb50b32661c306ddc538ee5aa6f6d68f3d54b1649c1595403acaa552cb"
+source = "git+https://github.com/dfinity/agent-rs?rev=ec59fc0f5034efd9e29bc8ee6e35d8a906239d2d#ec59fc0f5034efd9e29bc8ee6e35d8a906239d2d"
 dependencies = [
  "async-trait",
  "base32",
@@ -2050,6 +2064,7 @@ dependencies = [
  "http-body",
  "hyper-rustls 0.23.0",
  "ic-types",
+ "ic-verify-bls-signature",
  "k256",
  "leb128",
  "mime",
@@ -2294,9 +2309,9 @@ dependencies = [
 
 [[package]]
 name = "ic-types"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a7d9569a4c91d5c9c202c1666f799a9761bab70a2b59464ee78c45b005e47b8"
+checksum = "79a17269dff0ec6ca4c3d04e18fca97d018ff53d809e6d92348fc22f9588e1a5"
 dependencies = [
  "crc32fast",
  "data-encoding",
@@ -2346,6 +2361,18 @@ dependencies = [
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "thiserror",
+]
+
+[[package]]
+name = "ic-verify-bls-signature"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583b1c03380cf86059160cc6c91dcbf56c7b5f141bf3a4f06bc79762d775fac4"
+dependencies = [
+ "bls12_381",
+ "lazy_static",
+ "pairing",
+ "sha2 0.9.9",
 ]
 
 [[package]]
@@ -3135,6 +3162,15 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "sha2 0.10.5",
+]
+
+[[package]]
+name = "pairing"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "135590d8bdba2b31346f9cd1fb2a912329f5135e832a4f422942eb6ead8b6b3b"
+dependencies = [
+ "group",
 ]
 
 [[package]]
