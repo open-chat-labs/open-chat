@@ -31,10 +31,15 @@ export async function initNotificationsServiceWorker(
     });
 
     notificationStatus.subscribe((status) => {
-        if (status === "granted") {
-            trySubscribe(api)
-        } else if (status === "soft-denied") {
-            unsubscribeNotifications(api);
+        switch (status) {
+            case "granted":
+                trySubscribe(api);
+                break;
+            case "pending-init":
+                break;
+            default:
+                unsubscribeNotifications(api);
+                break;
         }
     });
 
