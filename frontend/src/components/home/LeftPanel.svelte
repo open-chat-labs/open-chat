@@ -6,7 +6,6 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
-    import { unsubscribeNotifications } from "../../utils/notifications";
     import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -32,7 +31,6 @@
             on:showFaq
             on:showAbout
             on:userAvatarSelected
-            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:whatsHot
             on:newGroup
             on:profile
