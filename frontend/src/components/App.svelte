@@ -141,7 +141,7 @@
 
             if (isCanisterUrl) {
                 notificationPermission.set("denied");
-                unsubscribeNotifications(api, user.userId);
+                unsubscribeNotifications(api);
             }
         }
     }

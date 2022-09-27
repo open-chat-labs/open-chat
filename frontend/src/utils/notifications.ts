@@ -12,7 +12,6 @@ export const PUBLIC_VAPID_KEY =
 
 export async function initNotificationsServiceWorker(
     api: ServiceContainer,
-    userId: string,
     onNotification: (notification: Notification) => void) : Promise<boolean>
 {
     // Register a service worker if it hasn't already been done
@@ -33,9 +32,9 @@ export async function initNotificationsServiceWorker(
 
     notificationStatus.subscribe((status) => {
         if (status === "granted") {
-            trySubscribe(api, userId)
+            trySubscribe(api)
         } else if (status === "soft-denied") {
-            unsubscribeNotifications(api, userId);
+            unsubscribeNotifications(api);
         }
     });
 
@@ -108,10 +107,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 }
 
-async function trySubscribe(
-    api: ServiceContainer,
-    userId: string,
-): Promise<boolean> {
+async function trySubscribe(api: ServiceContainer): Promise<boolean> {
     const registration = await getRegistration();
     if (!registration) {
         return false;
@@ -121,7 +117,7 @@ async function trySubscribe(
     let pushSubscription = await registration.pushManager.getSubscription();
     if (pushSubscription) {
         // Check if the subscription has already been pushed to the notifications canister
-        if (await api.subscriptionExists(userId, extract_p256dh_key(pushSubscription))) {
+        if (await api.subscriptionExists(extract_p256dh_key(pushSubscription))) {
             return true;
         }
     } else {
@@ -134,7 +130,7 @@ async function trySubscribe(
 
     // Add the subscription to the user record on the notifications canister
     try {
-        await api.pushSubscription(userId, pushSubscription);
+        await api.pushSubscription(pushSubscription);
         return true;
     } catch (e) {
         console.log("Push subscription failed: ", e);
@@ -142,9 +138,7 @@ async function trySubscribe(
     }
 }
 
-async function subscribeUserToPush(
-    registration: ServiceWorkerRegistration
-): Promise<PushSubscription | null> {
+async function subscribeUserToPush(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
     const subscribeOptions = {
         userVisibleOnly: true,
         applicationServerKey: toUint8Array(PUBLIC_VAPID_KEY),
@@ -181,16 +175,13 @@ export async function askForNotificationPermission(): Promise<NotificationPermis
     return result;
 }
 
-export async function unsubscribeNotifications(
-    api: ServiceContainer,
-    userId: string
-): Promise<void> {
+export async function unsubscribeNotifications(api: ServiceContainer): Promise<void> {
     const registration = await getRegistration();
     if (registration) {
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
-            if (await api.subscriptionExists(userId, extract_p256dh_key(pushSubscription))) {
-                await api.removeSubscription(userId, pushSubscription);
+            if (await api.subscriptionExists(extract_p256dh_key(pushSubscription))) {
+                await api.removeSubscription(pushSubscription);
             }
         }
     }

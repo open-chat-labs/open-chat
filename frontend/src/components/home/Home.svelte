@@ -179,7 +179,7 @@
         rtcConnectionsManager.init(user.userId);
         rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores();
-        initNotificationsServiceWorker(api, user.userId, (n) => notificationReceived(n));
+        initNotificationsServiceWorker(api, (n) => notificationReceived(n));
         startPruningLocalUpdates();
     });
 
