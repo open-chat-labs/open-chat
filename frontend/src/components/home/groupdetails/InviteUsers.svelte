@@ -147,7 +147,7 @@
 {#if !group.public}
     <div class="toggle-row">
         <Toggle
-            id={"enable-invite-link"}
+            id="enable-invite-link"
             on:change={toggleLink}
             disabled={loading}
             waiting={loading}

@@ -415,15 +415,18 @@
         "historyPrivateMessage": "旧消息对新成员不可见",
         "privateGroupInfo": "用户不能自由加入该群组。他们必须由授权成员添加或邀请。",
         "permissionsUpdateFailed": "权限更新失败",
+        "groupRules": "组规则",
+        "rulesUpdateFailed": "抱歉，我们无法更新您的群组规则",
+        "getRulesFailed": "获取组规则失败",
         "rules": {
             "enable": "启用规则",
             "placeholder": "什么是小组规则？",
-            "agree": "要加入此群组，您必须首先同意这些规则。",
-            "instructions": "新用户必须同意规则才能加入群组。"
-        },
-        "groupRules": "组规则",
-        "rulesUpdateFailed": "抱歉，我们无法更新您的群组规则",
-        "getRulesFailed": "获取组规则失败"
+            "instructions": "如果启用，新用户必须同意规则才能加入群组。",
+            "acceptTitle": "接受组规则",
+            "acceptMessage": "要加入此群组，您必须首先接受这些规则。",
+            "accept": "接受",
+            "reject": "拒绝"
+        }
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

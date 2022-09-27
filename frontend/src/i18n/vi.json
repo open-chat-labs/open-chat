@@ -416,15 +416,18 @@
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
         "permissionsUpdateFailed": "Cập nhật quyền không thành công",
+        "groupRules": "Quy tắc nhóm",
+        "rulesUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật các quy tắc nhóm của bạn",
+        "getRulesFailed": "Không lấy được quy tắc nhóm",
         "rules": {
             "enable": "Bật quy tắc",
             "placeholder": "các quy tắc nhóm là gì?",
-            "agree": "Để tham gia nhóm này, trước tiên bạn phải đồng ý với các quy tắc này.",
-            "instructions": "Người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia nhóm."
-        },
-        "groupRules": "Quy tắc nhóm",
-        "rulesUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật các quy tắc nhóm của bạn",
-        "getRulesFailed": "Không lấy được quy tắc nhóm"
+            "instructions": "Nếu được bật, người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia nhóm.",
+            "acceptTitle": "Chấp nhận các quy tắc của nhóm",
+            "acceptMessage": "Để tham gia nhóm này, trước tiên bạn phải chấp nhận các quy tắc này.",
+            "accept": "Chấp nhận",
+            "reject": "Từ chối"
+        }
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",

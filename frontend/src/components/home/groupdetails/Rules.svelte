@@ -19,15 +19,13 @@
         on:change={toggleRules}
         label={$_("group.rules.enable")}
         checked={rules.enabled} />
+    <div class="instructions">{$_("group.rules.instructions")}</div>
     <TextArea
         bind:value={rules.text}
         minlength={0}
         maxlength={MAX_RULES_LENGTH}
         rows={8}
         placeholder={$_("group.rules.placeholder")} />
-    {#if rules.enabled}
-        <div class="instructions">{$_("group.rules.instructions")}</div>
-    {/if}
 </div>
 
 <style type="text/scss">

@@ -416,15 +416,18 @@
         "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros.",
         "privateGroupInfo": "Los usuarios no pueden unirse a este grupo libremente. Deben ser agregados o invitados por un miembro autorizado.",
         "permissionsUpdateFailed": "Actualización de permisos fallida",
+        "groupRules": "Reglas de grupo",
+        "rulesUpdateFailed": "Lo sentimos, no pudimos actualizar las reglas de su grupo.",
+        "getRulesFailed": "Error al obtener las reglas del grupo",
         "rules": {
             "enable": "Habilitar reglas",
             "placeholder": "¿Cuáles son las reglas del grupo?",
-            "agree": "Para unirse a este grupo, primero debe aceptar estas reglas.",
-            "instructions": "Los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo."
-        },
-        "groupRules": "Reglas de grupo",
-        "rulesUpdateFailed": "Lo sentimos, no pudimos actualizar las reglas de su grupo.",
-        "getRulesFailed": "Error al obtener las reglas del grupo"
+            "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo.",
+            "acceptTitle": "Aceptar reglas de grupo",
+            "acceptMessage": "Para unirte a este grupo primero debes aceptar estas reglas.",
+            "accept": "Aceptar",
+            "reject": "Rechazar"
+        }
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",

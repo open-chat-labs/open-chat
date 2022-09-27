@@ -667,8 +667,8 @@
             case "makePrivate":
                 return $_("confirmMakeGroupPrivate");
             case "rules": {
-                const agreeMessage = $_("group.rules.agree");
-                return `${agreeMessage}\n\n${confirmActionEvent.rules}`;
+                const acceptMessage = $_("group.rules.acceptMessage");
+                return `${acceptMessage}\n\n${confirmActionEvent.rules}`;
             }
         }
     }
@@ -1203,6 +1203,9 @@
         doubleCheck={confirmActionEvent.kind === "delete"
             ? confirmActionEvent.doubleCheck
             : undefined}
+        title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}
+        yesLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.accept") : undefined}
+        noLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.reject") : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}
