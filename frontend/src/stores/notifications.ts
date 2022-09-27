@@ -1,67 +1,52 @@
 import { derived, writable } from "svelte/store";
-import type { Notification } from "../domain/notifications";
-import type { ServiceContainer } from "../services/serviceContainer";
-import { getSoftDisabled } from "../utils/caching";
+import { getSoftDisabled, storeSoftDisabled } from "../utils/caching";
+import { rollbar } from "../utils/logging";
 import {
     notificationsSupported,
     permissionStateToNotificationPermission,
     permissionToStatus,
-    trySubscribe,
 } from "../utils/notifications";
 
-export const notificationsSoftDisabled = writable<boolean>(false);
+const softDisabledStore = writable<boolean>(false);
+const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
 
-export const notificationPermission = writable<NotificationPermission | "pending-init">("pending-init");
-
-function convertAndSubscribe(
-    api: ServiceContainer,
-    userId: string,
-    perm: PermissionState,
-    onNotification: (notification: Notification) => void
-): NotificationPermission {
-    const notifPerm = permissionStateToNotificationPermission(perm);
-    if (notifPerm === "granted") {
-        trySubscribe(api, userId, onNotification);
-    }
-    return notifPerm;
-}
-
-export async function initNotificationStores(
-    api: ServiceContainer,
-    userId: string,
-    onNotification: (notification: Notification) => void
-): Promise<void> {
+export async function initNotificationStores(): Promise<void> {
     if (!notificationsSupported) {
-        notificationPermission.set("denied");
         return;
     }
+
     const softDisabled = await getSoftDisabled();
-    notificationsSoftDisabled.set(softDisabled);
+    softDisabledStore.set(softDisabled);
+
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
-            notificationPermission.set(
-                convertAndSubscribe(api, userId, perm.state, onNotification)
-            );
-            perm.onchange = () => {
-                notificationPermission.set(
-                    convertAndSubscribe(api, userId, perm.state, onNotification)
-                );
-            };
+            browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
+            perm.onchange = () => browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
         });
     } else {
-        notificationPermission.set(Notification.permission);
+        browserPermissionStore.set(Notification.permission);
     }
+}
+
+export function setSoftDisabled(softDisabled: boolean): void {
+    // add to indexdb so service worker has access
+    storeSoftDisabled(softDisabled).catch((err) =>
+        rollbar.error("Failed to set soft disabled", err)
+    );
+
+    // add to svelte store
+    softDisabledStore.set(softDisabled);
 }
 
 export const notificationStatus = derived(
-    [notificationsSoftDisabled, notificationPermission],
-    ([$softDisabled, $perm]) => {
+    [softDisabledStore, browserPermissionStore],
+    ([softDisabled, browserPermission]) => {
         if (!notificationsSupported) {
             return "unsupported";
         }
-        if ($softDisabled) {
+        if (softDisabled) {
             return "soft-denied";
         }
-        return permissionToStatus($perm);
+        return permissionToStatus(browserPermission);
     }
 );

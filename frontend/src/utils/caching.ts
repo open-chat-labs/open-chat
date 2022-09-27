@@ -571,30 +571,6 @@ function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrappe
     };
 }
 
-export async function overwriteCachedEvents<T extends ChatEvent>(
-    chatId: string,
-    events: EventWrapper<T>[],
-    threadRootMessageIndex?: number
-): Promise<void> {
-    if (!process.env.CLIENT_CACHING) return;
-
-    if (db === undefined) {
-        throw new Error("Unable to open indexDB, cannot overwrite cache entries");
-    }
-    const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
-    const tx = (await db).transaction(storeName, "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore(storeName);
-    await Promise.all(
-        events.map((event) =>
-            store.put(
-                makeSerialisable<T>(event, chatId),
-                createCacheKey(chatId, event.index, threadRootMessageIndex)
-            )
-        )
-    );
-    await tx.done;
-}
-
 export async function getCachedGroupDetails(
     db: Database,
     chatId: string
@@ -612,10 +588,7 @@ export async function setCachedGroupDetails(
 
 export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
-        const tx = (await db).transaction("soft_disabled", "readwrite", { durability: "relaxed" });
-        const store = tx.objectStore("soft_disabled");
-        await store.put(value, "soft_disabled");
-        await tx.done;
+        await (await db).put("soft_disabled", value, "soft_disabled");
     }
 }
 

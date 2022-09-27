@@ -139,7 +139,7 @@
             identityState.set("logged_in");
 
             if (isCanisterUrl) {
-                unsubscribeNotifications(api, user.userId);
+                unsubscribeNotifications(api);
             }
         }
     }

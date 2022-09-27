@@ -24,7 +24,6 @@
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import { nullUser } from "../../domain/user/user.utils";
-    import { unsubscribeNotifications } from "../../utils/notifications";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../stores/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -43,6 +42,7 @@
         focusThreadMessageIndex,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
+    import { setSoftDisabled } from "../../stores/notifications";
 
     const dispatch = createEventDispatcher();
 
@@ -378,7 +378,7 @@
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+            on:unsubscribeNotifications={() => setSoftDisabled(true)}
             on:upgrade
             on:showFaqQuestion
             {user}

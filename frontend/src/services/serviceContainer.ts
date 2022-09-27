@@ -992,16 +992,16 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._onlineClient.markAsOnline();
     }
 
-    subscriptionExists(userId: string, p256dh_key: string): Promise<boolean> {
-        return this._notificationClient.subscriptionExists(userId, p256dh_key);
+    subscriptionExists(p256dh_key: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(p256dh_key);
     }
 
-    pushSubscription(userId: string, subscription: PushSubscription): Promise<void> {
-        return this._notificationClient.pushSubscription(userId, subscription);
+    pushSubscription(subscription: PushSubscription): Promise<void> {
+        return this._notificationClient.pushSubscription(subscription);
     }
 
-    removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
-        return this._notificationClient.removeSubscription(userId, subscription);
+    removeSubscription(subscription: PushSubscription): Promise<void> {
+        return this._notificationClient.removeSubscription(subscription);
     }
 
     toggleMuteNotifications(
