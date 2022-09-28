@@ -905,8 +905,7 @@
     async function joinGroup(
         ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>
     ): Promise<void> {
-        const group = ev.detail.group;
-        const select = ev.detail.select;
+        const { group, select } = ev.detail;
 
         const rules = await api.getGroupRules(group.chatId);
 
