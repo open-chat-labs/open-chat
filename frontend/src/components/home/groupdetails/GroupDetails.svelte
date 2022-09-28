@@ -62,7 +62,7 @@
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
-    export let rules: GroupRules;
+    export let rules: GroupRules | undefined;
 
     let originalGroup = { ...chat };
     let updatedGroup = {
@@ -76,17 +76,21 @@
               }
             : undefined,
         permissions: { ...chat.permissions },
-        rules: { ...rules },
     };
+
+    let updatedRules: GroupRules | undefined = undefined;
 
     $: {
         if (updatedGroup.chatId !== chat.chatId) {
             switchChat();
         }
+
+        if (rules !== undefined && updatedRules === undefined) {
+            updatedRules = { ...rules };
+        }
     }
 
     function init() {
-        saving = false;
         confirmed = false;
         updatedGroup = {
             chatId: chat.chatId,
@@ -99,9 +103,9 @@
                   }
                 : undefined,
             permissions: { ...chat.permissions },
-            rules: { ...rules },
         };
         originalGroup = { ...chat };
+        updatedRules = undefined;
         if (canInvite) {
             inviteComponent?.init(originalGroup);
         }
@@ -121,8 +125,11 @@
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
     $: rulesDirty =
-        updatedGroup.rules.enabled !== rules.enabled || updatedGroup.rules.text !== rules.text;
-    $: rulesInvalid = updatedGroup.rules.enabled && updatedGroup.rules.text.length === 0;
+        updatedRules !== undefined &&
+        rules !== undefined &&
+        (updatedRules.enabled !== rules.enabled || updatedRules.text !== rules.text);
+    $: rulesInvalid =
+        updatedRules !== undefined && updatedRules.enabled && updatedRules.text.length === 0;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
     $: permissionsDirty = havePermissionsChanged(
         originalGroup.permissions,
@@ -199,7 +206,6 @@
         Promise.all([p1, p2, p3]).finally(() => {
             showConfirmation = false;
             postConfirmation();
-            init();
         });
     }
 
@@ -207,7 +213,7 @@
         if (!infoDirty) return;
         saving = true;
         doUpdateInfo().finally(() => {
-            init();
+            saving = false;
         });
     }
 
@@ -215,7 +221,7 @@
         if (!rulesDirty || rulesInvalid) return;
         saving = true;
         doUpdateRules().finally(() => {
-            init();
+            saving = false;
         });
     }
 
@@ -272,16 +278,17 @@
                 updatedGroup.chatId,
                 undefined,
                 undefined,
-                updatedGroup.rules,
+                updatedRules,
                 undefined,
                 undefined
             )
             .then((resp) => {
                 if (resp === "success") {
-                    rules = updatedGroup.rules;
+                    rules = updatedRules;
+                    updatedRules = undefined;
                     dispatch("updateGroupRules", {
                         chatId: updatedGroup.chatId,
-                        rules: updatedGroup.rules,
+                        rules,
                     });
                 } else {
                     toastStore.showFailureToast("group.rulesUpdateFailed");
@@ -299,7 +306,7 @@
         saving = true;
 
         doUpdatePermissions().finally(() => {
-            init();
+            saving = false;
         });
     }
 
@@ -448,23 +455,25 @@
                 {/if}
             </div>
         </CollapsibleCard>
-        <CollapsibleCard
-            on:toggle={groupRulesOpen.toggle}
-            open={$groupRulesOpen}
-            headerText={$_("group.groupRules")}>
-            {#if canEdit}
-                <Rules bind:rules={updatedGroup.rules} />
-                <div class="rules-button">
-                    <Button
-                        on:click={updateRules}
-                        fill
-                        disabled={!canEdit || !rulesDirty || saving || rulesInvalid}
-                        loading={saving}>{$_("update")}</Button>
-                </div>
-            {:else if rules.enabled}
-                <Markdown inline={false} text={rules.text} />
-            {/if}
-        </CollapsibleCard>
+        {#if rules !== undefined && (canEdit || rules.enabled)}
+            <CollapsibleCard
+                on:toggle={groupRulesOpen.toggle}
+                open={$groupRulesOpen}
+                headerText={$_("group.groupRules")}>
+                {#if canEdit && updatedRules !== undefined}
+                    <Rules bind:rules={updatedRules} />
+                    <div class="rules-button">
+                        <Button
+                            on:click={updateRules}
+                            fill
+                            disabled={!canEdit || !rulesDirty || saving || rulesInvalid}
+                            loading={saving}>{$_("update")}</Button>
+                    </div>
+                {:else if !canEdit && rules.enabled}
+                    <Markdown inline={false} text={rules.text} />
+                {/if}
+            </CollapsibleCard>
+        {/if}
         {#if canInvite}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
