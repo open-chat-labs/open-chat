@@ -29,7 +29,6 @@ mod register_proposal_vote;
 mod remove_participant;
 mod remove_reaction;
 mod send_message;
-mod toggle_reaction;
 mod unblock_user;
 mod unpin_message;
 mod update_group;

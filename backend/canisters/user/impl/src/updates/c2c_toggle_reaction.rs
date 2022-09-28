@@ -2,7 +2,7 @@ use crate::model::direct_chat::DirectChat;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::ToggleReactionResult;
+use chat_events::AddRemoveReactionResult;
 use types::{DirectReactionAddedNotification, Notification, TimestampMillis, UserId};
 use user_canister::c2c_toggle_reaction::{Response::*, *};
 
@@ -28,24 +28,28 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
 
-        let exists = chat.events.reaction_exists(caller, None, args.message_id, &args.reaction);
-
-        if exists == args.added {
-            return if args.added { Added } else { Removed };
-        }
-
-        match chat
-            .events
-            .toggle_reaction(caller, None, args.message_id, args.reaction.clone(), now)
-        {
-            ToggleReactionResult::Added(_) => {
-                if let Some((recipients, notification)) = build_notification(args, chat, now) {
-                    runtime_state.push_notification(recipients, notification);
+        if args.added {
+            match chat
+                .events
+                .add_reaction(caller, None, args.message_id, args.reaction.clone(), now)
+            {
+                AddRemoveReactionResult::Success(_) => {
+                    if let Some((recipients, notification)) = build_notification(args, chat, now) {
+                        runtime_state.push_notification(recipients, notification);
+                    }
+                    Added
                 }
-                Added
+                AddRemoveReactionResult::NoChange => Added,
+                AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
-            ToggleReactionResult::Removed(_) => Removed,
-            ToggleReactionResult::MessageNotFound => MessageNotFound,
+        } else {
+            match chat
+                .events
+                .remove_reaction(caller, None, args.message_id, args.reaction.clone(), now)
+            {
+                AddRemoveReactionResult::Success(_) | AddRemoveReactionResult::NoChange => Removed,
+                AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+            }
         }
     } else {
         ChatNotFound
