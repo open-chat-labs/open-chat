@@ -16,6 +16,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import Rules from "../groupdetails/Rules.svelte";
 
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
@@ -27,6 +28,7 @@
 
     let groupInfoOpen = true;
     let visibilityOpen = true;
+    let groupRulesOpen = true;
     let permissionsOpen = false;
 
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
@@ -74,16 +76,13 @@
                 <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
             </div>
             <Input
-                invalid={false}
-                autofocus={false}
                 bind:value={candidateGroup.name}
                 minlength={MIN_LENGTH}
                 maxlength={MAX_LENGTH}
-                countdown={true}
+                countdown
                 placeholder={$_("newGroupName")} />
             <TextArea
                 rows={3}
-                invalid={false}
                 bind:value={candidateGroup.description}
                 maxlength={MAX_DESC_LENGTH}
                 placeholder={$_("newGroupDesc")} />
@@ -99,7 +98,7 @@
 
                     <Checkbox
                         id="is-public"
-                        toggle={true}
+                        toggle
                         on:change={toggleScope}
                         label={$_("group.public")}
                         checked={candidateGroup.isPublic} />
@@ -138,6 +137,9 @@
                 </div>
             </div>
         </CollapsibleCard>
+        <CollapsibleCard open={groupRulesOpen} headerText={$_("group.groupRules")}>
+            <Rules bind:rules={candidateGroup.rules} />
+        </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
             <GroupPermissionsEditor
                 bind:permissions={candidateGroup.permissions}
@@ -153,10 +155,6 @@
 <style type="text/scss">
     :global(.group-form .form-fields .card) {
         margin-bottom: $sp3;
-    }
-
-    :global(.group-form .form-fields .card .outer-wrapper) {
-        margin-bottom: 0;
     }
 
     h4 {

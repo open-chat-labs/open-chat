@@ -96,6 +96,7 @@ import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { textToCode } from "../../domain/inviteCodes";
 import type { GroupInvite } from "../../services/serviceContainer";
+import { apiGroupRules } from "../group/mappers";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -134,10 +135,7 @@ export class UserClient extends CandidService implements IUserClient {
                     };
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
-                rules: {
-                    text: "",
-                    enabled: false,
-                },
+                rules: apiGroupRules(group.rules),
             }),
             createGroupResponse
         );

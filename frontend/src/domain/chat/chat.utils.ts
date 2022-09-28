@@ -146,6 +146,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 break;
             case "name_changed":
             case "desc_changed":
+            case "rules_changed":
             case "avatar_changed":
             case "role_changed":
             case "permissions_changed":
@@ -272,6 +273,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.userId;
         case "name_changed":
         case "desc_changed":
+        case "rules_changed":
         case "avatar_changed":
         case "role_changed":
         case "permissions_changed":
@@ -495,6 +497,7 @@ export function mergeGroupChatDetails(
             updates.pinnedMessagesAdded,
             updates.pinnedMessagesRemoved
         ),
+        rules: updates.rules ?? previous.rules,
     };
 }
 
@@ -1187,6 +1190,7 @@ export function groupChatFromCandidate(
         latestThreads: [],
         subtype: undefined,
         archived: false,
+        previewed: false,
     };
 }
 

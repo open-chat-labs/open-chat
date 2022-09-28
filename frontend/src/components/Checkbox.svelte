@@ -22,7 +22,7 @@
 
     input {
         margin: 0;
-        margin-right: $sp4;
+        margin-right: toRem(12);
     }
 
     .checkbox {
@@ -31,7 +31,7 @@
         cursor: pointer;
 
         &.rtl input {
-            margin-left: $sp4;
+            margin-left: toRem(12);
             margin-right: unset;
         }
     }

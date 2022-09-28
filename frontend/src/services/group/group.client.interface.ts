@@ -29,6 +29,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import type { ServiceRetryInterrupt } from "services/candidService";
@@ -70,6 +71,7 @@ export interface IGroupClient {
     updateGroup(
         name?: string,
         desc?: string,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse>;
@@ -94,6 +96,7 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
+    getRules(): Promise<GroupRules | undefined>;
     getMessagesByMessageIndex(
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined

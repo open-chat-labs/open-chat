@@ -29,6 +29,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         txt: txtHigh,
         error: "#CF6679",
         accent: "#e87fb4",
+        disabledTxt: txtLow,
 
         notificationBar: {
             bg: "#df783f",
@@ -197,6 +198,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
             msgs: {
                 bg: "transparent",
+            },
+
+            date: {
+                bg: "rgba(100,100,100,0.7)",
+                txt: "inherit",
             },
 
             msg: {

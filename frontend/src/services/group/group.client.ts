@@ -30,6 +30,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -61,6 +62,8 @@ import {
     registerPollVoteResponse,
     registerProposalVoteResponse,
     apiOptionalGroupPermissions,
+    apiGroupRules,
+    rulesResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -278,6 +281,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
@@ -296,7 +300,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                               },
                           },
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
-                rules: [],
+                rules: apiOptional(apiGroupRules, rules),
             }),
             updateGroupResponse
         );
@@ -417,6 +421,19 @@ export class GroupClient extends CandidService implements IGroupClient {
             args
         ).catch((_err) => {
             // whatever error we get, just assume that we cannot get hold of the group
+            return undefined;
+        });
+    }
+
+    @profile("groupClient")
+    getRules(): Promise<GroupRules | undefined> {
+        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
+        return this.handleQueryResponse(
+            () => this.groupService.rules(args),
+            rulesResponse,
+            args
+        ).catch((_err) => {
+            // whatever error we get, just assume that we cannot get hold of the rules
             return undefined;
         });
     }

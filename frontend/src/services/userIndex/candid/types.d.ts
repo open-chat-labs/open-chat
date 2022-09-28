@@ -71,6 +71,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
@@ -352,6 +353,12 @@ export interface GroupReactionAddedNotification {
   'reaction' : string,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export interface GroupRules { 'text' : string, 'enabled' : boolean }
+export interface GroupRulesChanged {
+  'changed_by' : UserId,
+  'enabled' : boolean,
+  'prev_enabled' : boolean,
+}
 export type GroupSubtype = {
     'GovernanceProposals' : GovernanceProposalsSubtype
   };

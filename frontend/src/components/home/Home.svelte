@@ -45,6 +45,7 @@
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
+        GroupRules,
         MemberRole,
         Message,
     } from "../../domain/chat/chat";
@@ -82,6 +83,7 @@
         clearSelectedChat,
         focusThreadMessageIndex,
         currentChatDraftMessage,
+        currentChatRules,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -101,12 +103,34 @@
     export let user: CreatedUser;
     export let logout: () => void;
 
-    type ConfirmAction = "leave" | "delete" | "makePrivate";
-    type ConfirmActionEvent = {
-        kind: ConfirmAction;
+    type ConfirmActionEvent =
+        | ConfirmLeaveEvent
+        | ConfirmDeleteEvent
+        | ConfirmMakePrivateEvent
+        | ConfirmRulesEvent;
+
+    interface ConfirmLeaveEvent {
+        kind: "leave";
         chatId: string;
-        doubleCheck: { challenge: string; response: string } | undefined;
-    };
+    }
+
+    interface ConfirmDeleteEvent {
+        kind: "delete";
+        chatId: string;
+        doubleCheck: { challenge: string; response: string };
+    }
+
+    interface ConfirmMakePrivateEvent {
+        kind: "makePrivate";
+        chatId: string;
+    }
+
+    interface ConfirmRulesEvent {
+        kind: "rules";
+        group: GroupChatSummary;
+        select: boolean;
+        rules: string;
+    }
 
     enum ModalType {
         None,
@@ -202,16 +226,21 @@
         }
     }
 
-    function newChatSelected(chatId: string, messageIndex?: number, threadMessageIndex?: number) {
+    async function newChatSelected(
+        chatId: string,
+        messageIndex?: number,
+        threadMessageIndex?: number
+    ): Promise<void> {
         interruptRecommended = true;
 
-        const chat = $chatSummariesStore[chatId];
+        let chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
+                return;
             } else {
                 const code = qs.get("code");
                 if (code) {
@@ -220,32 +249,24 @@
                         code,
                     };
                 }
-                previewChat(chatId).then((canPreview) => {
-                    if (canPreview) {
-                        setSelectedChat(
-                            api,
-                            $chatSummariesStore[chatId],
-                            messageIndex,
-                            threadMessageIndex
-                        );
-                        resetRightPanel();
-                        hotGroups = { kind: "idle" };
-                    } else {
-                        replace("/");
-                    }
-                });
-            }
-        } else {
-            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-            if (chat.archived) {
-                unarchiveChat(chatId);
-            }
+                if (!(await previewChat(chatId))) {
+                    replace("/");
+                    return;
+                }
 
-            // if it's a known chat let's select it
-            setSelectedChat(api, chat, messageIndex, threadMessageIndex);
-            resetRightPanel();
-            hotGroups = { kind: "idle" };
+                chat = $chatSummariesStore[chatId];
+            }
         }
+
+        // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+        if (chat.archived) {
+            unarchiveChat(chat.chatId);
+        }
+
+        // if it's a known chat let's select it
+        setSelectedChat(api, chat, messageIndex, threadMessageIndex);
+        resetRightPanel();
+        hotGroups = { kind: "idle" };
     }
 
     // extracting to a function to try to control more tightly what this reacts to
@@ -645,6 +666,10 @@
                 return $_("irreversible");
             case "makePrivate":
                 return $_("confirmMakeGroupPrivate");
+            case "rules": {
+                const acceptMessage = $_("group.rules.acceptMessage");
+                return `${acceptMessage}\n\n${confirmActionEvent.rules}`;
+            }
         }
     }
 
@@ -672,6 +697,8 @@
                 return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
+            case "rules":
+                return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
                 return Promise.reject();
         }
@@ -875,11 +902,34 @@
         }
     }
 
-    function joinGroup(ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>) {
-        joining = ev.detail.group;
-        const group = ev.detail.group;
+    async function joinGroup(
+        ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>
+    ): Promise<void> {
+        const { group, select } = ev.detail;
 
-        api.joinGroup(group.chatId)
+        const rules = await api.getGroupRules(group.chatId);
+
+        if (rules === undefined) {
+            toastStore.showFailureToast("group.getRulesFailed");
+            return;
+        }
+
+        if (!rules.enabled) {
+            doJoinGroup(group, select);
+        } else {
+            confirmActionEvent = {
+                kind: "rules",
+                group,
+                select,
+                rules: rules.text,
+            };
+        }
+    }
+
+    async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
+        joining = group;
+        return api
+            .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
@@ -900,15 +950,14 @@
                 }
             })
             .then((success) => {
-                if (success && ev.detail.select) {
+                if (success && select) {
                     hotGroups = { kind: "idle" };
-                    push(`/${ev.detail.group.chatId}`);
+                    push(`/${group.chatId}`);
                 }
             })
             .catch((err) => {
                 rollbar.error("Unable to join group", err);
                 toastStore.showFailureToast("joinGroupFailed");
-                return false;
             })
             .finally(() => (joining = undefined));
     }
@@ -974,9 +1023,11 @@
         currentChatDraftMessage.setTextContent(chatId, text);
     }
 
-    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
-        addOrReplaceChat(ev.detail);
-        if (ev.detail.public) {
+    function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
+        const { group, rules } = ev.detail;
+        currentChatRules.set(group.chatId, rules);
+        addOrReplaceChat(group);
+        if (group.public) {
             trackEvent("public_group_created");
         } else {
             trackEvent("private_group_created");
@@ -1141,7 +1192,12 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.doubleCheck}
+        doubleCheck={confirmActionEvent.kind === "delete"
+            ? confirmActionEvent.doubleCheck
+            : undefined}
+        title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}
+        yesLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.accept") : undefined}
+        noLabel={confirmActionEvent.kind === "rules" ? $_("group.rules.reject") : undefined}
         message={confirmMessage}
         action={onConfirmAction} />
 {/if}

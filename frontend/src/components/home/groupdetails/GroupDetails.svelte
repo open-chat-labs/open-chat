@@ -15,6 +15,7 @@
     import type {
         GroupChatSummary,
         GroupPermissions,
+        GroupRules,
         UpdateGroupResponse,
     } from "../../../domain/chat/chat";
     import {
@@ -37,6 +38,7 @@
         groupInfoOpen,
         groupInviteUsersOpen,
         groupPermissionsOpen,
+        groupRulesOpen,
         groupStatsOpen,
         groupVisibilityOpen,
     } from "../../../stores/settings";
@@ -48,6 +50,7 @@
     import { rollbar } from "../../../utils/logging";
     import { currentUserKey } from "../../../stores/user";
     import { UnsupportedValueError } from "utils/error";
+    import Rules from "./Rules.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -59,6 +62,7 @@
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
+    export let rules: GroupRules;
 
     let originalGroup = { ...chat };
     let updatedGroup = {
@@ -72,6 +76,7 @@
               }
             : undefined,
         permissions: { ...chat.permissions },
+        rules: { ...rules },
     };
 
     $: {
@@ -80,18 +85,8 @@
         }
     }
 
-    function switchChat() {
-        // check for unsaved changes
-        if ((dirty || permissionsDirty) && !confirmed) {
-            confirmed = true;
-            showConfirmation = true;
-            postConfirmation = init;
-        } else {
-            init();
-        }
-    }
-
     function init() {
+        saving = false;
         confirmed = false;
         updatedGroup = {
             chatId: chat.chatId,
@@ -104,6 +99,7 @@
                   }
                 : undefined,
             permissions: { ...chat.permissions },
+            rules: { ...rules },
         };
         originalGroup = { ...chat };
         if (canInvite) {
@@ -124,12 +120,16 @@
     $: myGroup = currentUser.userId === originalGroup.ownerId;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
+    $: rulesDirty =
+        updatedGroup.rules.enabled !== rules.enabled || updatedGroup.rules.text !== rules.text;
+    $: rulesInvalid = updatedGroup.rules.enabled && updatedGroup.rules.text.length === 0;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
     $: permissionsDirty = havePermissionsChanged(
         originalGroup.permissions,
         updatedGroup.permissions
     );
-    $: dirty = nameDirty || descDirty || avatarDirty;
+    $: infoDirty = nameDirty || descDirty || avatarDirty;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty;
     $: canEdit = canEditGroupDetails(originalGroup);
     $: canEditPermissions = canChangePermissions(originalGroup);
     $: canInvite = canInviteUsers(originalGroup);
@@ -157,8 +157,19 @@
         close();
     }
 
+    function switchChat() {
+        // check for unsaved changes
+        if (dirty && !confirmed) {
+            confirmed = true;
+            showConfirmation = true;
+            postConfirmation = init;
+        } else {
+            init();
+        }
+    }
+
     function close() {
-        if ((dirty || permissionsDirty) && !confirmed) {
+        if (dirty && !confirmed) {
             confirmed = true;
             showConfirmation = true;
         } else {
@@ -181,19 +192,31 @@
     function updateGroup() {
         saving = true;
 
-        const p1 = dirty ? doUpdateInfo() : Promise.resolve();
+        const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
         const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
+        const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
 
-        Promise.all([p1, p2]).finally(() => {
-            showConfirmation = saving = false;
+        Promise.all([p1, p2, p3]).finally(() => {
+            showConfirmation = false;
             postConfirmation();
+            init();
         });
     }
 
     function updateInfo() {
-        if (!dirty) return;
+        if (!infoDirty) return;
         saving = true;
-        doUpdateInfo().finally(() => (saving = false));
+        doUpdateInfo().finally(() => {
+            init();
+        });
+    }
+
+    function updateRules() {
+        if (!rulesDirty || rulesInvalid) return;
+        saving = true;
+        doUpdateRules().finally(() => {
+            init();
+        });
     }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
@@ -208,6 +231,8 @@
         if (resp === "internal_error") return "groupUpdateFailed";
         if (resp === "not_authorised") return "groupUpdateFailed";
         if (resp === "avatar_too_big") return "avatarTooBig";
+        if (resp === "rules_too_short") return "groupRulesTooShort";
+        if (resp === "rules_too_long") return "groupRulesTooLong";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -217,6 +242,7 @@
                 updatedGroup.chatId,
                 nameDirty ? updatedGroup.name : undefined,
                 descDirty ? updatedGroup.desc : undefined,
+                undefined,
                 undefined,
                 avatarDirty ? updatedGroup.avatar?.blobData : undefined
             )
@@ -240,12 +266,41 @@
             });
     }
 
+    function doUpdateRules(): Promise<void> {
+        return api
+            .updateGroup(
+                updatedGroup.chatId,
+                undefined,
+                undefined,
+                updatedGroup.rules,
+                undefined,
+                undefined
+            )
+            .then((resp) => {
+                if (resp === "success") {
+                    rules = updatedGroup.rules;
+                    dispatch("updateGroupRules", {
+                        chatId: updatedGroup.chatId,
+                        rules: updatedGroup.rules,
+                    });
+                } else {
+                    toastStore.showFailureToast("group.rulesUpdateFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update group rules failed: ", err);
+                toastStore.showFailureToast("group.rulesUpdateFailed");
+            });
+    }
+
     function updatePermissions() {
         if (!permissionsDirty) return;
 
         saving = true;
 
-        doUpdatePermissions().finally(() => (saving = false));
+        doUpdatePermissions().finally(() => {
+            init();
+        });
     }
 
     function doUpdatePermissions(): Promise<void> {
@@ -256,7 +311,14 @@
         console.log("Changed permissions: ", optionalPermissions);
 
         return api
-            .updateGroup(updatedGroup.chatId, undefined, undefined, optionalPermissions, undefined)
+            .updateGroup(
+                updatedGroup.chatId,
+                undefined,
+                undefined,
+                undefined,
+                optionalPermissions,
+                undefined
+            )
             .then((resp) => {
                 if (resp === "success") {
                     originalGroup = {
@@ -334,13 +396,11 @@
 
             {#if canEdit}
                 <Input
-                    invalid={false}
                     disabled={saving || !canEdit}
-                    autofocus={false}
                     bind:value={updatedGroup.name}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
-                    countdown={true}
+                    countdown
                     placeholder={$_("newGroupName")} />
 
                 <TextArea
@@ -350,13 +410,11 @@
                     maxlength={MAX_DESC_LENGTH}
                     placeholder={$_("newGroupDesc")} />
 
-                {#if canEdit}
-                    <Button
-                        on:click={updateInfo}
-                        fill
-                        disabled={!canEdit || !dirty || saving}
-                        loading={saving}>{$_("update")}</Button>
-                {/if}
+                <Button
+                    on:click={updateInfo}
+                    fill
+                    disabled={!canEdit || !infoDirty || saving}
+                    loading={saving}>{$_("update")}</Button>
             {:else if originalGroup.description !== ""}
                 <fieldset>
                     <legend>
@@ -389,6 +447,23 @@
                     {/if}
                 {/if}
             </div>
+        </CollapsibleCard>
+        <CollapsibleCard
+            on:toggle={groupRulesOpen.toggle}
+            open={$groupRulesOpen}
+            headerText={$_("group.groupRules")}>
+            {#if canEdit}
+                <Rules bind:rules={updatedGroup.rules} />
+                <div class="rules-button">
+                    <Button
+                        on:click={updateRules}
+                        fill
+                        disabled={!canEdit || !rulesDirty || saving || rulesInvalid}
+                        loading={saving}>{$_("update")}</Button>
+                </div>
+            {:else if rules.enabled}
+                <Markdown inline={false} text={rules.text} />
+            {/if}
         </CollapsibleCard>
         {#if canInvite}
             <CollapsibleCard
@@ -553,6 +628,10 @@
     }
 
     .update-permissions {
+        margin-top: $sp4;
+    }
+
+    .rules-button {
         margin-top: $sp4;
     }
 </style>
