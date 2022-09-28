@@ -15,6 +15,7 @@
         EventWrapper,
         FullMember,
         GroupChatSummary,
+        GroupRules,
         MemberRole,
         Message,
     } from "../../domain/chat/chat";
@@ -328,6 +329,10 @@
             });
     }
 
+    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
+        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
+    }
+
     $: threadRootEvent =
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
@@ -341,12 +346,12 @@
             memberCount={$currentChatMembers.length}
             rules={$currentChatRules}
             on:close={popHistory}
+            on:updateGroupRules={updateGroupRules}
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
             on:showMembers
-            on:updateChat
-            on:updateGroupRules />
+            on:updateChat />
     {:else if lastState.kind === "add_members"}
         <AddMembers
             busy={savingMembers}

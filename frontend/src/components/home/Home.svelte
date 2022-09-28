@@ -891,10 +891,6 @@
         addOrReplaceChat(ev.detail);
     }
 
-    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
-        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
-    }
-
     function showPinned() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
@@ -933,7 +929,7 @@
 
     async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
         joining = group;
-        await api
+        return api
             .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp.kind === "group_chat") {
@@ -963,7 +959,6 @@
             .catch((err) => {
                 rollbar.error("Unable to join group", err);
                 toastStore.showFailureToast("joinGroupFailed");
-                return false;
             })
             .finally(() => (joining = undefined));
     }
@@ -1030,8 +1025,7 @@
     }
 
     function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
-        const group = ev.detail.group;
-        const rules = ev.detail.rules;
+        const { group, rules } = ev.detail;
         currentChatRules.set(group.chatId, rules);
         addOrReplaceChat(group);
         if (group.public) {
@@ -1166,7 +1160,6 @@
             on:deleteGroup={triggerConfirm}
             on:makeGroupPrivate={triggerConfirm}
             on:updateChat={updateChat}
-            on:updateGroupRules={updateGroupRules}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
