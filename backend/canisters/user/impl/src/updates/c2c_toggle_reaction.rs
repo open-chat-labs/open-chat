@@ -43,10 +43,7 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
         } else {
-            match chat
-                .events
-                .remove_reaction(caller, None, args.message_id, args.reaction.clone(), now)
-            {
+            match chat.events.remove_reaction(caller, None, args.message_id, args.reaction, now) {
                 AddRemoveReactionResult::Success(_) | AddRemoveReactionResult::NoChange => Removed,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
