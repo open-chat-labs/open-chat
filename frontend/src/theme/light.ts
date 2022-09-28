@@ -3,6 +3,7 @@ import type { Theme } from "./themes";
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
+const disabledTxt = "#999999";
 
 export function lightTheme(): Theme {
     return {
@@ -14,6 +15,7 @@ export function lightTheme(): Theme {
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
+        disabledTxt: disabledTxt,
         placeholder: "#aaaaaa",
 
         notificationBar: {
@@ -129,7 +131,7 @@ export function lightTheme(): Theme {
         menu: {
             bg: "white",
             txt: "#191919",
-            "disabled-txt": "#999999",
+            "disabled-txt": disabledTxt,
             // bd: "#cccccc",
             bd: "rgba(0,0,0,0.05)",
             hv: "#efefef",
@@ -144,7 +146,7 @@ export function lightTheme(): Theme {
             bd: "transparent",
             disabled: "#cccccc",
             spinner: "#ffffff",
-            "disabled-txt": "#999999",
+            "disabled-txt": disabledTxt,
             "disabled-bd": "transparent",
         },
 

@@ -9,6 +9,7 @@
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
+    import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
@@ -182,6 +183,8 @@
         changedBy={event.event.changedBy}
         property={$_("groupDesc")}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "rules_changed"}
+    <GroupRulesChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "avatar_changed"}
     <GroupChangedEvent
         user={userSummary}

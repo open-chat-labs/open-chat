@@ -1,8 +1,13 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import NewGroup from "./NewGroup.svelte";
     import ChooseMembers from "./ChooseMembers.svelte";
     import type { NewGroupState } from "../../../domain/newGroup";
-    import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
+    import {
+        CandidateGroupChat,
+        CreateGroupResponse,
+        defaultGroupRules,
+    } from "../../../domain/chat/chat";
     import type { User } from "../../../domain/user/user";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
@@ -49,6 +54,10 @@
                 reactToMessages: "members",
                 replyInThread: "members",
             },
+            rules: {
+                text: defaultGroupRules,
+                enabled: false,
+            },
         };
     }
 
@@ -63,6 +72,8 @@
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
         if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
+        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
@@ -123,10 +134,10 @@
 
     function onGroupCreated(canisterId: string) {
         const url = `/${canisterId}`;
-        dispatch(
-            "groupCreated",
-            groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup)
-        );
+        dispatch("groupCreated", {
+            group: groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup),
+            rules: candidateGroup.rules,
+        });
         reset();
 
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route

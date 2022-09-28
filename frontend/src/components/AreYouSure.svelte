@@ -10,6 +10,9 @@
     export let message: string;
     export let action: (yes: boolean) => Promise<void>;
     export let doubleCheck: { challenge: string; response: string } | undefined = undefined;
+    export let title: string | undefined = undefined;
+    export let yesLabel: string | undefined = undefined;
+    export let noLabel: string | undefined = undefined;
 
     let inProgress = false;
     let response = "";
@@ -29,11 +32,9 @@
 
 <Overlay>
     <ModalContent>
-        <span slot="header">{$_("areYouSure")}</span>
+        <span slot="header">{title ?? $_("areYouSure")}</span>
         <span slot="body">
-            <p>
-                {message}
-            </p>
+            <Markdown inline={false} text={message} />
 
             {#if doubleCheck !== undefined}
                 <p>
@@ -55,19 +56,13 @@
                     loading={inProgress}
                     disabled={!canConfirm}
                     small={true}
-                    on:click={() => onClick(true)}>{$_("yesPlease")}</Button>
+                    on:click={() => onClick(true)}>{yesLabel ?? $_("yesPlease")}</Button>
                 <Button
                     disabled={inProgress}
                     small={true}
                     on:click={() => onClick(false)}
-                    secondary={true}>{$_("noThanks")}</Button>
+                    secondary={true}>{noLabel ?? $_("noThanks")}</Button>
             </ButtonGroup>
         </span>
     </ModalContent>
 </Overlay>
-
-<style type="text/scss">
-    p {
-        margin-bottom: $sp4;
-    }
-</style>

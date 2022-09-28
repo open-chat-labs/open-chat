@@ -33,6 +33,7 @@ export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, f
 
 export const groupInfoOpen = createLsBoolStore(configKeys.groupInfoSection, true);
 export const groupVisibilityOpen = createLsBoolStore(configKeys.groupVisibilitySection, true);
+export const groupRulesOpen = createLsBoolStore(configKeys.groupRulesSection, true);
 export const groupPermissionsOpen = createLsBoolStore(configKeys.groupPermissionSection, false);
 export const groupStatsOpen = createLsBoolStore(configKeys.groupStatsSection, false);
 export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUsersSections, false);

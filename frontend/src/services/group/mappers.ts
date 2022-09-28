@@ -29,6 +29,8 @@ import type {
     ApiThreadPreview,
     ApiRegisterPollVoteResponse,
     ApiRegisterProposalVoteResponse,
+    ApiGroupRules,
+    ApiRulesResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -61,6 +63,7 @@ import type {
     ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
     GroupPermissions,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
@@ -76,11 +79,10 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
-import { optional } from "../../utils/mapping";
+import { identity, optional } from "../../utils/mapping";
 import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
-import { identity } from "domain/chat/chat.utils";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -142,6 +144,20 @@ function member(candid: ApiParticipant): Member {
     };
 }
 
+function groupRules(candid: ApiGroupRules): GroupRules {
+    return {
+        text: candid.text,
+        enabled: candid.enabled,
+    };
+}
+
+export function apiGroupRules(rules: GroupRules): ApiGroupRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+    };
+}
+
 export function groupDetailsUpdatesResponse(
     candid: ApiSelectedUpdatesResponse
 ): GroupChatDetailsUpdatesResponse {
@@ -166,6 +182,7 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
+            rules: optional(candid.Success.rules, groupRules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -181,6 +198,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
+            rules: groupRules(candid.Success.rules),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -262,7 +280,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRemoveReactionResponse): AddRemoveReactionResponse {
+export function addRemoveReactionResponse(
+    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
+): AddRemoveReactionResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -281,7 +301,10 @@ export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRe
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
-    throw new UnsupportedValueError("Unexpected ApiAddRemoveReactionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddRemoveReactionResponse type received",
+        candid
+    );
 }
 
 export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
@@ -317,6 +340,12 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     }
     if ("AvatarTooBig" in candid) {
         return "avatar_too_big";
+    }
+    if ("RulesTooLong" in candid) {
+        return "rules_too_long";
+    }
+    if ("RulesTooShort" in candid) {
+        return "rules_too_long";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
@@ -833,6 +862,15 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("GroupRulesChanged" in candid) {
+        return {
+            kind: "rules_changed",
+            enabled: candid.GroupRulesChanged.enabled,
+            enabledPrev: candid.GroupRulesChanged.prev_enabled,
+            changedBy: candid.GroupRulesChanged.changed_by.toString(),
+        };
+    }
+
     if ("AvatarChanged" in candid) {
         return {
             kind: "avatar_changed",
@@ -1050,4 +1088,14 @@ export function registerProposalVoteResponse(
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
+}
+
+export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined {
+    if ("Success" in candid) {
+        const rules = optional(candid.Success.rules, identity);
+        return {
+            text: rules ?? "",
+            enabled: rules !== undefined,
+        };
+    }
 }

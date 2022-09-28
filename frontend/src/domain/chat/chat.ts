@@ -356,10 +356,10 @@ export type LocalPollVote = {
 
 export type LocalMessageUpdates = {
     deleted?: {
-        deletedBy: string,
-        timestamp: bigint,
+        deletedBy: string;
+        timestamp: bigint;
     };
-    editedContent?: MessageContent,
+    editedContent?: MessageContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     lastUpdated: number;
@@ -394,6 +394,7 @@ export type GroupChatEvent =
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
+    | GroupRulesChanged
     | UsersBlocked
     | UsersUnblocked
     | MemberAssumesSuperAdmin
@@ -444,6 +445,13 @@ export type GroupNameChanged = {
 
 export type GroupDescChanged = {
     kind: "desc_changed";
+    changedBy: string;
+};
+
+export type GroupRulesChanged = {
+    kind: "rules_changed";
+    enabled: boolean;
+    enabledPrev: boolean;
     changedBy: string;
 };
 
@@ -763,7 +771,19 @@ export type GroupChatDetails = {
     blockedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
+    rules: GroupRules;
 };
+
+export type GroupRules = {
+    text: string;
+    enabled: boolean;
+};
+
+export const defaultGroupRules = `- Do not impersonate others in a deceptive or misleading manner
+- Do not intentionally share false or misleading information
+- Keep messages relevant to the group
+
+If you break the rules you might be blocked and/or have your message(s) deleted.`;
 
 export type GroupChatDetailsUpdates = {
     membersAddedOrUpdated: Member[];
@@ -773,6 +793,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
+    rules?: GroupRules;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -813,6 +834,7 @@ export type GroupChatSummary = DataContent &
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
+        previewed: boolean;
     };
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;
@@ -838,6 +860,7 @@ export type CandidateMember = {
 export type CandidateGroupChat = {
     name: string;
     description: string;
+    rules: GroupRules;
     historyVisible: boolean;
     isPublic: boolean;
     members: CandidateMember[];
@@ -856,7 +879,9 @@ export type CreateGroupResponse =
     | GroupNameTaken
     | AvatarTooBig
     | MaxGroupsCreated
-    | CreateGroupThrottled;
+    | CreateGroupThrottled
+    | GroupRulesTooShort
+    | GroupRulesTooLong;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -891,6 +916,14 @@ export type GroupNameTaken = {
 
 export type AvatarTooBig = {
     kind: "avatar_too_big";
+};
+
+export type GroupRulesTooLong = {
+    kind: "rules_too_long";
+};
+
+export type GroupRulesTooShort = {
+    kind: "rules_too_short";
 };
 
 export type MaxGroupsCreated = {
@@ -1121,6 +1154,8 @@ export type UpdateGroupResponse =
     | "name_taken"
     | "not_in_group"
     | "avatar_too_big"
+    | "rules_too_short"
+    | "rules_too_long"
     | "internal_error";
 
 export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group";
