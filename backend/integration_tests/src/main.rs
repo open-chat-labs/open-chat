@@ -1,6 +1,5 @@
-use fondue::*;
-use ic_fondue::ic_manager::IcManager;
-use ic_fondue::internet_computer::InternetComputer;
+use ic_fondue::ic_instance::LegacyInternetComputer;
+use ic_fondue::*;
 use ic_registry_subnet_type::SubnetType;
 use std::future::Future;
 use tokio::runtime::Runtime as TRuntime;
@@ -17,11 +16,10 @@ mod send_message_tests;
 mod verify_user_tests;
 
 fn main() {
-    let fondue_config = fondue::pot::execution::Config::default().random_pot_rng_seed();
+    let fondue_config = pot::execution::Config::default().random_pot_rng_seed();
     let pots = vec![tests_pot()];
 
-    if let Some(res) = fondue::pot::execution::execute(&fondue_config, pots) {
-        res.print_summary();
+    if let Some(res) = pot::execution::execute(&fondue_config, pots) {
         print_rng_seed(&fondue_config);
 
         if !res.was_successful() {
@@ -34,7 +32,7 @@ fn main() {
     }
 }
 
-fn tests_pot() -> pot::Pot<IcManager> {
+fn tests_pot() -> pot::Pot {
     composable!(
         "Tests",
         configure(),
@@ -53,15 +51,15 @@ fn tests_pot() -> pot::Pot<IcManager> {
     )
 }
 
-fn print_rng_seed<ManCfg>(fondue_config: &fondue::pot::execution::Config<ManCfg>) {
+fn print_rng_seed(fondue_config: &ic_fondue::pot::execution::Config) {
     println!(
         "(To reproduce this exact run, make sure to use '--seed {}')",
         fondue_config.pot_config.rng_seed
     );
 }
 
-pub fn configure() -> InternetComputer {
-    InternetComputer::new().add_fast_single_node_subnet(SubnetType::System)
+pub fn configure() -> LegacyInternetComputer {
+    LegacyInternetComputer::new().add_fast_single_node_subnet(SubnetType::System)
 }
 
 pub fn block_on<F: Future>(f: F) -> F::Output {

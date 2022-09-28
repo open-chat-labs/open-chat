@@ -5,13 +5,13 @@ use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::cmp::min;
-use types::{CanisterId, ChatId, ChatSummary, UserId};
+use types::{CanisterId, ChatId, ChatSummary, GroupRules, UserId};
 
-pub fn create_group_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn create_group_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(create_group_tests_impl(handle, ctx));
 }
 
-async fn create_group_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn create_group_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -85,6 +85,8 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
         avatar: None,
         history_visible_to_new_joiners: !is_public,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
 
     let members = if is_public { Vec::new() } else { vec![users.user2_id, users.user3_id] };
@@ -104,7 +106,7 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
         .await;
     }
 
-    let args = user_canister::initial_state::Args {};
+    let args = user_canister::initial_state::Args { disable_cache: None };
     match user_canister_client::initial_state(&users.user1_agent, &users.user1_id.into(), &args)
         .await
         .unwrap()
@@ -153,7 +155,7 @@ async fn search_groups(
 }
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, chat_id: ChatId) {
-    let args = user_canister::initial_state::Args {};
+    let args = user_canister::initial_state::Args { disable_cache: None };
     match user_canister_client::initial_state(agent, &user_id.into(), &args)
         .await
         .unwrap()

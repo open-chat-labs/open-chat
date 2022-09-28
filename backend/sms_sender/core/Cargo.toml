@@ -15,6 +15,6 @@ index_store = { path = "../../libraries/index_store" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.137"
-tokio = "1.11.0"
+tokio = "1.15.0"
 tracing = "0.1.33"
 types = { path = "../../libraries/types" }

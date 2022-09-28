@@ -15,7 +15,7 @@ notifications_canister = { path = "../../canisters/notifications/api" }
 notifications_canister_client = { path = "../../canisters/notifications/client" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.137"
-tokio = { version = "1.10.0", features = ["macros", "time"] }
+tokio = { version = "1.15.0", features = ["macros", "time"] }
 tracing = "0.1.33"
 types = { path = "../../libraries/types" }
 web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "12a08c29e5175066cd70428699e10ac509036f01" }

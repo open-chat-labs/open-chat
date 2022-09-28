@@ -9,5 +9,5 @@ edition = "2021"
 [dependencies]
 canister_client = { path = "../libraries/canister_client" }
 clap = { version = "3.0.14", features = ["derive"] }
-tokio = { version = "1.10.0", features = ["full"] }
+tokio = { version = "1.15.0", features = ["full"] }
 types = { path = "../libraries/types" }

@@ -6,13 +6,13 @@ use ic_fondue::ic_manager::IcHandle;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::panic;
-use types::{ChatEvent, MessageContent, PollConfig, PollContent, PollVotes, TotalVotes, VoteOperation};
+use types::{ChatEvent, GroupRules, MessageContent, PollConfig, PollContent, PollVotes, TotalVotes, VoteOperation};
 
-pub fn poll_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn poll_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(poll_tests_impl(handle, ctx));
 }
 
-async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn poll_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -40,6 +40,8 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         avatar: None,
         history_visible_to_new_joiners: false,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id]).await;
@@ -160,6 +162,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         from_index: 0.into(),
         to_index: 10.into(),
         invite_code: None,
+        latest_client_event_index: None,
     };
     match group_canister_client::events_range(&user1_agent, &chat_id.into(), &events_range_args)
         .await
