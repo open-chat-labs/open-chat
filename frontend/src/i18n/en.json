@@ -438,7 +438,19 @@
         "welcome": "Welcome to ",
         "historyPrivateMessage": "Old messages are not visible to new members",
         "privateGroupInfo": "Users cannot join this group freely. They must either be added or invited by an authorised member.",
-        "permissionsUpdateFailed": "Permissions update failed"
+        "permissionsUpdateFailed": "Permissions update failed",
+        "rules": {
+            "enable": "Enable rules",
+            "placeholder": "what are the group rules?",
+            "instructions": "If enabled, new users must agree to the rules before they can join the group.",
+            "acceptTitle": "Accept group rules",
+            "acceptMessage": "To join this group you must first accept these rules.",
+            "accept": "Accept",
+            "reject": "Reject"
+        },
+        "groupRules": "Group rules",
+        "rulesUpdateFailed": "Sorry we were unable to update your group rules",
+        "getRulesFailed": "Failed to get group rules"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
@@ -522,7 +534,7 @@
     },
     "copy": "Copy",
     "failedToShareLink": "Failed to share link",
-    "groupInviteChangedBy": "{changedBy} {changed} the group invite",
+    "groupInviteChangedBy": "{changedBy} {changed} the group invite link",
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
@@ -594,5 +606,10 @@
         "title": "Please switch to our new domain",
         "blurb": "You are currently using the [{currentDomain}]({currentDomain}) domain.<br /><br />You will not receive notifications from this legacy domain and it will soon be retired altogether.<br /><br /> *To continue using OpenChat and benefit fully from ongoing performance optimisations please switch to our new domain [https://oc.app](https://oc.app)*<br /><br />If you have saved the site to your home screen you will need to delete/uninstall and save to home screen again from the new domain.<br/><br/>",
         "continue": "Continue"
-    }
+    },
+    "groupRules": "group rules",
+    "groupRulesEnabled": "{changedBy} enabled the group rules",
+    "groupRulesDisabled": "{changedBy} disabled the group rules",
+    "groupRulesTooShort": "The group rules must not be empty",
+    "groupRulesTooLong": "The group rules are too long"
 }

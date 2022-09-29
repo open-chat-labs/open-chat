@@ -414,7 +414,19 @@
         "welcome": "欢迎来到",
         "historyPrivateMessage": "旧消息对新成员不可见",
         "privateGroupInfo": "用户不能自由加入该群组。他们必须由授权成员添加或邀请。",
-        "permissionsUpdateFailed": "权限更新失败"
+        "permissionsUpdateFailed": "权限更新失败",
+        "groupRules": "组规则",
+        "rulesUpdateFailed": "抱歉，我们无法更新您的群组规则",
+        "getRulesFailed": "获取组规则失败",
+        "rules": {
+            "enable": "启用规则",
+            "placeholder": "什么是小组规则？",
+            "instructions": "如果启用，新用户必须同意规则才能加入群组。",
+            "acceptTitle": "接受组规则",
+            "acceptMessage": "要加入此群组，您必须首先接受这些规则。",
+            "accept": "接受",
+            "reject": "拒绝"
+        }
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -514,7 +526,6 @@
     "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群组",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
-    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请",
     "failedToLeaveGroup": "尝试将您从群组中移除时出错",
     "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫",
     "memberIsTyping": "{username} 正在输入",
@@ -597,5 +608,11 @@
         "title": "请切换到我们的新域",
         "continue": "继续",
         "blurb": "您当前正在使用 [{currentDomain}]({currentDomain}) 域。<br /><br />您将不会收到来自此旧域的通知，并且很快将完全停用。<br /><br /> *要继续使用 OpenChat 并充分受益于持续的性能优化，请切换到我们的新域 [https://oc.app](https://oc.app)*<br /><br />如果您已将站点保存到主屏幕，则需要从新域中删除/卸载并再次保存到主屏幕。<br/><br/>"
-    }
+    },
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请链接",
+    "groupRules": "组规则",
+    "groupRulesEnabled": "{changedBy} 启用组规则",
+    "groupRulesDisabled": "{changedBy} 禁用组规则",
+    "groupRulesTooShort": "组规则不能为空",
+    "groupRulesTooLong": "群规太长"
 }

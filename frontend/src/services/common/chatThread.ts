@@ -23,6 +23,7 @@ import {
     updateBlockedUsers,
     updateChatMembers,
     updatePinnedMessages,
+    currentChatRules,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -566,6 +567,7 @@ export async function loadDetails(
             const resp = await api.getGroupDetails(clientChat.chatId, clientChat.latestEventIndex);
             if (resp !== "caller_not_in_group") {
                 groupDetails.set(clientChat.chatId, resp);
+                currentChatRules.set(clientChat.chatId, resp.rules);
             }
             await updateUserStore(
                 api,
@@ -589,6 +591,7 @@ export async function updateDetails(
         const details = groupDetails.get(clientChat.chatId);
         if (details !== undefined && details.latestEventIndex < clientChat.latestEventIndex) {
             const gd = await api.getGroupDetailsUpdates(clientChat.chatId, details);
+            currentChatRules.set(clientChat.chatId, gd.rules);
             groupDetails.set(clientChat.chatId, gd);
             await updateUserStore(
                 api,

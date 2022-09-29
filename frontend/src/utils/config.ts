@@ -16,6 +16,7 @@ export const configKeys = {
     userStatsSection: "openchat_user_stats_section",
     groupInfoSection: "openchat_group_info_section",
     groupVisibilitySection: "openchat_group_visibility_section",
+    groupRulesSection: "openchat_group_rules_section",
     groupPermissionSection: "openchat_group_permission_section",
     groupStatsSection: "openchat_group_stats_section",
     groupInviteUsersSections: "openchat_group_invite_users_section",

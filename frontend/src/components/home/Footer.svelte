@@ -16,9 +16,7 @@
         MessageContent,
     } from "../../domain/chat/chat";
     import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
-    import Loading from "../Loading.svelte";
     import type { CreatedUser } from "../../domain/user/user";
-    import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
     import { userStore } from "../../stores/user";
     import { createEventDispatcher } from "svelte";
@@ -146,10 +144,6 @@
 </div>
 
 <style type="text/scss">
-    .loading-emoji {
-        height: 400px;
-    }
-
     .footer {
         position: relative;
     }

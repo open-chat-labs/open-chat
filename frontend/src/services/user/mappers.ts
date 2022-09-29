@@ -226,7 +226,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRemoveReactionResponse): AddRemoveReactionResponse {
+export function addRemoveReactionResponse(
+    candid: ApiAddReactionResponse | ApiRemoveReactionResponse
+): AddRemoveReactionResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -245,7 +247,10 @@ export function addRemoveReactionResponse(candid: ApiAddReactionResponse | ApiRe
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
-    throw new UnsupportedValueError("Unexpected ApiAddRemoveReactionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddRemoveReactionResponse type received",
+        candid
+    );
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
@@ -520,6 +525,14 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     if ("MaxGroupsCreated" in candid) {
         // todo - make sure we handle this in the UI
         return { kind: "max_groups_created" };
+    }
+
+    if ("RulesTooLong" in candid) {
+        return { kind: "rules_too_long" };
+    }
+
+    if ("RulesTooShort" in candid) {
+        return { kind: "rules_too_short" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -854,6 +867,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         latestThreads: candid.latest_threads.map(threadSyncDetails),
         subtype: optional(candid.subtype, apiGroupSubtype),
         archived: candid.archived,
+        previewed: false,
     };
 }
 

@@ -13,7 +13,7 @@
 
 <div class="toggle-wrapper" class:big-gap={bigGap}>
     <div class="toggle">
-        <Checkbox {small} {disabled} {waiting} {id} toggle={true} on:change {label} bind:checked />
+        <Checkbox {small} {disabled} {waiting} {id} toggle on:change {label} bind:checked />
     </div>
     {#if label !== undefined}
         <div class="label">

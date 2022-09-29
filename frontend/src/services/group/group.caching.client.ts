@@ -31,6 +31,7 @@ import type {
     UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
+    GroupRules,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -217,10 +218,11 @@ export class CachingGroupClient implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
+        rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, description, permissions, avatar);
+        return this.client.updateGroup(name, description, rules, permissions, avatar);
     }
 
     addReaction(
@@ -288,6 +290,10 @@ export class CachingGroupClient implements IGroupClient {
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
         return this.client.getPublicSummary();
+    }
+
+    getRules(): Promise<GroupRules | undefined> {
+        return this.client.getRules();
     }
 
     /**

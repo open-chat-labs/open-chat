@@ -95,6 +95,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
@@ -155,11 +156,13 @@ export interface CreateGroupArgs {
   'avatar' : [] | [Avatar],
 }
 export type CreateGroupResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateGroupSuccessResult } |
+  { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'MaxGroupsCreated' : number } |
@@ -433,6 +436,11 @@ export interface GroupReactionAddedNotification {
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface GroupRules { 'text' : string, 'enabled' : boolean }
+export interface GroupRulesChanged {
+  'changed_by' : UserId,
+  'enabled' : boolean,
+  'prev_enabled' : boolean,
+}
 export type GroupSubtype = {
     'GovernanceProposals' : GovernanceProposalsSubtype
   };
@@ -906,18 +914,6 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface ToggleReactionArgs {
-  'username' : string,
-  'user_id' : UserId,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : string,
-}
-export type ToggleReactionResponse = { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
-  { 'InvalidReaction' : null } |
-  { 'Added' : EventIndex } |
-  { 'Removed' : EventIndex };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1081,7 +1077,6 @@ export interface _SERVICE {
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
-  'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse,

@@ -5,6 +5,7 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     GroupChatDetails,
+    GroupRules,
     Member,
     Message,
     MessageContent,
@@ -325,7 +326,7 @@ export function setSelectedChat(
     focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
 
     groupDetails.clear(chat.chatId);
-
+    currentChatRules.set(chat.chatId, undefined);
     currentChatUserIds.set(
         chat.chatId,
         new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
@@ -384,6 +385,7 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
             serverEventsStore.clear(chatId);
             focusMessageIndex.clear(chatId);
             focusThreadMessageIndex.clear(chatId);
+            currentChatRules.clear(chatId);
         }
         return newSelectedChatId;
     });
@@ -551,6 +553,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
 );
 
 export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
+export const currentChatRules = createChatSpecificDataStore<GroupRules | undefined>(undefined);
 export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 // This set will contain 1 key for each rendered user event group which is used as that group's key

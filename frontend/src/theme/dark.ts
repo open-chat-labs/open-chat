@@ -29,6 +29,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         txt: txtHigh,
         error: "#CF6679",
         accent: "#e87fb4",
+        disabledTxt: txtLow,
 
         notificationBar: {
             bg: "#df783f",

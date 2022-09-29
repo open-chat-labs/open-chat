@@ -5,11 +5,11 @@ use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use std::{thread, time};
 
-pub fn online_users_aggregator_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn online_users_aggregator_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(online_users_aggregator_tests_impl(handle, ctx));
 }
 
-async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

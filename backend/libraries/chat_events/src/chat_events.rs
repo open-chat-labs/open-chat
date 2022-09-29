@@ -278,67 +278,6 @@ impl AllChatEvents {
         }
     }
 
-    pub fn toggle_reaction(
-        &mut self,
-        user_id: UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-        reaction: Reaction,
-        now: TimestampMillis,
-    ) -> ToggleReactionResult {
-        if !reaction.is_valid() {
-            // This should never happen because we validate earlier
-            panic!("Invalid reaction: {reaction:?}");
-        }
-
-        if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
-            message.last_updated = Some(now);
-
-            let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
-                if users.insert(user_id) {
-                    true
-                } else {
-                    users.remove(&user_id);
-                    if users.is_empty() {
-                        message.reactions.retain(|(r, _)| *r != reaction);
-                    }
-                    false
-                }
-            } else {
-                message.reactions.push((reaction, vec![user_id].into_iter().collect()));
-                true
-            };
-
-            let inner = Box::new(UpdatedMessageInternal {
-                updated_by: user_id,
-                message_id,
-            });
-
-            let new_event_index = self.push_event(
-                thread_root_message_index,
-                if added {
-                    ChatEventInternal::MessageReactionAdded(inner)
-                } else {
-                    ChatEventInternal::MessageReactionRemoved(inner)
-                },
-                now,
-            );
-
-            if let Some(root_message_index) = thread_root_message_index {
-                self.main
-                    .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
-            }
-
-            if added {
-                ToggleReactionResult::Added(new_event_index)
-            } else {
-                ToggleReactionResult::Removed(new_event_index)
-            }
-        } else {
-            ToggleReactionResult::MessageNotFound
-        }
-    }
-
     pub fn add_reaction(
         &mut self,
         user_id: UserId,
@@ -491,17 +430,6 @@ impl AllChatEvents {
 
     pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
         self.push_event(None, event, now)
-    }
-
-    pub fn reaction_exists(
-        &self,
-        added_by: UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-        reaction: &Reaction,
-    ) -> bool {
-        self.get(thread_root_message_index)
-            .map_or(false, |events| events.reaction_exists(added_by, message_id, reaction))
     }
 
     pub fn search_messages(
@@ -823,12 +751,6 @@ pub enum RecordProposalVoteResult {
     ProposalNotFound,
 }
 
-pub enum ToggleReactionResult {
-    Added(EventIndex),
-    Removed(EventIndex),
-    MessageNotFound,
-}
-
 pub enum AddRemoveReactionResult {
     Success(EventIndex),
     NoChange,
@@ -946,13 +868,6 @@ impl ChatEvents {
         });
 
         event_index
-    }
-
-    fn reaction_exists(&self, added_by: UserId, message_id: MessageId, reaction: &Reaction) -> bool {
-        self.message_internal_by_message_id(message_id)
-            .and_then(|m| m.reactions.iter().find(|(r, _)| r == reaction))
-            .map(|(_, users)| users.contains(&added_by))
-            .unwrap_or_default()
     }
 
     pub fn latest_message(&self, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {

@@ -13,7 +13,7 @@ dynamodb_index_store = { path = "../../libraries/dynamodb_index_store" }
 index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
 serde = "1.0.137"
-tokio = { version = "1.10.0", features = ["macros"] }
+tokio = { version = "1.15.0", features = ["macros"] }
 tracing = "0.1.33"
 tracing-subscriber = "0.3.11"
 types = { path = "../../libraries/types" }

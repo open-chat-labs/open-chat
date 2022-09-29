@@ -35,7 +35,6 @@ fn main() {
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
-    generate_candid_method!(user, toggle_reaction, update);
     generate_candid_method!(user, transfer_crypto_within_group_v2, update);
     generate_candid_method!(user, unarchive_chat, update);
     generate_candid_method!(user, unblock_user, update);

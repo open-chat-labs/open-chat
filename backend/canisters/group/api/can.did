@@ -71,24 +71,6 @@ type RegisterPollVoteResponse =
         CallerNotInGroup;
     };
 
-type ToggleReactionArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        username: text;
-    };
-
-type ToggleReactionResponse =
-    variant {
-        Added: EventIndex;
-        Removed: EventIndex;
-        InvalidReaction;
-        MessageNotFound;
-        CallerNotInGroup;
-        NotAuthorized;
-    };
-
 type AddReactionArgs =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -631,7 +613,6 @@ service: {
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
-    toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);

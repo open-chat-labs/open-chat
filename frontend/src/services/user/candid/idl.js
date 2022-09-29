@@ -91,11 +91,13 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
     'NameReserved' : IDL.Null,
+    'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,
+    'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
     'MaxGroupsCreated' : IDL.Nat32,
@@ -430,6 +432,11 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
+  const GroupRulesChanged = IDL.Record({
+    'changed_by' : UserId,
+    'enabled' : IDL.Bool,
+    'prev_enabled' : IDL.Bool,
+  });
   const ParticipantDismissedAsSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -496,6 +503,7 @@ export const idlFactory = ({ IDL }) => {
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
+    'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'RoleChanged' : RoleChanged,
@@ -861,20 +869,6 @@ export const idlFactory = ({ IDL }) => {
     'TooLong' : FieldTooLongResult,
     'Success' : IDL.Null,
   });
-  const ToggleReactionArgs = IDL.Record({
-    'username' : IDL.Text,
-    'user_id' : UserId,
-    'message_id' : MessageId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'reaction' : IDL.Text,
-  });
-  const ToggleReactionResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
-    'ChatNotFound' : IDL.Null,
-    'InvalidReaction' : IDL.Null,
-    'Added' : EventIndex,
-    'Removed' : EventIndex,
-  });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptoWithinGroupArgs = IDL.Record({
@@ -1093,11 +1087,6 @@ export const idlFactory = ({ IDL }) => {
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
-    'toggle_reaction' : IDL.Func(
-        [ToggleReactionArgs],
-        [ToggleReactionResponse],
-        [],
-      ),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [TransferCryptoWithinGroupResponse],

@@ -118,6 +118,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
@@ -428,6 +429,11 @@ export interface GroupReactionAddedNotification {
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface GroupRules { 'text' : string, 'enabled' : boolean }
+export interface GroupRulesChanged {
+  'changed_by' : UserId,
+  'enabled' : boolean,
+  'prev_enabled' : boolean,
+}
 export type GroupSubtype = {
     'GovernanceProposals' : GovernanceProposalsSubtype
   };
@@ -788,6 +794,10 @@ export interface RoleChanged {
   'old_role' : Role,
   'new_role' : Role,
 }
+export interface RulesArgs { 'invite_code' : [] | [bigint] }
+export type RulesResponse = { 'NotAuthorized' : null } |
+  { 'Success' : RulesSuccess };
+export interface RulesSuccess { 'rules' : [] | [string] }
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
@@ -806,6 +816,7 @@ export interface SelectedInitialSuccess {
   'blocked_users' : Array<UserId>,
   'pinned_messages' : Uint32Array,
   'latest_event_index' : EventIndex,
+  'rules' : GroupRules,
 }
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
 export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
@@ -818,6 +829,7 @@ export interface SelectedUpdatesSuccess {
   'participants_removed' : Array<UserId>,
   'pinned_messages_added' : Uint32Array,
   'latest_event_index' : EventIndex,
+  'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
 }
 export interface SendMessageArgs {
@@ -907,18 +919,6 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface ToggleReactionArgs {
-  'username' : string,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : string,
-}
-export type ToggleReactionResponse = { 'MessageNotFound' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'InvalidReaction' : null } |
-  { 'Added' : EventIndex } |
-  { 'Removed' : EventIndex };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -970,6 +970,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
@@ -1075,6 +1076,7 @@ export interface _SERVICE {
     [ResetInviteCodeArgs],
     ResetInviteCodeResponse,
   >,
+  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
@@ -1086,7 +1088,6 @@ export interface _SERVICE {
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
-  'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group' : ActorMethod<[UpdateGroupArgs], UpdateGroupResponse>,

@@ -414,7 +414,19 @@
         "welcome": "Benvenuto a",
         "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri",
         "privateGroupInfo": "Gli utenti non possono unirsi a questo gruppo liberamente. Devono essere aggiunti o invitati da un membro autorizzato.",
-        "permissionsUpdateFailed": "Aggiornamento delle autorizzazioni non riuscito"
+        "permissionsUpdateFailed": "Aggiornamento delle autorizzazioni non riuscito",
+        "groupRules": "Regole di gruppo",
+        "rulesUpdateFailed": "Spiacenti, non siamo riusciti ad aggiornare le regole del tuo gruppo",
+        "getRulesFailed": "Impossibile ottenere le regole del gruppo",
+        "rules": {
+            "enable": "Abilita regole",
+            "placeholder": "quali sono le regole del gruppo?",
+            "instructions": "Se abilitato, i nuovi utenti devono accettare le regole prima di poter entrare nel gruppo.",
+            "acceptTitle": "Accetta le regole del gruppo",
+            "acceptMessage": "Per entrare a far parte di questo gruppo devi prima accettare queste regole.",
+            "accept": "Accettare",
+            "reject": "Rifiutare"
+        }
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",
@@ -596,5 +608,10 @@
         "title": "Si prega di passare al nostro nuovo dominio",
         "continue": "Continua",
         "blurb": "Stai attualmente utilizzando il dominio [{currentDomain}]({currentDomain}).<br /><br /> Non riceverai notifiche da questo dominio legacy e presto verrà ritirato del tutto.<br /><br /> *Per continuare a utilizzare OpenChat e beneficiare appieno delle continue ottimizzazioni delle prestazioni, passa al nostro nuovo dominio [https://oc.app](https://oc.app)*<br /><br /> Se hai salvato il sito nella schermata iniziale, dovrai eliminarlo/disinstallarlo e salvarlo nuovamente nella schermata iniziale dal nuovo dominio.<br/><br/>"
-    }
+    },
+    "groupRules": "regole di gruppo",
+    "groupRulesEnabled": "{changedBy} ha abilitato le regole del gruppo",
+    "groupRulesDisabled": "{changedBy} ha disabilitato le regole del gruppo",
+    "groupRulesTooShort": "Le regole del gruppo non devono essere vuote",
+    "groupRulesTooLong": "Le regole del gruppo sono troppo lunghe"
 }

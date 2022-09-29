@@ -21,7 +21,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         let is_public_group = runtime_state.data.is_public;
         let is_valid = match method_name.as_str() {
             "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_block_users(permissions),
-            "add_reaction" | "remove_reaction" | "toggle_reaction" => role.can_react_to_messages(permissions),
+            "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
             "change_role" => {
                 let (args,) = ic_cdk::api::call::arg_data::<(group_canister::change_role::Args,)>();

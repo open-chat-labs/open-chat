@@ -20,7 +20,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 43;
+const CACHE_VERSION = 44;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -535,8 +535,8 @@ export function setCachedMessageFromNotification(
         throw new Error("Unable to open indexDB, cannot set message from notification");
     }
 
-    setCachedMessage(db, chatId, message, threadRootMessageIndex).catch(
-        (err) => rollbar.error("Unable to write notification message to the cache", err)
+    setCachedMessage(db, chatId, message, threadRootMessageIndex).catch((err) =>
+        rollbar.error("Unable to write notification message to the cache", err)
     );
 }
 

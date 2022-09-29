@@ -15,6 +15,7 @@
         EventWrapper,
         FullMember,
         GroupChatSummary,
+        GroupRules,
         MemberRole,
         Message,
     } from "../../domain/chat/chat";
@@ -33,17 +34,20 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { eventsStore, selectedChatId, selectedChatStore } from "../../stores/chat";
-    import { focusThreadMessageIndex } from "../../stores/chat";
+    import {
+        eventsStore,
+        selectedChatId,
+        selectedChatStore,
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatPinnedMessages,
+        currentChatRules,
+        focusThreadMessageIndex,
+        updateChatMembers,
+        updateBlockedUsers,
+    } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
     import { setSoftDisabled } from "../../stores/notifications";
-    import {
-        currentChatMembers,
-        updateChatMembers,
-        currentChatBlockedUsers,
-        updateBlockedUsers,
-        currentChatPinnedMessages,
-    } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -327,6 +331,10 @@
             });
     }
 
+    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
+        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
+    }
+
     $: threadRootEvent =
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
@@ -337,8 +345,10 @@
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
             chat={$groupChat}
-            memberCount={$currentChatMembers?.length ?? 0}
+            memberCount={$currentChatMembers.length}
+            rules={$currentChatRules}
             on:close={popHistory}
+            on:updateGroupRules={updateGroupRules}
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
