@@ -573,17 +573,19 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-// This set will contain 1 key for each rendered user event group which is used as that group's key
-
-const draftMessages = createChatSpecificDataStore<DraftMessage>(() => ({}));
+/**
+ * You might think that this belongs in the chatStateStore, but this needs to persist across chat selection boundary
+ * so it has a different scope.
+ */
+const draftMessages = createChatSpecificObjectStore<DraftMessage>(() => ({}));
 export const currentChatDraftMessage = {
     ...draftMessages,
     setTextContent: (id: string, textContent: string | undefined): void =>
-        draftMessages.update(id, (d) => ({ ...d, ...{ textContent } })),
+        draftMessages.setProp(id, "textContent", textContent),
     setAttachment: (id: string, attachment: MessageContent | undefined): void =>
-        draftMessages.update(id, (d) => ({ ...d, ...{ attachment } })),
+        draftMessages.setProp(id, "attachment", attachment),
     setReplyingTo: (id: string, replyingTo: EnhancedReplyContext | undefined): void =>
-        draftMessages.update(id, (d) => ({ ...d, ...{ replyingTo } })),
+        draftMessages.setProp(id, "replyingTo", replyingTo),
     setEditing: (id: string, editingEvent: EventWrapper<Message>): void => {
         const users = get(userStore);
         const updated = {
@@ -605,7 +607,23 @@ export const currentChatDraftMessage = {
         draftMessages.update(id, (d) => ({ ...d, ...updated }));
     },
 };
-export const currentChatTextContent = derived(currentChatDraftMessage, (d) => d.textContent);
-export const currentChatReplyingTo = derived(currentChatDraftMessage, (d) => d.replyingTo);
-export const currentChatFileToAttach = derived(currentChatDraftMessage, (d) => d.attachment);
-export const currentChatEditingEvent = derived(currentChatDraftMessage, (d) => d.editingEvent);
+export const currentChatTextContent = createDerivedPropStore(
+    currentChatDraftMessage,
+    "textContent",
+    () => undefined
+);
+export const currentChatReplyingTo = createDerivedPropStore(
+    currentChatDraftMessage,
+    "replyingTo",
+    () => undefined
+);
+export const currentChatFileToAttach = createDerivedPropStore(
+    currentChatDraftMessage,
+    "attachment",
+    () => undefined
+);
+export const currentChatEditingEvent = createDerivedPropStore(
+    currentChatDraftMessage,
+    "editingEvent",
+    () => undefined
+);
