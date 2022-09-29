@@ -81,7 +81,6 @@
         removeChat,
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
-        focusThreadMessageIndex,
         currentChatDraftMessage,
         currentChatBlockedUsers,
         currentChatMembers,
@@ -1083,10 +1082,6 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
-
-    $: console.log("currentChatMembers: ", $currentChatMembers);
-    $: console.log("currentChatBlockedUsers: ", $currentChatBlockedUsers);
-    $: console.log("currentChatPinnedMessages: ", $currentChatPinnedMessages);
 </script>
 
 <main class:fullscreen={$fullScreen}>
