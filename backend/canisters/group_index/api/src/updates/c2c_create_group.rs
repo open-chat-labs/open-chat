@@ -1,11 +1,10 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{Avatar, ChatId, GroupPermissions, GroupRules, GroupSubtype};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
-    pub creator_principal: Principal,
     pub name: String,
     pub description: String,
     #[serde(default)]
@@ -21,6 +20,7 @@ pub enum Response {
     Success(SuccessResult),
     NameTaken,
     CyclesBalanceTooLow,
+    UserNotFound,
     InternalError,
 }
 
