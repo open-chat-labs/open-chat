@@ -1,5 +1,4 @@
 mod create_group;
-mod cycles_wallet;
 mod get_user;
 mod install_service_canisters;
 mod join_group;
@@ -10,7 +9,6 @@ mod set_username;
 mod upgrade_service_canisters;
 
 pub use create_group::*;
-pub use cycles_wallet::*;
 pub use get_user::*;
 pub use install_service_canisters::*;
 pub use join_group::*;

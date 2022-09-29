@@ -7,11 +7,11 @@ use ic_fondue::ic_manager::IcHandle;
 use types::CanisterId;
 use user_index_canister::current_user::PhoneStatus;
 
-pub fn verify_user_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn verify_user_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(verify_user_tests_impl(handle, ctx));
 }
 
-async fn verify_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn verify_user_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

@@ -287,7 +287,7 @@ export function setSelectedChat(
     currentChatMembers.set(chat.chatId, []);
     currentChatBlockedUsers.set(chat.chatId, new Set<string>());
     currentChatPinnedMessages.set(chat.chatId, new Set<number>());
-    currentChatRules.set(chat.chatId, emptyRules);
+    currentChatRules.set(chat.chatId, undefined);
     currentChatUserIds.set(
         chat.chatId,
         new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
@@ -515,10 +515,6 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         );
     }
 );
-const emptyRules: GroupRules = {
-    text: "",
-    enabled: false,
-};
 
 export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
 export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
@@ -526,7 +522,7 @@ export const currentChatBlockedUsers = createChatSpecificDataStore<Set<string>>(
 export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>>(
     new Set<number>()
 );
-export const currentChatRules = createChatSpecificDataStore<GroupRules>(emptyRules);
+export const currentChatRules = createChatSpecificDataStore<GroupRules | undefined>(undefined);
 export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 // This set will contain 1 key for each rendered user event group which is used as that group's key

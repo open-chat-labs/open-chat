@@ -1,2 +1,2 @@
-# The directory used to place the compiled nodemanager, replica, etc. for local system tests.
-local-bin/*
+icBinaries
+local-bin

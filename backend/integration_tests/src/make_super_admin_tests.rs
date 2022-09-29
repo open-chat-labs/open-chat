@@ -4,13 +4,13 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
-use types::{ChatEvent, ChatSummary, Role};
+use types::{ChatEvent, ChatSummary, GroupRules, Role};
 
-pub fn make_super_admin_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn make_super_admin_tests(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     block_on(make_super_admin_tests_impl(handle, ctx));
 }
 
-async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -45,6 +45,8 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         avatar: None,
         history_visible_to_new_joiners: false,
         permissions: None,
+        rules: GroupRules::default(),
+        subtype: None,
     };
 
     // User1 is owner and user2 is a participant
@@ -112,7 +114,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
 
     {
         print!("5. Confirm that user3 is now a super admin... ");
-        let args = user_canister::initial_state::Args {};
+        let args = user_canister::initial_state::Args { disable_cache: None };
         match user_canister_client::initial_state(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
@@ -269,7 +271,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         for i in 0..20 {
             print!("{i}... ");
 
-            let args = user_canister::initial_state::Args {};
+            let args = user_canister::initial_state::Args { disable_cache: None };
             match user_canister_client::initial_state(&user3_agent, &user3_id.into(), &args)
                 .await
                 .unwrap()
@@ -298,6 +300,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             from_index: 0.into(),
             to_index: 20.into(),
             invite_code: None,
+            latest_client_event_index: None,
         };
         match group_canister_client::events_range(&user2_agent, &chat_id.into(), &events_range_args)
             .await
