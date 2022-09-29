@@ -423,8 +423,7 @@
             "enable": "Habilitar reglas",
             "placeholder": "¿Cuáles son las reglas del grupo?",
             "instructions": "Si está habilitado, los nuevos usuarios deben aceptar las reglas antes de poder unirse al grupo.",
-            "acceptTitle": "Aceptar reglas de grupo",
-            "acceptMessage": "Para unirte a este grupo primero debes aceptar estas reglas.",
+            "acceptTitle": "Reglas de grupo",
             "accept": "Aceptar",
             "reject": "Rechazar"
         }

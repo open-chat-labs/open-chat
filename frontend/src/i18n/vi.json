@@ -423,8 +423,7 @@
             "enable": "Bật quy tắc",
             "placeholder": "các quy tắc nhóm là gì?",
             "instructions": "Nếu được bật, người dùng mới phải đồng ý với các quy tắc trước khi họ có thể tham gia nhóm.",
-            "acceptTitle": "Chấp nhận các quy tắc của nhóm",
-            "acceptMessage": "Để tham gia nhóm này, trước tiên bạn phải chấp nhận các quy tắc này.",
+            "acceptTitle": "Quy tắc nhóm",
             "accept": "Chấp nhận",
             "reject": "Từ chối"
         }
