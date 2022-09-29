@@ -1,9 +1,12 @@
 use crate::model::public_groups::GroupCreatedArgs;
-use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE};
+use crate::{
+    mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE,
+};
+use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, GroupSubtype, Version};
+use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, GroupSubtype, UserId, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -17,7 +20,12 @@ async fn c2c_create_group(args: Args) -> Response {
     let is_public = args.is_public;
     let avatar_id = Avatar::id(&args.avatar);
 
-    let canister_args = match mutate_state(|state| prepare(args, state)) {
+    let (user_id, principal) = match validate_caller().await {
+        Ok((u, p)) => (u, p),
+        Err(response) => return response,
+    };
+
+    let canister_args = match mutate_state(|state| prepare(args, user_id, principal, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -71,7 +79,28 @@ struct CreateCanisterArgs {
     init_canister_args: group_canister::init::Args,
 }
 
-fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
+async fn validate_caller() -> Result<(UserId, Principal), Response> {
+    let (caller, user_index_canister_id): (UserId, CanisterId) =
+        read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
+
+    match user_index_canister_c2c_client::c2c_lookup_principal(
+        user_index_canister_id,
+        &user_index_canister::c2c_lookup_principal::Args { user_id: caller },
+    )
+    .await
+    {
+        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => Err(UserNotFound),
+        Err(_) => Err(InternalError),
+    }
+}
+
+fn prepare(
+    args: Args,
+    user_id: UserId,
+    principal: Principal,
+    runtime_state: &mut RuntimeState,
+) -> Result<CreateCanisterArgs, Response> {
     let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
@@ -83,7 +112,6 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
     };
 
     let now = runtime_state.env.now();
-    let user_id = runtime_state.env.caller().into();
 
     if args.is_public && !runtime_state.data.public_groups.reserve_name(&args.name, now) {
         Err(NameTaken)
@@ -99,7 +127,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
             // History is always visible on public groups
             history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
             permissions: args.permissions,
-            created_by_principal: args.creator_principal,
+            created_by_principal: principal,
             created_by_user_id: user_id,
             mark_active_duration: MARK_ACTIVE_DURATION,
             wasm_version: canister_wasm.version,

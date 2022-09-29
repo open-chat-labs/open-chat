@@ -45,12 +45,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 }
 
 async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
-    let (group_index_canister_id, my_principal) =
-        read_state(|state| (state.data.group_index_canister_id, state.env.canister_id()));
+    let group_index_canister_id = read_state(|state| state.data.group_index_canister_id);
 
     let create_group_args = group_index_canister::c2c_create_group::Args {
         is_public: true,
-        creator_principal: my_principal,
         name: format!("{} Proposals", &args.name),
         description: args.description.clone().unwrap_or_else(|| default_description(&args.name)),
         rules: GroupRules::default(),

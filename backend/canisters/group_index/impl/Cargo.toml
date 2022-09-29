@@ -32,4 +32,6 @@ tracing = "0.1.33"
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
