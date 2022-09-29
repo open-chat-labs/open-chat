@@ -671,8 +671,7 @@
             case "makePrivate":
                 return $_("confirmMakeGroupPrivate");
             case "rules": {
-                const acceptMessage = $_("group.rules.acceptMessage");
-                return `${acceptMessage}\n\n${confirmActionEvent.rules}`;
+                return confirmActionEvent.rules;
             }
         }
     }

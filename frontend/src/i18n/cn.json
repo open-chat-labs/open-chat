@@ -422,8 +422,7 @@
             "enable": "启用规则",
             "placeholder": "什么是小组规则？",
             "instructions": "如果启用，新用户必须同意规则才能加入群组。",
-            "acceptTitle": "接受组规则",
-            "acceptMessage": "要加入此群组，您必须首先接受这些规则。",
+            "acceptTitle": "组规则",
             "accept": "接受",
             "reject": "拒绝"
         }

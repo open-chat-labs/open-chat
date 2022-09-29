@@ -421,8 +421,7 @@
             "enable": "Activer les règles",
             "placeholder": "quelles sont les règles du groupe?",
             "instructions": "Si cette option est activée, les nouveaux utilisateurs doivent accepter les règles avant de pouvoir rejoindre le groupe.",
-            "acceptTitle": "Accepter les règles du groupe",
-            "acceptMessage": "Pour rejoindre ce groupe, vous devez d'abord accepter ces règles.",
+            "acceptTitle": "Règles de groupe",
             "accept": "Accepter",
             "reject": "Rejeter"
         }
