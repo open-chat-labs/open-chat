@@ -1,10 +1,10 @@
 import type {
     ChatEvent,
+    ChatSpecificState,
     ChatSummary,
     CurrentChatState,
     EnhancedReplyContext,
     EventWrapper,
-    GroupChatDetails,
     GroupRules,
     Member,
     Message,
@@ -43,7 +43,6 @@ import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import {
     createChatSpecificDataStore,
-    createNullableChatSpecificDateStore,
     createDerivedPropStore,
     updateDerivedProp,
     setDerivedProp,
@@ -248,51 +247,85 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
-export const groupDetails = createNullableChatSpecificDateStore<GroupChatDetails>();
-export const currentChatMembers = createDerivedPropStore<GroupChatDetails, "members">(
-    groupDetails,
+export const chatStateStore = createChatSpecificDataStore<ChatSpecificState>(() => ({
+    detailsLoaded: false,
+    members: [],
+    blockedUsers: new Set<string>(),
+    pinnedMessages: new Set<number>(),
+}));
+
+export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
+    chatStateStore,
+    "rules",
+    () => undefined
+);
+export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
+    chatStateStore,
     "members",
-    []
+    () => []
 );
-export const currentChatBlockedUsers = createDerivedPropStore<GroupChatDetails, "blockedUsers">(
-    groupDetails,
+export const chatDetailsLatestEventIndex = createDerivedPropStore<
+    ChatSpecificState,
+    "latestEventIndex"
+>(chatStateStore, "latestEventIndex", () => undefined);
+
+export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
+    chatStateStore,
     "blockedUsers",
-    new Set<string>()
+    () => new Set<string>()
 );
-export const currentChatPinnedMessages = createDerivedPropStore<GroupChatDetails, "pinnedMessages">(
-    groupDetails,
-    "pinnedMessages",
-    new Set<number>()
-);
+export const currentChatPinnedMessages = createDerivedPropStore<
+    ChatSpecificState,
+    "pinnedMessages"
+>(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function updateChatMembers(chatId: string, updateFn: (members: Member[]) => Member[]): void {
-    updateDerivedProp(groupDetails, chatId, "members", updateFn);
+    updateDerivedProp(chatStateStore, chatId, "members", updateFn);
 }
 
 export function setChatMembers(chatId: string, members: Member[]): void {
-    setDerivedProp(groupDetails, chatId, "members", members);
+    setDerivedProp(chatStateStore, chatId, "members", members);
+}
+
+export function setLatestEventIndex(chatId: string, index: number): void {
+    setDerivedProp(chatStateStore, chatId, "latestEventIndex", index);
+}
+
+export function setDetailsLoaded(chatId: string, loaded: boolean): void {
+    setDerivedProp(chatStateStore, chatId, "detailsLoaded", loaded);
+}
+
+export function updateChatRules(
+    chatId: string,
+    updateFn: (rules: GroupRules | undefined) => GroupRules | undefined
+): void {
+    updateDerivedProp(chatStateStore, chatId, "rules", updateFn);
+}
+
+export function setChatRules(chatId: string, rules: GroupRules | undefined): void {
+    setDerivedProp(chatStateStore, chatId, "rules", rules);
 }
 
 export function updateBlockedUsers(
     chatId: string,
     updateFn: (blockedUsers: Set<string>) => Set<string>
 ): void {
-    updateDerivedProp(groupDetails, chatId, "blockedUsers", updateFn);
+    updateDerivedProp(chatStateStore, chatId, "blockedUsers", updateFn);
 }
 
 export function setBlockedUsers(chatId: string, blockedUsers: Set<string>): void {
-    setDerivedProp(groupDetails, chatId, "blockedUsers", blockedUsers);
+    setDerivedProp(chatStateStore, chatId, "blockedUsers", blockedUsers);
 }
 
 export function updatePinnedMessages(
     chatId: string,
     updateFn: (pinnedMessages: Set<number>) => Set<number>
 ): void {
-    updateDerivedProp(groupDetails, chatId, "pinnedMessages", updateFn);
+    updateDerivedProp(chatStateStore, chatId, "pinnedMessages", updateFn);
 }
 
 export function setPinnedMessages(chatId: string, pinnedMessages: Set<number>): void {
-    setDerivedProp(groupDetails, chatId, "pinnedMessages", pinnedMessages);
+    setDerivedProp(chatStateStore, chatId, "pinnedMessages", pinnedMessages);
 }
 
 export function setSelectedChat(
@@ -337,9 +370,7 @@ export function setSelectedChat(
     serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
     focusMessageIndex.set(chat.chatId, messageIndex);
     focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
-
-    groupDetails.clear(chat.chatId);
-    currentChatRules.set(chat.chatId, undefined);
+    chatStateStore.clear(chat.chatId);
     currentChatUserIds.set(
         chat.chatId,
         new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
@@ -394,11 +425,10 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
     filteredProposalsStore.set(undefined);
     selectedChatId.update((chatId) => {
         if (chatId !== undefined) {
-            groupDetails.clear(chatId);
+            chatStateStore.clear(chatId);
             serverEventsStore.clear(chatId);
             focusMessageIndex.clear(chatId);
             focusThreadMessageIndex.clear(chatId);
-            currentChatRules.clear(chatId);
         }
         return newSelectedChatId;
     });
@@ -554,7 +584,7 @@ export function removeChat(chatId: string): void {
 
 // All of the below state is relative to the selected chat
 
-export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>([]);
+export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>(() => []);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [serverEventsStore, localMessageUpdates],
     ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
@@ -565,21 +595,16 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
-export const currentChatRules = createChatSpecificDataStore<GroupRules | undefined>(undefined);
-export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
-export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
+export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(() => new Set<string>());
+export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(() => undefined);
+export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(
+    () => undefined
+);
 // This set will contain 1 key for each rendered user event group which is used as that group's key
-export const userGroupKeys = createChatSpecificDataStore<Set<string>>(
-    new Set<string>(),
-    () => new Set<string>()
-);
-export const confirmedEventIndexesLoaded = createChatSpecificDataStore<DRange>(
-    new DRange(),
-    () => new DRange()
-);
+export const userGroupKeys = createChatSpecificDataStore<Set<string>>(() => new Set<string>());
+export const confirmedEventIndexesLoaded = createChatSpecificDataStore<DRange>(() => new DRange());
 
-const draftMessages = createChatSpecificDataStore<DraftMessage>({});
+const draftMessages = createChatSpecificDataStore<DraftMessage>(() => ({}));
 export const currentChatDraftMessage = {
     ...draftMessages,
     setTextContent: (id: string, textContent: string | undefined): void =>

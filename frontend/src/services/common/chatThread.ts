@@ -19,14 +19,16 @@ import {
     userGroupKeys,
     serverEventsStore,
     updateSummaryWithConfirmedMessage,
-    groupDetails,
     updateBlockedUsers,
     updateChatMembers,
     updatePinnedMessages,
-    currentChatRules,
     setChatMembers,
     setBlockedUsers,
     setPinnedMessages,
+    chatStateStore,
+    setDetailsLoaded,
+    setChatRules,
+    setLatestEventIndex,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -171,8 +173,8 @@ export async function updateUserStore(
     userIdsFromEvents: Set<string>
 ): Promise<void> {
     const allUserIds = new Set<string>();
-    groupDetails.getProp(chatId, "members")?.forEach((m) => allUserIds.add(m.userId));
-    groupDetails.getProp(chatId, "blockedUsers")?.forEach((u) => allUserIds.add(u));
+    chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
+    chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
     userIdsFromEvents.forEach((u) => allUserIds.add(u));
 
     currentChatUserIds.update(chatId, (userIds) => {
@@ -566,11 +568,15 @@ export async function loadDetails(
 ): Promise<void> {
     // currently this is only meaningful for group chats, but we'll set it up generically just in case
     if (clientChat.kind === "group_chat") {
-        if (groupDetails.get(clientChat.chatId) === undefined) {
+        if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
             const resp = await api.getGroupDetails(clientChat.chatId, clientChat.latestEventIndex);
             if (resp !== "caller_not_in_group") {
-                groupDetails.set(clientChat.chatId, resp);
-                currentChatRules.set(clientChat.chatId, resp.rules);
+                setDetailsLoaded(clientChat.chatId, true);
+                setLatestEventIndex(clientChat.chatId, resp.latestEventIndex);
+                setChatMembers(clientChat.chatId, resp.members);
+                setBlockedUsers(clientChat.chatId, resp.blockedUsers);
+                setPinnedMessages(clientChat.chatId, resp.pinnedMessages);
+                setChatRules(clientChat.chatId, resp.rules);
             }
             await updateUserStore(
                 api,
@@ -591,13 +597,19 @@ export async function updateDetails(
     currentEvents: EventWrapper<ChatEvent>[]
 ): Promise<void> {
     if (clientChat.kind === "group_chat") {
-        const details = groupDetails.get(clientChat.chatId);
-        if (details !== undefined && details.latestEventIndex < clientChat.latestEventIndex) {
-            const gd = await api.getGroupDetailsUpdates(clientChat.chatId, details);
-            currentChatRules.set(clientChat.chatId, gd.rules);
+        const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
+        if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
+            const gd = await api.getGroupDetailsUpdates(clientChat.chatId, {
+                members: chatStateStore.getProp(clientChat.chatId, "members"),
+                blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
+                pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
+                latestEventIndex,
+                rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+            });
             setChatMembers(clientChat.chatId, gd.members);
             setBlockedUsers(clientChat.chatId, gd.blockedUsers);
             setPinnedMessages(clientChat.chatId, gd.pinnedMessages);
+            setChatRules(clientChat.chatId, gd.rules);
             await updateUserStore(
                 api,
                 clientChat.chatId,

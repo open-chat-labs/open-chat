@@ -83,10 +83,11 @@
         clearSelectedChat,
         focusThreadMessageIndex,
         currentChatDraftMessage,
-        currentChatRules,
         currentChatBlockedUsers,
         currentChatMembers,
         currentChatPinnedMessages,
+        chatStateStore,
+        setChatRules,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -1028,7 +1029,7 @@
 
     function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
         const { group, rules } = ev.detail;
-        currentChatRules.set(group.chatId, rules);
+        setChatRules(group.chatId, rules);
         addOrReplaceChat(group);
         if (group.public) {
             trackEvent("public_group_created");

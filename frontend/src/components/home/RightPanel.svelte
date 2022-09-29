@@ -45,6 +45,7 @@
         focusThreadMessageIndex,
         updateChatMembers,
         updateBlockedUsers,
+        setChatRules,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
     import { setSoftDisabled } from "../../stores/notifications";
@@ -332,7 +333,7 @@
     }
 
     function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
-        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
+        setChatRules(ev.detail.chatId, ev.detail.rules);
     }
 
     $: threadRootEvent =
