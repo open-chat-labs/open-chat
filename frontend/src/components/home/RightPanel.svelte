@@ -340,8 +340,6 @@
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
             : undefined;
-
-    $: console.log("Rules: ", $currentChatRules);
 </script>
 
 <Panel right>
