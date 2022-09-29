@@ -9,6 +9,7 @@ type SendMessageArgs =
         content: MessageContent;
         replies_to: opt ReplyContext;
         forwarding: bool;
+        correlation_id: nat64;
     };
 
 type SendMessageResponse =
@@ -42,6 +43,7 @@ type EditMessageArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         content: MessageContent;
+        correlation_id: nat64;
     };
 
 type EditMessageResponse =
@@ -57,6 +59,7 @@ type DeleteMessagesArgs =
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         message_ids: vec MessageId;
+        correlation_id: nat64;
     };
 
 type DeleteMessagesResponse =
@@ -72,6 +75,7 @@ type AddReactionArgs =
         message_id: MessageId;
         reaction: text;
         username: text;
+        correlation_id: nat64;
     };
 
 type AddReactionResponse =
@@ -89,6 +93,7 @@ type RemoveReactionArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
+        correlation_id: nat64;
     };
 
 type RemoveReactionResponse =
@@ -179,6 +184,7 @@ type JoinGroupArgs =
         chat_id: ChatId;
         as_super_admin: bool;
         invite_code: opt nat64;
+        correlation_id: nat64;
     };
 
 type JoinGroupResponse =
@@ -196,6 +202,7 @@ type JoinGroupResponse =
 type LeaveGroupArgs =
     record {
         chat_id: ChatId;
+        correlation_id: nat64;
     };
 
 type LeaveGroupResponse =
@@ -258,6 +265,7 @@ type UnmuteNotificationsResponse =
 type AssumeGroupSuperAdminArgs =
     record {
         chat_id: ChatId;
+        correlation_id: nat64;
     };
 
 type AssumeGroupSuperAdminResponse =
@@ -273,6 +281,7 @@ type AssumeGroupSuperAdminResponse =
 type RelinquishGroupSuperAdminArgs =
     record {
         chat_id: ChatId;
+        correlation_id: nat64;
     };
 
 type RelinquishGroupSuperAdminResponse =
@@ -314,6 +323,7 @@ type TransferCryptoWithinGroupArgs =
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
+        correlation_id: nat64;
     };
 
 type TransferCryptoWithinGroupResponse =

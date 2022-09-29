@@ -9,6 +9,8 @@ pub struct Args {
     pub added: bool,
     #[serde(default)]
     pub username: String,
+    #[serde(default)]
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

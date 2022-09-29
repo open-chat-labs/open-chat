@@ -34,6 +34,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     args.message_id,
                     args.reaction,
                     args.username,
+                    args.correlation_id,
                 ));
                 Success(e)
             }
@@ -50,12 +51,14 @@ async fn add_reaction_on_recipients_canister(
     message_id: MessageId,
     reaction: Reaction,
     username: String,
+    correlation_id: u64,
 ) {
     let args = c2c_toggle_reaction::Args {
         message_id,
         reaction,
         added: true,
         username,
+        correlation_id,
     };
     let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
 }

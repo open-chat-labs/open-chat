@@ -5,6 +5,7 @@ export type AccountIdentifier = Uint8Array;
 export interface AddReactionArgs {
   'username' : string,
   'user_id' : UserId,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
@@ -29,7 +30,10 @@ export interface AddedToGroupNotification {
 export interface ArchiveChatArgs { 'chat_id' : ChatId }
 export type ArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
-export interface AssumeGroupSuperAdminArgs { 'chat_id' : ChatId }
+export interface AssumeGroupSuperAdminArgs {
+  'correlation_id' : bigint,
+  'chat_id' : ChatId,
+}
 export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
@@ -190,6 +194,7 @@ export type DeleteGroupResponse = { 'NotAuthorized' : null } |
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
+  'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
@@ -244,6 +249,7 @@ export interface DirectReactionAddedNotification {
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -493,6 +499,7 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
   'as_super_admin' : boolean,
+  'correlation_id' : bigint,
   'chat_id' : ChatId,
 }
 export type JoinGroupResponse = { 'Blocked' : null } |
@@ -503,7 +510,10 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
-export interface LeaveGroupArgs { 'chat_id' : ChatId }
+export interface LeaveGroupArgs {
+  'correlation_id' : bigint,
+  'chat_id' : ChatId,
+}
 export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'OwnerCannotLeave' : null } |
@@ -776,13 +786,17 @@ export interface RecommendedGroupsSuccessResult {
 }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
+export interface RelinquishGroupSuperAdminArgs {
+  'correlation_id' : bigint,
+  'chat_id' : ChatId,
+}
 export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
   { 'InternalError' : string };
 export interface RemoveReactionArgs {
   'user_id' : UserId,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
@@ -829,6 +843,7 @@ export interface SendMessageArgs {
   'recipient' : UserId,
   'forwarding' : boolean,
   'sender_name' : string,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'thread_root_message_index' : [] | [MessageIndex],
@@ -925,6 +940,7 @@ export interface TransferCryptoWithinGroupArgs {
   'mentioned' : Array<User>,
   'group_id' : ChatId,
   'sender_name' : string,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
 }

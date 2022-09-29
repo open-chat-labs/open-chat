@@ -120,6 +120,7 @@ fn send_message_impl(
             }
         }),
         forwarding: args.forwarding,
+        correlation_id: args.correlation_id,
     };
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
 

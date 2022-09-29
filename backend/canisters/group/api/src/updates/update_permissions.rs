@@ -17,6 +17,7 @@ pub struct Args {
     pub send_messages: Option<PermissionRole>,
     pub react_to_messages: Option<PermissionRole>,
     pub reply_in_thread: Option<PermissionRole>,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

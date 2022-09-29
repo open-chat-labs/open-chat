@@ -11,7 +11,9 @@ use user_canister::leave_group::{Response::*, *};
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let c2c_args = c2c_leave_group::Args {};
+    let c2c_args = c2c_leave_group::Args {
+        correlation_id: args.correlation_id,
+    };
 
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
