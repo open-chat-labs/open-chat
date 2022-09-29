@@ -22,7 +22,7 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         match chat
             .events
-            .remove_reaction(my_user_id, None, args.message_id, args.reaction.clone(), now)
+            .remove_reaction(my_user_id, None, args.message_id, args.reaction.clone(), args.correlation_id, now)
         {
             AddRemoveReactionResult::Success(e) => {
                 ic_cdk::spawn(remove_reaction_on_recipients_canister(

@@ -10,7 +10,7 @@ use user_index_canister::c2c_is_super_admin;
 
 #[update_msgpack]
 #[trace]
-async fn c2c_assume_super_admin(_args: Args) -> Response {
+async fn c2c_assume_super_admin(args: Args) -> Response {
     run_regular_jobs();
 
     let prepare_result = mutate_state(prepare);
@@ -19,7 +19,7 @@ async fn c2c_assume_super_admin(_args: Args) -> Response {
     let canister_id = prepare_result.user_index_canister_id;
     let is_super_admin_args = c2c_is_super_admin::Args { user_id };
     match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
-        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => mutate_state(|state| commit(user_id, state)),
+        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => mutate_state(|state| commit(user_id, args.correlation_id, state)),
         Ok(user_index_canister::c2c_is_super_admin::Response::No) => NotSuperAdmin,
         Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {error:?}")),
     }
@@ -37,7 +37,7 @@ fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
     }
 }
 
-fn commit(user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
+fn commit(user_id: UserId, correlation_id: u64, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     match runtime_state.data.participants.make_super_admin(&user_id) {
@@ -46,7 +46,7 @@ fn commit(user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .push_main_event(ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(event)), now);
+                .push_main_event(ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(event)), correlation_id, now);
 
             handle_activity_notification(runtime_state);
             Success

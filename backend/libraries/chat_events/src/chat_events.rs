@@ -31,7 +31,7 @@ impl AllChatEvents {
             message_index_map: BTreeMap::new(),
         };
 
-        events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
+        events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
 
         AllChatEvents {
             chat_id: them.into(),
@@ -64,6 +64,7 @@ impl AllChatEvents {
                 description,
                 created_by,
             })),
+            0,
             now,
         );
 
@@ -104,17 +105,25 @@ impl AllChatEvents {
         let event_index = self.push_event(
             args.thread_root_message_index,
             ChatEventInternal::Message(Box::new(message_internal)),
+            args.correlation_id,
             args.now,
         );
 
         if let Some(root_message_index) = args.thread_root_message_index {
-            self.main
-                .update_thread_summary(root_message_index, args.sender, Some(message_index), event_index, args.now);
+            self.main.update_thread_summary(
+                root_message_index,
+                args.sender,
+                Some(message_index),
+                event_index,
+                args.correlation_id,
+                args.now,
+            );
         }
 
         EventWrapper {
             index: event_index,
             timestamp: args.now,
+            correlation_id: args.correlation_id,
             event: message,
         }
     }
@@ -132,12 +141,19 @@ impl AllChatEvents {
                             updated_by: args.sender,
                             message_id: args.message_id,
                         })),
+                        args.correlation_id,
                         args.now,
                     );
 
                     if let Some(root_message_index) = args.thread_root_message_index {
-                        self.main
-                            .update_thread_summary(root_message_index, args.sender, None, event_index, args.now);
+                        self.main.update_thread_summary(
+                            root_message_index,
+                            args.sender,
+                            None,
+                            event_index,
+                            args.correlation_id,
+                            args.now,
+                        );
                     }
 
                     return EditMessageResult::Success;
@@ -156,6 +172,7 @@ impl AllChatEvents {
         is_admin: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> Vec<(MessageId, DeleteMessageResult)> {
         let results = message_ids
@@ -163,15 +180,21 @@ impl AllChatEvents {
             .map(|message_id| {
                 (
                     message_id,
-                    self.delete_message(caller, is_admin, thread_root_message_index, message_id, now),
+                    self.delete_message(caller, is_admin, thread_root_message_index, message_id, correlation_id, now),
                 )
             })
             .collect();
 
         if let Some(root_message_index) = thread_root_message_index {
             if let Some(thread_events) = self.threads.get(&root_message_index) {
-                self.main
-                    .update_thread_summary(root_message_index, caller, None, thread_events.last().index, now);
+                self.main.update_thread_summary(
+                    root_message_index,
+                    caller,
+                    None,
+                    thread_events.last().index,
+                    correlation_id,
+                    now,
+                );
             }
         }
 
@@ -185,6 +208,7 @@ impl AllChatEvents {
         message_index: MessageIndex,
         option_index: u32,
         operation: VoteOperation,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> RegisterPollVoteResult {
         if let Some(message) = self.message_internal_mut_by_message_index(thread_root_message_index, message_index) {
@@ -206,11 +230,17 @@ impl AllChatEvents {
                             })),
                         };
                         let votes = p.hydrate(Some(user_id)).votes;
-                        let event_index = self.push_event(thread_root_message_index, event, now);
+                        let event_index = self.push_event(thread_root_message_index, event, correlation_id, now);
 
                         if let Some(root_message_index) = thread_root_message_index {
-                            self.main
-                                .update_thread_summary(root_message_index, user_id, None, event_index, now);
+                            self.main.update_thread_summary(
+                                root_message_index,
+                                user_id,
+                                None,
+                                event_index,
+                                correlation_id,
+                                now,
+                            );
                         }
 
                         RegisterPollVoteResult::Success(votes)
@@ -231,6 +261,7 @@ impl AllChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> EndPollResult {
         if let Some(message) = self.message_internal_mut_by_message_index(thread_root_message_index, message_index) {
@@ -241,7 +272,7 @@ impl AllChatEvents {
                     message.last_updated = Some(now);
                     p.ended = true;
                     let event = ChatEventInternal::PollEnded(Box::new(message_index));
-                    self.push_event(thread_root_message_index, event, now);
+                    self.push_event(thread_root_message_index, event, correlation_id, now);
                     EndPollResult::Success
                 };
             }
@@ -284,6 +315,7 @@ impl AllChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> AddRemoveReactionResult {
         if !reaction.is_valid() {
@@ -311,12 +343,13 @@ impl AllChatEvents {
                     updated_by: user_id,
                     message_id,
                 })),
+                correlation_id,
                 now,
             );
 
             if let Some(root_message_index) = thread_root_message_index {
                 self.main
-                    .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
+                    .update_thread_summary(root_message_index, user_id, None, new_event_index, correlation_id, now);
             }
 
             AddRemoveReactionResult::Success(new_event_index)
@@ -331,6 +364,7 @@ impl AllChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> AddRemoveReactionResult {
         if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
@@ -352,12 +386,13 @@ impl AllChatEvents {
                     updated_by: user_id,
                     message_id,
                 })),
+                correlation_id,
                 now,
             );
 
             if let Some(root_message_index) = thread_root_message_index {
                 self.main
-                    .update_thread_summary(root_message_index, user_id, None, new_event_index, now);
+                    .update_thread_summary(root_message_index, user_id, None, new_event_index, correlation_id, now);
             }
 
             AddRemoveReactionResult::Success(new_event_index)
@@ -371,6 +406,7 @@ impl AllChatEvents {
         thread_root_message_index: MessageIndex,
         user_id: UserId,
         latest_thread_message_index_if_updated: Option<MessageIndex>,
+        correlation_id: u64,
         now: TimestampMillis,
     ) {
         if let Some(thread_events) = self.threads.get(&thread_root_message_index) {
@@ -379,12 +415,19 @@ impl AllChatEvents {
                 user_id,
                 latest_thread_message_index_if_updated,
                 thread_events.last().index,
+                correlation_id,
                 now,
             );
         }
     }
 
-    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<(MessageId, ProposalStatusUpdate)>, now: TimestampMillis) {
+    pub fn update_proposals(
+        &mut self,
+        user_id: UserId,
+        updates: Vec<(MessageId, ProposalStatusUpdate)>,
+        correlation_id: u64,
+        now: TimestampMillis,
+    ) {
         let mut message_indexes = Vec::new();
 
         let chat_events = &mut self.main;
@@ -422,14 +465,15 @@ impl AllChatEvents {
                     ChatEventInternal::ProposalsUpdated(Box::new(ProposalsUpdatedInternal {
                         proposals: message_indexes,
                     })),
+                    correlation_id,
                     now,
                 );
             }
         }
     }
 
-    pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
-        self.push_event(None, event, now)
+    pub fn push_main_event(&mut self, event: ChatEventInternal, correlation_id: u64, now: TimestampMillis) -> EventIndex {
+        self.push_event(None, event, correlation_id, now)
     }
 
     pub fn search_messages(
@@ -583,11 +627,15 @@ impl AllChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         event: ChatEventInternal,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> EventIndex {
         self.add_to_metrics(&event, now);
 
-        let event_index = self.get_mut(thread_root_message_index).unwrap().push_event(event, now);
+        let event_index = self
+            .get_mut(thread_root_message_index)
+            .unwrap()
+            .push_event(event, correlation_id, now);
 
         event_index
     }
@@ -598,6 +646,7 @@ impl AllChatEvents {
         is_admin: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        correlation_id: u64,
         now: TimestampMillis,
     ) -> DeleteMessageResult {
         if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
@@ -626,6 +675,7 @@ impl AllChatEvents {
                                 updated_by: caller,
                                 message_id,
                             })),
+                            correlation_id,
                             now,
                         );
 
@@ -704,8 +754,9 @@ pub struct PushMessageArgs {
     pub message_id: MessageId,
     pub content: MessageContentInternal,
     pub replies_to: Option<ReplyContext>,
-    pub now: TimestampMillis,
     pub forwarded: bool,
+    pub correlation_id: u64,
+    pub now: TimestampMillis,
 }
 
 pub struct EditMessageArgs {
@@ -713,6 +764,7 @@ pub struct EditMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContent,
+    pub correlation_id: u64,
     pub now: TimestampMillis,
 }
 
@@ -785,6 +837,7 @@ impl ChatEvents {
         EventWrapper {
             index: message_event.index,
             timestamp: message_event.timestamp,
+            correlation_id: message_event.correlation_id,
             event: self.hydrate_message(message_event.event, my_user_id),
         }
     }
@@ -795,6 +848,7 @@ impl ChatEvents {
         user_id: UserId,
         latest_thread_message_index_if_updated: Option<MessageIndex>,
         latest_event_index: EventIndex,
+        correlation_id: u64,
         now: TimestampMillis,
     ) {
         // If the current latest event is a `ThreadUpdated` event for the same thread then update
@@ -819,6 +873,7 @@ impl ChatEvents {
                     message_index: thread_root_message_index,
                     latest_thread_message_index_if_updated,
                 })),
+                correlation_id,
                 now,
             );
         }
@@ -841,7 +896,7 @@ impl ChatEvents {
         }
     }
 
-    fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
+    fn push_event(&mut self, event: ChatEventInternal, correlation_id: u64, now: TimestampMillis) -> EventIndex {
         let valid = match self.events_type {
             ChatEventsType::Direct => event.is_valid_for_direct_chat(),
             ChatEventsType::Group => event.is_valid_for_group_chat(),
@@ -864,6 +919,7 @@ impl ChatEvents {
         self.events.push(EventWrapper {
             index: event_index,
             timestamp: now,
+            correlation_id,
             event,
         });
 
@@ -887,6 +943,7 @@ impl ChatEvents {
             Some(EventWrapper {
                 index: event.index,
                 timestamp: event.timestamp,
+                correlation_id: event.correlation_id,
                 event: self.hydrate_message(message, my_user_id),
             })
         } else {
@@ -1037,6 +1094,7 @@ impl ChatEvents {
             .map(|(e, m)| EventWrapper {
                 index: e.index,
                 timestamp: e.timestamp,
+                correlation_id: e.correlation_id,
                 event: m,
             })
     }
@@ -1218,6 +1276,7 @@ impl ChatEvents {
                     Some(EventWrapper {
                         index: e.index,
                         timestamp: e.timestamp,
+                        correlation_id: e.correlation_id,
                         event: self.hydrate_message(message, my_user_id),
                     })
                 } else {
@@ -1269,6 +1328,7 @@ impl ChatEvents {
         EventWrapper {
             index: event.index,
             timestamp: event.timestamp,
+            correlation_id: event.correlation_id,
             event: event_data,
         }
     }

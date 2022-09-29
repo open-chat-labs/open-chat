@@ -70,8 +70,9 @@ pub(crate) fn c2c_send_message_impl(
         sender,
         content: args.content.new_content_into_internal(),
         replies_to,
-        now,
         forwarded: args.forwarding,
+        correlation_id: args.correlation_id,
+        now,
     };
 
     let message_event =

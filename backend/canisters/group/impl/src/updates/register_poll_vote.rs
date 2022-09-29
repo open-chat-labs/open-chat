@@ -33,6 +33,7 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             args.message_index,
             args.poll_option,
             args.operation,
+            args.correlation_id,
             now,
         );
 

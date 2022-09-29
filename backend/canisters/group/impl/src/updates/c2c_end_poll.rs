@@ -20,7 +20,7 @@ fn c2c_end_poll_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     match runtime_state
         .data
         .events
-        .end_poll(args.thread_root_message_index, args.message_index, now)
+        .end_poll(args.thread_root_message_index, args.message_index, args.correlation_id, now)
     {
         EndPollResult::Success => {
             handle_activity_notification(runtime_state);

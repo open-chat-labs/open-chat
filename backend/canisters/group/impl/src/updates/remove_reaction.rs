@@ -36,6 +36,7 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             args.thread_root_message_index,
             args.message_id,
             args.reaction,
+            args.correlation_id,
             now,
         ) {
             AddRemoveReactionResult::Success(e) => {

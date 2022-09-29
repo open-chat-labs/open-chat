@@ -123,6 +123,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 previous_name: runtime_state.data.name.clone(),
                 changed_by: my_user_id,
             })),
+            args.correlation_id,
             now,
         );
 
@@ -136,6 +137,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 previous_description: runtime_state.data.description.clone(),
                 changed_by: my_user_id,
             })),
+            args.correlation_id,
             now,
         );
 
@@ -149,6 +151,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 prev_enabled: runtime_state.data.rules.enabled,
                 changed_by: my_user_id,
             })),
+            args.correlation_id,
             now,
         );
 
@@ -166,6 +169,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                     previous_avatar: previous_avatar_id,
                     changed_by: my_user_id,
                 })),
+                args.correlation_id,
                 now,
             );
 
@@ -180,6 +184,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 new_permissions: permissions.clone(),
                 changed_by: my_user_id,
             })),
+            args.correlation_id,
             now,
         );
 

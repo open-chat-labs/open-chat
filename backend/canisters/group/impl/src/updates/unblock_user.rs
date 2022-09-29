@@ -33,10 +33,11 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 unblocked_by,
             };
 
-            runtime_state
-                .data
-                .events
-                .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), now);
+            runtime_state.data.events.push_main_event(
+                ChatEventInternal::UsersUnblocked(Box::new(event)),
+                args.correlation_id,
+                now,
+            );
 
             handle_activity_notification(runtime_state);
             Success

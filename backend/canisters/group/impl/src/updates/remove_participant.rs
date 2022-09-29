@@ -28,7 +28,7 @@ async fn remove_participant(args: Args) -> Response {
         return InternalError(format!("{error:?}"));
     }
 
-    mutate_state(|state| commit(prepare_result.removed_by, args.user_id, state));
+    mutate_state(|state| commit(args, prepare_result.removed_by, state));
 
     Success
 }
@@ -67,7 +67,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
+fn commit(Args { user_id, correlation_id }: Args, removed_by: UserId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
     runtime_state.data.participants.remove(user_id);
@@ -80,7 +80,7 @@ fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
     runtime_state
         .data
         .events
-        .push_main_event(ChatEventInternal::ParticipantsRemoved(Box::new(event)), now);
+        .push_main_event(ChatEventInternal::ParticipantsRemoved(Box::new(event)), correlation_id, now);
 
     handle_activity_notification(runtime_state);
 }

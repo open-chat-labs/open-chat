@@ -22,6 +22,7 @@ fn update_permissions_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             return NotAuthorized;
         }
 
+        let correlation_id = args.correlation_id;
         let old_permissions = runtime_state.data.permissions.clone();
         let new_permissions = merge_permissions(args, &old_permissions);
         runtime_state.data.permissions = new_permissions.clone();
@@ -32,6 +33,7 @@ fn update_permissions_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
                 new_permissions,
                 changed_by: participant.user_id,
             })),
+            correlation_id,
             runtime_state.env.now(),
         );
 

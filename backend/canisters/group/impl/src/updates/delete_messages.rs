@@ -47,6 +47,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                                 unpinned_by: user_id,
                                 due_to_message_deleted: true,
                             })),
+                            args.correlation_id,
                             runtime_state.env.now(),
                         );
                     }
@@ -59,6 +60,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             participant.role.can_delete_messages(&runtime_state.data.permissions),
             args.thread_root_message_index,
             args.message_ids,
+            args.correlation_id,
             now,
         );
 

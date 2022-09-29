@@ -40,6 +40,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
                     unpinned_by: participant.user_id,
                     due_to_message_deleted: false,
                 })),
+                args.correlation_id,
                 now,
             );
 

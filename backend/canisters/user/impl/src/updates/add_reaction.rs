@@ -26,7 +26,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         match chat
             .events
-            .add_reaction(my_user_id, None, args.message_id, args.reaction.clone(), now)
+            .add_reaction(my_user_id, None, args.message_id, args.reaction.clone(), args.correlation_id, now)
         {
             AddRemoveReactionResult::Success(e) => {
                 ic_cdk::spawn(add_reaction_on_recipients_canister(

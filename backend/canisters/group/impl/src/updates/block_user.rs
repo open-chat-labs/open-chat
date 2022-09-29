@@ -30,7 +30,7 @@ async fn block_user(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| commit(prepare_result.my_user_id, args.user_id, state));
+    mutate_state(|state| commit(args, prepare_result.my_user_id, state));
 
     Success
 }
@@ -78,7 +78,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
+fn commit(Args { user_id, correlation_id }: Args, blocked_by: UserId, runtime_state: &mut RuntimeState) {
     if !runtime_state.data.participants.is_blocked(&user_id) {
         let now = runtime_state.env.now();
 
@@ -93,7 +93,7 @@ fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
         runtime_state
             .data
             .events
-            .push_main_event(ChatEventInternal::UsersBlocked(Box::new(event)), now);
+            .push_main_event(ChatEventInternal::UsersBlocked(Box::new(event)), correlation_id, now);
 
         handle_activity_notification(runtime_state);
     }

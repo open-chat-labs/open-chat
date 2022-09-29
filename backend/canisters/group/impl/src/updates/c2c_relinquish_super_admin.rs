@@ -9,23 +9,24 @@ use types::ParticipantRelinquishesSuperAdmin;
 
 #[update_msgpack]
 #[trace]
-fn c2c_relinquish_super_admin(_args: Args) -> Response {
+fn c2c_relinquish_super_admin(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(c2c_relinquish_super_admin_impl)
+    mutate_state(|state| c2c_relinquish_super_admin_impl(args, state))
 }
 
-fn c2c_relinquish_super_admin_impl(runtime_state: &mut RuntimeState) -> Response {
+fn c2c_relinquish_super_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let user_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
     match runtime_state.data.participants.dismiss_super_admin(&user_id) {
         DismissSuperAdminResult::Success => {
             let event = ParticipantRelinquishesSuperAdmin { user_id };
-            runtime_state
-                .data
-                .events
-                .push_main_event(ChatEventInternal::ParticipantRelinquishesSuperAdmin(Box::new(event)), now);
+            runtime_state.data.events.push_main_event(
+                ChatEventInternal::ParticipantRelinquishesSuperAdmin(Box::new(event)),
+                args.correlation_id,
+                now,
+            );
 
             handle_activity_notification(runtime_state);
             Success

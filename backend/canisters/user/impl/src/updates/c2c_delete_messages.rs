@@ -23,7 +23,9 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
 
-        let delete_message_results = chat.events.delete_messages(caller, false, None, args.message_ids, now);
+        let delete_message_results =
+            chat.events
+                .delete_messages(caller, false, None, args.message_ids, args.correlation_id, now);
 
         let files_to_delete: Vec<_> = delete_message_results
             .into_iter()

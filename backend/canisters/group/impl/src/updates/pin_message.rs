@@ -39,6 +39,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     message_index: args.message_index,
                     pinned_by: participant.user_id,
                 })),
+                args.correlation_id,
                 now,
             );
 
