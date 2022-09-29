@@ -33,12 +33,53 @@ export function createChatSpecificDataStore<T>(init: () => T) {
         return $all[$selectedChatId] ?? init();
     });
     return {
+        all,
         subscribe: byChat.subscribe,
         get: (chatId: string): T => get(all)[chatId] ?? init(),
-        getProp: <P extends keyof T>(chatId: string, prop: P) => (get(all)[chatId] ?? init())[prop],
         update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, init()),
         set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
         clear: (chatId: string): void => setDataForChat(all, chatId, init()),
+    };
+}
+
+export function createChatSpecificObjectStore<T extends Record<string, unknown>>(init: () => T) {
+    const store = createChatSpecificDataStore(init);
+    return {
+        ...store,
+        getProp: <P extends keyof T>(chatId: string, prop: P) =>
+            (get(store.all)[chatId] ?? init())[prop],
+        updateProp: <P extends keyof T>(
+            chatId: string,
+            prop: P,
+            updateFn: (data: T[P]) => T[P]
+        ) => {
+            updateDataForChat(
+                store.all,
+                chatId,
+                (data) => {
+                    if (data !== undefined) {
+                        data[prop] = updateFn(data[prop]);
+                        return data;
+                    }
+                    return data;
+                },
+                init()
+            );
+        },
+        setProp: <P extends keyof T>(chatId: string, prop: P, value: T[P]) => {
+            updateDataForChat(
+                store.all,
+                chatId,
+                (data) => {
+                    if (data !== undefined) {
+                        data[prop] = value;
+                        return data;
+                    }
+                    return data;
+                },
+                init()
+            );
+        },
     };
 }
 
@@ -57,35 +98,5 @@ export function createDerivedPropStore<S, P extends keyof S>(
         }
         currentValue = nextValue;
         initialised = true;
-    });
-}
-
-export function updateDerivedProp<S extends Record<string, unknown>, P extends keyof S>(
-    store: UpdatableChatStore<S>,
-    chatId: string,
-    prop: P,
-    updateFn: (members: S[P]) => S[P]
-): void {
-    store.update(chatId, (data) => {
-        if (data !== undefined) {
-            data[prop] = updateFn(data[prop]);
-            return data;
-        }
-        return data;
-    });
-}
-
-export function setDerivedProp<S extends Record<string, unknown>, P extends keyof S>(
-    store: UpdatableChatStore<S>,
-    chatId: string,
-    prop: P,
-    value: S[P]
-): void {
-    store.update(chatId, (data) => {
-        if (data !== undefined) {
-            data[prop] = value;
-            return data;
-        }
-        return data;
     });
 }

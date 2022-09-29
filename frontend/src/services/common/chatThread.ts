@@ -14,21 +14,11 @@ import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
-    currentChatUserIds,
     confirmedEventIndexesLoaded,
     userGroupKeys,
     serverEventsStore,
     updateSummaryWithConfirmedMessage,
-    updateBlockedUsers,
-    updateChatMembers,
-    updatePinnedMessages,
-    setChatMembers,
-    setBlockedUsers,
-    setPinnedMessages,
     chatStateStore,
-    setDetailsLoaded,
-    setChatRules,
-    setLatestEventIndex,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -126,7 +116,7 @@ export function deleteMessage(
 
     localMessageUpdates.markDeleted(messageIdString, userId);
 
-    const recipients = [...currentChatUserIds.get(chat.chatId)];
+    const recipients = [...chatStateStore.getProp(chat.chatId, "userIds")];
     const chatType = chat.kind;
     const chatId = chat.chatId;
 
@@ -177,7 +167,7 @@ export async function updateUserStore(
     chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
     userIdsFromEvents.forEach((u) => allUserIds.add(u));
 
-    currentChatUserIds.update(chatId, (userIds) => {
+    chatStateStore.updateProp(chatId, "userIds", (userIds) => {
         allUserIds.forEach((u) => {
             if (u !== userId) {
                 userIds.add(u);
@@ -261,16 +251,16 @@ export function registerPollVote(
 }
 
 function blockUserLocally(chatId: string, userId: string): void {
-    updateBlockedUsers(chatId, (b) => b.add(userId));
-    updateChatMembers(chatId, (p) => p.filter((p) => p.userId !== userId));
+    chatStateStore.updateProp(chatId, "blockedUsers", (b) => b.add(userId));
+    chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
 }
 
 function unblockUserLocally(chatId: string, userId: string): void {
-    updateBlockedUsers(chatId, (b) => {
+    chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
         b.delete(userId);
         return b;
     });
-    updateChatMembers(chatId, (p) => [
+    chatStateStore.updateProp(chatId, "members", (p) => [
         ...p,
         {
             role: "participant",
@@ -571,12 +561,16 @@ export async function loadDetails(
         if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
             const resp = await api.getGroupDetails(clientChat.chatId, clientChat.latestEventIndex);
             if (resp !== "caller_not_in_group") {
-                setDetailsLoaded(clientChat.chatId, true);
-                setLatestEventIndex(clientChat.chatId, resp.latestEventIndex);
-                setChatMembers(clientChat.chatId, resp.members);
-                setBlockedUsers(clientChat.chatId, resp.blockedUsers);
-                setPinnedMessages(clientChat.chatId, resp.pinnedMessages);
-                setChatRules(clientChat.chatId, resp.rules);
+                chatStateStore.setProp(clientChat.chatId, "detailsLoaded", true);
+                chatStateStore.setProp(
+                    clientChat.chatId,
+                    "latestEventIndex",
+                    resp.latestEventIndex
+                );
+                chatStateStore.setProp(clientChat.chatId, "members", resp.members);
+                chatStateStore.setProp(clientChat.chatId, "blockedUsers", resp.blockedUsers);
+                chatStateStore.setProp(clientChat.chatId, "pinnedMessages", resp.pinnedMessages);
+                chatStateStore.setProp(clientChat.chatId, "rules", resp.rules);
             }
             await updateUserStore(
                 api,
@@ -606,10 +600,10 @@ export async function updateDetails(
                 latestEventIndex,
                 rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
             });
-            setChatMembers(clientChat.chatId, gd.members);
-            setBlockedUsers(clientChat.chatId, gd.blockedUsers);
-            setPinnedMessages(clientChat.chatId, gd.pinnedMessages);
-            setChatRules(clientChat.chatId, gd.rules);
+            chatStateStore.setProp(clientChat.chatId, "members", gd.members);
+            chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
+            chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
+            chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
             await updateUserStore(
                 api,
                 clientChat.chatId,
@@ -621,14 +615,14 @@ export async function updateDetails(
 }
 
 function addPinnedMessage(chatId: string, messageIndex: number): void {
-    updatePinnedMessages(chatId, (s) => {
+    chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
         s.add(messageIndex);
         return new Set(s);
     });
 }
 
 function removePinnedMessage(chatId: string, messageIndex: number): void {
-    updatePinnedMessages(chatId, (s) => {
+    chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
         s.delete(messageIndex);
         return new Set(s);
     });
@@ -687,7 +681,7 @@ export function removeMessage(
     userId: string
 ): void {
     if (userId === currentUserId) {
-        const userIds = currentChatUserIds.get(clientChat.chatId);
+        const userIds = chatStateStore.getProp(clientChat.chatId, "userIds");
         rtcConnectionsManager.sendMessage([...userIds], {
             kind: "remote_user_removed_message",
             chatType: clientChat.kind,
@@ -725,7 +719,7 @@ export async function sendMessage(
     }
 
     unconfirmed.add(clientChat.chatId, messageEvent);
-    rtcConnectionsManager.sendMessage([...currentChatUserIds.get(clientChat.chatId)], {
+    rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.chatId, "userIds")], {
         kind: "remote_user_sent_message",
         chatType: clientChat.kind,
         chatId: clientChat.chatId,

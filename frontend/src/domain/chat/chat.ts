@@ -785,6 +785,7 @@ export type ChatSpecificState = {
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
     rules?: GroupRules;
+    userIds: Set<string>;
 };
 
 export type GroupRules = {
