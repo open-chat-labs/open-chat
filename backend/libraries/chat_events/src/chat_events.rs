@@ -201,52 +201,43 @@ impl AllChatEvents {
         results
     }
 
-    pub fn register_poll_vote(
-        &mut self,
-        user_id: UserId,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-        option_index: u32,
-        operation: VoteOperation,
-        correlation_id: u64,
-        now: TimestampMillis,
-    ) -> RegisterPollVoteResult {
-        if let Some(message) = self.message_internal_mut_by_message_index(thread_root_message_index, message_index) {
+    pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
+        if let Some(message) = self.message_internal_mut_by_message_index(args.thread_root_message_index, args.message_index) {
             if let MessageContentInternal::Poll(p) = &mut message.content {
-                return match p.register_vote(user_id, option_index, operation) {
+                return match p.register_vote(args.user_id, args.option_index, args.operation) {
                     types::RegisterVoteResult::Success(existing_vote_removed) => {
-                        message.last_updated = Some(now);
-                        let event = match operation {
+                        message.last_updated = Some(args.now);
+                        let event = match args.operation {
                             VoteOperation::RegisterVote => {
                                 ChatEventInternal::PollVoteRegistered(Box::new(PollVoteRegistered {
-                                    user_id,
+                                    user_id: args.user_id,
                                     message_id: message.message_id,
                                     existing_vote_removed,
                                 }))
                             }
                             VoteOperation::DeleteVote => ChatEventInternal::PollVoteDeleted(Box::new(UpdatedMessageInternal {
-                                updated_by: user_id,
+                                updated_by: args.user_id,
                                 message_id: message.message_id,
                             })),
                         };
-                        let votes = p.hydrate(Some(user_id)).votes;
-                        let event_index = self.push_event(thread_root_message_index, event, correlation_id, now);
+                        let votes = p.hydrate(Some(args.user_id)).votes;
+                        let event_index = self.push_event(args.thread_root_message_index, event, args.correlation_id, args.now);
 
-                        if let Some(root_message_index) = thread_root_message_index {
+                        if let Some(root_message_index) = args.thread_root_message_index {
                             self.main.update_thread_summary(
                                 root_message_index,
-                                user_id,
+                                args.user_id,
                                 None,
                                 event_index,
-                                correlation_id,
-                                now,
+                                args.correlation_id,
+                                args.now,
                             );
                         }
 
                         RegisterPollVoteResult::Success(votes)
                     }
                     types::RegisterVoteResult::SuccessNoChange => {
-                        RegisterPollVoteResult::SuccessNoChange(p.hydrate(Some(user_id)).votes)
+                        RegisterPollVoteResult::SuccessNoChange(p.hydrate(Some(args.user_id)).votes)
                     }
                     types::RegisterVoteResult::PollEnded => RegisterPollVoteResult::PollEnded,
                     types::RegisterVoteResult::OptionIndexOutOfRange => RegisterPollVoteResult::OptionIndexOutOfRange,
@@ -781,6 +772,16 @@ pub enum DeleteMessageResult {
     MessageTypeCannotBeDeleted,
     NotAuthorized,
     NotFound,
+}
+
+pub struct RegisterPollVoteArgs {
+    pub user_id: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub option_index: u32,
+    pub operation: VoteOperation,
+    pub correlation_id: u64,
+    pub now: TimestampMillis,
 }
 
 pub enum RegisterPollVoteResult {
