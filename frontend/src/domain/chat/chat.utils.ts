@@ -38,7 +38,7 @@ import type {
     GroupSubtype,
     GroupSubtypeUpdate,
 } from "./chat";
-import { dedupe, groupWhile, toRecord } from "../../utils/list";
+import { groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -961,92 +961,37 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
     return r ? r.userIds.has(userId) : false;
 }
 
-function mergeMessageEvents(
-    existing: EventWrapper<ChatEvent>,
-    incoming: EventWrapper<ChatEvent>
-): EventWrapper<ChatEvent> {
-    if (
-        existing.event.kind === "message" &&
-        incoming.event.kind === "message" &&
-        existing.event.messageId === incoming.event.messageId
-    ) {
-        return {
-            ...existing,
-            event: {
-                ...existing.event,
-                content: incoming.event.content,
-                thread: incoming.event.thread,
-            },
-        };
-    }
-    return existing;
-}
+// The current events list must already be sorted by ascending event index
+export function mergeServerEvents(events: EventWrapper<ChatEvent>[], newEvents: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
+    newEvents.sort(sortByIndex);
 
-function partitionEvents(
-    events: EventWrapper<ChatEvent>[]
-): [Record<string, EventWrapper<ChatEvent>>, EventWrapper<ChatEvent>[]] {
-    return events.reduce(
-        ([msgs, evts], e) => {
-            if (e.event.kind === "message") {
-                msgs[e.event.messageId.toString()] = e;
-            } else {
-                evts.push(e);
+    let i = 0;
+    let j = 0;
+    const merged = [];
+    while (i < events.length && j < newEvents.length) {
+        const event = events[i];
+        const newEvent = newEvents[j];
+        if (event.index < newEvent.index) {
+            merged.push(event);
+            i++;
+        } else {
+            merged.push(newEvent);
+            j++;
+            if (event.index === newEvent.index) {
+                i++;
             }
-            return [msgs, evts];
-        },
-        [{} as Record<string, EventWrapper<ChatEvent>>, [] as EventWrapper<ChatEvent>[]]
-    );
-}
-
-export function replaceLocal(
-    userId: string,
-    chatId: string,
-    readByMe: DRange,
-    onClient: EventWrapper<ChatEvent>[],
-    fromServer: EventWrapper<ChatEvent>[],
-    threadRootMessageIndex?: number
-): EventWrapper<ChatEvent>[] {
-    // partition client events into msgs and other events
-    const [clientMsgs, clientEvts] = partitionEvents(onClient);
-
-    // partition inbound events into msgs and other events
-    const [serverMsgs, serverEvts] = partitionEvents(fromServer);
-
-    // overwrite any local msgs with their server counterpart to correct any index errors
-    Object.entries(serverMsgs).forEach(([id, e]) => {
-        if (e.event.kind === "message") {
-            // only now do we consider this message confirmed
-            const idNum = BigInt(id);
-            if (threadRootMessageIndex !== undefined) {
-                const key = `${chatId}_${threadRootMessageIndex}`;
-                unconfirmed.delete(key, idNum);
-            } else {
-                if (unconfirmed.delete(chatId, idNum)) {
-                    messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
-                } else if (
-                    e.event.sender === userId &&
-                    !indexIsInRanges(e.event.messageIndex, readByMe)
-                ) {
-                    // If this message was sent by us and is not currently marked as read, mark it as read
-                    messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
-                }
-            }
-            revokeObjectUrls(clientMsgs[id]);
-            clientMsgs[id] = e;
         }
-    });
+    }
 
-    // concat and dedupe the two lists of non-message events
-    const uniqEvts = dedupe(
-        (a, b) => a.index === b.index,
-        [...clientEvts, ...serverEvts].sort(sortByIndex)
-    );
+    while (i < events.length) {
+        merged.push(events[i++]);
+    }
 
-    // create a list from the merged map of messages
-    const msgEvts = Object.values(clientMsgs);
+    while (j < newEvents.length) {
+        merged.push(newEvents[j++]);
+    }
 
-    // concat it with the merged non-message event list
-    return [...uniqEvts, ...msgEvts].sort(sortByIndex);
+    return merged;
 }
 
 function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
@@ -1059,64 +1004,6 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
             URL.revokeObjectURL(event.event.content.blobUrl);
         }
     }
-}
-
-export function replaceAffected(
-    events: EventWrapper<ChatEvent>[],
-    affectedEvents: EventWrapper<ChatEvent>[]
-): EventWrapper<ChatEvent>[] {
-    if (affectedEvents.length === 0) {
-        return events;
-    }
-    const affectedEventsLookup = affectedEvents.reduce((lookup, event) => {
-        lookup[event.index] = event;
-        return lookup;
-    }, {} as Record<number, EventWrapper<ChatEvent>>);
-
-    return events.map((event) => {
-        const affectedEvent = affectedEventsLookup[event.index];
-        if (affectedEvent !== undefined) {
-            return mergeMessageEvents(event, affectedEvent);
-        } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
-            const repliesTo = event.event.repliesTo.eventIndex;
-            const affectedReplyContent = affectedEventsLookup[repliesTo];
-            if (
-                affectedReplyContent !== undefined &&
-                affectedReplyContent.event.kind === "message"
-            ) {
-                return {
-                    ...event,
-                    event: {
-                        ...event.event,
-                        repliesTo: {
-                            ...event.event.repliesTo,
-                            content: affectedReplyContent.event.content,
-                        },
-                    },
-                };
-            }
-        }
-        return event;
-    });
-}
-
-export function replaceMessageContent(
-    events: EventWrapper<ChatEvent>[],
-    messageId: bigint,
-    content: MessageContent
-): EventWrapper<ChatEvent>[] {
-    return events.map((e) => {
-        if (e.event.kind === "message" && e.event.messageId === messageId) {
-            return {
-                ...e,
-                event: {
-                    ...e.event,
-                    content: content,
-                },
-            };
-        }
-        return e;
-    });
 }
 
 export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
