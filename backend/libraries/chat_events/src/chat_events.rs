@@ -1652,12 +1652,14 @@ mod tests {
                 replies_to: None,
                 now: i as u64,
                 forwarded: false,
+                correlation_id: 0,
             });
             events.push_main_event(
                 ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
                     updated_by: user_id,
                     message_id,
                 })),
+                0,
                 i as u64,
             );
         }
