@@ -44,6 +44,7 @@ import {
     createChatSpecificDataStore,
     createNullableChatSpecificDateStore,
     createDerivedPropStore,
+    updateDerivedProp,
 } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
@@ -262,38 +263,22 @@ export const currentChatPinnedMessages = createDerivedPropStore<GroupChatDetails
     new Set<number>()
 );
 
-export function updateSlice<P extends keyof GroupChatDetails>(
-    chatId: string,
-    prop: P,
-    updateFn: (members: GroupChatDetails[P]) => GroupChatDetails[P]
-): void {
-    groupDetails.update(chatId, (data) => {
-        if (data !== undefined) {
-            return {
-                ...data,
-                [prop]: updateFn(data[prop]),
-            };
-        }
-        return data;
-    });
-}
-
 export function updateChatMembers(chatId: string, updateFn: (members: Member[]) => Member[]): void {
-    updateSlice(chatId, "members", updateFn);
+    updateDerivedProp(groupDetails, chatId, "members", updateFn);
 }
 
 export function updateBlockedUsers(
     chatId: string,
     updateFn: (blockedUsers: Set<string>) => Set<string>
 ): void {
-    updateSlice(chatId, "blockedUsers", updateFn);
+    updateDerivedProp(groupDetails, chatId, "blockedUsers", updateFn);
 }
 
 export function updatePinnedMessages(
     chatId: string,
     updateFn: (pinnedMessages: Set<number>) => Set<number>
 ): void {
-    updateSlice(chatId, "pinnedMessages", updateFn);
+    updateDerivedProp(groupDetails, chatId, "pinnedMessages", updateFn);
 }
 
 export function setSelectedChat(

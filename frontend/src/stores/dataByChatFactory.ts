@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import type { UpdateArgs } from "domain/chat/chat";
 import { derived, get, Readable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
 import { immutableStore } from "./immutable";
@@ -21,6 +22,11 @@ function updateDataForChat<T>(
         [chatId]: fn(s[chatId] ?? empty),
     }));
 }
+
+export type UpdatableChatStore<T> = {
+    update: (chatId: string, fn: (data: T) => T) => void;
+    set: (chatId: string, data: T) => void;
+};
 
 export function createChatSpecificDataStore<T>(empty: T, initFn?: () => T) {
     function init() {
@@ -75,5 +81,22 @@ export function createDerivedPropStore<S, P extends keyof S>(
         }
         currentValue = nextValue;
         initialised = true;
+    });
+}
+
+export function updateDerivedProp<S extends Record<string, unknown>, P extends keyof S>(
+    store: UpdatableChatStore<S>,
+    chatId: string,
+    prop: P,
+    updateFn: (members: S[P]) => S[P]
+): void {
+    store.update(chatId, (data) => {
+        if (data !== undefined) {
+            return {
+                ...data,
+                [prop]: updateFn(data[prop]),
+            };
+        }
+        return data;
     });
 }
