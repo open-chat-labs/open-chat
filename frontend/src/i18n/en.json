@@ -443,8 +443,7 @@
             "enable": "Enable rules",
             "placeholder": "what are the group rules?",
             "instructions": "If enabled, new users must agree to the rules before they can join the group.",
-            "acceptTitle": "Accept group rules",
-            "acceptMessage": "To join this group you must first accept these rules.",
+            "acceptTitle": "Group rules",
             "accept": "Accept",
             "reject": "Reject"
         },
