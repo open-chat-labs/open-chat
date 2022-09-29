@@ -34,8 +34,46 @@ export function createChatSpecificDataStore<T>(empty: T, initFn?: () => T) {
     return {
         subscribe: byChat.subscribe,
         get: (chatId: string): T => get(all)[chatId] ?? init(),
+        getProp: <P extends keyof T>(chatId: string, prop: P) => (get(all)[chatId] ?? init())[prop],
         update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, init()),
         set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
         clear: (chatId: string): void => setDataForChat(all, chatId, init()),
     };
+}
+
+export function createNullableChatSpecificDateStore<T>() {
+    const store = createChatSpecificDataStore<T | undefined>(undefined);
+    return {
+        subscribe: store.subscribe,
+        get: (chatId: string): T | undefined => store.get(chatId),
+        getProp: <P extends keyof T>(chatId: string, prop: P) => {
+            const val = store.get(chatId);
+            if (val) {
+                return val[prop];
+            }
+            return undefined;
+        },
+        update: (chatId: string, fn: (data: T) => T) =>
+            store.update(chatId, (data) => (data ? fn(data) : undefined)),
+        set: (chatId: string, data: T) => store.set(chatId, data),
+        clear: (chatId: string): void => store.clear(chatId),
+    };
+}
+
+export function createDerivedPropStore<S, P extends keyof S>(
+    store: Readable<S | undefined>,
+    prop: P,
+    empty: S[P]
+): Readable<S[P]> {
+    const storeVal = get(store);
+    let initialised = false;
+    let currentValue: S[P] = storeVal ? storeVal[prop] : empty;
+    return derived(store, ($store, set) => {
+        const nextValue: S[P] = $store ? $store[prop] : empty;
+        if (nextValue !== currentValue || !initialised) {
+            set(nextValue);
+        }
+        currentValue = nextValue;
+        initialised = true;
+    });
 }

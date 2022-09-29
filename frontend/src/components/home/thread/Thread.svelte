@@ -82,11 +82,11 @@
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         threadsFollowedByMeStore,
-        currentChatMembers,
-        currentChatBlockedUsers,
         currentChatUserIds,
         selectedChatId,
         focusThreadMessageIndex,
+        currentChatMembers,
+        currentChatBlockedUsers,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";

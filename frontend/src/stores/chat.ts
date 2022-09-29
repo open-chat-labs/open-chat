@@ -40,7 +40,11 @@ import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { createChatSpecificDataStore } from "./dataByChatFactory";
+import {
+    createChatSpecificDataStore,
+    createNullableChatSpecificDateStore,
+    createDerivedPropStore,
+} from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 
@@ -241,6 +245,57 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads)
 );
 
+export const groupDetails = createNullableChatSpecificDateStore<GroupChatDetails>();
+export const currentChatMembers = createDerivedPropStore<GroupChatDetails, "members">(
+    groupDetails,
+    "members",
+    []
+);
+export const currentChatBlockedUsers = createDerivedPropStore<GroupChatDetails, "blockedUsers">(
+    groupDetails,
+    "blockedUsers",
+    new Set<string>()
+);
+export const currentChatPinnedMessages = createDerivedPropStore<GroupChatDetails, "pinnedMessages">(
+    groupDetails,
+    "pinnedMessages",
+    new Set<number>()
+);
+
+export function updateSlice<P extends keyof GroupChatDetails>(
+    chatId: string,
+    prop: P,
+    updateFn: (members: GroupChatDetails[P]) => GroupChatDetails[P]
+): void {
+    groupDetails.update(chatId, (data) => {
+        if (data !== undefined) {
+            return {
+                ...data,
+                [prop]: updateFn(data[prop]),
+            };
+        }
+        return data;
+    });
+}
+
+export function updateChatMembers(chatId: string, updateFn: (members: Member[]) => Member[]): void {
+    updateSlice(chatId, "members", updateFn);
+}
+
+export function updateBlockedUsers(
+    chatId: string,
+    updateFn: (blockedUsers: Set<string>) => Set<string>
+): void {
+    updateSlice(chatId, "blockedUsers", updateFn);
+}
+
+export function updatePinnedMessages(
+    chatId: string,
+    updateFn: (pinnedMessages: Set<number>) => Set<number>
+): void {
+    updateSlice(chatId, "pinnedMessages", updateFn);
+}
+
 export function setSelectedChat(
     api: ServiceContainer,
     chat: ChatSummary,
@@ -283,9 +338,9 @@ export function setSelectedChat(
     serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
     focusMessageIndex.set(chat.chatId, messageIndex);
     focusThreadMessageIndex.set(chat.chatId, threadMessageIndex);
-    currentChatMembers.set(chat.chatId, []);
-    currentChatBlockedUsers.set(chat.chatId, new Set<string>());
-    currentChatPinnedMessages.set(chat.chatId, new Set<number>());
+
+    groupDetails.clear(chat.chatId);
+
     currentChatUserIds.set(
         chat.chatId,
         new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
@@ -344,9 +399,6 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
             serverEventsStore.clear(chatId);
             focusMessageIndex.clear(chatId);
             focusThreadMessageIndex.clear(chatId);
-            currentChatMembers.clear(chatId);
-            currentChatBlockedUsers.clear(chatId);
-            currentChatPinnedMessages.clear(chatId);
         }
         return newSelectedChatId;
     });
@@ -512,16 +564,11 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         );
     }
 );
-export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
+
 export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
-export const currentChatBlockedUsers = createChatSpecificDataStore<Set<string>>(new Set<string>());
-export const currentChatPinnedMessages = createChatSpecificDataStore<Set<number>>(
-    new Set<number>()
-);
 export const focusMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 export const focusThreadMessageIndex = createChatSpecificDataStore<number | undefined>(undefined);
 // This set will contain 1 key for each rendered user event group which is used as that group's key
-export const groupDetails = createChatSpecificDataStore<GroupChatDetails | undefined>(undefined);
 export const userGroupKeys = createChatSpecificDataStore<Set<string>>(
     new Set<string>(),
     () => new Set<string>()

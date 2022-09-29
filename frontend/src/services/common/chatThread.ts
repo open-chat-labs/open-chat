@@ -13,8 +13,6 @@ import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager
 import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
-    currentChatBlockedUsers,
-    currentChatMembers,
     currentChatDraftMessage,
     currentChatUserIds,
     confirmedEventIndexesLoaded,
@@ -22,14 +20,15 @@ import {
     serverEventsStore,
     updateSummaryWithConfirmedMessage,
     groupDetails,
-    currentChatPinnedMessages,
+    updateBlockedUsers,
+    updateChatMembers,
+    updatePinnedMessages,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
 import { toastStore } from "../../stores/toast";
 import { localMessageUpdates } from "../../stores/localMessageUpdates";
 import {
-    getStorageRequiredForMessage,
     indexRangeForChat,
     makeRtcConnections,
     mergeSendMessageResponse,
@@ -45,7 +44,6 @@ import { findLast } from "../../utils/list";
 import { indexIsInRanges } from "../../utils/range";
 import { unconfirmed } from "../../stores/unconfirmed";
 import { messagesRead } from "../../stores/markRead";
-import { remainingStorage } from "stores/storage";
 import { trackEvent } from "utils/tracking";
 
 export function selectReaction(
@@ -75,11 +73,28 @@ export function selectReaction(
     return (
         chat.kind === "direct_chat"
             ? kind == "add"
-                ? api.addDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
-                : api.removeDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+                ? api.addDirectChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      username,
+                      threadRootMessageIndex
+                  )
+                : api.removeDirectChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      threadRootMessageIndex
+                  )
             : kind === "add"
-                ? api.addGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
-                : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            ? api.addGroupChatReaction(
+                  chat.chatId,
+                  messageId,
+                  reaction,
+                  username,
+                  threadRootMessageIndex
+              )
+            : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
     )
         .then((resp) => {
             if (resp !== "success" && resp !== "no_change") {
@@ -152,8 +167,8 @@ export async function updateUserStore(
     userIdsFromEvents: Set<string>
 ): Promise<void> {
     const allUserIds = new Set<string>();
-    currentChatMembers.get(chatId).forEach((m) => allUserIds.add(m.userId));
-    currentChatBlockedUsers.get(chatId).forEach((u) => allUserIds.add(u));
+    groupDetails.getProp(chatId, "members")?.forEach((m) => allUserIds.add(m.userId));
+    groupDetails.getProp(chatId, "blockedUsers")?.forEach((u) => allUserIds.add(u));
     userIdsFromEvents.forEach((u) => allUserIds.add(u));
 
     currentChatUserIds.update(chatId, (userIds) => {
@@ -240,16 +255,16 @@ export function registerPollVote(
 }
 
 function blockUserLocally(chatId: string, userId: string): void {
-    currentChatBlockedUsers.update(chatId, (b) => b.add(userId));
-    currentChatMembers.update(chatId, (p) => p.filter((p) => p.userId !== userId));
+    updateBlockedUsers(chatId, (b) => b.add(userId));
+    updateChatMembers(chatId, (p) => p.filter((p) => p.userId !== userId));
 }
 
 function unblockUserLocally(chatId: string, userId: string): void {
-    currentChatBlockedUsers.update(chatId, (b) => {
+    updateBlockedUsers(chatId, (b) => {
         b.delete(userId);
         return b;
     });
-    currentChatMembers.update(chatId, (p) => [
+    updateChatMembers(chatId, (p) => [
         ...p,
         {
             role: "participant",
@@ -551,9 +566,6 @@ export async function loadDetails(
             const resp = await api.getGroupDetails(clientChat.chatId, clientChat.latestEventIndex);
             if (resp !== "caller_not_in_group") {
                 groupDetails.set(clientChat.chatId, resp);
-                currentChatMembers.set(clientChat.chatId, resp.members);
-                currentChatBlockedUsers.set(clientChat.chatId, resp.blockedUsers);
-                currentChatPinnedMessages.set(clientChat.chatId, resp.pinnedMessages);
             }
             await updateUserStore(
                 api,
@@ -577,9 +589,6 @@ export async function updateDetails(
         const details = groupDetails.get(clientChat.chatId);
         if (details !== undefined && details.latestEventIndex < clientChat.latestEventIndex) {
             const gd = await api.getGroupDetailsUpdates(clientChat.chatId, details);
-            currentChatMembers.set(clientChat.chatId, gd.members);
-            currentChatBlockedUsers.set(clientChat.chatId, gd.blockedUsers);
-            currentChatPinnedMessages.set(clientChat.chatId, gd.pinnedMessages);
             groupDetails.set(clientChat.chatId, gd);
             await updateUserStore(
                 api,
@@ -592,14 +601,14 @@ export async function updateDetails(
 }
 
 function addPinnedMessage(chatId: string, messageIndex: number): void {
-    currentChatPinnedMessages.update(chatId, (s) => {
+    updatePinnedMessages(chatId, (s) => {
         s.add(messageIndex);
         return new Set(s);
     });
 }
 
 function removePinnedMessage(chatId: string, messageIndex: number): void {
-    currentChatPinnedMessages.update(chatId, (s) => {
+    updatePinnedMessages(chatId, (s) => {
         s.delete(messageIndex);
         return new Set(s);
     });

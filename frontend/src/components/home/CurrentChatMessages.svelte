@@ -74,7 +74,6 @@
         isProposalGroup,
         currentChatUserIds,
         focusMessageIndex,
-        currentChatPinnedMessages,
         currentChatEditingEvent,
         nextEventIndex,
         nextMessageIndex,
@@ -82,6 +81,7 @@
         chatUpdatedStore,
         userGroupKeys,
         confirmedEventIndexesLoaded,
+        currentChatPinnedMessages,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -391,13 +391,20 @@
 
         const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
-        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, user.username, kind).then(
-            (success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
+        selectReaction(
+            api,
+            chat,
+            user.userId,
+            undefined,
+            message.messageId,
+            reaction,
+            user.username,
+            kind
+        ).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
             }
-        );
+        });
 
         rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
@@ -406,7 +413,7 @@
             messageId: message.messageId,
             reaction,
             userId: user.userId,
-            added: kind === "add"
+            added: kind === "add",
         });
     }
 

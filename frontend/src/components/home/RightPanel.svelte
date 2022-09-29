@@ -34,14 +34,16 @@
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { eventsStore, selectedChatId, selectedChatStore } from "../../stores/chat";
-    import {
-        currentChatMembers,
-        currentChatBlockedUsers,
-        currentChatPinnedMessages,
-        focusThreadMessageIndex,
-    } from "../../stores/chat";
+    import { focusThreadMessageIndex } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
     import { setSoftDisabled } from "../../stores/notifications";
+    import {
+        currentChatMembers,
+        updateChatMembers,
+        currentChatBlockedUsers,
+        updateBlockedUsers,
+        currentChatPinnedMessages,
+    } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -74,9 +76,7 @@
 
     function onRemoveMember(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
-            currentChatMembers.update($selectedChatId, (ps) =>
-                ps.filter((p) => p.userId !== ev.detail)
-            );
+            updateChatMembers($selectedChatId, (ps) => ps.filter((p) => p.userId !== ev.detail));
             removeMember($selectedChatId, ev.detail);
         }
     }
@@ -148,7 +148,7 @@
     }
 
     function transferOwnershipLocally(chatId: string, me: string, them: string): void {
-        currentChatMembers.update(chatId, (ps) =>
+        updateChatMembers(chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: "owner" };
@@ -167,7 +167,7 @@
         them: string,
         theirRole: MemberRole
     ): void {
-        currentChatMembers.update(chatId, (ps) =>
+        updateChatMembers(chatId, (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: theirRole };
@@ -200,7 +200,7 @@
     }
 
     function dismissAsAdmin(chatId: string, userId: string): Promise<void> {
-        currentChatMembers.update(chatId, (ps) =>
+        updateChatMembers(chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return api
@@ -218,7 +218,7 @@
     }
 
     function makeAdmin(chatId: string, userId: string): Promise<void> {
-        currentChatMembers.update(chatId, (ps) =>
+        updateChatMembers(chatId, (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
         );
         return api
@@ -269,14 +269,14 @@
             toRemove = users.map((u) => u.userId);
         }
 
-        currentChatMembers.update(chatId, (ps) =>
+        updateChatMembers(chatId, (ps) =>
             ps.filter((p) => {
                 !toRemove.includes(p.userId);
             })
         );
 
         if (viaUnblock) {
-            currentChatBlockedUsers.update(chatId, (b) => {
+            updateBlockedUsers(chatId, (b) => {
                 return toRemove.reduce((blocked, u) => blocked.add(u), b);
             });
         }
@@ -284,12 +284,12 @@
 
     function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
         if (viaUnblock) {
-            currentChatBlockedUsers.update(chatId, (b) => {
+            updateBlockedUsers(chatId, (b) => {
                 users.forEach((u) => b.delete(u.userId));
                 return b;
             });
         }
-        currentChatMembers.update(chatId, (ps) => [
+        updateChatMembers(chatId, (ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
                 role: "participant" as MemberRole,
@@ -337,7 +337,7 @@
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
             chat={$groupChat}
-            memberCount={$currentChatMembers.length}
+            memberCount={$currentChatMembers?.length ?? 0}
             on:close={popHistory}
             on:deleteGroup
             on:makeGroupPrivate
