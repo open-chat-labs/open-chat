@@ -5,6 +5,7 @@ use types::{EventIndex, MessageIndex};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_index: MessageIndex,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

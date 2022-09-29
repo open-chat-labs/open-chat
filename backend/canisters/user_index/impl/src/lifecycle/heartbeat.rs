@@ -361,7 +361,10 @@ mod dismiss_removed_super_admins {
     }
 
     async fn dismiss_super_admin(user_id: UserId, group_id: ChatId) {
-        let c2c_args = c2c_dismiss_super_admin::Args { user_id };
+        let c2c_args = c2c_dismiss_super_admin::Args {
+            user_id,
+            correlation_id: 0,
+        };
         if let Err(error) = group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args).await {
             error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
             mutate_state(|state| push_super_admin_to_dismiss(user_id, group_id, state));

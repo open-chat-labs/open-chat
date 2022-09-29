@@ -6,6 +6,7 @@ use types::{MessageId, MessageIndex};
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

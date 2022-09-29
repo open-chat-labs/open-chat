@@ -40,6 +40,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
+        correlation_id: args.correlation_id,
     };
 
     match group_canister_c2c_client::send_message(args.group_id.into(), &c2c_args).await {

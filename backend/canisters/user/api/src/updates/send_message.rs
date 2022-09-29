@@ -14,6 +14,7 @@ pub struct Args {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,
+    pub correlation_id: u64,
 }
 
 #[allow(clippy::large_enum_variant)]

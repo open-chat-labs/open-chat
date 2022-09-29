@@ -6,6 +6,7 @@ use types::{Role, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub new_role: Role,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

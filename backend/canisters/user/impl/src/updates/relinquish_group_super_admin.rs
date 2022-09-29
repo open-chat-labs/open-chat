@@ -16,7 +16,9 @@ async fn relinquish_group_super_admin(args: Args) -> Response {
         return response;
     }
 
-    let c2c_args = c2c_relinquish_super_admin::Args {};
+    let c2c_args = c2c_relinquish_super_admin::Args {
+        correlation_id: args.correlation_id,
+    };
     match group_canister_c2c_client::c2c_relinquish_super_admin(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
             c2c_relinquish_super_admin::Response::Success => {

@@ -6,6 +6,7 @@ export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
   'added_by_name' : string,
+  'correlation_id' : bigint,
 }
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
@@ -31,6 +32,7 @@ export type AddParticipantsResponse = {
   { 'ParticipantLimitReached' : number };
 export interface AddReactionArgs {
   'username' : string,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
@@ -74,7 +76,7 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
-export interface BlockUserArgs { 'user_id' : UserId }
+export interface BlockUserArgs { 'user_id' : UserId, 'correlation_id' : bigint }
 export type BlockUserResponse = { 'GroupNotPublic' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -91,7 +93,11 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array,
 }
-export interface ChangeRoleArgs { 'user_id' : UserId, 'new_role' : Role }
+export interface ChangeRoleArgs {
+  'user_id' : UserId,
+  'new_role' : Role,
+  'correlation_id' : bigint,
+}
 export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -181,6 +187,7 @@ export interface CyclesRegistrationFee {
 }
 export interface DeleteMessagesArgs {
   'message_ids' : Array<MessageId>,
+  'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
@@ -233,18 +240,19 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
-export type DisableInviteCodeArgs = {};
+export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
 export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null };
-export type EnableInviteCodeArgs = {};
+export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
 export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } };
 export type EventIndex = number;
@@ -471,7 +479,7 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
-export type MakePrivateArgs = {};
+export interface MakePrivateArgs { 'correlation_id' : bigint }
 export type MakePrivateResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'AlreadyPrivate' : null } |
@@ -665,7 +673,10 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
-export interface PinMessageArgs { 'message_index' : MessageIndex }
+export interface PinMessageArgs {
+  'correlation_id' : bigint,
+  'message_index' : MessageIndex,
+}
 export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
   { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
@@ -737,6 +748,7 @@ export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
   'operation' : VoteOperation,
+  'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
@@ -759,7 +771,10 @@ export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'InternalError' : string };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RemoveParticipantArgs { 'user_id' : UserId }
+export interface RemoveParticipantArgs {
+  'user_id' : UserId,
+  'correlation_id' : bigint,
+}
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
@@ -768,6 +783,7 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CannotRemoveUser' : null } |
   { 'InternalError' : string };
 export interface RemoveReactionArgs {
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
@@ -781,7 +797,7 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export type ResetInviteCodeArgs = {};
+export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
 export type ResetInviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } };
 export type Role = { 'Participant' : null } |
@@ -837,6 +853,7 @@ export interface SendMessageArgs {
   'mentioned' : Array<User>,
   'forwarding' : boolean,
   'sender_name' : string,
+  'correlation_id' : bigint,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
   'thread_root_message_index' : [] | [MessageIndex],
@@ -924,13 +941,19 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array;
-export interface UnblockUserArgs { 'user_id' : UserId }
+export interface UnblockUserArgs {
+  'user_id' : UserId,
+  'correlation_id' : bigint,
+}
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
-export interface UnpinMessageArgs { 'message_index' : MessageIndex }
+export interface UnpinMessageArgs {
+  'correlation_id' : bigint,
+  'message_index' : MessageIndex,
+}
 export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
@@ -940,6 +963,7 @@ export interface UpdateGroupArgs {
   'permissions' : [] | [GroupPermissions],
   'name' : string,
   'description' : string,
+  'correlation_id' : bigint,
   'rules' : GroupRules,
   'avatar' : AvatarUpdate,
 }
@@ -959,6 +983,7 @@ export interface UpdateGroupV2Args {
   'permissions' : [] | [OptionalGroupPermissions],
   'name' : [] | [string],
   'description' : [] | [string],
+  'correlation_id' : bigint,
   'rules' : [] | [GroupRules],
   'avatar' : AvatarUpdate,
 }
@@ -986,6 +1011,7 @@ export interface UpdatePermissionsArgs {
   'add_members' : [] | [PermissionRole],
   'create_polls' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
+  'correlation_id' : bigint,
   'reply_in_thread' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }

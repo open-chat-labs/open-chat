@@ -29,6 +29,7 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
+                    args.correlation_id,
                 ));
                 Success(e)
             }
@@ -40,12 +41,18 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-async fn remove_reaction_on_recipients_canister(canister_id: CanisterId, message_id: MessageId, reaction: Reaction) {
+async fn remove_reaction_on_recipients_canister(
+    canister_id: CanisterId,
+    message_id: MessageId,
+    reaction: Reaction,
+    correlation_id: u64,
+) {
     let args = c2c_toggle_reaction::Args {
         message_id,
         reaction,
         added: false,
         username: "".to_string(),
+        correlation_id,
     };
     let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
 }

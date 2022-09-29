@@ -8,6 +8,7 @@ pub struct Args {
     pub message_index: MessageIndex,
     pub poll_option: u32,
     pub operation: VoteOperation,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

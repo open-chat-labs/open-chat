@@ -9,6 +9,7 @@ type SendMessageArgs =
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
         forwarding: bool;
+        correlation_id: nat64;
     };
 
 type SendMessageResponse =
@@ -32,6 +33,7 @@ type EditMessageArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         content: MessageContent;
+        correlation_id: nat64;
     };
 
 type EditMessageResponse =
@@ -45,6 +47,7 @@ type DeleteMessagesArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         message_ids: vec MessageId;
+        correlation_id: nat64;
     };
 
 type DeleteMessagesResponse =
@@ -60,6 +63,7 @@ type RegisterPollVoteArgs =
         message_index: MessageIndex;
         poll_option: nat32;
         operation: VoteOperation;
+        correlation_id: nat64;
     };
 
 type RegisterPollVoteResponse =
@@ -77,6 +81,7 @@ type AddReactionArgs =
         message_id: MessageId;
         reaction: text;
         username: text;
+        correlation_id: nat64;
     };
 
 type AddReactionResponse =
@@ -94,6 +99,7 @@ type RemoveReactionArgs =
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
+        correlation_id: nat64;
     };
 
 type RemoveReactionResponse =
@@ -108,6 +114,7 @@ type RemoveReactionResponse =
 type BlockUserArgs =
     record {
         user_id: UserId;
+        correlation_id: nat64;
     };
 
 type BlockUserResponse =
@@ -125,6 +132,7 @@ type BlockUserResponse =
 type UnblockUserArgs =
     record {
         user_id: UserId;
+        correlation_id: nat64;
     };
 
 type UnblockUserResponse =
@@ -141,6 +149,7 @@ type AddParticipantsArgs =
         user_ids: vec UserId;
         added_by_name: text;
         allow_blocked_users: bool;
+        correlation_id: nat64;
     };
 
 type AddParticipantsResponse =
@@ -174,6 +183,7 @@ type AddParticipantsFailedResult =
 type RemoveParticipantArgs =
     record {
         user_id: UserId;
+        correlation_id: nat64;
     };
 
 type RemoveParticipantResponse =
@@ -191,6 +201,7 @@ type ChangeRoleArgs =
     record {
         user_id: UserId;
         new_role: Role;
+        correlation_id: nat64;
     };
 
 type ChangeRoleResponse =
@@ -216,6 +227,7 @@ type InviteCodeResponse =
 
 type EnableInviteCodeArgs =
     record {
+        correlation_id: nat64;
     };
 
 type EnableInviteCodeResponse =
@@ -228,6 +240,7 @@ type EnableInviteCodeResponse =
 
 type DisableInviteCodeArgs =
     record {
+        correlation_id: nat64;
     };
 
 type DisableInviteCodeResponse =
@@ -238,6 +251,7 @@ type DisableInviteCodeResponse =
 
 type ResetInviteCodeArgs =
     record {
+        correlation_id: nat64;
     };
 
 type ResetInviteCodeResponse =
@@ -255,6 +269,7 @@ type UpdateGroupArgs =
         avatar: AvatarUpdate;
         permissions: opt GroupPermissions;
         rules: GroupRules;
+        correlation_id: nat64;
     };
 
 type UpdateGroupResponse =
@@ -280,6 +295,7 @@ type UpdateGroupV2Args =
         rules: opt GroupRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
+        correlation_id: nat64;
     };
 
 type UpdateGroupV2Response =
@@ -330,6 +346,7 @@ type UpdatePermissionsArgs =
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
         reply_in_thread: opt PermissionRole;
+        correlation_id: nat64;
     };
 
 type UpdatePermissionsResponse =
@@ -342,6 +359,7 @@ type UpdatePermissionsResponse =
 type PinMessageArgs =
     record {
         message_index: MessageIndex;
+        correlation_id: nat64;
     };
 
 type PinMessageResponse =
@@ -357,6 +375,7 @@ type PinMessageResponse =
 type UnpinMessageArgs =
     record {
         message_index: MessageIndex;
+        correlation_id: nat64;
     };
 
 type UnpinMessageResponse =
@@ -388,6 +407,7 @@ type RegisterProposalVoteResponse =
 
 type MakePrivateArgs =
     record {
+        correlation_id: nat64;
     };
 
 type MakePrivateResponse =

@@ -14,6 +14,7 @@ pub struct Args {
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

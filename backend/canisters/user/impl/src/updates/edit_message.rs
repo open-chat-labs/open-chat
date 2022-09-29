@@ -36,6 +36,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     args.user_id.into(),
                     args.message_id,
                     args.content,
+                    args.correlation_id,
                 ));
                 Success
             }
@@ -47,7 +48,16 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-async fn edit_on_recipients_canister(canister_id: CanisterId, message_id: MessageId, content: MessageContent) {
-    let args = c2c_edit_message::Args { message_id, content };
+async fn edit_on_recipients_canister(
+    canister_id: CanisterId,
+    message_id: MessageId,
+    content: MessageContent,
+    correlation_id: u64,
+) {
+    let args = c2c_edit_message::Args {
+        message_id,
+        content,
+        correlation_id,
+    };
     let _ = user_canister_c2c_client::c2c_edit_message(canister_id, &args).await;
 }

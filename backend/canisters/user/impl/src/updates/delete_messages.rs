@@ -28,7 +28,11 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .collect();
 
         if !deleted.is_empty() {
-            ic_cdk::spawn(delete_on_recipients_canister(args.user_id.into(), deleted));
+            ic_cdk::spawn(delete_on_recipients_canister(
+                args.user_id.into(),
+                deleted,
+                args.correlation_id,
+            ));
         }
 
         Success
@@ -37,7 +41,10 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>) {
-    let args = c2c_delete_messages::Args { message_ids };
+async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>, correlation_id: u64) {
+    let args = c2c_delete_messages::Args {
+        message_ids,
+        correlation_id,
+    };
     let _ = user_canister_c2c_client::c2c_delete_messages(canister_id, &args).await;
 }

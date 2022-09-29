@@ -30,7 +30,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
                     new_storage_limit: result.new_byte_limit,
                 }),
             );
-            // NOTE: If we later allow a user to change their already confimed phone number
+            // NOTE: If we later allow a user to change their already confirmed phone number
             // we must remember not to increase their byte_limit in this case
             runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                 user_id: caller,
