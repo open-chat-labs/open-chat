@@ -84,7 +84,9 @@
         if (updatedGroup.chatId !== chat.chatId) {
             switchChat();
         }
+    }
 
+    $: {
         if (rules !== undefined && updatedRules === undefined) {
             updatedRules = { ...rules };
         }
@@ -165,6 +167,10 @@
     }
 
     function switchChat() {
+        if (showConfirmation) {
+            return;
+        }
+
         // check for unsaved changes
         if (dirty && !confirmed) {
             confirmed = true;
@@ -205,6 +211,7 @@
 
         Promise.all([p1, p2, p3]).finally(() => {
             showConfirmation = false;
+            saving = false;
             postConfirmation();
         });
     }
@@ -284,11 +291,9 @@
             )
             .then((resp) => {
                 if (resp === "success") {
-                    rules = updatedRules;
-                    updatedRules = undefined;
                     dispatch("updateGroupRules", {
                         chatId: updatedGroup.chatId,
-                        rules,
+                        rules: updatedRules,
                     });
                 } else {
                     toastStore.showFailureToast("group.rulesUpdateFailed");

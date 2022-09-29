@@ -34,8 +34,9 @@ async fn create_group(mut args: Args) -> Response {
                 Success(SuccessResult { chat_id: r.chat_id })
             }
             c2c_create_group::Response::NameTaken => NameTaken,
-            c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
-            c2c_create_group::Response::InternalError => InternalError,
+            c2c_create_group::Response::CyclesBalanceTooLow
+            | c2c_create_group::Response::UserNotFound
+            | c2c_create_group::Response::InternalError => InternalError,
         },
         Err(error) => {
             error!(?error, "Error calling create group");
@@ -92,7 +93,6 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
     } else {
         let create_group_args = c2c_create_group::Args {
             is_public: args.is_public,
-            creator_principal: runtime_state.env.caller(),
             name: args.name,
             description: args.description,
             rules: args.rules,
