@@ -961,27 +961,6 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
     return r ? r.userIds.has(userId) : false;
 }
 
-function mergeMessageEvents(
-    existing: EventWrapper<ChatEvent>,
-    incoming: EventWrapper<ChatEvent>
-): EventWrapper<ChatEvent> {
-    if (
-        existing.event.kind === "message" &&
-        incoming.event.kind === "message" &&
-        existing.event.messageId === incoming.event.messageId
-    ) {
-        return {
-            ...existing,
-            event: {
-                ...existing.event,
-                content: incoming.event.content,
-                thread: incoming.event.thread,
-            },
-        };
-    }
-    return existing;
-}
-
 function partitionEvents(
     events: EventWrapper<ChatEvent>[]
 ): [Record<string, EventWrapper<ChatEvent>>, EventWrapper<ChatEvent>[]] {
@@ -1076,7 +1055,7 @@ export function replaceAffected(
     return events.map((event) => {
         const affectedEvent = affectedEventsLookup[event.index];
         if (affectedEvent !== undefined) {
-            return mergeMessageEvents(event, affectedEvent);
+            return affectedEvent;
         } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
             const repliesTo = event.event.repliesTo.eventIndex;
             const affectedReplyContent = affectedEventsLookup[repliesTo];
