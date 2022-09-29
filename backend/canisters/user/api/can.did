@@ -65,24 +65,6 @@ type DeleteMessagesResponse =
         ChatNotFound;
     };
 
-type ToggleReactionArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        reaction: text;
-        username: text;
-    };
-
-type ToggleReactionResponse =
-    variant {
-        Added: EventIndex;
-        Removed: EventIndex;
-        InvalidReaction;
-        MessageNotFound;
-        ChatNotFound;
-    };
-
 type AddReactionArgs =
     record {
         user_id: UserId;
@@ -631,7 +613,6 @@ service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
-    toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);

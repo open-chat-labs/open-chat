@@ -869,20 +869,6 @@ export const idlFactory = ({ IDL }) => {
     'TooLong' : FieldTooLongResult,
     'Success' : IDL.Null,
   });
-  const ToggleReactionArgs = IDL.Record({
-    'username' : IDL.Text,
-    'user_id' : UserId,
-    'message_id' : MessageId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'reaction' : IDL.Text,
-  });
-  const ToggleReactionResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
-    'ChatNotFound' : IDL.Null,
-    'InvalidReaction' : IDL.Null,
-    'Added' : EventIndex,
-    'Removed' : EventIndex,
-  });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptoWithinGroupArgs = IDL.Record({
@@ -1101,11 +1087,6 @@ export const idlFactory = ({ IDL }) => {
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
-    'toggle_reaction' : IDL.Func(
-        [ToggleReactionArgs],
-        [ToggleReactionResponse],
-        [],
-      ),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [TransferCryptoWithinGroupResponse],

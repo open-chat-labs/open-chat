@@ -34,7 +34,6 @@ pub mod remove_reaction;
 pub mod send_message;
 pub mod set_avatar;
 pub mod set_bio;
-pub mod toggle_reaction;
 pub mod transfer_crypto_within_group;
 pub mod unblock_user;
 pub mod unpin_chat;

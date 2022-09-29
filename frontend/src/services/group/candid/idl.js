@@ -776,20 +776,6 @@ export const idlFactory = ({ IDL }) => {
       'threads' : IDL.Vec(ThreadPreview),
     }),
   });
-  const ToggleReactionArgs = IDL.Record({
-    'username' : IDL.Text,
-    'message_id' : MessageId,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'reaction' : IDL.Text,
-  });
-  const ToggleReactionResponse = IDL.Variant({
-    'MessageNotFound' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'InvalidReaction' : IDL.Null,
-    'Added' : EventIndex,
-    'Removed' : EventIndex,
-  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -993,11 +979,6 @@ export const idlFactory = ({ IDL }) => {
         [ThreadPreviewsArgs],
         [ThreadPreviewsResponse],
         ['query'],
-      ),
-    'toggle_reaction' : IDL.Func(
-        [ToggleReactionArgs],
-        [ToggleReactionResponse],
-        [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),

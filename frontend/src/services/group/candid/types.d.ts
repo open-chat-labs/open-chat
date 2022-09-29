@@ -919,18 +919,6 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface ToggleReactionArgs {
-  'username' : string,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : string,
-}
-export type ToggleReactionResponse = { 'MessageNotFound' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'InvalidReaction' : null } |
-  { 'Added' : EventIndex } |
-  { 'Removed' : EventIndex };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1100,7 +1088,6 @@ export interface _SERVICE {
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
-  'toggle_reaction' : ActorMethod<[ToggleReactionArgs], ToggleReactionResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group' : ActorMethod<[UpdateGroupArgs], UpdateGroupResponse>,
