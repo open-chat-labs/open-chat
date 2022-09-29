@@ -8,6 +8,7 @@ pub struct Args {
     pub message_id: MessageId,
     pub reaction: Reaction,
     pub username: String,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

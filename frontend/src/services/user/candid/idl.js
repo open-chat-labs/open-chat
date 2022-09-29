@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
   const AddReactionArgs = IDL.Record({
     'username' : IDL.Text,
     'user_id' : UserId,
+    'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
@@ -32,7 +33,10 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
+  const AssumeGroupSuperAdminArgs = IDL.Record({
+    'correlation_id' : IDL.Nat64,
+    'chat_id' : ChatId,
+  });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
@@ -112,6 +116,7 @@ export const idlFactory = ({ IDL }) => {
   const DeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
+    'correlation_id' : IDL.Nat64,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const DeleteMessagesResponse = IDL.Variant({
@@ -324,6 +329,7 @@ export const idlFactory = ({ IDL }) => {
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
     'user_id' : UserId,
+    'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -669,6 +675,7 @@ export const idlFactory = ({ IDL }) => {
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
     'as_super_admin' : IDL.Bool,
+    'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
   const JoinGroupResponse = IDL.Variant({
@@ -681,7 +688,10 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantLimitReached' : IDL.Nat32,
     'InternalError' : IDL.Text,
   });
-  const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const LeaveGroupArgs = IDL.Record({
+    'correlation_id' : IDL.Nat64,
+    'chat_id' : ChatId,
+  });
   const LeaveGroupResponse = IDL.Variant({
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
@@ -768,7 +778,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : RecommendedGroupsSuccessResult,
     'InternalError' : IDL.Text,
   });
-  const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
+  const RelinquishGroupSuperAdminArgs = IDL.Record({
+    'correlation_id' : IDL.Nat64,
+    'chat_id' : ChatId,
+  });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
@@ -777,6 +790,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveReactionArgs = IDL.Record({
     'user_id' : UserId,
+    'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
@@ -824,6 +838,7 @@ export const idlFactory = ({ IDL }) => {
     'recipient' : UserId,
     'forwarding' : IDL.Bool,
     'sender_name' : IDL.Text,
+    'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -877,6 +892,7 @@ export const idlFactory = ({ IDL }) => {
     'mentioned' : IDL.Vec(User),
     'group_id' : ChatId,
     'sender_name' : IDL.Text,
+    'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
   });

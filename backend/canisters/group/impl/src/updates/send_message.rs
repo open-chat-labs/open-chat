@@ -189,6 +189,7 @@ async fn register_end_poll_callback(
     let payload = ByteBuf::from(msgpack::serialize(&group_canister::c2c_end_poll::Args {
         thread_root_message_index,
         message_index,
+        correlation_id: 0,
     }));
     let args = callback_canister::c2c_register_callback::Args {
         method_name: "c2c_end_poll_msgpack".to_string(),

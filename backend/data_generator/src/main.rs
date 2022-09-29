@@ -69,6 +69,7 @@ async fn run_data_generator(
                     content: MessageContent::Text(build_text_content(&mut rng)),
                     replies_to: None,
                     forwarding: false,
+                    correlation_id: 0,
                 };
                 send_direct_message(&a, u, &args).await;
             }
@@ -81,6 +82,7 @@ async fn run_data_generator(
                     replies_to: None,
                     mentioned: Vec::new(),
                     forwarding: false,
+                    correlation_id: 0,
                 };
                 send_group_message(&a, g, &args).await;
             }

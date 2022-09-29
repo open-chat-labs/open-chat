@@ -7,6 +7,7 @@ pub struct Args {
     pub user_ids: Vec<UserId>,
     pub added_by_name: String,
     pub allow_blocked_users: bool,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

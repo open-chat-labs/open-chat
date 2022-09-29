@@ -78,6 +78,7 @@ import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { textToCode } from "../../domain/inviteCodes";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
+import { generateUint64 } from "../../utils/rng";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -196,6 +197,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 user_ids: userIds.map((u) => Principal.fromText(u)),
                 added_by_name: myUsername,
                 allow_blocked_users: allowBlocked,
+                correlation_id: generateUint64()
             }),
             addMembersResponse
         );
@@ -211,6 +213,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             this.groupService.change_role({
                 user_id: Principal.fromText(userId),
                 new_role,
+                correlation_id: generateUint64()
             }),
             changeRoleResponse
         );
@@ -221,6 +224,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.remove_participant({
                 user_id: Principal.fromText(userId),
+                correlation_id: generateUint64()
             }),
             removeMemberResponse
         );
@@ -236,6 +240,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
+                        correlation_id: generateUint64()
                     }),
                     editMessageResponse
                 );
@@ -269,6 +274,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 mentioned: mentioned.map(apiUser),
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                correlation_id: generateUint64()
             };
             return this.handleResponse(
                 this.groupService.send_message(args),
@@ -301,6 +307,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                           },
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiGroupRules, rules),
+                correlation_id: generateUint64()
             }),
             updateGroupResponse
         );
@@ -319,6 +326,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_id: messageId,
                 reaction,
                 username,
+                correlation_id: generateUint64()
             }),
             addRemoveReactionResponse
         );
@@ -335,6 +343,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
+                correlation_id: generateUint64()
             }),
             addRemoveReactionResponse
         );
@@ -349,6 +358,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             this.groupService.delete_messages({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
+                correlation_id: generateUint64()
             }),
             deleteMessageResponse
         );
@@ -359,6 +369,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.block_user({
                 user_id: Principal.fromText(userId),
+                correlation_id: generateUint64()
             }),
             blockUserResponse
         );
@@ -369,6 +380,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.unblock_user({
                 user_id: Principal.fromText(userId),
+                correlation_id: generateUint64()
             }),
             unblockUserResponse
         );
@@ -409,7 +421,11 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
-        return this.handleResponse(this.groupService.make_private({}), makeGroupPrivateResponse);
+        return this.handleResponse(
+            this.groupService.make_private({
+                correlation_id: generateUint64()
+            }),
+            makeGroupPrivateResponse);
     }
 
     @profile("groupClient")
@@ -469,6 +485,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.pin_message({
                 message_index: messageIndex,
+                correlation_id: generateUint64()
             }),
             pinMessageResponse
         );
@@ -479,6 +496,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.unpin_message({
                 message_index: messageIndex,
+                correlation_id: generateUint64()
             }),
             unpinMessageResponse
         );
@@ -497,6 +515,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                correlation_id: generateUint64()
             }),
             registerPollVoteResponse
         );
@@ -525,24 +544,30 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     enableInviteCode(): Promise<EnableInviteCodeResponse> {
-        return this.handleQueryResponse(
-            () => this.groupService.enable_invite_code({}),
+        return this.handleResponse(
+            this.groupService.enable_invite_code({
+                correlation_id: generateUint64()
+            }),
             enableInviteCodeResponse
         );
     }
 
     @profile("groupClient")
     disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.handleQueryResponse(
-            () => this.groupService.disable_invite_code({}),
+        return this.handleResponse(
+            this.groupService.disable_invite_code({
+                correlation_id: generateUint64()
+            }),
             disableInviteCodeResponse
         );
     }
 
     @profile("groupClient")
     resetInviteCode(): Promise<ResetInviteCodeResponse> {
-        return this.handleQueryResponse(
-            () => this.groupService.reset_invite_code({}),
+        return this.handleResponse(
+            this.groupService.reset_invite_code({
+                correlation_id: generateUint64()
+            }),
             resetInviteCodeResponse
         );
     }

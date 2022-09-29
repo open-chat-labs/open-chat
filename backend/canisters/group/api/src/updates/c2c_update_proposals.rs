@@ -5,6 +5,8 @@ use types::{MessageId, ProposalDecisionStatus, ProposalRewardStatus, Tally, Time
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub proposals: Vec<ProposalUpdate>,
+    #[serde(default)]
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]

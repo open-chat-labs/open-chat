@@ -62,6 +62,7 @@ fn handle_notification(
         message_id,
         reaction,
         username,
+        ..
     }: Args,
     user_id: UserId,
     now: TimestampMillis,

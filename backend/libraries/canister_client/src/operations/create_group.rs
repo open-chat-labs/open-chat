@@ -17,6 +17,7 @@ pub async fn create_group(
                 user_ids: participants,
                 added_by_name: String::default(),
                 allow_blocked_users: false,
+                correlation_id: 0,
             };
             let add_participants_response =
                 group_canister_client::add_participants(agent, &r.chat_id.into(), &add_participants_args)

@@ -9,6 +9,7 @@ pub struct Args {
     pub rules: GroupRules,
     pub avatar: OptionUpdate<Avatar>,
     pub permissions: Option<GroupPermissions>,
+    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -128,6 +128,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         content,
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
 
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);

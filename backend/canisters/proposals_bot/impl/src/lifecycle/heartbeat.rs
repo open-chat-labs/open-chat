@@ -164,6 +164,7 @@ mod push_proposals {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            correlation_id: 0,
         };
         match group_canister_c2c_client::send_message(chat_id.into(), &send_message_args).await {
             Ok(_) => {
@@ -214,6 +215,7 @@ mod update_proposals {
     async fn update_proposals(governance_canister_id: CanisterId, chat_id: ChatId, proposals: Vec<ProposalUpdate>) {
         let update_proposals_args = group_canister::c2c_update_proposals::Args {
             proposals: proposals.clone(),
+            correlation_id: 0,
         };
         match group_canister_c2c_client::c2c_update_proposals(chat_id.into(), &update_proposals_args).await {
             Ok(_) => {
