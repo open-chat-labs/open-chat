@@ -349,7 +349,7 @@ export async function handleEventsResponse(
     const userIds = userIdsFromEvents(updated);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
 
-    serverEventsStore.set(chat.chatId, updated);
+    chatStateStore.setProp(chat.chatId, "serverEvents", updated);
 
     if (resp.events.length > 0) {
         chatStateStore.updateProp(chat.chatId, "confirmedEventIndexesLoaded", (range) => {
@@ -693,7 +693,7 @@ export function removeMessage(
     }
     unconfirmed.delete(clientChat.chatId, messageId);
     messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
-    serverEventsStore.update(clientChat.chatId, (events) =>
+    chatStateStore.updateProp(clientChat.chatId, "serverEvents", (events) =>
         events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
     );
 }
@@ -752,7 +752,7 @@ function appendMessage(
 
     if (existing !== undefined) return false;
 
-    serverEventsStore.update(chatId, (events) => [...events, message]);
+    chatStateStore.updateProp(chatId, "serverEvents", (events) => [...events, message]);
     return true;
 }
 
@@ -887,7 +887,7 @@ function confirmMessage(
             timestamp: resp.timestamp,
         };
         let found = false;
-        serverEventsStore.update(chatId, (events) =>
+        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
             events.map((e) => {
                 if (e.event === candidate) {
                     found = true;

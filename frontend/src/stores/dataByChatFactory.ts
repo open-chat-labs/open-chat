@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import type { StringDecoder } from "string_decoder";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
 
@@ -26,7 +27,7 @@ export type UpdatableChatStore<T> = {
     set: (chatId: string, data: T) => void;
 };
 
-export function createChatSpecificDataStore<T>(init: () => T) {
+export function createChatSpecificObjectStore<T extends Record<string, unknown>>(init: () => T) {
     const all: Writable<Record<string, T>> = writable<Record<string, T>>({});
     const byChat: Readable<T> = derived([selectedChatId, all], ([$selectedChatId, $all]) => {
         if ($selectedChatId === undefined) return init();
@@ -39,22 +40,14 @@ export function createChatSpecificDataStore<T>(init: () => T) {
         update: (chatId: string, fn: (data: T) => T) => updateDataForChat(all, chatId, fn, init()),
         set: (chatId: string, data: T) => setDataForChat(all, chatId, data),
         clear: (chatId: string): void => setDataForChat(all, chatId, init()),
-    };
-}
-
-export function createChatSpecificObjectStore<T extends Record<string, unknown>>(init: () => T) {
-    const store = createChatSpecificDataStore(init);
-    return {
-        ...store,
-        getProp: <P extends keyof T>(chatId: string, prop: P) =>
-            (get(store.all)[chatId] ?? init())[prop],
+        getProp: <P extends keyof T>(chatId: string, prop: P) => (get(all)[chatId] ?? init())[prop],
         updateProp: <P extends keyof T>(
             chatId: string,
             prop: P,
             updateFn: (data: T[P]) => T[P]
         ) => {
             updateDataForChat(
-                store.all,
+                all,
                 chatId,
                 (data) => {
                     if (data !== undefined) {
@@ -68,7 +61,7 @@ export function createChatSpecificObjectStore<T extends Record<string, unknown>>
         },
         setProp: <P extends keyof T>(chatId: string, prop: P, value: T[P]) => {
             updateDataForChat(
-                store.all,
+                all,
                 chatId,
                 (data) => {
                     if (data !== undefined) {

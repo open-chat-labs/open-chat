@@ -39,11 +39,7 @@ import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import {
-    createChatSpecificDataStore,
-    createDerivedPropStore,
-    createChatSpecificObjectStore,
-} from "./dataByChatFactory";
+import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 
@@ -252,7 +248,14 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     userIds: new Set<string>(),
     userGroupKeys: new Set<string>(),
     confirmedEventIndexesLoaded: new DRange(),
+    serverEvents: [],
 }));
+
+export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
+    chatStateStore,
+    "serverEvents",
+    () => []
+);
 
 export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
     chatStateStore,
@@ -346,7 +349,7 @@ export function setSelectedChat(
     clearSelectedChat(chat.chatId);
 
     // initialise a bunch of stores
-    serverEventsStore.set(chat.chatId, unconfirmed.getMessages(chat.chatId));
+    chatStateStore.setProp(chat.chatId, "serverEvents", unconfirmed.getMessages(chat.chatId));
     chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
     chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.clear(chat.chatId);
@@ -406,7 +409,6 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
     selectedChatId.update((chatId) => {
         if (chatId !== undefined) {
             chatStateStore.clear(chatId);
-            serverEventsStore.clear(chatId);
         }
         return newSelectedChatId;
     });
@@ -560,9 +562,6 @@ export function removeChat(chatId: string): void {
     });
 }
 
-// All of the below state is relative to the selected chat
-
-export const serverEventsStore = createChatSpecificDataStore<EventWrapper<ChatEvent>[]>(() => []);
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [serverEventsStore, localMessageUpdates],
     ([$serverEventsForSelectedChat, $localMessageUpdates]) => {

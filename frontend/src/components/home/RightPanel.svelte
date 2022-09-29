@@ -156,10 +156,10 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
-                    return { ...p, role: "owner" };
+                    return { ...p, role: "owner" as MemberRole };
                 }
                 if (p.userId === me) {
-                    return { ...p, role: "admin" };
+                    return { ...p, role: "admin" as MemberRole };
                 }
                 return p;
             })
@@ -178,7 +178,7 @@
                     return { ...p, role: theirRole };
                 }
                 if (p.userId === me) {
-                    return { ...p, role: "owner" };
+                    return { ...p, role: "owner" as MemberRole };
                 }
                 return p;
             })
@@ -206,7 +206,7 @@
 
     function dismissAsAdmin(chatId: string, userId: string): Promise<void> {
         chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
+            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
         );
         return api
             .changeRole(chatId, userId, "participant")
@@ -224,7 +224,7 @@
 
     function makeAdmin(chatId: string, userId: string): Promise<void> {
         chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
+            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
         );
         return api
             .changeRole(chatId, userId, "admin")

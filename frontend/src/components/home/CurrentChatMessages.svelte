@@ -267,6 +267,7 @@
     ) {
         if (index < 0) {
             chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
+
             return;
         }
 
