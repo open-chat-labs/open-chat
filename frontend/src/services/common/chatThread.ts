@@ -24,6 +24,9 @@ import {
     updateChatMembers,
     updatePinnedMessages,
     currentChatRules,
+    setChatMembers,
+    setBlockedUsers,
+    setPinnedMessages,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -592,7 +595,9 @@ export async function updateDetails(
         if (details !== undefined && details.latestEventIndex < clientChat.latestEventIndex) {
             const gd = await api.getGroupDetailsUpdates(clientChat.chatId, details);
             currentChatRules.set(clientChat.chatId, gd.rules);
-            groupDetails.set(clientChat.chatId, gd);
+            setChatMembers(clientChat.chatId, gd.members);
+            setBlockedUsers(clientChat.chatId, gd.blockedUsers);
+            setPinnedMessages(clientChat.chatId, gd.pinnedMessages);
             await updateUserStore(
                 api,
                 clientChat.chatId,

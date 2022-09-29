@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import type { UpdateArgs } from "domain/chat/chat";
-import { derived, get, Readable, Writable } from "svelte/store";
+import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
-import { immutableStore } from "./immutable";
 
 function setDataForChat<T>(store: Writable<Record<string, T>>, chatId: string, data: T): void {
-    store.update((s) => ({
-        ...s,
-        [chatId]: data,
-    }));
+    store.update((s) => {
+        s[chatId] = data;
+        return s;
+    });
 }
 
 function updateDataForChat<T>(
@@ -17,10 +15,10 @@ function updateDataForChat<T>(
     fn: (events: T) => T,
     empty: T
 ): void {
-    store.update((s) => ({
-        ...s,
-        [chatId]: fn(s[chatId] ?? empty),
-    }));
+    store.update((s) => {
+        s[chatId] = fn(s[chatId] ?? empty);
+        return s;
+    });
 }
 
 export type UpdatableChatStore<T> = {
@@ -32,7 +30,7 @@ export function createChatSpecificDataStore<T>(empty: T, initFn?: () => T) {
     function init() {
         return initFn ? initFn() : empty;
     }
-    const all: Writable<Record<string, T>> = immutableStore<Record<string, T>>({});
+    const all: Writable<Record<string, T>> = writable<Record<string, T>>({});
     const byChat: Readable<T> = derived([selectedChatId, all], ([$selectedChatId, $all]) => {
         if ($selectedChatId === undefined) return init();
         return $all[$selectedChatId] ?? init();
@@ -92,10 +90,23 @@ export function updateDerivedProp<S extends Record<string, unknown>, P extends k
 ): void {
     store.update(chatId, (data) => {
         if (data !== undefined) {
-            return {
-                ...data,
-                [prop]: updateFn(data[prop]),
-            };
+            data[prop] = updateFn(data[prop]);
+            return data;
+        }
+        return data;
+    });
+}
+
+export function setDerivedProp<S extends Record<string, unknown>, P extends keyof S>(
+    store: UpdatableChatStore<S>,
+    chatId: string,
+    prop: P,
+    value: S[P]
+): void {
+    store.update(chatId, (data) => {
+        if (data !== undefined) {
+            data[prop] = value;
+            return data;
         }
         return data;
     });

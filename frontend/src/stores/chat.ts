@@ -46,6 +46,7 @@ import {
     createNullableChatSpecificDateStore,
     createDerivedPropStore,
     updateDerivedProp,
+    setDerivedProp,
 } from "./dataByChatFactory";
 import { localMessageUpdates } from "../stores/localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
@@ -268,6 +269,10 @@ export function updateChatMembers(chatId: string, updateFn: (members: Member[]) 
     updateDerivedProp(groupDetails, chatId, "members", updateFn);
 }
 
+export function setChatMembers(chatId: string, members: Member[]): void {
+    setDerivedProp(groupDetails, chatId, "members", members);
+}
+
 export function updateBlockedUsers(
     chatId: string,
     updateFn: (blockedUsers: Set<string>) => Set<string>
@@ -275,11 +280,19 @@ export function updateBlockedUsers(
     updateDerivedProp(groupDetails, chatId, "blockedUsers", updateFn);
 }
 
+export function setBlockedUsers(chatId: string, blockedUsers: Set<string>): void {
+    setDerivedProp(groupDetails, chatId, "blockedUsers", blockedUsers);
+}
+
 export function updatePinnedMessages(
     chatId: string,
     updateFn: (pinnedMessages: Set<number>) => Set<number>
 ): void {
     updateDerivedProp(groupDetails, chatId, "pinnedMessages", updateFn);
+}
+
+export function setPinnedMessages(chatId: string, pinnedMessages: Set<number>): void {
+    setDerivedProp(groupDetails, chatId, "pinnedMessages", pinnedMessages);
 }
 
 export function setSelectedChat(

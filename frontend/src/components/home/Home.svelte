@@ -84,6 +84,9 @@
         focusThreadMessageIndex,
         currentChatDraftMessage,
         currentChatRules,
+        currentChatBlockedUsers,
+        currentChatMembers,
+        currentChatPinnedMessages,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -1080,6 +1083,10 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
+
+    $: console.log("currentChatMembers: ", $currentChatMembers);
+    $: console.log("currentChatBlockedUsers: ", $currentChatBlockedUsers);
+    $: console.log("currentChatPinnedMessages: ", $currentChatPinnedMessages);
 </script>
 
 <main class:fullscreen={$fullScreen}>
