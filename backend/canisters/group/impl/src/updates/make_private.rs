@@ -68,10 +68,11 @@ fn commit(args: Args, runtime_state: &mut RuntimeState) {
         changed_by: runtime_state.data.owner_id,
     };
 
-    runtime_state
-        .data
-        .events
-        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), args.correlation_id, now);
+    runtime_state.data.events.push_main_event(
+        ChatEventInternal::GroupVisibilityChanged(Box::new(event)),
+        args.correlation_id,
+        now,
+    );
 
     handle_activity_notification(runtime_state);
 }

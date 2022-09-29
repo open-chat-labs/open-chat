@@ -25,7 +25,12 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
     mutate_state(|runtime_state| {
         runtime_state.data.invite_code = Some(code);
         runtime_state.data.invite_code_enabled = true;
-        record_event(initial_state.caller, GroupInviteCodeChange::Reset, args.correlation_id, runtime_state);
+        record_event(
+            initial_state.caller,
+            GroupInviteCodeChange::Reset,
+            args.correlation_id,
+            runtime_state,
+        );
     });
 
     reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
@@ -50,7 +55,12 @@ async fn enable_invite_code(args: enable_invite_code::Args) -> enable_invite_cod
         mutate_state(|runtime_state| {
             runtime_state.data.invite_code = Some(code);
             runtime_state.data.invite_code_enabled = true;
-            record_event(initial_state.caller, GroupInviteCodeChange::Enabled, args.correlation_id, runtime_state);
+            record_event(
+                initial_state.caller,
+                GroupInviteCodeChange::Enabled,
+                args.correlation_id,
+                runtime_state,
+            );
         });
     }
 

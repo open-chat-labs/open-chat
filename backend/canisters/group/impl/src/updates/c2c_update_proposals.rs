@@ -35,7 +35,10 @@ fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
             })
             .collect();
 
-        runtime_state.data.events.update_proposals(participant.user_id, updates, args.correlation_id, now);
+        runtime_state
+            .data
+            .events
+            .update_proposals(participant.user_id, updates, args.correlation_id, now);
 
         handle_activity_notification(runtime_state);
 

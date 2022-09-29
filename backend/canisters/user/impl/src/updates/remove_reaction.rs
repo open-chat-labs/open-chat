@@ -20,10 +20,14 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        match chat
-            .events
-            .remove_reaction(my_user_id, None, args.message_id, args.reaction.clone(), args.correlation_id, now)
-        {
+        match chat.events.remove_reaction(
+            my_user_id,
+            None,
+            args.message_id,
+            args.reaction.clone(),
+            args.correlation_id,
+            now,
+        ) {
             AddRemoveReactionResult::Success(e) => {
                 ic_cdk::spawn(remove_reaction_on_recipients_canister(
                     args.user_id.into(),
