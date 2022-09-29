@@ -311,8 +311,9 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            focusThreadMessageIndex.set(
+                            chatStateStore.setProp(
                                 pathParams.chatId,
+                                "focusThreadMessageIndex",
                                 pathParams.threadMessageIndex
                             );
                             currentChatMessages?.scrollToMessageIndex(

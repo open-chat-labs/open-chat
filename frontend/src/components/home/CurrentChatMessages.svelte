@@ -82,6 +82,7 @@
         userGroupKeys,
         confirmedEventIndexesLoaded,
         currentChatPinnedMessages,
+        chatStateStore,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -265,13 +266,13 @@
         loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
-            focusMessageIndex.set(chat.chatId, undefined);
+            chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        focusMessageIndex.set(chat.chatId, index);
+        chatStateStore.setProp(chat.chatId, "focusMessageIndex", index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -288,7 +289,7 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    focusMessageIndex.set(chat.chatId, undefined);
+                    chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
@@ -523,7 +524,7 @@
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.update(chat.chatId, (keys) => {
+        chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
         });
@@ -571,8 +572,6 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow(api, user, serverChat, chat, events, $focusMessageIndex).then(

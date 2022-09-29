@@ -14,8 +14,6 @@ import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
-    confirmedEventIndexesLoaded,
-    userGroupKeys,
     serverEventsStore,
     updateSummaryWithConfirmedMessage,
     chatStateStore,
@@ -331,8 +329,8 @@ export async function handleEventsResponse(
     if (resp === "events_failed") return;
 
     if (!keepCurrentEvents) {
-        confirmedEventIndexesLoaded.clear(chat.chatId);
-        userGroupKeys.clear(chat.chatId);
+        chatStateStore.setProp(chat.chatId, "confirmedEventIndexesLoaded", new DRange());
+        chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
     } else if (!isContiguous(chat.chatId, resp)) {
         return;
     }
@@ -354,7 +352,7 @@ export async function handleEventsResponse(
     serverEventsStore.set(chat.chatId, updated);
 
     if (resp.events.length > 0) {
-        confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
+        chatStateStore.updateProp(chat.chatId, "confirmedEventIndexesLoaded", (range) => {
             const r = range.clone();
             resp.events.forEach((e) => r.add(e.index));
             return r;
@@ -365,7 +363,7 @@ export async function handleEventsResponse(
 }
 
 function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(chatId);
+    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
 
     if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
 
@@ -378,7 +376,7 @@ function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>):
     if (!isContiguous) {
         console.log(
             "Events in response are not contiguous with the loaded events",
-            confirmedEventIndexesLoaded,
+            confirmedLoaded,
             firstIndex,
             lastIndex
         );
@@ -448,7 +446,7 @@ function previousMessagesCriteria(
 }
 
 function earliestLoadedIndex(chatId: string): number | undefined {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(chatId);
+    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
     return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
 }
 
@@ -499,7 +497,7 @@ function newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefi
 }
 
 function confirmedUpToEventIndex(chatId: string): number | undefined {
-    const ranges = confirmedEventIndexesLoaded.get(chatId).subranges();
+    const ranges = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded").subranges();
     if (ranges.length > 0) {
         return ranges[0].high;
     }
@@ -524,7 +522,10 @@ export function refreshAffectedEvents(
     currentEvents: EventWrapper<ChatEvent>[],
     affectedEventIndexes: number[]
 ): Promise<void> {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(clientChat.chatId);
+    const confirmedLoaded = chatStateStore.getProp(
+        clientChat.chatId,
+        "confirmedEventIndexesLoaded"
+    );
     const filtered = affectedEventIndexes.filter((e) => indexIsInRanges(e, confirmedLoaded));
     if (filtered.length === 0) {
         return Promise.resolve();
@@ -763,7 +764,10 @@ export async function handleMessageSentByOther(
     messageEvent: EventWrapper<Message>,
     confirmed: boolean
 ): Promise<void> {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(clientChat.chatId);
+    const confirmedLoaded = chatStateStore.getProp(
+        clientChat.chatId,
+        "confirmedEventIndexesLoaded"
+    );
 
     if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
         // We already have this confirmed message
@@ -894,7 +898,7 @@ function confirmMessage(
         );
 
         if (found) {
-            confirmedEventIndexesLoaded.update(chatId, (range) => {
+            chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
                 const r = range.clone();
                 r.add(resp.eventIndex);
                 return r;

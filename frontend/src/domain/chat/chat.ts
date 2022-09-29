@@ -786,6 +786,10 @@ export type ChatSpecificState = {
     latestEventIndex?: number;
     rules?: GroupRules;
     userIds: Set<string>;
+    focusMessageIndex?: number;
+    focusThreadMessageIndex?: number;
+    userGroupKeys: Set<string>;
+    confirmedEventIndexesLoaded: DRange;
 };
 
 export type GroupRules = {
