@@ -82,9 +82,6 @@
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
         currentChatDraftMessage,
-        currentChatBlockedUsers,
-        currentChatMembers,
-        currentChatPinnedMessages,
         chatStateStore,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
@@ -1087,7 +1084,6 @@
 <main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
-            {api}
             {user}
             {groupSearchResults}
             {userSearchResults}

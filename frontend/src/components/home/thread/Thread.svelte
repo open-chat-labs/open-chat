@@ -84,7 +84,6 @@
         threadsFollowedByMeStore,
         currentChatUserIds,
         selectedChatId,
-        focusThreadMessageIndex,
         currentChatMembers,
         currentChatBlockedUsers,
         chatStateStore,

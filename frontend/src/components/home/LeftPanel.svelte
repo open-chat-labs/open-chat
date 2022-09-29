@@ -6,7 +6,6 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
-    import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -14,10 +13,7 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let api: ServiceContainer;
     export let user: CreatedUser;
-
-    $: userId = user.userId;
 
     // TODO - this component doesn't do anything now. We could remove it but it might be a useful abstraction
 </script>

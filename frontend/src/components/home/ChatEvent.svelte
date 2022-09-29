@@ -16,7 +16,6 @@
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import { push } from "svelte-spa-router";
     import { typing, isTyping } from "../../stores/typing";
-    import { derived } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 

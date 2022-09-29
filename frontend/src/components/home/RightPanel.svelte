@@ -138,7 +138,7 @@
         }
     }
 
-    function closeThread(ev: CustomEvent<string>) {
+    function closeThread(_ev: CustomEvent<string>) {
         popHistory();
         replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
     }

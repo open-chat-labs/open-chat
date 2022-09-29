@@ -80,7 +80,6 @@
         currentChatReplyingTo,
         chatUpdatedStore,
         userGroupKeys,
-        confirmedEventIndexesLoaded,
         currentChatPinnedMessages,
         chatStateStore,
     } from "../../stores/chat";
