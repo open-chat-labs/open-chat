@@ -425,6 +425,11 @@
                 return;
         }
 
+        if (threadRootMessageIndex !== undefined) {
+            // TODO fix this for thread messages
+            return;
+        }
+
         const chat = $serverChatSummariesStore[chatId];
         if (chat === undefined || chat.latestEventIndex >= message.index) {
             return;
