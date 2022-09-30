@@ -41,6 +41,23 @@ export function flatMap<A, B>(things: A[], fn: (thing: A) => B[]): B[] {
     }, [] as B[]);
 }
 
+export function distinctBy<T, K>(things: T[], keyFn: ((thing: T) => K)): T[] {
+    if (things.length == 0) return things;
+
+    const set = new Set<K>();
+    const output = [];
+
+    for (const thing of things) {
+        const key = keyFn(thing);
+        if (!set.has(key)) {
+            set.add(key);
+            output.push(thing);
+        }
+    }
+
+    return output;
+}
+
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {
     const l = Math.min(a.length, b.length);
     const res: [A, B][] = [];

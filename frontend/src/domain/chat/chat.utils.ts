@@ -38,7 +38,7 @@ import type {
     GroupSubtype,
     GroupSubtypeUpdate,
 } from "./chat";
-import { groupWhile, toRecord } from "../../utils/list";
+import { distinctBy, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -963,34 +963,8 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 
 // The current events list must already be sorted by ascending event index
 export function mergeServerEvents(events: EventWrapper<ChatEvent>[], newEvents: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
-    newEvents.sort(sortByIndex);
-
-    let i = 0;
-    let j = 0;
-    const merged = [];
-    while (i < events.length && j < newEvents.length) {
-        const event = events[i];
-        const newEvent = newEvents[j];
-        if (event.index < newEvent.index) {
-            merged.push(event);
-            i++;
-        } else {
-            merged.push(newEvent);
-            j++;
-            if (event.index === newEvent.index) {
-                i++;
-            }
-        }
-    }
-
-    while (i < events.length) {
-        merged.push(events[i++]);
-    }
-
-    while (j < newEvents.length) {
-        merged.push(newEvents[j++]);
-    }
-
+    const merged = distinctBy([...newEvents, ...events], (e) => e.index);
+    merged.sort(sortByIndex);
     return merged;
 }
 
