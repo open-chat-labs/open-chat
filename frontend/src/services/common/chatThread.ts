@@ -784,9 +784,7 @@ export function forwardMessage(
     api.sendMessage(clientChat, user, [], evt.event)
         .then(([resp, msg]) => {
             if (resp.kind === "success") {
-                const event = convertSendMessageResponse(resp, msg);
-                addServerEventsToStores(clientChat.chatId, [event]);
-                updateSummaryWithConfirmedMessage(clientChat.chatId, event);
+                onSendMessageSuccess(clientChat.chatId, resp, msg);
                 trackEvent("forward_message");
             } else {
                 removeMessage(user.userId, clientChat, msg.messageId, user.userId);
@@ -816,9 +814,7 @@ export function sendMessageWithAttachment(
     api.sendMessage(clientChat, user, mentioned, evt.event)
         .then(([resp, msg]) => {
             if (resp.kind === "success" || resp.kind === "transfer_success") {
-                const event = convertSendMessageResponse(resp, msg);
-                addServerEventsToStores(clientChat.chatId, [event]);
-                updateSummaryWithConfirmedMessage(clientChat.chatId, event);
+                onSendMessageSuccess(clientChat.chatId, resp, msg);
                 if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                     api.refreshAccountBalance(msg.content.transfer.token, user.cryptoAccount);
                 }
@@ -851,8 +847,8 @@ export function sendMessageWithAttachment(
     return sendMessage(api, user, serverChat, clientChat, currentEvents, evt);
 }
 
-function convertSendMessageResponse(resp: SendMessageSuccess | TransferSuccess, msg: Message): EventWrapper<Message> {
-    return {
+function onSendMessageSuccess(chatId: string, resp: SendMessageSuccess | TransferSuccess, msg: Message) {
+    const event = {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
         event: {
@@ -860,4 +856,7 @@ function convertSendMessageResponse(resp: SendMessageSuccess | TransferSuccess, 
             messageIndex: resp.messageIndex
         }
     };
+
+    addServerEventsToStores(chatId, [event]);
+    updateSummaryWithConfirmedMessage(chatId, event);
 }
