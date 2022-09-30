@@ -334,27 +334,19 @@ impl AllChatEvents {
         now: TimestampMillis,
     ) -> AddRemoveReactionResult {
         if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
-            let (reaction_removed, index_to_remove) = message
+            let (removed, is_empty) = message
                 .reactions
                 .iter_mut()
-                .find_position(|(r, _)| *r == reaction)
-                .map(
-                    |(i, (_, u))| {
-                        if u.remove(&user_id) {
-                            (true, u.is_empty().then_some(i))
-                        } else {
-                            (false, None)
-                        }
-                    },
-                )
+                .find(|(r, _)| *r == reaction)
+                .map(|(_, u)| (u.remove(&user_id), u.is_empty()))
                 .unwrap_or_default();
 
-            if !reaction_removed {
+            if !removed {
                 return AddRemoveReactionResult::NoChange;
             }
 
-            if let Some(index) = index_to_remove {
-                message.reactions.remove(index);
+            if is_empty {
+                message.reactions.retain(|(_, u)| !u.is_empty());
             }
 
             message.last_updated = Some(now);
