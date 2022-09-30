@@ -262,32 +262,6 @@ type ResetInviteCodeResponse =
         NotAuthorized;
     };
 
-type UpdateGroupArgs =
-    record {
-        name: text;
-        description: text;
-        avatar: AvatarUpdate;
-        permissions: opt GroupPermissions;
-        rules: GroupRules;
-        correlation_id: nat64;
-    };
-
-type UpdateGroupResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        CallerNotInGroup;
-        NameTooShort: FieldTooShortResult;
-        NameTooLong: FieldTooLongResult;
-        NameReserved;
-        DescriptionTooLong: FieldTooLongResult;
-        AvatarTooBig: FieldTooLongResult;
-        NameTaken;
-        InternalError;
-        RulesTooLong: FieldTooLongResult;
-        RulesTooShort: FieldTooShortResult;
-    };
-
 type UpdateGroupV2Args =
     record {
         name: opt text;
@@ -329,31 +303,6 @@ type OptionalGroupPermissions =
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
         reply_in_thread: opt PermissionRole;
-    };
-
-type UpdatePermissionsArgs =
-    record {
-        change_permissions: opt PermissionRole;
-        change_roles: opt PermissionRole;
-        add_members: opt PermissionRole;
-        remove_members: opt PermissionRole;
-        block_users: opt PermissionRole;
-        delete_messages: opt PermissionRole;
-        update_group: opt PermissionRole;
-        pin_messages: opt PermissionRole;
-        invite_users: opt PermissionRole;
-        create_polls: opt PermissionRole;
-        send_messages: opt PermissionRole;
-        react_to_messages: opt PermissionRole;
-        reply_in_thread: opt PermissionRole;
-        correlation_id: nat64;
-    };
-
-type UpdatePermissionsResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        CallerNotInGroup;
     };
 
 type PinMessageArgs =
@@ -614,9 +563,7 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
-    update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    update_permissions: (UpdatePermissionsArgs) -> (UpdatePermissionsResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);

@@ -959,26 +959,6 @@ export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };
-export interface UpdateGroupArgs {
-  'permissions' : [] | [GroupPermissions],
-  'name' : string,
-  'description' : string,
-  'correlation_id' : bigint,
-  'rules' : GroupRules,
-  'avatar' : AvatarUpdate,
-}
-export type UpdateGroupResponse = { 'NameReserved' : null } |
-  { 'RulesTooLong' : FieldTooLongResult } |
-  { 'DescriptionTooLong' : FieldTooLongResult } |
-  { 'NameTooShort' : FieldTooShortResult } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : null } |
-  { 'RulesTooShort' : FieldTooShortResult } |
-  { 'NameTooLong' : FieldTooLongResult } |
-  { 'NameTaken' : null } |
-  { 'InternalError' : null };
 export interface UpdateGroupV2Args {
   'permissions' : [] | [OptionalGroupPermissions],
   'name' : [] | [string],
@@ -999,25 +979,6 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
-export interface UpdatePermissionsArgs {
-  'block_users' : [] | [PermissionRole],
-  'change_permissions' : [] | [PermissionRole],
-  'delete_messages' : [] | [PermissionRole],
-  'send_messages' : [] | [PermissionRole],
-  'remove_members' : [] | [PermissionRole],
-  'update_group' : [] | [PermissionRole],
-  'invite_users' : [] | [PermissionRole],
-  'change_roles' : [] | [PermissionRole],
-  'add_members' : [] | [PermissionRole],
-  'create_polls' : [] | [PermissionRole],
-  'pin_messages' : [] | [PermissionRole],
-  'correlation_id' : bigint,
-  'reply_in_thread' : [] | [PermissionRole],
-  'react_to_messages' : [] | [PermissionRole],
-}
-export type UpdatePermissionsResponse = { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -1116,10 +1077,5 @@ export interface _SERVICE {
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
-  'update_group' : ActorMethod<[UpdateGroupArgs], UpdateGroupResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
-  'update_permissions' : ActorMethod<
-    [UpdatePermissionsArgs],
-    UpdatePermissionsResponse,
-  >,
 }
