@@ -14,9 +14,9 @@ import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
-    serverEventsStore,
     updateSummaryWithConfirmedMessage,
     chatStateStore,
+    addServerEventsToStore,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -26,8 +26,6 @@ import {
     indexRangeForChat,
     makeRtcConnections,
     mergeSendMessageResponse,
-    replaceAffected,
-    replaceLocal,
     serialiseMessageForRtc,
     upToDate,
     userIdsFromEvents,
@@ -38,7 +36,7 @@ import { findLast } from "../../utils/list";
 import { indexIsInRanges } from "../../utils/range";
 import { unconfirmed } from "../../stores/unconfirmed";
 import { messagesRead } from "../../stores/markRead";
-import { trackEvent } from "utils/tracking";
+import { trackEvent } from "../../utils/tracking";
 
 export function selectReaction(
     api: ServiceContainer,
@@ -292,7 +290,6 @@ export async function loadEventWindow(
     user: CreatedUser,
     serverChat: ChatSummary,
     chat: ChatSummary,
-    currentEvents: EventWrapper<ChatEvent>[],
     messageIndex: number
 ): Promise<number | undefined> {
     if (messageIndex >= 0) {
@@ -312,7 +309,7 @@ export async function loadEventWindow(
             return undefined;
         }
 
-        await handleEventsResponse(api, user, chat, currentEvents, eventsResponse, false);
+        await handleEventsResponse(api, user, chat, eventsResponse, false);
 
         return messageIndex;
     }
@@ -322,7 +319,6 @@ export async function handleEventsResponse(
     api: ServiceContainer,
     user: CreatedUser,
     chat: ChatSummary,
-    currentEvents: EventWrapper<ChatEvent>[],
     resp: EventsResponse<ChatEvent>,
     keepCurrentEvents = true
 ): Promise<void> {
@@ -335,23 +331,14 @@ export async function handleEventsResponse(
         return;
     }
 
-    const updated = replaceAffected(
-        replaceLocal(
-            user.userId,
-            chat.chatId,
-            chat.readByMe,
-            keepCurrentEvents ? currentEvents : [],
-            resp.events
-        ),
-        resp.affectedEvents
-    );
+    const events = resp.events.concat(resp.affectedEvents);
 
-    const userIds = userIdsFromEvents(updated);
+    const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
 
-    chatStateStore.setProp(chat.chatId, "serverEvents", updated);
+    addServerEventsToStore(chat.chatId, events);
 
-    if (resp.events.length > 0) {
+    if (events.length > 0) {
         chatStateStore.updateProp(chat.chatId, "confirmedEventIndexesLoaded", (range) => {
             const r = range.clone();
             resp.events.forEach((e) => r.add(e.index));
@@ -359,7 +346,7 @@ export async function handleEventsResponse(
         });
     }
 
-    makeRtcConnections(user.userId, chat, updated, get(userStore));
+    makeRtcConnections(user.userId, chat, events, get(userStore));
 }
 
 function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
@@ -406,8 +393,7 @@ export async function loadPreviousMessages(
     api: ServiceContainer,
     user: CreatedUser,
     serverChat: ChatSummary,
-    clientChat: ChatSummary,
-    currentEvents: EventWrapper<ChatEvent>[]
+    clientChat: ChatSummary
 ): Promise<void> {
     const criteria = previousMessagesCriteria(serverChat, clientChat);
 
@@ -419,7 +405,7 @@ export async function loadPreviousMessages(
         return;
     }
 
-    await handleEventsResponse(api, user, clientChat, currentEvents, eventsResponse);
+    await handleEventsResponse(api, user, clientChat, eventsResponse);
     return;
 }
 
@@ -454,8 +440,7 @@ export async function loadNewMessages(
     api: ServiceContainer,
     user: CreatedUser,
     serverChat: ChatSummary,
-    clientChat: ChatSummary,
-    currentEvents: EventWrapper<ChatEvent>[]
+    clientChat: ChatSummary
 ): Promise<boolean> {
     const criteria = newMessageCriteria(serverChat);
 
@@ -467,7 +452,7 @@ export async function loadNewMessages(
         return false;
     }
 
-    await handleEventsResponse(api, user, clientChat, currentEvents, eventsResponse);
+    await handleEventsResponse(api, user, clientChat, eventsResponse);
 
     // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
     // if so, we update the chat summary to show the correct latest message.
@@ -519,7 +504,6 @@ export function refreshAffectedEvents(
     api: ServiceContainer,
     user: CreatedUser,
     clientChat: ChatSummary,
-    currentEvents: EventWrapper<ChatEvent>[],
     affectedEventIndexes: number[]
 ): Promise<void> {
     const confirmedLoaded = chatStateStore.getProp(
@@ -546,9 +530,7 @@ export function refreshAffectedEvents(
                   clientChat.latestEventIndex
               );
 
-    return eventsPromise.then((resp) =>
-        handleEventsResponse(api, user, clientChat, currentEvents, resp)
-    );
+    return eventsPromise.then((resp) => handleEventsResponse(api, user, clientChat, resp));
 }
 
 export async function loadDetails(
@@ -713,7 +695,6 @@ export async function sendMessage(
             user,
             serverChat,
             clientChat,
-            currentEvents,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientChat.latestMessage!.event.messageIndex
         );
@@ -783,7 +764,7 @@ export async function handleMessageSentByOther(
             return;
         }
 
-        await handleEventsResponse(api, user, clientChat, currentEvents, {
+        await handleEventsResponse(api, user, clientChat, {
             events: [messageEvent],
             affectedEvents: [],
             latestEventIndex: undefined,

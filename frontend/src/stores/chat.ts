@@ -19,6 +19,7 @@ import {
     getFirstUnreadMessageIndex,
     getNextEventIndex,
     getNextMessageIndex,
+    mergeServerEvents,
     mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
@@ -572,11 +573,18 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
+export function addServerEventsToStore(chatId: string, newEvents: EventWrapper<ChatEvent>[]): void {
+    chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+        mergeServerEvents(events, newEvents)
+    );
+}
+
 /**
  * You might think that this belongs in the chatStateStore, but this needs to persist across chat selection boundary
  * so it has a different scope.
  */
 const draftMessages = createChatSpecificObjectStore<DraftMessage>(() => ({}));
+
 export const currentChatDraftMessage = {
     ...draftMessages,
     setTextContent: (id: string, textContent: string | undefined): void =>
