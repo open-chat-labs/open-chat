@@ -292,7 +292,7 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            loadEventWindow(api, user, serverChat, chat, events, index).then(onMessageWindowLoaded);
+            loadEventWindow(api, user, serverChat, chat, index).then(onMessageWindowLoaded);
         }
     }
 
@@ -360,7 +360,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, events).then(
+            loadPreviousMessages(api, user, serverChat, chat).then(
                 onLoadedPreviousMessages
             );
         }
@@ -370,7 +370,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -530,11 +530,11 @@
             handleMessageSentByOther(api, user, chat, events, latestMessage, true);
         }
 
-        refreshAffectedEvents(api, user, chat, events, affectedEvents);
+        refreshAffectedEvents(api, user, chat, affectedEvents);
         updateDetails(api, user, chat, events);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            loadNewMessages(api, user, serverChat, chat, events);
+            loadNewMessages(api, user, serverChat, chat);
         }
     }
 
@@ -568,11 +568,11 @@
             userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
-                loadEventWindow(api, user, serverChat, chat, events, $focusMessageIndex).then(
+                loadEventWindow(api, user, serverChat, chat, $focusMessageIndex).then(
                     onMessageWindowLoaded
                 );
             } else {
-                loadPreviousMessages(api, user, serverChat, chat, events).then(
+                loadPreviousMessages(api, user, serverChat, chat).then(
                     onLoadedPreviousMessages
                 );
             }
@@ -605,11 +605,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, events).then(
+            loadPreviousMessages(api, user, serverChat, chat).then(
                 onLoadedPreviousMessages
             );
         }
