@@ -16,7 +16,7 @@ import {
     currentChatDraftMessage,
     updateSummaryWithConfirmedMessage,
     chatStateStore,
-    addServerEventsToStore,
+    addServerEventsToStores,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -336,15 +336,7 @@ export async function handleEventsResponse(
     const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
 
-    addServerEventsToStore(chat.chatId, events);
-
-    if (events.length > 0) {
-        chatStateStore.updateProp(chat.chatId, "confirmedEventIndexesLoaded", (range) => {
-            const r = range.clone();
-            resp.events.forEach((e) => r.add(e.index));
-            return r;
-        });
-    }
+    addServerEventsToStores(chat.chatId, events);
 
     makeRtcConnections(user.userId, chat, events, get(userStore));
 }
@@ -792,7 +784,9 @@ export function forwardMessage(
     api.sendMessage(clientChat, user, [], evt.event)
         .then(([resp, msg]) => {
             if (resp.kind === "success") {
-                confirmMessage(clientChat.chatId, msg, resp);
+                const event = convertSendMessageResponse(resp, msg);
+                addServerEventsToStores(clientChat.chatId, [event]);
+                updateSummaryWithConfirmedMessage(clientChat.chatId, event);
                 trackEvent("forward_message");
             } else {
                 removeMessage(user.userId, clientChat, msg.messageId, user.userId);
@@ -822,7 +816,9 @@ export function sendMessageWithAttachment(
     api.sendMessage(clientChat, user, mentioned, evt.event)
         .then(([resp, msg]) => {
             if (resp.kind === "success" || resp.kind === "transfer_success") {
-                confirmMessage(clientChat.chatId, msg, resp);
+                const event = convertSendMessageResponse(resp, msg);
+                addServerEventsToStores(clientChat.chatId, [event]);
+                updateSummaryWithConfirmedMessage(clientChat.chatId, event);
                 if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                     api.refreshAccountBalance(msg.content.transfer.token, user.cryptoAccount);
                 }
@@ -855,37 +851,13 @@ export function sendMessageWithAttachment(
     return sendMessage(api, user, serverChat, clientChat, currentEvents, evt);
 }
 
-function confirmMessage(
-    chatId: string,
-    candidate: Message,
-    resp: SendMessageSuccess | TransferSuccess
-): void {
-    if (unconfirmed.delete(chatId, candidate.messageId)) {
-        messagesRead.confirmMessage(chatId, resp.messageIndex, candidate.messageId);
-        const confirmed = {
-            event: mergeSendMessageResponse(candidate, resp),
-            index: resp.eventIndex,
-            timestamp: resp.timestamp,
-        };
-        let found = false;
-        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-            events.map((e) => {
-                if (e.event === candidate) {
-                    found = true;
-                    return confirmed;
-                }
-                return e;
-            })
-        );
-
-        if (found) {
-            chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
-                const r = range.clone();
-                r.add(resp.eventIndex);
-                return r;
-            });
+function convertSendMessageResponse(resp: SendMessageSuccess | TransferSuccess, msg: Message): EventWrapper<Message> {
+    return {
+        index: resp.eventIndex,
+        timestamp: resp.timestamp,
+        event: {
+            ...msg,
+            messageIndex: resp.messageIndex
         }
-
-        updateSummaryWithConfirmedMessage(chatId, confirmed);
-    }
+    };
 }

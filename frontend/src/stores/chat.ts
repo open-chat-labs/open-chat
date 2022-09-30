@@ -41,8 +41,9 @@ import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
-import { localMessageUpdates } from "../stores/localMessageUpdates";
+import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
+import { messagesRead } from "./markRead";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -573,10 +574,28 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export function addServerEventsToStore(chatId: string, newEvents: EventWrapper<ChatEvent>[]): void {
+export function addServerEventsToStores(chatId: string, newEvents: EventWrapper<ChatEvent>[]): void {
+    if (newEvents.length === 0) {
+        return;
+    }
+
     chatStateStore.updateProp(chatId, "serverEvents", (events) =>
         mergeServerEvents(events, newEvents)
     );
+
+    for (const event of newEvents) {
+        if (event.event.kind === "message") {
+            if (unconfirmed.delete(chatId, event.event.messageId)) {
+                messagesRead.confirmMessage(chatId, event.event.messageIndex, event.event.messageId);
+            }
+        }
+    }
+
+    chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
+        const r = range.clone();
+        newEvents.forEach((e) => r.add(e.index));
+        return r;
+    });
 }
 
 /**
