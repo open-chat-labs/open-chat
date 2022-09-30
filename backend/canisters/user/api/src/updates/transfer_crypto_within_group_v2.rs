@@ -9,6 +9,7 @@ use types::{
 pub struct Args {
     pub message_id: MessageId,
     pub group_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
     pub recipient: UserId,
     pub content: CryptoContent,
     pub sender_name: String,

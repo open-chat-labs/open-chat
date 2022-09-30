@@ -895,6 +895,7 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const TransferCryptoWithinGroupResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
