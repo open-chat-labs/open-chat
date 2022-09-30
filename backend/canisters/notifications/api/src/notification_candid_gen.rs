@@ -9,6 +9,7 @@ fn main() {
         message: EventWrapper {
             index: 0.into(),
             timestamp: 0,
+            correlation_id: 0,
             event: Message {
                 message_index: 0.into(),
                 message_id: 0.into(),

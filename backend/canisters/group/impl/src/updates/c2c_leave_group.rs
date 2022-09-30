@@ -9,13 +9,13 @@ use types::ParticipantLeft;
 // Called via the user's user canister
 #[update_msgpack]
 #[trace]
-fn c2c_leave_group(_args: Args) -> Response {
+fn c2c_leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(c2c_leave_group_impl)
+    mutate_state(|state| c2c_leave_group_impl(args, state))
 }
 
-fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
+fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
@@ -35,7 +35,7 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     runtime_state
         .data
         .events
-        .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), now);
+        .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), args.correlation_id, now);
 
     handle_activity_notification(runtime_state);
 

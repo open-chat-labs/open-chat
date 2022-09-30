@@ -41,6 +41,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             args.thread_root_message_index,
             args.message_id,
             args.reaction.clone(),
+            args.correlation_id,
             now,
         ) {
             AddRemoveReactionResult::Success(e) => {

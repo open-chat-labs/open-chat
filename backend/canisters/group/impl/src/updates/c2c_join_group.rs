@@ -76,10 +76,11 @@ fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut
                     user_id,
                     as_super_admin: args.as_super_admin,
                 };
-                runtime_state
-                    .data
-                    .events
-                    .push_main_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
+                runtime_state.data.events.push_main_event(
+                    ChatEventInternal::ParticipantJoined(Box::new(event)),
+                    args.correlation_id,
+                    now,
+                );
 
                 handle_activity_notification(runtime_state);
 

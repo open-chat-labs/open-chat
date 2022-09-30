@@ -10,7 +10,7 @@ use types::{CanisterId, ChatId, GroupVisibilityChanged};
 
 #[update]
 #[trace]
-async fn make_private(_args: Args) -> Response {
+async fn make_private(args: Args) -> Response {
     run_regular_jobs();
 
     let prepare_result = match read_state(prepare) {
@@ -28,7 +28,7 @@ async fn make_private(_args: Args) -> Response {
                 InternalError
             }
             c2c_make_private::Response::Success => {
-                mutate_state(commit);
+                mutate_state(|state| commit(args, state));
                 Success
             }
         },
@@ -59,7 +59,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-fn commit(runtime_state: &mut RuntimeState) {
+fn commit(args: Args, runtime_state: &mut RuntimeState) {
     runtime_state.data.is_public = false;
 
     let now = runtime_state.env.now();
@@ -68,10 +68,11 @@ fn commit(runtime_state: &mut RuntimeState) {
         changed_by: runtime_state.data.owner_id,
     };
 
-    runtime_state
-        .data
-        .events
-        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
+    runtime_state.data.events.push_main_event(
+        ChatEventInternal::GroupVisibilityChanged(Box::new(event)),
+        args.correlation_id,
+        now,
+    );
 
     handle_activity_notification(runtime_state);
 }

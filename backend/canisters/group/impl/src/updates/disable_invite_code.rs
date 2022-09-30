@@ -8,13 +8,13 @@ use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
 #[update]
 #[trace]
-fn disable_invite_code(_args: Args) -> Response {
+fn disable_invite_code(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(disable_invite_code_impl)
+    mutate_state(|state| disable_invite_code_impl(args, state))
 }
 
-fn disable_invite_code_impl(runtime_state: &mut RuntimeState) -> Response {
+fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.role.can_invite_users(&runtime_state.data.permissions) {
@@ -26,6 +26,7 @@ fn disable_invite_code_impl(runtime_state: &mut RuntimeState) -> Response {
                     change: GroupInviteCodeChange::Disabled,
                     changed_by: participant.user_id,
                 })),
+                args.correlation_id,
                 now,
             );
 

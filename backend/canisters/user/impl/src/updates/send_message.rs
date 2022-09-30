@@ -88,8 +88,9 @@ fn send_message_impl(
         sender: my_user_id,
         content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
-        now,
         forwarded: args.forwarding,
+        correlation_id: args.correlation_id,
+        now,
     };
 
     let message_event = runtime_state

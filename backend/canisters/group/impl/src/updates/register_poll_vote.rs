@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::RegisterPollVoteResult;
+use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
 use group_canister::register_poll_vote::{Response::*, *};
 use ic_cdk_macros::update;
 
@@ -27,14 +27,15 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             return PollNotFound;
         }
 
-        let result = runtime_state.data.events.register_poll_vote(
+        let result = runtime_state.data.events.register_poll_vote(RegisterPollVoteArgs {
             user_id,
-            args.thread_root_message_index,
-            args.message_index,
-            args.poll_option,
-            args.operation,
+            thread_root_message_index: args.thread_root_message_index,
+            message_index: args.message_index,
+            option_index: args.poll_option,
+            operation: args.operation,
+            correlation_id: args.correlation_id,
             now,
-        );
+        });
 
         match result {
             RegisterPollVoteResult::Success(votes) => {

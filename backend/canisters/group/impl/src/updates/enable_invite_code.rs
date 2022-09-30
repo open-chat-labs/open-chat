@@ -12,7 +12,7 @@ use utils::canister;
 
 #[update]
 #[trace]
-async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
+async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
@@ -25,7 +25,12 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
     mutate_state(|runtime_state| {
         runtime_state.data.invite_code = Some(code);
         runtime_state.data.invite_code_enabled = true;
-        record_event(initial_state.caller, GroupInviteCodeChange::Reset, runtime_state);
+        record_event(
+            initial_state.caller,
+            GroupInviteCodeChange::Reset,
+            args.correlation_id,
+            runtime_state,
+        );
     });
 
     reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
@@ -33,7 +38,7 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
 
 #[update]
 #[trace]
-async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_code::Response {
+async fn enable_invite_code(args: enable_invite_code::Args) -> enable_invite_code::Response {
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
@@ -50,7 +55,12 @@ async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_co
         mutate_state(|runtime_state| {
             runtime_state.data.invite_code = Some(code);
             runtime_state.data.invite_code_enabled = true;
-            record_event(initial_state.caller, GroupInviteCodeChange::Enabled, runtime_state);
+            record_event(
+                initial_state.caller,
+                GroupInviteCodeChange::Enabled,
+                args.correlation_id,
+                runtime_state,
+            );
         });
     }
 
@@ -63,7 +73,7 @@ async fn generate_code() -> u64 {
     rng.next_u64()
 }
 
-fn record_event(caller: Principal, change: GroupInviteCodeChange, runtime_state: &mut RuntimeState) {
+fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id: u64, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
@@ -72,6 +82,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, runtime_state:
                 change,
                 changed_by: participant.user_id,
             })),
+            correlation_id,
             now,
         );
 

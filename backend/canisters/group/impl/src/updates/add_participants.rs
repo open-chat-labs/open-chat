@@ -51,7 +51,15 @@ async fn add_participants(args: Args) -> Response {
 
     if !users_added.is_empty() {
         let added_by_name = args.added_by_name;
-        mutate_state(|state| commit(prepare_result.added_by, added_by_name, &users_added, state));
+        mutate_state(|state| {
+            commit(
+                prepare_result.added_by,
+                added_by_name,
+                &users_added,
+                args.correlation_id,
+                state,
+            )
+        });
     }
 
     if users_added.len() == args.user_ids.len() {
@@ -140,7 +148,13 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
+fn commit(
+    added_by: UserId,
+    added_by_name: String,
+    users: &[(UserId, Principal)],
+    correlation_id: u64,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
     let mut min_visible_event_index = EventIndex::default();
     let mut min_visible_message_index = MessageIndex::default();
@@ -182,7 +196,7 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
     runtime_state
         .data
         .events
-        .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
+        .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), correlation_id, now);
 
     handle_activity_notification(runtime_state);
 

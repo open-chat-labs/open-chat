@@ -74,8 +74,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             message_id: args.message_id,
             content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
-            now,
             forwarded: args.forwarding,
+            correlation_id: args.correlation_id,
+            now,
         };
 
         let message_event = runtime_state.data.events.push_message(push_message_args);

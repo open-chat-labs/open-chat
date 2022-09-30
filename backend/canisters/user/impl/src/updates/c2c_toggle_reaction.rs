@@ -31,7 +31,7 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if args.added {
             match chat
                 .events
-                .add_reaction(caller, None, args.message_id, args.reaction.clone(), now)
+                .add_reaction(caller, None, args.message_id, args.reaction.clone(), args.correlation_id, now)
             {
                 AddRemoveReactionResult::Success(_) => {
                     if let Some((recipients, notification)) = build_notification(args, chat, now) {
@@ -43,7 +43,10 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
         } else {
-            match chat.events.remove_reaction(caller, None, args.message_id, args.reaction, now) {
+            match chat
+                .events
+                .remove_reaction(caller, None, args.message_id, args.reaction, args.correlation_id, now)
+            {
                 AddRemoveReactionResult::Success(_) | AddRemoveReactionResult::NoChange => Removed,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
