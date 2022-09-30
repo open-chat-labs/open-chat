@@ -41,14 +41,17 @@ export function flatMap<A, B>(things: A[], fn: (thing: A) => B[]): B[] {
     }, [] as B[]);
 }
 
-export function dedupe<A>(eq: (a: A, b: A) => boolean, things: A[]): A[] {
+export function distinctBy<T, K>(things: T[], keyFn: ((thing: T) => K)): T[] {
     if (things.length == 0) return things;
 
+    const set = new Set<K>();
     const output = [];
 
-    for (let i = 0; i < things.length; i++) {
-        if (things[i + 1] === undefined || !eq(things[i], things[i + 1])) {
-            output.push(things[i]);
+    for (const thing of things) {
+        const key = keyFn(thing);
+        if (!set.has(key)) {
+            set.add(key);
+            output.push(thing);
         }
     }
 
