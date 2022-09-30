@@ -49,14 +49,14 @@
     import { currentUserKey } from "../../stores/user";
     import { messagesRead } from "../../stores/markRead";
     import {
-        currentChatMembers,
-        currentChatBlockedUsers,
-        currentChatPinnedMessages,
         currentChatFileToAttach,
         currentChatEditingEvent,
         currentChatReplyingTo,
         currentChatTextContent,
         currentChatDraftMessage,
+        currentChatMembers,
+        currentChatBlockedUsers,
+        currentChatPinnedMessages,
     } from "../../stores/chat";
     import type { FilteredProposals } from "../../stores/filteredProposals";
 

@@ -774,6 +774,25 @@ export type GroupChatDetails = {
     rules: GroupRules;
 };
 
+/**
+ * This will hold all chat specific state
+ * All properties are optional but individual derived stores can provide their own default values
+ */
+export type ChatSpecificState = {
+    detailsLoaded: boolean;
+    members: Member[];
+    blockedUsers: Set<string>;
+    pinnedMessages: Set<number>;
+    latestEventIndex?: number;
+    rules?: GroupRules;
+    userIds: Set<string>;
+    focusMessageIndex?: number;
+    focusThreadMessageIndex?: number;
+    userGroupKeys: Set<string>;
+    confirmedEventIndexesLoaded: DRange;
+    serverEvents: EventWrapper<ChatEvent>[];
+};
+
 export type GroupRules = {
     text: string;
     enabled: boolean;

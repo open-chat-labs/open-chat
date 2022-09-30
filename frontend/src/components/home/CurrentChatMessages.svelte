@@ -74,14 +74,14 @@
         isProposalGroup,
         currentChatUserIds,
         focusMessageIndex,
-        currentChatPinnedMessages,
         currentChatEditingEvent,
         nextEventIndex,
         nextMessageIndex,
         currentChatReplyingTo,
         chatUpdatedStore,
         userGroupKeys,
-        confirmedEventIndexesLoaded,
+        currentChatPinnedMessages,
+        chatStateStore,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -265,13 +265,14 @@
         loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
-            focusMessageIndex.set(chat.chatId, undefined);
+            chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
+
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        focusMessageIndex.set(chat.chatId, index);
+        chatStateStore.setProp(chat.chatId, "focusMessageIndex", index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -288,11 +289,11 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    focusMessageIndex.set(chat.chatId, undefined);
+                    chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            loadEventWindow(api, user, serverChat, chat, events, index).then(onMessageWindowLoaded);
+            loadEventWindow(api, user, serverChat, chat, index).then(onMessageWindowLoaded);
         }
     }
 
@@ -360,7 +361,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, events).then(
+            loadPreviousMessages(api, user, serverChat, chat).then(
                 onLoadedPreviousMessages
             );
         }
@@ -370,7 +371,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -391,13 +392,20 @@
 
         const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
-        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, user.username, kind).then(
-            (success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
+        selectReaction(
+            api,
+            chat,
+            user.userId,
+            undefined,
+            message.messageId,
+            reaction,
+            user.username,
+            kind
+        ).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
             }
-        );
+        });
 
         rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
@@ -406,7 +414,7 @@
             messageId: message.messageId,
             reaction,
             userId: user.userId,
-            added: kind === "add"
+            added: kind === "add",
         });
     }
 
@@ -516,7 +524,7 @@
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.update(chat.chatId, (keys) => {
+        chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
         });
@@ -530,11 +538,11 @@
             handleMessageSentByOther(api, user, chat, events, latestMessage, true);
         }
 
-        refreshAffectedEvents(api, user, chat, events, affectedEvents);
+        refreshAffectedEvents(api, user, chat, affectedEvents);
         updateDetails(api, user, chat, events);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            loadNewMessages(api, user, serverChat, chat, events);
+            loadNewMessages(api, user, serverChat, chat);
         }
     }
 
@@ -564,15 +572,13 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
-                loadEventWindow(api, user, serverChat, chat, events, $focusMessageIndex).then(
+                loadEventWindow(api, user, serverChat, chat, $focusMessageIndex).then(
                     onMessageWindowLoaded
                 );
             } else {
-                loadPreviousMessages(api, user, serverChat, chat, events).then(
+                loadPreviousMessages(api, user, serverChat, chat).then(
                     onLoadedPreviousMessages
                 );
             }
@@ -605,11 +611,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat, events).then(onLoadedNewMessages);
+            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat, events).then(
+            loadPreviousMessages(api, user, serverChat, chat).then(
                 onLoadedPreviousMessages
             );
         }

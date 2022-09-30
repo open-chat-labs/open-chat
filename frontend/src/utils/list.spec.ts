@@ -1,4 +1,4 @@
-import { chunk, dedupe, flatMap, groupWhile } from "./list";
+import { chunk, distinctBy, flatMap, groupWhile } from "./list";
 
 describe("list utils", () => {
     describe("group by", () => {
@@ -52,33 +52,42 @@ describe("list utils", () => {
         });
     });
 
-    describe("dedupe", () => {
+    describe("distinctBy", () => {
         const things = [
             {
                 a: 1,
+                b: 1,
             },
             {
                 a: 1,
+                b: 2,
             },
             {
                 a: 2,
+                b: 3,
             },
             {
                 a: 2,
+                b: 4,
             },
             {
                 a: 3,
+                b: 5,
             },
             {
                 a: 3,
+                b: 6,
             },
         ];
 
-        const deduped = dedupe((a, b) => a.a === b.a, things);
-        expect(deduped.length).toEqual(3);
-        expect(deduped[0].a).toEqual(1);
-        expect(deduped[1].a).toEqual(2);
-        expect(deduped[2].a).toEqual(3);
+        const distinct = distinctBy(things, (t) => t.a);
+        expect(distinct.length).toEqual(3);
+        expect(distinct[0].a).toEqual(1);
+        expect(distinct[0].b).toEqual(1);
+        expect(distinct[1].a).toEqual(2);
+        expect(distinct[1].b).toEqual(3);
+        expect(distinct[2].a).toEqual(3);
+        expect(distinct[2].b).toEqual(5);
     });
 
     describe("chunk", () => {

@@ -34,13 +34,16 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { eventsStore, selectedChatId, selectedChatStore } from "../../stores/chat";
     import {
+        eventsStore,
+        selectedChatId,
+        selectedChatStore,
         currentChatMembers,
         currentChatBlockedUsers,
         currentChatPinnedMessages,
         currentChatRules,
         focusThreadMessageIndex,
+        chatStateStore,
     } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
     import { setSoftDisabled } from "../../stores/notifications";
@@ -76,7 +79,7 @@
 
     function onRemoveMember(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
-            currentChatMembers.update($selectedChatId, (ps) =>
+            chatStateStore.updateProp($selectedChatId, "members", (ps) =>
                 ps.filter((p) => p.userId !== ev.detail)
             );
             removeMember($selectedChatId, ev.detail);
@@ -135,7 +138,7 @@
         }
     }
 
-    function closeThread(ev: CustomEvent<string>) {
+    function closeThread(_ev: CustomEvent<string>) {
         popHistory();
         replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
     }
@@ -150,13 +153,13 @@
     }
 
     function transferOwnershipLocally(chatId: string, me: string, them: string): void {
-        currentChatMembers.update(chatId, (ps) =>
+        chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
-                    return { ...p, role: "owner" };
+                    return { ...p, role: "owner" as MemberRole };
                 }
                 if (p.userId === me) {
-                    return { ...p, role: "admin" };
+                    return { ...p, role: "admin" as MemberRole };
                 }
                 return p;
             })
@@ -169,13 +172,13 @@
         them: string,
         theirRole: MemberRole
     ): void {
-        currentChatMembers.update(chatId, (ps) =>
+        chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
                     return { ...p, role: theirRole };
                 }
                 if (p.userId === me) {
-                    return { ...p, role: "owner" };
+                    return { ...p, role: "owner" as MemberRole };
                 }
                 return p;
             })
@@ -202,8 +205,8 @@
     }
 
     function dismissAsAdmin(chatId: string, userId: string): Promise<void> {
-        currentChatMembers.update(chatId, (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
+        chatStateStore.updateProp(chatId, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
         );
         return api
             .changeRole(chatId, userId, "participant")
@@ -220,8 +223,8 @@
     }
 
     function makeAdmin(chatId: string, userId: string): Promise<void> {
-        currentChatMembers.update(chatId, (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
+        chatStateStore.updateProp(chatId, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
         );
         return api
             .changeRole(chatId, userId, "admin")
@@ -271,14 +274,14 @@
             toRemove = users.map((u) => u.userId);
         }
 
-        currentChatMembers.update(chatId, (ps) =>
+        chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.filter((p) => {
                 !toRemove.includes(p.userId);
             })
         );
 
         if (viaUnblock) {
-            currentChatBlockedUsers.update(chatId, (b) => {
+            chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
                 return toRemove.reduce((blocked, u) => blocked.add(u), b);
             });
         }
@@ -286,12 +289,12 @@
 
     function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
         if (viaUnblock) {
-            currentChatBlockedUsers.update(chatId, (b) => {
+            chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
                 users.forEach((u) => b.delete(u.userId));
                 return b;
             });
         }
-        currentChatMembers.update(chatId, (ps) => [
+        chatStateStore.updateProp(chatId, "members", (ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
                 role: "participant" as MemberRole,
@@ -330,7 +333,7 @@
     }
 
     function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
-        currentChatRules.set(ev.detail.chatId, ev.detail.rules);
+        chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
     }
 
     $: threadRootEvent =
