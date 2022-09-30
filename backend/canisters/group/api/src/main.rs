@@ -32,9 +32,7 @@ fn main() {
     generate_candid_method!(group, send_message, update);
     generate_candid_method!(group, unblock_user, update);
     generate_candid_method!(group, unpin_message, update);
-    generate_candid_method!(group, update_group, update);
     generate_candid_method!(group, update_group_v2, update);
-    generate_candid_method!(group, update_permissions, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

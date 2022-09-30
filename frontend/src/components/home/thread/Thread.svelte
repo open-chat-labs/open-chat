@@ -46,8 +46,7 @@
         groupEvents,
         makeRtcConnections,
         mergeSendMessageResponse,
-        replaceAffected,
-        replaceLocal,
+        mergeServerEvents,
         serialiseMessageForRtc,
         startTyping,
         stopTyping,
@@ -65,7 +64,6 @@
     import { trackEvent } from "../../../utils/tracking";
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
-    import { dedupe } from "../../../utils/list";
     import { immutableStore } from "../../../stores/immutable";
     import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
     import { relayPublish } from "../../../stores/relay";
@@ -205,13 +203,8 @@
             if (clearEvents) {
                 serverEventsStore.set([]);
             }
-            const [updated, _] = await handleEventsResponse($events, eventsResponse);
-            serverEventsStore.set(
-                dedupe(
-                    (a, b) => a.index === b.index,
-                    updated.sort((a, b) => a.index - b.index)
-                )
-            );
+            const [newEvents, _] = await handleEventsResponse(eventsResponse);
+            serverEventsStore.update(events => mergeServerEvents([...events], [...newEvents]));
             makeRtcConnections(user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
@@ -253,27 +246,17 @@
     }
 
     async function handleEventsResponse(
-        events: EventWrapper<ChatEvent>[],
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
-        const updated = replaceAffected(
-            replaceLocal(
-                user.userId,
-                chat.chatId,
-                chat.readByMe,
-                events,
-                resp.events,
-                threadRootMessageIndex
-            ),
-            resp.affectedEvents
-        );
 
-        const userIds = userIdsFromEvents(updated);
+        const events = resp.events.concat(resp.affectedEvents);
+
+        const userIds = userIdsFromEvents(events);
         userIds.add(rootEvent.event.sender);
         await updateUserStore(api, chat.chatId, user.userId, userIds);
 
-        return [updated, userIds];
+        return [events, userIds];
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {

@@ -21,6 +21,7 @@ import {
     getFirstUnreadMessageIndex,
     getNextEventIndex,
     getNextMessageIndex,
+    mergeServerEvents,
     mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
@@ -515,6 +516,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         );
     }
 );
+
+export function addServerEventsToStore(chatId: string, newEvents: EventWrapper<ChatEvent>[]): void {
+    serverEventsStore.update(chatId, events => mergeServerEvents(events, newEvents));
+}
 
 export const currentChatMembers = createChatSpecificDataStore<Member[]>([]);
 export const currentChatUserIds = createChatSpecificDataStore<Set<string>>(new Set<string>());
