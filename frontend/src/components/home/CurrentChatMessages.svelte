@@ -647,7 +647,12 @@
         if (preview) return true;
 
         if (evt.event.kind === "message") {
-            return messagesRead.isRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+            const isRead = messagesRead.isRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+            if (!isRead && evt.event.sender === user.userId) {
+                messagesRead.markMessageRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+                return true;
+            }
+            return isRead;
         }
         return true;
     }
