@@ -74,14 +74,14 @@
         isProposalGroup,
         currentChatUserIds,
         focusMessageIndex,
-        currentChatPinnedMessages,
         currentChatEditingEvent,
         nextEventIndex,
         nextMessageIndex,
         currentChatReplyingTo,
         chatUpdatedStore,
         userGroupKeys,
-        confirmedEventIndexesLoaded,
+        currentChatPinnedMessages,
+        chatStateStore,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -265,13 +265,14 @@
         loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
-            focusMessageIndex.set(chat.chatId, undefined);
+            chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
+
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        focusMessageIndex.set(chat.chatId, index);
+        chatStateStore.setProp(chat.chatId, "focusMessageIndex", index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -288,7 +289,7 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    focusMessageIndex.set(chat.chatId, undefined);
+                    chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
@@ -391,13 +392,20 @@
 
         const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
 
-        selectReaction(api, chat, user.userId, undefined, message.messageId, reaction, user.username, kind).then(
-            (success) => {
-                if (success && kind === "add") {
-                    trackEvent("reacted_to_message");
-                }
+        selectReaction(
+            api,
+            chat,
+            user.userId,
+            undefined,
+            message.messageId,
+            reaction,
+            user.username,
+            kind
+        ).then((success) => {
+            if (success && kind === "add") {
+                trackEvent("reacted_to_message");
             }
-        );
+        });
 
         rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
@@ -406,7 +414,7 @@
             messageId: message.messageId,
             reaction,
             userId: user.userId,
-            added: kind === "add"
+            added: kind === "add",
         });
     }
 
@@ -516,7 +524,7 @@
             }
         }
         const firstKey = prefix + first.index;
-        userGroupKeys.update(chat.chatId, (keys) => {
+        chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
         });
@@ -564,8 +572,6 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-            confirmedEventIndexesLoaded.clear(chat.chatId);
-            userGroupKeys.clear(chat.chatId);
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow(api, user, serverChat, chat, $focusMessageIndex).then(

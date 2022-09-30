@@ -13,17 +13,9 @@ import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager
 import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
-    currentChatBlockedUsers,
-    currentChatMembers,
     currentChatDraftMessage,
-    currentChatUserIds,
-    confirmedEventIndexesLoaded,
-    userGroupKeys,
-    serverEventsStore,
     updateSummaryWithConfirmedMessage,
-    groupDetails,
-    currentChatPinnedMessages,
-    currentChatRules,
+    chatStateStore,
     addServerEventsToStore,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
@@ -73,11 +65,28 @@ export function selectReaction(
     return (
         chat.kind === "direct_chat"
             ? kind == "add"
-                ? api.addDirectChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
-                : api.removeDirectChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+                ? api.addDirectChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      username,
+                      threadRootMessageIndex
+                  )
+                : api.removeDirectChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      threadRootMessageIndex
+                  )
             : kind === "add"
-                ? api.addGroupChatReaction(chat.chatId, messageId, reaction, username, threadRootMessageIndex)
-                : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
+            ? api.addGroupChatReaction(
+                  chat.chatId,
+                  messageId,
+                  reaction,
+                  username,
+                  threadRootMessageIndex
+              )
+            : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
     )
         .then((resp) => {
             if (resp !== "success" && resp !== "no_change") {
@@ -103,7 +112,7 @@ export function deleteMessage(
 
     localMessageUpdates.markDeleted(messageIdString, userId);
 
-    const recipients = [...currentChatUserIds.get(chat.chatId)];
+    const recipients = [...chatStateStore.getProp(chat.chatId, "userIds")];
     const chatType = chat.kind;
     const chatId = chat.chatId;
 
@@ -150,11 +159,11 @@ export async function updateUserStore(
     userIdsFromEvents: Set<string>
 ): Promise<void> {
     const allUserIds = new Set<string>();
-    currentChatMembers.get(chatId).forEach((m) => allUserIds.add(m.userId));
-    currentChatBlockedUsers.get(chatId).forEach((u) => allUserIds.add(u));
+    chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
+    chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
     userIdsFromEvents.forEach((u) => allUserIds.add(u));
 
-    currentChatUserIds.update(chatId, (userIds) => {
+    chatStateStore.updateProp(chatId, "userIds", (userIds) => {
         allUserIds.forEach((u) => {
             if (u !== userId) {
                 userIds.add(u);
@@ -238,16 +247,16 @@ export function registerPollVote(
 }
 
 function blockUserLocally(chatId: string, userId: string): void {
-    currentChatBlockedUsers.update(chatId, (b) => b.add(userId));
-    currentChatMembers.update(chatId, (p) => p.filter((p) => p.userId !== userId));
+    chatStateStore.updateProp(chatId, "blockedUsers", (b) => b.add(userId));
+    chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
 }
 
 function unblockUserLocally(chatId: string, userId: string): void {
-    currentChatBlockedUsers.update(chatId, (b) => {
+    chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
         b.delete(userId);
         return b;
     });
-    currentChatMembers.update(chatId, (p) => [
+    chatStateStore.updateProp(chatId, "members", (p) => [
         ...p,
         {
             role: "participant",
@@ -316,8 +325,8 @@ export async function handleEventsResponse(
     if (resp === "events_failed") return;
 
     if (!keepCurrentEvents) {
-        confirmedEventIndexesLoaded.clear(chat.chatId);
-        userGroupKeys.clear(chat.chatId);
+        chatStateStore.setProp(chat.chatId, "confirmedEventIndexesLoaded", new DRange());
+        chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
     } else if (!isContiguous(chat.chatId, resp)) {
         return;
     }
@@ -330,7 +339,7 @@ export async function handleEventsResponse(
     addServerEventsToStore(chat.chatId, events);
 
     if (events.length > 0) {
-        confirmedEventIndexesLoaded.update(chat.chatId, (range) => {
+        chatStateStore.updateProp(chat.chatId, "confirmedEventIndexesLoaded", (range) => {
             const r = range.clone();
             resp.events.forEach((e) => r.add(e.index));
             return r;
@@ -341,7 +350,7 @@ export async function handleEventsResponse(
 }
 
 function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(chatId);
+    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
 
     if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
 
@@ -354,7 +363,7 @@ function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>):
     if (!isContiguous) {
         console.log(
             "Events in response are not contiguous with the loaded events",
-            confirmedEventIndexesLoaded,
+            confirmedLoaded,
             firstIndex,
             lastIndex
         );
@@ -384,7 +393,7 @@ export async function loadPreviousMessages(
     api: ServiceContainer,
     user: CreatedUser,
     serverChat: ChatSummary,
-    clientChat: ChatSummary,
+    clientChat: ChatSummary
 ): Promise<void> {
     const criteria = previousMessagesCriteria(serverChat, clientChat);
 
@@ -423,7 +432,7 @@ function previousMessagesCriteria(
 }
 
 function earliestLoadedIndex(chatId: string): number | undefined {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(chatId);
+    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
     return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
 }
 
@@ -431,7 +440,7 @@ export async function loadNewMessages(
     api: ServiceContainer,
     user: CreatedUser,
     serverChat: ChatSummary,
-    clientChat: ChatSummary,
+    clientChat: ChatSummary
 ): Promise<boolean> {
     const criteria = newMessageCriteria(serverChat);
 
@@ -473,7 +482,7 @@ function newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefi
 }
 
 function confirmedUpToEventIndex(chatId: string): number | undefined {
-    const ranges = confirmedEventIndexesLoaded.get(chatId).subranges();
+    const ranges = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded").subranges();
     if (ranges.length > 0) {
         return ranges[0].high;
     }
@@ -497,7 +506,10 @@ export function refreshAffectedEvents(
     clientChat: ChatSummary,
     affectedEventIndexes: number[]
 ): Promise<void> {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(clientChat.chatId);
+    const confirmedLoaded = chatStateStore.getProp(
+        clientChat.chatId,
+        "confirmedEventIndexesLoaded"
+    );
     const filtered = affectedEventIndexes.filter((e) => indexIsInRanges(e, confirmedLoaded));
     if (filtered.length === 0) {
         return Promise.resolve();
@@ -518,9 +530,7 @@ export function refreshAffectedEvents(
                   clientChat.latestEventIndex
               );
 
-    return eventsPromise.then((resp) =>
-        handleEventsResponse(api, user, clientChat, resp)
-    );
+    return eventsPromise.then((resp) => handleEventsResponse(api, user, clientChat, resp));
 }
 
 export async function loadDetails(
@@ -531,14 +541,19 @@ export async function loadDetails(
 ): Promise<void> {
     // currently this is only meaningful for group chats, but we'll set it up generically just in case
     if (clientChat.kind === "group_chat") {
-        if (groupDetails.get(clientChat.chatId) === undefined) {
+        if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
             const resp = await api.getGroupDetails(clientChat.chatId, clientChat.latestEventIndex);
             if (resp !== "caller_not_in_group") {
-                groupDetails.set(clientChat.chatId, resp);
-                currentChatMembers.set(clientChat.chatId, resp.members);
-                currentChatBlockedUsers.set(clientChat.chatId, resp.blockedUsers);
-                currentChatPinnedMessages.set(clientChat.chatId, resp.pinnedMessages);
-                currentChatRules.set(clientChat.chatId, resp.rules);
+                chatStateStore.setProp(clientChat.chatId, "detailsLoaded", true);
+                chatStateStore.setProp(
+                    clientChat.chatId,
+                    "latestEventIndex",
+                    resp.latestEventIndex
+                );
+                chatStateStore.setProp(clientChat.chatId, "members", resp.members);
+                chatStateStore.setProp(clientChat.chatId, "blockedUsers", resp.blockedUsers);
+                chatStateStore.setProp(clientChat.chatId, "pinnedMessages", resp.pinnedMessages);
+                chatStateStore.setProp(clientChat.chatId, "rules", resp.rules);
             }
             await updateUserStore(
                 api,
@@ -559,14 +574,19 @@ export async function updateDetails(
     currentEvents: EventWrapper<ChatEvent>[]
 ): Promise<void> {
     if (clientChat.kind === "group_chat") {
-        const details = groupDetails.get(clientChat.chatId);
-        if (details !== undefined && details.latestEventIndex < clientChat.latestEventIndex) {
-            const gd = await api.getGroupDetailsUpdates(clientChat.chatId, details);
-            currentChatMembers.set(clientChat.chatId, gd.members);
-            currentChatBlockedUsers.set(clientChat.chatId, gd.blockedUsers);
-            currentChatPinnedMessages.set(clientChat.chatId, gd.pinnedMessages);
-            currentChatRules.set(clientChat.chatId, gd.rules);
-            groupDetails.set(clientChat.chatId, gd);
+        const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
+        if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
+            const gd = await api.getGroupDetailsUpdates(clientChat.chatId, {
+                members: chatStateStore.getProp(clientChat.chatId, "members"),
+                blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
+                pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
+                latestEventIndex,
+                rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+            });
+            chatStateStore.setProp(clientChat.chatId, "members", gd.members);
+            chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
+            chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
+            chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
             await updateUserStore(
                 api,
                 clientChat.chatId,
@@ -578,14 +598,14 @@ export async function updateDetails(
 }
 
 function addPinnedMessage(chatId: string, messageIndex: number): void {
-    currentChatPinnedMessages.update(chatId, (s) => {
+    chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
         s.add(messageIndex);
         return new Set(s);
     });
 }
 
 function removePinnedMessage(chatId: string, messageIndex: number): void {
-    currentChatPinnedMessages.update(chatId, (s) => {
+    chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
         s.delete(messageIndex);
         return new Set(s);
     });
@@ -644,7 +664,7 @@ export function removeMessage(
     userId: string
 ): void {
     if (userId === currentUserId) {
-        const userIds = currentChatUserIds.get(clientChat.chatId);
+        const userIds = chatStateStore.getProp(clientChat.chatId, "userIds");
         rtcConnectionsManager.sendMessage([...userIds], {
             kind: "remote_user_removed_message",
             chatType: clientChat.kind,
@@ -655,7 +675,7 @@ export function removeMessage(
     }
     unconfirmed.delete(clientChat.chatId, messageId);
     messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
-    serverEventsStore.update(clientChat.chatId, (events) =>
+    chatStateStore.updateProp(clientChat.chatId, "serverEvents", (events) =>
         events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
     );
 }
@@ -681,7 +701,7 @@ export async function sendMessage(
     }
 
     unconfirmed.add(clientChat.chatId, messageEvent);
-    rtcConnectionsManager.sendMessage([...currentChatUserIds.get(clientChat.chatId)], {
+    rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.chatId, "userIds")], {
         kind: "remote_user_sent_message",
         chatType: clientChat.kind,
         chatId: clientChat.chatId,
@@ -713,7 +733,7 @@ function appendMessage(
 
     if (existing !== undefined) return false;
 
-    serverEventsStore.update(chatId, (events) => [...events, message]);
+    chatStateStore.updateProp(chatId, "serverEvents", (events) => [...events, message]);
     return true;
 }
 
@@ -725,7 +745,10 @@ export async function handleMessageSentByOther(
     messageEvent: EventWrapper<Message>,
     confirmed: boolean
 ): Promise<void> {
-    const confirmedLoaded = confirmedEventIndexesLoaded.get(clientChat.chatId);
+    const confirmedLoaded = chatStateStore.getProp(
+        clientChat.chatId,
+        "confirmedEventIndexesLoaded"
+    );
 
     if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
         // We already have this confirmed message
@@ -845,7 +868,7 @@ function confirmMessage(
             timestamp: resp.timestamp,
         };
         let found = false;
-        serverEventsStore.update(chatId, (events) =>
+        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
             events.map((e) => {
                 if (e.event === candidate) {
                     found = true;
@@ -856,7 +879,7 @@ function confirmMessage(
         );
 
         if (found) {
-            confirmedEventIndexesLoaded.update(chatId, (range) => {
+            chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
                 const r = range.clone();
                 r.add(resp.eventIndex);
                 return r;

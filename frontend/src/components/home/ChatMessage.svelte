@@ -12,7 +12,6 @@
     import ModalContent from "../ModalContent.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
@@ -45,7 +44,6 @@
     import type { MessageContent } from "../../domain/chat/chat";
     import { calculateMediaDimensions } from "../../utils/layout";
     import MessageReaction from "./MessageReaction.svelte";
-    import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { userAvatarUrl } from "../../domain/user/user.utils";
     import * as shareFunctions from "../../domain/share";

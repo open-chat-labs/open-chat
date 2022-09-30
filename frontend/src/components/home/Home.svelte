@@ -81,9 +81,8 @@
         removeChat,
         updateSummaryWithConfirmedMessage,
         clearSelectedChat,
-        focusThreadMessageIndex,
         currentChatDraftMessage,
-        currentChatRules,
+        chatStateStore,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -308,8 +307,9 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            focusThreadMessageIndex.set(
+                            chatStateStore.setProp(
                                 pathParams.chatId,
+                                "focusThreadMessageIndex",
                                 pathParams.threadMessageIndex
                             );
                             currentChatMessages?.scrollToMessageIndex(
@@ -1024,7 +1024,7 @@
 
     function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
         const { group, rules } = ev.detail;
-        currentChatRules.set(group.chatId, rules);
+        chatStateStore.setProp(group.chatId, "rules", rules);
         addOrReplaceChat(group);
         if (group.public) {
             trackEvent("public_group_created");
@@ -1084,7 +1084,6 @@
 <main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
-            {api}
             {user}
             {groupSearchResults}
             {userSearchResults}

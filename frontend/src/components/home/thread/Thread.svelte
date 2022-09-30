@@ -80,11 +80,11 @@
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         threadsFollowedByMeStore,
-        currentChatMembers,
-        currentChatBlockedUsers,
         currentChatUserIds,
         selectedChatId,
-        focusThreadMessageIndex,
+        currentChatMembers,
+        currentChatBlockedUsers,
+        chatStateStore,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
@@ -609,7 +609,7 @@
 
     function clearFocusIndex() {
         focusMessageIndex = undefined;
-        focusThreadMessageIndex.clear(chat.chatId);
+        chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", undefined);
     }
 
     function goToMessageIndex(index: number) {

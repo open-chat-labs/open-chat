@@ -35,9 +35,9 @@
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import {
+        currentChatReplyingTo,
         currentChatMembers,
         currentChatBlockedUsers,
-        currentChatReplyingTo,
     } from "../../stores/chat";
     import type { ChatSummary, DirectChatSummary } from "../../domain/chat/chat";
 
