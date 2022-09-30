@@ -21,6 +21,14 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
+    pub fn clean_up_empty_reactions(&mut self) {
+        self.main.clean_up_empty_reactions();
+
+        for thread in self.threads.values_mut() {
+            thread.clean_up_empty_reactions();
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
@@ -763,6 +771,14 @@ pub enum AddRemoveReactionResult {
 }
 
 impl ChatEvents {
+    pub fn clean_up_empty_reactions(&mut self) {
+        for event in self.events.iter_mut() {
+            if let ChatEventInternal::Message(m) = &mut event.event {
+                m.reactions.retain(|(_, u)| !u.is_empty());
+            }
+        }
+    }
+
     pub fn new_thread(chat_id: ChatId, thread_root_message_index: MessageIndex) -> ChatEvents {
         ChatEvents {
             chat_id,
