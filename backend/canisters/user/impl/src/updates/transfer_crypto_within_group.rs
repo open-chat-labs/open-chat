@@ -30,7 +30,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 
     let c2c_args = group_canister::send_message::Args {
         message_id: args.message_id,
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_index,
         content: MessageContent::Crypto(CryptoContent {
             recipient: args.recipient,
             transfer: CryptoTransaction::Completed(completed_transaction.clone()),
