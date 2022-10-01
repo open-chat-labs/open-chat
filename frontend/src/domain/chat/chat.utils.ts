@@ -37,6 +37,7 @@ import type {
     ThreadSyncDetailsUpdates,
     GroupSubtype,
     GroupSubtypeUpdate,
+    RehydratedReplyContext,
 } from "./chat";
 import { distinctBy, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -1514,6 +1515,18 @@ export function mergeServerEventsWithLocalUpdates(
                     event: mergeLocalUpdates(e.event, updates),
                 };
             }
+            if (e.event.repliesTo !== undefined && e.event.repliesTo.kind === "rehydrated_reply_context") {
+                const updates = localUpdates[e.event.repliesTo.messageId.toString()];
+                if (updates !== undefined) {
+                    return {
+                        ...e,
+                        event: {
+                            ...e.event,
+                            repliesTo: mergeLocalUpdatesIntoReplyContext(e.event.repliesTo, updates),
+                        }
+                    };
+                }
+            }
         }
         return e;
     });
@@ -1567,6 +1580,26 @@ function mergeLocalUpdates(
     }
 
     return message;
+}
+
+function mergeLocalUpdatesIntoReplyContext(replyContext: RehydratedReplyContext, updates: LocalMessageUpdates): RehydratedReplyContext {
+    if (updates.deleted !== undefined) {
+        return {
+            ...replyContext,
+            content: {
+                kind: "deleted_content",
+                deletedBy: updates.deleted.deletedBy,
+                timestamp: updates.deleted.timestamp
+            }
+        };
+    }
+    if (updates.editedContent !== undefined) {
+        return {
+            ...replyContext,
+            content: updates.editedContent
+        };
+    }
+    return replyContext;
 }
 
 export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
