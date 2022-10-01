@@ -11,6 +11,7 @@
         Message,
         MessageContent,
         SendMessageSuccess,
+        ThreadSummary,
         TransferSuccess,
     } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -406,6 +407,15 @@
                 userId: user.userId,
                 threadRootMessageIndex,
             });
+
+            const summary: ThreadSummary = {
+                participantIds: new Set<string>([user.userId]),
+                numberOfReplies: nextMessageIndex + 1,
+                latestEventIndex: nextEventIndex,
+                latestEventTimestamp: BigInt(Date.now())
+            };
+
+            localMessageUpdates.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
         }
     }
 
