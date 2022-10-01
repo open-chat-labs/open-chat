@@ -149,19 +149,19 @@ export const selectedChatStore = derived(
     }
 );
 
-export const nextMessageIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+export const nextMessageIndex = derived([selectedServerChatStore, unconfirmed], ([$selectedServerChatStore, $unconfirmed]) => {
     if ($selectedServerChatStore === undefined) return 0;
     return getNextMessageIndex(
         $selectedServerChatStore,
-        unconfirmed.getMessages($selectedServerChatStore.chatId)
+        $unconfirmed[$selectedServerChatStore.chatId]?.messages ?? []
     );
 });
 
-export const nextEventIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
+export const nextEventIndex = derived([selectedServerChatStore, unconfirmed], ([$selectedServerChatStore, $unconfirmed]) => {
     if ($selectedServerChatStore === undefined) return 0;
     return getNextEventIndex(
         $selectedServerChatStore,
-        unconfirmed.getMessages($selectedServerChatStore.chatId)
+        $unconfirmed[$selectedServerChatStore.chatId]?.messages ?? []
     );
 });
 
