@@ -351,10 +351,10 @@ export function setSelectedChat(
     clearSelectedChat(chat.chatId);
 
     // initialise a bunch of stores
+    chatStateStore.clear(chat.chatId);
     chatStateStore.setProp(chat.chatId, "serverEvents", unconfirmed.getMessages(chat.chatId));
     chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
     chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", threadMessageIndex);
-    chatStateStore.clear(chat.chatId);
     chatStateStore.setProp(
         chat.chatId,
         "userIds",
@@ -574,7 +574,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export function addServerEventsToStores(chatId: string, newEvents: EventWrapper<ChatEvent>[]): void {
+export function addServerEventsToStores(
+    chatId: string,
+    newEvents: EventWrapper<ChatEvent>[]
+): void {
     if (newEvents.length === 0) {
         return;
     }
@@ -586,7 +589,11 @@ export function addServerEventsToStores(chatId: string, newEvents: EventWrapper<
     for (const event of newEvents) {
         if (event.event.kind === "message") {
             if (unconfirmed.delete(chatId, event.event.messageId)) {
-                messagesRead.confirmMessage(chatId, event.event.messageIndex, event.event.messageId);
+                messagesRead.confirmMessage(
+                    chatId,
+                    event.event.messageIndex,
+                    event.event.messageId
+                );
             }
         }
     }
