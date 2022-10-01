@@ -214,12 +214,12 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<[SendMessageResponse, Message]> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
-                // FIXME - this doesn't look like it's going to work in threads
                 return this.userClient.sendGroupICPTransfer(
                     chat.chatId,
                     msg.content.transfer.recipient,
                     user,
-                    msg
+                    msg,
+                    threadRootMessageIndex
                 );
             }
             return this.sendGroupMessage(

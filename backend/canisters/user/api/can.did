@@ -318,6 +318,7 @@ type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
         group_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
         recipient: UserId;
         content: CryptoContent;
         sender_name: text;

@@ -943,6 +943,7 @@ export interface TransferCryptoWithinGroupArgs {
   'correlation_id' : bigint,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : Tokens } |
