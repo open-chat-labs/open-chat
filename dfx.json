@@ -1,4 +1,5 @@
 {
+  "dfx": "0.12.0-beta.3",
   "canisters": {
     "user_index": {
       "type": "custom",
