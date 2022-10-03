@@ -667,9 +667,6 @@ export function removeMessage(
     }
     unconfirmed.delete(clientChat.chatId, messageId);
     messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
-    chatStateStore.updateProp(clientChat.chatId, "serverEvents", (events) =>
-        events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
-    );
 }
 
 export async function sendMessage(
@@ -707,26 +704,10 @@ export async function sendMessage(
         messageEvent.event.messageIndex,
         messageEvent.event.messageId
     );
-    appendMessage(clientChat.chatId, currentEvents, messageEvent);
 
     currentChatDraftMessage.clear(clientChat.chatId);
 
     return jumpingTo;
-}
-
-function appendMessage(
-    chatId: string,
-    currentEvents: EventWrapper<ChatEvent>[],
-    message: EventWrapper<Message>
-): boolean {
-    const existing = currentEvents.find(
-        (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-    );
-
-    if (existing !== undefined) return false;
-
-    chatStateStore.updateProp(chatId, "serverEvents", (events) => [...events, message]);
-    return true;
 }
 
 export async function handleMessageSentByOther(
@@ -766,8 +747,11 @@ export async function handleMessageSentByOther(
             return;
         }
 
-        // If it is unconfirmed then we simply append it
-        if (appendMessage(clientChat.chatId, currentEvents, messageEvent)) {
+        const existing = currentEvents.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === messageEvent.event.messageId
+        );
+
+        if (existing === undefined) {
             unconfirmed.add(clientChat.chatId, messageEvent);
         }
     }

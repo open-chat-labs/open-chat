@@ -88,7 +88,7 @@
         chatStateStore,
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
-    import { mergeServerEventsWithLocalUpdates } from "../../../domain/chat/chat.utils";
+    import { mergeEventsAndLocalUpdates } from "../../../domain/chat/chat.utils";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const api = getContext<ServiceContainer>(apiKey);
@@ -117,9 +117,9 @@
     let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
     $: events = derived(
-        [serverEventsStore, localMessageUpdates],
-        ([serverEvents, localUpdates]) => {
-            return mergeServerEventsWithLocalUpdates(serverEvents, localUpdates);
+        [serverEventsStore, unconfirmed, localMessageUpdates],
+        ([serverEvents, $unconfirmed, localUpdates]) => {
+            return mergeEventsAndLocalUpdates(serverEvents, $unconfirmed[chat.chatId] ?? [], localUpdates);
         }
     );
 

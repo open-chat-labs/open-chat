@@ -964,6 +964,10 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
     return a.index - b.index;
 }
 
+function sortByTimestamp(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return Number(a.timestamp - b.timestamp);
+}
+
 function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     if (event?.event.kind === "message") {
         if ("blobUrl" in event.event.content && event.event.content.blobUrl !== undefined) {
@@ -1493,43 +1497,62 @@ export function markAllRead(chat: ChatSummary): void {
     }
 }
 
-export function mergeServerEventsWithLocalUpdates(
+export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
+    unconfirmed: EventWrapper<Message>[],
     localUpdates: Record<string, LocalMessageUpdates>
 ): EventWrapper<ChatEvent>[] {
-    return events.map((e) => {
+    const eventIndexes = new Set<number>();
+
+    function processEvent(e: EventWrapper<ChatEvent>) {
+        eventIndexes.add(e.index);
+
         if (e.event.kind === "message") {
             const updates = localUpdates[e.event.messageId.toString()];
-            if (updates !== undefined) {
+            const replyContextUpdates = e.event.repliesTo?.kind === "rehydrated_reply_context"
+                ? localUpdates[e.event.repliesTo.messageId.toString()]
+                : undefined;
+
+            if (updates !== undefined || replyContextUpdates !== undefined) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates),
+                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates)
                 };
-            }
-            if (e.event.repliesTo !== undefined && e.event.repliesTo.kind === "rehydrated_reply_context") {
-                const updates = localUpdates[e.event.repliesTo.messageId.toString()];
-                if (updates !== undefined) {
-                    return {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            repliesTo: mergeLocalUpdatesIntoReplyContext(e.event.repliesTo, updates),
-                        }
-                    };
-                }
             }
         }
         return e;
-    });
+    }
+    const merged = events.map((e) => processEvent(e));
+
+    if (unconfirmed.length > 0) {
+        let anyAdded = false;
+        for (const message of unconfirmed) {
+            // Only include unconfirmed events that are contiguous with the loaded confirmed events
+            if (eventIndexes.has(message.index - 1) ||
+                eventIndexes.has(message.index) ||
+                eventIndexes.has(message.index + 1))
+            {
+                merged.push(processEvent(message));
+                anyAdded = true;
+            }
+        }
+        if (anyAdded) {
+            // Sort by timestamp rather than event index so that we never have issues when grouping events by date
+            merged.sort(sortByTimestamp);
+        }
+    }
+
+    return merged;
 }
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: LocalMessageUpdates | undefined
+    localUpdates: LocalMessageUpdates | undefined,
+    replyContextLocalUpdates: LocalMessageUpdates | undefined,
 ): Message {
-    if (localUpdates === undefined) return message;
+    if (localUpdates === undefined && replyContextLocalUpdates === undefined) return message;
 
-    if (localUpdates.deleted !== undefined) {
+    if (localUpdates?.deleted !== undefined) {
         return {
             ...message,
             content: {
@@ -1542,12 +1565,12 @@ function mergeLocalUpdates(
 
     message = { ...message };
 
-    if (localUpdates.editedContent !== undefined) {
+    if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;
         message.edited = true;
     }
 
-    if (localUpdates.reactions !== undefined) {
+    if (localUpdates?.reactions !== undefined) {
         let reactions = [...message.reactions];
         for (const localReaction of localUpdates.reactions) {
             reactions = applyLocalReaction(localReaction, reactions);
@@ -1555,7 +1578,7 @@ function mergeLocalUpdates(
         message.reactions = reactions;
     }
 
-    if (localUpdates.pollVotes !== undefined) {
+    if (localUpdates?.pollVotes !== undefined) {
         for (const pollVote of localUpdates.pollVotes) {
             message = updateEventPollContent(
                 message,
@@ -1566,33 +1589,30 @@ function mergeLocalUpdates(
         }
     }
 
-    if (localUpdates.threadSummary !== undefined) {
+    if (localUpdates?.threadSummary !== undefined) {
         message.thread = message.thread === undefined
             ? localUpdates.threadSummary
             : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
     }
 
+    if (message.repliesTo?.kind === "rehydrated_reply_context" && replyContextLocalUpdates !== undefined) {
+        if (replyContextLocalUpdates?.deleted !== undefined) {
+            message.repliesTo = {
+                ...message.repliesTo,
+                content: {
+                    kind: "deleted_content",
+                    deletedBy: replyContextLocalUpdates.deleted.deletedBy,
+                    timestamp: replyContextLocalUpdates.deleted.timestamp
+                }
+            };
+        } else if (replyContextLocalUpdates.editedContent !== undefined) {
+            message.repliesTo = {
+                ...message.repliesTo,
+                content: replyContextLocalUpdates.editedContent
+            };
+        }
+    }
     return message;
-}
-
-function mergeLocalUpdatesIntoReplyContext(replyContext: RehydratedReplyContext, updates: LocalMessageUpdates): RehydratedReplyContext {
-    if (updates.deleted !== undefined) {
-        return {
-            ...replyContext,
-            content: {
-                kind: "deleted_content",
-                deletedBy: updates.deleted.deletedBy,
-                timestamp: updates.deleted.timestamp
-            }
-        };
-    }
-    if (updates.editedContent !== undefined) {
-        return {
-            ...replyContext,
-            content: updates.editedContent
-        };
-    }
-    return replyContext;
 }
 
 export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
