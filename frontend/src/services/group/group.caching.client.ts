@@ -28,7 +28,6 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    UpdatePermissionsResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,

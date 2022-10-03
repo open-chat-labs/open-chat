@@ -37,7 +37,6 @@ import type {
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
-    UserSummary,
 } from "../../domain/user/user";
 import type { ServiceRetryInterrupt } from "services/candidService";
 

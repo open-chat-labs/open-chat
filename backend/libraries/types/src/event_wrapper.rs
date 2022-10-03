@@ -7,7 +7,6 @@ use std::fmt::Debug;
 pub struct EventWrapper<T: CandidType + Clone + Debug> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
-    #[serde(default)]
     pub correlation_id: u64,
     pub event: T,
 }

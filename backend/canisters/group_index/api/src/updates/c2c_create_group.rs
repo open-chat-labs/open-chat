@@ -7,7 +7,6 @@ pub struct Args {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub rules: GroupRules,
     pub subtype: Option<GroupSubtype>,
     pub avatar: Option<Avatar>,
