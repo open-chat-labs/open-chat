@@ -842,32 +842,22 @@ export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapp
     return groupWhile(sameDate, events.filter(eventIsVisible));
 }
 
-export function getNextMessageIndex(
+export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
     unconfirmedMessages: EventWrapper<Message>[]
-): number {
-    let current = chat.latestMessage?.event.messageIndex ?? -1;
+): [number, number] {
+    let eventIndex = chat.latestEventIndex;
+    let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
     if (unconfirmedMessages.length > 0) {
-        const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
-        if (messageIndex > current) {
-            current = messageIndex;
+        const lastUnconfirmed = unconfirmedMessages[unconfirmedMessages.length - 1];
+        if (lastUnconfirmed.index > eventIndex) {
+            eventIndex = lastUnconfirmed.index;
+        }
+        if (lastUnconfirmed.event.messageIndex > messageIndex) {
+            messageIndex = lastUnconfirmed.event.messageIndex;
         }
     }
-    return current + 1;
-}
-
-export function getNextEventIndex(
-    chat: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[]
-): number {
-    let current = chat.latestEventIndex;
-    if (unconfirmedMessages.length > 0) {
-        const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
-        if (eventIndex > current) {
-            current = eventIndex;
-        }
-    }
-    return current + 1;
+    return [eventIndex + 1, messageIndex + 1];
 }
 
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
