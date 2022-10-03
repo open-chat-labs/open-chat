@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import type { StringDecoder } from "string_decoder";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { selectedChatId } from "./chat";
 
