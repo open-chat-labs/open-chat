@@ -129,7 +129,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
-    #[serde(default = "default_ledger_canister_ids")]
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
@@ -145,13 +144,6 @@ struct Data {
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
-}
-
-// TODO - remove this
-fn default_ledger_canister_ids() -> HashMap<Cryptocurrency, CanisterId> {
-    [(Cryptocurrency::InternetComputer, MAINNET_LEDGER_CANISTER_ID)]
-        .into_iter()
-        .collect()
 }
 
 impl Data {
