@@ -100,7 +100,6 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
     let mut group_chats_added = Vec::new();
     let mut group_chats_to_check_for_updates = Vec::new();
 
-    // TODO handle groups that the user has been removed from
     for chat_id in args.group_chat_ids {
         if let Some(updates_since) = group_chat_args_map.get(&chat_id) {
             group_chats_to_check_for_updates.push((chat_id, *updates_since));

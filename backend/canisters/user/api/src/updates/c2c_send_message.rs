@@ -10,7 +10,6 @@ pub struct Args {
     pub content: MessageContent,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
-    #[serde(default)]
     pub correlation_id: u64,
 }
 

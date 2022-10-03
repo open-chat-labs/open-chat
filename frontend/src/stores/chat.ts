@@ -19,7 +19,7 @@ import {
     getFirstUnreadMessageIndex,
     getNextEventAndMessageIndexes,
     mergeServerEvents,
-    mergeServerEventsWithLocalUpdates,
+    mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
@@ -247,7 +247,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     serverEvents: [],
 }));
 
-export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
+const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
     chatStateStore,
     "serverEvents",
     () => []
@@ -346,7 +346,6 @@ export function setSelectedChat(
 
     // initialise a bunch of stores
     chatStateStore.clear(chat.chatId);
-    chatStateStore.setProp(chat.chatId, "serverEvents", unconfirmed.getMessages(chat.chatId));
     chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
     chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.setProp(
@@ -559,10 +558,12 @@ export function removeChat(chatId: string): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, localMessageUpdates],
-    ([$serverEventsForSelectedChat, $localMessageUpdates]) => {
-        return mergeServerEventsWithLocalUpdates(
+    [serverEventsStore, unconfirmed, localMessageUpdates],
+    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates]) => {
+        const chatId = get(selectedChatId) ?? "";
+        return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
+            $unconfirmed[chatId]?.messages ?? [],
             $localMessageUpdates
         );
     }
@@ -576,10 +577,6 @@ export function addServerEventsToStores(
         return;
     }
 
-    chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-        mergeServerEvents(events, newEvents)
-    );
-
     for (const event of newEvents) {
         if (event.event.kind === "message") {
             if (unconfirmed.delete(chatId, event.event.messageId)) {
@@ -591,6 +588,10 @@ export function addServerEventsToStores(
             }
         }
     }
+
+    chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+        mergeServerEvents(events, newEvents)
+    );
 
     chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
         const r = range.clone();

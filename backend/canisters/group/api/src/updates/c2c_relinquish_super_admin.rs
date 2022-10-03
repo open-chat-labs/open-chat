@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    #[serde(default)]
     pub correlation_id: u64,
 }
 

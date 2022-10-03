@@ -144,7 +144,6 @@ struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    #[serde(default)]
     pub rules: GroupRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
