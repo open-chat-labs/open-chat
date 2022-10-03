@@ -362,6 +362,7 @@ export type LocalMessageUpdates = {
     editedContent?: MessageContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
+    threadSummary?: ThreadSummary;
     lastUpdated: number;
 };
 

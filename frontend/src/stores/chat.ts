@@ -17,8 +17,7 @@ import {
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
-    getNextEventIndex,
-    getNextMessageIndex,
+    getNextEventAndMessageIndexes,
     mergeServerEvents,
     mergeServerEventsWithLocalUpdates,
     mergeUnconfirmedIntoSummary,
@@ -149,21 +148,16 @@ export const selectedChatStore = derived(
     }
 );
 
-export const nextMessageIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
-    if ($selectedServerChatStore === undefined) return 0;
-    return getNextMessageIndex(
-        $selectedServerChatStore,
-        unconfirmed.getMessages($selectedServerChatStore.chatId)
+export function nextEventAndMessageIndexes(): [number, number] {
+    const chat = get(selectedServerChatStore);
+    if (chat === undefined) {
+        return [0, 0];
+    }
+    return getNextEventAndMessageIndexes(
+        chat,
+        unconfirmed.getMessages(chat.chatId)
     );
-});
-
-export const nextEventIndex = derived([selectedServerChatStore], ([$selectedServerChatStore]) => {
-    if ($selectedServerChatStore === undefined) return 0;
-    return getNextEventIndex(
-        $selectedServerChatStore,
-        unconfirmed.getMessages($selectedServerChatStore.chatId)
-    );
-});
+}
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
     return (

@@ -75,13 +75,12 @@
         currentChatUserIds,
         focusMessageIndex,
         currentChatEditingEvent,
-        nextEventIndex,
-        nextMessageIndex,
         currentChatReplyingTo,
         chatUpdatedStore,
         userGroupKeys,
         currentChatPinnedMessages,
         chatStateStore,
+        nextEventAndMessageIndexes,
     } from "../../stores/chat";
     import {
         FilteredProposals,
@@ -768,14 +767,16 @@
                 return;
             }
 
+            const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
+
             const msg = createMessage(
                 user.userId,
-                $nextMessageIndex,
+                nextMessageIndex,
                 textContent,
                 $currentChatReplyingTo,
                 fileToAttach
             );
-            const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
+            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             sendMessageWithAttachment(api, user, serverChat, chat, events, event, mentioned).then(
                 afterSendMessage
@@ -802,10 +803,12 @@
             content.caption = "";
         }
 
+        const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
+
         msg = {
             kind: "message",
             messageId: newMessageId(),
-            messageIndex: $nextMessageIndex,
+            messageIndex: nextMessageIndex,
             sender: user.userId,
             content,
             repliesTo: undefined,
@@ -813,7 +816,7 @@
             edited: false,
             forwarded: msg.content.kind !== "giphy_content",
         };
-        const event = { event: msg, index: $nextEventIndex, timestamp: BigInt(Date.now()) };
+        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
         forwardMessage(api, user, serverChat, chat, events, event).then(afterSendMessage);
     }
