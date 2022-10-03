@@ -7,9 +7,7 @@ pub struct Args {
     pub message_id: MessageId,
     pub reaction: Reaction,
     pub added: bool,
-    #[serde(default)]
     pub username: String,
-    #[serde(default)]
     pub correlation_id: u64,
 }
 

@@ -6,7 +6,6 @@ pub mod block_user;
 pub mod c2c_charge_user_account;
 pub mod c2c_delete_messages;
 pub mod c2c_edit_message;
-pub mod c2c_end_poll;
 pub mod c2c_grant_super_admin;
 pub mod c2c_mark_read;
 pub mod c2c_notify_group_deleted;
