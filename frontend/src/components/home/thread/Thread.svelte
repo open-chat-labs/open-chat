@@ -433,14 +433,7 @@
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = mergeSendMessageResponse(candidate, resp);
-            serverEventsStore.update((events) =>
-                events.map((e) => {
-                    if (e.event === candidate) {
-                        return confirmed;
-                    }
-                    return e;
-                })
-            );
+            serverEventsStore.update(events => mergeServerEvents(events, [confirmed]));
         }
     }
 
