@@ -9,7 +9,6 @@ edition = "2021"
 [dependencies]
 candid = "0.7.17"
 canister_client_macros = { path = "../canister_client_macros" }
-compile-time-run = "0.2.12"
 getrandom = { version = "0.2.7", features = ["custom"] }
 ic-cdk = "0.5.6"
 itertools = "0.10.3"
