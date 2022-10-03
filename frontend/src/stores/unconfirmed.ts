@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 import type { EventWrapper, Message } from "../domain/chat/chat";
-import { revokeObjectUrls } from "domain/chat/chat.utils";
+import { revokeObjectUrls } from "../domain/chat/chat.utils";
 
 export type UnconfirmedMessages = Record<
     string,

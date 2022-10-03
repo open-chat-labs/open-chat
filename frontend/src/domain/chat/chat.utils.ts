@@ -37,7 +37,6 @@ import type {
     ThreadSyncDetailsUpdates,
     GroupSubtype,
     GroupSubtypeUpdate,
-    RehydratedReplyContext,
     ThreadSummary,
 } from "./chat";
 import { distinctBy, groupWhile, toRecord } from "../../utils/list";
