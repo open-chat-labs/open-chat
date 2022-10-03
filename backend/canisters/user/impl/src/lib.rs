@@ -6,7 +6,7 @@ use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
+use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification_v2;
 use serde::{Deserialize, Serialize};
