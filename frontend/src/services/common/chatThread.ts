@@ -743,14 +743,9 @@ export async function handleMessageSentByOther(
             latestEventIndex: undefined,
         });
     } else {
-        if (!upToDate(clientChat, currentEvents)) {
-            return;
-        }
-
         const existing = currentEvents.find(
             (ev) => ev.event.kind === "message" && ev.event.messageId === messageEvent.event.messageId
         );
-
         if (existing === undefined) {
             unconfirmed.add(clientChat.chatId, messageEvent);
         }
