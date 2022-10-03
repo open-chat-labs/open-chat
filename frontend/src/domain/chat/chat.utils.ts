@@ -38,6 +38,7 @@ import type {
     GroupSubtype,
     GroupSubtypeUpdate,
     RehydratedReplyContext,
+    ThreadSummary,
 } from "./chat";
 import { distinctBy, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -1539,12 +1540,11 @@ function mergeLocalUpdates(
         };
     }
 
+    message = { ...message };
+
     if (localUpdates.editedContent !== undefined) {
-        message = {
-            ...message,
-            content: localUpdates.editedContent,
-            edited: true,
-        };
+        message.content = localUpdates.editedContent;
+        message.edited = true;
     }
 
     if (localUpdates.reactions !== undefined) {
@@ -1552,10 +1552,7 @@ function mergeLocalUpdates(
         for (const localReaction of localUpdates.reactions) {
             reactions = applyLocalReaction(localReaction, reactions);
         }
-        message = {
-            ...message,
-            reactions,
-        };
+        message.reactions = reactions;
     }
 
     if (localUpdates.pollVotes !== undefined) {
@@ -1567,6 +1564,12 @@ function mergeLocalUpdates(
                 pollVote.userId
             );
         }
+    }
+
+    if (localUpdates.threadSummary !== undefined) {
+        message.thread = message.thread === undefined
+            ? localUpdates.threadSummary
+            : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
     }
 
     return message;
@@ -1590,6 +1593,17 @@ function mergeLocalUpdatesIntoReplyContext(replyContext: RehydratedReplyContext,
         };
     }
     return replyContext;
+}
+
+export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
+    return {
+        participantIds: new Set<string>([...a.participantIds, ...b.participantIds]),
+        numberOfReplies: Math.max(a.numberOfReplies, b.numberOfReplies),
+        latestEventIndex: Math.max(a.latestEventIndex, b.latestEventIndex),
+        latestEventTimestamp: a.latestEventTimestamp > b.latestEventTimestamp
+            ? a.latestEventTimestamp
+            : b.latestEventTimestamp
+    };
 }
 
 export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
