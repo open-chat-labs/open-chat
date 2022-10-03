@@ -38,6 +38,7 @@ import type {
     GroupSubtype,
     GroupSubtypeUpdate,
     RehydratedReplyContext,
+    ThreadSummary,
 } from "./chat";
 import { distinctBy, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -842,32 +843,22 @@ export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapp
     return groupWhile(sameDate, events.filter(eventIsVisible));
 }
 
-export function getNextMessageIndex(
+export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
     unconfirmedMessages: EventWrapper<Message>[]
-): number {
-    let current = chat.latestMessage?.event.messageIndex ?? -1;
+): [number, number] {
+    let eventIndex = chat.latestEventIndex;
+    let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
     if (unconfirmedMessages.length > 0) {
-        const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
-        if (messageIndex > current) {
-            current = messageIndex;
+        const lastUnconfirmed = unconfirmedMessages[unconfirmedMessages.length - 1];
+        if (lastUnconfirmed.index > eventIndex) {
+            eventIndex = lastUnconfirmed.index;
+        }
+        if (lastUnconfirmed.event.messageIndex > messageIndex) {
+            messageIndex = lastUnconfirmed.event.messageIndex;
         }
     }
-    return current + 1;
-}
-
-export function getNextEventIndex(
-    chat: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[]
-): number {
-    let current = chat.latestEventIndex;
-    if (unconfirmedMessages.length > 0) {
-        const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
-        if (eventIndex > current) {
-            current = eventIndex;
-        }
-    }
-    return current + 1;
+    return [eventIndex + 1, messageIndex + 1];
 }
 
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -1549,12 +1540,11 @@ function mergeLocalUpdates(
         };
     }
 
+    message = { ...message };
+
     if (localUpdates.editedContent !== undefined) {
-        message = {
-            ...message,
-            content: localUpdates.editedContent,
-            edited: true,
-        };
+        message.content = localUpdates.editedContent;
+        message.edited = true;
     }
 
     if (localUpdates.reactions !== undefined) {
@@ -1562,10 +1552,7 @@ function mergeLocalUpdates(
         for (const localReaction of localUpdates.reactions) {
             reactions = applyLocalReaction(localReaction, reactions);
         }
-        message = {
-            ...message,
-            reactions,
-        };
+        message.reactions = reactions;
     }
 
     if (localUpdates.pollVotes !== undefined) {
@@ -1577,6 +1564,12 @@ function mergeLocalUpdates(
                 pollVote.userId
             );
         }
+    }
+
+    if (localUpdates.threadSummary !== undefined) {
+        message.thread = message.thread === undefined
+            ? localUpdates.threadSummary
+            : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
     }
 
     return message;
@@ -1600,6 +1593,17 @@ function mergeLocalUpdatesIntoReplyContext(replyContext: RehydratedReplyContext,
         };
     }
     return replyContext;
+}
+
+export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): ThreadSummary {
+    return {
+        participantIds: new Set<string>([...a.participantIds, ...b.participantIds]),
+        numberOfReplies: Math.max(a.numberOfReplies, b.numberOfReplies),
+        latestEventIndex: Math.max(a.latestEventIndex, b.latestEventIndex),
+        latestEventTimestamp: a.latestEventTimestamp > b.latestEventTimestamp
+            ? a.latestEventTimestamp
+            : b.latestEventTimestamp
+    };
 }
 
 export function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
