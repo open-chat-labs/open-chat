@@ -990,17 +990,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "compile-time-run"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43b5affba7c91c039a483065125dd8c6d4a0985e1e9ac5ab6dffdea4fe4e637f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "concurrent-queue"
 version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4876,7 +4865,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros 0.1.0",
- "compile-time-run",
  "getrandom",
  "ic-cdk",
  "itertools",
