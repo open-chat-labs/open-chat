@@ -964,7 +964,7 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
     return a.index - b.index;
 }
 
-function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
+export function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     if (event?.event.kind === "message") {
         if ("blobUrl" in event.event.content && event.event.content.blobUrl !== undefined) {
             URL.revokeObjectURL(event.event.content.blobUrl);
