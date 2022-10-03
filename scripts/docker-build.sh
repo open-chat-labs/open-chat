@@ -4,7 +4,9 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-docker build -t openchat .
+GIT_COMMIT_ID=$(git rev-parse HEAD)
+
+docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID .
 
 container_id=$(docker create openchat)
 rm -rf wasms

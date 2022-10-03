@@ -2,8 +2,10 @@
 FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
+ARG git_commit_id
 ARG rust_version=1.63.0
 
+ENV GIT_COMMIT_id=$git_commit_id
 ENV TZ=UTC
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
