@@ -318,7 +318,7 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "name_too_long";
     }
     if ("NameTooShort" in candid) {
-        return "name_too_long";
+        return "name_too_short";
     }
     if ("NameReserved" in candid) {
         return "name_reserved";
@@ -345,7 +345,7 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "rules_too_long";
     }
     if ("RulesTooShort" in candid) {
-        return "rules_too_long";
+        return "rules_too_short";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
