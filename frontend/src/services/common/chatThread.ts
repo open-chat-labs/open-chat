@@ -848,14 +848,7 @@ export function sendMessageWithAttachment(
 }
 
 function onSendMessageSuccess(chatId: string, resp: SendMessageSuccess | TransferSuccess, msg: Message) {
-    const event = {
-        index: resp.eventIndex,
-        timestamp: resp.timestamp,
-        event: {
-            ...msg,
-            messageIndex: resp.messageIndex
-        }
-    };
+    const event = mergeSendMessageResponse(msg, resp);
 
     addServerEventsToStores(chatId, [event]);
     updateSummaryWithConfirmedMessage(chatId, event);
