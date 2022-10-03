@@ -1592,6 +1592,7 @@ function mergeLocalUpdatesIntoReplyContext(replyContext: RehydratedReplyContext,
     if (updates.editedContent !== undefined) {
         return {
             ...replyContext,
+            edited: true,
             content: updates.editedContent
         };
     }
