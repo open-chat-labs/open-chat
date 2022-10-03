@@ -964,10 +964,6 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
     return a.index - b.index;
 }
 
-function sortByTimestamp(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
-    return Number(a.timestamp - b.timestamp);
-}
-
 function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     if (event?.event.kind === "message") {
         if ("blobUrl" in event.event.content && event.event.content.blobUrl !== undefined) {
@@ -1531,7 +1527,8 @@ export function mergeEventsAndLocalUpdates(
         let anyAdded = false;
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are contiguous with the loaded confirmed events
-            if (eventIndexes.has(message.index - 1) ||
+            if (merged.length === 0 ||
+                eventIndexes.has(message.index - 1) ||
                 eventIndexes.has(message.index) ||
                 eventIndexes.has(message.index + 1))
             {
@@ -1540,8 +1537,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (anyAdded) {
-            // Sort by timestamp rather than event index so that we never have issues when grouping events by date
-            merged.sort(sortByTimestamp);
+            merged.sort(sortByIndex);
         }
     }
 

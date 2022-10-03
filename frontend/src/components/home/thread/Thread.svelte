@@ -118,8 +118,8 @@
 
     $: events = derived(
         [serverEventsStore, unconfirmed, localMessageUpdates],
-        ([serverEvents, $unconfirmed, localUpdates]) => {
-            return mergeEventsAndLocalUpdates(serverEvents, $unconfirmed[chat.chatId] ?? [], localUpdates);
+        ([serverEvents, unconf, localUpdates]) => {
+            return mergeEventsAndLocalUpdates(serverEvents, unconf[unconfirmedKey]?.messages ?? [], localUpdates);
         }
     );
 
@@ -205,7 +205,14 @@
                 serverEventsStore.set([]);
             }
             const [newEvents, _] = await handleEventsResponse(eventsResponse);
-            serverEventsStore.update(events => mergeServerEvents([...events], [...newEvents]));
+
+            for (const event of newEvents) {
+                if (event.event.kind === "message") {
+                    unconfirmed.delete(unconfirmedKey, event.event.messageId);
+                }
+            }
+
+            serverEventsStore.update(events => mergeServerEvents(events, newEvents));
             makeRtcConnections(user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
@@ -321,7 +328,6 @@
     }
 
     function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-        unconfirmed.delete(unconfirmedKey, message.messageId);
         removeMessage(message.messageId, message.userId);
     }
 
@@ -338,7 +344,13 @@
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
-        appendMessage(message.messageEvent);
+        const existing = $events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === message.messageEvent.event.messageId
+        );
+
+        if (existing === undefined) {
+            unconfirmed.add(unconfirmedKey, message.messageEvent);
+        }
 
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
@@ -369,7 +381,6 @@
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             unconfirmed.add(unconfirmedKey, event);
-            serverEventsStore.update((evts) => [...evts, event]);
             scrollBottom();
             messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
@@ -434,9 +445,7 @@
     }
 
     function removeMessage(messageId: bigint, userId: string) {
-        serverEventsStore.update((evts) =>
-            evts.filter((e) => e.event.kind !== "message" || e.event.messageId !== messageId)
-        );
+        unconfirmed.delete(unconfirmedKey, messageId);
         if (userId === user.userId) {
             rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
@@ -568,17 +577,6 @@
         }
 
         deleteMessage(api, chat, user.userId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
-    function appendMessage(message: EventWrapper<Message>): boolean {
-        const existing = $events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
-        );
-
-        if (existing !== undefined) return false;
-
-        serverEventsStore.update((events) => [...events, message]);
-        return true;
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
