@@ -6,7 +6,6 @@ use types::GroupChatSummaryInternal;
 pub struct Args {
     pub as_super_admin: bool,
     pub invite_code: Option<u64>,
-    #[serde(default)]
     pub correlation_id: u64,
 }
 

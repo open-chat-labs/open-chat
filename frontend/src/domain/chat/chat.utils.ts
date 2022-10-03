@@ -1463,14 +1463,17 @@ function buildIdenticonUrl(userId: string): string {
 export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess
-): Message {
+): EventWrapper<Message> {
     return {
-        ...msg,
-        messageIndex: resp.messageIndex,
-        content:
-            resp.kind === "transfer_success"
+        index: resp.eventIndex,
+        timestamp: resp.timestamp,
+        event: {
+            ...msg,
+            messageIndex: resp.messageIndex,
+            content: resp.kind === "transfer_success"
                 ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
                 : msg.content,
+        }
     };
 }
 

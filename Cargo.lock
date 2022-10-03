@@ -607,7 +607,6 @@ name = "callback_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
  "serde",
  "serde_bytes",
  "types 0.1.0",
@@ -1948,7 +1947,6 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "types 0.1.0",
- "utils",
 ]
 
 [[package]]
@@ -2600,7 +2598,6 @@ dependencies = [
  "serde_cbor",
  "sha2 0.10.6",
  "types 0.1.0",
- "utils",
 ]
 
 [[package]]
@@ -3488,11 +3485,9 @@ name = "proposals_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
- "futures",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -4636,7 +4631,6 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 name = "types"
 version = "0.1.0"
 dependencies = [
- "base64",
  "candid",
  "ic-icrc1",
  "ic-ledger-types",
@@ -4757,8 +4751,6 @@ dependencies = [
 name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
- "callback_canister",
- "callback_canister_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_logger",
