@@ -91,7 +91,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
-            git_commit_id: utils::git::git_commit_id(),
+            git_commit_id: utils::git::git_commit_id().to_string(),
             direct_chats: self.data.direct_chats.len() as u32,
             group_chats: self.data.group_chats.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
