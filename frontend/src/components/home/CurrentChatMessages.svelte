@@ -429,7 +429,8 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        push(`/${chat.chatId}/${index}`);
+        push(`/${chat.chatId}`);
+        scrollToMessageIndex(index, false);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
