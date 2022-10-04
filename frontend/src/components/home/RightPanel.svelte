@@ -364,7 +364,7 @@
     {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
-            chat={groupChat}
+            chat={$groupChat}
             {userId}
             members={currentChatMembers}
             blockedUsers={currentChatBlockedUsers}
