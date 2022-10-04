@@ -40,7 +40,7 @@ impl<V> CaseInsensitiveHashMap<V> {
         let term_uppercase = term.to_uppercase();
         self.map
             .iter()
-            .filter(move |(k, _)| k.starts_with(&term_uppercase))
+            .filter(move |(k, _)| k.contains(&term_uppercase))
             .map(|(_, v)| v)
     }
 
