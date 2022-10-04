@@ -1274,11 +1274,11 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientMainEventIndex
         );
 
-        const replies = this.reydrateEventList(
+        const replies = this.rehydrateEventList(
             this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, threadMissing)
         );
 
-        const [rootMsg] = this.reydrateEventList(
+        const [rootMsg] = this.rehydrateEventList(
             this.rehydrateMissingReplies(thread.chatId, [thread.rootMessage], rootMissing)
         );
 
