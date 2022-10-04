@@ -632,6 +632,7 @@ export class ServiceContainer implements MarkMessagesRead {
                         },
                     };
                 } else {
+                    console.log("Reply context not found, this should never happen", defaultChatId, chatId);
                     rollbar.error("Reply context not found, this should never happen", defaultChatId, chatId);
                 }
                 return ev;
