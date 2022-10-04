@@ -11,8 +11,8 @@ export const PUBLIC_VAPID_KEY =
 
 export async function initNotificationsServiceWorker(
     api: ServiceContainer,
-    onNotification: (notification: Notification) => void) : Promise<boolean>
-{
+    onNotification: (notification: Notification) => void
+): Promise<boolean> {
     // Register a service worker if it hasn't already been done
     const registration = await registerServiceWorker();
     if (registration == null) {
@@ -45,7 +45,9 @@ export async function initNotificationsServiceWorker(
     return true;
 }
 
-export function permissionToStatus(permission: NotificationPermission | "pending-init"): NotificationStatus {
+export function permissionToStatus(
+    permission: NotificationPermission | "pending-init"
+): NotificationStatus {
     switch (permission) {
         case "pending-init":
             return "pending-init";
@@ -61,7 +63,12 @@ export function permissionToStatus(permission: NotificationPermission | "pending
 export const notificationsSupported = supported();
 
 function supported(): boolean {
-    return !isCanisterUrl && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    return (
+        !isCanisterUrl &&
+        "serviceWorker" in navigator &&
+        "PushManager" in window &&
+        "Notification" in window
+    );
 }
 
 export function permissionStateToNotificationPermission(
@@ -79,7 +86,7 @@ export function permissionStateToNotificationPermission(
 
 export async function closeNotificationsForChat(chatId: string): Promise<void> {
     const registration = await getRegistration();
-    if (registration != null) {
+    if (registration !== undefined) {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
             if (notification.data?.path.startsWith(chatId)) {
@@ -91,7 +98,7 @@ export async function closeNotificationsForChat(chatId: string): Promise<void> {
 
 export async function unregister(): Promise<boolean> {
     const registration = await getRegistration();
-    if (registration == null) {
+    if (registration === undefined) {
         return false;
     }
     return registration.unregister();
@@ -113,7 +120,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
 
 async function trySubscribe(api: ServiceContainer): Promise<boolean> {
     const registration = await getRegistration();
-    if (!registration) {
+    if (registration === undefined) {
         return false;
     }
 
@@ -142,7 +149,9 @@ async function trySubscribe(api: ServiceContainer): Promise<boolean> {
     }
 }
 
-async function subscribeUserToPush(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
+async function subscribeUserToPush(
+    registration: ServiceWorkerRegistration
+): Promise<PushSubscription | null> {
     const subscribeOptions = {
         userVisibleOnly: true,
         applicationServerKey: toUint8Array(PUBLIC_VAPID_KEY),
@@ -181,7 +190,7 @@ export async function askForNotificationPermission(): Promise<NotificationPermis
 
 export async function unsubscribeNotifications(api: ServiceContainer): Promise<void> {
     const registration = await getRegistration();
-    if (registration) {
+    if (registration !== undefined) {
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
             if (await api.subscriptionExists(extract_p256dh_key(pushSubscription))) {
@@ -192,5 +201,7 @@ export async function unsubscribeNotifications(api: ServiceContainer): Promise<v
 }
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
+    if (!notificationsSupported) return undefined;
+
     return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }

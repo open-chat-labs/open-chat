@@ -24,14 +24,14 @@
     export let closeIcon: "close" | "back";
     export let members: Readable<MemberType[]>;
     export let blockedUsers: Readable<Set<string>>;
-    export let chat: Readable<GroupChatSummary>;
+    export let chat: GroupChatSummary;
 
     $: knownUsers = getKnownUsers($userStore, $members, $blockedUsers);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: others = knownUsers
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: publicGroup = $chat.public;
+    $: publicGroup = chat.public;
 
     let searchTerm = "";
     let membersList: VirtualList;
@@ -68,7 +68,7 @@
                 });
             }
         });
-        if ($chat.myRole === "admin" || $chat.myRole === "owner") {
+        if (chat.myRole === "admin" || chat.myRole === "owner") {
             blockedUsers.forEach((userId) => {
                 const user = userStore[userId];
                 if (user) {
@@ -115,12 +115,12 @@
     <Member
         me={false}
         member={item}
-        canTransferOwnership={canChangeRoles($chat, item.role, "owner")}
-        canMakeAdmin={canChangeRoles($chat, item.role, "admin")}
-        canDismissAdmin={item.role === "admin" && canChangeRoles($chat, "admin", "participant")}
-        canBlockUser={canBlockUsers($chat)}
-        canUnblockUser={canUnblockUsers($chat)}
-        canRemoveMember={canRemoveMembers($chat)}
+        canTransferOwnership={canChangeRoles(chat, item.role, "owner")}
+        canMakeAdmin={canChangeRoles(chat, item.role, "admin")}
+        canDismissAdmin={item.role === "admin" && canChangeRoles(chat, "admin", "participant")}
+        canBlockUser={canBlockUsers(chat)}
+        canUnblockUser={canUnblockUsers(chat)}
+        canRemoveMember={canRemoveMembers(chat)}
         on:blockUser
         on:unblockUser
         on:chatWith
