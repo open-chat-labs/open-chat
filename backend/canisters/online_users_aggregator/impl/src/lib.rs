@@ -36,7 +36,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
-            git_commit_id: utils::git::git_commit_id(),
+            git_commit_id: utils::git::git_commit_id().to_string(),
             mark_as_online_count: self.data.mark_as_online_count,
             batches_sent_to_user_index: self.data.batches_sent_to_user_index,
             failed_batches: self.data.failed_batches,

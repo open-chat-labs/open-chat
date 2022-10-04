@@ -58,7 +58,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
-            git_commit_id: utils::git::git_commit_id(),
+            git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             public_groups: self.data.public_groups.len() as u32,
             private_groups: self.data.private_groups.len() as u64,
