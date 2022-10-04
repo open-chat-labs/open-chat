@@ -373,7 +373,7 @@
      * This will allow us to interact with the chat in a readonly mode.
      *
      * We will load the chat and then add it to the chat list. If we refresh the page
-     * it will just disppear (unless of course we still have the canisterId in the url)
+     * it will just disappear (unless of course we still have the canisterId in the url)
      */
     function previewChat(chatId: string): Promise<boolean> {
         return api.getPublicGroupSummary(chatId).then((maybeChat) => {

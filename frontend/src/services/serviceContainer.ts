@@ -661,12 +661,13 @@ export class ServiceContainer implements MarkMessagesRead {
         const missing = await this.resolveMissingIndexes(
             chatType,
             currentChatId,
-            resp.events,
+            resp.events.concat(resp.affectedEvents),
             threadRootMessageIndex,
             latestClientEventIndex
         );
         resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
         resp.events = this.rehydrateEventList(resp.events);
+        resp.affectedEvents = this.rehydrateMissingReplies(currentChatId, resp.affectedEvents, missing);
         resp.affectedEvents = this.rehydrateEventList(resp.affectedEvents);
         return resp;
     }
