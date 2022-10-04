@@ -16,6 +16,7 @@
 
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
+    export let messageId: bigint;
     export let chatId: string;
     export let repliesTo: RehydratedReplyContext;
     export let preview: boolean;
@@ -29,8 +30,8 @@
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
+                messageId,
                 index: repliesTo.messageIndex,
-                preserveFocus: false,
             });
         } else {
             push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);

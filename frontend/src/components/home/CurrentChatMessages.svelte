@@ -94,6 +94,7 @@
     import type { RemoteUserToggledReaction, WebRtcMessage } from "../../domain/webrtc/webrtc";
     import { typing } from "../../stores/typing";
     import { localMessageUpdates } from "../../stores/localMessageUpdates";
+    import { push } from "svelte-spa-router";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -197,6 +198,10 @@
         relaySubscribe((event: RelayedEvent) => {
             if (event.kind === "relayed_delete_message") {
                 doDeleteMessage(event.message);
+            }
+
+            if (event.kind === "relayed_goto_message") {
+                doGoToMessageIndex(event.index);
             }
 
             if (event.kind === "relayed_select_reaction") {
@@ -360,9 +365,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat).then(
-                onLoadedPreviousMessages
-            );
+            loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
         }
 
         if (shouldLoadNewMessages()) {
@@ -421,8 +424,12 @@
         onSelectReaction(ev.detail);
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+    function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
+        doGoToMessageIndex(ev.detail.index);
+    }
+
+    function doGoToMessageIndex(index: number): void {
+        push(`/${chat.chatId}/${index}`);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -577,9 +584,7 @@
                     onMessageWindowLoaded
                 );
             } else {
-                loadPreviousMessages(api, user, serverChat, chat).then(
-                    onLoadedPreviousMessages
-                );
+                loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
             }
             loadDetails(api, user, chat, events);
         }
@@ -614,9 +619,7 @@
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat).then(
-                onLoadedPreviousMessages
-            );
+            loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
         }
     }
 
@@ -646,9 +649,17 @@
         if (preview) return true;
 
         if (evt.event.kind === "message") {
-            const isRead = messagesRead.isRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+            const isRead = messagesRead.isRead(
+                chat.chatId,
+                evt.event.messageIndex,
+                evt.event.messageId
+            );
             if (!isRead && evt.event.sender === user.userId) {
-                messagesRead.markMessageRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+                messagesRead.markMessageRead(
+                    chat.chatId,
+                    evt.event.messageIndex,
+                    evt.event.messageId
+                );
                 return true;
             }
             return isRead;

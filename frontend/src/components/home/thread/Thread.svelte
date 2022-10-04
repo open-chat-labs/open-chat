@@ -119,7 +119,11 @@
     $: events = derived(
         [serverEventsStore, unconfirmed, localMessageUpdates],
         ([serverEvents, unconf, localUpdates]) => {
-            return mergeEventsAndLocalUpdates(serverEvents, unconf[unconfirmedKey]?.messages ?? [], localUpdates);
+            return mergeEventsAndLocalUpdates(
+                serverEvents,
+                unconf[unconfirmedKey]?.messages ?? [],
+                localUpdates
+            );
         }
     );
 
@@ -212,7 +216,7 @@
                 }
             }
 
-            serverEventsStore.update(events => mergeServerEvents(events, newEvents));
+            serverEventsStore.update((events) => mergeServerEvents(events, newEvents));
             makeRtcConnections(user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
@@ -345,7 +349,9 @@
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
         const existing = $events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === message.messageEvent.event.messageId
+            (ev) =>
+                ev.event.kind === "message" &&
+                ev.event.messageId === message.messageEvent.event.messageId
         );
 
         if (existing === undefined) {
@@ -423,17 +429,20 @@
                 participantIds: new Set<string>([user.userId]),
                 numberOfReplies: nextMessageIndex + 1,
                 latestEventIndex: nextEventIndex,
-                latestEventTimestamp: BigInt(Date.now())
+                latestEventTimestamp: BigInt(Date.now()),
             };
 
-            localMessageUpdates.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+            localMessageUpdates.markThreadSummaryUpdated(
+                rootEvent.event.messageId.toString(),
+                summary
+            );
         }
     }
 
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = mergeSendMessageResponse(candidate, resp);
-            serverEventsStore.update(events => mergeServerEvents(events, [confirmed]));
+            serverEventsStore.update((events) => mergeServerEvents(events, [confirmed]));
         }
     }
 
@@ -627,7 +636,13 @@
         }
     }
 
-    function onGoToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+    function onGoToMessageIndex(
+        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
+    ) {
+        if (ev.detail.messageId === rootEvent.event.messageId) {
+            relayPublish({ kind: "relayed_goto_message", ...ev.detail });
+            return;
+        }
         goToMessageIndex(ev.detail.index);
     }
 
