@@ -299,8 +299,10 @@ impl UserMap {
         }
     }
 
-    pub fn search(&self, term: &str) -> impl Iterator<Item = &User> {
-        self.username_to_user_id.search(term).filter_map(move |u| self.users.get(u))
+    pub fn search(&self, term: &str) -> impl Iterator<Item = (&User, bool)> {
+        self.username_to_user_id
+            .search(term)
+            .filter_map(move |(uid, p)| self.users.get(uid).map(|u| (u, p)))
     }
 
     // Remove unconfirmed phone numbers whose confirmation codes have expired, this frees up memory

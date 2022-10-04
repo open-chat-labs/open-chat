@@ -36,12 +36,12 @@ impl<V> CaseInsensitiveHashMap<V> {
         self.len() == 0
     }
 
-    pub fn search(&self, term: &str) -> impl Iterator<Item = &V> {
+    // Returns an iterator containing a tuple with the matching item and whether it is a prefix match
+    pub fn search(&self, term: &str) -> impl Iterator<Item = (&V, bool)> {
         let term_uppercase = term.to_uppercase();
         self.map
             .iter()
-            .filter(move |(k, _)| k.starts_with(&term_uppercase))
-            .map(|(_, v)| v)
+            .filter_map(move |(k, v)| k.find(&term_uppercase).map(|s| (v, s == 0)))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {
