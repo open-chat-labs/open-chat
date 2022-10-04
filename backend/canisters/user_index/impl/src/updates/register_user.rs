@@ -136,7 +136,7 @@ fn commit(
     runtime_state
         .data
         .users
-        .register(caller, user_id, wasm_version, username.clone(), now, referred_by);
+        .register(caller, user_id, wasm_version, username.clone(), now, referred_by, false);
 
     if let Some(referred_by) = referred_by {
         runtime_state.data.user_event_sync_queue.push(

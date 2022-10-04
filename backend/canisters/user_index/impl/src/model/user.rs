@@ -20,6 +20,8 @@ pub struct User {
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub is_bot: bool,
 }
 
 impl User {
@@ -71,6 +73,7 @@ impl User {
         now: TimestampMillis,
         wasm_version: Version,
         referred_by: Option<UserId>,
+        is_bot: bool,
     ) -> User {
         User {
             principal,
@@ -88,6 +91,7 @@ impl User {
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
             referred_by,
+            is_bot,
         }
     }
 
@@ -100,6 +104,7 @@ impl User {
             username: self.username.clone(),
             seconds_since_last_online,
             avatar_id: self.avatar_id,
+            is_bot: self.is_bot,
         }
     }
 
@@ -112,6 +117,7 @@ impl User {
             username: if include_username { Some(self.username.clone()) } else { None },
             seconds_since_last_online,
             avatar_id: self.avatar_id,
+            is_bot: self.is_bot,
         }
     }
 }

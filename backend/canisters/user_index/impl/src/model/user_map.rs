@@ -83,11 +83,12 @@ impl UserMap {
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
+        is_bot: bool,
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, wasm_version, referred_by);
+        let user = User::new(principal, user_id, username, now, wasm_version, referred_by, is_bot);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {

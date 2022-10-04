@@ -13,6 +13,7 @@ fn c2c_lookup_principal_impl(args: Args, runtime_state: &RuntimeState) -> Respon
 
         Success(SuccessResult {
             principal: user.principal,
+            is_bot: user.is_bot,
             is_super_admin,
         })
     } else {
