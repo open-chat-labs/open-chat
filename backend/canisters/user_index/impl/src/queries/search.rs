@@ -19,14 +19,9 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let users = &runtime_state.data.users;
     let mut search_term = args.search_term;
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
-    let search_term_lower = search_term.to_lowercase();
 
     // Filter
-    let mut matches: Vec<(&User, bool)> = users
-        .search(&search_term)
-        .filter(|u| u.principal != caller)
-        .map(|u| (u, u.username.to_lowercase().starts_with(&search_term_lower)))
-        .collect();
+    let mut matches: Vec<(&User, bool)> = users.search(&search_term).filter(|(u, _)| u.principal != caller).collect();
 
     // Sort
     matches.sort_unstable_by(|(u1, u1_starts_ci), (u2, u2_starts_ci)| {
