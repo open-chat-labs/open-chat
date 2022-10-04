@@ -59,7 +59,7 @@
 
         if (chat.kind === "direct_chat") {
             const username = $userStore[chat.them]?.username;
-            return username ? username.indexOf(searchTerm) >= 0 : false;
+            return username ? username.toLowerCase().indexOf(lowercaseSearch) >= 0 : false;
         }
         return false;
     }
