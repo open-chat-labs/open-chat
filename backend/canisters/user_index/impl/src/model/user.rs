@@ -149,6 +149,7 @@ impl Default for User {
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
             referred_by: None,
+            is_bot: false,
         }
     }
 }
