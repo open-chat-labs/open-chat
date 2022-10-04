@@ -115,6 +115,7 @@ import { snsFunctions } from "../stores/snsFunctions";
 import { userCreatedStore } from "../stores/settings";
 import { selectedAuthProviderStore } from "../stores/authProviders";
 import { AuthProvider } from "../domain/auth";
+import { rollbar } from "../utils/logging";
 
 export const apiKey = Symbol();
 
@@ -634,6 +635,9 @@ export class ServiceContainer implements MarkMessagesRead {
                             },
                         },
                     };
+                } else {
+                    console.error("Reply context not found, this should never happen", defaultChatId, chatId);
+                    rollbar.error("Reply context not found, this should never happen", defaultChatId, chatId);
                 }
                 return ev;
             }
