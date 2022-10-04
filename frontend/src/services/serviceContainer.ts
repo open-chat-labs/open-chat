@@ -496,16 +496,20 @@ export class ServiceContainer implements MarkMessagesRead {
         return content;
     }
 
-    private reydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
+    private rehydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
         return events.map((e) => {
             if (e.event.kind === "message") {
-                return {
-                    ...e,
-                    event: {
-                        ...e.event,
-                        content: this.rehydrateMessageContent(e.event.content),
-                    },
-                };
+                const original = e.event.content;
+                const rehydrated = this.rehydrateMessageContent(original);
+                if (original !== rehydrated) {
+                    return {
+                        ...e,
+                        event: {
+                            ...e.event,
+                            content: rehydrated,
+                        },
+                    };
+                }
             }
             return e;
         });
@@ -658,8 +662,8 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientEventIndex
         );
         resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
-        resp.events = this.reydrateEventList(resp.events);
-        resp.affectedEvents = this.reydrateEventList(resp.affectedEvents);
+        resp.events = this.rehydrateEventList(resp.events);
+        resp.affectedEvents = this.rehydrateEventList(resp.affectedEvents);
         return resp;
     }
 
@@ -701,7 +705,7 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientEventIndex
         );
         [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
-        [message] = this.reydrateEventList([message]);
+        [message] = this.rehydrateEventList([message]);
         return message;
     }
 
