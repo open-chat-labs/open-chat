@@ -460,6 +460,7 @@
             {#if msg.repliesTo !== undefined && !inert}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
+                        messageId={msg.messageId}
                         {preview}
                         {chatId}
                         {groupChat}

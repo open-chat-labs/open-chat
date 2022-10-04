@@ -636,8 +636,16 @@ export class ServiceContainer implements MarkMessagesRead {
                         },
                     };
                 } else {
-                    console.error("Reply context not found, this should never happen", defaultChatId, chatId);
-                    rollbar.error("Reply context not found, this should never happen", defaultChatId, chatId);
+                    console.error(
+                        "Reply context not found, this should never happen",
+                        defaultChatId,
+                        chatId
+                    );
+                    rollbar.error(
+                        "Reply context not found, this should never happen",
+                        defaultChatId,
+                        chatId
+                    );
                 }
                 return ev;
             }
@@ -667,7 +675,11 @@ export class ServiceContainer implements MarkMessagesRead {
         );
         resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
         resp.events = this.rehydrateEventList(resp.events);
-        resp.affectedEvents = this.rehydrateMissingReplies(currentChatId, resp.affectedEvents, missing);
+        resp.affectedEvents = this.rehydrateMissingReplies(
+            currentChatId,
+            resp.affectedEvents,
+            missing
+        );
         resp.affectedEvents = this.rehydrateEventList(resp.affectedEvents);
         return resp;
     }
