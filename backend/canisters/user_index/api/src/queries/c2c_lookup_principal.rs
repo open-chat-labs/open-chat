@@ -16,5 +16,6 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub principal: Principal,
+    pub is_bot: bool,
     pub is_super_admin: bool,
 }
