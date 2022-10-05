@@ -790,7 +790,6 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
     userGroupKeys: Set<string>;
-    confirmedEventIndexesLoaded: DRange;
     serverEvents: EventWrapper<ChatEvent>[];
 };
 
