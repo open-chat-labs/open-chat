@@ -276,11 +276,17 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>()
 );
 
-export const confirmedEventIndexesLoaded = derived([serverEventsStore], ([serverEvents]) => {
+const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
     const ranges = new DRange();
     serverEvents.forEach((e) => ranges.add(e.index));
     return ranges;
 })
+
+export function confirmedEventIndexesLoaded(chatId: string): DRange {
+    return get(selectedChatId) === chatId
+        ? get(confirmedEventIndexesLoadedStore)
+        : new DRange();
+}
 
 export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
     chatStateStore,
