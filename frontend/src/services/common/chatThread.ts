@@ -331,7 +331,10 @@ export async function handleEventsResponse(
         return;
     }
 
-    const events = resp.events.concat(resp.affectedEvents);
+    // Only include affected events that overlap with already loaded events
+    const confirmedLoaded = chatStateStore.getProp(chat.chatId, "confirmedEventIndexesLoaded");
+    const events = resp.events.concat(
+        resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded)));
 
     const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
