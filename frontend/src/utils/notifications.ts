@@ -84,18 +84,6 @@ export function permissionStateToNotificationPermission(
     }
 }
 
-export async function closeNotificationsForChat(chatId: string): Promise<void> {
-    const registration = await getRegistration();
-    if (registration !== undefined) {
-        const notifications = await registration.getNotifications();
-        for (const notification of notifications) {
-            if (notification.data?.path.startsWith(chatId)) {
-                notification.close();
-            }
-        }
-    }
-}
-
 export async function unregister(): Promise<boolean> {
     const registration = await getRegistration();
     if (registration === undefined) {

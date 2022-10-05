@@ -2,7 +2,6 @@
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
-    import { closeNotificationsForChat } from "../../utils/notifications";
     import { editMessage } from "../../services/common/chatThread";
     import { getContext, onDestroy, tick } from "svelte";
     import {
@@ -121,10 +120,6 @@
         );
     }
 
-    function onWindowFocus() {
-        closeNotificationsForChat(chatId);
-    }
-
     onDestroy(unsub);
 
     function onMarkAllRead() {
@@ -222,8 +217,6 @@
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
     }
 </script>
-
-<svelte:window on:focus={onWindowFocus} />
 
 <PollBuilder
     bind:this={pollBuilder}

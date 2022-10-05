@@ -31,7 +31,6 @@ import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
-import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
 import DRange from "drange";
@@ -320,7 +319,6 @@ export function setSelectedChat(
     threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
 ): void {
     const currentScrollStrategy = get(scrollStrategy);
-    closeNotificationsForChat(chat.chatId);
 
     // TODO don't think this should be in here really
     if (
