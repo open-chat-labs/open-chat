@@ -102,6 +102,7 @@ async fn install_service_canisters_impl(
         callback_canister_id: canister_ids.callback,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
+        proposals_bot_user_id: canister_ids.proposals_bot.into(),
         wasm_version: version,
         test_mode,
     };

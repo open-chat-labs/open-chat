@@ -27,6 +27,7 @@ fn init(args: Args) {
         args.callback_canister_id,
         args.open_storage_index_canister_id,
         args.ledger_canister_id,
+        args.proposals_bot_user_id,
         canister_pool_target_size,
         args.test_mode,
     );

@@ -153,11 +153,25 @@ impl Data {
         callback_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        proposals_bot_user_id: UserId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
+        let mut users = UserMap::default();
+
+        // Register the ProposalsBot
+        users.register(
+            proposals_bot_user_id.into(),
+            proposals_bot_user_id,
+            user_canister_wasm.version,
+            "ProposalsBot".to_string(),
+            0,
+            None,
+            true,
+        );
+
         Data {
-            users: UserMap::default(),
+            users,
             service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
             sms_service_principals: sms_service_principals.into_iter().collect(),
