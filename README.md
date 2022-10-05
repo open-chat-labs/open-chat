@@ -23,3 +23,7 @@ We need builds to be deterministic so that code running inside a canister can be
 wasm hash locally with the wasm hash exposed by the IC.
 
 You can build the OpenChat canister wasms by running `./scripts/docker-build.sh`
+
+## License
+
+Licensed under the AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html
