@@ -1,4 +1,3 @@
-import type { ScrollStrategy } from "../domain/chat/chat";
 import { writable } from "svelte/store";
 import { isTouchDevice } from "../utils/devices";
 import { configKeys } from "../utils/config";
@@ -59,19 +58,3 @@ function createLsBoolStore(key: string, def: boolean) {
             }),
     };
 }
-
-const scrollStratStore = writable<ScrollStrategy>(
-    (test
-        ? null
-        : localStorage.getItem(configKeys.scrollStrategy) || "latestMessage") as ScrollStrategy
-);
-
-export const scrollStrategy = {
-    subscribe: scrollStratStore.subscribe,
-    set: (strategy: ScrollStrategy): void => {
-        scrollStratStore.set(strategy);
-        if (!test) {
-            localStorage.setItem(configKeys.scrollStrategy, strategy);
-        }
-    },
-};
