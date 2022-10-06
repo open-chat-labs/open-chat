@@ -239,14 +239,6 @@
         });
     }
 
-    function scrollToNew() {
-        const idx = firstUnreadMessage ?? chat.latestMessage?.event.messageIndex;
-
-        if (idx !== undefined) {
-            scrollToMessageIndex(idx, false);
-        }
-    }
-
     function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
         element?.scrollIntoView({ behavior, block: "center" });
     }
@@ -968,7 +960,7 @@
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
-    <Fab on:click={() => scrollToNew()}>
+    <Fab on:click={() => scrollBottom()}>
         {#if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>

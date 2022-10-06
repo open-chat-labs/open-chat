@@ -68,7 +68,6 @@ import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
 import { messagesRead } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
@@ -252,7 +251,6 @@ export class CachingUserClient implements IUserClient {
 
         const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
         const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
-        const currentScrollStrategy = get(scrollStrategy);
 
         const orderedChats = nextResponse.chatSummaries
             .filter(
@@ -266,25 +264,14 @@ export class CachingUserClient implements IUserClient {
 
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
-                let targetMessageIndex: number | undefined = undefined;
-                if (currentScrollStrategy !== "latestMessage") {
-                    // horrible having to do this but if we don't the message read tracker will not be in the right state
-                    messagesRead.syncWithServer(
-                        chat.chatId,
-                        chat.readByMe,
-                        threadsReadFromChat(chat)
-                    );
-                }
+                // horrible having to do this but if we don't the message read tracker will not be in the right state
+                messagesRead.syncWithServer(
+                    chat.chatId,
+                    chat.readByMe,
+                    threadsReadFromChat(chat)
+                );
 
-                if (currentScrollStrategy === "firstMention") {
-                    targetMessageIndex =
-                        getFirstUnreadMention(chat)?.messageIndex ??
-                        getFirstUnreadMessageIndex(chat);
-                }
-                if (currentScrollStrategy === "firstMessage") {
-                    targetMessageIndex = getFirstUnreadMessageIndex(chat);
-                }
-
+                const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);
 
                 // fire and forget an events request that will prime the cache
