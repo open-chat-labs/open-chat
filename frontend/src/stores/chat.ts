@@ -15,7 +15,6 @@ import { immutableStore } from "./immutable";
 import {
     compareChats,
     getContentAsText,
-    getFirstUnreadMention,
     getFirstUnreadMessageIndex,
     getNextEventAndMessageIndexes,
     mergeServerEvents,
@@ -33,7 +32,6 @@ import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser } from "../domain/user/user";
-import { scrollStrategy } from "./settings";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
@@ -319,7 +317,6 @@ export function setSelectedChat(
     messageIndex?: number,
     threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
 ): void {
-    const currentScrollStrategy = get(scrollStrategy);
     closeNotificationsForChat(chat.chatId);
 
     // TODO don't think this should be in here really
@@ -332,13 +329,8 @@ export function setSelectedChat(
     }
 
     if (messageIndex === undefined) {
-        if (currentScrollStrategy === "firstMention") {
-            messageIndex =
-                getFirstUnreadMention(chat)?.messageIndex ?? getFirstUnreadMessageIndex(chat);
-        }
-        if (currentScrollStrategy === "firstMessage") {
-            messageIndex = getFirstUnreadMessageIndex(chat);
-        }
+        messageIndex = getFirstUnreadMessageIndex(chat);
+
         if (messageIndex !== undefined) {
             const latestServerMessageIndex =
                 get(serverChatSummariesStore)[chat.chatId]?.latestMessage?.event.messageIndex ?? 0;

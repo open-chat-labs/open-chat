@@ -1206,8 +1206,6 @@ export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & 
     readByMe: IndexRange[];
 };
 
-export type ScrollStrategy = "latestMessage" | "firstMessage" | "firstMention";
-
 export type UnpinMessageResponse =
     | "no_change"
     | "caller_not_in_group"

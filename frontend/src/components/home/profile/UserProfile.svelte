@@ -30,7 +30,6 @@
         enterSend,
         fullScreen,
         referralOpen,
-        scrollStrategy,
         statsSectionOpen,
         storageSectionOpen,
         userInfoOpen,
@@ -39,7 +38,7 @@
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
-    import type { ChatMetrics, ScrollStrategy } from "../../../domain/chat/chat";
+    import type { ChatMetrics } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
@@ -154,10 +153,6 @@
         } else {
             dispatch("unsubscribeNotifications");
         }
-    }
-
-    function selectScrollStrategy(ev: Event) {
-        scrollStrategy.set((ev.target as HTMLInputElement).value as ScrollStrategy);
     }
 
     function selectTheme(theme: string) {
@@ -327,16 +322,6 @@
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
-            <Legend>{$_("scrollPosition")}</Legend>
-            {#each ["latestMessage", "firstMessage", "firstMention"] as strategy}
-                <Radio
-                    group="scrollPosition"
-                    value={strategy}
-                    checked={$scrollStrategy === strategy}
-                    id={strategy}
-                    label={$_(strategy)}
-                    on:change={selectScrollStrategy} />
-            {/each}
         </CollapsibleCard>
     </div>
     <div class="accounts">
