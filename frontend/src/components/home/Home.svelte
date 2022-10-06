@@ -1078,24 +1078,8 @@
             });
     }
 
-    function showAbout() {
-        window.location.href = "/home";
-    }
-
-    function showRoadmap() {
-        window.location.href = "/roadmap";
-    }
-
-    function showArchitecture() {
-        window.location.href = "/architecture";
-    }
-
-    function showFeatures() {
-        window.location.href = "/features";
-    }
-
-    function showWhitepaper() {
-        window.location.href = "/whitepaper";
+    function showLandingPageRoute(route: string) {
+        return () => (window.location.href = route);
     }
 
     $: bgHeight = $dimensions.height * 0.9;
@@ -1112,12 +1096,12 @@
             {searchTerm}
             {searchResultsAvailable}
             {searching}
-            on:showAbout={showAbout}
+            on:showAbout={showLandingPageRoute("/home")}
             on:showFaq={() => (modal = ModalType.Faq)}
-            on:showRoadmap={showRoadmap}
-            on:showArchitecture={showArchitecture}
-            on:showFeatures={showFeatures}
-            on:showWhitepaper={showWhitepaper}
+            on:showRoadmap={showLandingPageRoute("/roadmap")}
+            on:showArchitecture={showLandingPageRoute("/architecture")}
+            on:showFeatures={showLandingPageRoute("/features")}
+            on:showWhitepaper={showLandingPageRoute("whitepaper")}
             on:searchEntered={performSearch}
             on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}
