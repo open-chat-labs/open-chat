@@ -15,7 +15,6 @@ import { immutableStore } from "./immutable";
 import {
     compareChats,
     getContentAsText,
-    getFirstUnreadMention,
     getFirstUnreadMessageIndex,
     getNextEventAndMessageIndexes,
     mergeServerEvents,
@@ -33,7 +32,6 @@ import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser } from "../domain/user/user";
-import { scrollStrategy } from "./settings";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
@@ -276,10 +274,17 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>()
 );
 
-export const confirmedEventIndexesLoaded = createDerivedPropStore<
-    ChatSpecificState,
-    "confirmedEventIndexesLoaded"
->(chatStateStore, "confirmedEventIndexesLoaded", () => new DRange());
+const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
+    const ranges = new DRange();
+    serverEvents.forEach((e) => ranges.add(e.index));
+    return ranges;
+})
+
+export function confirmedEventIndexesLoaded(chatId: string): DRange {
+    return get(selectedChatId) === chatId
+        ? get(confirmedEventIndexesLoadedStore)
+        : new DRange();
+}
 
 export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
     chatStateStore,
@@ -312,7 +317,6 @@ export function setSelectedChat(
     messageIndex?: number,
     threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
 ): void {
-    const currentScrollStrategy = get(scrollStrategy);
     closeNotificationsForChat(chat.chatId);
 
     // TODO don't think this should be in here really
@@ -325,13 +329,8 @@ export function setSelectedChat(
     }
 
     if (messageIndex === undefined) {
-        if (currentScrollStrategy === "firstMention") {
-            messageIndex =
-                getFirstUnreadMention(chat)?.messageIndex ?? getFirstUnreadMessageIndex(chat);
-        }
-        if (currentScrollStrategy === "firstMessage") {
-            messageIndex = getFirstUnreadMessageIndex(chat);
-        }
+        messageIndex = getFirstUnreadMessageIndex(chat);
+
         if (messageIndex !== undefined) {
             const latestServerMessageIndex =
                 get(serverChatSummariesStore)[chat.chatId]?.latestMessage?.event.messageIndex ?? 0;
@@ -592,12 +591,10 @@ export function addServerEventsToStores(
     chatStateStore.updateProp(chatId, "serverEvents", (events) =>
         mergeServerEvents(events, newEvents)
     );
+}
 
-    chatStateStore.updateProp(chatId, "confirmedEventIndexesLoaded", (range) => {
-        const r = range.clone();
-        newEvents.forEach((e) => r.add(e.index));
-        return r;
-    });
+export function clearServerEvents(chatId: string): void {
+    chatStateStore.setProp(chatId, "serverEvents", []);
 }
 
 /**

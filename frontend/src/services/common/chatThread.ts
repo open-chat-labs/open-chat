@@ -17,6 +17,8 @@ import {
     updateSummaryWithConfirmedMessage,
     chatStateStore,
     addServerEventsToStores,
+    confirmedEventIndexesLoaded,
+    clearServerEvents,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
 import { rollbar } from "../../utils/logging";
@@ -325,13 +327,16 @@ export async function handleEventsResponse(
     if (resp === "events_failed") return;
 
     if (!keepCurrentEvents) {
-        chatStateStore.setProp(chat.chatId, "confirmedEventIndexesLoaded", new DRange());
+        clearServerEvents(chat.chatId);
         chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
     } else if (!isContiguous(chat.chatId, resp)) {
         return;
     }
 
-    const events = resp.events.concat(resp.affectedEvents);
+    // Only include affected events that overlap with already loaded events
+    const confirmedLoaded = confirmedEventIndexesLoaded(chat.chatId);
+    const events = resp.events.concat(
+        resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded)));
 
     const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
@@ -342,7 +347,7 @@ export async function handleEventsResponse(
 }
 
 function isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
-    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
+    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
 
     if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
 
@@ -424,7 +429,7 @@ function previousMessagesCriteria(
 }
 
 function earliestLoadedIndex(chatId: string): number | undefined {
-    const confirmedLoaded = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded");
+    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
     return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
 }
 
@@ -474,7 +479,7 @@ function newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefi
 }
 
 function confirmedUpToEventIndex(chatId: string): number | undefined {
-    const ranges = chatStateStore.getProp(chatId, "confirmedEventIndexesLoaded").subranges();
+    const ranges = confirmedEventIndexesLoaded(chatId).subranges();
     if (ranges.length > 0) {
         return ranges[0].high;
     }
@@ -498,10 +503,7 @@ export function refreshAffectedEvents(
     clientChat: ChatSummary,
     affectedEventIndexes: number[]
 ): Promise<void> {
-    const confirmedLoaded = chatStateStore.getProp(
-        clientChat.chatId,
-        "confirmedEventIndexesLoaded"
-    );
+    const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
     const filtered = affectedEventIndexes.filter((e) => indexIsInRanges(e, confirmedLoaded));
     if (filtered.length === 0) {
         return Promise.resolve();
@@ -718,10 +720,7 @@ export async function handleMessageSentByOther(
     messageEvent: EventWrapper<Message>,
     confirmed: boolean
 ): Promise<void> {
-    const confirmedLoaded = chatStateStore.getProp(
-        clientChat.chatId,
-        "confirmedEventIndexesLoaded"
-    );
+    const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
 
     if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
         // We already have this confirmed message

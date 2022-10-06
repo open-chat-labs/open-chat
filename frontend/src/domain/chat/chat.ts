@@ -790,7 +790,6 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
     userGroupKeys: Set<string>;
-    confirmedEventIndexesLoaded: DRange;
     serverEvents: EventWrapper<ChatEvent>[];
 };
 
@@ -1206,8 +1205,6 @@ export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" |
 export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
     readByMe: IndexRange[];
 };
-
-export type ScrollStrategy = "latestMessage" | "firstMessage" | "firstMention";
 
 export type UnpinMessageResponse =
     | "no_change"
