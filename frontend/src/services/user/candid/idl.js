@@ -525,6 +525,7 @@ export const idlFactory = ({ IDL }) => {
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'correlation_id' : IDL.Nat64,
   });
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
@@ -616,6 +617,7 @@ export const idlFactory = ({ IDL }) => {
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'correlation_id' : IDL.Nat64,
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
@@ -853,7 +855,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat64,
+    'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
@@ -899,7 +901,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransferCryptoWithinGroupResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : Tokens,
+    'TransferLimitExceeded' : IDL.Nat,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({

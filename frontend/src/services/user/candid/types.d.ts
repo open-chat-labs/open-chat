@@ -114,6 +114,7 @@ export interface ChatEventWrapper {
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
+  'correlation_id' : bigint,
 }
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
@@ -208,6 +209,7 @@ export interface DirectChatEventWrapper {
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
+  'correlation_id' : bigint,
 }
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
@@ -555,6 +557,7 @@ export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
+  'correlation_id' : bigint,
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
@@ -671,6 +674,7 @@ export interface OwnershipTransferred {
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
+  'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
@@ -946,7 +950,7 @@ export interface TransferCryptoWithinGroupArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
-  { 'TransferLimitExceeded' : Tokens } |
+  { 'TransferLimitExceeded' : bigint } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'TransferCannotBeZero' : null } |
   {
@@ -1003,6 +1007,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
+  'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
