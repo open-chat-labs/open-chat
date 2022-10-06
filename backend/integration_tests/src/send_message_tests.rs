@@ -30,6 +30,7 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
     let send_message_result = send_direct_message(&agent, user1_id, &send_message_args).await;
 
@@ -57,6 +58,7 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context
         content: MessageContent::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
     let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
         .await
@@ -75,6 +77,7 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context
         }),
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
     let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
         .await

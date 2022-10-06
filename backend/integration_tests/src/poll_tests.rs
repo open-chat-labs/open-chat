@@ -69,6 +69,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
         replies_to: None,
         mentioned: Vec::new(),
         forwarding: false,
+        correlation_id: 0,
     };
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args1).await;
     println!("Ok");
@@ -79,6 +80,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
         message_index: 0.into(),
         poll_option: 0,
         operation: VoteOperation::RegisterVote,
+        correlation_id: 0,
     };
     match group_canister_client::register_poll_vote(&user1_agent, &chat_id.into(), &register_poll_vote_args)
         .await
@@ -117,6 +119,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
         message_index: 0.into(),
         poll_option: 1,
         operation: VoteOperation::RegisterVote,
+        correlation_id: 0,
     };
     match group_canister_client::register_poll_vote(&user1_agent, &chat_id.into(), &register_poll_vote_args)
         .await
@@ -140,6 +143,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
         message_index: 0.into(),
         poll_option: 1,
         operation: VoteOperation::DeleteVote,
+        correlation_id: 0,
     };
     match group_canister_client::register_poll_vote(&user1_agent, &chat_id.into(), &register_poll_vote_args)
         .await

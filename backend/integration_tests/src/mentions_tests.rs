@@ -90,6 +90,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
             replies_to: None,
             mentioned: vec![],
             forwarding: false,
+            correlation_id: 0,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -124,6 +125,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
                 username: "Matt".to_owned(),
             }],
             forwarding: false,
+            correlation_id: 0,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -160,7 +162,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
                     assert_eq!(group_chat_summary.mentions.len(), 1);
                     assert_eq!(group_chat_summary.mentions[0].message_index, 1.into());
                 } else {
-                    assert!(false);
+                    panic!();
                 }
             }
             response => panic!("user::initial_state returned an error: {response:?}"),
@@ -183,6 +185,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
                 username: "Matt".to_owned(),
             }],
             forwarding: false,
+            correlation_id: 0,
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -211,7 +214,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context) {
                     assert_eq!(group_chat_summary.mentions.len(), 1);
                     assert_eq!(group_chat_summary.mentions[0].message_index, 2.into());
                 } else {
-                    assert!(false);
+                    panic!();
                 }
             }
             response => panic!("user::updates returned an error: {response:?}"),
