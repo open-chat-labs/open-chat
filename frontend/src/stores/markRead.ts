@@ -155,7 +155,8 @@ export class MessageReadTracker {
             }
             this.waiting[chatId].set(messageId, messageIndex);
         } else {
-            this.state[chatId].addRange(messageIndex);
+            // Mark the chat as read up to the new messageIndex
+            this.markRangeRead(chatId, 0, messageIndex);
         }
 
         this.publish();
