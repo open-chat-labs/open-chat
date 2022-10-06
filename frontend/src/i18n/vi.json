@@ -613,5 +613,8 @@
     "groupRulesEnabled": "{changedBy} đã bật quy tắc nhóm",
     "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm",
     "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
-    "groupRulesTooLong": "Nội quy nhóm quá dài"
+    "groupRulesTooLong": "Nội quy nhóm quá dài",
+    "features": "Đặc trưng",
+    "architecture": "Ngành kiến trúc",
+    "whitepaper": "Giấy trắng"
 }

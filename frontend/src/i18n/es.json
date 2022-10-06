@@ -613,5 +613,8 @@
     "groupRulesEnabled": "{changedBy} habilitó las reglas del grupo",
     "groupRulesDisabled": "{changedBy} inhabilitó las reglas del grupo",
     "groupRulesTooShort": "Las reglas del grupo no deben estar vacías.",
-    "groupRulesTooLong": "Las reglas del grupo son demasiado largas."
+    "groupRulesTooLong": "Las reglas del grupo son demasiado largas.",
+    "features": "Características",
+    "architecture": "Arquitectura",
+    "whitepaper": "Papel blanco"
 }

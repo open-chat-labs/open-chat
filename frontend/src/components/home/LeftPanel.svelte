@@ -24,6 +24,9 @@
             on:loadMessage
             on:chatWith
             on:showRoadmap
+            on:showArchitecture
+            on:showFeatures
+            on:showWhitepaper
             on:showFaq
             on:showAbout
             on:userAvatarSelected

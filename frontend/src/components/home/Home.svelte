@@ -1082,6 +1082,26 @@
             });
     }
 
+    function showAbout() {
+        window.location.href = "/home";
+    }
+
+    function showRoadmap() {
+        window.location.href = "/roadmap";
+    }
+
+    function showArchitecture() {
+        window.location.href = "/architecture";
+    }
+
+    function showFeatures() {
+        window.location.href = "/features";
+    }
+
+    function showWhitepaper() {
+        window.location.href = "/whitepaper";
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1096,9 +1116,12 @@
             {searchTerm}
             {searchResultsAvailable}
             {searching}
-            on:showAbout={() => (modal = ModalType.About)}
+            on:showAbout={showAbout}
             on:showFaq={() => (modal = ModalType.Faq)}
-            on:showRoadmap={() => (modal = ModalType.Roadmap)}
+            on:showRoadmap={showRoadmap}
+            on:showArchitecture={showArchitecture}
+            on:showFeatures={showFeatures}
+            on:showWhitepaper={showWhitepaper}
             on:searchEntered={performSearch}
             on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}

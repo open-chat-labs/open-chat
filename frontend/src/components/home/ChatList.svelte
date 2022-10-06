@@ -158,6 +158,9 @@
         on:showAbout
         on:showFaq
         on:showRoadmap
+        on:showArchitecture
+        on:showFeatures
+        on:showWhitepaper
         {user}
         on:profile
         on:newGroup />

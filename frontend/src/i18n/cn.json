@@ -613,5 +613,8 @@
     "groupRulesEnabled": "{changedBy} 启用组规则",
     "groupRulesDisabled": "{changedBy} 禁用组规则",
     "groupRulesTooShort": "组规则不能为空",
-    "groupRulesTooLong": "群规太长"
+    "groupRulesTooLong": "群规太长",
+    "features": "特征",
+    "architecture": "建筑学",
+    "whitepaper": "白皮书"
 }
