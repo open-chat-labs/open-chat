@@ -6,15 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.53"
-candid = "0.7.17"
-futures = "0.3.21"
-garcon = "0.2.3"
-ic-agent = "0.20.0"
+async-trait = { workspace = true }
+candid = { workspace = true }
+futures = { workspace = true }
+garcon = { workspace = true }
+ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 user_index_canister = { path = "../../canisters/user_index/api" }
-openssl = { version = "0.10.35", features = ["vendored"] }
-serde = "1.0.137"
-tokio = "1.15.0"
-tracing = "0.1.33"
+openssl = { workspace = true, features = ["vendored"] }
+serde = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../libraries/types" }

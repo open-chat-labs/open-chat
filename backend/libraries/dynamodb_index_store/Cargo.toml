@@ -7,8 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.53"
-aws-sdk-dynamodb = "0.9.0"
-aws-types = "0.9.0"
+async-trait = { workspace = true }
+aws-sdk-dynamodb = { workspace = true }
+aws-types = { workspace = true }
 index_store = { path = "../index_store" }
 types = { path = "../types" }

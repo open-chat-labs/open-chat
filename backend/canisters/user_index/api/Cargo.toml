@@ -7,9 +7,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
-ic-ledger-types = "0.1.1"
-serde = "1.0.137"
+ic-ledger-types = { workspace = true }
+serde = { workspace = true }
 serde_bytes = "0.11"
 types = { path = "../../../libraries/types" }

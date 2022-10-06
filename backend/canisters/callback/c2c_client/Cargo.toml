@@ -7,10 +7,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 callback_canister = { path = "../api" }
 canister_client_macros = { path = "../../../libraries/canister_client_macros" }
-ic-cdk = "0.5.6"
+ic-cdk = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
-tracing = "0.1.33"
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

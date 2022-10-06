@@ -12,19 +12,19 @@ crate-type = ["cdylib"]
 
 [dependencies]
 callback_canister = { path = "../api" }
-candid = "0.7.17"
+candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
-futures = "0.3.21"
+futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.6"
-ic-cdk-macros = "0.5.6"
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
-serde = "1.0.137"
-serde_bytes = "0.11.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
-tracing = "0.1.33"
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+stable_memory = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

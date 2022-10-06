@@ -11,27 +11,27 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
-futures = "0.3.21"
+futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
-ic-cdk = "0.5.6"
-ic-cdk-macros = "0.5.6"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
-ic-ledger-types = "0.1.1"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
-itertools = "0.10.3"
+ic-base-types = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-icrc1 = { workspace = true }
+ic-icrc1-client = { workspace = true }
+ic-icrc1-client-cdk = { workspace = true }
+ic-ledger-types = { workspace = true }
+ic-ledger-canister-core = { workspace = true }
+itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
@@ -39,10 +39,10 @@ notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 num-traits = "0.2.15"
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 search = { path = "../../../libraries/search" }
-serde = "1.0.137"
-serde_bytes = "0.11.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
-tracing = "0.1.33"
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+stable_memory = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils", features = ["range-set"] }
 user_canister = { path = "../api" }

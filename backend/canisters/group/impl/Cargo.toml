@@ -13,32 +13,32 @@ crate-type = ["cdylib"]
 [dependencies]
 callback_canister = { path = "../../callback/api" }
 callback_canister_c2c_client = { path = "../../callback/c2c_client" }
-candid = "0.7.17"
+candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
-futures = "0.3.21"
+futures = { workspace = true }
 group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.6"
-ic-cdk-macros = "0.5.6"
-itertools = "0.10.3"
-lazy_static = "1.4.0"
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
-rand = "0.8.5"
-regex = "1.5.4"
+rand = { workspace = true }
+regex = { workspace = true }
 search = { path = "../../../libraries/search" }
-serde = "1.0.137"
-serde_bytes = "0.11.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
-tracing = "0.1.33"
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+stable_memory = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
