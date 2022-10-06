@@ -41,7 +41,6 @@ import {
 import type { IDBPDatabase } from "idb";
 import {
     compareChats,
-    getFirstUnreadMention,
     getFirstUnreadMessageIndex,
     indexRangeForChat,
     MAX_MISSING,
