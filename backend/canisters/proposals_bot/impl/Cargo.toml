@@ -11,23 +11,23 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.6"
-ic-cdk-macros = "0.5.6"
-itertools = "0.10.3"
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+itertools = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
-serde = "1.0.137"
+serde = { workspace = true }
 sha2 = "0.10.2"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
-tracing = "0.1.33"
+stable_memory = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

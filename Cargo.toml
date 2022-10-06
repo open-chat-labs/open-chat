@@ -54,6 +54,61 @@ members = [
     "backend/sms_sender/core"
 ]
 
+[workspace.dependencies]
+async-trait = "0.1.53"
+aws-config = "0.9.0"
+aws-sdk-dynamodb = "0.9.0"
+aws-sdk-pinpoint = "0.9.0"
+aws-types = "0.9.0"
+base64 = "0.13.0"
+candid = "0.7.17"
+canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
+clap = "3.0.14"
+dirs = "3.0.2"
+dotenv = "0.15.0"
+futures = "0.3.21"
+garcon = "0.2.3"
+getrandom = "0.2.7"
+ic-agent = "0.20.0"
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
+ic-cdk = "0.5.6"
+ic-cdk-macros = "0.5.6"
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
+ic-ledger-types = "0.1.1"
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "4bd164bbc600421a2e6f93feb41f3d1479bb8d0f" }
+ic-utils = "0.20.0"
+itertools = "0.10.3"
+lazy_static = "1.4.0"
+num-traits = "0.2.14"
+open_storage_bucket_canister = { package = "bucket_canister", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
+open_storage_bucket_canister_c2c_client = { package = "bucket_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
+open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
+open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
+openssl = "0.10.35"
+proc-macro2 = "1.0"
+quote = "1.0.9"
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+rand_core = "0.6.3"
+range-set = "0.0.9"
+regex = "1.5.4"
+rmp-serde = "1.1.0"
+serde = "1.0.137"
+serde_bytes = "0.11.6"
+serde_cbor = "0.11.2"
+serde_json = "1.0.81"
+sha2 = "0.10.2"
+stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+syn = "1.0.76"
+tokio = "1.15.0"
+tracing = "0.1.33"
+tracing-attributes = "0.1.20"
+tracing-subscriber = "0.3.11"
+web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "12a08c29e5175066cd70428699e10ac509036f01" }
+
 [profile.release]
 lto = true
 opt-level = "z"

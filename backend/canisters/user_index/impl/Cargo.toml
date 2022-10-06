@@ -11,33 +11,33 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
-captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
-futures = "0.3.21"
+captcha = { workspace = true }
+futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.6"
-ic-cdk-macros = "0.5.6"
-ic-ledger-types = "0.1.1"
-itertools = "0.10.3"
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-ledger-types = { workspace = true }
+itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
-open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "aec9c57d0cac24850475549d1b8c14dd337a83ae" }
-rand = "0.8.5"
-rand_chacha = "0.3.1"
-rand_core = "0.6.3"
-serde = "1.0.137"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
-tracing = "0.1.33"
+open_storage_index_canister = { workspace = true }
+open_storage_index_canister_c2c_client = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
+serde = { workspace = true }
+stable_memory = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
