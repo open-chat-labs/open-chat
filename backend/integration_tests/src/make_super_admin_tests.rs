@@ -84,6 +84,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
             chat_id,
             as_super_admin: false,
             invite_code: None,
+            correlation_id: 0,
         };
         match user_canister_client::join_group_v2(&user3_agent, &user3_id.into(), &args)
             .await
@@ -101,6 +102,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
             chat_id,
             as_super_admin: true,
             invite_code: None,
+            correlation_id: 0,
         };
         match user_canister_client::join_group_v2(&user3_agent, &user3_id.into(), &args)
             .await
@@ -124,7 +126,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
                 if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
                     assert!(matches!(group_chat_summary.role, Role::SuperAdmin(_)))
                 } else {
-                    assert!(false);
+                    panic!();
                 }
             }
             response => panic!("user::initial_state returned an error: {response:?}"),
@@ -137,6 +139,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
         let args = group_canister::change_role::Args {
             user_id: user2_id,
             new_role: Role::Owner,
+            correlation_id: 0,
         };
         match group_canister_client::change_role(&user3_agent, &chat_id.into(), &args)
             .await
@@ -150,7 +153,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("7. User3 leave the group... ");
-        let args = user_canister::leave_group::Args { chat_id };
+        let args = user_canister::leave_group::Args {
+            chat_id,
+            correlation_id: 0,
+        };
         match user_canister_client::leave_group(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
@@ -167,6 +173,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
             user_ids: vec![user3_id],
             added_by_name: USER2_DEFAULT_NAME.to_string(),
             allow_blocked_users: false,
+            correlation_id: 0,
         };
         match group_canister_client::add_participants(&user2_agent, &chat_id.into(), &args)
             .await
@@ -180,7 +187,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("9. User3 assume SuperAdmin role... ");
-        let args = user_canister::assume_group_super_admin::Args { chat_id };
+        let args = user_canister::assume_group_super_admin::Args {
+            chat_id,
+            correlation_id: 0,
+        };
         match user_canister_client::assume_group_super_admin(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
@@ -193,7 +203,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("10. User3 remove user1... ");
-        let args = group_canister::remove_participant::Args { user_id: user1_id };
+        let args = group_canister::remove_participant::Args {
+            user_id: user1_id,
+            correlation_id: 0,
+        };
         match group_canister_client::remove_participant(&user3_agent, &chat_id.into(), &args)
             .await
             .unwrap()
@@ -206,7 +219,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("11. User3 relinquish SuperAdmin... ");
-        let args = user_canister::relinquish_group_super_admin::Args { chat_id };
+        let args = user_canister::relinquish_group_super_admin::Args {
+            chat_id,
+            correlation_id: 0,
+        };
         match user_canister_client::relinquish_group_super_admin(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
@@ -219,7 +235,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("12. User3 try to remove user2... ");
-        let args = group_canister::remove_participant::Args { user_id: user2_id };
+        let args = group_canister::remove_participant::Args {
+            user_id: user2_id,
+            correlation_id: 0,
+        };
         match group_canister_client::remove_participant(&user3_agent, &chat_id.into(), &args).await {
             Err(error) if format!("{error:?}").contains("403") => {}
             response => panic!("group::remove_participant did not return 403 as expected: {response:?}"),
@@ -229,7 +248,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
 
     {
         print!("13. User3 assume SuperAdmin role... ");
-        let args = user_canister::assume_group_super_admin::Args { chat_id };
+        let args = user_canister::assume_group_super_admin::Args {
+            chat_id,
+            correlation_id: 0,
+        };
         match user_canister_client::assume_group_super_admin(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
@@ -282,7 +304,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Con
                             break;
                         }
                     } else {
-                        assert!(false);
+                        panic!();
                     }
                 }
                 response => panic!("user::initial_state returned an error: {response:?}"),
