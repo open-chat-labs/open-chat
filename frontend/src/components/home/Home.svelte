@@ -4,9 +4,7 @@
     import LeftPanel from "./LeftPanel.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Toast from "../Toast.svelte";
-    import AboutModal from "../AboutModal.svelte";
     import FaqModal from "../FaqModal.svelte";
-    import RoadmapModal from "../RoadmapModal.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
@@ -133,9 +131,7 @@
 
     enum ModalType {
         None,
-        About,
         Faq,
-        Roadmap,
         SelectChat,
     }
 
@@ -1246,10 +1242,6 @@
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
             <FaqModal bind:question={faqQuestion} on:close={closeModal} />
-        {:else if modal === ModalType.Roadmap}
-            <RoadmapModal on:close={closeModal} />
-        {:else if modal === ModalType.About}
-            <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
                 chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}
