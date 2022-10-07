@@ -51,14 +51,9 @@ impl DirectChats {
 
         let message_event = chat.events.push_message(args);
 
-        if sent_by_me {
-            if chat.read_by_me.value.insert(message_event.event.message_index.into()) {
-                chat.read_by_me.timestamp = now;
-            }
-        } else {
-            if chat.read_by_them.value.insert(message_event.event.message_index.into()) {
-                chat.read_by_them.timestamp = now;
-            }
+        chat.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
+
+        if !sent_by_me {
             if let Some(their_message_index) = their_message_index {
                 chat.unread_message_index_map
                     .add(message_event.event.message_index, their_message_index);
