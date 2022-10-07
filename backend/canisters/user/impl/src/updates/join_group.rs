@@ -25,6 +25,7 @@ async fn join_group_v2(args: Args) -> Response {
                 mutate_state(|state| commit(args.chat_id, args.as_super_admin, latest_message_index, state));
 
                 let mut summary: GroupChatSummary = summary.into();
+                summary.read_up_to = latest_message_index;
                 if let Some(message_index) = latest_message_index {
                     summary.read_by_me.push(MessageIndexRange {
                         from: MessageIndex::default(),
