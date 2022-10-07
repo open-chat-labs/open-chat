@@ -84,14 +84,14 @@
         "util": "0.12.3"
     },
     "dependencies": {
-        "@dfinity/agent": "^0.13.3",
-        "@dfinity/auth-client": "^0.13.3",
-        "@dfinity/authentication": "^0.13.3",
-        "@dfinity/candid": "^0.13.3",
-        "@dfinity/identity": "^0.13.3",
-        "@dfinity/principal": "^0.13.3",
+        "@dfinity/agent": "^0.14.0",
+        "@dfinity/auth-client": "^0.14.0",
+        "@dfinity/authentication": "^0.14.0",
+        "@dfinity/candid": "^0.14.0",
+        "@dfinity/identity": "^0.14.0",
+        "@dfinity/principal": "^0.14.0",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",
-        "@open-ic/open-storage-agent": "^0.1.5",
+        "@open-ic/open-storage-agent": "^0.1.6",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "drange": "^2.0.1",
         "emoji-picker-element": "^1.11.2",
@@ -110,7 +110,7 @@
         "svelte-qr": "^1.0.0",
         "svelte-spa-router": "^3.2.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
-        "uuid": "^3.4.0"
+        "uuid": "^9.0.0"
     },
     "jest": {
         "testEnvironment": "jsdom",

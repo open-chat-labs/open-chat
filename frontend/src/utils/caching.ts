@@ -20,7 +20,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 44;
+const CACHE_VERSION = 45;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -91,7 +91,13 @@ export function openCache(principal: string): Database | undefined {
     }
     try {
         return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-            upgrade(db, _oldVersion, _newVersion) {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                if (oldVersion === 44) {
+                    if (transaction.objectStoreNames.contains("users")) {
+                        transaction.objectStore("users").clear();
+                    }
+                    return;
+                }
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
