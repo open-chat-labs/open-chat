@@ -11,7 +11,7 @@ use utils::timestamped_map::TimestampedMap;
 pub struct GroupChat {
     pub chat_id: ChatId,
     pub date_joined: TimestampMillis,
-    pub read_up_to: Timestamped<Option<MessageIndex>>,
+    pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
     pub last_changed_for_my_data: TimestampMillis,
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
@@ -23,7 +23,7 @@ impl GroupChat {
         GroupChat {
             chat_id,
             date_joined: now,
-            read_up_to: Timestamped::new(read_up_to, now),
+            read_by_me_up_to: Timestamped::new(read_up_to, now),
             last_changed_for_my_data: now,
             is_super_admin,
             threads_read: TimestampedMap::default(),
@@ -33,7 +33,7 @@ impl GroupChat {
 
     pub fn last_updated(&self) -> TimestampMillis {
         [
-            self.read_up_to.timestamp,
+            self.read_by_me_up_to.timestamp,
             self.last_changed_for_my_data,
             self.threads_read.last_updated().unwrap_or_default(),
             self.archived.timestamp,
@@ -45,8 +45,8 @@ impl GroupChat {
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if self.read_up_to.value < Some(message_index) {
-            self.read_up_to = Timestamped::new(Some(message_index), now);
+        if self.read_by_me_up_to.value < Some(message_index) {
+            self.read_by_me_up_to = Timestamped::new(Some(message_index), now);
             true
         } else {
             false
@@ -54,7 +54,7 @@ impl GroupChat {
     }
 
     pub fn to_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
-        let read_up_to = self.read_up_to.if_set_after(updates_since).copied().flatten();
+        let read_by_me_up_to = self.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
 
         GroupChatSummaryUpdates {
             chat_id: self.chat_id,
@@ -67,8 +67,8 @@ impl GroupChat {
             latest_event_index: None,
             participant_count: None,
             role: None,
-            read_by_me_up_to: read_up_to,
-            read_by_me: read_up_to.map(|i| vec![MessageIndexRange { from: 0.into(), to: i }]),
+            read_by_me_up_to,
+            read_by_me: read_by_me_up_to.map(|i| vec![MessageIndexRange { from: 0.into(), to: i }]),
             notifications_muted: None,
             mentions: Vec::new(),
             wasm_version: None,
@@ -107,7 +107,7 @@ struct GroupChatPrevious {
 
 impl From<GroupChatPrevious> for GroupChat {
     fn from(g: GroupChatPrevious) -> Self {
-        let read_up_to: Option<MessageIndex> = g
+        let read_by_me_up_to: Option<MessageIndex> = g
             .read_by_me
             .value
             .into_smallvec()
@@ -118,7 +118,7 @@ impl From<GroupChatPrevious> for GroupChat {
         GroupChat {
             chat_id: g.chat_id,
             date_joined: g.date_joined,
-            read_up_to: Timestamped::new(read_up_to, g.read_by_me.timestamp),
+            read_by_me_up_to: Timestamped::new(read_by_me_up_to, g.read_by_me.timestamp),
             last_changed_for_my_data: g.last_changed_for_my_data,
             is_super_admin: g.is_super_admin,
             threads_read: g.threads_read,

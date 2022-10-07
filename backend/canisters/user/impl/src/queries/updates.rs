@@ -100,9 +100,9 @@ fn finalize(
         }
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
-            summary.read_by_me_up_to = group_chat.read_up_to.value;
+            summary.read_by_me_up_to = group_chat.read_by_me_up_to.value;
             summary.read_by_me = group_chat
-                .read_up_to
+                .read_by_me_up_to
                 .value
                 .map(|i| vec![MessageIndexRange::from_zero(i)])
                 .unwrap_or_default();
@@ -116,9 +116,9 @@ fn finalize(
             group_chats_updated
                 .entry(group_chat.chat_id)
                 .and_modify(|su| {
-                    su.read_by_me_up_to = group_chat.read_up_to.if_set_after(updates_since).copied().flatten();
+                    su.read_by_me_up_to = group_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
                     su.read_by_me = group_chat
-                        .read_up_to
+                        .read_by_me_up_to
                         .if_set_after(updates_since)
                         .copied()
                         .flatten()
