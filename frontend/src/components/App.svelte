@@ -387,6 +387,10 @@
             box-sizing: inherit;
         }
 
+        :root {
+            --bg: #121212;
+        }
+
         body {
             transition: background ease-in-out 300ms, color ease-in-out 150ms,
                 padding ease-in-out 150ms;
