@@ -231,15 +231,19 @@ export class MessageReadTracker {
             return 0;
         }
 
-        const serverState = this.serverState[chatId]?.ranges.clone() ?? new DRange();
+        const messagesRead = new DRange();
+        const serverState = this.serverState[chatId]?.ranges ?? new DRange();
+        const localState = this.state[chatId]?.ranges ?? new DRange();
+
+        messagesRead.add(serverState).add(localState);
+
         // Exclude any data for messages earlier than the `firstMessageIndex`
         if (firstMessageIndex > 0) {
-            serverState.subtract(new DRange(0, firstMessageIndex - 1));
+            messagesRead.subtract(new DRange(0, firstMessageIndex - 1));
         }
         const total = latestMessageIndex - firstMessageIndex + 1;
         const read =
-            serverState.length +
-            (this.state[chatId]?.ranges?.length ?? 0) +
+            messagesRead.length +
             (this.waiting[chatId]?.size ?? 0);
         return Math.max(total - read, 0);
     }
