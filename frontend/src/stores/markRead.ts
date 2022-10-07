@@ -154,12 +154,11 @@ export class MessageReadTracker {
                 this.waiting[chatId] = new Map<bigint, number>();
             }
             this.waiting[chatId].set(messageId, messageIndex);
+            this.publish();
         } else {
             // Mark the chat as read up to the new messageIndex
             this.markRangeRead(chatId, 0, messageIndex);
         }
-
-        this.publish();
     }
 
     markRangeRead(chatId: string, from: number, to: number): void {
