@@ -182,8 +182,8 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
-{#if isCanisterUrl && !dismissedDomainWarning}
-    <SwitchDomain on:dismissDomainWarning={() => (dismissedDomainWarning = true)} />
+{#if isCanisterUrl}
+    <SwitchDomain />
 {:else if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
 {:else if $identityState === "registering"}
