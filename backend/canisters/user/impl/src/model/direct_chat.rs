@@ -11,8 +11,8 @@ pub struct DirectChat {
     pub date_created: TimestampMillis,
     pub events: AllChatEvents,
     pub unread_message_index_map: UnreadMessageIndexMap,
-    pub read_up_to_by_me: Timestamped<Option<MessageIndex>>,
-    pub read_up_to_by_them: Timestamped<Option<MessageIndex>>,
+    pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
+    pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
 }
@@ -24,8 +24,8 @@ impl DirectChat {
             date_created: now,
             events: AllChatEvents::new_direct_chat(them, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
-            read_up_to_by_me: Timestamped::new(None, now),
-            read_up_to_by_them: Timestamped::new(None, now),
+            read_by_me_up_to: Timestamped::new(None, now),
+            read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
         }
@@ -34,8 +34,8 @@ impl DirectChat {
     pub fn last_updated(&self) -> TimestampMillis {
         let timestamps = [
             self.events.main().last().timestamp,
-            self.read_up_to_by_me.timestamp,
-            self.read_up_to_by_them.timestamp,
+            self.read_by_me_up_to.timestamp,
+            self.read_by_them_up_to.timestamp,
             self.notifications_muted.timestamp,
             self.archived.timestamp,
         ];
@@ -44,7 +44,7 @@ impl DirectChat {
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
-        let val = if me { &mut self.read_up_to_by_me } else { &mut self.read_up_to_by_them };
+        let val = if me { &mut self.read_by_me_up_to } else { &mut self.read_by_them_up_to };
         if val.value < Some(message_index) {
             *val = Timestamped::new(Some(message_index), now);
             true
@@ -68,7 +68,7 @@ struct DirectChatPrevious {
 
 impl From<DirectChatPrevious> for DirectChat {
     fn from(d: DirectChatPrevious) -> Self {
-        let read_up_to_by_me: Option<MessageIndex> = d
+        let read_by_me_up_to: Option<MessageIndex> = d
             .read_by_me
             .value
             .into_smallvec()
@@ -76,7 +76,7 @@ impl From<DirectChatPrevious> for DirectChat {
             .next()
             .map(|r| (*r.end()).into());
 
-        let read_up_to_by_them: Option<MessageIndex> = d
+        let read_by_them_up_to: Option<MessageIndex> = d
             .read_by_them
             .value
             .into_smallvec()
@@ -89,8 +89,8 @@ impl From<DirectChatPrevious> for DirectChat {
             date_created: d.date_created,
             events: d.events,
             unread_message_index_map: d.unread_message_index_map,
-            read_up_to_by_me: Timestamped::new(read_up_to_by_me, d.read_by_me.timestamp),
-            read_up_to_by_them: Timestamped::new(read_up_to_by_them, d.read_by_them.timestamp),
+            read_by_me_up_to: Timestamped::new(read_by_me_up_to, d.read_by_me.timestamp),
+            read_by_them_up_to: Timestamped::new(read_by_them_up_to, d.read_by_them.timestamp),
             notifications_muted: d.notifications_muted,
             archived: d.archived,
         }

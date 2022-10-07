@@ -147,15 +147,15 @@ fn finalize(
                 latest_message: chat_events.latest_message(Some(my_user_id)).unwrap(),
                 latest_event_index: chat_events.last().index,
                 date_created: direct_chat.date_created,
-                read_by_me_up_to: direct_chat.read_up_to_by_me.value,
-                read_by_them_up_to: direct_chat.read_up_to_by_them.value,
+                read_by_me_up_to: direct_chat.read_by_me_up_to.value,
+                read_by_them_up_to: direct_chat.read_by_them_up_to.value,
                 read_by_me: direct_chat
-                    .read_up_to_by_me
+                    .read_by_me_up_to
                     .value
                     .map(|i| vec![MessageIndexRange::from_zero(i)])
                     .unwrap_or_default(),
                 read_by_them: direct_chat
-                    .read_up_to_by_them
+                    .read_by_them_up_to
                     .value
                     .map(|i| vec![MessageIndexRange::from_zero(i)])
                     .unwrap_or_default(),
@@ -176,14 +176,14 @@ fn finalize(
             let metrics = if has_new_events { Some(direct_chat.events.metrics().clone()) } else { None };
 
             let read_by_me = direct_chat
-                .read_up_to_by_me
+                .read_by_me_up_to
                 .if_set_after(updates_since)
                 .copied()
                 .flatten()
                 .map(|i| vec![MessageIndexRange::from_zero(i)]);
 
             let read_by_them = direct_chat
-                .read_up_to_by_them
+                .read_by_them_up_to
                 .if_set_after(updates_since)
                 .copied()
                 .flatten()
@@ -196,8 +196,8 @@ fn finalize(
                 chat_id: direct_chat.them.into(),
                 latest_message,
                 latest_event_index,
-                read_by_me_up_to: direct_chat.read_up_to_by_me.if_set_after(updates_since).copied().flatten(),
-                read_by_them_up_to: direct_chat.read_up_to_by_them.if_set_after(updates_since).copied().flatten(),
+                read_by_me_up_to: direct_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
+                read_by_them_up_to: direct_chat.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
                 read_by_me,
                 read_by_them,
                 notifications_muted,
