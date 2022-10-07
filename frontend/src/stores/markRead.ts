@@ -240,10 +240,9 @@ export class MessageReadTracker {
         if (firstMessageIndex > 0) {
             messagesRead.subtract(new DRange(0, firstMessageIndex - 1));
         }
+
         const total = latestMessageIndex - firstMessageIndex + 1;
-        const read =
-            messagesRead.length +
-            (this.waiting[chatId]?.size ?? 0);
+        const read = messagesRead.length + (this.waiting[chatId]?.size ?? 0);
         return Math.max(total - read, 0);
     }
 
