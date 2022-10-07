@@ -22,13 +22,18 @@ import { groupBy } from "../../utils/list";
 import { isUserSummary } from "../../utils/user";
 import { profile } from "../common/profiling";
 import { rollbar } from "../../utils/logging";
+import type { Identity } from "@dfinity/agent";
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to
  * indexDB for holding users
  */
 export class CachingUserIndexClient implements IUserIndexClient {
-    constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserIndexClient) {}
+    constructor(
+        private identity: Identity,
+        private db: Promise<IDBPDatabase<ChatSchema>>,
+        private client: IUserIndexClient
+    ) {}
 
     @profile("userIndexCachingClient")
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
@@ -52,9 +57,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
             fromCache
         );
 
-        setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary)).catch((err) =>
-            rollbar.error("Failed to save users to the cache", err)
-        );
+        setCachedUsers(
+            this.identity.getPrincipal().toString(),
+            mergedResponse.users.filter(isUserSummary)
+        ).catch((err) => rollbar.error("Failed to save users to the cache", err));
 
         return mergedResponse;
     }

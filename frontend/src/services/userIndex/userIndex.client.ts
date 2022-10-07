@@ -52,7 +52,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     static create(identity: Identity, db?: Database): IUserIndexClient {
         return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(db, new UserIndexClient(identity))
+            ? new CachingUserIndexClient(identity, db, new UserIndexClient(identity))
             : new UserIndexClient(identity);
     }
 

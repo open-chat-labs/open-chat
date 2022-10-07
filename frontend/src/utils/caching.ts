@@ -19,6 +19,7 @@ import type {
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
+import { measure } from "../services/common/profiling";
 
 const CACHE_VERSION = 45;
 
@@ -83,6 +84,11 @@ export function createCacheKey(
     return threadRootMessageIndex === undefined
         ? `${chatId}_${padMessageIndex(index)}`
         : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
+}
+
+export function lazyOpenCache(principal: string): Database | undefined {
+    if (db) return db;
+    return openCache(principal);
 }
 
 export function openCache(principal: string): Database | undefined {
@@ -621,12 +627,33 @@ export async function getAllUsers(db: Database): Promise<UserSummary[]> {
     return (await db).getAll("users");
 }
 
-export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
-    const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore("users");
+export async function setCachedUsers(principal: string, users: UserSummary[]): Promise<void> {
+    const reg = await navigator.serviceWorker.getRegistration(
+        "process.env.WEBPUSH_SERVICE_WORKER_PATH"
+    );
 
-    await Promise.all(users.map((u) => store.put(u, u.userId)));
-    await tx.done;
+    if (reg && reg.active) {
+        console.log("delegating setCachedUsers to service worker");
+        reg.active.postMessage({ type: "SAVE_USERS", users, principal });
+    }
+}
+
+export async function setCachedUsersFromWorker(
+    principal: string,
+    users: UserSummary[]
+): Promise<void> {
+    const db = lazyOpenCache(principal);
+    if (db !== undefined) {
+        const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+
+        await measure(`setCachedUsersFromWorker (${users.length})`, () =>
+            Promise.all(users.map((u) => store.put(u, u.userId)))
+        );
+        await tx.done;
+    } else {
+        console.log("Unable to setCachedUsersFromWorker as db is undefined");
+    }
 }
 
 export async function setUsername(db: Database, userId: string, username: string): Promise<void> {

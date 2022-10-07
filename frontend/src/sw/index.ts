@@ -7,7 +7,7 @@ import type { Notification } from "../domain/notifications";
 import type { User } from "../domain/user/user";
 import { UnsupportedValueError } from "../utils/error";
 import { notification as toNotification } from "../services/notifications/mappers";
-import { getSoftDisabled } from "../utils/caching";
+import { getSoftDisabled, setCachedUsersFromWorker } from "../utils/caching";
 import { toUint8Array } from "../utils/base64";
 import { Cryptocurrency, E8S_PER_TOKEN } from "../domain/crypto";
 
@@ -24,6 +24,13 @@ self.addEventListener("push", function (event: PushEvent) {
 
 self.addEventListener("notificationclick", function (event: NotificationEvent) {
     event.waitUntil(handleNotificationClick(event));
+});
+
+self.addEventListener("message", async (event) => {
+    if (event.data && event.data.type === "SAVE_USERS") {
+        console.log("received SAVE_USERS message in the service worker");
+        setCachedUsersFromWorker(event.data.principal, event.data.users);
+    }
 });
 
 self.addEventListener("fetch", () => {
