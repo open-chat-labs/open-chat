@@ -232,9 +232,14 @@ export class MessageReadTracker {
             return 0;
         }
 
+        const serverState = this.serverState[chatId]?.ranges.clone() ?? new DRange();
+        // Exclude any data for messages earlier than the `firstMessageIndex`
+        if (firstMessageIndex > 0) {
+            serverState.subtract(new DRange(0, firstMessageIndex - 1));
+        }
         const total = latestMessageIndex - firstMessageIndex + 1;
         const read =
-            (this.serverState[chatId]?.ranges?.length ?? 0) +
+            serverState.length +
             (this.state[chatId]?.ranges?.length ?? 0) +
             (this.waiting[chatId]?.size ?? 0);
         return Math.max(total - read, 0);

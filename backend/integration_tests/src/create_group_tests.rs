@@ -98,6 +98,7 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
             chat_id,
             as_super_admin: false,
             invite_code: None,
+            correlation_id: 0,
         };
         futures::future::join(
             join_group(&users.user2_agent, users.user2_id, &join_group_args),

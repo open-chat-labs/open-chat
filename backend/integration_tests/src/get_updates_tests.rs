@@ -59,6 +59,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context)
         content: MessageContent::Text(TextContent { text: "1".to_string() }),
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
     let result1 = send_direct_message(&user2_agent, user2_id, &direct_message_args1).await;
 
@@ -70,6 +71,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context)
         content: MessageContent::Text(TextContent { text: "2".to_string() }),
         replies_to: None,
         forwarding: false,
+        correlation_id: 0,
     };
     let _result2 = send_direct_message(&user2_agent, user2_id, &direct_message_args2).await;
 
@@ -81,6 +83,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context)
         replies_to: None,
         mentioned: vec![],
         forwarding: false,
+        correlation_id: 0,
     };
     let result3 = send_group_message(&user2_agent, chat_id1, &group_message_args1).await;
 
@@ -92,6 +95,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context)
         replies_to: None,
         mentioned: vec![],
         forwarding: false,
+        correlation_id: 0,
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 

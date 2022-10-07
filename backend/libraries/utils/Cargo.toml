@@ -7,15 +7,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.17"
+candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros" }
-getrandom = { version = "0.2.7", features = ["custom"] }
-ic-cdk = "0.5.6"
-itertools = "0.10.3"
+getrandom = { workspace = true, features = ["custom"] }
+ic-cdk = { workspace = true }
+itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
-rand = "0.8.5"
-range-set = { version = "0.0.9", features = ["serde"], optional = true }
-serde = "1.0.137"
-serde_bytes = "0.11.6"
-tracing = "0.1.33"
+rand = { workspace = true }
+range-set = { workspace = true, features = ["serde"], optional = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../types" }

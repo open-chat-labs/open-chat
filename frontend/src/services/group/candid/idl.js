@@ -514,6 +514,7 @@ export const idlFactory = ({ IDL }) => {
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'correlation_id' : IDL.Nat64,
   });
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
@@ -568,6 +569,7 @@ export const idlFactory = ({ IDL }) => {
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'correlation_id' : IDL.Nat64,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
@@ -794,6 +796,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'threads' : IDL.Vec(ThreadPreview),
+      'timestamp' : TimestampMillis,
     }),
   });
   const UnblockUserArgs = IDL.Record({

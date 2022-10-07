@@ -8,13 +8,13 @@ edition = "2021"
 
 [dependencies]
 canister_client = { path = "../libraries/canister_client" }
-clap = { version = "3.0.14", features = ["derive"] }
-futures = "0.3.21"
+clap = { workspace = true, features = ["derive"] }
+futures = { workspace = true }
 group_canister = { path = "../canisters/group/api" }
-ic-agent = "0.20.0"
+ic-agent = { workspace = true }
 lipsum = "0.8.0"
-rand = "0.8.5"
-tokio = { version = "1.10.0", features = ["full"] }
+rand = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
 utils = { path = "../libraries/utils" }

@@ -120,6 +120,7 @@ async fn change_role_tests_impl(handle: IcHandle, ctx: &ic_fondue::pot::Context)
         let args = group_canister::change_role::Args {
             user_id: user3_id,
             new_role: Role::Admin,
+            correlation_id: 0,
         };
         match group_canister_client::change_role(&user2_agent, &chat_id.into(), &args).await {
             Err(error) if format!("{error:?}").contains("403") => {}
@@ -187,7 +188,11 @@ async fn change_role(
     new_role: Role,
     agent: &Agent,
 ) -> group_canister::change_role::Response {
-    let args = group_canister::change_role::Args { user_id, new_role };
+    let args = group_canister::change_role::Args {
+        user_id,
+        new_role,
+        correlation_id: 0,
+    };
     group_canister_client::change_role(agent, &group_id.into(), &args)
         .await
         .unwrap()
