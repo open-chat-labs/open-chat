@@ -231,11 +231,10 @@ export class MessageReadTracker {
             return 0;
         }
 
-        const messagesRead = new DRange();
         const serverState = this.serverState[chatId]?.ranges ?? new DRange();
         const localState = this.state[chatId]?.ranges ?? new DRange();
 
-        messagesRead.add(serverState).add(localState);
+        const messagesRead = new DRange().add(serverState).add(localState);
 
         // Exclude any data for messages earlier than the `firstMessageIndex`
         if (firstMessageIndex > 0) {
