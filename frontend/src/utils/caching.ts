@@ -20,7 +20,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 44;
+const CACHE_VERSION = 45;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
