@@ -960,7 +960,7 @@
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
-    <Fab on:click={() => scrollBottom()}>
+    <Fab on:click={() => scrollToMessageIndex(chat.latestMessage.event.messageIndex, false)}>
         {#if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
