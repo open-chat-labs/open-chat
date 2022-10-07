@@ -100,7 +100,7 @@ fn finalize(
         }
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
-            summary.read_up_to = group_chat.read_up_to.value;
+            summary.read_by_me_up_to = group_chat.read_up_to.value;
             summary.read_by_me = group_chat
                 .read_up_to
                 .value
@@ -116,7 +116,7 @@ fn finalize(
             group_chats_updated
                 .entry(group_chat.chat_id)
                 .and_modify(|su| {
-                    su.read_up_to = group_chat.read_up_to.if_set_after(updates_since).copied().flatten();
+                    su.read_by_me_up_to = group_chat.read_up_to.if_set_after(updates_since).copied().flatten();
                     su.read_by_me = group_chat
                         .read_up_to
                         .if_set_after(updates_since)
@@ -147,8 +147,8 @@ fn finalize(
                 latest_message: chat_events.latest_message(Some(my_user_id)).unwrap(),
                 latest_event_index: chat_events.last().index,
                 date_created: direct_chat.date_created,
-                read_up_to_by_me: direct_chat.read_up_to_by_me.value,
-                read_up_to_by_them: direct_chat.read_up_to_by_them.value,
+                read_by_me_up_to: direct_chat.read_up_to_by_me.value,
+                read_by_them_up_to: direct_chat.read_up_to_by_them.value,
                 read_by_me: direct_chat
                     .read_up_to_by_me
                     .value
@@ -196,8 +196,8 @@ fn finalize(
                 chat_id: direct_chat.them.into(),
                 latest_message,
                 latest_event_index,
-                read_up_to_by_me: direct_chat.read_up_to_by_me.if_set_after(updates_since).copied().flatten(),
-                read_up_to_by_them: direct_chat.read_up_to_by_them.if_set_after(updates_since).copied().flatten(),
+                read_by_me_up_to: direct_chat.read_up_to_by_me.if_set_after(updates_since).copied().flatten(),
+                read_by_them_up_to: direct_chat.read_up_to_by_them.if_set_after(updates_since).copied().flatten(),
                 read_by_me,
                 read_by_them,
                 notifications_muted,

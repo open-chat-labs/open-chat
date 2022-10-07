@@ -67,7 +67,7 @@ impl GroupChat {
             latest_event_index: None,
             participant_count: None,
             role: None,
-            read_up_to,
+            read_by_me_up_to: read_up_to,
             read_by_me: read_up_to.map(|i| vec![MessageIndexRange { from: 0.into(), to: i }]),
             notifications_muted: None,
             mentions: Vec::new(),
