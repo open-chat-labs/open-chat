@@ -91,10 +91,10 @@ export function openCache(principal: string): Database | undefined {
     }
     try {
         return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-            upgrade(db, oldVersion, newVersion) {
-                if (oldVersion === newVersion - 1) {
-                    if (db.objectStoreNames.contains("users")) {
-                        db.clear("users");
+            upgrade(db, oldVersion, newVersion, transaction) {
+                if (oldVersion === 44) {
+                    if (transaction.objectStoreNames.contains("users")) {
+                        transaction.objectStore("users").clear();
                     }
                     return;
                 }
