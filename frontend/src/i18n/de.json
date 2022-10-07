@@ -110,7 +110,7 @@
     "directChatCreatedAt": "Chat gestartet",
     "skip": "Überspringen",
     "userLeft": "{username} hat die Gruppe verlassen",
-    "userJoined": "{username} ist der Gruppe beigetreten",
+    "userJoined": "{username} sind der Gruppe beigetreten",
     "addedBy": "{changedBy} hat {changed} zur Gruppe hinzugefügt",
     "removedBy": "{changedBy} hat {changed} aus der Gruppe entfernt",
     "promotedBy": "{changedBy} hat {changed} zum Gruppenadministrator befördert",
