@@ -154,12 +154,11 @@ export class MessageReadTracker {
                 this.waiting[chatId] = new Map<bigint, number>();
             }
             this.waiting[chatId].set(messageId, messageIndex);
+            this.publish();
         } else {
             // Mark the chat as read up to the new messageIndex
             this.markRangeRead(chatId, 0, messageIndex);
         }
-
-        this.publish();
     }
 
     markRangeRead(chatId: string, from: number, to: number): void {
@@ -232,16 +231,18 @@ export class MessageReadTracker {
             return 0;
         }
 
-        const serverState = this.serverState[chatId]?.ranges.clone() ?? new DRange();
+        const serverState = this.serverState[chatId]?.ranges ?? new DRange();
+        const localState = this.state[chatId]?.ranges ?? new DRange();
+
+        const messagesRead = new DRange().add(serverState).add(localState);
+
         // Exclude any data for messages earlier than the `firstMessageIndex`
         if (firstMessageIndex > 0) {
-            serverState.subtract(new DRange(0, firstMessageIndex - 1));
+            messagesRead.subtract(new DRange(0, firstMessageIndex - 1));
         }
+
         const total = latestMessageIndex - firstMessageIndex + 1;
-        const read =
-            serverState.length +
-            (this.state[chatId]?.ranges?.length ?? 0) +
-            (this.waiting[chatId]?.size ?? 0);
+        const read = messagesRead.length + (this.waiting[chatId]?.size ?? 0);
         return Math.max(total - read, 0);
     }
 

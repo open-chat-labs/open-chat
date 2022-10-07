@@ -110,7 +110,6 @@
     export let unreadMessages: number;
     export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
-    export let firstUnreadMessage: number | undefined;
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;

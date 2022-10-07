@@ -9,7 +9,6 @@
         canInviteUsers,
         canReplyInThread,
         getFirstUnreadMention,
-        getFirstUnreadMessageIndex,
         getMessageContent,
         getMinVisibleMessageIndex,
         markAllRead,
@@ -73,7 +72,6 @@
     $: chatId = chat.chatId;
     let previousChatId: string | undefined = undefined;
     let unreadMessages = 0;
-    let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
@@ -94,7 +92,6 @@
             showSearchHeader = false;
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = getFirstUnreadMention(chat);
-            firstUnreadMessage = getFirstUnreadMessageIndex(chat);
 
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
@@ -108,7 +105,6 @@
     let unsub = messagesRead.subscribe(() => {
         unreadMessages = getUnreadMessageCount(chat);
         firstUnreadMention = getFirstUnreadMention(chat);
-        firstUnreadMessage = getFirstUnreadMessageIndex(chat);
     });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
@@ -295,7 +291,6 @@
         canInvite={canInviteUsers(chat)}
         {preview}
         {firstUnreadMention}
-        {firstUnreadMessage}
         footer={showFooter}
         {unreadMessages} />
     {#if showFooter}
