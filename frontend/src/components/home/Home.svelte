@@ -290,7 +290,6 @@
                 history.replaceState(null, "", "/#/");
                 modal = ModalType.SelectChat;
             } else {
-                console.log("XX: routeChange: ", pathParams.chatId);
                 // if we have something in the chatId url param
 
                 // first close any open thread

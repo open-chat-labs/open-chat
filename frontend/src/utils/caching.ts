@@ -19,7 +19,7 @@ import type {
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 45;
+const CACHE_VERSION = 46;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
