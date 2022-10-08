@@ -33,9 +33,10 @@ import {
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { cachingLocallyDisabled, Database } from "../../utils/caching";
+import { cachingLocallyDisabled } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
+import type { UserDatabase } from "../../utils/userCache";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -50,9 +51,9 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity, db?: Database): IUserIndexClient {
-        return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(db, new UserIndexClient(identity))
+    static create(identity: Identity, userdb?: UserDatabase): IUserIndexClient {
+        return userdb && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
+            ? new CachingUserIndexClient(userdb, new UserIndexClient(identity))
             : new UserIndexClient(identity);
     }
 

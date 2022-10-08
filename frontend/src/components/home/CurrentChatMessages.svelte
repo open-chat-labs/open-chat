@@ -573,12 +573,17 @@
 
             if ($focusMessageIndex !== undefined) {
                 loadEventWindow(api, user, serverChat, chat, $focusMessageIndex).then(
-                    onMessageWindowLoaded
+                    (messageIndex: number | undefined) => {
+                        loadDetails(api, user, chat, events);
+                        onMessageWindowLoaded(messageIndex);
+                    }
                 );
             } else {
-                loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
+                loadPreviousMessages(api, user, serverChat, chat).then(() => {
+                    loadDetails(api, user, chat, events);
+                    onLoadedPreviousMessages();
+                });
             }
-            loadDetails(api, user, chat, events);
         }
     }
 
