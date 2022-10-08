@@ -151,10 +151,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
     if (chat === undefined) {
         return [0, 0];
     }
-    return getNextEventAndMessageIndexes(
-        chat,
-        unconfirmed.getMessages(chat.chatId)
-    );
+    return getNextEventAndMessageIndexes(chat, unconfirmed.getMessages(chat.chatId));
 }
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
@@ -278,12 +275,10 @@ const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEv
     const ranges = new DRange();
     serverEvents.forEach((e) => ranges.add(e.index));
     return ranges;
-})
+});
 
 export function confirmedEventIndexesLoaded(chatId: string): DRange {
-    return get(selectedChatId) === chatId
-        ? get(confirmedEventIndexesLoadedStore)
-        : new DRange();
+    return get(selectedChatId) === chatId ? get(confirmedEventIndexesLoadedStore) : new DRange();
 }
 
 export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(

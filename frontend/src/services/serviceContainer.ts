@@ -79,7 +79,8 @@ import type {
     GroupRules,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, getAllUsers, initDb } from "../utils/caching";
+import { Database, initDb } from "../utils/caching";
+import { getAllUsers, initUserDb, UserDatabase } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -134,11 +135,13 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
+    private userdb?: UserDatabase;
 
     constructor(private identity: Identity) {
         this.db = initDb(identity.getPrincipal().toString());
+        this.userdb = initUserDb();
         this._onlineClient = OnlineClient.create(identity);
-        this._userIndexClient = UserIndexClient.create(identity, this.db);
+        this._userIndexClient = UserIndexClient.create(identity, this.db, this.userdb);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._ledgerClients = {
@@ -149,7 +152,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this._groupClients = {};
         if (this.db) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            measure("getAllUsers", () => getAllUsers(this.db!)).then((users) => {
+            measure("getAllUsers", () => getAllUsers(this.userdb!)).then((users) => {
                 const lookup = toRecord(
                     users.map((user) => this.rehydrateUserSummary(user)),
                     (u) => u.userId

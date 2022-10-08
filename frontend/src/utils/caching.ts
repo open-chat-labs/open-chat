@@ -16,7 +16,6 @@ import type {
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
-import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
@@ -60,11 +59,6 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: boolean;
     };
-
-    users: {
-        key: string;
-        value: UserSummary;
-    };
 }
 
 function padMessageIndex(i: number): string {
@@ -92,12 +86,6 @@ export function openCache(principal: string): Database | undefined {
     try {
         return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
             upgrade(db, oldVersion, newVersion, transaction) {
-                if (oldVersion === 44) {
-                    if (transaction.objectStoreNames.contains("users")) {
-                        transaction.objectStore("users").clear();
-                    }
-                    return;
-                }
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
@@ -111,16 +99,12 @@ export function openCache(principal: string): Database | undefined {
                     if (db.objectStoreNames.contains("group_details")) {
                         db.deleteObjectStore("group_details");
                     }
-                    if (db.objectStoreNames.contains("users")) {
-                        db.deleteObjectStore("users");
-                    }
                     const chatEvents = db.createObjectStore("chat_events");
                     chatEvents.createIndex("messageIdx", "messageKey");
                     const threadEvents = db.createObjectStore("thread_events");
                     threadEvents.createIndex("messageIdx", "messageKey");
                     db.createObjectStore("chats");
                     db.createObjectStore("group_details");
-                    db.createObjectStore("users");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
                         db.createObjectStore("soft_disabled");
                     }
@@ -604,40 +588,6 @@ export async function getSoftDisabled(): Promise<boolean> {
         return res ?? false;
     }
     return false;
-}
-
-export async function getCachedUsers(db: Database, userIds: string[]): Promise<UserSummary[]> {
-    const resolvedDb = await db;
-
-    const fromCache = await Promise.all(userIds.map((u) => resolvedDb.get("users", u)));
-
-    return fromCache.reduce((users, next) => {
-        if (next !== undefined) users.push(next);
-        return users;
-    }, [] as UserSummary[]);
-}
-
-export async function getAllUsers(db: Database): Promise<UserSummary[]> {
-    return (await db).getAll("users");
-}
-
-export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
-    const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore("users");
-
-    await Promise.all(users.map((u) => store.put(u, u.userId)));
-    await tx.done;
-}
-
-export async function setUsername(db: Database, userId: string, username: string): Promise<void> {
-    const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.username = username;
-        await store.put(user, userId);
-    }
-    await tx.done;
 }
 
 let db: Database | undefined;
