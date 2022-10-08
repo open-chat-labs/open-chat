@@ -141,7 +141,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this.db = initDb(identity.getPrincipal().toString());
         this.userdb = initUserDb();
         this._onlineClient = OnlineClient.create(identity);
-        this._userIndexClient = UserIndexClient.create(identity, this.db, this.userdb);
+        this._userIndexClient = UserIndexClient.create(identity, this.userdb);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._ledgerClients = {
@@ -167,7 +167,13 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     createUserClient(userId: string): ServiceContainer {
-        this._userClient = UserClient.create(userId, this.identity, this.db, this._groupInvite);
+        this._userClient = UserClient.create(
+            userId,
+            this.identity,
+            this.db,
+            this.userdb,
+            this._groupInvite
+        );
         return this;
     }
 
@@ -1066,14 +1072,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getBio(userId?: string): Promise<string> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, undefined, undefined)
+            ? UserClient.create(userId, this.identity, this.db, this.userdb, undefined)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, undefined, undefined)
+            ? UserClient.create(userId, this.identity, this.db, this.userdb, undefined)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -1201,7 +1207,13 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        const userClient = UserClient.create(userId, this.identity, undefined, undefined);
+        const userClient = UserClient.create(
+            userId,
+            this.identity,
+            this.db,
+            this.userdb,
+            undefined
+        );
         return userClient.migrateUserPrincipal();
     }
 
