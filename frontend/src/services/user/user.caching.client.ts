@@ -27,7 +27,6 @@ import type {
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
-    ChatSchema,
     Database,
     getCachedChats,
     getCachedEvents,
@@ -39,7 +38,6 @@ import {
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import type { IDBPDatabase } from "idb";
 import {
     compareChats,
     getFirstUnreadMessageIndex,
@@ -77,7 +75,6 @@ import { rollbar } from "../../utils/logging";
 import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "services/candidService";
 import { configKeys } from "../../utils/config";
-import type { UserDatabase } from "../../utils/userCache";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -90,7 +87,6 @@ export class CachingUserClient implements IUserClient {
 
     constructor(
         private db: Database,
-        private userdb: UserDatabase,
         private identity: Identity,
         private client: IUserClient,
         private groupInvite: GroupInvite | undefined
@@ -335,7 +331,7 @@ export class CachingUserClient implements IUserClient {
 
                     const missing = missingUserIds(get(userStore), userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.userdb).getUsers(
+                        return UserIndexClient.create(this.identity).getUsers(
                             {
                                 userGroups: [
                                     {

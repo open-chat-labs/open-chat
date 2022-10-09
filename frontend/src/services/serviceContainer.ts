@@ -80,7 +80,7 @@ import type {
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
-import { getAllUsers, initUserDb, UserDatabase } from "../utils/userCache";
+import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -135,13 +135,11 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
-    private userdb?: UserDatabase;
 
     constructor(private identity: Identity) {
         this.db = initDb(identity.getPrincipal().toString());
-        this.userdb = initUserDb();
         this._onlineClient = OnlineClient.create(identity);
-        this._userIndexClient = UserIndexClient.create(identity, this.userdb);
+        this._userIndexClient = UserIndexClient.create(identity);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._ledgerClients = {
@@ -152,7 +150,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this._groupClients = {};
         if (this.db) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            measure("getAllUsers", () => getAllUsers(this.userdb!)).then((users) => {
+            measure("getAllUsers", () => getAllUsers()).then((users) => {
                 const lookup = toRecord(
                     users.map((user) => this.rehydrateUserSummary(user)),
                     (u) => u.userId
@@ -167,13 +165,7 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     createUserClient(userId: string): ServiceContainer {
-        this._userClient = UserClient.create(
-            userId,
-            this.identity,
-            this.db,
-            this.userdb,
-            this._groupInvite
-        );
+        this._userClient = UserClient.create(userId, this.identity, this.db, this._groupInvite);
         return this;
     }
 
@@ -1072,14 +1064,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getBio(userId?: string): Promise<string> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.db, this.userdb, undefined)
+            ? UserClient.create(userId, this.identity, this.db, undefined)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.db, this.userdb, undefined)
+            ? UserClient.create(userId, this.identity, this.db, undefined)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -1207,13 +1199,7 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        const userClient = UserClient.create(
-            userId,
-            this.identity,
-            this.db,
-            this.userdb,
-            undefined
-        );
+        const userClient = UserClient.create(userId, this.identity, this.db, undefined);
         return userClient.migrateUserPrincipal();
     }
 
