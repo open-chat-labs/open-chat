@@ -263,7 +263,11 @@ export class CachingUserClient implements IUserClient {
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
                 // horrible having to do this but if we don't the message read tracker will not be in the right state
-                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsReadFromChat(chat));
+                messagesRead.syncWithServer(
+                    chat.chatId,
+                    chat.readByMeUpTo,
+                    threadsReadFromChat(chat)
+                );
 
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);

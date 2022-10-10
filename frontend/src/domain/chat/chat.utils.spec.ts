@@ -18,7 +18,6 @@ import {
     mergeChatUpdates,
     mergeUnconfirmedThreadsIntoSummary,
     newMessageId,
-    rangesAreEqual,
 } from "./chat.utils";
 import { emptyChatMetrics } from "./chat.utils.shared";
 
@@ -32,8 +31,8 @@ const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    readByMe: new DRange(),
-    readByThem: new DRange(),
+    readByMeUpTo: undefined,
+    readByThemUpTo: undefined,
     latestMessage: {
         event: {
             kind: "message",
@@ -65,7 +64,7 @@ const defaultGroupChat: GroupChatSummary = {
     description: "whatever",
     chatId: "abc",
     lastUpdated: BigInt(0),
-    readByMe: new DRange(),
+    readByMeUpTo: undefined,
     latestMessage: undefined,
     public: true,
     historyVisibleToNewJoiners: false,
@@ -444,9 +443,9 @@ describe("merging updates", () => {
     describe("updated chats get merged correctly", () => {
         const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
-            readByMe: new DRange(),
+            readByMeUpTo: 100,
             chatId: "4",
-            readByThem: new DRange(),
+            readByThemUpTo: 200,
             latestEventIndex: 300,
             latestMessage: {
                 event: {
@@ -475,7 +474,7 @@ describe("merging updates", () => {
             kind: "group_chat",
             chatId: "2",
             lastUpdated: BigInt(1000),
-            readByMe: new DRange(),
+            readByMeUpTo: 250,
             latestMessage: {
                 event: {
                     kind: "message",
@@ -533,8 +532,8 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "4");
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.readByThem.length).toEqual(0);
-                expect(updated.readByMe.length).toEqual(0);
+                expect(updated.readByMeUpTo).toEqual(100);
+                expect(updated.readByThemUpTo).toEqual(200);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
@@ -556,7 +555,7 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "2");
             if (updated && updated.kind === "group_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.readByMe.length).toEqual(0);
+                expect(updated.readByMeUpTo).toBe(250);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
@@ -566,32 +565,4 @@ describe("merging updates", () => {
     });
 
     test.todo("chats end up in the right order");
-});
-
-describe("message ranges are equal", () => {
-    test("ranges are not equal length", () => {
-        const a = new DRange(0, 10);
-        const b = new DRange(0, 10).add(12, 20);
-        expect(rangesAreEqual(a, b)).toBe(false);
-    });
-    test("ranges are equal length but not equal", () => {
-        const a = new DRange(0, 10).add(12, 20);
-        const b = new DRange(0, 10).add(12, 21);
-        expect(rangesAreEqual(a, b)).toBe(false);
-    });
-    test("ranges are equal", () => {
-        const a = new DRange(0, 10).add(12, 20);
-        const b = new DRange(0, 10).add(12, 20);
-        expect(rangesAreEqual(a, b)).toBe(true);
-    });
-    test("ranges are equal again", () => {
-        const a = new DRange(0, 10).add(12, 20).add(100, 250);
-        const b = new DRange(0, 10).add(12, 20).add(100, 250);
-        expect(rangesAreEqual(a, b)).toBe(true);
-    });
-    test("ranges differ only in the 'to' property", () => {
-        const a = new DRange(0, 10).add(12, 20).add(100, 250);
-        const b = new DRange(0, 10).add(12, 20).add(100, 260);
-        expect(rangesAreEqual(a, b)).toBe(false);
-    });
 });

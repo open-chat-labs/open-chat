@@ -709,7 +709,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             kind: "group_chat",
             chatId,
             lastUpdated: candid.Group.last_updated,
-            readByMe: optional(candid.Group.read_by_me, apiMessageIndexRanges),
+            readByMeUpTo: optional(candid.Group.read_by_me_up_to, identity),
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -746,8 +746,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         return {
             kind: "direct_chat",
             chatId,
-            readByMe: optional(candid.Direct.read_by_me, apiMessageIndexRanges),
-            readByThem: optional(candid.Direct.read_by_them, apiMessageIndexRanges),
+            readByMeUpTo: optional(candid.Direct.read_by_me_up_to, identity),
+            readByThemUpTo: optional(candid.Direct.read_by_them_up_to, identity),
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -840,7 +840,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
                 event: message(ev.event),
             };
         }),
-        readByMe: apiMessageIndexRanges(candid.read_by_me),
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
@@ -910,8 +910,8 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         },
         them: candid.them.toString(),
         latestEventIndex: candid.latest_event_index,
-        readByMe: apiMessageIndexRanges(candid.read_by_me),
-        readByThem: apiMessageIndexRanges(candid.read_by_them),
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
         notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),

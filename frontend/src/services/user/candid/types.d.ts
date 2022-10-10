@@ -118,8 +118,8 @@ export interface ChatEventWrapper {
 }
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
-  'message_ranges' : Array<MessageIndexRange>,
   'threads' : Array<ThreadRead>,
+  'read_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
 }
 export interface ChatMetrics {
@@ -212,25 +212,25 @@ export interface DirectChatEventWrapper {
   'correlation_id' : bigint,
 }
 export interface DirectChatSummary {
+  'read_by_them_up_to' : [] | [MessageIndex],
   'date_created' : TimestampMillis,
   'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
-  'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
-  'read_by_them' : Array<MessageIndexRange>,
+  'read_by_me_up_to' : [] | [MessageIndex],
   'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
   'affected_events' : Uint32Array,
   'notifications_muted' : [] | [boolean],
-  'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
+  'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
-  'read_by_them' : [] | [Array<MessageIndexRange>],
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -347,13 +347,13 @@ export interface GroupChatSummary {
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'read_by_me' : Array<MessageIndexRange>,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
+  'read_by_me_up_to' : [] | [MessageIndex],
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -374,11 +374,11 @@ export interface GroupChatSummaryUpdates {
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'read_by_me' : [] | [Array<MessageIndexRange>],
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
   'latest_event_index' : [] | [EventIndex],
+  'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'archived' : [] | [boolean],
@@ -561,10 +561,6 @@ export interface MessageEventWrapper {
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
-export interface MessageIndexRange {
-  'to' : MessageIndex,
-  'from' : MessageIndex,
-}
 export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
@@ -1067,7 +1063,7 @@ export interface _SERVICE {
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
-  'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
+  'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse,

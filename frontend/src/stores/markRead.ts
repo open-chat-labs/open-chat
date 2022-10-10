@@ -1,4 +1,3 @@
-import DRange from "drange";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import type {
@@ -7,7 +6,6 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
 } from "../domain/chat/chat";
-import { indexIsInRanges } from "../utils/range";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;
@@ -17,11 +15,11 @@ export interface MarkMessagesRead {
 }
 
 export class MessagesRead {
-    public ranges: DRange;
+    public readUpTo: number | undefined;
     public threads: Record<number, number>;
 
     constructor() {
-        this.ranges = new DRange();
+        this.readUpTo = undefined;
         this.threads = {};
     }
 
@@ -33,11 +31,11 @@ export class MessagesRead {
     }
 
     empty(): boolean {
-        return this.ranges.length === 0 && Object.keys(this.threads).length === 0;
+        return this.readUpTo === undefined && Object.keys(this.threads).length === 0;
     }
 
-    addRange(from: number, to?: number): void {
-        this.ranges.add(from, to);
+    markReadUpTo(index: number): void {
+        this.readUpTo = Math.max(this.readUpTo ?? 0, index);
     }
 
     updateThread(rootIndex: number, readUpTo: number): void {
@@ -109,7 +107,7 @@ export class MessageReadTracker {
             if (!data.empty()) {
                 req.push({
                     chatId,
-                    ranges: data.ranges,
+                    readUpTo: data.readUpTo,
                     threads: data.threadsList,
                 });
             }
@@ -157,15 +155,15 @@ export class MessageReadTracker {
             this.publish();
         } else {
             // Mark the chat as read up to the new messageIndex
-            this.markRangeRead(chatId, 0, messageIndex);
+            this.markReadUpTo(chatId, messageIndex);
         }
     }
 
-    markRangeRead(chatId: string, from: number, to: number): void {
+    markReadUpTo(chatId: string, to: number): void {
         if (!this.state[chatId]) {
             this.state[chatId] = new MessagesRead();
         }
-        this.state[chatId].addRange(from, to);
+        this.state[chatId].markReadUpTo(to);
         this.publish();
     }
 
@@ -222,70 +220,62 @@ export class MessageReadTracker {
         return latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex);
     }
 
-    unreadMessageCount(
-        chatId: string,
-        firstMessageIndex: number,
-        latestMessageIndex: number | undefined
-    ): number {
+    unreadMessageCount(chatId: string, latestMessageIndex: number | undefined): number {
         if (latestMessageIndex === undefined) {
             return 0;
         }
 
-        const serverState = this.serverState[chatId]?.ranges ?? new DRange();
-        const localState = this.state[chatId]?.ranges ?? new DRange();
+        const readUpToServer = this.serverState[chatId]?.readUpTo;
+        const readUpToLocal = this.state[chatId]?.readUpTo;
 
-        const messagesRead = new DRange().add(serverState).add(localState);
+        const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
+        const readUnconfirmedCount = this.waiting[chatId]?.size ?? 0;
 
-        // Exclude any data for messages earlier than the `firstMessageIndex`
-        if (firstMessageIndex > 0) {
-            messagesRead.subtract(new DRange(0, firstMessageIndex - 1));
-        }
-
-        const total = latestMessageIndex - firstMessageIndex + 1;
-        const read = messagesRead.length + (this.waiting[chatId]?.size ?? 0);
-        return Math.max(total - read, 0);
+        const total = latestMessageIndex - readUpToConfirmed - readUnconfirmedCount;
+        return Math.max(total, 0);
     }
 
     getFirstUnreadMessageIndex(
         chatId: string,
-        firstMessageIndex: number,
         latestMessageIndex: number | undefined
     ): number | undefined {
-        if (this.unreadMessageCount(chatId, firstMessageIndex, latestMessageIndex) === 0) {
+        if (latestMessageIndex === undefined) {
             return undefined;
         }
 
-        // Start with all visible messages
-        const unreadMessageIndexes = new DRange(firstMessageIndex, latestMessageIndex);
+        const readUpToServer = this.serverState[chatId]?.readUpTo;
+        const readUpToLocal = this.state[chatId]?.readUpTo;
 
-        // Subtract the messages marked as read on the server
-        const serverState = this.serverState[chatId]?.ranges;
-        if (serverState) unreadMessageIndexes.subtract(serverState);
+        const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
 
-        // Subtract the confirmed messages marked as read locally
-        const localState = this.state[chatId]?.ranges;
-        if (localState) unreadMessageIndexes.subtract(localState);
+        if (readUpToConfirmed < latestMessageIndex) {
+            const readUnconfirmed = this.waiting[chatId] ?? new Map();
+            const unconfirmedMessageIndexes = [...readUnconfirmed.values()];
 
-        // Subtract the unconfirmed messages marked as read locally
-        const waiting = this.waiting[chatId];
-        if (waiting) {
-            for (const messageIndex of waiting.values()) {
-                unreadMessageIndexes.subtract(messageIndex);
+            for (let i = readUpToConfirmed + 1; i <= latestMessageIndex; i++) {
+                if (!unconfirmedMessageIndexes.includes(i)) {
+                    return i;
+                }
             }
         }
-
-        return unreadMessageIndexes.length > 0 ? unreadMessageIndexes.index(0) : undefined;
+        return undefined;
     }
 
-    syncWithServer(chatId: string, ranges: DRange, threads: ThreadRead[]): void {
+    syncWithServer(chatId: string, readUpTo: number | undefined, threads: ThreadRead[]): void {
         const serverState = new MessagesRead();
-        serverState.ranges = ranges;
+        serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);
         this.serverState[chatId] = serverState;
 
         const state = this.state[chatId];
         if (state) {
-            state.ranges.subtract(ranges);
+            if (
+                readUpTo !== undefined &&
+                state.readUpTo !== undefined &&
+                state.readUpTo <= readUpTo
+            ) {
+                state.readUpTo = undefined;
+            }
 
             // for each thread we get from the server
             // remove the corresponding thread data from the client state unless the client state is more recent
@@ -304,9 +294,11 @@ export class MessageReadTracker {
             return this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId);
         } else {
             const serverState = this.serverState[chatId];
-            if (serverState && indexIsInRanges(messageIndex, serverState.ranges)) return true;
+            if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
+                return true;
             const localState = this.state[chatId];
-            if (localState && indexIsInRanges(messageIndex, localState.ranges)) return true;
+            if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
+                return true;
             return false;
         }
     }

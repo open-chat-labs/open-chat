@@ -1,5 +1,4 @@
 import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils.shared";
-import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -14,12 +13,11 @@ import type {
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-    SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 46;
+const CACHE_VERSION = 47;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -31,7 +29,7 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
-        value: SerializableMergedUpdatesResponse;
+        value: MergedUpdatesResponse;
     };
 
     chat_events: {
@@ -85,7 +83,7 @@ export function openCache(principal: string): Database | undefined {
     }
     try {
         return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-            upgrade(db, oldVersion, newVersion, transaction) {
+            upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
@@ -134,28 +132,7 @@ export async function getCachedChats(
     db: Database,
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
-    const fromCache = (await (await db).get("chats", userId)) as
-        | SerializableMergedUpdatesResponse
-        | undefined;
-    return fromCache
-        ? {
-              ...fromCache,
-              chatSummaries: fromCache.chatSummaries.map((c) => {
-                  if (c.kind === "direct_chat") {
-                      return {
-                          ...c,
-                          readByMe: indexRangesToDRange(c.readByMe),
-                          readByThem: indexRangesToDRange(c.readByThem),
-                      };
-                  } else {
-                      return {
-                          ...c,
-                          readByMe: indexRangesToDRange(c.readByMe),
-                      };
-                  }
-              }),
-          }
-        : undefined;
+    return await (await db).get("chats", userId);
 }
 
 export async function setCachedChats(
@@ -170,7 +147,7 @@ export async function setCachedChats(
     const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
 
     // irritating hoop jumping to keep typescript happy here
-    const serialisable = data.chatSummaries
+    const chatSummaries = data.chatSummaries
         .filter((c) => !isPreviewing(c))
         .map((c) => {
             const latestMessage = c.latestMessage
@@ -188,8 +165,6 @@ export async function setCachedChats(
             if (c.kind === "direct_chat") {
                 return {
                     ...c,
-                    readByMe: drangeToIndexRanges(c.readByMe),
-                    readByThem: drangeToIndexRanges(c.readByThem),
                     latestMessage,
                 };
             }
@@ -197,7 +172,6 @@ export async function setCachedChats(
             if (c.kind === "group_chat") {
                 return {
                     ...c,
-                    readByMe: drangeToIndexRanges(c.readByMe),
                     latestMessage,
                 };
             }
@@ -213,7 +187,7 @@ export async function setCachedChats(
         chatsStore.put(
             {
                 wasUpdated: true,
-                chatSummaries: serialisable,
+                chatSummaries,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
                 pinnedChats: data.pinnedChats,
@@ -460,16 +434,6 @@ function removeReplyContent(
         };
     }
     return repliesTo;
-}
-
-function drangeToIndexRanges(drange: DRange): IndexRange[] {
-    return drange.subranges().map((r) => [r.low, r.high]);
-}
-
-function indexRangesToDRange(ranges: IndexRange[]): DRange {
-    const drange = new DRange();
-    ranges.forEach((r) => drange.add(r[0], r[1]));
-    return drange;
 }
 
 export async function setCachedEvents<T extends ChatEvent>(

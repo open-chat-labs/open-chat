@@ -595,10 +595,6 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
-  const MessageIndexRange = IDL.Record({
-    'to' : MessageIndex,
-    'from' : MessageIndex,
-  });
   const ThreadSyncDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -631,13 +627,13 @@ export const idlFactory = ({ IDL }) => {
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'read_by_me' : IDL.Vec(MessageIndexRange),
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
@@ -647,13 +643,13 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
+    'read_by_them_up_to' : IDL.Opt(MessageIndex),
     'date_created' : TimestampMillis,
     'metrics' : ChatMetrics,
     'them' : UserId,
     'notifications_muted' : IDL.Bool,
-    'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
-    'read_by_them' : IDL.Vec(MessageIndexRange),
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'archived' : IDL.Bool,
     'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
@@ -707,8 +703,8 @@ export const idlFactory = ({ IDL }) => {
     'read_up_to' : MessageIndex,
   });
   const ChatMessagesRead = IDL.Record({
-    'message_ranges' : IDL.Vec(MessageIndexRange),
     'threads' : IDL.Vec(ThreadRead),
+    'read_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
   });
   const MarkReadArgs = IDL.Record({
@@ -962,11 +958,11 @@ export const idlFactory = ({ IDL }) => {
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
-    'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'latest_event_index' : IDL.Opt(EventIndex),
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'archived' : IDL.Opt(IDL.Bool),
@@ -975,13 +971,13 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
+    'read_by_them_up_to' : IDL.Opt(MessageIndex),
     'metrics' : IDL.Opt(ChatMetrics),
     'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
-    'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
-    'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'archived' : IDL.Opt(IDL.Bool),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -1056,7 +1052,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
-    'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'mark_read_v2' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
