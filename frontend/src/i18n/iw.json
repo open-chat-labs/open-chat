@@ -606,5 +606,13 @@
     "groupRulesEnabled": "{changedBy} הפעילה את כללי הקבוצה",
     "groupRulesDisabled": "{changedBy} השבית את כללי הקבוצה",
     "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
-    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי"
+    "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי",
+    "userId": "תעודת זהות של המשתמש",
+    "alsoCanisterId": "גם מזהה המיכל שלך",
+    "version": "גִרְסָה",
+    "websiteVersion": "של האתר",
+    "advanced": "מִתקַדֵם",
+    "features": "תכונות",
+    "architecture": "ארכיטקטורה",
+    "whitepaper": "נייר לבן"
 }

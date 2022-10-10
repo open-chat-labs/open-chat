@@ -19,7 +19,7 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
     import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
     import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
     import { mobileWidth } from "stores/screenDimensions";
@@ -109,7 +109,7 @@
             <MenuIcon>
                 <div slot="icon">
                     <HoverIcon>
-                        <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                        <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
                 <div slot="menu">
