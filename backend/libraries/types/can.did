@@ -343,6 +343,7 @@ type Message =
         thread_summary: opt ThreadSummary;
         edited: bool;
         forwarded: bool;
+        last_updated: opt TimestampMillis;
     };
 
 type MessageEventWrapper =

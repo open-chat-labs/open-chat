@@ -1,4 +1,4 @@
-use crate::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
+use crate::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +13,7 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
+    pub last_updated: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
