@@ -98,7 +98,6 @@ import { textToCode } from "../../domain/inviteCodes";
 import type { GroupInvite } from "../../services/serviceContainer";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
-import type { UserDatabase } from "utils/userCache";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -114,17 +113,10 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         identity: Identity,
         db: Database | undefined,
-        userdb: UserDatabase | undefined,
         groupInvite: GroupInvite | undefined
     ): IUserClient {
-        return db && userdb && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserClient(
-                  db,
-                  userdb,
-                  identity,
-                  new UserClient(identity, userId),
-                  groupInvite
-              )
+        return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
+            ? new CachingUserClient(db, identity, new UserClient(identity, userId), groupInvite)
             : new UserClient(identity, userId);
     }
 
