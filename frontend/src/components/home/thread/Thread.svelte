@@ -306,28 +306,28 @@
         // make sure that the root message index matches
         if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
 
-        const { kind } = msg;
-
-        if (kind === "remote_user_typing") {
-            typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
-        }
-        if (kind === "remote_user_stopped_typing") {
-            typing.stopTyping(msg.userId);
-        }
-        if (kind === "remote_user_toggled_reaction") {
-            remoteUserToggledReaction(msg);
-        }
-        if (kind === "remote_user_removed_message") {
-            remoteUserRemovedMessage(msg);
-        }
-        if (kind === "remote_user_deleted_message") {
-            localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
-        }
-        if (kind === "remote_user_undeleted_message") {
-            localMessageUpdates.markUndeleted(msg.messageId.toString());
-        }
-        if (kind === "remote_user_sent_message") {
-            remoteUserSentMessage(msg);
+        switch (msg.kind) {
+            case "remote_user_typing":
+                typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
+                break;
+            case "remote_user_stopped_typing":
+                typing.stopTyping(msg.userId);
+                break;
+            case "remote_user_toggled_reaction":
+                remoteUserToggledReaction(msg);
+                break;
+            case "remote_user_removed_message":
+                remoteUserRemovedMessage(msg);
+                break;
+            case "remote_user_deleted_message":
+                localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
+                break;
+            case "remote_user_undeleted_message":
+                localMessageUpdates.markUndeleted(msg.messageId.toString());
+                break;
+            case "remote_user_sent_message":
+                remoteUserSentMessage(msg);
+                break;
         }
     }
 
@@ -348,22 +348,27 @@
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
-        const existing = $events.find(
-            (ev) =>
-                ev.event.kind === "message" &&
-                ev.event.messageId === message.messageEvent.event.messageId
-        );
-
-        if (existing === undefined) {
-            unconfirmed.add(unconfirmedKey, message.messageEvent);
+        const existing = findMessageById(message.messageEvent.event.messageId, $events);
+        if (existing !== undefined) {
+            return;
         }
+
+        const [eventIndex, messageIndex] = getNextEventAndMessageIndexes($events);
+        unconfirmed.add(unconfirmedKey, {
+            ...message.messageEvent,
+            index: eventIndex,
+            event: {
+                ...message.messageEvent.event,
+                messageIndex
+            }
+        });
 
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
         messagesRead.markThreadRead(
             chat.chatId,
             threadRootMessageIndex,
-            message.messageEvent.event.messageIndex
+            messageIndex
         );
     }
 

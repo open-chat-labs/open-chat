@@ -719,7 +719,6 @@ export async function handleMessageSentByOther(
     clientChat: ChatSummary,
     currentEvents: EventWrapper<ChatEvent>[],
     messageEvent: EventWrapper<Message>,
-    confirmed: boolean
 ): Promise<void> {
     const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
 
@@ -728,29 +727,19 @@ export async function handleMessageSentByOther(
         return;
     }
 
-    if (confirmed) {
-        const isAdjacentToAlreadyLoadedEvents =
-            indexIsInRanges(messageEvent.index - 1, confirmedLoaded) ||
-            indexIsInRanges(messageEvent.index + 1, confirmedLoaded);
+    const isAdjacentToAlreadyLoadedEvents =
+        indexIsInRanges(messageEvent.index - 1, confirmedLoaded) ||
+        indexIsInRanges(messageEvent.index + 1, confirmedLoaded);
 
-        if (!isAdjacentToAlreadyLoadedEvents) {
-            return;
-        }
-
-        await handleEventsResponse(api, user, clientChat, {
-            events: [messageEvent],
-            affectedEvents: [],
-            latestEventIndex: undefined,
-        });
-    } else {
-        const existing = currentEvents.find(
-            (ev) =>
-                ev.event.kind === "message" && ev.event.messageId === messageEvent.event.messageId
-        );
-        if (existing === undefined) {
-            unconfirmed.add(clientChat.chatId, messageEvent);
-        }
+    if (!isAdjacentToAlreadyLoadedEvents) {
+        return;
     }
+
+    await handleEventsResponse(api, user, clientChat, {
+        events: [messageEvent],
+        affectedEvents: [],
+        latestEventIndex: undefined,
+    });
 }
 
 export function forwardMessage(
