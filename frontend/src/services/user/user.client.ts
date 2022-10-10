@@ -332,7 +332,7 @@ export class UserClient extends CandidService implements IUserClient {
                     user_id: Principal.fromText(recipientId),
                     thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     message_id: message.messageId,
-                    correlation_id: generateUint64()
+                    correlation_id: generateUint64(),
                 };
                 return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
             });
@@ -364,7 +364,7 @@ export class UserClient extends CandidService implements IUserClient {
                 ),
                 forwarding: message.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message(req), (resp) =>
                 sendMessageResponse(resp, message.sender, recipientId)
@@ -394,7 +394,7 @@ export class UserClient extends CandidService implements IUserClient {
                 (replyContext) => apiReplyContextArgs(replyContext),
                 message.repliesTo
             ),
-            correlation_id: generateUint64()
+            correlation_id: generateUint64(),
         };
         return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
             transferWithinGroupResponse(resp, message.sender, recipientId)
@@ -426,7 +426,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.leave_group({
                 chat_id: Principal.fromText(chatId),
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             }),
             leaveGroupResponse
         );
@@ -439,7 +439,7 @@ export class UserClient extends CandidService implements IUserClient {
                 as_super_admin: false,
                 chat_id: Principal.fromText(chatId),
                 invite_code: apiOptional(textToCode, inviteCode),
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             }),
             joinGroupResponse
         );
@@ -480,7 +480,7 @@ export class UserClient extends CandidService implements IUserClient {
                 message_id: messageId,
                 reaction,
                 username,
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse
         );
@@ -499,7 +499,7 @@ export class UserClient extends CandidService implements IUserClient {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse
         );
@@ -516,7 +516,7 @@ export class UserClient extends CandidService implements IUserClient {
                 user_id: Principal.fromText(otherUserId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
-                correlation_id: generateUint64()
+                correlation_id: generateUint64(),
             }),
             deleteMessageResponse
         );

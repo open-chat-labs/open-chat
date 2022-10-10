@@ -112,7 +112,7 @@ type MarkReadArgs =
 type ChatMessagesRead =
     record {
         chat_id: ChatId;
-        message_ranges: vec MessageIndexRange;
+        read_up_to: opt MessageIndex;
         threads: vec ThreadRead;
     };
 
@@ -626,7 +626,7 @@ service: {
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
-    mark_read: (MarkReadArgs) -> (MarkReadResponse);
+    mark_read_v2: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
