@@ -680,7 +680,7 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    readByMe?: DRange;
+    readByMeUpTo?: number;
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
@@ -692,7 +692,7 @@ type ChatSummaryUpdatesCommon = {
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    readByThem?: DRange;
+    readByThemUpTo?: number;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -819,7 +819,7 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    readByMe: DRange;
+    readByMeUpTo: number | undefined;
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted: boolean;
@@ -831,7 +831,7 @@ type ChatSummaryCommon = {
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    readByThem: DRange;
+    readByThemUpTo: number | undefined;
     dateCreated: bigint;
 };
 
@@ -1150,7 +1150,7 @@ export type JoinGroupResponse =
     | InternalError;
 
 export type MarkReadRequest = {
-    ranges: DRange;
+    readUpTo: number | undefined;
     chatId: string;
     threads: ThreadRead[];
 }[];
@@ -1193,18 +1193,6 @@ export type DeleteMessageResponse =
     | "chat_not_found"
     | "success"
     | "message_not_found";
-
-export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & {
-    chatSummaries: SerializableChatSummary[];
-};
-export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
-export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & {
-    readByMe: IndexRange[];
-    readByThem: IndexRange[];
-};
-export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
-    readByMe: IndexRange[];
-};
 
 export type UnpinMessageResponse =
     | "no_change"

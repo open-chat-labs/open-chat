@@ -19,7 +19,6 @@
     import {
         getContentAsText,
         getDisplayDate,
-        getMinVisibleMessageIndex,
         getTypingString,
         markAllRead,
     } from "../../domain/chat/chat.utils";
@@ -105,7 +104,6 @@
     function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = messagesRead.unreadMessageCount(
             chatSummary.chatId,
-            getMinVisibleMessageIndex(chatSummary),
             chatSummary.latestMessage?.event.messageIndex
         );
         unreadMentions = getUnreadMentionCount(chatSummary);

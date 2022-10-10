@@ -448,13 +448,10 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
-            this.userService.mark_read({
-                messages_read: request.map(({ chatId, ranges, threads }) => ({
+            this.userService.mark_read_v2({
+                messages_read: request.map(({ chatId, readUpTo, threads }) => ({
                     chat_id: Principal.fromText(chatId),
-                    message_ranges: ranges.subranges().map((r) => ({
-                        from: r.low,
-                        to: r.high,
-                    })),
+                    read_up_to: apiOptional(identity, readUpTo),
                     threads: threads.map((t) => ({
                         root_message_index: t.threadRootMessageIndex,
                         read_up_to: t.readUpTo,

@@ -17,7 +17,7 @@
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { groupAvatarUrl, userAvatarUrl } from "../../domain/user/user.utils";
-    import { getContentAsText, getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
+    import { getContentAsText } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
@@ -75,7 +75,6 @@
                   (num, chat) =>
                       messagesRead.unreadMessageCount(
                           chat.chatId,
-                          getMinVisibleMessageIndex(chat),
                           chat.latestMessage?.event.messageIndex
                       ) > 0
                           ? num + 1
