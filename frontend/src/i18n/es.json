@@ -610,6 +610,11 @@
     "groupRulesDisabled": "{changedBy} inhabilitó las reglas del grupo",
     "groupRulesTooShort": "Las reglas del grupo no deben estar vacías.",
     "groupRulesTooLong": "Las reglas del grupo son demasiado largas.",
+    "userId": "identificación de usuario",
+    "alsoCanisterId": "también su identificación del recipiente",
+    "version": "versión",
+    "websiteVersion": "del sitio web",
+    "advanced": "Avanzado",
     "features": "Características",
     "architecture": "Arquitectura",
     "whitepaper": "Papel blanco"

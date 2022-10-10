@@ -610,6 +610,11 @@
     "groupRulesDisabled": "{changedBy} đã tắt các quy tắc nhóm",
     "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
     "groupRulesTooLong": "Nội quy nhóm quá dài",
+    "userId": "tên người dùng",
+    "alsoCanisterId": "cũng là id hộp của bạn",
+    "version": "phiên bản",
+    "websiteVersion": "của trang web",
+    "advanced": "Nâng cao",
     "features": "Đặc trưng",
     "architecture": "Ngành kiến trúc",
     "whitepaper": "Giấy trắng"
