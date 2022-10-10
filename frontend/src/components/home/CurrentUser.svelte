@@ -1,6 +1,9 @@
 <script lang="ts">
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Domain from "svelte-material-icons/Domain.svelte";
+    import FileDocumentOutline from "svelte-material-icons/FileDocumentOutline.svelte";
+    import Rocket from "svelte-material-icons/Rocket.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
@@ -43,7 +46,7 @@
         <MenuIcon>
             <span slot="icon">
                 <HoverIcon>
-                    <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                    <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </span>
             <span slot="menu">
@@ -67,9 +70,24 @@
                         <HelpCircleOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("faq.menu")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("showFeatures")}>
+                        <Rocket size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <span slot="text">{$_("features")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("showRoadmap")}>
                         <Map size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("roadmap")}</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => dispatch("showWhitepaper")}>
+                        <FileDocumentOutline
+                            size={$iconSize}
+                            color={"var(--icon-txt)"}
+                            slot="icon" />
+                        <span slot="text">{$_("whitepaper")}</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => dispatch("showArchitecture")}>
+                        <Domain size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <span slot="text">{$_("architecture")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showAbout")}>
                         <InformationOutline
