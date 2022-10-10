@@ -5,8 +5,7 @@ use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
     ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
-    GroupChatSummaryInternal, GroupChatSummaryUpdates, GroupChatSummaryUpdatesInternal, MessageIndexRange, OptionUpdate,
-    TimestampMillis,
+    GroupChatSummaryInternal, GroupChatSummaryUpdates, GroupChatSummaryUpdatesInternal, OptionUpdate, TimestampMillis,
 };
 use user_canister::{initial_state, updates};
 
@@ -101,12 +100,6 @@ fn finalize(
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
             summary.read_by_me_up_to = group_chat.read_by_me_up_to.value;
-            summary.read_by_me = group_chat
-                .read_by_me_up_to
-                .value
-                .map(|i| vec![MessageIndexRange::from_zero(i)])
-                .unwrap_or_default();
-
             summary.archived = group_chat.archived.value;
 
             for thread in summary.latest_threads.iter_mut() {
@@ -117,13 +110,6 @@ fn finalize(
                 .entry(group_chat.chat_id)
                 .and_modify(|su| {
                     su.read_by_me_up_to = group_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
-                    su.read_by_me = group_chat
-                        .read_by_me_up_to
-                        .if_set_after(updates_since)
-                        .copied()
-                        .flatten()
-                        .map(|i| vec![MessageIndexRange::from_zero(i)]);
-
                     su.archived = group_chat.archived.if_set_after(updates_since).copied();
 
                     for thread in su.latest_threads.iter_mut() {
@@ -149,16 +135,6 @@ fn finalize(
                 date_created: direct_chat.date_created,
                 read_by_me_up_to: direct_chat.read_by_me_up_to.value,
                 read_by_them_up_to: direct_chat.read_by_them_up_to.value,
-                read_by_me: direct_chat
-                    .read_by_me_up_to
-                    .value
-                    .map(|i| vec![MessageIndexRange::from_zero(i)])
-                    .unwrap_or_default(),
-                read_by_them: direct_chat
-                    .read_by_them_up_to
-                    .value
-                    .map(|i| vec![MessageIndexRange::from_zero(i)])
-                    .unwrap_or_default(),
                 notifications_muted: direct_chat.notifications_muted.value,
                 metrics: direct_chat.events.metrics().clone(),
                 my_metrics: direct_chat
@@ -174,21 +150,6 @@ fn finalize(
             let has_new_events = latest_event.timestamp > updates_since;
             let latest_event_index = if has_new_events { Some(latest_event.index) } else { None };
             let metrics = if has_new_events { Some(direct_chat.events.metrics().clone()) } else { None };
-
-            let read_by_me = direct_chat
-                .read_by_me_up_to
-                .if_set_after(updates_since)
-                .copied()
-                .flatten()
-                .map(|i| vec![MessageIndexRange::from_zero(i)]);
-
-            let read_by_them = direct_chat
-                .read_by_them_up_to
-                .if_set_after(updates_since)
-                .copied()
-                .flatten()
-                .map(|i| vec![MessageIndexRange::from_zero(i)]);
-
             let notifications_muted = direct_chat.notifications_muted.if_set_after(updates_since).copied();
             let affected_events = chat_events.affected_event_indexes_since(updates_since, 100);
 
@@ -198,8 +159,6 @@ fn finalize(
                 latest_event_index,
                 read_by_me_up_to: direct_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
                 read_by_them_up_to: direct_chat.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
-                read_by_me,
-                read_by_them,
                 notifications_muted,
                 affected_events,
                 metrics,

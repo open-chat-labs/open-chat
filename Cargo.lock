@@ -3558,17 +3558,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "range-set"
-version = "0.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6558ccfefeefa880f80c0e957c3748cbcf75c937900eb0604d0f2acc6a84f8dc"
-dependencies = [
- "num-traits",
- "serde",
- "smallvec",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4081,9 +4070,6 @@ name = "smallvec"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "sms_sender_aws"
@@ -4870,7 +4856,6 @@ dependencies = [
  "itertools",
  "msgpack",
  "rand",
- "range-set",
  "serde",
  "serde_bytes",
  "tracing",
