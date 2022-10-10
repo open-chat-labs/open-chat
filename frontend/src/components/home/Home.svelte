@@ -4,9 +4,7 @@
     import LeftPanel from "./LeftPanel.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Toast from "../Toast.svelte";
-    import AboutModal from "../AboutModal.svelte";
     import FaqModal from "../FaqModal.svelte";
-    import RoadmapModal from "../RoadmapModal.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
@@ -133,9 +131,7 @@
 
     enum ModalType {
         None,
-        About,
         Faq,
-        Roadmap,
         SelectChat,
     }
 
@@ -1082,6 +1078,10 @@
             });
     }
 
+    function showLandingPageRoute(route: string) {
+        return () => (window.location.href = route);
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1096,9 +1096,12 @@
             {searchTerm}
             {searchResultsAvailable}
             {searching}
-            on:showAbout={() => (modal = ModalType.About)}
+            on:showAbout={showLandingPageRoute("/home")}
             on:showFaq={() => (modal = ModalType.Faq)}
-            on:showRoadmap={() => (modal = ModalType.Roadmap)}
+            on:showRoadmap={showLandingPageRoute("/roadmap")}
+            on:showArchitecture={showLandingPageRoute("/architecture")}
+            on:showFeatures={showLandingPageRoute("/features")}
+            on:showWhitepaper={showLandingPageRoute("whitepaper")}
             on:searchEntered={performSearch}
             on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}
@@ -1223,10 +1226,6 @@
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
             <FaqModal bind:question={faqQuestion} on:close={closeModal} />
-        {:else if modal === ModalType.Roadmap}
-            <RoadmapModal on:close={closeModal} />
-        {:else if modal === ModalType.About}
-            <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
                 chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}

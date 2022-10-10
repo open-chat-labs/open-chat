@@ -608,5 +608,13 @@
     "groupRulesEnabled": "{changedBy} hat die Gruppenregeln aktiviert",
     "groupRulesDisabled": "{changedBy} hat die Gruppenregeln deaktiviert",
     "groupRulesTooShort": "Die Gruppenregeln dürfen nicht leer sein",
-    "groupRulesTooLong": "Die Gruppenregeln sind zu lang"
+    "groupRulesTooLong": "Die Gruppenregeln sind zu lang",
+    "userId": "Benutzeridentifikation",
+    "alsoCanisterId": "auch Ihre Kanister-ID",
+    "version": "Ausführung",
+    "websiteVersion": "der Webseite",
+    "advanced": "Fortschrittlich",
+    "features": "Merkmale",
+    "architecture": "Die Architektur",
+    "whitepaper": "Weißes Papier"
 }
