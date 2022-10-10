@@ -241,6 +241,9 @@
     "errorSendingMessage": "An unexpected error occurred sending your message",
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "aboutOpenChat": "About OpenChat",
+    "features": "Features",
+    "architecture": "Architecture",
+    "whitepaper": "Whitepaper",
     "roadmap": "Roadmap",
     "here": "here",
     "chatSummary": {

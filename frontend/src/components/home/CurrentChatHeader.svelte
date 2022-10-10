@@ -10,7 +10,7 @@
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Bell from "svelte-material-icons/Bell.svelte";
@@ -230,7 +230,7 @@
             <MenuIcon>
                 <div slot="icon">
                     <HoverIcon>
-                        <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                        <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
                 <div slot="menu">
