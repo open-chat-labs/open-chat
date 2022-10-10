@@ -614,5 +614,8 @@
     "alsoCanisterId": "キャニスター ID も",
     "version": "バージョン",
     "websiteVersion": "ウェブサイトの",
-    "advanced": "高度"
+    "advanced": "高度",
+    "features": "特徴",
+    "architecture": "建築",
+    "whitepaper": "白書"
 }

@@ -614,5 +614,8 @@
     "alsoCanisterId": "también su identificación del recipiente",
     "version": "versión",
     "websiteVersion": "del sitio web",
-    "advanced": "Avanzado"
+    "advanced": "Avanzado",
+    "features": "Características",
+    "architecture": "Arquitectura",
+    "whitepaper": "Papel blanco"
 }

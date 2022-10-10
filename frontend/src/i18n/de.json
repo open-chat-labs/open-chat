@@ -613,5 +613,8 @@
     "alsoCanisterId": "auch Ihre Kanister-ID",
     "version": "Ausführung",
     "websiteVersion": "der Webseite",
-    "advanced": "Fortschrittlich"
+    "advanced": "Fortschrittlich",
+    "features": "Merkmale",
+    "architecture": "Die Architektur",
+    "whitepaper": "Weißes Papier"
 }

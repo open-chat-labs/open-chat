@@ -611,5 +611,8 @@
     "alsoCanisterId": "גם מזהה המיכל שלך",
     "version": "גִרְסָה",
     "websiteVersion": "של האתר",
-    "advanced": "מִתקַדֵם"
+    "advanced": "מִתקַדֵם",
+    "features": "תכונות",
+    "architecture": "ארכיטקטורה",
+    "whitepaper": "נייר לבן"
 }

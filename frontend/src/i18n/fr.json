@@ -613,5 +613,8 @@
     "alsoCanisterId": "également votre identifiant de cartouche",
     "version": "version",
     "websiteVersion": "du site web",
-    "advanced": "Avancé"
+    "advanced": "Avancé",
+    "features": "Fonctionnalités",
+    "architecture": "Architecture",
+    "whitepaper": "Papier blanc"
 }

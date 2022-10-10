@@ -613,5 +613,8 @@
     "alsoCanisterId": "также ваш идентификатор канистры",
     "version": "версия",
     "websiteVersion": "веб-сайта",
-    "advanced": "Передовой"
+    "advanced": "Передовой",
+    "features": "Функции",
+    "architecture": "Архитектура",
+    "whitepaper": "Белая бумага"
 }

@@ -614,5 +614,8 @@
     "alsoCanisterId": "还有你的罐子ID",
     "version": "版本",
     "websiteVersion": "网站的",
-    "advanced": "先进的"
+    "advanced": "先进的",
+    "features": "特征",
+    "architecture": "建筑学",
+    "whitepaper": "白皮书"
 }

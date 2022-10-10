@@ -614,5 +614,8 @@
     "alsoCanisterId": "cũng là id hộp của bạn",
     "version": "phiên bản",
     "websiteVersion": "của trang web",
-    "advanced": "Nâng cao"
+    "advanced": "Nâng cao",
+    "features": "Đặc trưng",
+    "architecture": "Ngành kiến trúc",
+    "whitepaper": "Giấy trắng"
 }

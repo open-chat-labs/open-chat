@@ -613,5 +613,8 @@
     "alsoCanisterId": "anche l'ID del tuo contenitore",
     "version": "versione",
     "websiteVersion": "del sito web",
-    "advanced": "Avanzate"
+    "advanced": "Avanzate",
+    "features": "Caratteristiche",
+    "architecture": "Architettura",
+    "whitepaper": "Carta bianca"
 }
