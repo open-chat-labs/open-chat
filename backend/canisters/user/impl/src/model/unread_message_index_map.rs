@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use types::MessageIndex;
 
 /// This is used to tell the other user which of their messages we have read.
@@ -11,7 +11,7 @@ use types::MessageIndex;
 /// marked as read.
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct UnreadMessageIndexMap {
-    map: HashMap<MessageIndex, MessageIndex>,
+    map: BTreeMap<MessageIndex, MessageIndex>,
 }
 
 impl UnreadMessageIndexMap {
@@ -19,11 +19,54 @@ impl UnreadMessageIndexMap {
         self.map.insert(ours, theirs);
     }
 
-    pub fn get(&self, ours: &MessageIndex) -> Option<MessageIndex> {
-        self.map.get(ours).cloned()
+    pub fn get_max_read_up_to_of_theirs(&self, ours_read_up_to: &MessageIndex) -> Option<MessageIndex> {
+        self.map
+            .iter()
+            .take_while(|(o, _)| *o <= ours_read_up_to)
+            .map(|(_, t)| t)
+            .copied()
+            .max()
     }
 
-    pub fn remove(&mut self, ours: &MessageIndex) -> bool {
-        self.map.remove(ours).is_some()
+    pub fn remove_up_to(&mut self, theirs: &MessageIndex) {
+        self.map.retain(|_, t| *t > *theirs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_max_read_up_to_of_theirs() {
+        let mut map = UnreadMessageIndexMap::default();
+        map.add(1.into(), 5.into());
+        map.add(2.into(), 7.into());
+        map.add(3.into(), 6.into());
+        map.add(4.into(), 8.into());
+        map.add(5.into(), 9.into());
+
+        assert_eq!(map.get_max_read_up_to_of_theirs(&0.into()), None);
+        assert_eq!(map.get_max_read_up_to_of_theirs(&3.into()), Some(7.into()));
+        assert_eq!(map.get_max_read_up_to_of_theirs(&5.into()), Some(9.into()));
+    }
+
+    #[test]
+    fn remove_up_to() {
+        let mut map = UnreadMessageIndexMap::default();
+        map.add(1.into(), 5.into());
+        map.add(2.into(), 7.into());
+        map.add(3.into(), 6.into());
+        map.add(4.into(), 8.into());
+        map.add(5.into(), 9.into());
+
+        map.remove_up_to(&0.into());
+        assert_eq!(map.map.len(), 5);
+
+        map.remove_up_to(&7.into());
+        assert_eq!(map.map.len(), 2);
+
+        map.remove_up_to(&9.into());
+        assert_eq!(map.map.len(), 0);
     }
 }
