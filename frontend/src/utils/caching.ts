@@ -470,7 +470,7 @@ export function setCachedMessageFromSendResponse(
 
         const event = messageToEvent(message, resp);
 
-        setCachedMessage(db, chatId, event, threadRootMessageIndex).catch((err) =>
+        setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex).catch((err) =>
             rollbar.error("Unable to write message to cache: ", err)
         );
 
@@ -489,28 +489,26 @@ export function setCachedMessageFromNotification(
         throw new Error("Unable to open indexDB, cannot set message from notification");
     }
 
-    setCachedMessage(db, chatId, message, threadRootMessageIndex).catch((err) =>
+    setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex).catch((err) =>
         rollbar.error("Unable to write notification message to the cache", err)
     );
 }
 
-async function setCachedMessage(
+async function setCachedMessageIfNotExists(
     db: Database,
     chatId: string,
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
+    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex)
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
     const eventStore = tx.objectStore(store);
-    await Promise.all([
-        eventStore.put(
-            makeSerialisable(messageEvent, chatId),
-            createCacheKey(chatId, messageEvent.index, threadRootMessageIndex)
-        ),
-    ]);
+    if (await eventStore.count(key) === 0) {
+        await eventStore.add(makeSerialisable(messageEvent, chatId), key)
+    }
     await tx.done;
 }
 
