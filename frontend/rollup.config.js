@@ -136,6 +136,7 @@ export default [
             replace({
                 preventAssignment: true,
                 "process.env.NODE_ENV": JSON.stringify(env),
+                "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
             }),
 

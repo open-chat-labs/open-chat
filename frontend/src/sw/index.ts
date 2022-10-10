@@ -10,6 +10,7 @@ import { notification as toNotification } from "../services/notifications/mapper
 import { getSoftDisabled } from "../utils/caching";
 import { toUint8Array } from "../utils/base64";
 import { Cryptocurrency, E8S_PER_TOKEN } from "../domain/crypto";
+import { openUserCache, writeCachedUsersToDatabase } from "../utils/userCache";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;
@@ -28,6 +29,24 @@ self.addEventListener("notificationclick", function (event: NotificationEvent) {
 
 self.addEventListener("fetch", () => {
     console.log("dummy fetch interceptor");
+});
+
+self.addEventListener("activate", async () => {
+    // upon activation take control of all clients (tabs & windows)
+    await self.clients.claim();
+    console.log("our service worker activated");
+});
+
+self.addEventListener("message", async (event) => {
+    if (event.data && event.data.type === "SAVE_USERS") {
+        console.log("received SAVE_USERS message in the service worker");
+
+        // since we don't know when the service worker could be shut down we need to open the db each time
+        // seems to be good enough for svgomg: https://github.com/jakearchibald/svgomg/blob/main/src/js/utils/storage.js
+        const db = openUserCache();
+        writeCachedUsersToDatabase(db, event.data.users);
+        (await db).close();
+    }
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {

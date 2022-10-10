@@ -336,7 +336,8 @@ export async function handleEventsResponse(
     // Only include affected events that overlap with already loaded events
     const confirmedLoaded = confirmedEventIndexesLoaded(chat.chatId);
     const events = resp.events.concat(
-        resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded)));
+        resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded))
+    );
 
     const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
@@ -743,7 +744,8 @@ export async function handleMessageSentByOther(
         });
     } else {
         const existing = currentEvents.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageId === messageEvent.event.messageId
+            (ev) =>
+                ev.event.kind === "message" && ev.event.messageId === messageEvent.event.messageId
         );
         if (existing === undefined) {
             unconfirmed.add(clientChat.chatId, messageEvent);
@@ -825,7 +827,11 @@ export function sendMessageWithAttachment(
     return sendMessage(api, user, serverChat, clientChat, currentEvents, evt);
 }
 
-function onSendMessageSuccess(chatId: string, resp: SendMessageSuccess | TransferSuccess, msg: Message) {
+function onSendMessageSuccess(
+    chatId: string,
+    resp: SendMessageSuccess | TransferSuccess,
+    msg: Message
+) {
     const event = mergeSendMessageResponse(msg, resp);
 
     addServerEventsToStores(chatId, [event]);

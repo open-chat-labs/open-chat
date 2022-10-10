@@ -1,6 +1,4 @@
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { ChatSchema, getCachedUsers, setCachedUsers, setUsername } from "../../utils/caching";
-import type { IDBPDatabase } from "idb";
 import type {
     ChallengeAttempt,
     CheckUsernameResponse,
@@ -22,19 +20,20 @@ import { groupBy } from "../../utils/list";
 import { isUserSummary } from "../../utils/user";
 import { profile } from "../common/profiling";
 import { rollbar } from "../../utils/logging";
+import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to
  * indexDB for holding users
  */
 export class CachingUserIndexClient implements IUserIndexClient {
-    constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserIndexClient) {}
+    constructor(private client: IUserIndexClient) {}
 
     @profile("userIndexCachingClient")
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
-        const fromCache = await getCachedUsers(this.db, allUsers);
+        const fromCache = await getCachedUsers(allUsers);
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
@@ -52,7 +51,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
             fromCache
         );
 
-        setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary)).catch((err) =>
+        setCachedUsers(mergedResponse.users.filter(isUserSummary)).catch((err) =>
             rollbar.error("Failed to save users to the cache", err)
         );
 
@@ -94,7 +93,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.client.setUsername(userId, username).then((res) => {
             if (res === "success") {
-                setUsername(this.db, userId, username);
+                setUsername(userId, username);
             }
             return res;
         });

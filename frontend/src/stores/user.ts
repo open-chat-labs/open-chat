@@ -43,13 +43,11 @@ const { subscribe, update, set } = immutableStore<UserLookup>({
 });
 
 export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
-    return {
-        ...lookup,
-        [user.userId]: {
-            ...user,
-            username: user.username ?? lookup[user.userId]?.username,
-        },
+    lookup[user.userId] = {
+        ...user,
+        username: user.username ?? lookup[user.userId]?.username,
     };
+    return lookup;
 }
 
 export const userStore = {
@@ -60,11 +58,15 @@ export const userStore = {
         set(users);
     },
     add: (user: PartialUserSummary): void => {
-        update((users) => overwriteUser(users, user));
+        update((users) => {
+            const clone = { ...users };
+            return overwriteUser(clone, user);
+        });
     },
     addMany: (newUsers: PartialUserSummary[]): void => {
         update((users) => {
-            return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), users);
+            const clone = { ...users };
+            return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {

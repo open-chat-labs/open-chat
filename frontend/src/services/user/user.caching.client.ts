@@ -27,7 +27,7 @@ import type {
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
-    ChatSchema,
+    Database,
     getCachedChats,
     getCachedEvents,
     getCachedEventsByIndex,
@@ -38,7 +38,6 @@ import {
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import type { IDBPDatabase } from "idb";
 import {
     compareChats,
     getFirstUnreadMessageIndex,
@@ -87,7 +86,7 @@ export class CachingUserClient implements IUserClient {
     }
 
     constructor(
-        private db: Promise<IDBPDatabase<ChatSchema>>,
+        private db: Database,
         private identity: Identity,
         private client: IUserClient,
         private groupInvite: GroupInvite | undefined
@@ -264,11 +263,7 @@ export class CachingUserClient implements IUserClient {
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
                 // horrible having to do this but if we don't the message read tracker will not be in the right state
-                messagesRead.syncWithServer(
-                    chat.chatId,
-                    chat.readByMe,
-                    threadsReadFromChat(chat)
-                );
+                messagesRead.syncWithServer(chat.chatId, chat.readByMe, threadsReadFromChat(chat));
 
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);
@@ -336,7 +331,7 @@ export class CachingUserClient implements IUserClient {
 
                     const missing = missingUserIds(get(userStore), userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.db).getUsers(
+                        return UserIndexClient.create(this.identity).getUsers(
                             {
                                 userGroups: [
                                     {
@@ -474,7 +469,13 @@ export class CachingUserClient implements IUserClient {
         username: string,
         threadRootMessageIndex?: number
     ): Promise<AddRemoveReactionResponse> {
-        return this.client.addReaction(otherUserId, messageId, reaction, username, threadRootMessageIndex);
+        return this.client.addReaction(
+            otherUserId,
+            messageId,
+            reaction,
+            username,
+            threadRootMessageIndex
+        );
     }
 
     removeReaction(
