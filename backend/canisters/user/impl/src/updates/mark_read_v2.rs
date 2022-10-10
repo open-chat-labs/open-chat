@@ -15,7 +15,7 @@ fn mark_read_v2(args: Args) -> Response {
     mutate_state(|state| mark_read_impl(args, state))
 }
 
-pub(crate) fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     for chat_messages_read in args.messages_read {
