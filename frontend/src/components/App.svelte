@@ -85,26 +85,34 @@
 
     function loadUser(id: Identity) {
         api = new ServiceContainer(id);
-        api.getCurrentUser().then((user) => {
-            switch (user.kind) {
-                case "unknown_user":
-                    // TODO remove this once the principal migration can be done via the UI
-                    const principalMigrationUserId = localStorage.getItem(
-                        "openchat_principal_migration_user_id"
-                    );
-                    if (principalMigrationUserId !== null) {
-                        console.log("Migrating user principal", principalMigrationUserId);
-                        api.migrateUserPrincipal(principalMigrationUserId);
-                        return;
-                    }
+        api.getCurrentUser()
+            .then((user) => {
+                switch (user.kind) {
+                    case "unknown_user":
+                        // TODO remove this once the principal migration can be done via the UI
+                        const principalMigrationUserId = localStorage.getItem(
+                            "openchat_principal_migration_user_id"
+                        );
+                        if (principalMigrationUserId !== null) {
+                            console.log("Migrating user principal", principalMigrationUserId);
+                            api.migrateUserPrincipal(principalMigrationUserId);
+                            return;
+                        }
 
-                    identityState.set("registering");
-                    break;
-                case "created_user":
-                    onCreatedUser(id, user);
-                    break;
-            }
-        });
+                        identityState.set("registering");
+                        break;
+                    case "created_user":
+                        onCreatedUser(id, user);
+                        break;
+                }
+            })
+            .catch((e) => {
+                if (e.code === 403) {
+                    // This happens locally if you run a new instance of the IC and have an identity based on the
+                    // previous version's root key in the cache
+                    logout();
+                }
+            });
     }
 
     function registeredUser(ev: CustomEvent<CreatedUser>) {
