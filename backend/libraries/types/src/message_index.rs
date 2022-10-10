@@ -27,3 +27,9 @@ pub struct MessageIndexRange {
     pub from: MessageIndex,
     pub to: MessageIndex,
 }
+
+impl MessageIndexRange {
+    pub fn from_zero(max: MessageIndex) -> MessageIndexRange {
+        MessageIndexRange { from: 0.into(), to: max }
+    }
+}

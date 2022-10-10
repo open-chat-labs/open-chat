@@ -25,7 +25,7 @@ fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
             .data
             .users
             .iter()
-            .filter(|u| u.wasm_version != version)
+            .filter(|u| u.wasm_version != version && !u.is_bot)
             .sorted_by_key(|u| u.last_online)
             .rev()
             .map(|u| u.user_id)
