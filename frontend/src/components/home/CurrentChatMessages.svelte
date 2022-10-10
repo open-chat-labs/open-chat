@@ -91,7 +91,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { CreatedUser, User } from "../../domain/user/user";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-    import type { RemoteUserToggledReaction, WebRtcMessage } from "../../domain/webrtc/webrtc";
+    import type { RemoteUserSentMessage, RemoteUserToggledReaction, WebRtcMessage } from "../../domain/webrtc/webrtc";
     import { typing } from "../../stores/typing";
     import { localMessageUpdates } from "../../stores/localMessageUpdates";
     import { push } from "svelte-spa-router";
@@ -533,7 +533,7 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            handleMessageSentByOther(api, user, chat, events, latestMessage, true);
+            handleMessageSentByOther(api, user, chat, events, latestMessage);
         }
 
         refreshAffectedEvents(api, user, chat, affectedEvents);
@@ -545,10 +545,9 @@
     }
 
     export function handleMessageSentByOtherExternal(
-        messageEvent: EventWrapper<Message>,
-        confirmed: boolean
+        messageEvent: EventWrapper<Message>
     ): void {
-        handleMessageSentByOther(api, user, chat, events, messageEvent, confirmed).then(() =>
+        handleMessageSentByOther(api, user, chat, events, messageEvent).then(() =>
             onLoadedNewMessages(true)
         );
     }
@@ -841,32 +840,52 @@
         }
     }
 
-    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
-        const { kind } = msg;
+    function remoteUserSentMessage(message: RemoteUserSentMessage): void {
+        const existing = findMessageById(message.messageEvent.event.messageId, events);
+        if (existing !== undefined) {
+            return;
+        }
 
-        if (kind === "remote_user_typing") {
-            typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
-        }
-        if (kind === "remote_user_stopped_typing") {
-            typing.stopTyping(msg.userId);
-        }
-        if (kind === "remote_user_toggled_reaction") {
-            remoteUserToggledReaction(msg);
-        }
-        if (kind === "remote_user_deleted_message") {
-            localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
-        }
-        if (kind === "remote_user_removed_message") {
-            removeMessage(user.userId, chat, msg.messageId, msg.userId);
-        }
-        if (kind === "remote_user_undeleted_message") {
-            localMessageUpdates.markUndeleted(msg.messageId.toString());
-        }
-        if (kind === "remote_user_sent_message") {
-            handleMessageSentByOther(api, user, chat, events, msg.messageEvent, false);
-        }
-        if (kind === "remote_user_read_message") {
-            unconfirmedReadByThem.add(BigInt(msg.messageId));
+        // We should overwrite the event index and message index to ensure these new messages always get placed at the
+        // end rather than before any unconfirmed messages we have sent. Also, for direct chats the indexes can mismatch
+        // due to either user being blocked temporarily, so by overwriting the indexes we avoid issues caused by this.
+        const [eventIndex, messageIndex] = nextEventAndMessageIndexes();
+        unconfirmed.add(chat.chatId, {
+            ...message.messageEvent,
+            index: eventIndex,
+            event: {
+                ...message.messageEvent.event,
+                messageIndex,
+            }
+        });
+    }
+
+    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
+        switch (msg.kind) {
+            case "remote_user_typing":
+                typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
+                break;
+            case "remote_user_stopped_typing":
+                typing.stopTyping(msg.userId);
+                break;
+            case "remote_user_toggled_reaction":
+                remoteUserToggledReaction(msg);
+                break;
+            case "remote_user_deleted_message":
+                localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
+                break;
+            case "remote_user_removed_message":
+                removeMessage(user.userId, chat, msg.messageId, msg.userId);
+                break;
+            case "remote_user_undeleted_message":
+                localMessageUpdates.markUndeleted(msg.messageId.toString());
+                break;
+            case "remote_user_sent_message":
+                remoteUserSentMessage(msg);
+                break;
+            case "remote_user_read_message":
+                unconfirmedReadByThem.add(BigInt(msg.messageId));
+                break;
         }
     }
 </script>

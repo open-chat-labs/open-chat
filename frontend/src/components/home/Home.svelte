@@ -441,7 +441,7 @@
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if ($selectedChatId === chatId) {
-                currentChatMessages?.handleMessageSentByOtherExternal(m, true);
+                currentChatMessages?.handleMessageSentByOtherExternal(m);
             }
         });
     }
