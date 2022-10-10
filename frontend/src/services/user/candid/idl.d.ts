@@ -38,6 +38,9 @@ import {
     NnsPendingCryptoTransaction,
     NnsCompletedCryptoTransaction,
     NnsFailedCryptoTransaction,
+    SnsPendingCryptoTransaction,
+    SnsCompletedCryptoTransaction,
+    SnsFailedCryptoTransaction,
     DeletedContent,
     TimestampMillis,
     BlobReference,
@@ -99,6 +102,7 @@ import {
     GovernanceProposalsSubtype,
     GroupSubtypeUpdate,
     ArchiveChatResponse,
+    Icrc1Account,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -135,6 +139,9 @@ export {
     NnsPendingCryptoTransaction as ApiNnsPendingCryptoTransaction,
     NnsCompletedCryptoTransaction as ApiNnsCompletedCryptoTransaction,
     NnsFailedCryptoTransaction as ApiNnsFailedCryptoTransaction,
+    SnsPendingCryptoTransaction as ApiSnsPendingCryptoTransaction,
+    SnsCompletedCryptoTransaction as ApiSnsCompletedCryptoTransaction,
+    SnsFailedCryptoTransaction as ApiSnsFailedCryptoTransaction,
     TimestampMillis as ApiTimestampMillis,
     BlobReference as ApiBlobReference,
     Participant as ApiParticipant,
@@ -200,6 +207,7 @@ export {
     GovernanceProposalsSubtype as ApiGovernanceProposalsSubtype,
     GroupSubtypeUpdate as ApiGroupSubtypeUpdate,
     ArchiveChatResponse as ApiArchiveChatResponse,
+    Icrc1Account as ApiIcrc1Account,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

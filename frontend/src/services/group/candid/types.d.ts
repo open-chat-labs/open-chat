@@ -166,7 +166,8 @@ export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
-  };
+  } |
+  { 'SNS' : SnsCompletedCryptoTransaction };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -295,7 +296,8 @@ export interface EventsWindowArgs {
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction };
+export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
+  { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
 export interface FieldTooLongResult {
@@ -459,6 +461,10 @@ export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
   'valid_until' : TimestampMillis,
   'amount' : ICP,
+}
+export interface Icrc1Account {
+  'owner' : Principal,
+  'subaccount' : [] | [Uint8Array],
 }
 export interface ImageContent {
   'height' : number,
@@ -664,7 +670,8 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction };
+export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
+  { 'SNS' : SnsPendingCryptoTransaction };
 export type PermissionRole = { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -872,7 +879,38 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'InvalidRequest' : string };
+export type SnsAccount = { 'Mint' : null } |
+  { 'Account' : Icrc1Account };
+export interface SnsCompletedCryptoTransaction {
+  'to' : SnsAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'from' : SnsAccount,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
+export interface SnsFailedCryptoTransaction {
+  'to' : SnsAccount,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'from' : SnsAccount,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'amount' : Tokens,
+}
 export type SnsNeuronId = Uint8Array;
+export interface SnsPendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : Tokens,
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
 export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
