@@ -10,7 +10,6 @@
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import Radio from "../../Radio.svelte";
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -25,6 +24,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import {
         accountSectionOpen,
+        advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
@@ -71,6 +71,9 @@
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
     let showManageCryptoAccount = false;
     let balanceError: string | undefined;
+
+    //@ts-ignore
+    let version = window.OPENCHAT_WEBSITE_VERSION;
 
     $: {
         setLocale(selectedLocale);
@@ -442,6 +445,21 @@
             <Stats stats={metrics} />
         </CollapsibleCard>
     </div>
+    <div class="advanced">
+        <CollapsibleCard
+            on:toggle={advancedSectionOpen.toggle}
+            open={$advancedSectionOpen}
+            headerText={$_("advanced")}>
+            <div class="userid">
+                <Legend>{$_("userId")} ({$_("alsoCanisterId")})</Legend>
+                <div>{user.userId}</div>
+            </div>
+            <div>
+                <Legend>{$_("version")} ({$_("websiteVersion")})</Legend>
+                <div>{version}</div>
+            </div>
+        </CollapsibleCard>
+    </div>
 </form>
 
 <style type="text/scss">
@@ -488,19 +506,24 @@
         margin: $sp4 0 $sp5 0;
     }
 
+    .userid {
+        margin-bottom: $sp4;
+    }
+
     .user,
     .chats,
     .invite,
     .accounts,
     .stats,
     .appearance,
-    .storage {
+    .storage,
+    .advanced {
         margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
     }
 
-    .stats {
+    .advanced {
         margin-bottom: 0;
     }
 

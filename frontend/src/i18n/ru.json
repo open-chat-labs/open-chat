@@ -608,5 +608,10 @@
     "groupRulesEnabled": "{changedBy} включил правила группы",
     "groupRulesDisabled": "{changedBy} отключил правила группы",
     "groupRulesTooShort": "Правила группы не должны быть пустыми.",
-    "groupRulesTooLong": "Правила группы слишком длинные."
+    "groupRulesTooLong": "Правила группы слишком длинные.",
+    "userId": "ID пользователя",
+    "alsoCanisterId": "также ваш идентификатор канистры",
+    "version": "версия",
+    "websiteVersion": "веб-сайта",
+    "advanced": "Передовой"
 }

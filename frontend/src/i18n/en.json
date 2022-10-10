@@ -606,5 +606,10 @@
     "groupRulesEnabled": "{changedBy} enabled the group rules",
     "groupRulesDisabled": "{changedBy} disabled the group rules",
     "groupRulesTooShort": "The group rules must not be empty",
-    "groupRulesTooLong": "The group rules are too long"
+    "groupRulesTooLong": "The group rules are too long",
+    "userId": "user id",
+    "alsoCanisterId": "also your canister id",
+    "version": "version",
+    "websiteVersion": "of the website",
+    "advanced": "Advanced"
 }
