@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange,
-    OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    CanisterId, ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, Role,
+    TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -40,8 +40,6 @@ pub struct DirectChatSummary {
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
-    pub read_by_me: Vec<MessageIndexRange>,
-    pub read_by_them: Vec<MessageIndexRange>,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
@@ -71,7 +69,6 @@ pub struct GroupChatSummary {
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
-    pub read_by_me: Vec<MessageIndexRange>,
     pub notifications_muted: bool,
     pub participant_count: u32,
     pub role: Role,
@@ -105,8 +102,6 @@ pub struct DirectChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
-    pub read_by_me: Option<Vec<MessageIndexRange>>,
-    pub read_by_them: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
     pub affected_events: Vec<EventIndex>,
     pub metrics: Option<ChatMetrics>,
@@ -126,7 +121,6 @@ pub struct GroupChatSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,
-    pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
@@ -259,7 +253,6 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             latest_event_index: s.latest_event_index,
             joined: s.joined,
             read_by_me_up_to: None,
-            read_by_me: vec![],
             notifications_muted: s.notifications_muted,
             participant_count: s.participant_count,
             role: s.role,
@@ -314,7 +307,6 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             participant_count: s.participant_count,
             role: s.role,
             read_by_me_up_to: None,
-            read_by_me: None,
             notifications_muted: s.notifications_muted,
             mentions: s.mentions,
             wasm_version: s.wasm_version,

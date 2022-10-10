@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::c2c_join_group_v2 as c2c_join_group;
 use ic_cdk_macros::update;
-use types::{ChatId, GroupChatSummary, MessageIndex, MessageIndexRange};
+use types::{ChatId, GroupChatSummary, MessageIndex};
 use user_canister::join_group_v2::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -26,12 +26,6 @@ async fn join_group_v2(args: Args) -> Response {
 
                 let mut summary: GroupChatSummary = summary.into();
                 summary.read_by_me_up_to = latest_message_index;
-                if let Some(message_index) = latest_message_index {
-                    summary.read_by_me.push(MessageIndexRange {
-                        from: MessageIndex::default(),
-                        to: message_index,
-                    });
-                }
                 Success(summary)
             }
             c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,

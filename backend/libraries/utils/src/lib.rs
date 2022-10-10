@@ -13,6 +13,3 @@ pub mod rand;
 pub mod regular_jobs;
 pub mod time;
 pub mod timestamped_map;
-
-#[cfg(feature = "range-set")]
-pub mod range_set;

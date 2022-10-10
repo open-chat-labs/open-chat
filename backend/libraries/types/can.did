@@ -131,8 +131,6 @@ type DirectChatSummary =
         date_created: TimestampMillis;
         read_by_me_up_to: opt MessageIndex;
         read_by_them_up_to: opt MessageIndex;
-        read_by_me: vec MessageIndexRange;
-        read_by_them: vec MessageIndexRange;
         notifications_muted: bool;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
@@ -146,8 +144,6 @@ type DirectChatSummaryUpdates =
         latest_event_index: opt EventIndex;
         read_by_me_up_to: opt MessageIndex;
         read_by_them_up_to: opt MessageIndex;
-        read_by_me: opt vec MessageIndexRange;
-        read_by_them: opt vec MessageIndexRange;
         notifications_muted: opt bool;
         affected_events: vec EventIndex;
         metrics: opt ChatMetrics;
@@ -260,7 +256,6 @@ type GroupChatSummary =
         latest_event_index: EventIndex;
         joined: TimestampMillis;
         read_by_me_up_to: opt MessageIndex;
-        read_by_me: vec MessageIndexRange;
         notifications_muted: bool;
         participant_count: nat32;
         role: Role;
@@ -285,7 +280,6 @@ type GroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me_up_to: opt MessageIndex;
-        read_by_me: opt vec MessageIndexRange;
         notifications_muted: opt bool;
         participant_count: opt nat32;
         role: opt Role;
@@ -509,12 +503,6 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
-    };
-
-type MessageIndexRange =
-    record {
-        from: MessageIndex;
-        to: MessageIndex;
     };
 
 type UpdatedMessage =
