@@ -1,6 +1,5 @@
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, extractUserIdsFromMentions, nullUser } from "../user/user.utils";
-import DRange from "drange";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -49,7 +48,6 @@ import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
-import { indexIsInRanges } from "../../utils/range";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
 import { currentChatUserIds } from "../../stores/chat";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
@@ -329,7 +327,7 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
-    return indexIsInRanges(messageIndex, chat.readByThem);
+    return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
 }
 
 export function getTypingString(
@@ -426,25 +424,14 @@ export function getDisplayDate(chat: ChatSummary): bigint {
         : started;
 }
 
-function mergeRange(a: DRange, b: DRange) {
-    const merged = new DRange();
-    merged.add(a);
-    merged.add(b);
-    return merged;
-}
-
 function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
     return {
         ...chat,
-        readByMe: updatedChat.readByMe
-            ? mergeRange(chat.readByMe, updatedChat.readByMe)
-            : chat.readByMe,
-        readByThem: updatedChat.readByThem
-            ? mergeRange(chat.readByThem, updatedChat.readByThem)
-            : chat.readByThem,
+        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
+        readByThemUpTo: updatedChat.readByThemUpTo ?? chat.readByThemUpTo,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage: getLatestMessage(chat, updatedChat),
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
@@ -527,22 +514,6 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
     return updated;
 }
 
-export function rangesAreEqual(a: DRange, b: DRange): boolean {
-    if (a.length !== b.length) return false;
-
-    const rangesA = a.subranges();
-    const rangesB = b.subranges();
-    if (rangesA.length !== rangesB.length) return false;
-
-    for (let i = 0; i < rangesA.length; i++) {
-        const rangeA = rangesA[i];
-        const rangeB = rangesB[i];
-        if (rangeA.low !== rangeB.low || rangeA.high !== rangeB.high) return false;
-    }
-
-    return true;
-}
-
 function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
     updatedChat: GroupChatSummaryUpdates
@@ -551,9 +522,7 @@ function mergeUpdatedGroupChat(
         ...chat,
         name: updatedChat.name ?? chat.name,
         description: updatedChat.description ?? chat.description,
-        readByMe: updatedChat.readByMe
-            ? mergeRange(chat.readByMe, updatedChat.readByMe)
-            : chat.readByMe,
+        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
         lastUpdated: updatedChat.lastUpdated,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage: getLatestMessage(chat, updatedChat),
@@ -1019,7 +988,7 @@ export function groupChatFromCandidate(
     return {
         kind: "group_chat",
         chatId,
-        readByMe: new DRange(),
+        readByMeUpTo: undefined,
         latestEventIndex: 0,
         latestMessage: undefined,
         notificationsMuted: false,
@@ -1414,7 +1383,6 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefine
 
     return messagesRead.getFirstUnreadMessageIndex(
         chat.chatId,
-        getMinVisibleMessageIndex(chat),
         chat.latestMessage?.event.messageIndex
     );
 }
@@ -1487,11 +1455,7 @@ export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
 export function markAllRead(chat: ChatSummary): void {
     const latestMessageIndex = chat.latestMessage?.event.messageIndex;
     if (latestMessageIndex !== undefined) {
-        messagesRead.markRangeRead(
-            chat.chatId,
-            getMinVisibleMessageIndex(chat),
-            latestMessageIndex
-        );
+        messagesRead.markReadUpTo(chat.chatId, latestMessageIndex);
     }
 }
 

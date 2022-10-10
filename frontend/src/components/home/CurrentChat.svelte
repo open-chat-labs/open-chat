@@ -10,7 +10,6 @@
         canReplyInThread,
         getFirstUnreadMention,
         getMessageContent,
-        getMinVisibleMessageIndex,
         markAllRead,
         startTyping,
         stopTyping,
@@ -112,7 +111,6 @@
 
         return messagesRead.unreadMessageCount(
             chat.chatId,
-            getMinVisibleMessageIndex(chat),
             chat.latestMessage?.event.messageIndex
         );
     }
