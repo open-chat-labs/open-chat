@@ -20,6 +20,7 @@ fn main() {
                 edited: false,
                 forwarded: false,
                 thread_summary: None,
+                last_updated: None,
             },
         },
     });

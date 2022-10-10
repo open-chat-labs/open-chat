@@ -1000,6 +1000,7 @@ impl ChatEvents {
             edited: message.last_edited.is_some(),
             forwarded: message.forwarded,
             thread_summary: message.thread_summary.clone(),
+            last_updated: message.last_updated,
         }
     }
 
