@@ -114,134 +114,101 @@ if (iiAlternativeOrigins !== undefined) {
     );
 }
 
-export default [
-    {
-        input: "./src/sw/index.ts",
-        output: {
-            file: "build/" + WEBPUSH_SERVICE_WORKER_PATH,
-            sourcemap: true,
-            format: "iife",
-        },
-        plugins: [
-            commonjs(),
-            typescript({
-                sourceMap: !production,
-                inlineSources: !production,
-            }),
-            resolve({
-                preferBuiltins: false,
-                browser: true,
-                dedupe: ["svelte"],
-            }),
-            replace({
-                preventAssignment: true,
-                "process.env.NODE_ENV": JSON.stringify(env),
-                "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
-                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
-            }),
-
-            production && terser(),
-        ],
+export default {
+    input: `./src/main.ts`,
+    output: {
+        sourcemap: true,
+        format: "es",
+        name: "app",
+        dir: "build",
+        entryFileNames: "[name]-[hash].js",
     },
-    {
-        input: `./src/main.ts`,
-        output: {
-            sourcemap: true,
-            format: "es",
-            name: "app",
-            dir: "build",
-            entryFileNames: "[name]-[hash].js",
-        },
-        plugins: [
-            svelte({
-                preprocess: sveltePreprocess({
-                    sourceMap: !production,
-                    scss: {
-                        prependData: `@use 'sass:math'; @import 'src/styles/mixins.scss';`,
-                    },
-                }),
-                compilerOptions: {
-                    dev: !production,
-                    // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
+    plugins: [
+        svelte({
+            preprocess: sveltePreprocess({
+                sourceMap: !production,
+                scss: {
+                    prependData: `@use 'sass:math'; @import 'src/styles/mixins.scss';`,
                 },
             }),
+            compilerOptions: {
+                dev: !production,
+                // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
+            },
+        }),
 
-            postcss({ extract: true }),
+        postcss({ extract: true }),
 
-            resolve({
-                preferBuiltins: false,
-                browser: true,
-                dedupe: ["svelte"],
-            }),
-            commonjs(),
-            typescript({
-                sourceMap: !production,
-                inlineSources: !production,
-            }),
-            inject({
-                Buffer: ["buffer", "Buffer"],
-                process: "process/browser",
-            }),
-            json(),
+        resolve({
+            preferBuiltins: false,
+            browser: true,
+            dedupe: ["svelte"],
+        }),
+        commonjs(),
+        typescript({
+            sourceMap: !production,
+            inlineSources: !production,
+        }),
+        inject({
+            Buffer: ["buffer", "Buffer"],
+            process: "process/browser",
+        }),
+        json(),
 
-            replace({
-                preventAssignment: true,
-                "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
-                    process.env.INTERNET_IDENTITY_URL
-                ),
-                "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
-                "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
-                "process.env.NODE_ENV": JSON.stringify(env),
-                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
-                "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
-                "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
-                "process.env.IC_URL": maybeStringify(process.env.IC_URL),
-                "process.env.II_DERIVATION_ORIGIN": maybeStringify(
-                    process.env.II_DERIVATION_ORIGIN
-                ),
-                "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
-                "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
-                "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
-                "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
-                "process.env.PROPOSALS_BOT_CANISTER": process.env.PROPOSALS_BOT_CANISTER,
-                "process.env.OPEN_STORAGE_INDEX_CANISTER": process.env.OPEN_STORAGE_INDEX_CANISTER,
-                "process.env.LEDGER_CANISTER_ICP": process.env.LEDGER_CANISTER_ICP,
-                "process.env.LEDGER_CANISTER_BTC": process.env.LEDGER_CANISTER_BTC,
-                "process.env.LEDGER_CANISTER_CHAT": process.env.LEDGER_CANISTER_CHAT,
-                "process.env.ENABLE_MULTI_CRYPTO": process.env.ENABLE_MULTI_CRYPTO,
-                "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
-                "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
-                "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
-                "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
-                "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
-                    process.env.PUBLIC_TRANSLATE_API_KEY
-                ),
-            }),
+        replace({
+            preventAssignment: true,
+            "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
+            "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
+            "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
+            "process.env.NODE_ENV": JSON.stringify(env),
+            "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
+            "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
+            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
+            "process.env.IC_URL": maybeStringify(process.env.IC_URL),
+            "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
+            "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
+            "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
+            "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
+            "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
+            "process.env.PROPOSALS_BOT_CANISTER": process.env.PROPOSALS_BOT_CANISTER,
+            "process.env.OPEN_STORAGE_INDEX_CANISTER": process.env.OPEN_STORAGE_INDEX_CANISTER,
+            "process.env.LEDGER_CANISTER_ICP": process.env.LEDGER_CANISTER_ICP,
+            "process.env.LEDGER_CANISTER_BTC": process.env.LEDGER_CANISTER_BTC,
+            "process.env.LEDGER_CANISTER_CHAT": process.env.LEDGER_CANISTER_CHAT,
+            "process.env.ENABLE_MULTI_CRYPTO": process.env.ENABLE_MULTI_CRYPTO,
+            "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
+            "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
+            "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+            "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
+                process.env.PUBLIC_TRANSLATE_API_KEY
+            ),
+        }),
 
-            html({
-                template: ({ files }) => {
-                    const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
-                    const cssFile = files.css[0].fileName;
+        html({
+            template: ({ files }) => {
+                const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
+                const cssFile = files.css[0].fileName;
 
-                    function generateCspHashValue(text) {
-                        const hash = sha256.update(text).arrayBuffer();
-                        const base64 = Buffer.from(hash).toString("base64");
-                        return `'sha256-${base64}'`;
-                    }
+                function generateCspHashValue(text) {
+                    const hash = sha256.update(text).arrayBuffer();
+                    const base64 = Buffer.from(hash).toString("base64");
+                    return `'sha256-${base64}'`;
+                }
 
-                    const inlineScripts = [
-                        `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
-                        `var parcelRequire;`,
-                    ];
-                    const cspHashValues = inlineScripts.map(generateCspHashValue);
-                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ ${cspHashValues.join(
-                        " "
-                    )}`;
-                    if (!production) {
-                        csp += " http://localhost:* http://127.0.0.1:*";
-                    }
+                const inlineScripts = [
+                    `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
+                    `var parcelRequire;`,
+                ];
+                const cspHashValues = inlineScripts.map(generateCspHashValue);
+                let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ ${cspHashValues.join(
+                    " "
+                )}`;
+                if (!production) {
+                    csp += " http://localhost:* http://127.0.0.1:*";
+                }
 
-                    return `
+                return `
                         <!DOCTYPE html>
                         <html lang="en">
                             <head>
@@ -266,54 +233,50 @@ export default [
                             <body></body>
                         </html>
                     `;
-                },
+            },
+        }),
+
+        // In dev mode, call `npm run start` once
+        // the bundle has been generated
+        !production && serve(),
+
+        // Watch the `public` directory and refresh the
+        // browser on changes when not in production
+        !production && livereload("build"),
+
+        // If we're building for production (npm run build
+        // instead of npm run dev), minify
+        production && terser(),
+
+        production && analyze({ summaryOnly: true }),
+
+        production && filesize(),
+
+        // If we're building for production, copy sourcemaps to '_/raw'
+        // and update the js files to point to the new sourcemap locations
+        production &&
+            copy({
+                targets: [
+                    {
+                        src: "build/*.map",
+                        dest: "build/_/raw",
+                    },
+                    {
+                        src: "build/*.js",
+                        dest: "build",
+                        transform: (contents, filename) =>
+                            contents
+                                .toString()
+                                .replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/"),
+                    },
+                ],
+                hook: "writeBundle",
             }),
-
-            // In dev mode, call `npm run start` once
-            // the bundle has been generated
-            !production && serve(),
-
-            // Watch the `public` directory and refresh the
-            // browser on changes when not in production
-            !production && livereload("build"),
-
-            // If we're building for production (npm run build
-            // instead of npm run dev), minify
-            production && terser(),
-
-            production && analyze({ summaryOnly: true }),
-
-            production && filesize(),
-
-            // If we're building for production, copy sourcemaps to '_/raw'
-            // and update the js files to point to the new sourcemap locations
-            production &&
-                copy({
-                    targets: [
-                        {
-                            src: "build/*.map",
-                            dest: "build/_/raw",
-                        },
-                        {
-                            src: "build/*.js",
-                            dest: "build",
-                            transform: (contents, filename) =>
-                                contents
-                                    .toString()
-                                    .replace(
-                                        "//# sourceMappingURL=",
-                                        "//# sourceMappingURL=./_/raw/"
-                                    ),
-                        },
-                    ],
-                    hook: "writeBundle",
-                }),
-        ],
-        watch: {
-            clearScreen: false,
-        },
+    ],
+    watch: {
+        clearScreen: false,
     },
-];
+};
 
 function maybeStringify(value) {
     return value !== undefined ? JSON.stringify(value) : undefined;

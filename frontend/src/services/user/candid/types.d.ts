@@ -542,6 +542,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,

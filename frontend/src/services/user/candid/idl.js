@@ -443,6 +443,7 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
     'message_id' : MessageId,

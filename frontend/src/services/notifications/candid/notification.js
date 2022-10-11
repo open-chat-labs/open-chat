@@ -269,6 +269,7 @@ export const Notification = IDL.Variant({
           }),
         }),
         'edited' : IDL.Bool,
+        'last_updated' : IDL.Opt(IDL.Nat64),
         'sender' : IDL.Principal,
         'thread_summary' : IDL.Opt(
           IDL.Record({
@@ -562,6 +563,7 @@ export const Notification = IDL.Variant({
           }),
         }),
         'edited' : IDL.Bool,
+        'last_updated' : IDL.Opt(IDL.Nat64),
         'sender' : IDL.Principal,
         'thread_summary' : IDL.Opt(
           IDL.Record({
@@ -858,6 +860,7 @@ export const Notification = IDL.Variant({
           }),
         }),
         'edited' : IDL.Bool,
+        'last_updated' : IDL.Opt(IDL.Nat64),
         'sender' : IDL.Principal,
         'thread_summary' : IDL.Opt(
           IDL.Record({
@@ -1154,6 +1157,7 @@ export const Notification = IDL.Variant({
           }),
         }),
         'edited' : IDL.Bool,
+        'last_updated' : IDL.Opt(IDL.Nat64),
         'sender' : IDL.Principal,
         'thread_summary' : IDL.Opt(
           IDL.Record({
