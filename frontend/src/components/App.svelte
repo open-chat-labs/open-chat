@@ -158,7 +158,7 @@
         markOnlinePoller = new Poller(
             () => api?.markAsOnline() ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
-            MARK_ONLINE_INTERVAL,
+            undefined,
             true
         );
     }
