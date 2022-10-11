@@ -14,7 +14,9 @@ import type {
     StaleMessage,
     CryptocurrencyContent,
     CryptocurrencyTransfer,
+    PendingCryptocurrencyTransfer,
     CompletedCryptocurrencyTransfer,
+    FailedCryptocurrencyTransfer,
     PollContent,
     PollVotes,
     TotalPollVotes,
@@ -52,6 +54,10 @@ import type {
     ApiCryptoTransaction,
     ApiNnsPendingCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
+    ApiNnsFailedCryptoTransaction,
+    ApiSnsPendingCryptoTransaction,
+    ApiSnsCompletedCryptoTransaction,
+    ApiSnsFailedCryptoTransaction,
     ApiMessageIndexRange,
     ApiUser,
     ApiICP,
@@ -335,34 +341,36 @@ function cryptoTransfer(
     recipient: string
 ): CryptocurrencyTransfer {
     if ("Pending" in candid) {
-        return {
-            kind: "pending",
-            token: token(candid.Pending.NNS.token),
-            recipient,
-            amountE8s: candid.Pending.NNS.amount.e8s,
-            feeE8s: optional(candid.Pending.NNS.fee, (f) => f.e8s),
-            memo: optional(candid.Pending.NNS.memo, identity),
-        };
+        const transfer = "NNS" in candid.Pending ? candid.Pending.NNS : candid.Pending.SNS;
+        return pendingCryptoTransfer(transfer, recipient);
     }
     if ("Completed" in candid) {
-        return completedCryptoTransfer(candid.Completed.NNS, sender, recipient);
+        const transfer = "NNS" in candid.Completed ? candid.Completed.NNS : candid.Completed.SNS;
+        return completedCryptoTransfer(transfer, sender, recipient);
     }
     if ("Failed" in candid) {
-        return {
-            kind: "failed",
-            token: token(candid.Failed.NNS.token),
-            recipient,
-            amountE8s: candid.Failed.NNS.amount.e8s,
-            feeE8s: candid.Failed.NNS.fee.e8s,
-            memo: candid.Failed.NNS.memo,
-            errorMessage: candid.Failed.NNS.error_message,
-        };
+        const transfer = "NNS" in candid.Failed ? candid.Failed.NNS : candid.Failed.SNS;
+        return failedCryptoTransfer(transfer, recipient);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptoTransaction type received", candid);
 }
 
+function pendingCryptoTransfer(
+    candid: ApiNnsPendingCryptoTransaction | ApiSnsPendingCryptoTransaction,
+    recipient: string
+): PendingCryptocurrencyTransfer {
+    return {
+        kind: "pending",
+        token: token(candid.token),
+        recipient,
+        amountE8s: candid.amount.e8s,
+        feeE8s: Array.isArray(candid.fee) ? optional(candid.fee, (f) => f.e8s) : candid.fee.e8s,
+        memo: optional(candid.memo, identity),
+    };
+}
+
 export function completedCryptoTransfer(
-    candid: ApiNnsCompletedCryptoTransaction,
+    candid: ApiNnsCompletedCryptoTransaction | ApiSnsCompletedCryptoTransaction,
     sender: string,
     recipient: string
 ): CompletedCryptocurrencyTransfer {
@@ -373,9 +381,24 @@ export function completedCryptoTransfer(
         sender,
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
-        memo: candid.memo,
+        memo: Array.isArray(candid.memo) ? (candid.memo[0] ?? BigInt(0)) : candid.memo,
         blockIndex: candid.block_index,
         transactionHash: bytesToHexString(candid.transaction_hash),
+    };
+}
+
+export function failedCryptoTransfer(
+    candid: ApiNnsFailedCryptoTransaction | ApiSnsFailedCryptoTransaction,
+    recipient: string
+): FailedCryptocurrencyTransfer {
+    return {
+        kind: "failed",
+        token: token(candid.token),
+        recipient,
+        amountE8s: candid.amount.e8s,
+        feeE8s: candid.fee.e8s,
+        memo: Array.isArray(candid.memo) ? (candid.memo[0] ?? BigInt(0)) : candid.memo,
+        errorMessage: candid.error_message,
     };
 }
 
