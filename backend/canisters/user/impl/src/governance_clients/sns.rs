@@ -2,6 +2,7 @@ use crate::governance_clients::sns::manage_neuron::RegisterVote;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
+use tracing::error;
 use types::{CanisterId, ProposalId, SnsNeuronId, TimestampMillis};
 
 pub async fn list_neurons(
@@ -44,10 +45,16 @@ pub async fn register_vote(
         })),
     };
     let (response,): (ManageNeuronResponse,) = ic_cdk::call(governance_canister_id, "manage_neuron", (&args,)).await?;
-    Ok(match response.command.unwrap() {
-        manage_neuron_response::Command::RegisterVote(_) => Ok(()),
-        manage_neuron_response::Command::Error(error) => Err(error),
-        _ => unreachable!(),
+    Ok(match response.command {
+        Some(manage_neuron_response::Command::RegisterVote(_)) => Ok(()),
+        Some(manage_neuron_response::Command::Error(error)) => Err(error),
+        Some(_) => unreachable!(),
+        None => {
+            // This will be reached if we fail to deserialize the response
+            // TODO remove this arm once candid is fixed (if ever).
+            error!(%governance_canister_id, "Failed to deserialize SNS manage_neuron response");
+            Ok(())
+        }
     })
 }
 
@@ -117,66 +124,22 @@ mod manage_neuron_response {
     use super::*;
 
     #[derive(CandidType, Deserialize, Debug)]
-    pub struct ConfigureResponse {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct DisburseResponse {
-        pub transfer_block_height: u64,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct MergeMaturityResponse {
-        pub merged_maturity_e8s: u64,
-        pub new_stake_e8s: u64,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct DisburseMaturityResponse {
-        pub transfer_block_height: u64,
-        pub amount_disbursed_e8s: u64,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct FollowResponse {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct MakeProposalResponse {
-        pub proposal_id: Option<WrappedProposalId>,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct RegisterVoteResponse {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct SplitResponse {
-        pub created_neuron_id: Option<WrappedNeuronId>,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct ClaimOrRefreshResponse {
-        pub refreshed_neuron_id: Option<WrappedNeuronId>,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct AddNeuronPermissionsResponse {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct RemoveNeuronPermissionsResponse {}
+    pub struct Empty {}
 
     #[derive(CandidType, Deserialize, Debug)]
     pub enum Command {
-        Error(super::GovernanceError),
-        Configure(ConfigureResponse),
-        Disburse(DisburseResponse),
-        Follow(FollowResponse),
-        MakeProposal(MakeProposalResponse),
-        RegisterVote(RegisterVoteResponse),
-        Split(SplitResponse),
-        ClaimOrRefresh(ClaimOrRefreshResponse),
-        MergeMaturity(MergeMaturityResponse),
-        DisburseMaturity(DisburseMaturityResponse),
-        AddNeuronPermission(AddNeuronPermissionsResponse),
-        RemoveNeuronPermission(RemoveNeuronPermissionsResponse),
+        Error(GovernanceError),
+        Configure(Empty),
+        Disburse(Empty),
+        Follow(Empty),
+        MakeProposal(Empty),
+        RegisterVote(Empty),
+        Split(Empty),
+        ClaimOrRefresh(Empty),
+        MergeMaturity(Empty),
+        DisburseMaturity(Empty),
+        AddNeuronPermission(Empty),
+        RemoveNeuronPermission(Empty),
     }
 }
 
