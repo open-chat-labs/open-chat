@@ -1,0 +1,20 @@
+{
+    "name": "openchat-agent",
+    "version": "1.0.0",
+    "description": "Typescript library for interacting with the OpenChat backend",
+    "main": "index.ts",
+    "scripts": {
+        "build": "tsc",
+        "check": "tsc --noEmit -w",
+        "lint": "eslint ./src --fix",
+        "format": "prettier './src/**/*.ts' --write"
+    },
+    "author": "julian.jelfs@gmail.com",
+    "dependencies": {
+        "@dfinity/agent": "^0.14.0",
+        "@dfinity/candid": "^0.14.0",
+        "@dfinity/identity": "^0.14.0",
+        "@dfinity/principal": "^0.14.0",
+        "idb": "^6.1.5"
+    }
+}
