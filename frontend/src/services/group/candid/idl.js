@@ -234,8 +234,28 @@ export const idlFactory = ({ IDL }) => {
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
+  const Icrc1Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const SnsAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'Account' : Icrc1Account,
+  });
+  const SnsFailedCryptoTransaction = IDL.Record({
+    'to' : SnsAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : SnsAccount,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
+    'SNS' : SnsFailedCryptoTransaction,
   });
   const BlockIndex = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
@@ -249,8 +269,20 @@ export const idlFactory = ({ IDL }) => {
     'memo' : Memo,
     'amount' : Tokens,
   });
+  const SnsCompletedCryptoTransaction = IDL.Record({
+    'to' : SnsAccount,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'from' : SnsAccount,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
+    'SNS' : SnsCompletedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -263,8 +295,16 @@ export const idlFactory = ({ IDL }) => {
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,
   });
+  const SnsPendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : Tokens,
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
+    'SNS' : SnsPendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,

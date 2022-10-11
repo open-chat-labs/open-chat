@@ -40,7 +40,10 @@ import type {
     ApiGroupChatSummary,
     ApiNnsFailedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
+    ApiSnsFailedCryptoTransaction,
+    ApiSnsCompletedCryptoTransaction,
     ApiArchiveChatResponse,
+    ApiIcrc1Account,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -78,7 +81,6 @@ import type {
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import {
-    apiMessageIndexRanges,
     completedCryptoTransfer,
     groupPermissions,
     message,
@@ -381,13 +383,16 @@ export function transferWithinGroupResponse(
     recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
-        const transfer = candid.Success.transfer;
+        const transfer = "NNS" in candid.Success.transfer
+            ? candid.Success.transfer.NNS
+            : candid.Success.transfer.SNS;
+
         return {
             kind: "transfer_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(transfer.NNS, sender, recipient),
+            transfer: completedCryptoTransfer(transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -443,13 +448,17 @@ export function sendMessageResponse(
         };
     }
     if ("TransferSuccessV2" in candid) {
+        const transfer = "NNS" in candid.TransferSuccessV2.transfer
+            ? candid.TransferSuccessV2.transfer.NNS
+            : candid.TransferSuccessV2.transfer.SNS;
+
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
             transfer: completedCryptoTransfer(
-                candid.TransferSuccessV2.transfer.NNS,
+                transfer,
                 sender,
                 recipient
             ),
@@ -920,7 +929,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     };
 }
 
-export function failedCryptoWithdrawal(
+function failedNnsCryptoWithdrawal(
     candid: ApiNnsFailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
     return {
@@ -934,7 +943,21 @@ export function failedCryptoWithdrawal(
     };
 }
 
-export function completedCryptoWithdrawal(
+function failedSnsCryptoWithdrawal(
+    candid: ApiSnsFailedCryptoTransaction
+): FailedCryptocurrencyWithdrawal {
+    return {
+        kind: "failed",
+        token: token(candid.token),
+        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
+        amountE8s: candid.amount.e8s,
+        feeE8s: candid.fee.e8s,
+        memo: candid.memo[0] ?? BigInt(0),
+        errorMessage: candid.error_message,
+    };
+}
+
+function completedNnsCryptoWithdrawal(
     candid: ApiNnsCompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
     return {
@@ -949,6 +972,21 @@ export function completedCryptoWithdrawal(
     };
 }
 
+function completedSnsCryptoWithdrawal(
+    candid: ApiSnsCompletedCryptoTransaction
+): CompletedCryptocurrencyWithdrawal {
+    return {
+        kind: "completed",
+        token: token(candid.token),
+        to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
+        amountE8s: candid.amount.e8s,
+        feeE8s: candid.fee.e8s,
+        memo: candid.memo[0] ?? BigInt(0),
+        blockIndex: candid.block_index,
+        transactionHash: bytesToHexString(candid.transaction_hash),
+    };
+}
+
 export function withdrawCryptoResponse(
     candid: ApiWithdrawCryptoResponse
 ): WithdrawCryptocurrencyResponse {
@@ -956,10 +994,18 @@ export function withdrawCryptoResponse(
         return { kind: "currency_not_supported" };
     }
     if ("TransactionFailed" in candid) {
-        return failedCryptoWithdrawal(candid.TransactionFailed.NNS);
+        if ("NNS" in candid.TransactionFailed) {
+            return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
+        } else {
+            return failedSnsCryptoWithdrawal(candid.TransactionFailed.SNS);
+        }
     }
     if ("Success" in candid) {
-        return completedCryptoWithdrawal(candid.Success.NNS);
+        if ("NNS" in candid.Success) {
+            return completedNnsCryptoWithdrawal(candid.Success.NNS);
+        } else {
+            return completedSnsCryptoWithdrawal(candid.Success.SNS);
+        }
     }
     throw new UnsupportedValueError(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
@@ -979,4 +1025,13 @@ export function migrateUserPrincipal(
         "Unexpected ApiMigrateUserPrincipalResponse type received",
         candid
     );
+}
+
+function formatIcrc1Account(candid: ApiIcrc1Account): string {
+    const owner = candid.owner.toString();
+    const subaccount = optional(candid.subaccount, bytesToHexString);
+
+    return subaccount !== undefined
+        ? `${owner}:${subaccount}`
+        : owner;
 }
