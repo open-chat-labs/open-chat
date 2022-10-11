@@ -206,7 +206,7 @@
     "owner": "propriétaire",
     "admin": "administrateur",
     "goToFirstMention": "Aller à la première mention non lue",
-    "goToFirstMessage": "Aller au premier message non lu",
+    "goToLatestMessage": "Aller au dernier message",
     "transferOwnership": "Transférer la propriété à",
     "transferOwnershipSucceeded": "Propriété transférée avec succès",
     "transferOwnershipFailed": "Échec du transfert de propriété",

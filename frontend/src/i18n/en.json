@@ -232,7 +232,7 @@
     "member": "member",
     "viewer": "viewer",
     "goToFirstMention": "Go to the first unread mention",
-    "goToFirstMessage": "Go to the first unread message",
+    "goToLatestMessage": "Go to latest message",
     "transferOwnership": "Transfer ownership to",
     "transferOwnershipSucceeded": "Ownership succcessfully transfered",
     "transferOwnershipFailed": "Transfer of ownership failed",
