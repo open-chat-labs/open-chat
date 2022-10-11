@@ -178,7 +178,7 @@
     "owner": "群主",
     "admin": "管理员",
     "goToFirstMention": "查看最新未读提及",
-    "goToFirstMessage": "查看最新未读消息",
+    "goToLatestMessage": "转到最新消息",
     "transferOwnership": "转交群主给",
     "transferOwnershipSucceeded": "群主转交成功",
     "transferOwnershipFailed": "群主转交失败",

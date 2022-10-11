@@ -978,7 +978,7 @@
     </div>
 {/if}
 <div
-    title={$_("goToFirstMessage")}
+    title={$_("goToLatestMessage")}
     class:show={!insideFromBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
     class:footer

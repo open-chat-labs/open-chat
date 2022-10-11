@@ -222,7 +222,7 @@
     "member": "חבר",
     "viewer": "צוֹפֶה",
     "goToFirstMention": "עבור לאזכור הראשון שלא נקרא",
-    "goToFirstMessage": "עבור להודעה הראשונה שלא נקראה",
+    "goToLatestMessage": "עבור להודעה האחרונה",
     "transferOwnership": "העברת בעלות אל",
     "transferOwnershipSucceeded": "הבעלות הועברה בהצלחה",
     "transferOwnershipFailed": "העברת הבעלות נכשלה",

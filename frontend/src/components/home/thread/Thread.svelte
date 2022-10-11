@@ -693,7 +693,7 @@
 {/if}
 
 <div
-    title={$_("goToFirstMessage")}
+    title={$_("goToLatestMessage")}
     class:show={!$withinThreshold}
     class="fab to-bottom"
     class:rtl={$rtlStore}>

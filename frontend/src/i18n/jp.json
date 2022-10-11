@@ -207,7 +207,7 @@
     "owner": "オーナー",
     "admin": "管理者",
     "goToFirstMention": "最初の未読メンションに移動する",
-    "goToFirstMessage": "最初の未読メッセージに移動する",
+    "goToLatestMessage": "最新のメッセージに移動",
     "transferOwnership": "所有権を譲渡する",
     "transferOwnershipSucceeded": "所有権の移転が完了しました",
     "transferOwnershipFailed": "所有権の移転に失敗しました",

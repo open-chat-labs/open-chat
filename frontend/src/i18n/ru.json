@@ -207,7 +207,7 @@
     "owner": "Владелец",
     "admin": "Администратор",
     "goToFirstMention": "Перейти к первому непрочитанному уведомлению",
-    "goToFirstMessage": "Перейти к первому непрочитанному сообщению",
+    "goToLatestMessage": "Перейти к последнему сообщению",
     "transferOwnership": "Передать права владения",
     "transferOwnershipSucceeded": "Права владения успешно переданы",
     "transferOwnershipFailed": "Передача права владения не удалась",

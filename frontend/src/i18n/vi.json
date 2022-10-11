@@ -203,7 +203,7 @@
     "owner": "Chủ",
     "admin": "Quản trị viên",
     "goToFirstMention": "chuyển đến đề cập chưa đọc đầu tiên",
-    "goToFirstMessage": "Chuyển đến tin nhắn chưa đọc đầu tiên",
+    "goToLatestMessage": "Chuyển đến tin nhắn mới nhất",
     "transferOwnership": "Chuyển quyền sở hữu cho",
     "transferOwnershipSucceeded": "Quyền sở hữu đã được chuyển nhượng thành công",
     "transferOwnershipFailed": "Chuyển quyền sở hữu không thành công",

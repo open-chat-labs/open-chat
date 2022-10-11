@@ -207,7 +207,7 @@
     "owner": "Eigentümer",
     "admin": "Administrator",
     "goToFirstMention": "Gehen Sie zur ersten ungelesenen Erwähnung",
-    "goToFirstMessage": "Gehen Sie zur ersten ungelesenen Nachricht",
+    "goToLatestMessage": "Gehen Sie zur letzten Nachricht",
     "transferOwnership": "Eigentum übertragen auf",
     "transferOwnershipSucceeded": "Eigentum erfolgreich übertragen",
     "transferOwnershipFailed": "Eigentumsübertragung fehlgeschlagen",
