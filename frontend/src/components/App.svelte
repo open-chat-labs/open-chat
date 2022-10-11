@@ -33,6 +33,7 @@
     import { selectedAuthProviderStore } from "../stores/authProviders";
     import { isCanisterUrl } from "../utils/urls";
     import { unsubscribeNotifications } from "../utils/notifications";
+    import { startSwCheckPoller } from "../utils/updateSw";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -140,6 +141,7 @@
             api?.createUserClient(user.userId);
             startMessagesReadTracker(api!);
             startOnlinePoller();
+            startSwCheckPoller();
             startSession(id).then(logout);
             chatPoller = startChatPoller(api!);
             usersPoller = startUserUpdatePoller(api);
@@ -153,10 +155,11 @@
     }
 
     function startOnlinePoller() {
-        api?.markAsOnline();
         markOnlinePoller = new Poller(
             () => api?.markAsOnline() ?? Promise.resolve(),
-            MARK_ONLINE_INTERVAL
+            MARK_ONLINE_INTERVAL,
+            MARK_ONLINE_INTERVAL,
+            true
         );
     }
 
