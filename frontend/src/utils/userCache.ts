@@ -62,24 +62,9 @@ export async function getAllUsers(): Promise<UserSummary[]> {
     return (await lazyOpenUserCache()).getAll("users");
 }
 
-// since setCachedUsers can be somewhat slow we will attempt to delegate it to the
-// service worker so that it should not interfere with the UI
 export async function setCachedUsers(users: UserSummary[]): Promise<void> {
     if (users.length === 0) return;
-
-    const reg = await navigator.serviceWorker.getRegistration(
-        "process.env.WEBPUSH_SERVICE_WORKER_PATH"
-    );
-
-    if (reg && reg.active) {
-        console.log("delegating setCachedUsers to service worker");
-        reg.active.postMessage({ type: "SAVE_USERS", users });
-    } else {
-        // in dev mode we might not have a service worker, in that case, just perform
-        // the update in the window context (which is also fine)
-        console.log("can't find a service worker, falling back to window context");
-        writeCachedUsersToDatabase(lazyOpenUserCache(), users);
-    }
+    writeCachedUsersToDatabase(lazyOpenUserCache(), users);
 }
 
 export async function writeCachedUsersToDatabase(
