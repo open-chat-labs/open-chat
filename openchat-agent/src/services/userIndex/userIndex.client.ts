@@ -31,9 +31,7 @@ import {
     registerUserResponse,
     upgradeStorageResponse,
 } from "./mappers";
-import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { cachingLocallyDisabled } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 
@@ -48,12 +46,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             "process.env.USER_INDEX_CANISTER"
         );
-    }
-
-    static create(identity: Identity): IUserIndexClient {
-        return process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(new UserIndexClient(identity))
-            : new UserIndexClient(identity);
     }
 
     @profile("userIndexClient")

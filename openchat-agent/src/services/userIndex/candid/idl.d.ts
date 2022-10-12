@@ -4,7 +4,6 @@ import {
     CreateChallengeResponse,
     CurrentUserResponse,
     CurrentUserArgs,
-    CheckUsernameArgs,
     SetUsernameArgs,
     CheckUsernameResponse,
     SetUsernameResponse,
@@ -20,14 +19,11 @@ import {
     PartialUserSummary,
     SearchArgs,
     SearchResponse,
-    RegistrationState,
     UnconfirmedPhoneNumberState,
-    CyclesFeeState,
     RegistrationFee,
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
-    RefreshAccountBalanceResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -49,15 +45,11 @@ export {
     PartialUserSummary as ApiPartialUserSummary,
     SearchArgs as ApiSearchArgs,
     SearchResponse as ApiSearchResponse,
-    UpgradeCanisterResponse as ApiUpgradeCanisterResponse,
-    RegistrationState as ApiRegistrationState,
     UnconfirmedPhoneNumberState as ApiUnconfirmedPhoneNumberState,
-    CyclesFeeState as ApiCyclesFeeState,
     RegistrationFee as ApiRegistrationFee,
     RegisterUserResponse as ApiRegisterUserResponse,
     PhoneStatus as ApiPhoneStatus,
     UpgradeStorageResponse as ApiUpgradeStorageResponse,
-    RefreshAccountBalanceResponse as ApiRefreshAccountBalanceResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

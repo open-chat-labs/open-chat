@@ -63,7 +63,7 @@ export function partialUserSummary(
         kind: candid.is_bot ? "bot" : "user",
         userId,
         username: optional(candid.username, identity),
-        blobReference: optional(candid.avatar_id, (id) => ({
+        blobReference: optional(candid.avatar_id, (id: bigint) => ({
             blobId: id,
             canisterId: userId,
         })),
@@ -78,7 +78,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         userId: candid.user_id.toString(),
         username: candid.username,
         lastOnline: Date.now() - candid.seconds_since_last_online * 1000,
-        blobReference: optional(candid.avatar_id, (id) => ({
+        blobReference: optional(candid.avatar_id, (id: bigint) => ({
             blobId: id,
             canisterId: candid.user_id.toString(),
         })),

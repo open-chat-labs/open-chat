@@ -1,4 +1,4 @@
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -24,6 +24,8 @@ import type {
     ChatEvent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
+    compareChats,
+    indexRangeForChat,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -38,15 +40,15 @@ import {
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import {
-    compareChats,
-    getFirstUnreadMessageIndex,
-    indexRangeForChat,
-    MAX_MISSING,
-    threadsReadFromChat,
-    updateArgsFromChats,
-    userIdsFromEvents,
-} from "../../domain/chat/chat.utils";
+// import {
+//     compareChats,
+//     getFirstUnreadMessageIndex,
+//     indexRangeForChat,
+//     MAX_MISSING,
+//     threadsReadFromChat,
+//     updateArgsFromChats,
+//     userIdsFromEvents,
+// } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type {
     ArchiveChatResponse,
@@ -66,15 +68,16 @@ import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { get } from "svelte/store";
-import { messagesRead } from "../../stores/markRead";
-import { missingUserIds } from "../../domain/user/user.utils";
-import { userStore } from "stores/user";
-import { UserIndexClient } from "services/userIndex/userIndex.client";
-import { rollbar } from "../../utils/logging";
-import type { GroupInvite } from "../../services/serviceContainer";
-import type { ServiceRetryInterrupt } from "services/candidService";
+// import { get } from "svelte/store";
+// import { messagesRead } from "../../stores/markRead";
+// import { missingUserIds } from "../../domain/user/user.utils";
+// import { userStore } from "stores/user";
+import { UserIndexClient } from "../userIndex/userIndex.client";
+import { logger } from "../../utils/logger";
+import type { GroupInvite } from "../serviceContainer";
+import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
+import { MAX_MISSING } from "../../settings";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -94,7 +97,7 @@ export class CachingUserClient implements IUserClient {
 
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
         setCachedChats(this.db, this.userId, resp).catch((err) =>
-            rollbar.error("Error setting cached chats", err)
+            logger.error("Error setting cached chats", err)
         );
         return resp;
     }
@@ -105,7 +108,7 @@ export class CachingUserClient implements IUserClient {
         threadRootMessageIndex?: number
     ): EventsResponse<T> {
         setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
-            rollbar.error("Error writing cached group events", err)
+            logger.error("Error writing cached group events", err)
         );
         return resp;
     }
@@ -449,7 +452,7 @@ export class CachingUserClient implements IUserClient {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         removeCachedChat(this.db, this.userId, chatId).catch((err) =>
-            rollbar.error("Failed to remove chat from cache", err)
+            logger.error("Failed to remove chat from cache", err)
         );
         return this.client.leaveGroup(chatId);
     }

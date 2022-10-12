@@ -38,7 +38,7 @@ import type {
     SetBioResponse,
     UnpinChatResponse,
 } from "../../domain/user/user";
-import type { ServiceRetryInterrupt } from "services/candidService";
+import type { ServiceRetryInterrupt } from "../candidService";
 
 export interface IUserClient {
     userId: string;

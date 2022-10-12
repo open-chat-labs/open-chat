@@ -922,7 +922,10 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 }
 
 // The current events list must already be sorted by ascending event index
-export function mergeServerEvents(events: EventWrapper<ChatEvent>[], newEvents: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
+export function mergeServerEvents(
+    events: EventWrapper<ChatEvent>[],
+    newEvents: EventWrapper<ChatEvent>[]
+): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
     merged.sort(sortByIndex);
     return merged;
@@ -1433,10 +1436,11 @@ export function mergeSendMessageResponse(
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
-            content: resp.kind === "transfer_success"
-                ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
-                : msg.content,
-        }
+            content:
+                resp.kind === "transfer_success"
+                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
+                    : msg.content,
+        },
     };
 }
 
@@ -1471,14 +1475,15 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             const updates = localUpdates[e.event.messageId.toString()];
-            const replyContextUpdates = e.event.repliesTo?.kind === "rehydrated_reply_context"
-                ? localUpdates[e.event.repliesTo.messageId.toString()]
-                : undefined;
+            const replyContextUpdates =
+                e.event.repliesTo?.kind === "rehydrated_reply_context"
+                    ? localUpdates[e.event.repliesTo.messageId.toString()]
+                    : undefined;
 
             if (updates !== undefined || replyContextUpdates !== undefined) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates)
+                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates),
                 };
             }
         }
@@ -1490,11 +1495,12 @@ export function mergeEventsAndLocalUpdates(
         let anyAdded = false;
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are contiguous with the loaded confirmed events
-            if (merged.length === 0 ||
+            if (
+                merged.length === 0 ||
                 eventIndexes.has(message.index - 1) ||
                 eventIndexes.has(message.index) ||
-                eventIndexes.has(message.index + 1))
-            {
+                eventIndexes.has(message.index + 1)
+            ) {
                 merged.push(processEvent(message));
                 anyAdded = true;
             }
@@ -1510,7 +1516,7 @@ export function mergeEventsAndLocalUpdates(
 function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
-    replyContextLocalUpdates: LocalMessageUpdates | undefined,
+    replyContextLocalUpdates: LocalMessageUpdates | undefined
 ): Message {
     if (localUpdates === undefined && replyContextLocalUpdates === undefined) return message;
 
@@ -1552,25 +1558,29 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
-        message.thread = message.thread === undefined
-            ? localUpdates.threadSummary
-            : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
+        message.thread =
+            message.thread === undefined
+                ? localUpdates.threadSummary
+                : mergeThreadSummaries(message.thread, localUpdates.threadSummary);
     }
 
-    if (message.repliesTo?.kind === "rehydrated_reply_context" && replyContextLocalUpdates !== undefined) {
+    if (
+        message.repliesTo?.kind === "rehydrated_reply_context" &&
+        replyContextLocalUpdates !== undefined
+    ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
             message.repliesTo = {
                 ...message.repliesTo,
                 content: {
                     kind: "deleted_content",
                     deletedBy: replyContextLocalUpdates.deleted.deletedBy,
-                    timestamp: replyContextLocalUpdates.deleted.timestamp
-                }
+                    timestamp: replyContextLocalUpdates.deleted.timestamp,
+                },
             };
         } else if (replyContextLocalUpdates.editedContent !== undefined) {
             message.repliesTo = {
                 ...message.repliesTo,
-                content: replyContextLocalUpdates.editedContent
+                content: replyContextLocalUpdates.editedContent,
             };
         }
     }
@@ -1582,9 +1592,10 @@ export function mergeThreadSummaries(a: ThreadSummary, b: ThreadSummary): Thread
         participantIds: new Set<string>([...a.participantIds, ...b.participantIds]),
         numberOfReplies: Math.max(a.numberOfReplies, b.numberOfReplies),
         latestEventIndex: Math.max(a.latestEventIndex, b.latestEventIndex),
-        latestEventTimestamp: a.latestEventTimestamp > b.latestEventTimestamp
-            ? a.latestEventTimestamp
-            : b.latestEventTimestamp
+        latestEventTimestamp:
+            a.latestEventTimestamp > b.latestEventTimestamp
+                ? a.latestEventTimestamp
+                : b.latestEventTimestamp,
     };
 }
 

@@ -15,9 +15,9 @@ import type {
 } from "../domain/chat/chat";
 import { UnsupportedValueError } from "./error";
 import { logger } from "./logger";
+import { MAX_EVENTS } from "../settings";
 
 const CACHE_VERSION = 47;
-const MAX_EVENTS = 150;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 

@@ -1,2 +1,0 @@
-import type { ChatEvent, EventWrapper, EventsResponse, IndexRange } from "../../domain/chat/chat";
-export declare function getChatEventsInLoop<T extends ChatEvent>(getChatEventsFunc: (startIndex: number, ascending: boolean) => Promise<EventsResponse<T>>, eventIndexRange: IndexRange, startIndex: number, ascending: boolean, previouslyLoadedEvents?: EventWrapper<T>[], iterations?: number): Promise<EventsResponse<T>>;

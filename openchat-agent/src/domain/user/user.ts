@@ -189,3 +189,9 @@ export type MigrateUserPrincipalResponse =
 export function isUserSummary(user: PartialUserSummary): user is UserSummary {
     return user.username !== undefined;
 }
+
+const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
+
+export function extractUserIdsFromMentions(text: string): string[] {
+    return [...text.matchAll(mentionRegex)].map((m) => m[1]);
+}

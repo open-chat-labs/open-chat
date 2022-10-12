@@ -21,3 +21,18 @@ will become a higher level library).
 ### Events
 
 Should the whole service container be an EventEmitter?
+
+### Types of thing in this repo
+
+-   candid
+-   service
+-   caching service
+-   service interface
+-   service container
+-   mapping functions
+-   domain types (and pure functions operating on those types)
+-   utility functions
+
+### Not in this repo
+
+-   nothing UI related (no svelte stores)

@@ -6,7 +6,7 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -31,6 +31,20 @@ import type {
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
+    ChatSummary,
+    UpdatesResponse,
+    ChatSummaryUpdates,
+    GroupChatSummaryUpdates,
+    DirectChatSummary,
+    DirectChatSummaryUpdates,
+    EventWrapper,
+    Mention,
+    ThreadSyncDetailsUpdates,
+    ThreadSyncDetails,
+    GroupSubtypeUpdate,
+    GroupSubtype,
+    compareChats,
+    GroupInvite,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -60,10 +74,9 @@ import {
     unpinChatResponse,
     migrateUserPrincipal,
     archiveChatResponse,
+    textToCode,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
-import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -91,13 +104,13 @@ import type {
 } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity, toVoid } from "../../utils/mapping";
+import { applyOptionUpdate, identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { textToCode } from "../../domain/inviteCodes";
-import type { GroupInvite } from "../../services/serviceContainer";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
+import { MAX_EVENTS } from "../../settings";
+import { toRecord } from "../../utils/list";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -689,4 +702,190 @@ export class UserClient extends CandidService implements IUserClient {
             migrateUserPrincipal
         );
     }
+}
+
+function mergeChatUpdates(
+    chatSummaries: ChatSummary[],
+    updateResponse: UpdatesResponse
+): ChatSummary[] {
+    return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
+        added: updateResponse.chatsAdded,
+        updated: updateResponse.chatsUpdated,
+        removed: updateResponse.chatsRemoved,
+    }).sort(compareChats);
+}
+
+export function mergeUpdates(
+    chat: ChatSummary | undefined,
+    updatedChat: ChatSummaryUpdates
+): ChatSummary | undefined {
+    if (!chat) return undefined;
+
+    if (chat.chatId !== updatedChat.chatId) {
+        throw new Error("Cannot update chat from a chat with a different chat id");
+    }
+
+    if (chat.kind === "group_chat" && updatedChat.kind === "group_chat") {
+        return mergeUpdatedGroupChat(chat, updatedChat);
+    }
+
+    if (chat.kind === "direct_chat" && updatedChat.kind === "direct_chat") {
+        return mergeUpdatedDirectChat(chat, updatedChat);
+    }
+
+    throw new Error("Cannot update chat with a chat of a different kind");
+}
+
+function mergeUpdatedGroupChat(
+    chat: GroupChatSummary,
+    updatedChat: GroupChatSummaryUpdates
+): GroupChatSummary {
+    return {
+        ...chat,
+        name: updatedChat.name ?? chat.name,
+        description: updatedChat.description ?? chat.description,
+        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
+        lastUpdated: updatedChat.lastUpdated,
+        latestEventIndex: getLatestEventIndex(chat, updatedChat),
+        latestMessage: getLatestMessage(chat, updatedChat),
+        blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
+        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
+        memberCount: updatedChat.memberCount ?? chat.memberCount,
+        myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
+        mentions: mergeMentions(chat.mentions, updatedChat.mentions),
+        ownerId: updatedChat.ownerId ?? chat.ownerId,
+        permissions: updatedChat.permissions ?? chat.permissions,
+        metrics: updatedChat.metrics ?? chat.metrics,
+        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+        public: updatedChat.public ?? chat.public,
+        latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
+        subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
+        archived: updatedChat.archived ?? chat.archived,
+    };
+}
+
+function mergeSubtype(updated: GroupSubtypeUpdate, existing: GroupSubtype): GroupSubtype {
+    if (updated.kind === "no_change") {
+        return existing;
+    } else if (updated.kind === "set_to_none") {
+        return undefined;
+    } else {
+        return updated.subtype;
+    }
+}
+
+function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
+    return [
+        ...existing,
+        ...incoming.filter(
+            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined
+        ),
+    ];
+}
+
+function mergeThreadSyncDetails(
+    updated: ThreadSyncDetailsUpdates[] | undefined,
+    existing: ThreadSyncDetails[]
+) {
+    if (updated === undefined) return existing;
+
+    return Object.values(
+        updated.reduce(
+            (merged, thread) => {
+                const existing = merged[thread.threadRootMessageIndex];
+                if (existing !== undefined || thread.latestEventIndex !== undefined) {
+                    merged[thread.threadRootMessageIndex] = {
+                        threadRootMessageIndex: thread.threadRootMessageIndex,
+                        lastUpdated: thread.lastUpdated,
+                        readUpTo: thread.readUpTo ?? existing?.readUpTo,
+                        latestEventIndex: thread.latestEventIndex ?? existing.latestEventIndex,
+                        latestMessageIndex:
+                            thread.latestMessageIndex ?? existing.latestMessageIndex,
+                    };
+                }
+                return merged;
+            },
+            toRecord(existing, (t) => t.threadRootMessageIndex)
+        )
+    );
+}
+
+function mergeUpdatedDirectChat(
+    chat: DirectChatSummary,
+    updatedChat: DirectChatSummaryUpdates
+): DirectChatSummary {
+    return {
+        ...chat,
+        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
+        readByThemUpTo: updatedChat.readByThemUpTo ?? chat.readByThemUpTo,
+        latestEventIndex: getLatestEventIndex(chat, updatedChat),
+        latestMessage: getLatestMessage(chat, updatedChat),
+        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
+        metrics: updatedChat.metrics ?? chat.metrics,
+        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+        archived: updatedChat.archived ?? chat.archived,
+    };
+}
+
+function getLatestMessage(
+    chat: ChatSummary,
+    updatedChat: ChatSummaryUpdates
+): EventWrapper<Message> | undefined {
+    if (chat.latestMessage === undefined) return updatedChat.latestMessage;
+    if (updatedChat.latestMessage === undefined) return chat.latestMessage;
+
+    // If the local message is unconfirmed, treat that as the latest
+
+    // FIXME -> cannot reference a svelte store here
+    const isLocalLatestUnconfirmed = unconfirmed.contains(
+        chat.chatId,
+        chat.latestMessage.event.messageId
+    );
+    if (isLocalLatestUnconfirmed) return chat.latestMessage;
+
+    // Otherwise take the one with the highest event index, if they match, take the server version since it may have had
+    // subsequent updates (eg. deleted)
+    return updatedChat.latestMessage.index >= chat.latestMessage.index
+        ? updatedChat.latestMessage
+        : chat.latestMessage;
+}
+
+function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
+    return Math.max(updatedChat.latestEventIndex ?? 0, chat.latestEventIndex);
+}
+
+function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
+    return things.reduce<Record<string, T>>((agg, thing) => {
+        agg[keyFn(thing)] = thing;
+        return agg;
+    }, {});
+}
+
+// this is used to merge both the overall list of chats with updates and also the list of participants
+// within a group chat
+function mergeThings<A, U>(
+    keyFn: (a: A | U) => string,
+    mergeFn: (existing: A | undefined, updated: U) => A | undefined,
+    things: A[],
+    updates: { added: A[]; updated: U[]; removed: Set<string> }
+): A[] {
+    const remaining = things.filter((t) => !updates.removed.has(keyFn(t)));
+    const dict = toLookup(keyFn, remaining);
+    const updated = updates.updated.reduce((dict, updated) => {
+        const key = keyFn(updated);
+        const merged = mergeFn(dict[key], updated);
+        if (merged) {
+            dict[key] = merged;
+        }
+        return dict;
+    }, dict);
+
+    // concat the updated and the added and then merge the result so we are sure
+    // there are no duplicates (according to the provided keyFn)
+    return Object.values(
+        [...Object.values(updated), ...updates.added].reduce((merged, thing) => {
+            merged[keyFn(thing)] = thing;
+            return merged;
+        }, {} as Record<string, A>)
+    );
 }
