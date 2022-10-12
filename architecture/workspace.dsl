@@ -1,9 +1,9 @@
-workspace {
+workspace "OpenChat" "High-level system architecture diagrams for OpenChat." {
 
     model {
         user = person "User" "An OpenChat user"
         openChat = softwareSystem "OpenChat" "OpenChat system" {
-            website = container "oc.app" "Landing pages and PWA" "TypeScript and Svelte" "Web Browser" {
+            website = container "website" "Landing pages and PWA" "TypeScript and Svelte" "Web Browser" {
                 httpCache = component "HTTP Cache" "Caches website assets and OpenStorage files"
                 serviceWorker = component "Service worker" "Validates API calls to IC, handles web push notifications, handles caching of website assets"
                 landingPages = component "Landing pages" "Static landing page content"
@@ -75,7 +75,8 @@ workspace {
         serviceWorker -> httpCache "Get assets and make API calls"
         serviceWorker -> indexDB "Cache static assets"
         pwa -> indexDB "Cache domain objects"
-        pwa -> localStorage "Cache user settings"        
+        pwa -> localStorage "Cache user settings"
+
     }
 
     views {
@@ -84,12 +85,12 @@ workspace {
             autoLayout
         }
         
-        container openChat "ocContainers" {
+        container openChat "Containers" {
             include *
             autoLayout
         }        
         
-        component website "websiteComponents" {
+        component website "WebsiteComponents" {
             include *
             autoLayout
         }        
