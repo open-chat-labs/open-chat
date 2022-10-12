@@ -57,6 +57,7 @@ async fn send_message(mut args: Args) -> Response {
     mutate_state(|state| send_message_impl(args, completed_transfer, is_bot, state))
 }
 
+#[allow(clippy::large_enum_variant)]
 enum ValidateRequestResult {
     Valid(bool), // Value is `is_bot`
     Invalid(Response),
@@ -218,7 +219,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                 }
             });
         }
-        Err(_) => {
+        Err(_error) => {
             // TODO push message saying that the message failed to send
         }
     }

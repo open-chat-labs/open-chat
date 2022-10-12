@@ -35,9 +35,7 @@ fn register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     // TODO charge a fee in cycles to register a bot
 
-    runtime_state.data.users.reserve_username(&args.username);
-
-    if runtime_state.data.users.get_by_username(&args.username) {
+    if runtime_state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
     }
 
