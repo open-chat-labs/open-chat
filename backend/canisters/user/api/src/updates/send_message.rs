@@ -25,11 +25,13 @@ pub enum Response {
     MessageEmpty,
     TextTooLong(u32),
     RecipientBlocked,
+    RecipientNotFound,
     InvalidPoll(InvalidPollReason),
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
     TransferLimitExceeded(u128),
+    InternalError(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

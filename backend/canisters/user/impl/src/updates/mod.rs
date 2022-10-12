@@ -28,6 +28,7 @@ pub mod mark_read_v2;
 pub mod migrate_user_principal;
 pub mod mute_notifications;
 pub mod pin_chat;
+pub mod receive_bot_message;
 pub mod relinquish_group_super_admin;
 pub mod remove_reaction;
 pub mod send_message;

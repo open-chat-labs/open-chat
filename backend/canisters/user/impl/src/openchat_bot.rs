@@ -1,10 +1,9 @@
 use crate::model::direct_chat::DirectChat;
-use crate::updates::c2c_send_message::c2c_send_message_impl;
+use crate::updates::c2c_send_message::{receive_message_impl, ReceiveMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
-use user_canister::c2c_send_message;
+use types::{MessageContentInternal, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use utils::format::format_to_decimal_places;
 
 // zzyk3-openc-hatbo-tq7my-cai
@@ -25,7 +24,7 @@ pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
         if bot_chat(state).is_none() {
             for message in WELCOME_MESSAGES.iter() {
-                let content = MessageContent::Text(TextContent {
+                let content = MessageContentInternal::Text(TextContent {
                     text: message.to_string(),
                 });
 
@@ -106,32 +105,23 @@ fn to_tokens(tokens: Tokens) -> String {
 }
 
 fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
-    let content = MessageContent::Text(TextContent { text });
+    let content = MessageContentInternal::Text(TextContent { text });
     send_message(content, false, runtime_state);
 }
 
-fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let message_index = runtime_state
-        .data
-        .direct_chats
-        .get(&OPENCHAT_BOT_USER_ID.into())
-        .and_then(|c| c.events.main().latest_message_index())
-        .map(|i| i.incr())
-        .unwrap_or_default();
-
-    let message_id = MessageId::generate(|| runtime_state.env.random_u32());
-
-    let args = c2c_send_message::Args {
-        message_id,
-        sender_message_index: message_index,
+fn send_message(content: MessageContentInternal, mute_notification: bool, runtime_state: &mut RuntimeState) {
+    let args = ReceiveMessageArgs {
+        message_id: None,
+        sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
         replies_to: None,
         forwarding: false,
         correlation_id: 0,
+        is_bot: true,
     };
 
-    c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+    receive_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
 fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
