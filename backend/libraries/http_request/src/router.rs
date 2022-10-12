@@ -55,6 +55,6 @@ mod tests {
 
     #[test]
     fn other() {
-        assert!(matches!(extract_route("blah"), Route::Other));
+        assert!(matches!(extract_route("blah"), Route::Other(_)));
     }
 }
