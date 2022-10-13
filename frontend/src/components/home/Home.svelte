@@ -35,7 +35,10 @@
     import { userStore } from "../../stores/user";
     import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
-    import { initNotificationsServiceWorker } from "../../utils/notifications";
+    import {
+        closeNotificationsForChat,
+        initNotificationsServiceWorker,
+    } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "../../domain/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
@@ -234,6 +237,7 @@
         if (chat === undefined) {
             if (qs.get("type") === "direct") {
                 createDirectChat(chatId);
+                push(`/${chatId}`);
                 hotGroups = { kind: "idle" };
                 return;
             } else {
@@ -259,6 +263,7 @@
         }
 
         // if it's a known chat let's select it
+        closeNotificationsForChat(chat.chatId);
         setSelectedChat(api, chat, messageIndex, threadMessageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
@@ -793,6 +798,7 @@
             push(`/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
+            push(`/${ev.detail}`);
         }
     }
 
@@ -823,6 +829,7 @@
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             createDirectChat(ev.detail.sender!.userId);
+            push(`/${ev.detail.sender!.userId}`);
         }
     }
 
