@@ -12,52 +12,6 @@ use user_canister::c2c_send_message::{Response::*, *};
 #[update_msgpack]
 #[trace]
 async fn c2c_send_message(args: Args) -> Response {
-    handle_message(HandleMessageArgs {
-        message_id: Some(args.message_id),
-        sender_message_index: Some(args.sender_message_index),
-        sender_name: args.sender_name,
-        content: args.content.new_content_into_internal(),
-        replies_to: args.replies_to,
-        forwarding: args.forwarding,
-        correlation_id: args.correlation_id,
-        is_bot: false,
-    })
-    .await
-}
-
-#[update(guard = "caller_is_known_bot")]
-#[trace]
-async fn c2c_handle_bot_messages(
-    args: user_canister::c2c_handle_bot_messages::Args,
-) -> user_canister::c2c_handle_bot_messages::Response {
-    for message in args.messages {
-        handle_message(HandleMessageArgs {
-            message_id: None,
-            sender_message_index: None,
-            sender_name: args.bot_name.clone(),
-            content: message.content,
-            replies_to: None,
-            forwarding: false,
-            correlation_id: 0,
-            is_bot: true,
-        })
-        .await;
-    }
-    Success
-}
-
-pub(crate) struct HandleMessageArgs {
-    pub message_id: Option<MessageId>,
-    pub sender_message_index: Option<MessageIndex>,
-    pub sender_name: String,
-    pub content: MessageContentInternal,
-    pub replies_to: Option<C2CReplyContext>,
-    pub forwarding: bool,
-    pub correlation_id: u64,
-    pub is_bot: bool,
-}
-
-async fn handle_message(args: HandleMessageArgs) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -71,7 +25,75 @@ async fn handle_message(args: HandleMessageArgs) -> Response {
         }
     };
 
-    mutate_state(|state| handle_message_impl(sender_user_id, args, false, state))
+    mutate_state(|state| {
+        handle_message_impl(
+            sender_user_id,
+            HandleMessageArgs {
+                message_id: Some(args.message_id),
+                sender_message_index: Some(args.sender_message_index),
+                sender_name: args.sender_name,
+                content: args.content.new_content_into_internal(),
+                replies_to: args.replies_to,
+                forwarding: args.forwarding,
+                correlation_id: args.correlation_id,
+                is_bot: false,
+            },
+            false,
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_known_bot")]
+#[trace]
+fn c2c_handle_bot_messages(
+    args: user_canister::c2c_handle_bot_messages::Args,
+) -> user_canister::c2c_handle_bot_messages::Response {
+    let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
+
+    let sender_user_id = match sender_status {
+        SenderStatus::Ok(user_id) => user_id,
+        SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
+        SenderStatus::UnknownUser(..) => unreachable!(),
+    };
+
+    for message in args.messages.iter() {
+        if let Err(error) = message.content.validate_for_new_message(true, false, now) {
+            return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
+        }
+    }
+
+    mutate_state(|state| {
+        for message in args.messages {
+            handle_message_impl(
+                sender_user_id,
+                HandleMessageArgs {
+                    message_id: None,
+                    sender_message_index: None,
+                    sender_name: args.bot_name.clone(),
+                    content: message.content,
+                    replies_to: None,
+                    forwarding: false,
+                    correlation_id: 0,
+                    is_bot: true,
+                },
+                false,
+                state,
+            );
+        }
+    });
+    user_canister::c2c_handle_bot_messages::Response::Success
+}
+
+pub(crate) struct HandleMessageArgs {
+    pub message_id: Option<MessageId>,
+    pub sender_message_index: Option<MessageIndex>,
+    pub sender_name: String,
+    pub content: MessageContentInternal,
+    pub replies_to: Option<C2CReplyContext>,
+    pub forwarding: bool,
+    pub correlation_id: u64,
+    pub is_bot: bool,
 }
 
 enum SenderStatus {

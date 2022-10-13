@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::BotMessage;
+use types::{BotMessage, ContentValidationError};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,4 +8,9 @@ pub struct Args {
     pub messages: Vec<BotMessage>,
 }
 
-pub type Response = crate::c2c_send_message::Response;
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success,
+    Blocked,
+    ContentValidationError(ContentValidationError),
+}

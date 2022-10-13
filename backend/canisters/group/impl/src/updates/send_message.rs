@@ -8,7 +8,7 @@ use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
     CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
+    MessageContent, MessageContentInternal, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -23,8 +23,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
+        let content = args.content.new_content_into_internal();
 
-        if let Err(error) = args.content.validate_for_new_message(false, args.forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, args.forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -48,7 +49,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
-        if matches!(args.content, MessageContent::Poll(_)) && !participant.role.can_create_polls(permissions) {
+        if matches!(content, MessageContentInternal::Poll(_)) && !participant.role.can_create_polls(permissions) {
             return NotAuthorized;
         }
 
@@ -72,7 +73,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             sender,
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
-            content: args.content.new_content_into_internal(),
+            content,
             replies_to: args.replies_to.map(|r| r.into()),
             forwarded: args.forwarding,
             correlation_id: args.correlation_id,
