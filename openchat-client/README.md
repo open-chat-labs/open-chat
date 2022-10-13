@@ -38,3 +38,7 @@ From the outside we can think of this as a few separate pieces.
 -   Actions
 -   Effects
 -   (Reactive) State
+
+### Done so far
+
+-   stores roughly partitioned into UI and lib

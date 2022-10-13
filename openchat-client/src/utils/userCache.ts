@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type { UserSummary } from "../domain/user/user";
-import { logger } from "./logger";
+import { rollbar } from "./logging";
 
 const CACHE_VERSION = 1;
 
@@ -36,12 +36,12 @@ export function openUserCache(): UserDatabase {
                     }
                     db.createObjectStore("users");
                 } catch (err) {
-                    logger.error("Unable to upgrade indexedDB for users", err as Error);
+                    rollbar.error("Unable to upgrade indexedDB for users", err as Error);
                 }
             },
         });
     } catch (err) {
-        logger.error("Unable to open indexedDB for users", err as Error);
+        rollbar.error("Unable to open indexedDB for users", err as Error);
         throw err;
     }
 }

@@ -32,7 +32,7 @@ import type {
     GroupRules,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
-import type { ServiceRetryInterrupt } from "services/candidService";
+import type { ServiceRetryInterrupt } from "../candidService";
 
 export interface IGroupClient {
     chatEventsByIndex(

@@ -4,6 +4,7 @@ import {
     CreateChallengeResponse,
     CurrentUserResponse,
     CurrentUserArgs,
+    CheckUsernameArgs,
     SetUsernameArgs,
     CheckUsernameResponse,
     SetUsernameResponse,

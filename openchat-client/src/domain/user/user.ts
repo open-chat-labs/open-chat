@@ -1,4 +1,4 @@
-import type { Version } from "../version";
+import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
 export type UserLastOnline = {
@@ -185,13 +185,3 @@ export type MigrateUserPrincipalResponse =
     | "migration_already_in_progress"
     | "internal_error"
     | "migration_not_initialized";
-
-export function isUserSummary(user: PartialUserSummary): user is UserSummary {
-    return user.username !== undefined;
-}
-
-const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
-
-export function extractUserIdsFromMentions(text: string): string[] {
-    return [...text.matchAll(mentionRegex)].map((m) => m[1]);
-}

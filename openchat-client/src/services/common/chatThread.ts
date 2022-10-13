@@ -10,7 +10,7 @@ import type {
 } from "../../domain/chat/chat";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-import type { ServiceContainer } from "../serviceContainer";
+import type { ServiceContainer } from "../../services/serviceContainer";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
@@ -718,7 +718,7 @@ export async function handleMessageSentByOther(
     user: CreatedUser,
     clientChat: ChatSummary,
     currentEvents: EventWrapper<ChatEvent>[],
-    messageEvent: EventWrapper<Message>
+    messageEvent: EventWrapper<Message>,
 ): Promise<void> {
     const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
 

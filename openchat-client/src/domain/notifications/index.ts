@@ -1,4 +1,4 @@
-import type { User } from "../user/user";
+import type { User } from "../../domain/user/user";
 import type { EventWrapper, Message } from "../chat/chat";
 
 export type Notification =

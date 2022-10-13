@@ -51,7 +51,7 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../domain/chat/chat.utils";
 import { rollbar } from "../../utils/logging";
-import type { ServiceRetryInterrupt } from "services/candidService";
+import type { ServiceRetryInterrupt } from "../candidService";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to

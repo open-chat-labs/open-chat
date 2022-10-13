@@ -1,3 +1,4 @@
+import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils.shared";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -13,9 +14,8 @@ import type {
     SendMessageResponse,
     SendMessageSuccess,
 } from "../domain/chat/chat";
+import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { logger } from "./logger";
-import { MAX_EVENTS } from "../settings";
 
 const CACHE_VERSION = 47;
 
@@ -107,12 +107,12 @@ export function openCache(principal: string): Database | undefined {
                         db.createObjectStore("soft_disabled");
                     }
                 } catch (err) {
-                    logger.error("Unable to upgrade indexDB", err as Error);
+                    rollbar.error("Unable to upgrade indexDB", err as Error);
                 }
             },
         });
     } catch (err) {
-        logger.error("Unable to open indexDB", err as Error);
+        rollbar.error("Unable to open indexDB", err as Error);
     }
 }
 
@@ -148,7 +148,7 @@ export async function setCachedChats(
 
     // irritating hoop jumping to keep typescript happy here
     const chatSummaries = data.chatSummaries
-        .filter((c) => !(c.kind === "group_chat" && c.myRole === "previewer"))
+        .filter((c) => !isPreviewing(c))
         .map((c) => {
             const latestMessage = c.latestMessage
                 ? makeSerialisable(c.latestMessage, c.chatId)
@@ -471,7 +471,7 @@ export function setCachedMessageFromSendResponse(
         const event = messageToEvent(message, resp);
 
         setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex).catch((err) =>
-            logger.error("Unable to write message to cache: ", err)
+            rollbar.error("Unable to write message to cache: ", err)
         );
 
         return [resp, message];
@@ -490,7 +490,7 @@ export function setCachedMessageFromNotification(
     }
 
     setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex).catch((err) =>
-        logger.error("Unable to write notification message to the cache", err)
+        rollbar.error("Unable to write notification message to the cache", err)
     );
 }
 
@@ -500,14 +500,14 @@ async function setCachedMessageIfNotExists(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex);
+    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex)
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
     const eventStore = tx.objectStore(store);
-    if ((await eventStore.count(key)) === 0) {
-        await eventStore.add(makeSerialisable(messageEvent, chatId), key);
+    if (await eventStore.count(key) === 0) {
+        await eventStore.add(makeSerialisable(messageEvent, chatId), key)
     }
     await tx.done;
 }

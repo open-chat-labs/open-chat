@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": true,
+        "checkJs": false,
         "baseUrl": "./",
         "declaration": true,
         "experimentalDecorators": true,
@@ -17,7 +18,8 @@
         "rootDir": "./src",
         "sourceMap": true,
         "strict": true,
-        "target": "es2017"
+        "target": "es2020",
+        "types": ["svelte", "jest", "node"]
     },
     "exclude": ["node_modules/*", "lib/*"],
     "include": ["src/**/*"]

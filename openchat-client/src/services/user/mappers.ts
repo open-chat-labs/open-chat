@@ -104,12 +104,6 @@ import type {
 } from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { ReplicaNotUpToDateError } from "../error";
-import { base64ToBigint } from "../../utils/base64";
-
-export function textToCode(codeStr: string): bigint {
-    // This also decodes potentially extant old-style base64 encoded invite codes
-    return codeStr.length === 16 ? BigInt("0x" + codeStr) : base64ToBigint(codeStr);
-}
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -389,10 +383,9 @@ export function transferWithinGroupResponse(
     recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
-        const transfer =
-            "NNS" in candid.Success.transfer
-                ? candid.Success.transfer.NNS
-                : candid.Success.transfer.SNS;
+        const transfer = "NNS" in candid.Success.transfer
+            ? candid.Success.transfer.NNS
+            : candid.Success.transfer.SNS;
 
         return {
             kind: "transfer_success",
@@ -455,17 +448,20 @@ export function sendMessageResponse(
         };
     }
     if ("TransferSuccessV2" in candid) {
-        const transfer =
-            "NNS" in candid.TransferSuccessV2.transfer
-                ? candid.TransferSuccessV2.transfer.NNS
-                : candid.TransferSuccessV2.transfer.SNS;
+        const transfer = "NNS" in candid.TransferSuccessV2.transfer
+            ? candid.TransferSuccessV2.transfer.NNS
+            : candid.TransferSuccessV2.transfer.SNS;
 
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(transfer, sender, recipient),
+            transfer: completedCryptoTransfer(
+                transfer,
+                sender,
+                recipient
+            ),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -1035,5 +1031,7 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
     const owner = candid.owner.toString();
     const subaccount = optional(candid.subaccount, bytesToHexString);
 
-    return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
+    return subaccount !== undefined
+        ? `${owner}:${subaccount}`
+        : owner;
 }

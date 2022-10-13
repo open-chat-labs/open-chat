@@ -1,10 +1,13 @@
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import DRange from "drange";
 import type { GroupChatSummary } from "../../domain/chat/chat";
-import type { ApiPublicGroupSummary, ApiPublicSummaryResponse } from "../group/candid/idl";
+import type {
+    ApiPublicGroupSummary,
+    ApiPublicSummaryResponse,
+} from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
 import { message } from "./chatMappers";
-import { apiGroupSubtype } from "../user/mappers";
+import { apiGroupSubtype } from "../../services/user/mappers";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
     return {

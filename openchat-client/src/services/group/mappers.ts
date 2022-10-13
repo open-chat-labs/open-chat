@@ -76,7 +76,7 @@ import {
     updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "./candid/idl";
+import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { identity, optional } from "../../utils/mapping";

@@ -5,18 +5,65 @@
     "main": "index.ts",
     "scripts": {
         "build": "tsc",
-        "check": "tsc --noEmit -w",
+        "check": "tsc --noEmit",
+        "check:watch": "tsc --noEmit -w",
         "lint": "eslint ./src --fix",
-        "format": "prettier './src/**/*.ts' --write"
+        "format": "prettier './src/**/*.ts' --write",
+        "test": "jest --detectOpenHandles --runInBand",
+        "test:watch": "jest --watch --detectOpenHandles --runInBand",
+        "codegen": "sh ./codegen.sh"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
         "@dfinity/agent": "^0.14.0",
+        "@dfinity/auth-client": "^0.14.0",
         "@dfinity/candid": "^0.14.0",
         "@dfinity/identity": "^0.14.0",
         "@dfinity/principal": "^0.14.0",
+        "@open-ic/open-storage-agent": "^0.1.6",
+        "drange": "^2.0.1",
         "idb": "^6.1.5",
+        "md5": "^2.3.0",
         "svelte": "^3.51.0",
-        "svelte-i18n": "^3.4.0"
+        "svelte-i18n": "^3.4.0",
+        "uuid": "^9.0.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.17.9",
+        "@babel/preset-env": "^7.16.11",
+        "@testing-library/jest-dom": "^5.16.4",
+        "@types/jest": "^29.1.2",
+        "@types/uuid": "^8.3.4",
+        "@typescript-eslint/eslint-plugin": "^4.33.0",
+        "@typescript-eslint/parser": "^4.33.0",
+        "babel-jest": "^29.0.2",
+        "babel-loader": "^8.2.4",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-prettier": "^3.4.1",
+        "jest": "^29.0.2",
+        "jest-environment-jsdom": "^29.0.2",
+        "ts-jest": "^29.0.0"
+    },
+    "jest": {
+        "testEnvironment": "jsdom",
+        "fakeTimers": {
+            "enableGlobally": true
+        },
+        "transform": {
+            "^.+\\.ts$": "ts-jest",
+            "^.+\\.js$": "babel-jest"
+        },
+        "moduleFileExtensions": [
+            "js",
+            "ts"
+        ],
+        "moduleNameMapper": {
+            "peerjs": "<rootDir>/src/dummyModule.js",
+            "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
+            "svelte-spa-router": "<rootDir>/src/dummyModule.js",
+            "stores/background": "<rootDir>/src/dummyModule.js",
+            "idb": "<rootDir>/src/dummyModule.js",
+            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
+        }
     }
 }
