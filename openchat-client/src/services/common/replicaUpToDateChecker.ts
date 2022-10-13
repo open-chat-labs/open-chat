@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
-import { serverChatSummariesStore } from "stores/chat";
-import { ReplicaNotUpToDateError } from "services/error";
+import { serverChatSummariesStore } from "../../stores/chat";
+import { ReplicaNotUpToDateError } from "../error";
 
 export function ensureReplicaIsUpToDate(
     chatId: string,

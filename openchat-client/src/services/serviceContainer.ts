@@ -113,7 +113,7 @@ import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import { snsFunctions } from "../stores/snsFunctions";
-import { userCreatedStore } from "../stores/settings";
+import { userCreatedStore } from "../stores/userCreated";
 import { selectedAuthProviderStore } from "../stores/authProviders";
 import { AuthProvider } from "../domain/auth";
 import { rollbar } from "../utils/logging";

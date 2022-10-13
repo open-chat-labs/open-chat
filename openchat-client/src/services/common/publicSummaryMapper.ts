@@ -1,5 +1,4 @@
 import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
-import DRange from "drange";
 import type { GroupChatSummary } from "../../domain/chat/chat";
 import type {
     ApiPublicGroupSummary,

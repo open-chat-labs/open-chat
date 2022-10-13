@@ -1,5 +1,4 @@
 import { Principal } from "@dfinity/principal";
-import DRange from "drange";
 import type {
     FileContent,
     ImageContent,
@@ -58,7 +57,6 @@ import type {
     ApiSnsPendingCryptoTransaction,
     ApiSnsCompletedCryptoTransaction,
     ApiSnsFailedCryptoTransaction,
-    ApiMessageIndexRange,
     ApiUser,
     ApiICP,
     ApiPollContent,
@@ -116,12 +114,6 @@ export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
         messageId: candid.message_id,
         eventIndex: candid.event_index,
     };
-}
-
-export function apiMessageIndexRanges(ranges: ApiMessageIndexRange[]): DRange {
-    const drange = new DRange();
-    ranges.forEach((r) => drange.add(r.from, r.to));
-    return drange;
 }
 
 export function messageContent(candid: ApiMessageContent, sender: string): MessageContent {
@@ -381,7 +373,7 @@ export function completedCryptoTransfer(
         sender,
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
-        memo: Array.isArray(candid.memo) ? (candid.memo[0] ?? BigInt(0)) : candid.memo,
+        memo: Array.isArray(candid.memo) ? candid.memo[0] ?? BigInt(0) : candid.memo,
         blockIndex: candid.block_index,
         transactionHash: bytesToHexString(candid.transaction_hash),
     };
@@ -397,7 +389,7 @@ export function failedCryptoTransfer(
         recipient,
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
-        memo: Array.isArray(candid.memo) ? (candid.memo[0] ?? BigInt(0)) : candid.memo,
+        memo: Array.isArray(candid.memo) ? candid.memo[0] ?? BigInt(0) : candid.memo,
         errorMessage: candid.error_message,
     };
 }
