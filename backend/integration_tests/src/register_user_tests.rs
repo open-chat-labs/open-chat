@@ -1,6 +1,6 @@
 use crate::client;
 use crate::rng::random_principal;
-use crate::setup::setup_env;
+use crate::setup::{return_env, setup_env};
 
 #[test]
 fn register_users() {
@@ -27,4 +27,6 @@ fn register_users() {
 
     let user_index_canister::users::Response::Success(result) = response;
     assert_eq!(result.users.len(), user_count);
+
+    return_env(env, canister_ids)
 }

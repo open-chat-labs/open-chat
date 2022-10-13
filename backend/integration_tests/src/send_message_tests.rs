@@ -1,6 +1,6 @@
 use crate::client;
 use crate::rng::{random_message_id, random_principal};
-use crate::setup::setup_env;
+use crate::setup::{return_env, setup_env};
 use types::{MessageContent, TextContent};
 
 #[test]
@@ -16,6 +16,8 @@ fn send_message_succeeds() {
     let events_response =
         client::user::happy_path::events_by_index(&env, &user1, user2.user_id, vec![send_message_result.event_index]);
     assert_eq!(events_response.events.len(), 1);
+
+    return_env(env, canister_ids)
 }
 
 #[test]
@@ -40,6 +42,8 @@ fn empty_message_fails() {
     if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
         panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
     }
+
+    return_env(env, canister_ids)
 }
 
 #[test]
@@ -66,4 +70,6 @@ fn text_too_long_fails() {
     if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
         panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
     }
+
+    return_env(env, canister_ids)
 }

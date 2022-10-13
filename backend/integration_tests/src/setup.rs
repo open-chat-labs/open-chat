@@ -2,19 +2,40 @@ use crate::client::{create_canister, install_canister};
 use crate::{wasms, CanisterIds};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
 use types::{CanisterId, Version};
 
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
+lazy_static! {
+    static ref ENV: Mutex<Vec<(StateMachine, CanisterIds)>> = Mutex::default();
+}
+
 pub fn setup_env(controller: Principal) -> (StateMachine, CanisterIds) {
+    if let Some((env, canister_ids)) = try_take_existing_env() {
+        return (env, canister_ids);
+    }
+    setup_fresh_env(controller)
+}
+
+pub fn setup_fresh_env(controller: Principal) -> (StateMachine, CanisterIds) {
     let mut env = StateMachine::new();
     let canister_ids = install_canisters(&mut env, controller);
     (env, canister_ids)
 }
 
-fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterIds {
-    println!("Creating canisters - Starting");
+pub fn return_env(env: StateMachine, canister_ids: CanisterIds) {
+    if let Ok(mut e) = ENV.try_lock() {
+        e.push((env, canister_ids));
+    }
+}
 
+fn try_take_existing_env() -> Option<(StateMachine, CanisterIds)> {
+    ENV.try_lock().ok().map(|mut e| e.pop()).flatten()
+}
+
+fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterIds {
     let callback_canister_id = create_canister(env);
     let group_index_canister_id = create_canister(env);
     let notifications_canister_id = create_canister(env);
@@ -24,8 +45,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     let open_storage_index_canister_id = create_canister(env);
     let ledger_canister_id = create_canister(env);
 
-    println!("Creating canisters - Completed");
-
     let callback_canister_wasm = wasms::CALLBACK.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
@@ -34,9 +53,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
-
-    println!("Installing canisters - Starting");
-    println!("Installing user_index");
 
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
@@ -54,8 +70,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     };
     install_canister(env, user_index_canister_id, user_index_canister_wasm, user_index_init_args);
 
-    println!("Installing group_index");
-
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
@@ -66,8 +80,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         test_mode: true,
     };
     install_canister(env, group_index_canister_id, group_index_canister_wasm, group_index_init_args);
-
-    println!("Installing notifications");
 
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: vec![principal],
@@ -82,8 +94,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         notifications_init_args,
     );
 
-    println!("Installing online_users_aggregator");
-
     let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
         user_index_canister_id,
         wasm_version: Version::min(),
@@ -96,15 +106,11 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         online_users_aggregator_init_args,
     );
 
-    println!("Installing callback");
-
     let callback_init_args = callback_canister::init::Args {
         wasm_version: Version::min(),
         test_mode: true,
     };
     install_canister(env, callback_canister_id, callback_canister_wasm, callback_init_args);
-
-    println!("Installing proposals_bot");
 
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
         service_owner_principals: vec![principal],
@@ -128,8 +134,6 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     //     wasm_version: version,
     //     test_mode,
     // };
-
-    println!("Creating canisters - Completed");
 
     CanisterIds {
         user_index: user_index_canister_id,
