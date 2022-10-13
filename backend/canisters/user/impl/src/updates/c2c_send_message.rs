@@ -26,9 +26,7 @@ async fn c2c_send_message(args: Args) -> Response {
 
 #[update_msgpack(guard = "caller_is_known_bot")]
 #[trace]
-async fn receive_bot_messages(
-    args: user_canister::receive_bot_messages::Args,
-) -> user_canister::receive_bot_messages::Response {
+async fn handle_bot_messages(args: user_canister::handle_bot_messages::Args) -> user_canister::handle_bot_messages::Response {
     for message in args.messages {
         receive_message(ReceiveMessageArgs {
             message_id: None,

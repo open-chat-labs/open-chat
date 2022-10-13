@@ -35,15 +35,15 @@ fn register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         _ => {}
     };
 
+    if runtime_state.data.users.get_by_username(&args.username).is_some() {
+        return UsernameTaken;
+    }
+
     let cycles = ic_cdk::api::call::msg_cycles_available128();
     if cycles < BOT_REGISTRATION_FEE {
         return InsufficientCyclesProvided(BOT_REGISTRATION_FEE);
     }
     ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
-
-    if runtime_state.data.users.get_by_username(&args.username).is_some() {
-        return UsernameTaken;
-    }
 
     runtime_state
         .data

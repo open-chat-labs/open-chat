@@ -15,7 +15,7 @@ pub struct DirectChats {
 
 impl DirectChats {
     pub fn set_is_bot(&mut self) {
-        let proposals_bot_user_id: UserId = Principal::from_text("").unwrap().into();
+        let proposals_bot_user_id: UserId = Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into();
         for chat in self.direct_chats.values_mut() {
             if chat.them == OPENCHAT_BOT_USER_ID || chat.them == proposals_bot_user_id {
                 chat.is_bot = true;
