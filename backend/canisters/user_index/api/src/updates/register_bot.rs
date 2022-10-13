@@ -16,6 +16,6 @@ pub enum Response {
     UsernameInvalid,
     UsernameTooShort(u16),
     UsernameTooLong(u16),
-    NotEnoughCyclesProvided(Cycles),
+    InsufficientCyclesProvided(Cycles),
     InternalError(String),
 }

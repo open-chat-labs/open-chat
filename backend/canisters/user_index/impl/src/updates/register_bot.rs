@@ -2,8 +2,10 @@ use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use types::{UserId, Version};
+use types::{Cycles, UserId, Version};
 use user_index_canister::register_bot::{Response::*, *};
+
+const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
 #[update_candid_and_msgpack]
 #[trace]
@@ -33,7 +35,11 @@ fn register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         _ => {}
     };
 
-    // TODO charge a fee in cycles to register a bot
+    let cycles = ic_cdk::api::call::msg_cycles_available128();
+    if cycles < BOT_REGISTRATION_FEE {
+        return InsufficientCyclesProvided(BOT_REGISTRATION_FEE);
+    }
+    ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
 
     if runtime_state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
