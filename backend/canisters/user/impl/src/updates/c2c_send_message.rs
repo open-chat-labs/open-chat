@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
+use ic_cdk_macros::update;
 use types::{
     CanisterId, DirectMessageNotification, MessageContentInternal, MessageId, MessageIndex, Notification, ReplyContext, UserId,
 };
@@ -11,7 +12,7 @@ use user_canister::c2c_send_message::{Response::*, *};
 #[update_msgpack]
 #[trace]
 async fn c2c_send_message(args: Args) -> Response {
-    receive_message(ReceiveMessageArgs {
+    handle_message(HandleMessageArgs {
         message_id: Some(args.message_id),
         sender_message_index: Some(args.sender_message_index),
         sender_name: args.sender_name,
@@ -24,11 +25,13 @@ async fn c2c_send_message(args: Args) -> Response {
     .await
 }
 
-#[update_msgpack(guard = "caller_is_known_bot")]
+#[update(guard = "caller_is_known_bot")]
 #[trace]
-async fn handle_bot_messages(args: user_canister::handle_bot_messages::Args) -> user_canister::handle_bot_messages::Response {
+async fn c2c_handle_bot_messages(
+    args: user_canister::c2c_handle_bot_messages::Args,
+) -> user_canister::c2c_handle_bot_messages::Response {
     for message in args.messages {
-        receive_message(ReceiveMessageArgs {
+        handle_message(HandleMessageArgs {
             message_id: None,
             sender_message_index: None,
             sender_name: args.bot_name.clone(),
@@ -43,7 +46,7 @@ async fn handle_bot_messages(args: user_canister::handle_bot_messages::Args) -> 
     Success
 }
 
-pub(crate) struct ReceiveMessageArgs {
+pub(crate) struct HandleMessageArgs {
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
@@ -54,7 +57,7 @@ pub(crate) struct ReceiveMessageArgs {
     pub is_bot: bool,
 }
 
-async fn receive_message(args: ReceiveMessageArgs) -> Response {
+async fn handle_message(args: HandleMessageArgs) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -68,7 +71,7 @@ async fn receive_message(args: ReceiveMessageArgs) -> Response {
         }
     };
 
-    mutate_state(|state| receive_message_impl(sender_user_id, args, false, state))
+    mutate_state(|state| handle_message_impl(sender_user_id, args, false, state))
 }
 
 enum SenderStatus {
@@ -101,9 +104,9 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-pub(crate) fn receive_message_impl(
+pub(crate) fn handle_message_impl(
     sender: UserId,
-    args: ReceiveMessageArgs,
+    args: HandleMessageArgs,
     mute_notification: bool,
     runtime_state: &mut RuntimeState,
 ) -> Response {

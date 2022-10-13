@@ -1,5 +1,5 @@
 use crate::model::direct_chat::DirectChat;
-use crate::updates::c2c_send_message::{receive_message_impl, ReceiveMessageArgs};
+use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
@@ -110,7 +110,7 @@ fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
 }
 
 fn send_message(content: MessageContentInternal, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let args = ReceiveMessageArgs {
+    let args = HandleMessageArgs {
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
@@ -121,7 +121,7 @@ fn send_message(content: MessageContentInternal, mute_notification: bool, runtim
         is_bot: true,
     };
 
-    receive_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
 fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
