@@ -11,13 +11,9 @@ edition = "2021"
 [dependencies]
 callback_canister = { path = "../canisters/callback/api" }
 candid = "0.7.17"
-futures = "0.3.21"
-garcon = "0.2.3"
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
-ic-agent = "0.20.0"
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "e947becfc936de3f189e331a2c43834de54373b4" }
-itertools = "0.10.3"
 lazy_static = "1.4.0"
 notifications_canister = { path = "../canisters/notifications/api" }
 online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
@@ -25,8 +21,6 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = "0.8.5"
 serde = "1.0.137"
 serde_bytes = "0.11.6"
-tokio = { version = "1.15.0", features = ["full"] }
 types = { path = "../../backend/libraries/types", default-features = false }
-url = "2.2.2"
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }
