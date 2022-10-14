@@ -9,11 +9,11 @@ const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
 #[update]
 #[trace]
-fn register_bot(args: Args) -> Response {
-    mutate_state(|state| register_bot_impl(args, state))
+fn c2c_register_bot(args: Args) -> Response {
+    mutate_state(|state| c2c_register_bot_impl(args, state))
 }
 
-fn register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let user_id: UserId = caller.into();
     let now = runtime_state.env.now();
