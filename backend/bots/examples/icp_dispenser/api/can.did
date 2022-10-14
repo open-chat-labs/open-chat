@@ -1,0 +1,55 @@
+type CanisterId = principal;
+type Cycles = nat;
+type TimestampMillis = nat64;
+type Tokens = record { e8s: nat64; };
+
+type RegisterBotArgs =
+    record {
+        username: text;
+    };
+
+type RegisterBotResponse =
+    variant {
+        Success;
+        AlreadyRegistered;
+        UserLimitReached;
+        UsernameTaken;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        InsufficientCyclesProvided: Cycles;
+        InternalError: text;
+    };
+
+type AddRewardCodesArgs =
+    record {
+        reward_amount: Tokens;
+        codes: vec text;
+        expiry: opt TimestampMillis;
+    };
+
+type AddRewardCodesResponse =
+    variant {
+        Success;
+        InvalidCodes;
+    };
+
+type InitArgs =
+    record {
+        user_index_canister_id: CanisterId;
+        admins: vec principal;
+        wasm_version: Version;
+        test_mode: bool;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
+
+service: (InitArgs) -> {
+    register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
+    add_reward_codes: (AddRewardCodesArgs) -> (AddRewardCodesResponse);
+}

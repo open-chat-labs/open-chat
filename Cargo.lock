@@ -2383,6 +2383,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "icp_dispenser_bot"
+version = "0.1.0"
+dependencies = [
+ "bot_api",
+ "candid",
+ "candid_gen 0.1.0",
+ "ic-ledger-types",
+ "serde",
+ "types 0.1.0",
+ "user_canister",
+ "user_index_canister",
+]
+
+[[package]]
+name = "icp_dispenser_bot_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-ledger-types",
+ "icp_dispenser_bot",
+ "ledger_utils",
+ "msgpack",
+ "serde",
+ "serde_bytes",
+ "stable_memory",
+ "tracing",
+ "types 0.1.0",
+ "user_canister",
+ "user_index_canister",
+ "utils",
+]
+
+[[package]]
 name = "idna"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
