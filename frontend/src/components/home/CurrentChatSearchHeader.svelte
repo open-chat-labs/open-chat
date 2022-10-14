@@ -11,17 +11,16 @@
         SearchDirectChatResponse,
         SearchGroupChatResponse,
     } from "../../domain/search/search";
-    import { apiKey } from "../../services/serviceContainer";
-    import type { ServiceContainer } from "../../services/serviceContainer";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import type { OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
     export let chat: ChatSummary;
     export let searchTerm = "";
 
-    const api = getContext<ServiceContainer>(apiKey);
+    const client = getContext<OpenChat>("client");
 
     let lastSearchTerm = "";
     let timer: number | undefined;
@@ -88,9 +87,9 @@
             try {
                 let response: SearchDirectChatResponse | SearchGroupChatResponse;
                 if (chat.kind === "group_chat") {
-                    response = await api.searchGroupChat(chat.chatId, lowercase, 50);
+                    response = await client.api.searchGroupChat(chat.chatId, lowercase, 50);
                 } else {
-                    response = await api.searchDirectChat(chat.chatId, lowercase, 50);
+                    response = await client.api.searchDirectChat(chat.chatId, lowercase, 50);
                 }
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);

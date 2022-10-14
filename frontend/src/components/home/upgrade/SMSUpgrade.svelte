@@ -7,19 +7,20 @@
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import Footer from "./Footer.svelte";
-    import { createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import "intl-tel-input/build/css/intlTelInput.css";
     import "intl-tel-input/build/js/utils";
     import intlTelInput, { Plugin } from "intl-tel-input";
     import { phoneNumberToString } from "../../../domain/user/user.utils";
-    import type { CreatedUser, PhoneNumber } from "../../../domain/user/user";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import type { PhoneNumber } from "../../../domain/user/user";
     import { rollbar } from "../../../utils/logging";
     import { updateStorageLimit } from "stores/storage";
+    import type { OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
-    export let api: ServiceContainer;
-    export let user: CreatedUser;
+
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     function cancel() {
         dispatch("cancel");
@@ -69,7 +70,8 @@
             phoneNumber = { countryCode, number: phoneNumberStr };
 
             busy = true;
-            api.submitPhoneNumber(phoneNumber)
+            client.api
+                .submitPhoneNumber(phoneNumber)
                 .then((resp) => {
                     if (resp === "already_registered") {
                         error = "register.phoneAlreadyRegistered";
@@ -93,7 +95,8 @@
 
     function submitCode() {
         busy = true;
-        api.confirmPhoneNumber(codeValue)
+        client.api
+            .confirmPhoneNumber(codeValue)
             .then((resp) => {
                 if (resp.kind === "already_claimed") {
                     error = "register.confirmAlreadyClaimed";

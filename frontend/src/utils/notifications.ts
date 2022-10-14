@@ -102,14 +102,6 @@ export async function closeNotificationsForChat(chatId: string): Promise<void> {
     }
 }
 
-export async function unregister(): Promise<boolean> {
-    const registration = await getRegistration();
-    if (registration === undefined) {
-        return false;
-    }
-    return registration.unregister();
-}
-
 async function trySubscribe(api: ServiceContainer): Promise<boolean> {
     const registration = await getRegistration();
     if (registration === undefined) {

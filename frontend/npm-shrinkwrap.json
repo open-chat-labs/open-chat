@@ -77,6 +77,7 @@
                 "lodash": "^4.17.21",
                 "marked": "^4.0.18",
                 "node-fetch": "^3.2.3",
+                "openchat-client": "file:../openchat-client",
                 "postcss": "^8.4.12",
                 "prettier": "^2.6.2",
                 "process": "^0.11.10",
@@ -134,6 +135,45 @@
             },
             "peerDependencies": {
                 "svelte": "^3.0.0"
+            }
+        },
+        "../openchat-client": {
+            "version": "1.0.0",
+            "dev": true,
+            "dependencies": {
+                "@dfinity/agent": "^0.14.0",
+                "@dfinity/auth-client": "^0.14.0",
+                "@dfinity/candid": "^0.14.0",
+                "@dfinity/identity": "^0.14.0",
+                "@dfinity/principal": "^0.14.0",
+                "@open-ic/open-storage-agent": "^0.1.6",
+                "drange": "^2.0.1",
+                "idb": "^6.1.5",
+                "identicon.js": "^2.3.3",
+                "md5": "^2.3.0",
+                "peerjs": "^1.4.7",
+                "svelte": "^3.51.0",
+                "svelte-i18n": "^3.4.0",
+                "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
+                "uuid": "^9.0.0"
+            },
+            "devDependencies": {
+                "@babel/core": "^7.17.9",
+                "@babel/preset-env": "^7.16.11",
+                "@testing-library/jest-dom": "^5.16.4",
+                "@types/identicon.js": "^2.3.1",
+                "@types/jest": "^29.1.2",
+                "@types/md5": "^2.3.2",
+                "@types/uuid": "^8.3.4",
+                "@typescript-eslint/eslint-plugin": "^4.33.0",
+                "@typescript-eslint/parser": "^4.33.0",
+                "babel-jest": "^29.0.2",
+                "babel-loader": "^8.2.4",
+                "eslint-config-prettier": "^8.5.0",
+                "eslint-plugin-prettier": "^3.4.1",
+                "jest": "^29.0.2",
+                "jest-environment-jsdom": "^29.0.2",
+                "ts-jest": "^29.0.0"
             }
         },
         "node_modules/@ampproject/remapping": {
@@ -15492,6 +15532,10 @@
             "funding": {
                 "url": "https://github.com/sponsors/sindresorhus"
             }
+        },
+        "node_modules/openchat-client": {
+            "resolved": "../openchat-client",
+            "link": true
         },
         "node_modules/optionator": {
             "version": "0.9.1",
@@ -31315,6 +31359,42 @@
             "integrity": "sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==",
             "requires": {
                 "mimic-fn": "^2.1.0"
+            }
+        },
+        "openchat-client": {
+            "version": "file:../openchat-client",
+            "requires": {
+                "@babel/core": "^7.17.9",
+                "@babel/preset-env": "^7.16.11",
+                "@dfinity/agent": "^0.14.0",
+                "@dfinity/auth-client": "^0.14.0",
+                "@dfinity/candid": "^0.14.0",
+                "@dfinity/identity": "^0.14.0",
+                "@dfinity/principal": "^0.14.0",
+                "@open-ic/open-storage-agent": "^0.1.6",
+                "@testing-library/jest-dom": "^5.16.4",
+                "@types/identicon.js": "^2.3.1",
+                "@types/jest": "^29.1.2",
+                "@types/md5": "^2.3.2",
+                "@types/uuid": "^8.3.4",
+                "@typescript-eslint/eslint-plugin": "^4.33.0",
+                "@typescript-eslint/parser": "^4.33.0",
+                "babel-jest": "^29.0.2",
+                "babel-loader": "^8.2.4",
+                "drange": "^2.0.1",
+                "eslint-config-prettier": "^8.5.0",
+                "eslint-plugin-prettier": "^3.4.1",
+                "idb": "^6.1.5",
+                "identicon.js": "^2.3.3",
+                "jest": "^29.0.2",
+                "jest-environment-jsdom": "^29.0.2",
+                "md5": "^2.3.0",
+                "peerjs": "^1.4.7",
+                "svelte": "^3.51.0",
+                "svelte-i18n": "^3.4.0",
+                "ts-jest": "^29.0.0",
+                "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
+                "uuid": "^9.0.0"
             }
         },
         "optionator": {

@@ -5,6 +5,7 @@
     "main": "lib/index.js",
     "scripts": {
         "build": "tsc",
+        "build:watch": "tsc -w",
         "check": "tsc --noEmit",
         "check:watch": "tsc --noEmit -w",
         "lint": "eslint ./src --fix",

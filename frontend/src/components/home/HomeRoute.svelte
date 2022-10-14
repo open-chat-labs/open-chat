@@ -1,14 +1,13 @@
 <script lang="ts">
     import Home from "./Home.svelte";
-    import { currentUserStore } from "../../stores/chat";
-    import { apiStore } from "../../stores/api";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
     export let logout: () => void;
 
-    $: user = $currentUserStore!;
-    $: api = $apiStore!;
+    const client = getContext<OpenChat>("client");
 </script>
 
-{#if user !== undefined}
-    <Home {user} {api} {logout} on:logout />
+{#if client.hasUser}
+    <Home {logout} on:logout />
 {/if}

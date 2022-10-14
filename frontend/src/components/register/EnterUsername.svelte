@@ -4,9 +4,9 @@
     import UsernameInput from "../UsernameInput.svelte";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { ServiceContainer } from "../../services/serviceContainer";
+    import type { OpenChat } from "openchat-client";
 
-    export let api: ServiceContainer;
+    export let client: OpenChat;
     export let error: string | undefined = undefined;
     export let originalUsername: string | undefined = undefined;
 
@@ -26,7 +26,7 @@
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <UsernameInput
-        {api}
+        {client}
         {originalUsername}
         bind:validUsername
         bind:checking={checkingUsername}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, setContext } from "svelte";
 
     import "../i18n/i18n";
     import "../utils/markdown";
@@ -12,52 +12,21 @@
     import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
-    import { SessionExpiryError } from "../services/error";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-
     import "../theme/themes";
     import "../stores/fontSize";
-    import { showTrace } from "../services/common/profiling";
     import Profiler from "./Profiler.svelte";
-    import { writable } from "svelte/store";
-    import type { Identity } from "@dfinity/agent";
-    import { ServiceContainer } from "../services/serviceContainer";
-    import type { CreatedUser } from "../domain/user/user";
-    import { Poller } from "../services/poller";
-    import { getIdentity, login, logout, startSession } from "../services/auth";
-    import { currentUserStore, startChatPoller } from "../stores/chat";
-    import { apiStore } from "../stores/api";
-    import { startUserUpdatePoller } from "../stores/user";
-    import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
-    import { selectedAuthProviderStore } from "../stores/authProviders";
-    import { isCanisterUrl } from "../utils/urls";
-    import { unsubscribeNotifications } from "../utils/notifications";
-    import { startSwCheckPoller } from "../utils/updateSw";
-
-    const UPGRADE_POLL_INTERVAL = 1000;
-    const MARK_ONLINE_INTERVAL = 61 * 1000;
-    type IdentityState =
-        | "requires_login"
-        | "loading_user"
-        | "logged_in"
-        | "registering"
-        | "logging_in"
-        | "upgrading_user"
-        | "upgrade_user";
+    import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
 
     let viewPortContent = "width=device-width, initial-scale=1";
-    let profileTrace = showTrace();
-
-    let identityState = writable<IdentityState>("loading_user");
-    let identity: Identity;
-    let api: ServiceContainer;
-    let markOnlinePoller: Poller | undefined;
-    let chatPoller: Poller | undefined;
-    let usersPoller: Poller | undefined;
     let referredBy: string | undefined = undefined;
-    let messagesRead: MessageReadTracker;
-    let dismissedDomainWarning = false;
+    let client: OpenChat = new OpenChat();
+    let profileTrace = client.showTrace();
+
+    setContext<OpenChat>("client", client);
+
+    $: identityState = client.identityState;
 
     onMount(() => {
         referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
@@ -71,101 +40,10 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-
-        getIdentity().then((id) => loadedIdentity(id));
     });
 
-    function loadedIdentity(id: Identity) {
-        identity = id;
-        const anon = id.getPrincipal().isAnonymous();
-        identityState.set(anon ? "requires_login" : "loading_user");
-        if (!anon) {
-            loadUser(id);
-        }
-    }
-
-    function loadUser(id: Identity) {
-        api = new ServiceContainer(id);
-        api.getCurrentUser()
-            .then((user) => {
-                switch (user.kind) {
-                    case "unknown_user":
-                        // TODO remove this once the principal migration can be done via the UI
-                        const principalMigrationUserId = localStorage.getItem(
-                            "openchat_principal_migration_user_id"
-                        );
-                        if (principalMigrationUserId !== null) {
-                            console.log("Migrating user principal", principalMigrationUserId);
-                            api.migrateUserPrincipal(principalMigrationUserId);
-                            return;
-                        }
-
-                        identityState.set("registering");
-                        break;
-                    case "created_user":
-                        onCreatedUser(id, user);
-                        break;
-                }
-            })
-            .catch((e) => {
-                if (e.code === 403) {
-                    // This happens locally if you run a new instance of the IC and have an identity based on the
-                    // previous version's root key in the cache
-                    logout();
-                }
-            });
-    }
-
     function registeredUser(ev: CustomEvent<CreatedUser>) {
-        onCreatedUser(identity, ev.detail);
-    }
-
-    function onCreatedUser(id: Identity, user: CreatedUser): void {
-        // TODO remove this once the principal migration can be done via the UI
-        const principalMigrationNewPrincipal = localStorage.getItem(
-            "openchat_principal_migration_new_principal"
-        );
-        if (principalMigrationNewPrincipal !== null) {
-            console.log("Initializing user principal migration", principalMigrationNewPrincipal);
-            api.createUserClient(user.userId);
-            api.initUserPrincipalMigration(principalMigrationNewPrincipal);
-            return;
-        }
-
-        if (user.canisterUpgradeStatus === "in_progress") {
-            identityState.set("upgrading_user");
-            window.setTimeout(() => loadUser(id), UPGRADE_POLL_INTERVAL);
-        } else {
-            currentUserStore.set(user);
-            apiStore.set(api);
-            api?.createUserClient(user.userId);
-            startMessagesReadTracker(api!);
-            startOnlinePoller();
-            startSwCheckPoller();
-            startSession(id).then(logout);
-            chatPoller = startChatPoller(api!);
-            usersPoller = startUserUpdatePoller(api);
-            api.getUserStorageLimits();
-            identityState.set("logged_in");
-
-            if (isCanisterUrl) {
-                unsubscribeNotifications(api);
-            }
-        }
-    }
-
-    function startOnlinePoller() {
-        markOnlinePoller = new Poller(
-            () => api?.markAsOnline() ?? Promise.resolve(),
-            MARK_ONLINE_INTERVAL,
-            undefined,
-            true
-        );
-    }
-
-    function doLogin(): void {
-        identityState.set("logging_in");
-        login($selectedAuthProviderStore).then((id) => loadedIdentity(id));
+        client.onCreatedUser(ev.detail);
     }
 
     function calculateHeight() {
@@ -181,7 +59,7 @@
 
     function unhandledError(ev: Event) {
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
-            logout();
+            client.logout();
             ev.preventDefault();
         }
     }
@@ -193,13 +71,13 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
-{#if isCanisterUrl}
+{#if client.isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "requires_login" || $identityState === "logging_in"}
-    <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
+    <Login loading={$identityState === "logging_in"} on:login={() => client.login()} />
 {:else if $identityState === "registering"}
-    <Register on:logout={logout} on:createdUser={registeredUser} {api} {referredBy} />
-{:else if $identityState === "logged_in" && $currentUserStore !== undefined}
+    <Register on:logout={() => client.logout()} on:createdUser={registeredUser} {referredBy} />
+{:else if $identityState === "logged_in"}
     <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />

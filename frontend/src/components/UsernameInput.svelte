@@ -1,13 +1,13 @@
 <script lang="ts">
     import Input from "./Input.svelte";
     import { _ } from "svelte-i18n";
-    import type { ServiceContainer } from "../services/serviceContainer";
     import { rollbar } from "../utils/logging";
+    import type { OpenChat } from "openchat-client";
 
     const MIN_USERNAME_LENGTH = 5;
     const MAX_USERNAME_LENGTH = 25;
 
-    export let api: ServiceContainer;
+    export let client: OpenChat;
     export let originalUsername = "";
     export let validUsername: string | undefined = undefined;
     export let error: string | undefined = undefined;
@@ -28,7 +28,8 @@
 
         const currTimer = timer;
 
-        api.checkUsername(value)
+        client.api
+            .checkUsername(value)
             .then((resp) => {
                 if (currTimer !== timer) return;
                 switch (resp) {

@@ -2,24 +2,22 @@
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Footer from "./Footer.svelte";
     import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import type { CreatedUser } from "../../../domain/user/user";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
     import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN } from "../../../domain/crypto";
     import { rollbar } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;
     const icpPrice: number = 0.2; // storage price in ICP per 1/10th of a GB
-
-    export let api: ServiceContainer;
-    export let user: CreatedUser;
 
     let error: string | undefined = undefined;
     let range: HTMLInputElement;
@@ -43,7 +41,8 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        api.refreshAccountBalance(token, user.cryptoAccount)
+        client.api
+            .refreshAccountBalance(token, client.user.cryptoAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;
@@ -76,7 +75,8 @@
 
         const newLimitBytes = Math.floor((newLimit * ONE_GB) / 10);
 
-        api.upgradeStorage(newLimitBytes)
+        client.api
+            .upgradeStorage(newLimitBytes)
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
                     refreshBalance();
@@ -102,7 +102,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <AccountInfo {user} />
+        <AccountInfo user={client.user} />
 
         <p class="choose">
             {$_("chooseAStorageLevel")}

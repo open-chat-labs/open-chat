@@ -11,7 +11,7 @@
     import { fly } from "svelte/transition";
     import type { Notification } from "../../domain/notifications";
     import Overlay from "../Overlay.svelte";
-    import { onMount, setContext, tick } from "svelte";
+    import { getContext, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
         dimensions,
@@ -29,7 +29,7 @@
         MessageMatch,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
@@ -50,12 +50,10 @@
         MemberRole,
         Message,
     } from "../../domain/chat/chat";
-    import { currentUserKey } from "../../stores/user";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import type { Questions } from "../../domain/faq";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
@@ -98,10 +96,12 @@
     import type { WebRtcMessage } from "domain/webrtc/webrtc";
     import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
     import { unconfirmed } from "stores/unconfirmed";
+    import type { OpenChat } from "openchat-client";
 
-    export let api: ServiceContainer;
-    export let user: CreatedUser;
     export let logout: () => void;
+
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -140,9 +140,6 @@
 
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
-    setContext(apiKey, api);
-    setContext(currentUserKey, user);
-
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
@@ -161,8 +158,8 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: userId = user.userId;
-    $: wasmVersion = user.wasmVersion;
+    $: userId = client.user.userId;
+    $: wasmVersion = client.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: combinedMetrics = $chatSummariesListStore
@@ -198,7 +195,7 @@
 
     onMount(() => {
         // bootstrap anything that needs a service container here
-        rtcConnectionsManager.init(user.userId);
+        rtcConnectionsManager.init(client.user.userId);
         rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores();
         initNotificationsServiceWorker(api, (n) => notificationReceived(n));
@@ -243,7 +240,7 @@
             } else {
                 const code = qs.get("code");
                 if (code) {
-                    api.groupInvite = {
+                    client.api.groupInvite = {
                         chatId,
                         code,
                     };
@@ -264,7 +261,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        setSelectedChat(api, chat, messageIndex, threadMessageIndex);
+        setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -377,7 +374,7 @@
      * it will just disappear (unless of course we still have the canisterId in the url)
      */
     function previewChat(chatId: string): Promise<boolean> {
-        return api.getPublicGroupSummary(chatId).then((maybeChat) => {
+        return client.api.getPublicGroupSummary(chatId).then((maybeChat) => {
             if (maybeChat === undefined) {
                 return false;
             }
@@ -440,7 +437,13 @@
 
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         Promise.all([
-            api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
+            client.api.rehydrateMessage(
+                chatType,
+                chatId,
+                message,
+                undefined,
+                chat.latestEventIndex
+            ),
             addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -455,7 +458,7 @@
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds($userStore, users);
         if (missingUsers.length > 0) {
-            const usersResp = await api.getUsers(
+            const usersResp = await client.api.getUsers(
                 {
                     userGroups: [
                         {
@@ -493,7 +496,7 @@
             });
         }
 
-        api
+        client.api
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .setUserAvatar(data.blobData!)
             .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
@@ -517,7 +520,7 @@
 
     function dismissRecommendation(ev: CustomEvent<string>) {
         hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
-        api.dismissRecommendation(ev.detail);
+        client.api.dismissRecommendation(ev.detail);
     }
 
     function showFaqQuestion(ev: CustomEvent<Questions>) {
@@ -531,12 +534,12 @@
         if (searchTerm !== "") {
             searching = true;
             const lowercase = searchTerm.toLowerCase();
-            groupSearchResults = api.searchGroups(lowercase, 10);
-            userSearchResults = api.searchUsers(lowercase, 10).then((resp) => {
+            groupSearchResults = client.api.searchGroups(lowercase, 10);
+            userSearchResults = client.api.searchUsers(lowercase, 10).then((resp) => {
                 userStore.addMany(resp);
                 return resp;
             });
-            messageSearchResults = api.searchAllMessages(lowercase, 10);
+            messageSearchResults = client.api.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
                     groupSearchResults,
@@ -567,7 +570,8 @@
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.add(ev.detail.userId);
-        api.blockUserFromDirectChat(ev.detail.userId)
+        client.api
+            .blockUserFromDirectChat(ev.detail.userId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("blockUserSucceeded");
@@ -584,7 +588,8 @@
 
     function unblockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.delete(ev.detail.userId);
-        api.unblockUserFromDirectChat(ev.detail.userId)
+        client.api
+            .unblockUserFromDirectChat(ev.detail.userId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("unblockUserSucceeded");
@@ -610,7 +615,8 @@
 
         const chatId = ev.detail;
         pinnedChatsStore.pin(chatId);
-        api.pinChat(chatId)
+        client.api
+            .pinChat(chatId)
             .then((resp) => {
                 if (resp.kind === "pinned_limit_reached") {
                     toastStore.showFailureToast("pinChat.limitExceeded", {
@@ -629,7 +635,7 @@
     function unpinChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
         pinnedChatsStore.unpin(chatId);
-        api.unpinChat(chatId).catch((err) => {
+        client.api.unpinChat(chatId).catch((err) => {
             toastStore.showFailureToast("pinChat.unpinFailed");
             rollbar.error("Error unpinning chat", err);
             pinnedChatsStore.pin(chatId);
@@ -639,7 +645,7 @@
     function onArchiveChat(ev: CustomEvent<string>) {
         const chatId = ev.detail;
         archivedChatsStore.set(chatId, true);
-        api.archiveChat(chatId).catch((err) => {
+        client.api.archiveChat(chatId).catch((err) => {
             toastStore.showFailureToast("archiveChatFailed");
             rollbar.error("Error archiving chat", err);
             archivedChatsStore.set(chatId, false);
@@ -655,7 +661,7 @@
 
     function unarchiveChat(chatId: string) {
         archivedChatsStore.set(chatId, false);
-        api.unarchiveChat(chatId).catch((err) => {
+        client.api.unarchiveChat(chatId).catch((err) => {
             toastStore.showFailureToast("unarchiveChatFailed");
             rollbar.error("Error un-archiving chat", err);
             archivedChatsStore.set(chatId, true);
@@ -710,7 +716,7 @@
     }
 
     function makeGroupPrivate(chatId: string): Promise<void> {
-        return api
+        return client.api
             .makeGroupPrivate(chatId)
             .then((resp) => {
                 if (resp === "success") {
@@ -740,7 +746,7 @@
 
     function deleteGroup(chatId: string): Promise<void> {
         push("/");
-        return api
+        return client.api
             .deleteGroup(chatId)
             .then((resp) => {
                 if (resp === "success") {
@@ -761,7 +767,7 @@
 
     function leaveGroup(chatId: string): Promise<void> {
         push("/");
-        return api
+        return client.api
             .leaveGroup(chatId)
             .then((resp) => {
                 if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
@@ -914,7 +920,7 @@
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await api.getGroupRules(group.chatId);
+        const rules = await client.api.getGroupRules(group.chatId);
 
         if (rules === undefined) {
             toastStore.showFailureToast("group.getRulesFailed");
@@ -935,7 +941,7 @@
 
     async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
         joining = group;
-        return api
+        return client.api
             .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp.kind === "group_chat") {
@@ -981,7 +987,8 @@
         tick().then(() => {
             interruptRecommended = false;
             hotGroups = { kind: "loading" };
-            api.getRecommendedGroups((_n: number) => interruptRecommended)
+            client.api
+                .getRecommendedGroups((_n: number) => interruptRecommended)
                 .then((resp) => (hotGroups = { kind: "success", data: resp }))
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
@@ -1068,7 +1075,8 @@
         mutedChatsStore.set(chatId, mute);
 
         let success = false;
-        api.toggleMuteNotifications(chatId, mute)
+        client.api
+            .toggleMuteNotifications(chatId, mute)
             .then((resp) => {
                 success = resp === "success";
             })
@@ -1219,8 +1227,6 @@
 
 {#if upgradeStorage && user}
     <Upgrade
-        {user}
-        {api}
         step={upgradeStorage}
         on:showFaqQuestion={showFaqQuestion}
         on:cancel={() => (upgradeStorage = undefined)} />

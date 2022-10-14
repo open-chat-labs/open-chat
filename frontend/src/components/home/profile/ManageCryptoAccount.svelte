@@ -21,12 +21,12 @@
     import TokenInput from "../TokenInput.svelte";
     import { Cryptocurrency, cryptoLookup } from "../../../domain/crypto";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import type { OpenChat } from "openchat-client";
 
     export let open: boolean;
     export let token: Cryptocurrency;
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const user = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
 
     let error: string | undefined = undefined;
     let targetAccount: string = "";
@@ -38,7 +38,7 @@
     $: valid =
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== user.cryptoAccount;
+        targetAccount !== client.user.cryptoAccount;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -54,12 +54,13 @@
 
         withdrawing = true;
         error = undefined;
-        api.withdrawCryptocurrency({
-            kind: "pending",
-            token: token,
-            to: targetAccount,
-            amountE8s: amountToWithdrawE8s,
-        })
+        client.api
+            .withdrawCryptocurrency({
+                kind: "pending",
+                token: token,
+                to: targetAccount,
+                amountE8s: amountToWithdrawE8s,
+            })
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToWithdrawE8s = BigInt(0);

@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-type ProfileData = Record<string, number[]>;
+export type ProfileData = Record<string, number[]>;
 
 const { subscribe, update } = writable<ProfileData>({});
 

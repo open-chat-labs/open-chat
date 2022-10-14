@@ -12,9 +12,9 @@
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import { now } from "../stores/time";
-    import { apiKey, ServiceContainer } from "../services/serviceContainer";
+    import type { OpenChat } from "openchat-client";
 
-    const api: ServiceContainer = getContext(apiKey);
+    const client = getContext<OpenChat>("client");
 
     export let mode: "add" | "edit";
 
@@ -52,7 +52,8 @@
                 return;
             }
             searching = true;
-            api.searchUsers(value)
+            client.api
+                .searchUsers(value)
                 .then((u) => (users = u))
                 .catch((_err) => toastStore.showFailureToast("userSearchFailed"))
                 .finally(() => (searching = false));

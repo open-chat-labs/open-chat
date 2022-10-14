@@ -7,10 +7,10 @@
     import Explain from "./Explain.svelte";
     import Premium from "./Premium.svelte";
     import ICPUpgrade from "./ICPUpgrade.svelte";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
-    import type { CreatedUser } from "../../../domain/user/user";
     import type { Questions } from "../../../domain/faq";
     import FaqModal from "../../FaqModal.svelte";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
     const titles: Record<typeof step, string> = {
         premium: $_("premium.title"),
@@ -19,9 +19,9 @@
         icp: $_("upgradeStorage"),
     };
 
+    const client = getContext<OpenChat>("client");
+
     export let step: "premium" | "explain" | "icp" | "sms";
-    export let api: ServiceContainer;
-    export let user: CreatedUser;
 
     let question: Questions | undefined = undefined;
 
@@ -65,7 +65,7 @@
                         on:upgradeSms={upgradeViaSMS} />
                 {/if}
                 {#if step === "icp"}
-                    <ICPUpgrade {user} {api} on:cancel />
+                    <ICPUpgrade on:cancel />
                 {/if}
                 {#if step === "sms"}
                     {#await import("./SMSUpgrade.svelte")}
@@ -73,7 +73,7 @@
                             <Loading />
                         </div>
                     {:then smsUpgrade}
-                        <svelte:component this={smsUpgrade.default} {user} {api} on:cancel />
+                        <svelte:component this={smsUpgrade.default} on:cancel />
                     {:catch _error}
                         <Reload>{$_("unableToLoadSMSUpgrade")}</Reload>
                     {/await}

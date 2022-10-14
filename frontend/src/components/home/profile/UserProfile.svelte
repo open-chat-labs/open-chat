@@ -43,7 +43,6 @@
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { cryptoBalance } from "../../../stores/crypto";
@@ -51,8 +50,9 @@
     import LinkButton from "../../LinkButton.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ReferUsers from "./ReferUsers.svelte";
+    import type { OpenChat } from "openchat-client";
 
-    const api: ServiceContainer = getContext(apiKey);
+    const client = getContext<OpenChat>("client");
 
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
@@ -82,7 +82,7 @@
     $: bioDirty = userbio !== originalBio;
 
     onMount(() => {
-        api.getBio().then((bio) => {
+        client.api.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
     });
@@ -99,7 +99,7 @@
 
         if (bioDirty) {
             promises.push(
-                api
+                client.api
                     .setBio(userbio)
                     .then((resp) => {
                         if (resp === "bio_too_long") {
@@ -117,7 +117,7 @@
 
         if (validUsername !== undefined) {
             promises.push(
-                api
+                client.api
                     .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
@@ -215,7 +215,7 @@
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
             <UsernameInput
-                {api}
+                {client}
                 originalUsername={user?.username ?? ""}
                 bind:validUsername
                 bind:checking={checkingUsername}

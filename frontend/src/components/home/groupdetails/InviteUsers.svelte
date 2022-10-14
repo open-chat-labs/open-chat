@@ -6,7 +6,6 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { rollbar } from "../../../utils/logging";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import Toggle from "../../Toggle.svelte";
     import type { GroupChatSummary } from "../../../domain/chat/chat";
     import Link from "../../Link.svelte";
@@ -14,10 +13,11 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import * as shareFunctions from "../../../domain/share";
     import { toastStore } from "../../../stores/toast";
+    import type { OpenChat } from "openchat-client";
 
     export let group: GroupChatSummary;
 
-    const api = getContext<ServiceContainer>(apiKey);
+    const client = getContext<OpenChat>("client");
     const unauthorized = $_("group.permissions.notPermitted", {
         values: { permission: $_("group.permissions.inviteUsers") },
     });
@@ -41,7 +41,8 @@
             return;
         }
         loading = true;
-        api.getInviteCode(group.chatId)
+        client.api
+            .getInviteCode(group.chatId)
             .then((resp) => {
                 if (resp.kind === "success") {
                     ready = true;
@@ -71,7 +72,8 @@
         if (loading) return;
         loading = true;
         if (checked) {
-            api.enableInviteCode(group.chatId)
+            client.api
+                .enableInviteCode(group.chatId)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         code = resp.code;
@@ -90,7 +92,8 @@
                     loading = false;
                 });
         } else {
-            api.disableInviteCode(group.chatId)
+            client.api
+                .disableInviteCode(group.chatId)
                 .catch((err) => {
                     code = undefined;
                     checked = true;
@@ -104,7 +107,7 @@
     }
 
     function resetLink(): Promise<void> {
-        return api
+        return client.api
             .resetInviteCode(group.chatId)
             .then((resp) => {
                 if (resp.kind === "success") {

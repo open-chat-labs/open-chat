@@ -1,11 +1,12 @@
 <script lang="ts">
     import Avatar from "./Avatar.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { createEventDispatcher } from "svelte";
-    import { AvatarSize, UserStatus } from "../domain/user/user";
-    import type { UserSummary } from "../domain/user/user";
-    import { userAvatarUrl } from "../domain/user/user.utils";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { OpenChat, UserSummary } from "openchat-client";
+    import { AvatarSize, UserStatus } from "openchat-client";
     const dispatch = createEventDispatcher();
+
+    const client = getContext<OpenChat>("client");
 
     export let mode: "add" | "edit";
     export let user: UserSummary;
@@ -17,7 +18,7 @@
 
 <div class="pill" class:add={mode === "add"} class:edit={mode === "edit"}>
     <div class="avatar">
-        <Avatar url={userAvatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
+        <Avatar url={client.userAvatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
     </div>
     <div class="username">{user.username}</div>
     <div on:click={deleteUser} class="delete">

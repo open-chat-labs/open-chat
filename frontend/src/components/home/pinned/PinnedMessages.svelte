@@ -12,16 +12,14 @@
     import PinnedMessage from "./PinnedMessage.svelte";
     import { groupMessagesByDate } from "../../../domain/chat/chat.utils";
     import { formatMessageDate } from "../../../utils/date";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { CreatedUser } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../stores/user";
     import { serverChatSummariesStore } from "stores/chat";
+    import type { OpenChat } from "openchat-client";
 
     export let pinned: Set<number>;
     export let chatId: string;
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    $: currentUser = client.currentUserStore;
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
 
@@ -39,7 +37,12 @@
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
-            api.getGroupMessagesByMessageIndex(chatId, pinned, $serverChatSummariesStore[chatId]?.latestEventIndex)
+            client.api
+                .getGroupMessagesByMessageIndex(
+                    chatId,
+                    pinned,
+                    $serverChatSummariesStore[chatId]?.latestEventIndex
+                )
                 .then((resp) => {
                     if (resp === "events_failed") {
                         rollbar.warn("Unable to load pinned messages: ", resp);
@@ -89,7 +92,7 @@
                 {#each dayGroup as message, _i (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
-                        user={currentUser}
+                        user={$currentUser}
                         senderId={message.event.sender}
                         msg={message.event}
                         on:chatWith={chatWith}

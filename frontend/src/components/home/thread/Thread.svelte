@@ -19,9 +19,7 @@
     import Loading from "../../Loading.svelte";
     import Fab from "../../Fab.svelte";
     import { formatMessageDate } from "../../../utils/date";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { CreatedUser, User } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../stores/user";
+    import type { User } from "../../../domain/user/user";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
     import {
@@ -89,10 +87,11 @@
     } from "../../../stores/chat";
     import { localMessageUpdates } from "../../../stores/localMessageUpdates";
     import { mergeEventsAndLocalUpdates } from "../../../domain/chat/chat.utils";
+    import type { OpenChat } from "openchat-client";
 
     const FROM_BOTTOM_THRESHOLD = 600;
-    const api = getContext<ServiceContainer>(apiKey);
-    const user = getContext<CreatedUser>(currentUserKey);
+
+    const client = getContext<OpenChat>("client");
 
     export let rootEvent: EventWrapper<Message>;
     export let focusMessageIndex: number | undefined;
@@ -191,7 +190,7 @@
         loading = true;
 
         const chatId = chat.chatId;
-        const eventsResponse = await api.chatEvents(
+        const eventsResponse = await client.api.chatEvents(
             chat,
             range,
             startIndex,
@@ -217,7 +216,7 @@
             }
 
             serverEventsStore.update((events) => mergeServerEvents(events, newEvents));
-            makeRtcConnections(user.userId, chat, $events, $userStore);
+            makeRtcConnections(client.user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -266,7 +265,7 @@
 
         const userIds = userIdsFromEvents(events);
         userIds.add(rootEvent.event.sender);
-        await updateUserStore(api, chat.chatId, user.userId, userIds);
+        await updateUserStore(client.api, chat.chatId, client.user.userId, userIds);
 
         return [events, userIds];
     }
@@ -296,7 +295,13 @@
         fileToAttach: MessageContent | undefined,
         nextMessageIndex: number
     ): Message {
-        return createMessage(user.userId, nextMessageIndex, textContent, $replyingTo, fileToAttach);
+        return createMessage(
+            client.user.userId,
+            nextMessageIndex,
+            textContent,
+            $replyingTo,
+            fileToAttach
+        );
     }
 
     export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
@@ -359,17 +364,13 @@
             index: eventIndex,
             event: {
                 ...message.messageEvent.event,
-                messageIndex
-            }
+                messageIndex,
+            },
         });
 
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
-        messagesRead.markThreadRead(
-            chat.chatId,
-            threadRootMessageIndex,
-            messageIndex
-        );
+        messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, messageIndex);
     }
 
     function sendMessageWithAttachment(
@@ -395,20 +396,21 @@
             scrollBottom();
             messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
-            api.sendMessage(chat, user, mentioned, msg, threadRootMessageIndex)
+            client.api
+                .sendMessage(chat, client.user, mentioned, msg, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            api.refreshAccountBalance(
+                            client.api.refreshAccountBalance(
                                 msg.content.transfer.token,
-                                user.cryptoAccount
+                                client.user.cryptoAccount
                             );
                         }
                         trackEvent("sent_threaded_message");
                     } else {
                         unconfirmed.delete(unconfirmedKey, msg.messageId);
-                        removeMessage(msg.messageId, user.userId);
+                        removeMessage(msg.messageId, client.user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
@@ -416,7 +418,7 @@
                 .catch((err) => {
                     console.log(err);
                     unconfirmed.delete(unconfirmedKey, msg.messageId);
-                    removeMessage(msg.messageId, user.userId);
+                    removeMessage(msg.messageId, client.user.userId);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
                 });
@@ -426,12 +428,12 @@
                 chatType: chat.kind,
                 chatId: chat.chatId,
                 messageEvent: serialiseMessageForRtc(event),
-                userId: user.userId,
+                userId: client.user.userId,
                 threadRootMessageIndex,
             });
 
             const summary: ThreadSummary = {
-                participantIds: new Set<string>([user.userId]),
+                participantIds: new Set<string>([client.user.userId]),
                 numberOfReplies: nextMessageIndex + 1,
                 latestEventIndex: nextEventIndex,
                 latestEventTimestamp: BigInt(Date.now()),
@@ -453,7 +455,7 @@
 
     function removeMessage(messageId: bigint, userId: string) {
         unconfirmed.delete(unconfirmedKey, messageId);
-        if (userId === user.userId) {
+        if (userId === client.user.userId) {
             rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
                 chatType: chat.kind,
@@ -477,7 +479,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            editMessage(api, chat, msg, threadRootMessageIndex);
+            editMessage(client.api, chat, msg, threadRootMessageIndex);
         }
     }
 
@@ -512,11 +514,11 @@
     }
 
     function onStartTyping() {
-        startTyping(chat, user.userId, threadRootMessageIndex);
+        startTyping(chat, client.user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        stopTyping(chat, user.userId, threadRootMessageIndex);
+        stopTyping(chat, client.user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -565,8 +567,8 @@
 
         if ($selectedChatId !== undefined) {
             registerPollVote(
-                api,
-                user.userId,
+                client.api,
+                client.user.userId,
                 $selectedChatId,
                 threadRootMessageIndex,
                 ev.detail.messageId,
@@ -583,7 +585,13 @@
             return;
         }
 
-        deleteMessage(api, chat, user.userId, threadRootMessageIndex, ev.detail.messageId);
+        deleteMessage(
+            client.api,
+            chat,
+            client.user.userId,
+            threadRootMessageIndex,
+            ev.detail.messageId
+        );
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -600,16 +608,18 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
+        const kind = containsReaction(client.user.userId, reaction, message.reactions)
+            ? "remove"
+            : "add";
 
         selectReaction(
-            api,
+            client.api,
             chat,
-            user.userId,
+            client.user.userId,
             threadRootMessageIndex,
             message.messageId,
             reaction,
-            user.username,
+            client.user.username,
             kind
         ).then((success) => {
             if (success && kind === "add") {
@@ -665,7 +675,11 @@
     }
 
     function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
+        shareFunctions.shareMessage(
+            client.user.userId,
+            ev.detail.sender === client.user.userId,
+            ev.detail
+        );
     }
 
     function copyMessageUrl(ev: CustomEvent<Message>) {
@@ -736,8 +750,8 @@
                             readByThem={true}
                             chatId={chat.chatId}
                             chatType={chat.kind}
-                            {user}
-                            me={evt.event.sender === user.userId}
+                            user={client.user}
+                            me={evt.event.sender === client.user.userId}
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             {preview}
@@ -785,7 +799,7 @@
         textContent={$textContent}
         members={$currentChatMembers}
         blockedUsers={$currentChatBlockedUsers}
-        {user}
+        user={client.user}
         joining={undefined}
         {preview}
         mode={"thread"}

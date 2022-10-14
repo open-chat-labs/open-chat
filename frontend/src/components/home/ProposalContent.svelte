@@ -7,7 +7,6 @@
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
     } from "../../domain/chat/chat";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
     import { formatTimeRemaining } from "../../utils/time";
@@ -24,6 +23,7 @@
     import { currentUserStore, proposalTopicsStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -35,7 +35,7 @@
     export let preview: boolean;
     export let reply: boolean;
 
-    const api: ServiceContainer = getContext(apiKey);
+    const client = getContext<OpenChat>("client");
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
     const nnsDappUrl = "https://nns.ic0.app";
@@ -93,7 +93,8 @@
         proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
         let success = false;
-        api.registerProposalVote(chatId, messageIndex, adopt)
+        client.api
+            .registerProposalVote(chatId, messageIndex, adopt)
             .then((resp) => {
                 if (resp === "success") {
                     success = true;

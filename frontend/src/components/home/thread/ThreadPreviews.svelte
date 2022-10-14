@@ -13,15 +13,20 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { push } from "svelte-spa-router";
     import { getContext } from "svelte";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { ThreadPreview, EventWrapper, Message, ThreadSyncDetails } from "../../../domain/chat/chat";
+    import type {
+        ThreadPreview,
+        EventWrapper,
+        Message,
+        ThreadSyncDetails,
+    } from "../../../domain/chat/chat";
     import { userIdsFromEvents } from "../../../domain/chat/chat.utils";
     import { missingUserIds } from "../../../domain/user/user.utils";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { toRecord2 } from "utils/list";
+    import type { OpenChat } from "openchat-client";
 
-    const api = getContext<ServiceContainer>(apiKey);
+    const client = getContext<OpenChat>("client");
 
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -33,32 +38,42 @@
     }
 
     function updateUserStore(userIdsFromEvents: Set<string>) {
-        api.getUsers(
-            {
-                userGroups: [
-                    {
-                        users: missingUserIds($userStore, new Set<string>(userIdsFromEvents)),
-                        updatedSince: BigInt(0),
-                    },
-                ],
-            },
-            true
-        ).then((resp) => {
-            userStore.addMany(resp.users);
-        });
+        client.api
+            .getUsers(
+                {
+                    userGroups: [
+                        {
+                            users: missingUserIds($userStore, new Set<string>(userIdsFromEvents)),
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                },
+                true
+            )
+            .then((resp) => {
+                userStore.addMany(resp.users);
+            });
     }
 
     $: {
         // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
         // we definitely cannot get away with *just* doing it onMount though.
         loading = true;
-        api.threadPreviews(toRecord2(
-            Object.entries($threadsByChatStore),
-            ([chatId, _]) => chatId,
-            ([chatId, threads]) => {
-                const latestEventIndex = $serverChatSummariesStore[chatId]?.latestEventIndex;
-                return [threads, latestEventIndex] as [ThreadSyncDetails[], number | undefined];
-            }))
+        client.api
+            .threadPreviews(
+                toRecord2(
+                    Object.entries($threadsByChatStore),
+                    ([chatId, _]) => chatId,
+                    ([chatId, threads]) => {
+                        const latestEventIndex =
+                            $serverChatSummariesStore[chatId]?.latestEventIndex;
+                        return [threads, latestEventIndex] as [
+                            ThreadSyncDetails[],
+                            number | undefined
+                        ];
+                    }
+                )
+            )
             .then((t) => {
                 threads = t;
                 updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));

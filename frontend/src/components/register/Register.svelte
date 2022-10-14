@@ -5,12 +5,13 @@
     import ModalPage from "../ModalPage.svelte";
     import ChallengeComponent from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
-    import type { ChallengeAttempt, CreatedUser, Challenge } from "../../domain/user/user";
-    import { createEventDispatcher, onMount } from "svelte";
-    import type { ServiceContainer } from "../../services/serviceContainer";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { writable, Writable } from "svelte/store";
+    import type { Challenge, ChallengeAttempt, CreatedUser, OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
+
+    const client = getContext<OpenChat>("client");
 
     type Spinning = { kind: "spinning" };
     type AwaitingUsername = { kind: "awaiting_username" };
@@ -18,7 +19,6 @@
 
     type RegisterState = Spinning | AwaitingUsername | AwaitingChallengeAttempt;
 
-    export let api: ServiceContainer;
     export let referredBy: string | undefined;
 
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
@@ -53,7 +53,7 @@
         referredBy: string | undefined
     ): void {
         state.set({ kind: "spinning" });
-        api.registerUser(username, challengeAttempt, referredBy).then((resp) => {
+        client.api.registerUser(username, challengeAttempt, referredBy).then((resp) => {
             state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 error.set("register.usernameTaken");
@@ -81,7 +81,7 @@
         state.set({ kind: "spinning" });
         challenge.set(undefined);
         challengeAttempt = undefined;
-        api.createChallenge().then((challengeResponse) => {
+        client.api.createChallenge().then((challengeResponse) => {
             if (challengeResponse.kind === "challenge") {
                 challenge.set(challengeResponse);
                 if ($username !== undefined) {
@@ -102,7 +102,7 @@
 
     function loadUser(): void {
         state.set({ kind: "spinning" });
-        api.getCurrentUser().then((resp) => {
+        client.api.getCurrentUser().then((resp) => {
             if (resp.kind === "created_user") {
                 createdUser = resp;
                 dispatch("createdUser", createdUser);
@@ -143,7 +143,7 @@
             <Logo />
         </div>
         <EnterUsername
-            {api}
+            {client}
             originalUsername={$username}
             error={$error}
             on:submitUsername={submitUsername} />

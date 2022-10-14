@@ -1,6 +1,11 @@
 <script lang="ts">
-    import { profileStore } from "../stores/profiling";
+    import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import Select from "./Select.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    $: profileStore = client.profileStore;
 
     let selectedMethod: string = "";
     let dragging = false;

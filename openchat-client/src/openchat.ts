@@ -2,13 +2,23 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, Readable, writable } from "svelte/store";
+import type { StorageStatus } from "./domain/data/data";
 import type { CreatedUser, IdentityState } from "./domain/user/user";
+import { userAvatarUrl } from "./domain/user/user.utils";
 import { login, startSession } from "./services/auth";
+import { showTrace } from "./services/common/profiling";
 import { Poller } from "./services/poller";
 import { ServiceContainer } from "./services/serviceContainer";
 import { idbAuthClientStore, selectedAuthProviderStore } from "./stores/authProviders";
 import { currentUserStore, startChatPoller } from "./stores/chat";
 import { startMessagesReadTracker } from "./stores/markRead";
+import { ProfileData, profileStore } from "./stores/profiling";
+import {
+    percentageStorageRemaining,
+    percentageStorageUsed,
+    storageInGb,
+    storageStore,
+} from "./stores/storage";
 import { startUserUpdatePoller } from "./stores/user";
 import { initialiseTracking } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
@@ -21,6 +31,7 @@ export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
     private _api: ServiceContainer | undefined;
     private _identity: Identity | undefined;
+    private _user: CreatedUser | undefined;
 
     public identityState = writable<IdentityState>("loading_user");
 
@@ -40,10 +51,6 @@ export class OpenChat extends EventTarget {
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
     }
 
-    public get currentUserStore(): Readable<CreatedUser | undefined> {
-        return currentUserStore;
-    }
-
     private loadedIdentity(id: Identity) {
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();
@@ -60,7 +67,7 @@ export class OpenChat extends EventTarget {
 
     private loadUser(id: Identity) {
         this._api = new ServiceContainer(id);
-        this._api
+        this.api
             .getCurrentUser()
             .then((user) => {
                 switch (user.kind) {
@@ -71,7 +78,7 @@ export class OpenChat extends EventTarget {
                         );
                         if (principalMigrationUserId !== null) {
                             console.log("Migrating user principal", principalMigrationUserId);
-                            this._api?.migrateUserPrincipal(principalMigrationUserId);
+                            this.api.migrateUserPrincipal(principalMigrationUserId);
                             return;
                         }
 
@@ -95,6 +102,7 @@ export class OpenChat extends EventTarget {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
+        this._user = user;
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -102,8 +110,8 @@ export class OpenChat extends EventTarget {
         );
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
-            this._api?.createUserClient(user.userId);
-            this._api?.initUserPrincipalMigration(principalMigrationNewPrincipal);
+            this.api.createUserClient(user.userId);
+            this.api.initUserPrincipalMigration(principalMigrationNewPrincipal);
             return;
         }
 
@@ -112,14 +120,14 @@ export class OpenChat extends EventTarget {
             window.setTimeout(() => this.loadUser(id), UPGRADE_POLL_INTERVAL);
         } else {
             currentUserStore.set(user);
-            this._api?.createUserClient(user.userId);
-            startMessagesReadTracker(this._api!);
+            this.api.createUserClient(user.userId);
+            startMessagesReadTracker(this.api);
             this.startOnlinePoller();
             startSwCheckPoller();
             startSession(id).then(() => this.logout());
-            startChatPoller(this._api!);
-            startUserUpdatePoller(this._api!);
-            this._api?.getUserStorageLimits();
+            startChatPoller(this.api);
+            startUserUpdatePoller(this.api);
+            this.api.getUserStorageLimits();
             this.identityState.set("logged_in");
 
             if (isCanisterUrl) {
@@ -131,7 +139,7 @@ export class OpenChat extends EventTarget {
 
     private startOnlinePoller() {
         new Poller(
-            () => this._api?.markAsOnline() ?? Promise.resolve(),
+            () => this.api.markAsOnline() ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
             undefined,
             true
@@ -145,16 +153,56 @@ export class OpenChat extends EventTarget {
     }
 
     public showTrace(): boolean {
-        return this.showTrace();
+        return showTrace();
     }
 
     public get isCanisterUrl(): boolean {
         return isCanisterUrl;
     }
 
+    // FIXME - find a way to automatically proxy openChat.doStuff to openChat.api.doStuff without having to write a bunch of code
+    // so that we don't have to type client.api.doStuff in the calling code
     public get api(): ServiceContainer {
         if (this._api === undefined)
             throw new Error("OpenChat tried to make an api call before the api was available");
         return this._api;
+    }
+
+    public get hasUser(): boolean {
+        return this._user !== undefined;
+    }
+
+    public get user(): CreatedUser {
+        if (this._user === undefined) {
+            throw new Error("OpenChat tried to access the current user before it has been set");
+        }
+        return this._user;
+    }
+
+    public get profileStore(): Readable<ProfileData> {
+        return profileStore;
+    }
+
+    public userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+        return userAvatarUrl(dataContent);
+    }
+
+    /**
+     * Reactive state provided in the form of svelte stores
+     */
+    public get percentageStorageRemaining(): Readable<number> {
+        return percentageStorageRemaining;
+    }
+
+    public get percentageStorageUsed(): Readable<number> {
+        return percentageStorageUsed;
+    }
+
+    public get storageStore(): Readable<StorageStatus> {
+        return storageStore;
+    }
+
+    public get storageInGb(): typeof storageInGb {
+        return storageInGb;
     }
 }

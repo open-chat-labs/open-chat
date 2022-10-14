@@ -14,10 +14,10 @@
     import { push } from "svelte-spa-router";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import { groupChatFromCandidate } from "domain/chat/chat.utils";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { UnsupportedValueError } from "utils/error";
+    import type { OpenChat } from "openchat-client";
 
-    const api: ServiceContainer = getContext(apiKey);
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let currentUser: User;
@@ -80,7 +80,8 @@
     function createGroup() {
         busy = true;
 
-        api.createGroupChat(candidateGroup)
+        client.api
+            .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp);

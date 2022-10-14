@@ -2,8 +2,7 @@
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import { rollbar } from "../utils/logging";
-    import { Poller } from "../services/poller";
-    import { Version } from "domain/version";
+    import { Poller, Version } from "openchat-client";
 
     const VERSION_INTERVAL = 60 * 1000;
 
