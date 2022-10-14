@@ -2,6 +2,7 @@ use candid::Principal;
 use ic_ledger_types::Tokens;
 
 mod avatar;
+mod bots;
 mod canister_upgrade_status;
 mod canister_wasm;
 mod challenge;
@@ -44,6 +45,7 @@ mod user_summary;
 mod version;
 
 pub use avatar::*;
+pub use bots::*;
 pub use canister_upgrade_status::*;
 pub use canister_wasm::*;
 pub use challenge::*;

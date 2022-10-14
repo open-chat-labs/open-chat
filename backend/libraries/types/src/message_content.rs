@@ -1,6 +1,4 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::*;
-use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
     CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
@@ -43,6 +41,7 @@ pub enum MessageContentInternal {
     GovernanceProposal(ProposalContentInternal),
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
@@ -64,7 +63,7 @@ impl MessageContent {
         if forwarding {
             match self {
                 MessageContent::Poll(_) | MessageContent::Crypto(_) | MessageContent::Deleted(_) => {
-                    return Err(InvalidTypeForForwarding);
+                    return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
             };
@@ -73,14 +72,16 @@ impl MessageContent {
         match self {
             MessageContent::Poll(p) => {
                 if let Err(reason) = p.config.validate(is_direct_chat, now) {
-                    return Err(InvalidPoll(reason));
+                    return Err(ContentValidationError::InvalidPoll(reason));
                 }
             }
             MessageContent::Crypto(c) => {
                 if c.transfer.is_zero() {
-                    return Err(TransferCannotBeZero);
+                    return Err(ContentValidationError::TransferCannotBeZero);
                 } else if c.transfer.exceeds_transfer_limit() {
-                    return Err(TransferLimitExceeded(c.transfer.token().transfer_limit()));
+                    return Err(ContentValidationError::TransferLimitExceeded(
+                        c.transfer.token().transfer_limit(),
+                    ));
                 }
             }
             _ => {}
@@ -98,11 +99,11 @@ impl MessageContent {
         };
 
         if is_empty {
-            Err(Empty)
+            Err(ContentValidationError::Empty)
         // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
         // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
         } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContent::GovernanceProposal(_)) {
-            Err(TextTooLong(MAX_TEXT_LENGTH))
+            Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
         }
@@ -340,7 +341,7 @@ impl PollContentInternal {
                 VoteOperation::RegisterVote => {
                     let votes = self.votes.entry(option_index).or_default();
                     if votes.contains(&user_id) {
-                        return SuccessNoChange;
+                        return RegisterVoteResult::SuccessNoChange;
                     }
                     votes.push(user_id);
                     let mut existing_vote_removed = false;

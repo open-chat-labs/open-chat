@@ -6,14 +6,14 @@ pub enum Route {
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
     Metrics,
-    Other,
+    Other(String),
 }
 
 pub fn extract_route(path: &str) -> Route {
     let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
 
     if path.is_empty() {
-        return Route::Other;
+        return Route::Other(path);
     }
     let parts: Vec<_> = path.split('/').collect();
 
@@ -31,7 +31,7 @@ pub fn extract_route(path: &str) -> Route {
             Route::Traces(since)
         }
         "metrics" => Route::Metrics,
-        _ => Route::Other,
+        _ => Route::Other(path),
     }
 }
 
@@ -55,6 +55,6 @@ mod tests {
 
     #[test]
     fn other() {
-        assert!(matches!(extract_route("blah"), Route::Other));
+        assert!(matches!(extract_route("blah"), Route::Other(_)));
     }
 }

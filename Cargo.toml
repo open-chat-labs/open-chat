@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "backend/bots/api",
+    "backend/bots/c2c_client",
     "backend/canister_installer",
     "backend/canister_upgrader",
     "backend/canisters/callback/api",

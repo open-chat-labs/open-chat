@@ -1,10 +1,9 @@
 use crate::model::direct_chat::DirectChat;
-use crate::updates::c2c_send_message::c2c_send_message_impl;
+use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
-use user_canister::c2c_send_message;
+use types::{MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use utils::format::format_to_decimal_places;
 
 // zzyk3-openc-hatbo-tq7my-cai
@@ -111,27 +110,18 @@ fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
 }
 
 fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let message_index = runtime_state
-        .data
-        .direct_chats
-        .get(&OPENCHAT_BOT_USER_ID.into())
-        .and_then(|c| c.events.main().latest_message_index())
-        .map(|i| i.incr())
-        .unwrap_or_default();
-
-    let message_id = MessageId::generate(|| runtime_state.env.random_u32());
-
-    let args = c2c_send_message::Args {
-        message_id,
-        sender_message_index: message_index,
+    let args = HandleMessageArgs {
+        message_id: None,
+        sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
         replies_to: None,
         forwarding: false,
         correlation_id: 0,
+        is_bot: true,
     };
 
-    c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
 fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
