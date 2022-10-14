@@ -1,11 +1,14 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../stores/rtl";
-    import type { ChatSummary, DirectChatSummary, GroupChatSummary } from "../domain/chat/chat";
+    import type {
+        ChatSummary,
+        DirectChatSummary,
+        GroupChatSummary,
+        OpenChat,
+    } from "openchat-client";
     import Avatar from "./Avatar.svelte";
-    import { AvatarSize, UserStatus } from "../domain/user/user";
-    import { userStore } from "../stores/user";
-    import { userAvatarUrl, groupAvatarUrl, getUserStatus } from "../domain/user/user.utils";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
@@ -14,6 +17,10 @@
     import SectionHeader from "./SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../stores/time";
+
+    const client = getContext<OpenChat>("client");
+
+    $: userStore = client.userStore;
 
     export let chatsSummaries: ChatSummary[];
 
@@ -26,20 +33,20 @@
             return {
                 id: chatSummary.chatId,
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
                 description: buildDirectChatDescription(chatSummary, now),
             };
         }
         return {
             id: chatSummary.chatId,
             name: chatSummary.name,
-            avatarUrl: groupAvatarUrl(chatSummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary),
             description: buildGroupChatDescription(chatSummary),
         };
     }
 
     function buildDirectChatDescription(chat: DirectChatSummary, now: number): string {
-        return getUserStatus(now, $userStore, chat.them) === UserStatus.Offline
+        return client.getUserStatus(now, $userStore, chat.them) === UserStatus.Offline
             ? $_("offline")
             : $_("onlineNow");
     }

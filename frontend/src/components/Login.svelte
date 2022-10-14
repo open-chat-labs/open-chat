@@ -2,27 +2,22 @@
     import Button from "./Button.svelte";
     import Logo from "./Logo.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ModalPage from "./ModalPage.svelte";
-    import {
-        idbAuthClientStore,
-        lsAuthClientStore,
-        selectedAuthProviderStore,
-    } from "../stores/authProviders";
-    import { AuthProvider } from "../domain/auth";
-    import { userCreatedStore } from "../stores/settings";
+    import type { OpenChat } from "openchat-client";
+    import { AuthProvider } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     export let loading: boolean = false;
+
+    $: userCreatedStore = client.userCreatedStore;
+    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
     let showAuthProviders = false;
 
     onMount(async () => {
-        const KEY_STORAGE_DELEGATION = "delegation";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
-        const noDelegation = ls == null && idb == null;
-        showAuthProviders = !$userCreatedStore && noDelegation;
+        showAuthProviders = await client.showAuthProviders();
     });
 </script>
 

@@ -11,11 +11,8 @@
     import "intl-tel-input/build/css/intlTelInput.css";
     import "intl-tel-input/build/js/utils";
     import intlTelInput, { Plugin } from "intl-tel-input";
-    import { phoneNumberToString } from "../../../domain/user/user.utils";
-    import type { PhoneNumber } from "../../../domain/user/user";
     import { rollbar } from "../../../utils/logging";
-    import { updateStorageLimit } from "stores/storage";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, PhoneNumber } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -109,7 +106,7 @@
                 } else if (resp.kind === "success") {
                     error = undefined;
                     confirmed = true;
-                    updateStorageLimit(resp.storageLimitBytes);
+                    client.updateStorageLimit(resp.storageLimitBytes);
                 }
             })
             .catch((err) => {
@@ -144,7 +141,7 @@
             <span>
                 {$_("register.enterCodeSentTo")}
             </span>
-            <span class="change-phone-number">{phoneNumberToString(phoneNumber)}</span>
+            <span class="change-phone-number">{client.phoneNumberToString(phoneNumber)}</span>
             <span>
                 <Link underline={"always"} on:click={changePhoneNumber}>({$_("change")})</Link>
             </span>

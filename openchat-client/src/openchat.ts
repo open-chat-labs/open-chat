@@ -3,13 +3,28 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, Readable, writable } from "svelte/store";
 import type { StorageStatus } from "./domain/data/data";
-import type { CreatedUser, IdentityState } from "./domain/user/user";
-import { userAvatarUrl } from "./domain/user/user.utils";
+import type {
+    CreatedUser,
+    IdentityState,
+    PhoneNumber,
+    UserLookup,
+    UserStatus,
+} from "./domain/user/user";
+import {
+    getUserStatus,
+    groupAvatarUrl,
+    phoneNumberToString,
+    userAvatarUrl,
+} from "./domain/user/user.utils";
 import { login, startSession } from "./services/auth";
 import { showTrace } from "./services/common/profiling";
 import { Poller } from "./services/poller";
 import { ServiceContainer } from "./services/serviceContainer";
-import { idbAuthClientStore, selectedAuthProviderStore } from "./stores/authProviders";
+import {
+    idbAuthClientStore,
+    lsAuthClientStore,
+    selectedAuthProviderStore,
+} from "./stores/authProviders";
 import { currentUserStore, startChatPoller } from "./stores/chat";
 import { startMessagesReadTracker } from "./stores/markRead";
 import { ProfileData, profileStore } from "./stores/profiling";
@@ -18,8 +33,11 @@ import {
     percentageStorageUsed,
     storageInGb,
     storageStore,
+    updateStorageLimit,
 } from "./stores/storage";
-import { startUserUpdatePoller } from "./stores/user";
+import { startUserUpdatePoller, userStore } from "./stores/user";
+import { userCreatedStore } from "./stores/userCreated";
+import { formatTokens, ValidatedICPInput, validateTokenInput } from "./utils/cryptoFormatter";
 import { initialiseTracking } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import { isCanisterUrl } from "./utils/urls";
@@ -187,6 +205,42 @@ export class OpenChat extends EventTarget {
         return userAvatarUrl(dataContent);
     }
 
+    public groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+        return groupAvatarUrl(dataContent);
+    }
+
+    public getUserStatus(now: number, users: UserLookup, userId: string): UserStatus {
+        return getUserStatus(now, users, userId);
+    }
+
+    public async showAuthProviders(): Promise<boolean> {
+        const KEY_STORAGE_DELEGATION = "delegation";
+        const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
+        const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
+        const noDelegation = ls == null && idb == null;
+        return !get(userCreatedStore) && noDelegation;
+    }
+
+    public phoneNumberToString(phoneNumber: PhoneNumber): string {
+        return phoneNumberToString(phoneNumber);
+    }
+
+    public updateStorageLimit(limit: number): void {
+        return updateStorageLimit(limit);
+    }
+
+    public formatTokens(
+        e8s: bigint,
+        minDecimals: number,
+        decimalSeparatorOverride?: string
+    ): string {
+        return formatTokens(e8s, minDecimals, decimalSeparatorOverride);
+    }
+
+    public validateTokenInput(value: string): ValidatedICPInput {
+        return validateTokenInput(value);
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -204,5 +258,17 @@ export class OpenChat extends EventTarget {
 
     public get storageInGb(): typeof storageInGb {
         return storageInGb;
+    }
+
+    public get userStore(): typeof userStore {
+        return userStore;
+    }
+
+    public get userCreatedStore(): typeof userCreatedStore {
+        return userCreatedStore;
+    }
+
+    public get selectedAuthProviderStore(): typeof selectedAuthProviderStore {
+        return selectedAuthProviderStore;
     }
 }

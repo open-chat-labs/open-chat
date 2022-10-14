@@ -4,7 +4,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Input from "../Input.svelte";
     import { createEventDispatcher } from "svelte";
-    import type { Challenge } from "../../domain/user/user";
+    import type { Challenge } from "openchat-client";
     import { _ } from "svelte-i18n";
 
     const dispatch = createEventDispatcher();

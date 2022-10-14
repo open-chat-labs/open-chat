@@ -4,10 +4,9 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Footer from "./Footer.svelte";
-    import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN } from "../../../domain/crypto";
+    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN, ONE_GB } from "openchat-client";
     import { rollbar } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -29,6 +28,8 @@
     const symbol = "ICP";
     const token: Cryptocurrency = "icp";
 
+    $: storageStore = client.storageStore;
+    $: storageInGb = client.storageInGb;
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: min = Math.ceil(($storageStore.byteLimit / ONE_GB) * 10); //the min bound expressed as number of 1/10 GB units
     $: newLimit = min;
@@ -80,7 +81,7 @@
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
                     refreshBalance();
-                    updateStorageLimit(newLimitBytes);
+                    client.updateStorageLimit(newLimitBytes);
                     error = undefined;
                     confirmed = true;
                 } else {

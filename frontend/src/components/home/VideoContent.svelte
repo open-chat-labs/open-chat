@@ -3,7 +3,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { VideoContent } from "../../domain/chat/chat";
+    import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
 
     export let content: VideoContent;

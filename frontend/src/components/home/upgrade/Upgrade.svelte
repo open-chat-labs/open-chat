@@ -7,10 +7,8 @@
     import Explain from "./Explain.svelte";
     import Premium from "./Premium.svelte";
     import ICPUpgrade from "./ICPUpgrade.svelte";
-    import type { Questions } from "../../../domain/faq";
     import FaqModal from "../../FaqModal.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { Questions } from "openchat-client";
 
     const titles: Record<typeof step, string> = {
         premium: $_("premium.title"),
@@ -18,8 +16,6 @@
         sms: $_("register.requestCode"),
         icp: $_("upgradeStorage"),
     };
-
-    const client = getContext<OpenChat>("client");
 
     export let step: "premium" | "explain" | "icp" | "sms";
 

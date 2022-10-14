@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { formatTokens, validateTokenInput } from "../../utils/cryptoFormatter";
-    import { E8S_PER_TOKEN } from "../../domain/crypto";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import { E8S_PER_TOKEN, OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let amountE8s: bigint = BigInt(0);
     export let autofocus: boolean = false;
@@ -11,15 +12,15 @@
 
     onMount(() => {
         if (amountE8s > BigInt(0)) {
-            inputElement.value = formatTokens(amountE8s, 0, ".");
+            inputElement.value = client.formatTokens(amountE8s, 0, ".");
         }
     });
 
     $: {
         if (inputElement !== undefined) {
-            const e8s = validateTokenInput(inputElement.value).e8s;
+            const e8s = client.validateTokenInput(inputElement.value).e8s;
             if (e8s !== amountE8s) {
-                inputElement.value = formatTokens(amountE8s, 0, ".");
+                inputElement.value = client.formatTokens(amountE8s, 0, ".");
             }
         }
     }
@@ -27,11 +28,11 @@
     function onInput(ev: Event) {
         const inputValue = (ev.target as HTMLInputElement).value;
 
-        let { replacementText, e8s } = validateTokenInput(inputValue);
+        let { replacementText, e8s } = client.validateTokenInput(inputValue);
 
         if (e8s > maxAmountE8s) {
             e8s = maxAmountE8s;
-            inputElement.value = formatTokens(maxAmountE8s, 0, ".");
+            inputElement.value = client.formatTokens(maxAmountE8s, 0, ".");
         } else if (replacementText !== undefined) {
             inputElement.value = replacementText;
         }

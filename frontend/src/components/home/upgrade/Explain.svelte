@@ -1,13 +1,17 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { ONE_GB, storageInGb, storageStore } from "../../../stores/storage";
+    import { ONE_GB } from "openchat-client";
     import Button from "../../Button.svelte";
     import Footer from "./Footer.svelte";
     import Link from "../../Link.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: storageStore = client.storageStore;
+    $: storageInGb = client.storageInGb;
     $: smsUpgradePossible = $storageStore.byteLimit === 0;
     $: upgradePossible = $storageStore.byteLimit < ONE_GB;
 
