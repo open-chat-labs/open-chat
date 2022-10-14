@@ -3431,6 +3431,7 @@ dependencies = [
  "group_canister",
  "group_index_canister",
  "ic-state-machine-tests",
+ "itertools",
  "lazy_static",
  "notifications_canister",
  "online_users_aggregator_canister",

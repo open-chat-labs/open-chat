@@ -14,6 +14,7 @@ candid = "0.7.17"
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "e947becfc936de3f189e331a2c43834de54373b4" }
+itertools = "0.10.5"
 lazy_static = "1.4.0"
 notifications_canister = { path = "../canisters/notifications/api" }
 online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
