@@ -1,6 +1,15 @@
 import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
+export type IdentityState =
+    | "requires_login"
+    | "loading_user"
+    | "logged_in"
+    | "registering"
+    | "logging_in"
+    | "upgrading_user"
+    | "upgrade_user";
+
 export type UserLastOnline = {
     kind: "user" | "bot";
     userId: string;

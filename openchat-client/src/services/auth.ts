@@ -8,9 +8,6 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 
-localStorage.removeItem("ic-delegation");
-localStorage.removeItem("ic-identity");
-
 const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
