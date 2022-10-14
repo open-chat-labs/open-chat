@@ -10,7 +10,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction, MessageContent } from "../../domain/chat/chat";
+    import type { MessageAction, MessageContent } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 

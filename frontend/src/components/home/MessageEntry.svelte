@@ -4,19 +4,16 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import { createEventDispatcher, tick } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { validateTokenInput } from "../../utils/cryptoFormatter";
-    import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
-    import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
-    import type { PartialUserSummary, User } from "../../domain/user/user";
-    import Button from "../Button.svelte";
     import type {
+        PartialUserSummary,
+        User,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
@@ -25,11 +22,16 @@
         MessageAction,
         MessageContent,
         Member,
-    } from "../../domain/chat/chat";
+        Questions,
+        OpenChat,
+    } from "openchat-client";
+    import { allQuestions } from "openchat-client";
+    import Button from "../Button.svelte";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
-    import { allQuestions, Questions } from "../../domain/faq";
+
+    const client = getContext<OpenChat>("client");
 
     export let chat: ChatSummary;
     export let blocked: boolean;
@@ -53,7 +55,7 @@
     const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
-    let audioMimeType = audioRecordingMimeType();
+    let audioMimeType = client.audioRecordingMimeType();
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
     let recording: boolean = false;
@@ -70,6 +72,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
+    $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
@@ -291,7 +294,7 @@
         if (tokenMatch && tokenMatch[2] !== undefined) {
             dispatch("tokenTransfer", {
                 token: tokenMatch[1],
-                amount: validateTokenInput(tokenMatch[2]).e8s,
+                amount: client.validateTokenInput(tokenMatch[2]).e8s,
             });
             return true;
         }

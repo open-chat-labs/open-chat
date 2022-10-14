@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { _ } from "svelte-i18n";
 

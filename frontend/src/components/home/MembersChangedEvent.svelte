@@ -2,11 +2,12 @@
 
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getMembersString } from "../../domain/chat/chat.utils";
-    import { compareIsNotYouThenUsername, compareUsername } from "../../domain/user/user.utils";
-    import { userStore } from "../../stores/user";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
     export let changedBy: string;
@@ -14,15 +15,16 @@
     export let timestamp: bigint;
     export let resourceKey: string;
 
+    $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
-    $: members = getMembersString(
+    $: members = client.getMembersString(
         user!,
         $userStore,
         changed,
         $_("unknownUser"),
         $_("you"),
-        user ? compareIsNotYouThenUsername(user.userId) : compareUsername
+        user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername
     );
 
     $: text = $_(resourceKey, {

@@ -18,6 +18,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
+    import { isCanisterUrl } from "../utils/urls";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -71,7 +72,7 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
-{#if client.isCanisterUrl}
+{#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => client.login()} />

@@ -2,16 +2,14 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize, PublicProfile } from "../../../domain/user/user";
+    import { AvatarSize, PublicProfile } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { PartialUserSummary } from "../../../domain/user/user";
-    import { formatLastOnlineDate } from "../../../domain/user/user.utils";
+    import type { PartialUserSummary } from "openchat-client";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rollbar } from "../../../utils/logging";
-    import { buildUserAvatarUrl } from "domain/chat/chat.utils";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -25,10 +23,10 @@
     let user: PartialUserSummary | undefined;
 
     $: modal = alignTo === undefined || $mobileWidth;
-    $: status = formatLastOnlineDate(Date.now(), user);
+    $: status = client.formatLastOnlineDate(Date.now(), user);
     $: avatarUrl =
         profile !== undefined
-            ? buildUserAvatarUrl(userId, profile.avatarId)
+            ? client.buildUserAvatarUrl(userId, profile.avatarId)
             : "../assets/unknownUserAvatar.svg";
 
     onMount(async () => {

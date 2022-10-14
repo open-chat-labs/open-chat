@@ -2,13 +2,13 @@
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
     import { _ } from "svelte-i18n";
-    import type { PollContent } from "../../domain/chat/chat";
+    import type { OpenChat, PollContent } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
-    import { toLongDateString, toShortTimeString } from "../../utils/date";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import PollAnswer from "./PollAnswer.svelte";
 
     const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let content: PollContent;
     export let me: boolean;
@@ -138,7 +138,9 @@
                 {$_("poll.finished")}
             {:else}
                 {$_("poll.pollEnds", {
-                    values: { end: `${toLongDateString(date)} @ ${toShortTimeString(date)}` },
+                    values: {
+                        end: `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
+                    },
                 })}
             {/if}
         </p>

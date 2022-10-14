@@ -3,19 +3,15 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Member } from "../../domain/chat/chat";
-    import { userStore } from "../../stores/user";
+    import type { Member, PartialUserSummary, CreatedUser, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "../../domain/user/user";
-    import type { PartialUserSummary } from "../../domain/user/user";
-    import type { CreatedUser } from "../../domain/user/user";
-    import { userAvatarUrl } from "../../domain/user/user.utils";
-    import { currentUserKey } from "../../stores/user";
+    import { AvatarSize } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
 
-    const user = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     export let blockedUsers: Set<string>;
     export let members: Member[];
@@ -25,6 +21,7 @@
     export let border = false;
 
     let index = 0;
+    $: userStore = client.userStore;
     $: itemHeight = $mobileWidth ? 53 : 55;
     $: borderWidth = direction === "up" ? 2 : 3;
     $: maxHeight =
@@ -104,7 +101,9 @@
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item.userId)}>
                 <div class="avatar" slot="icon">
-                    <Avatar url={userAvatarUrl($userStore[item.userId])} size={AvatarSize.Tiny} />
+                    <Avatar
+                        url={client.userAvatarUrl($userStore[item.userId])}
+                        size={AvatarSize.Tiny} />
                 </div>
                 <div slot="text">
                     {$userStore[item.userId]?.username ?? $_("unknown")}

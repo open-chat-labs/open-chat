@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { userAvatarUrl } from "../../../domain/user/user.utils";
     import SectionHeader from "../../SectionHeader.svelte";
-    import type { PartialUserSummary } from "../../../domain/user/user";
+    import { PartialUserSummary, ChatMetrics, OpenChat, ONE_GB } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -38,19 +37,14 @@
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
-    import type { ChatMetrics } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
-    import { userStore } from "../../../stores/user";
-    import { ONE_GB, storageStore } from "../../../stores/storage";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { cryptoBalance } from "../../../stores/crypto";
-    import { Cryptocurrency, cryptoCurrencyList } from "../../../domain/crypto";
+    import { Cryptocurrency, cryptoCurrencyList } from "openchat-client";
     import LinkButton from "../../LinkButton.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ReferUsers from "./ReferUsers.svelte";
-    import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
@@ -75,6 +69,9 @@
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
 
+    $: storageStore = client.storageStore;
+    $: cryptoBalance = client.cryptoBalance;
+    $: userStore = client.userStore;
     $: {
         setLocale(selectedLocale);
     }
@@ -210,7 +207,7 @@
             <div class="avatar">
                 <EditableAvatar
                     overlayIcon={true}
-                    image={userAvatarUrl(user)}
+                    image={client.userAvatarUrl(user)}
                     on:imageSelected={userAvatarSelected} />
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>

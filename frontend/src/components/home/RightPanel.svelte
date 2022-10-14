@@ -7,7 +7,7 @@
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import type { RightPanelState } from "../../domain/rightPanel";
+    import type { RightPanelState } from "./rightPanel";
     import type {
         AddMembersResponse,
         ChatEvent,
@@ -18,15 +18,11 @@
         GroupRules,
         MemberRole,
         Message,
-    } from "../../domain/chat/chat";
-    import { blockUser } from "../../services/common/chatThread";
-    import { userStore } from "../../stores/user";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
+        UserSummary,
+        OpenChat,
+    } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
-    import { nullUser } from "../../domain/user/user.utils";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../stores/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { Readable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
@@ -34,17 +30,6 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import {
-        eventsStore,
-        selectedChatId,
-        selectedChatStore,
-        currentChatMembers,
-        currentChatBlockedUsers,
-        currentChatPinnedMessages,
-        currentChatRules,
-        focusThreadMessageIndex,
-        chatStateStore,
-    } from "../../stores/chat";
     import { rollbar } from "../../utils/logging";
     import { setSoftDisabled } from "../../stores/notifications";
 
@@ -55,12 +40,22 @@
     export let metrics: ChatMetrics;
     export let thread: Thread | undefined;
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
     let savingMembers = false;
 
-    $: user = $userStore[userId] ?? nullUser("unknown");
+    $: selectedChatId = client.selectedChatId;
+    $: selectedChatStore = client.selectedChatStore;
+    $: currentChatMembers = client.currentChatMembers;
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
+    $: currentChatRules = client.currentChatRules;
+    $: focusThreadMessageIndex = client.focusThreadMessageIndex;
+    $: chatStateStore = client.chatStateStore;
+    $: eventsStore = client.eventsStore;
+    $: userStore = client.userStore;
+    $: user = $userStore[userId] ?? client.nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
@@ -92,7 +87,8 @@
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if ($selectedChatId !== undefined) {
-            blockUser(api, $selectedChatId, ev.detail.userId);
+            //FIXME - block user doesn't need to be passed api or selected chat id
+            client.blockUser(client.api, $selectedChatId, ev.detail.userId);
         }
     }
 
@@ -187,7 +183,7 @@
 
     function transferOwnership(chatId: string, me: string, them: FullMember): Promise<boolean> {
         transferOwnershipLocally(chatId, me, them.userId);
-        return api
+        return client.api
             .changeRole(chatId, them.userId, "owner")
             .then((resp) => {
                 if (resp !== "success") {
@@ -208,7 +204,7 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
         );
-        return api
+        return client.api
             .changeRole(chatId, userId, "participant")
             .then((resp) => {
                 if (resp !== "success") {
@@ -226,7 +222,7 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
         );
-        return api
+        return client.api
             .changeRole(chatId, userId, "admin")
             .then((resp) => {
                 if (resp !== "success") {
@@ -241,7 +237,7 @@
     }
 
     function removeMember(chatId: string, userId: string): Promise<void> {
-        return api
+        return client.api
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
@@ -309,7 +305,7 @@
         users: UserSummary[]
     ): Promise<boolean> {
         addMembersLocally(chatId, viaUnblock, users);
-        return api
+        return client.api
             .addMembers(
                 chatId,
                 users.map((u) => u.userId),

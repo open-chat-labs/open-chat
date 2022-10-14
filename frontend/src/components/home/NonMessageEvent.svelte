@@ -1,8 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { toLongDateString, toShortTimeString } from "../../utils/date";
+
+    const client = getContext<OpenChat>("client");
 
     export let text: string;
     export let timestamp: bigint;
@@ -11,7 +14,9 @@
 
 <div class="timeline-event">
     <p>{text}</p>
-    <p class="timestamp">{`${toLongDateString(date)} @ ${toShortTimeString(date)}`}</p>
+    <p class="timestamp">
+        {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
+    </p>
 </div>
 
 <style type="text/scss">

@@ -2,7 +2,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { EventWrapper, Message } from "../../../domain/chat/chat";
+    import type { EventWrapper, Message } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -10,16 +10,13 @@
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
-    import { groupMessagesByDate } from "../../../domain/chat/chat.utils";
-    import { formatMessageDate } from "../../../utils/date";
-    import { serverChatSummariesStore } from "stores/chat";
     import type { OpenChat } from "openchat-client";
 
     export let pinned: Set<number>;
     export let chatId: string;
 
     const client = getContext<OpenChat>("client");
-    $: currentUser = client.currentUserStore;
+    const user = client.user;
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
 
@@ -34,6 +31,7 @@
         dispatch("chatWith", ev.detail);
     }
 
+    $: serverChatSummariesStore = client.serverChatSummariesStore;
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
@@ -50,9 +48,9 @@
                     } else {
                         messages = {
                             kind: "success",
-                            data: groupMessagesByDate(
-                                resp.events.sort((a, b) => a.index - b.index)
-                            ).reverse(),
+                            data: client
+                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index))
+                                .reverse(),
                         };
                     }
                 })
@@ -87,12 +85,12 @@
         {#each messages.data as dayGroup, _di (dateGroupKey(dayGroup))}
             <div class="day-group">
                 <div class="date-label">
-                    {formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
+                    {client.formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
                 </div>
                 {#each dayGroup as message, _i (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
-                        user={$currentUser}
+                        {user}
                         senderId={message.event.sender}
                         msg={message.event}
                         on:chatWith={chatWith}

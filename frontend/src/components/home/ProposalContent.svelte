@@ -6,11 +6,9 @@
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
-    } from "../../domain/chat/chat";
+    } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
-    import { formatTimeRemaining } from "../../utils/time";
-    import { toDateString, toShortTimeString } from "../../utils/date";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
@@ -20,7 +18,6 @@
     import { rollbar } from "../../utils/logging";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { currentUserStore, proposalTopicsStore } from "../../stores/chat";
     import { proposalVotes } from "../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
     import type { OpenChat } from "openchat-client";
@@ -36,6 +33,7 @@
     export let reply: boolean;
 
     const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
     const nnsDappUrl = "https://nns.ic0.app";
@@ -43,6 +41,7 @@
     let summaryExpanded = false;
     let showNeuronInfo = false;
 
+    $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
         $proposalVotes.get(messageId) ??
@@ -69,7 +68,6 @@
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";
-    $: user = $currentUserStore!;
     $: showFullSummary = proposal.summary.length < 400;
 
     $: {
@@ -212,11 +210,13 @@
                 <div class="remaining">
                     {#if !votingEnded}
                         <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
-                        <span class="value">{formatTimeRemaining($now500, proposal.deadline)}</span>
+                        <span class="value"
+                            >{client.formatTimeRemaining($now500, proposal.deadline)}</span>
                     {:else}
                         <span class="label">{$_("proposal.votingPeriodEnded")}</span>
                         <span class="value"
-                            >{toDateString(deadline)} {toShortTimeString(deadline)}</span>
+                            >{client.toDateString(deadline)}
+                            {client.toShortTimeString(deadline)}</span>
                     {/if}
                 </div>
             </div>

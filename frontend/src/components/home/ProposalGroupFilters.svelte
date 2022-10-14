@@ -1,23 +1,19 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { NnsProposalTopic } from "../../domain/chat/chat";
+    import { NnsProposalTopic, OpenChat } from "openchat-client";
     import Toggle from "../Toggle.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { proposalTopicsStore } from "../../stores/chat";
-    import {
-        filteredProposalsStore,
-        enableAllProposalFilters,
-        disableAllProposalFilters,
-        toggleProposalFilter,
-    } from "../../stores/filteredProposals";
     import LinkButton from "../LinkButton.svelte";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+    $: proposalTopicsStore = client.proposalTopicsStore;
+    $: filteredProposalsStore = client.filteredProposalsStore;
 
     function close() {
         dispatch("close");
@@ -35,16 +31,17 @@
 
 <div class="proposal-filters">
     <div class="controls">
-        <LinkButton on:click={enableAllProposalFilters} underline={"always"}
+        <LinkButton on:click={client.enableAllProposalFilters} underline={"always"}
             >{$_("proposal.enableAll")}</LinkButton>
         <LinkButton
-            on:click={() => disableAllProposalFilters([...$proposalTopicsStore].map(([id]) => id))}
+            on:click={() =>
+                client.disableAllProposalFilters([...$proposalTopicsStore].map(([id]) => id))}
             underline={"always"}>{$_("proposal.disableAll")}</LinkButton>
     </div>
     {#each [...$proposalTopicsStore] as [id, label]}
         <Toggle
             id={NnsProposalTopic[id]}
-            on:change={() => toggleProposalFilter(id)}
+            on:change={() => client.toggleProposalFilter(id)}
             {label}
             checked={!$filteredProposalsStore?.hasFilter(id)}
             bigGap />

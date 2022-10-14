@@ -14,7 +14,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { PollContent, TotalPollVotes } from "domain/chat/chat";
+    import type { PollContent, TotalPollVotes } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const MAX_QUESTION_LENGTH = 250;

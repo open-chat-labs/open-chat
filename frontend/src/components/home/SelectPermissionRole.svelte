@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { PermissionRole } from "../../domain/chat/chat";
+    import type { PermissionRole } from "openchat-client";
     import Legend from "../Legend.svelte";
 
     export let label: string;

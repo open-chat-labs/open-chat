@@ -4,7 +4,7 @@
     import UserPill from "../UserPill.svelte";
     import { fade } from "svelte/transition";
     import { _ } from "svelte-i18n";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "openchat-client";
     import { pop } from "../../utils/transition";
 
     export let mode: "add" | "edit";

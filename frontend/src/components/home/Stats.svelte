@@ -2,11 +2,11 @@
     import { cubicOut } from "svelte/easing";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
-    import type { ChatMetrics } from "../../domain/chat/chat";
-    import { onMount } from "svelte";
-    import { metricsEqual } from "../../domain/chat/chat.utils";
+    import type { ChatMetrics, OpenChat } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
 
+    const client = getContext<OpenChat>("client");
     export let stats: ChatMetrics;
 
     let hoveredIndex: number | undefined;
@@ -24,7 +24,7 @@
     let giphyPerc = writable(12.5);
 
     $: {
-        if (previousStats === undefined || !metricsEqual(stats, previousStats)) {
+        if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
             totalMessages =
                 stats.textMessages +
                 stats.imageMessages +

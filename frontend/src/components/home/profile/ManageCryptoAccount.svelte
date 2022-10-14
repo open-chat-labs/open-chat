@@ -9,17 +9,12 @@
     import Send from "svelte-material-icons/Send.svelte";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { CreatedUser } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../stores/user";
-    import { formatTokens } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
-    import { cryptoBalance } from "../../../stores/crypto";
     import TokenInput from "../TokenInput.svelte";
-    import { Cryptocurrency, cryptoLookup } from "../../../domain/crypto";
+    import { Cryptocurrency, cryptoLookup } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
 
@@ -27,6 +22,9 @@
     export let token: Cryptocurrency;
 
     const client = getContext<OpenChat>("client");
+    const user = client.user;
+
+    $: cryptoBalance = client.cryptoBalance;
 
     let error: string | undefined = undefined;
     let targetAccount: string = "";
@@ -144,7 +142,7 @@
                 </div>
                 <div class="fee">
                     {$_("tokenTransfer.fee", {
-                        values: { fee: formatTokens(transferFees, 0), token: symbol },
+                        values: { fee: client.formatTokens(transferFees, 0), token: symbol },
                     })}
                 </div>
                 {#if error}

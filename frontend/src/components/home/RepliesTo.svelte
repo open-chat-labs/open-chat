@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { RehydratedReplyContext } from "../../domain/chat/chat";
+    import type { RehydratedReplyContext, OpenChat } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -9,12 +9,9 @@
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
-    import type { CreatedUser } from "../../domain/user/user";
-    import { userStore } from "../../stores/user";
-    import { toTitleCase } from "../../utils/string";
-    import { currentUserKey } from "../../stores/user";
 
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
     export let messageId: bigint;
     export let chatId: string;
@@ -24,6 +21,7 @@
 
     let debug = false;
 
+    $: userStore = client.userStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
@@ -40,7 +38,7 @@
 
     function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
         return me
-            ? toTitleCase($_("you"))
+            ? client.toTitleCase($_("you"))
             : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>

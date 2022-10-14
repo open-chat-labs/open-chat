@@ -1,24 +1,24 @@
 <script lang="ts">
-    import type { GroupChatSummary } from "../../domain/chat/chat";
-
+    import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { flip } from "svelte/animate";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import { groupAvatarUrl } from "../../domain/user/user.utils";
-    import { AvatarSize, UserStatus } from "domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import { push } from "svelte-spa-router";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import Markdown from "./Markdown.svelte";
     import Footer from "./upgrade/Footer.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
@@ -84,7 +84,7 @@
                     {#if !$mobileWidth}
                         <div class="avatar">
                             <Avatar
-                                url={groupAvatarUrl(group)}
+                                url={client.groupAvatarUrl(group)}
                                 status={UserStatus.None}
                                 size={AvatarSize.Small} />
                         </div>
@@ -94,7 +94,7 @@
                             {#if $mobileWidth}
                                 <div class="avatar">
                                     <Avatar
-                                        url={groupAvatarUrl(group)}
+                                        url={client.groupAvatarUrl(group)}
                                         status={UserStatus.None}
                                         size={AvatarSize.Tiny} />
                                 </div>

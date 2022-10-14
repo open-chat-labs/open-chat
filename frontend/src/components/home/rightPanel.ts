@@ -1,4 +1,4 @@
-import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "./chat/chat";
+import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel

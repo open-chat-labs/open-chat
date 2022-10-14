@@ -1,15 +1,14 @@
 <script lang="ts">
-    import type { EnhancedReplyContext } from "../../domain/chat/chat";
+    import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import type { CreatedUser } from "../../domain/user/user";
     import { iconSize } from "../../stores/iconSize";
-    import { toTitleCase } from "../../utils/string";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let replyingTo: EnhancedReplyContext;
@@ -20,7 +19,7 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: username = me ? toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";
+    $: username = me ? client.toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";
 
     function cancelReply() {
         dispatch("cancelReply");

@@ -4,6 +4,7 @@ import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import type { ThreadSyncDetails } from "./domain";
 import {
+    buildUserAvatarUrl,
     canBlockUsers,
     canCreatePolls,
     canDeleteOtherUsersMessages,
@@ -14,15 +15,18 @@ import {
     createMessage,
     findMessageById,
     getContentAsText,
+    getMembersString,
     getMessageContent,
     getStorageRequiredForMessage,
     getTypingString,
     groupBySender,
     groupEvents,
+    groupMessagesByDate,
     makeRtcConnections,
     mergeEventsAndLocalUpdates,
     mergeSendMessageResponse,
     mergeServerEvents,
+    metricsEqual,
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
@@ -31,9 +35,14 @@ import {
 import { isPreviewing } from "./domain/chat/chat.utils.shared";
 import type { CreatedUser, IdentityState } from "./domain/user/user";
 import {
+    buildUsernameList,
+    compareIsNotYouThenUsername,
+    compareUsername,
+    formatLastOnlineDate,
     getUserStatus,
     groupAvatarUrl,
     missingUserIds,
+    nullUser,
     phoneNumberToString,
     userAvatarUrl,
 } from "./domain/user/user.utils";
@@ -41,6 +50,7 @@ import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
 import type { WebRtcMessage } from "./domain/webrtc/webrtc";
 import { login, startSession } from "./services/auth";
 import {
+    blockUser,
     deleteMessage,
     editMessage,
     registerPollVote,
@@ -60,16 +70,29 @@ import {
     chatSummariesStore,
     currentChatBlockedUsers,
     currentChatMembers,
+    currentChatPinnedMessages,
+    currentChatRules,
     currentChatUserIds,
     currentUserStore,
+    eventsStore,
+    focusThreadMessageIndex,
+    proposalTopicsStore,
     selectedChatId,
+    selectedChatStore,
+    selectedServerChatStore,
     serverChatSummariesStore,
     startChatPoller,
     threadsByChatStore,
     threadsFollowedByMeStore,
 } from "./stores/chat";
-import { lastCryptoSent } from "./stores/crypto";
+import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
+import {
+    disableAllProposalFilters,
+    enableAllProposalFilters,
+    filteredProposalsStore,
+    toggleProposalFilter,
+} from "./stores/filteredProposals";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
 import { profileStore } from "./stores/profiling";
@@ -81,16 +104,25 @@ import {
     storageStore,
     updateStorageLimit,
 } from "./stores/storage";
+import { translationStore } from "./stores/translation";
 import { byThread, isTyping, typing } from "./stores/typing";
 import { unconfirmed } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
-import { formatMessageDate, toDatetimeString, toShortTimeString } from "./utils/date";
+import {
+    formatMessageDate,
+    toDateString,
+    toDatetimeString,
+    toLongDateString,
+    toShortTimeString,
+} from "./utils/date";
 import { toRecord2 } from "./utils/list";
+import { audioRecordingMimeType, fillMessage, twitterLinkRegex, youtubeRegex } from "./utils/media";
+import { toTitleCase } from "./utils/string";
+import { formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
-import { isCanisterUrl } from "./utils/urls";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -198,10 +230,10 @@ export class OpenChat extends EventTarget {
             this.api.getUserStorageLimits();
             this.identityState.set("logged_in");
 
-            if (isCanisterUrl) {
-                // FIXME - not sure what to do about this
-                // unsubscribeNotifications(api);
-            }
+            // FIXME - not sure what to do about this
+            // if (isCanisterUrl) {
+            //     unsubscribeNotifications(api);
+            // }
         }
     }
 
@@ -275,7 +307,6 @@ export class OpenChat extends EventTarget {
      * Wrap a bunch of pure utility functions
      */
     showTrace = showTrace;
-    isCanisterUrl = isCanisterUrl;
     userAvatarUrl = userAvatarUrl;
     groupAvatarUrl = groupAvatarUrl;
     getUserStatus = getUserStatus;
@@ -319,6 +350,27 @@ export class OpenChat extends EventTarget {
     updateUserStore = updateUserStore;
     isTyping = isTyping;
     trackEvent = trackEvent;
+    twitterLinkRegex = twitterLinkRegex;
+    youtubeRegex = youtubeRegex;
+    metricsEqual = metricsEqual;
+    getMembersString = getMembersString;
+    compareIsNotYouThenUsername = compareIsNotYouThenUsername;
+    compareUsername = compareUsername;
+    blockUser = blockUser;
+    nullUser = nullUser;
+    toTitleCase = toTitleCase;
+    enableAllProposalFilters = enableAllProposalFilters;
+    disableAllProposalFilters = disableAllProposalFilters;
+    toggleProposalFilter = toggleProposalFilter;
+    formatTimeRemaining = formatTimeRemaining;
+    toDateString = toDateString;
+    toLongDateString = toLongDateString;
+    formatLastOnlineDate = formatLastOnlineDate;
+    buildUserAvatarUrl = buildUserAvatarUrl;
+    buildUsernameList = buildUsernameList;
+    groupMessagesByDate = groupMessagesByDate;
+    fillMessage = fillMessage;
+    audioRecordingMimeType = audioRecordingMimeType;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -348,4 +400,14 @@ export class OpenChat extends EventTarget {
     localMessageUpdates = localMessageUpdates;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
+    translationStore = translationStore;
+    eventsStore = eventsStore;
+    selectedChatStore = selectedChatStore;
+    currentChatPinnedMessages = currentChatPinnedMessages;
+    currentChatRules = currentChatRules;
+    focusThreadMessageIndex = focusThreadMessageIndex;
+    proposalTopicsStore = proposalTopicsStore;
+    filteredProposalsStore = filteredProposalsStore;
+    cryptoBalance = cryptoBalance;
+    selectedServerChatStore = selectedServerChatStore;
 }

@@ -4,10 +4,11 @@
     import Markdown from "./Markdown.svelte";
     import Tweet from "./Tweet.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
-    import { translationStore } from "../../stores/translation";
     import { _ } from "svelte-i18n";
-    import type { TextContent } from "../../domain/chat/chat";
-    import { twitterLinkRegex, youtubeRegex } from "../../utils/media";
+    import { getContext } from "svelte";
+    import type { OpenChat, TextContent } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     const SIZE_LIMIT = 1000;
     export let content: TextContent;
@@ -27,9 +28,10 @@
         return text;
     }
 
+    $: translationStore = client.translationStore;
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
-    $: socialVideoMatch = content.text.match(youtubeRegex());
-    $: twitterLinkMatch = text.match(twitterLinkRegex());
+    $: socialVideoMatch = content.text.match(client.youtubeRegex());
+    $: twitterLinkMatch = text.match(client.twitterLinkRegex());
 </script>
 
 {#if !socialVideoMatch}

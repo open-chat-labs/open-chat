@@ -2,18 +2,16 @@
 
 <script lang="ts">
     import Link from "../../Link.svelte";
-    import type { CreatedUser } from "../../../domain/user/user";
+    import type { CreatedUser, Message, OpenChat } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
-    import type { Message } from "../../../domain/chat/chat";
     import RepliesTo from "../RepliesTo.svelte";
     import UnresolvedReply from "../UnresolvedReply.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
-    import { fillMessage } from "../../../utils/media";
-    import { userStore } from "../../../stores/user";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -21,15 +19,16 @@
     export let senderId: string;
     export let msg: Message;
 
-    let sender = $userStore[senderId];
-    let username = sender?.username;
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
 
+    $: sender = $userStore[senderId];
+    $: username = sender?.username;
+    $: userStore = client.userStore;
     $: deleted = msg.content.kind === "deleted_content";
-    $: fill = fillMessage(msg);
+    $: fill = client.fillMessage(msg);
     $: me = user.userId === senderId;
 
     function chatWithUser() {

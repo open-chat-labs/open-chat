@@ -8,21 +8,22 @@
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import type { RemoteData } from "../../utils/remoteData";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
+    import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../stores/routing";
-    import {
-        selectedChatStore,
-        selectedChatId,
-        selectedServerChatStore,
-        eventsStore,
-    } from "../../stores/chat";
-    import { filteredProposalsStore } from "../../stores/filteredProposals";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let loadingChats: boolean = false;
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: selectedChatStore = client.selectedChatStore;
+    $: selectedChatId = client.selectedChatId;
+    $: selectedServerChatStore = client.selectedServerChatStore;
+    $: eventsStore = client.eventsStore;
+    $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.chatId === undefined;
     $: showThreads = $pathParams.chatId === "threads";
 </script>

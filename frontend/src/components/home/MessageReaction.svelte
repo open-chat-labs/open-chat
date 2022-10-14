@@ -1,14 +1,14 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import type { UserLookup } from "../../domain/user/user";
-    import { buildUsernameList } from "../../domain/user/user.utils";
-    import { onMount } from "svelte";
+    import type { OpenChat, UserLookup } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { userStore } from "../../stores/user";
+
+    const client = getContext<OpenChat>("client");
 
     export let reaction: string;
     export let userIds: Set<string>;
@@ -17,6 +17,7 @@
 
     let reactionCode = "unknown";
 
+    $: userStore = client.userStore;
     $: alignRight = me != $rtlStore;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
     $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
@@ -34,7 +35,7 @@
             return $_("reactions.youClickToRemove");
         }
 
-        return buildUsernameList(userIds, myUserId, userStore);
+        return client.buildUsernameList(userIds, myUserId, userStore);
     }
 
     async function buildReactionCode(reaction: string): Promise<string | undefined> {

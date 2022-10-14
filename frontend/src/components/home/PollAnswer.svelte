@@ -5,11 +5,12 @@
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Progress from "../Progress.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { buildUsernameList } from "../../domain/user/user.utils";
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
-    import { userStore } from "../../stores/user";
-    import type { UserLookup } from "../../domain/user/user";
+    import type { OpenChat, UserLookup } from "openchat-client";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let finished: boolean;
     export let preview: boolean;
@@ -23,6 +24,7 @@
     export let showVotes: boolean;
     export let me: boolean;
 
+    $: userStore = client.userStore;
     $: usernames = buildPollUsernames($userStore, voters, myUserId);
     $: alignRight = me != $rtlStore;
 
@@ -32,7 +34,7 @@
         myUserId: string | undefined
     ): string | undefined {
         if (voters === undefined || voters.length === 0 || !showVotes) return undefined;
-        return buildUsernameList(new Set(voters), myUserId, userStore);
+        return client.buildUsernameList(new Set(voters), myUserId, userStore);
     }
 
     function buildTooltipText(): string {

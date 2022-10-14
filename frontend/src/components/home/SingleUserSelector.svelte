@@ -1,11 +1,11 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import { userStore } from "../../stores/user";
-    import type { Member } from "../../domain/chat/chat";
+    import type { Member, OpenChat, PartialUserSummary } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { PartialUserSummary } from "../../domain/user/user";
+    import { getContext } from "svelte";
 
+    const client = getContext<OpenChat>("client");
     export let blockedUsers: Set<string>;
     export let members: Member[];
     export let autofocus: boolean;
@@ -16,6 +16,7 @@
     let mentionPicker: MentionPicker;
     let inputHeight: number;
 
+    $: userStore = client.userStore;
     $: {
         if (textValue !== "") {
             showMentionPicker = true;

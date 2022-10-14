@@ -1,24 +1,24 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import type { CreatedUser } from "../../../domain/user/user";
+    import type { CreatedUser, OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
-    import { currentUserKey } from "../../../stores/user";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import * as shareFunctions from "../../../domain/share";
     import { toastStore } from "../../../stores/toast";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
-    import { AvatarSize, UserStatus } from "../../../domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
-    import { userAvatarUrl } from "../../../domain/user/user.utils";
-    import { userStore } from "../../../stores/user";
     import LinkButton from "../../LinkButton.svelte";
+    import { canShare, shareLink } from "../../../utils/share";
 
     const dispatch = createEventDispatcher();
 
-    const user = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
+
+    $: userStore = client.userStore;
 
     let link = `${window.location.origin}/?ref=${user.userId}`;
     let viewedUserId: string | undefined = undefined;
@@ -35,7 +35,7 @@
     }
 
     function onShare() {
-        shareFunctions.shareLink(link);
+        shareLink(link);
     }
 
     function showUserProfile(userId: string) {
@@ -60,14 +60,14 @@
         {$_("userReferralMessage")}
     </div>
     <div class="action">
-        <CopyIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+        <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
         <Link on:click={onCopy}>
             {$_("copy")}
         </Link>
     </div>
-    {#if shareFunctions.canShare()}
+    {#if canShare()}
         <div class="action">
-            <ShareIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+            <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
             <Link on:click={onShare}>
                 {$_("share")}
             </Link>
@@ -81,7 +81,7 @@
                     <div class="referral" on:click={() => showUserProfile(userId)}>
                         <div>
                             <Avatar
-                                url={userAvatarUrl($userStore[userId])}
+                                url={client.userAvatarUrl($userStore[userId])}
                                 status={UserStatus.None}
                                 size={AvatarSize.Miniscule} />
                         </div>
