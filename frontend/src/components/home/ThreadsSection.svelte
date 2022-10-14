@@ -1,15 +1,17 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { threadsByChatStore } from "../../stores/chat";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
-    import { onDestroy } from "svelte";
-    import { messagesRead } from "../../stores/markRead";
+    import { getContext, onDestroy } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
+
+    $: threadsByChatStore = client.threadsByChatStore;
+    $: messagesRead = client.messagesRead;
     $: selected = $pathParams.chatId === "threads";
-
-    $: numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
+    $: numStaleThreads = client.staleThreadsCount($threadsByChatStore);
 
     const unsub = messagesRead.subscribe(() => {
         numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);

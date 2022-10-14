@@ -1,12 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { toShortTimeString } from "../../utils/date";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { _ } from "svelte-i18n";
+    import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let timestamp: bigint;
     export let confirmed: boolean;
@@ -16,7 +19,7 @@
     export let fill: boolean;
     export let pinned: boolean;
     export let crypto: boolean;
-    export let dateFormatter: (date: Date) => string = toShortTimeString;
+    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
     let pinnedColor = crypto

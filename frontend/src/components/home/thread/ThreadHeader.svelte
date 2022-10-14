@@ -1,13 +1,17 @@
 <script lang="ts">
-    import type { ChatSummary, EventWrapper, Message } from "../../../domain/chat/chat";
-    import { AvatarSize, UserStatus } from "../../../domain/user/user";
+    import type {
+        ChatSummary,
+        EventWrapper,
+        Message,
+        OpenChat,
+        TypersByKey,
+    } from "openchat-client";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
-    import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { _ } from "svelte-i18n";
-    import { TypersByKey, byThread } from "../../../stores/typing";
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -20,11 +24,10 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
-    import { getContentAsText, getTypingString } from "../../../domain/chat/chat.utils";
-    import { getUserStatus, groupAvatarUrl, userAvatarUrl } from "domain/user/user.utils";
     import { mobileWidth } from "stores/screenDimensions";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let chatSummary: ChatSummary;
@@ -32,6 +35,8 @@
     export let pollsAllowed: boolean;
     export let threadRootMessageIndex: number;
 
+    $: byThread = client.typersByThread;
+    $: userStore = client.userStore;
     $: chat = normaliseChatSummary($now, chatSummary, $byThread);
 
     function close() {
@@ -39,20 +44,20 @@
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const someoneTyping = getTypingString(
+        const someoneTyping = client.getTypingString(
             $userStore,
             `${chatSummary.chatId}_${threadRootMessageIndex}`,
             typing
         );
 
-        const msgTxt = getContentAsText(rootEvent.event.content);
+        const msgTxt = client.getContentAsText(rootEvent.event.content);
         const subtext =
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
                 title: $mobileWidth ? $userStore[chatSummary.them]?.username : $_("thread.title"),
-                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus(now, $userStore, chatSummary.them),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
                 subtext,
                 typing: someoneTyping !== undefined,
             };
@@ -60,7 +65,7 @@
         return {
             title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: groupAvatarUrl(chatSummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary),
             subtext,
             typing: someoneTyping !== undefined,
         };

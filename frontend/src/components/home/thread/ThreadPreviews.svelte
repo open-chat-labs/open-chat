@@ -4,8 +4,6 @@
     import Loading from "../../Loading.svelte";
     import { rtlStore } from "../../../stores/rtl";
     import { iconSize } from "../../../stores/iconSize";
-    import { userStore } from "../../../stores/user";
-    import { serverChatSummariesStore, threadsByChatStore } from "../../../stores/chat";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
@@ -13,20 +11,16 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { push } from "svelte-spa-router";
     import { getContext } from "svelte";
-    import type {
-        ThreadPreview,
-        EventWrapper,
-        Message,
-        ThreadSyncDetails,
-    } from "../../../domain/chat/chat";
-    import { userIdsFromEvents } from "../../../domain/chat/chat.utils";
-    import { missingUserIds } from "../../../domain/user/user.utils";
+    import type { ThreadPreview, EventWrapper, Message, ThreadSyncDetails } from "openchat-client";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
-    import { toRecord2 } from "utils/list";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
+
+    $: serverChatSummariesStore = client.serverChatSummariesStore;
+    $: threadsByChatStore = client.threadsByChatStore;
+    $: userStore = client.userStore;
 
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -43,7 +37,10 @@
                 {
                     userGroups: [
                         {
-                            users: missingUserIds($userStore, new Set<string>(userIdsFromEvents)),
+                            users: client.missingUserIds(
+                                $userStore,
+                                new Set<string>(userIdsFromEvents)
+                            ),
                             updatedSince: BigInt(0),
                         },
                     ],
@@ -61,7 +58,7 @@
         loading = true;
         client.api
             .threadPreviews(
-                toRecord2(
+                client.toRecord2(
                     Object.entries($threadsByChatStore),
                     ([chatId, _]) => chatId,
                     ([chatId, threads]) => {
@@ -76,7 +73,7 @@
             )
             .then((t) => {
                 threads = t;
-                updateUserStore(userIdsFromEvents(eventsFromThreadPreviews(t)));
+                updateUserStore(client.userIdsFromEvents(eventsFromThreadPreviews(t)));
                 initialised = true;
             })
             .catch((err) => {

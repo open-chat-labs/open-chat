@@ -4,31 +4,29 @@
         GroupChatSummary,
         EventWrapper,
         Message,
-    } from "../../../domain/chat/chat";
+        OpenChat,
+    } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
     import { push } from "svelte-spa-router";
-    import { chatSummariesStore } from "../../../stores/chat";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { getContext, onDestroy } from "svelte";
-    import { CreatedUser, AvatarSize } from "../../../domain/user/user";
+    import { AvatarSize } from "openchat-client";
     import Markdown from "../Markdown.svelte";
-    import { currentUserKey } from "../../../stores/user";
-    import { groupAvatarUrl } from "../../../domain/user/user.utils";
     import Avatar from "../../Avatar.svelte";
-    import { getContentAsText, groupBySender } from "../../../domain/chat/chat.utils";
     import LinkButton from "../../LinkButton.svelte";
-    import { messagesRead } from "../../../stores/markRead";
-    import { toDatetimeString } from "../../../utils/date";
 
-    const user = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: chatSummariesStore = client.chatSummariesStore;
+    $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
     $: chat = $chatSummariesStore[thread.chatId] as GroupChatSummary;
@@ -36,7 +34,7 @@
         (t) => t.threadRootMessageIndex === threadRootMessageIndex
     );
     $: unreadCount = syncDetails
-        ? messagesRead.unreadThreadMessageCount(
+        ? client.unreadThreadMessageCount(
               thread.chatId,
               threadRootMessageIndex,
               syncDetails.latestMessageIndex
@@ -44,10 +42,10 @@
         : 0;
     $: chatData = {
         name: chat.name,
-        avatarUrl: groupAvatarUrl(chat),
+        avatarUrl: client.groupAvatarUrl(chat),
     };
 
-    $: grouped = groupBySender(thread.latestReplies);
+    $: grouped = client.groupBySender(thread.latestReplies);
 
     let open = false;
 
@@ -66,14 +64,14 @@
         if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
             const lastMsgIdx = lastMessageIndex(thread.latestReplies);
             if (lastMsgIdx !== undefined) {
-                messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, lastMsgIdx);
+                client.markThreadRead(chat.chatId, threadRootMessageIndex, lastMsgIdx);
             }
         }
     }
 
     const unsub = messagesRead.subscribe(() => {
         if (syncDetails !== undefined) {
-            unreadCount = messagesRead.unreadThreadMessageCount(
+            unreadCount = client.unreadThreadMessageCount(
                 thread.chatId,
                 threadRootMessageIndex,
                 syncDetails.latestMessageIndex
@@ -105,7 +103,7 @@
                 </h4>
                 <div class="root-msg">
                     <Markdown
-                        text={getContentAsText(thread.rootMessage.event.content)}
+                        text={client.getContentAsText(thread.rootMessage.event.content)}
                         oneLine={true}
                         suppressLinks={true} />
                 </div>
@@ -151,7 +149,7 @@
                         editing={false}
                         eventIndex={thread.rootMessage.index}
                         timestamp={thread.rootMessage.timestamp}
-                        dateFormatter={toDatetimeString}
+                        dateFormatter={client.toDatetimeString}
                         msg={thread.rootMessage.event} />
                 </div>
                 {#if missingMessages > 0}
@@ -192,7 +190,7 @@
                             editing={false}
                             eventIndex={evt.index}
                             timestamp={evt.timestamp}
-                            dateFormatter={toDatetimeString}
+                            dateFormatter={client.toDatetimeString}
                             msg={evt.event} />
                     {/each}
                 {/each}

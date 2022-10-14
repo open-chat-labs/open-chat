@@ -13,80 +13,29 @@
         SendMessageSuccess,
         ThreadSummary,
         TransferSuccess,
-    } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext, tick } from "svelte";
-    import { _ } from "svelte-i18n";
-    import Loading from "../../Loading.svelte";
-    import Fab from "../../Fab.svelte";
-    import { formatMessageDate } from "../../../utils/date";
-    import type { User } from "../../../domain/user/user";
-    import { iconSize } from "../../../stores/iconSize";
-    import { rtlStore } from "../../../stores/rtl";
-    import {
-        deleteMessage,
-        editMessage,
-        registerPollVote,
-        selectReaction,
-        updateUserStore,
-    } from "../../../services/common/chatThread";
-    import ChatMessage from "../ChatMessage.svelte";
-    import {
-        canBlockUsers,
-        canCreatePolls,
-        canDeleteOtherUsersMessages,
-        canPinMessages,
-        canReactToMessages,
-        canReplyInThread,
-        containsReaction,
-        createMessage,
-        findMessageById,
-        getMessageContent,
-        getStorageRequiredForMessage,
-        groupEvents,
-        makeRtcConnections,
-        mergeSendMessageResponse,
-        mergeServerEvents,
-        serialiseMessageForRtc,
-        startTyping,
-        stopTyping,
-        userIdsFromEvents,
-    } from "../../../domain/chat/chat.utils";
-    import { userStore } from "../../../stores/user";
-    import { derived, Readable, readable, writable, Writable } from "svelte/store";
-    import { draftThreadMessages } from "../../../stores/draftThreadMessages";
-    import { remainingStorage } from "../../../stores/storage";
-    import PollBuilder from "../PollBuilder.svelte";
-    import GiphySelector from "../GiphySelector.svelte";
-    import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import type { Cryptocurrency } from "../../../domain/crypto";
-    import { lastCryptoSent } from "../../../stores/crypto";
-    import { trackEvent } from "../../../utils/tracking";
-    import { rollbar } from "../../../utils/logging";
-    import { toastStore } from "../../../stores/toast";
-    import { immutableStore } from "../../../stores/immutable";
-    import { isPreviewing } from "../../../domain/chat/chat.utils.shared";
-    import { relayPublish } from "../../../stores/relay";
-    import * as shareFunctions from "../../../domain/share";
-    import { isTyping, typing } from "../../../stores/typing";
-    import { rtcConnectionsManager } from "../../../domain/webrtc/RtcConnectionsManager";
-    import type {
+        User,
+        Cryptocurrency,
         RemoteUserRemovedMessage,
         RemoteUserSentMessage,
         RemoteUserToggledReaction,
         WebRtcMessage,
-    } from "../../../domain/webrtc/webrtc";
-    import { messagesRead } from "../../../stores/markRead";
-    import { unconfirmed } from "../../../stores/unconfirmed";
-    import {
-        threadsFollowedByMeStore,
-        currentChatUserIds,
-        selectedChatId,
-        currentChatMembers,
-        currentChatBlockedUsers,
-        chatStateStore,
-    } from "../../../stores/chat";
-    import { localMessageUpdates } from "../../../stores/localMessageUpdates";
-    import { mergeEventsAndLocalUpdates } from "../../../domain/chat/chat.utils";
+    } from "openchat-client";
+    import { immutableStore } from "openchat-client";
+    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Loading from "../../Loading.svelte";
+    import Fab from "../../Fab.svelte";
+    import { iconSize } from "../../../stores/iconSize";
+    import { rtlStore } from "../../../stores/rtl";
+    import ChatMessage from "../ChatMessage.svelte";
+    import { derived, Readable, readable, writable, Writable } from "svelte/store";
+    import PollBuilder from "../PollBuilder.svelte";
+    import GiphySelector from "../GiphySelector.svelte";
+    import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
+    import { rollbar } from "../../../utils/logging";
+    import { toastStore } from "../../../stores/toast";
+    import { relayPublish } from "../../../stores/relay";
+    import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
 
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -115,10 +64,23 @@
 
     let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 
+    $: currentChatMembers = client.currentChatMembers;
+    $: chatStateStore = client.chatStateStore;
+    $: selectedChatId = client.selectedChatId;
+    $: lastCryptoSent = client.lastCryptoSent;
+    $: currentChatUserIds = client.currentChatUserIds;
+    $: remainingStorage = client.remainingStorage;
+    $: typing = client.typing;
+    $: userStore = client.userStore;
+    $: draftThreadMessages = client.draftThreadMessages;
+    $: unconfirmed = client.unconfirmed;
+    $: localMessageUpdates = client.localMessageUpdates;
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: events = derived(
         [serverEventsStore, unconfirmed, localMessageUpdates],
         ([serverEvents, unconf, localUpdates]) => {
-            return mergeEventsAndLocalUpdates(
+            return client.mergeEventsAndLocalUpdates(
                 serverEvents,
                 unconf[unconfirmedKey]?.messages ?? [],
                 localUpdates
@@ -168,11 +130,13 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = canReplyInThread(chat);
-    $: canReact = canReactToMessages(chat);
-    $: messages = groupEvents([rootEvent, ...$events]).reverse() as EventWrapper<Message>[][][];
-    $: preview = isPreviewing(chat);
-    $: pollsAllowed = canCreatePolls(chat);
+    $: canSend = client.canReplyInThread(chat);
+    $: canReact = client.canReactToMessages(chat);
+    $: messages = client
+        .groupEvents([rootEvent, ...$events])
+        .reverse() as EventWrapper<Message>[][][];
+    $: preview = client.isPreviewing(chat);
+    $: pollsAllowed = client.canCreatePolls(chat);
     $: unconfirmedKey = `${chat.chatId}_${threadRootMessageIndex}`;
     $: isFollowedByMe =
         $threadsFollowedByMeStore[chat.chatId]?.has(threadRootMessageIndex) ?? false;
@@ -215,8 +179,8 @@
                 }
             }
 
-            serverEventsStore.update((events) => mergeServerEvents(events, newEvents));
-            makeRtcConnections(client.user.userId, chat, $events, $userStore);
+            serverEventsStore.update((events) => client.mergeServerEvents(events, newEvents));
+            client.makeRtcConnections(client.user.userId, chat, $events, $userStore);
             if (ascending && $withinThreshold) {
                 scrollBottom();
             }
@@ -229,7 +193,7 @@
             if (isFollowedByMe) {
                 const lastLoadedMessageIdx = lastMessageIndex($events);
                 if (lastLoadedMessageIdx !== undefined) {
-                    messagesRead.markThreadRead(
+                    client.markThreadRead(
                         chat.chatId,
                         threadRootMessageIndex,
                         lastLoadedMessageIdx
@@ -263,9 +227,9 @@
 
         const events = resp.events.concat(resp.affectedEvents);
 
-        const userIds = userIdsFromEvents(events);
+        const userIds = client.userIdsFromEvents(events);
         userIds.add(rootEvent.event.sender);
-        await updateUserStore(client.api, chat.chatId, client.user.userId, userIds);
+        await client.updateUserStore(client.api, chat.chatId, client.user.userId, userIds);
 
         return [events, userIds];
     }
@@ -295,7 +259,7 @@
         fileToAttach: MessageContent | undefined,
         nextMessageIndex: number
     ): Message {
-        return createMessage(
+        return client.createMessage(
             client.user.userId,
             nextMessageIndex,
             textContent,
@@ -341,7 +305,7 @@
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const matchingMessage = findMessageById(message.messageId, $events);
+        const matchingMessage = client.findMessageById(message.messageId, $events);
 
         if (matchingMessage !== undefined) {
             localMessageUpdates.markReaction(message.messageId.toString(), {
@@ -353,7 +317,7 @@
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
-        const existing = findMessageById(message.messageEvent.event.messageId, $events);
+        const existing = client.findMessageById(message.messageEvent.event.messageId, $events);
         if (existing !== undefined) {
             return;
         }
@@ -370,7 +334,7 @@
 
         // since we will only get here if we actually have the thread open
         // we should mark read up to this message too
-        messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, messageIndex);
+        client.markThreadRead(chat.chatId, threadRootMessageIndex, messageIndex);
     }
 
     function sendMessageWithAttachment(
@@ -381,7 +345,7 @@
         if (!canSend) return;
 
         if (textContent || fileToAttach) {
-            const storageRequired = getStorageRequiredForMessage(fileToAttach);
+            const storageRequired = client.getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
                 dispatch("upgrade", "explain");
                 return;
@@ -394,7 +358,7 @@
 
             unconfirmed.add(unconfirmedKey, event);
             scrollBottom();
-            messagesRead.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
+            client.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
 
             client.api
                 .sendMessage(chat, client.user, mentioned, msg, threadRootMessageIndex)
@@ -407,7 +371,7 @@
                                 client.user.cryptoAccount
                             );
                         }
-                        trackEvent("sent_threaded_message");
+                        client.trackEvent("sent_threaded_message");
                     } else {
                         unconfirmed.delete(unconfirmedKey, msg.messageId);
                         removeMessage(msg.messageId, client.user.userId);
@@ -423,11 +387,11 @@
                     rollbar.error("Exception sending message", err);
                 });
 
-            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
+            client.sendRtcMessage([...$currentChatUserIds], {
                 kind: "remote_user_sent_message",
                 chatType: chat.kind,
                 chatId: chat.chatId,
-                messageEvent: serialiseMessageForRtc(event),
+                messageEvent: client.serialiseMessageForRtc(event),
                 userId: client.user.userId,
                 threadRootMessageIndex,
             });
@@ -448,15 +412,15 @@
 
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
-            const confirmed = mergeSendMessageResponse(candidate, resp);
-            serverEventsStore.update((events) => mergeServerEvents(events, [confirmed]));
+            const confirmed = client.mergeSendMessageResponse(candidate, resp);
+            serverEventsStore.update((events) => client.mergeServerEvents(events, [confirmed]));
         }
     }
 
     function removeMessage(messageId: bigint, userId: string) {
         unconfirmed.delete(unconfirmedKey, messageId);
         if (userId === client.user.userId) {
-            rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
+            client.sendRtcMessage([...$currentChatUserIds], {
                 kind: "remote_user_removed_message",
                 chatType: chat.kind,
                 chatId: chat.chatId,
@@ -476,10 +440,10 @@
             const msg = {
                 ...editingEvent.event,
                 edited: true,
-                content: getMessageContent(textContent ?? undefined, fileToAttach),
+                content: client.getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            editMessage(client.api, chat, msg, threadRootMessageIndex);
+            client.editMessage(client.api, chat, msg, threadRootMessageIndex);
         }
     }
 
@@ -514,11 +478,11 @@
     }
 
     function onStartTyping() {
-        startTyping(chat, client.user.userId, threadRootMessageIndex);
+        client.startTyping(chat, client.user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        stopTyping(chat, client.user.userId, threadRootMessageIndex);
+        client.stopTyping(chat, client.user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -533,7 +497,7 @@
     }
 
     function createPoll() {
-        if (!canCreatePolls(chat)) return;
+        if (!client.canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -566,7 +530,7 @@
         }
 
         if ($selectedChatId !== undefined) {
-            registerPollVote(
+            client.registerPollVote(
                 client.api,
                 client.user.userId,
                 $selectedChatId,
@@ -585,7 +549,7 @@
             return;
         }
 
-        deleteMessage(
+        client.deleteMessage(
             client.api,
             chat,
             client.user.userId,
@@ -608,24 +572,26 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = containsReaction(client.user.userId, reaction, message.reactions)
+        const kind = client.containsReaction(client.user.userId, reaction, message.reactions)
             ? "remove"
             : "add";
 
-        selectReaction(
-            client.api,
-            chat,
-            client.user.userId,
-            threadRootMessageIndex,
-            message.messageId,
-            reaction,
-            client.user.username,
-            kind
-        ).then((success) => {
-            if (success && kind === "add") {
-                trackEvent("reacted_to_message");
-            }
-        });
+        client
+            .selectReaction(
+                client.api,
+                chat,
+                client.user.userId,
+                threadRootMessageIndex,
+                message.messageId,
+                reaction,
+                client.user.username,
+                kind
+            )
+            .then((success) => {
+                if (success && kind === "add") {
+                    client.trackEvent("reacted_to_message");
+                }
+            });
     }
 
     function clearFocusIndex() {
@@ -731,7 +697,11 @@
         {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
             <div class="day-group">
                 <div class="date-label">
-                    {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
+                    {client.formatMessageDate(
+                        dayGroup[0][0]?.timestamp,
+                        $_("today"),
+                        $_("yesterday")
+                    )}
                 </div>
                 {#each dayGroup as userGroup}
                     {#each userGroup as evt, i (evt.event.messageId.toString())}
@@ -740,7 +710,7 @@
                             focused={evt.event.messageIndex === focusMessageIndex}
                             {observer}
                             confirmed={!unconfirmed.contains(unconfirmedKey, evt.event.messageId)}
-                            senderTyping={isTyping(
+                            senderTyping={client.isTyping(
                                 $typing,
                                 evt.event.sender,
                                 chat.chatId,
@@ -759,11 +729,11 @@
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={canPinMessages(chat)}
-                            canBlockUser={canBlockUsers(chat)}
-                            canDelete={canDeleteOtherUsersMessages(chat)}
+                            canPin={client.canPinMessages(chat)}
+                            canBlockUser={client.canBlockUsers(chat)}
+                            canDelete={client.canDeleteOtherUsersMessages(chat)}
                             canQuoteReply={canSend}
-                            canReact={canReactToMessages(chat)}
+                            canReact={client.canReactToMessages(chat)}
                             canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}

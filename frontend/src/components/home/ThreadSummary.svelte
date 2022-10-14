@@ -1,16 +1,13 @@
 <script lang="ts">
-    import type { ThreadSummary } from "../../domain/chat/chat";
+    import type { OpenChat, ThreadSummary } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "../../domain/user/user";
-    import { userAvatarUrl } from "../../domain/user/user.utils";
-    import { userStore } from "../../stores/user";
-    import { formatMessageDate } from "../../utils/date";
-    import { messagesRead } from "../../stores/markRead";
-    import { threadsFollowedByMeStore } from "../../stores/chat";
-    import { onDestroy } from "svelte";
+    import { getContext, onDestroy } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let threadSummary: ThreadSummary;
     export let indent: boolean;
@@ -20,18 +17,19 @@
     export let chatId: string;
     export let threadRootMessageIndex: number;
 
+    $: messagesRead = client.messagesRead;
+    $: userStore = client.userStore;
+    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: isFollowedByMe = $threadsFollowedByMeStore[chatId]?.has(threadRootMessageIndex) ?? false;
-
     $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now
-
-    $: unreadCount = messagesRead.unreadThreadMessageCount(
+    $: unreadCount = client.unreadThreadMessageCount(
         chatId,
         threadRootMessageIndex,
         lastMessageIndex
     );
 
     const unsub = messagesRead.subscribe(() => {
-        unreadCount = messagesRead.unreadThreadMessageCount(
+        unreadCount = client.unreadThreadMessageCount(
             chatId,
             threadRootMessageIndex,
             lastMessageIndex
@@ -54,7 +52,7 @@
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
-                    url={userAvatarUrl($userStore[participantId])}
+                    url={client.userAvatarUrl($userStore[participantId])}
                     size={AvatarSize.Miniscule} />
             {/each}
             {#if threadSummary.participantIds.size > 5}
@@ -76,7 +74,7 @@
                             ? ""
                             : $_("thread.lastMessage", {
                                   values: {
-                                      date: formatMessageDate(
+                                      date: client.formatMessageDate(
                                           threadSummary.latestEventTimestamp,
                                           $_("today"),
                                           $_("yesterday"),

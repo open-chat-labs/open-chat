@@ -1,22 +1,52 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { get, Readable, writable } from "svelte/store";
-import type { StorageStatus } from "./domain/data/data";
-import type {
-    CreatedUser,
-    IdentityState,
-    PhoneNumber,
-    UserLookup,
-    UserStatus,
-} from "./domain/user/user";
+import { get, writable } from "svelte/store";
+import type { ThreadSyncDetails } from "./domain";
+import {
+    canBlockUsers,
+    canCreatePolls,
+    canDeleteOtherUsersMessages,
+    canPinMessages,
+    canReactToMessages,
+    canReplyInThread,
+    containsReaction,
+    createMessage,
+    findMessageById,
+    getContentAsText,
+    getMessageContent,
+    getStorageRequiredForMessage,
+    getTypingString,
+    groupBySender,
+    groupEvents,
+    makeRtcConnections,
+    mergeEventsAndLocalUpdates,
+    mergeSendMessageResponse,
+    mergeServerEvents,
+    serialiseMessageForRtc,
+    startTyping,
+    stopTyping,
+    userIdsFromEvents,
+} from "./domain/chat/chat.utils";
+import { isPreviewing } from "./domain/chat/chat.utils.shared";
+import type { CreatedUser, IdentityState } from "./domain/user/user";
 import {
     getUserStatus,
     groupAvatarUrl,
+    missingUserIds,
     phoneNumberToString,
     userAvatarUrl,
 } from "./domain/user/user.utils";
+import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
+import type { WebRtcMessage } from "./domain/webrtc/webrtc";
 import { login, startSession } from "./services/auth";
+import {
+    deleteMessage,
+    editMessage,
+    registerPollVote,
+    selectReaction,
+    updateUserStore,
+} from "./services/common/chatThread";
 import { showTrace } from "./services/common/profiling";
 import { Poller } from "./services/poller";
 import { ServiceContainer } from "./services/serviceContainer";
@@ -25,20 +55,40 @@ import {
     lsAuthClientStore,
     selectedAuthProviderStore,
 } from "./stores/authProviders";
-import { currentUserStore, startChatPoller } from "./stores/chat";
-import { startMessagesReadTracker } from "./stores/markRead";
-import { ProfileData, profileStore } from "./stores/profiling";
+import {
+    chatStateStore,
+    chatSummariesStore,
+    currentChatBlockedUsers,
+    currentChatMembers,
+    currentChatUserIds,
+    currentUserStore,
+    selectedChatId,
+    serverChatSummariesStore,
+    startChatPoller,
+    threadsByChatStore,
+    threadsFollowedByMeStore,
+} from "./stores/chat";
+import { lastCryptoSent } from "./stores/crypto";
+import { draftThreadMessages } from "./stores/draftThreadMessages";
+import { localMessageUpdates } from "./stores/localMessageUpdates";
+import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
+import { profileStore } from "./stores/profiling";
 import {
     percentageStorageRemaining,
     percentageStorageUsed,
+    remainingStorage,
     storageInGb,
     storageStore,
     updateStorageLimit,
 } from "./stores/storage";
+import { byThread, isTyping, typing } from "./stores/typing";
+import { unconfirmed } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
-import { formatTokens, ValidatedICPInput, validateTokenInput } from "./utils/cryptoFormatter";
-import { initialiseTracking } from "./utils/tracking";
+import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
+import { formatMessageDate, toDatetimeString, toShortTimeString } from "./utils/date";
+import { toRecord2 } from "./utils/list";
+import { initialiseTracking, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import { isCanisterUrl } from "./utils/urls";
 
@@ -51,7 +101,7 @@ export class OpenChat extends EventTarget {
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
 
-    public identityState = writable<IdentityState>("loading_user");
+    identityState = writable<IdentityState>("loading_user");
 
     constructor() {
         super();
@@ -78,7 +128,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    public login(): void {
+    login(): void {
         this.identityState.set("logging_in");
         login(get(selectedAuthProviderStore)).then((id) => this.loadedIdentity(id));
     }
@@ -116,7 +166,7 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    public onCreatedUser(user: CreatedUser): void {
+    onCreatedUser(user: CreatedUser): void {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
@@ -164,56 +214,32 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    public logout(): Promise<void> {
+    logout(): Promise<void> {
         return this._authClient.then((c) => {
             return c.logout().then(() => window.location.reload());
         });
     }
 
-    public showTrace(): boolean {
-        return showTrace();
-    }
-
-    public get isCanisterUrl(): boolean {
-        return isCanisterUrl;
-    }
-
     // FIXME - find a way to automatically proxy openChat.doStuff to openChat.api.doStuff without having to write a bunch of code
     // so that we don't have to type client.api.doStuff in the calling code
-    public get api(): ServiceContainer {
+    get api(): ServiceContainer {
         if (this._api === undefined)
             throw new Error("OpenChat tried to make an api call before the api was available");
         return this._api;
     }
 
-    public get hasUser(): boolean {
+    get hasUser(): boolean {
         return this._user !== undefined;
     }
 
-    public get user(): CreatedUser {
+    get user(): CreatedUser {
         if (this._user === undefined) {
             throw new Error("OpenChat tried to access the current user before it has been set");
         }
         return this._user;
     }
 
-    public get profileStore(): Readable<ProfileData> {
-        return profileStore;
-    }
-
-    public userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return userAvatarUrl(dataContent);
-    }
-
-    public groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-        return groupAvatarUrl(dataContent);
-    }
-
-    public getUserStatus(now: number, users: UserLookup, userId: string): UserStatus {
-        return getUserStatus(now, users, userId);
-    }
-
-    public async showAuthProviders(): Promise<boolean> {
+    async showAuthProviders(): Promise<boolean> {
         const KEY_STORAGE_DELEGATION = "delegation";
         const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
         const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
@@ -221,54 +247,105 @@ export class OpenChat extends EventTarget {
         return !get(userCreatedStore) && noDelegation;
     }
 
-    public phoneNumberToString(phoneNumber: PhoneNumber): string {
-        return phoneNumberToString(phoneNumber);
+    unreadThreadMessageCount(
+        chatId: string,
+        threadRootMessageIndex: number,
+        latestMessageIndex: number
+    ): number {
+        return this.messagesRead.unreadThreadMessageCount(
+            chatId,
+            threadRootMessageIndex,
+            latestMessageIndex
+        );
     }
 
-    public updateStorageLimit(limit: number): void {
-        return updateStorageLimit(limit);
+    staleThreadsCount(threads: Record<string, ThreadSyncDetails[]>): number {
+        return this.messagesRead.staleThreadsCount(threads);
     }
 
-    public formatTokens(
-        e8s: bigint,
-        minDecimals: number,
-        decimalSeparatorOverride?: string
-    ): string {
-        return formatTokens(e8s, minDecimals, decimalSeparatorOverride);
+    markThreadRead(chatId: string, threadRootMessageIndex: number, readUpTo: number): void {
+        return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
-    public validateTokenInput(value: string): ValidatedICPInput {
-        return validateTokenInput(value);
+    sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
+        rtcConnectionsManager.sendMessage(userIds, message);
     }
+
+    /**
+     * Wrap a bunch of pure utility functions
+     */
+    showTrace = showTrace;
+    isCanisterUrl = isCanisterUrl;
+    userAvatarUrl = userAvatarUrl;
+    groupAvatarUrl = groupAvatarUrl;
+    getUserStatus = getUserStatus;
+    phoneNumberToString = phoneNumberToString;
+    updateStorageLimit = updateStorageLimit;
+    formatTokens = formatTokens;
+    validateTokenInput = validateTokenInput;
+    toShortTimeString = toShortTimeString;
+    formatMessageDate = formatMessageDate;
+    userIdsFromEvents = userIdsFromEvents;
+    missingUserIds = missingUserIds;
+    toRecord2 = toRecord2;
+    toDatetimeString = toDatetimeString;
+    getContentAsText = getContentAsText;
+    groupBySender = groupBySender;
+    getTypingString = getTypingString;
+    canBlockUsers = canBlockUsers;
+    canCreatePolls = canCreatePolls;
+    canDeleteOtherUsersMessages = canDeleteOtherUsersMessages;
+    canPinMessages = canPinMessages;
+    canReactToMessages = canReactToMessages;
+    canReplyInThread = canReplyInThread;
+    containsReaction = containsReaction;
+    createMessage = createMessage;
+    findMessageById = findMessageById;
+    getMessageContent = getMessageContent;
+    getStorageRequiredForMessage = getStorageRequiredForMessage;
+    groupEvents = groupEvents;
+    makeRtcConnections = makeRtcConnections;
+    mergeSendMessageResponse = mergeSendMessageResponse;
+    mergeServerEvents = mergeServerEvents;
+    serialiseMessageForRtc = serialiseMessageForRtc;
+    startTyping = startTyping;
+    stopTyping = stopTyping;
+    mergeEventsAndLocalUpdates = mergeEventsAndLocalUpdates;
+    isPreviewing = isPreviewing;
+    deleteMessage = deleteMessage;
+    editMessage = editMessage;
+    registerPollVote = registerPollVote;
+    selectReaction = selectReaction;
+    updateUserStore = updateUserStore;
+    isTyping = isTyping;
+    trackEvent = trackEvent;
 
     /**
      * Reactive state provided in the form of svelte stores
      */
-    public get percentageStorageRemaining(): Readable<number> {
-        return percentageStorageRemaining;
-    }
-
-    public get percentageStorageUsed(): Readable<number> {
-        return percentageStorageUsed;
-    }
-
-    public get storageStore(): Readable<StorageStatus> {
-        return storageStore;
-    }
-
-    public get storageInGb(): typeof storageInGb {
-        return storageInGb;
-    }
-
-    public get userStore(): typeof userStore {
-        return userStore;
-    }
-
-    public get userCreatedStore(): typeof userCreatedStore {
-        return userCreatedStore;
-    }
-
-    public get selectedAuthProviderStore(): typeof selectedAuthProviderStore {
-        return selectedAuthProviderStore;
-    }
+    profileStore = profileStore;
+    percentageStorageRemaining = percentageStorageRemaining;
+    percentageStorageUsed = percentageStorageUsed;
+    storageStore = storageStore;
+    storageInGb = storageInGb;
+    remainingStorage = remainingStorage;
+    userStore = userStore;
+    userCreatedStore = userCreatedStore;
+    selectedAuthProviderStore = selectedAuthProviderStore;
+    messagesRead = messagesRead;
+    threadsFollowedByMeStore = threadsFollowedByMeStore;
+    threadsByChatStore = threadsByChatStore;
+    serverChatSummariesStore = serverChatSummariesStore;
+    chatSummariesStore = chatSummariesStore;
+    typersByThread = byThread;
+    typing = typing;
+    currentChatUserIds = currentChatUserIds;
+    selectedChatId = selectedChatId;
+    currentChatMembers = currentChatMembers;
+    currentChatBlockedUsers = currentChatBlockedUsers;
+    chatStateStore = chatStateStore;
+    unconfirmed = unconfirmed;
+    localMessageUpdates = localMessageUpdates;
+    lastCryptoSent = lastCryptoSent;
+    draftThreadMessages = draftThreadMessages;
 }
