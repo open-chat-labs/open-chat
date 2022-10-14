@@ -7,8 +7,8 @@ use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInternal, MessageId,
-    MessageIndex, UserId,
+    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, MessageId, MessageIndex,
+    UserId,
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
@@ -17,16 +17,16 @@ use user_canister::send_message::{Response::*, *};
 // and then update the message content to contain the completed transfer.
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn send_message(args: Args) -> Response {
+async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let (mut content, is_bot) = match read_state(|state| validate_request(&args, state)) {
-        ValidateRequestResult::Valid(c, b) => (c, b),
+    let is_bot = match read_state(|state| validate_request(&args, state)) {
+        ValidateRequestResult::Valid(b) => b,
         ValidateRequestResult::Invalid(response) => return response,
-        ValidateRequestResult::RecipientUnknown(c, user_index_canister_id) => {
+        ValidateRequestResult::RecipientUnknown(user_index_canister_id) => {
             let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id: args.recipient };
             match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) => (c, result.is_bot),
+                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) => result.is_bot,
                 Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => return RecipientNotFound,
                 Err(error) => return InternalError(format!("{:?}", error)),
             }
@@ -36,7 +36,7 @@ async fn send_message(args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContentInternal::Crypto(c) = &mut content {
+    if let MessageContent::Crypto(c) = &mut args.content {
         let pending_transaction = match &c.transfer {
             CryptoTransaction::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
@@ -54,14 +54,14 @@ async fn send_message(args: Args) -> Response {
         };
     }
 
-    mutate_state(|state| send_message_impl(args, content, completed_transfer, is_bot, state))
+    mutate_state(|state| send_message_impl(args, completed_transfer, is_bot, state))
 }
 
 #[allow(clippy::large_enum_variant)]
 enum ValidateRequestResult {
-    Valid(MessageContentInternal, bool), // bool is `is_bot`
+    Valid(bool), // Value is `is_bot`
     Invalid(Response),
-    RecipientUnknown(MessageContentInternal, CanisterId), // CanisterId is the user_index canisterId
+    RecipientUnknown(CanisterId), // Value is the user_index canisterId
 }
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateRequestResult {
@@ -75,9 +75,8 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
     }
 
     let now = runtime_state.env.now();
-    let content = args.content.clone().new_content_into_internal();
 
-    if let Err(error) = content.validate_for_new_message(true, args.forwarding, now) {
+    if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -89,15 +88,14 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
             }
         })
     } else if let Some(chat) = runtime_state.data.direct_chats.get(&args.recipient.into()) {
-        ValidateRequestResult::Valid(content, chat.is_bot)
+        ValidateRequestResult::Valid(chat.is_bot)
     } else {
-        ValidateRequestResult::RecipientUnknown(content, runtime_state.data.user_index_canister_id)
+        ValidateRequestResult::RecipientUnknown(runtime_state.data.user_index_canister_id)
     }
 }
 
 fn send_message_impl(
     args: Args,
-    content: MessageContentInternal,
     completed_transfer: Option<CompletedCryptoTransaction>,
     is_bot: bool,
     runtime_state: &mut RuntimeState,
@@ -110,7 +108,7 @@ fn send_message_impl(
         thread_root_message_index: None,
         message_id: args.message_id,
         sender: my_user_id,
-        content,
+        content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,
@@ -203,7 +201,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         sender: recipient,
                         thread_root_message_index: None,
                         message_id: MessageId::generate(|| state.env.random_u32()),
-                        content: message.content,
+                        content: message.content.new_content_into_internal(),
                         replies_to: None,
                         forwarded: false,
                         correlation_id: 0,

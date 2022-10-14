@@ -1,5 +1,4 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::*;
 use crate::{
     CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
@@ -53,6 +52,63 @@ pub enum ContentValidationError {
 }
 
 impl MessageContent {
+    // Determines if the content is valid for a new message, this should not be called on existing
+    // messages
+    pub fn validate_for_new_message(
+        &self,
+        is_direct_chat: bool,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
+        if forwarding {
+            match self {
+                MessageContent::Poll(_) | MessageContent::Crypto(_) | MessageContent::Deleted(_) => {
+                    return Err(ContentValidationError::InvalidTypeForForwarding);
+                }
+                _ => {}
+            };
+        }
+
+        match self {
+            MessageContent::Poll(p) => {
+                if let Err(reason) = p.config.validate(is_direct_chat, now) {
+                    return Err(ContentValidationError::InvalidPoll(reason));
+                }
+            }
+            MessageContent::Crypto(c) => {
+                if c.transfer.is_zero() {
+                    return Err(ContentValidationError::TransferCannotBeZero);
+                } else if c.transfer.exceeds_transfer_limit() {
+                    return Err(ContentValidationError::TransferLimitExceeded(
+                        c.transfer.token().transfer_limit(),
+                    ));
+                }
+            }
+            _ => {}
+        };
+
+        let is_empty = match self {
+            MessageContent::Text(t) => t.text.is_empty(),
+            MessageContent::Image(i) => i.blob_reference.is_none(),
+            MessageContent::Video(v) => v.video_blob_reference.is_none(),
+            MessageContent::Audio(a) => a.blob_reference.is_none(),
+            MessageContent::File(f) => f.blob_reference.is_none(),
+            MessageContent::Poll(p) => p.config.options.is_empty(),
+            MessageContent::Deleted(_) => true,
+            MessageContent::Crypto(_) | MessageContent::Giphy(_) | MessageContent::GovernanceProposal(_) => false,
+        };
+
+        if is_empty {
+            Err(ContentValidationError::Empty)
+        // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
+        // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
+        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContent::GovernanceProposal(_)) {
+            Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
+        } else {
+            Ok(())
+        }
+    }
+
     // This must only be called on the content of new messages, this is because for polls it will
     // set the votes to empty
     pub fn new_content_into_internal(self) -> MessageContentInternal {
@@ -115,66 +171,24 @@ impl MessageContent {
 
         references
     }
+
+    fn text_length(&self) -> usize {
+        match self {
+            MessageContent::Text(t) => t.text.len(),
+            MessageContent::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Deleted(_) => 0,
+            MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
+        }
+    }
 }
 
 impl MessageContentInternal {
-    // Determines if the content is valid for a new message, this should not be called on existing
-    // messages
-    pub fn validate_for_new_message(
-        &self,
-        is_direct_chat: bool,
-        forwarding: bool,
-        now: TimestampMillis,
-    ) -> Result<(), ContentValidationError> {
-        if forwarding {
-            match self {
-                MessageContentInternal::Poll(_) | MessageContentInternal::Crypto(_) | MessageContentInternal::Deleted(_) => {
-                    return Err(InvalidTypeForForwarding);
-                }
-                _ => {}
-            };
-        }
-
-        match self {
-            MessageContentInternal::Poll(p) => {
-                if let Err(reason) = p.config.validate(is_direct_chat, now) {
-                    return Err(InvalidPoll(reason));
-                }
-            }
-            MessageContentInternal::Crypto(c) => {
-                if c.transfer.is_zero() {
-                    return Err(TransferCannotBeZero);
-                } else if c.transfer.exceeds_transfer_limit() {
-                    return Err(TransferLimitExceeded(c.transfer.token().transfer_limit()));
-                }
-            }
-            _ => {}
-        };
-
-        let is_empty = match self {
-            MessageContentInternal::Text(t) => t.text.is_empty(),
-            MessageContentInternal::Image(i) => i.blob_reference.is_none(),
-            MessageContentInternal::Video(v) => v.video_blob_reference.is_none(),
-            MessageContentInternal::Audio(a) => a.blob_reference.is_none(),
-            MessageContentInternal::File(f) => f.blob_reference.is_none(),
-            MessageContentInternal::Poll(p) => p.config.options.is_empty(),
-            MessageContentInternal::Deleted(_) => true,
-            MessageContentInternal::Crypto(_)
-            | MessageContentInternal::Giphy(_)
-            | MessageContentInternal::GovernanceProposal(_) => false,
-        };
-
-        if is_empty {
-            Err(Empty)
-            // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
-            // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInternal::GovernanceProposal(_)) {
-            Err(TextTooLong(MAX_TEXT_LENGTH))
-        } else {
-            Ok(())
-        }
-    }
-
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> MessageContent {
         match self {
             MessageContentInternal::Text(t) => MessageContent::Text(t.clone()),
@@ -191,21 +205,6 @@ impl MessageContentInternal {
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
-        }
-    }
-
-    fn text_length(&self) -> usize {
-        match self {
-            MessageContentInternal::Text(t) => t.text.len(),
-            MessageContentInternal::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::Deleted(_) => 0,
-            MessageContentInternal::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInternal::GovernanceProposal(p) => p.proposal.summary().len(),
         }
     }
 }

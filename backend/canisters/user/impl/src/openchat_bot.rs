@@ -3,7 +3,7 @@ use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContentInternal, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use types::{MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use utils::format::format_to_decimal_places;
 
 // zzyk3-openc-hatbo-tq7my-cai
@@ -24,7 +24,7 @@ pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
         if bot_chat(state).is_none() {
             for message in WELCOME_MESSAGES.iter() {
-                let content = MessageContentInternal::Text(TextContent {
+                let content = MessageContent::Text(TextContent {
                     text: message.to_string(),
                 });
 
@@ -105,11 +105,11 @@ fn to_tokens(tokens: Tokens) -> String {
 }
 
 fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
-    let content = MessageContentInternal::Text(TextContent { text });
+    let content = MessageContent::Text(TextContent { text });
     send_message(content, false, runtime_state);
 }
 
-fn send_message(content: MessageContentInternal, mute_notification: bool, runtime_state: &mut RuntimeState) {
+fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
     let args = HandleMessageArgs {
         message_id: None,
         sender_message_index: None,

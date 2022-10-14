@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use types::{
-    CanisterId, DirectMessageNotification, MessageContentInternal, MessageId, MessageIndex, Notification, ReplyContext, UserId,
+    CanisterId, DirectMessageNotification, MessageContent, MessageId, MessageIndex, Notification, ReplyContext, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 
@@ -32,7 +32,7 @@ async fn c2c_send_message(args: Args) -> Response {
                 message_id: Some(args.message_id),
                 sender_message_index: Some(args.sender_message_index),
                 sender_name: args.sender_name,
-                content: args.content.new_content_into_internal(),
+                content: args.content,
                 replies_to: args.replies_to,
                 forwarding: args.forwarding,
                 correlation_id: args.correlation_id,
@@ -89,7 +89,7 @@ pub(crate) struct HandleMessageArgs {
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
-    pub content: MessageContentInternal,
+    pub content: MessageContent,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
     pub correlation_id: u64,
@@ -141,7 +141,7 @@ pub(crate) fn handle_message_impl(
             .message_id
             .unwrap_or_else(|| MessageId::generate(|| runtime_state.env.random_u32())),
         sender,
-        content: args.content,
+        content: args.content.new_content_into_internal(),
         replies_to,
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,
