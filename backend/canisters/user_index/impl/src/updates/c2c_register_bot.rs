@@ -1,13 +1,13 @@
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
-use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
+use ic_cdk_macros::update;
 use types::{Cycles, UserId, Version};
-use user_index_canister::register_bot::{Response::*, *};
+use user_index_canister::c2c_register_bot::{Response::*, *};
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
-#[update_candid_and_msgpack]
+#[update]
 #[trace]
 fn register_bot(args: Args) -> Response {
     mutate_state(|state| register_bot_impl(args, state))
