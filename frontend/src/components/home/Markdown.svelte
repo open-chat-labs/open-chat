@@ -1,10 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { userStore } from "../../stores/user";
     import { marked } from "marked";
     import { rollbar } from "../../utils/logging";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "utils/domPurify";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let text: string;
     export let inline: boolean = true;
@@ -12,6 +15,7 @@
     export let suppressLinks: boolean = false;
 
     let sanitized = "unsafe";
+    $: userStore = client.userStore;
     $: options = {
         breaks: !oneLine,
     };

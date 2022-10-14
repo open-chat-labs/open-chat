@@ -2,10 +2,13 @@
 
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
-    import { groupAvatarUrl } from "../../domain/user/user.utils";
+    import { AvatarSize, UserStatus } from "openchat-client";
+    import type { GroupChatSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary;
     export let noVisibleEvents: boolean;
@@ -19,7 +22,10 @@
         </div>
     {/if}
     <div class="pop">
-        <Avatar url={groupAvatarUrl(group)} status={UserStatus.None} size={AvatarSize.ExtraLarge} />
+        <Avatar
+            url={client.groupAvatarUrl(group)}
+            status={UserStatus.None}
+            size={AvatarSize.ExtraLarge} />
     </div>
     <div>
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {

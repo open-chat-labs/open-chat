@@ -5,4 +5,6 @@ export * from "./chat";
 export * from "./auth";
 export * from "./faq";
 export * from "./crypto";
+export * from "./notifications";
 export * from "./webrtc/webrtc";
+export * from "./search/search";

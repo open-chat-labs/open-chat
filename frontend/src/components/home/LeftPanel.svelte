@@ -4,8 +4,9 @@
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
-    } from "../../domain/search/search";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
+        CreatedUser,
+        UserSummary,
+    } from "openchat-client";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;

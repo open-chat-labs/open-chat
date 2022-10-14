@@ -1,4 +1,4 @@
-import type { MessageContent } from "../chat/chat";
+import type { CallerNotInGroup, MessageContent } from "../chat/chat";
 import type { DataContent } from "../data/data";
 
 export type GroupMatch = DataContent & {
@@ -31,10 +31,6 @@ export type TermInvalid = {
 
 export type ChatNotFound = {
     kind: "chat_not_found";
-};
-
-export type CallerNotInGroup = {
-    kind: "caller_not_in_group";
 };
 
 export type GroupSearchSuccess = {

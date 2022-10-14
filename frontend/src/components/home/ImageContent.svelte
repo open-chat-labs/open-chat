@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
-    import type { ImageContent } from "../../domain/chat/chat";
+    import type { ImageContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ContentCaption from "./ContentCaption.svelte";

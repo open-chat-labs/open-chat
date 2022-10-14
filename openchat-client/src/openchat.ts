@@ -11,6 +11,7 @@ import {
     canPinMessages,
     canReactToMessages,
     canReplyInThread,
+    canSendMessages,
     containsReaction,
     createMessage,
     findMessageById,
@@ -23,6 +24,7 @@ import {
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
+    mergeChatMetrics,
     mergeEventsAndLocalUpdates,
     mergeSendMessageResponse,
     mergeServerEvents,
@@ -32,7 +34,7 @@ import {
     stopTyping,
     userIdsFromEvents,
 } from "./domain/chat/chat.utils";
-import { isPreviewing } from "./domain/chat/chat.utils.shared";
+import { emptyChatMetrics, isPreviewing } from "./domain/chat/chat.utils.shared";
 import type { CreatedUser, IdentityState } from "./domain/user/user";
 import {
     buildUsernameList,
@@ -65,10 +67,17 @@ import {
     lsAuthClientStore,
     selectedAuthProviderStore,
 } from "./stores/authProviders";
+import { blockedUsers } from "./stores/blockedUsers";
 import {
+    chatsInitialised,
+    chatsLoading,
     chatStateStore,
+    chatSummariesListStore,
     chatSummariesStore,
+    clearSelectedChat,
+    createDirectChat,
     currentChatBlockedUsers,
+    currentChatDraftMessage,
     currentChatMembers,
     currentChatPinnedMessages,
     currentChatRules,
@@ -77,13 +86,16 @@ import {
     eventsStore,
     focusThreadMessageIndex,
     proposalTopicsStore,
+    removeChat,
     selectedChatId,
     selectedChatStore,
     selectedServerChatStore,
     serverChatSummariesStore,
+    setSelectedChat,
     startChatPoller,
     threadsByChatStore,
     threadsFollowedByMeStore,
+    updateSummaryWithConfirmedMessage,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -93,8 +105,9 @@ import {
     filteredProposalsStore,
     toggleProposalFilter,
 } from "./stores/filteredProposals";
-import { localMessageUpdates } from "./stores/localMessageUpdates";
+import { localMessageUpdates, startPruningLocalUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
+import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import {
     percentageStorageRemaining,
@@ -104,11 +117,13 @@ import {
     storageStore,
     updateStorageLimit,
 } from "./stores/storage";
+import { archivedChatsStore, mutedChatsStore } from "./stores/tempChatsStore";
 import { translationStore } from "./stores/translation";
 import { byThread, isTyping, typing } from "./stores/typing";
 import { unconfirmed } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
+import { setCachedMessageFromNotification } from "./utils/caching";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
@@ -119,6 +134,7 @@ import {
 } from "./utils/date";
 import { toRecord2 } from "./utils/list";
 import { audioRecordingMimeType, fillMessage, twitterLinkRegex, youtubeRegex } from "./utils/media";
+import { delegateToChatComponent, filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import { toTitleCase } from "./utils/string";
 import { formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, trackEvent } from "./utils/tracking";
@@ -271,6 +287,10 @@ export class OpenChat extends EventTarget {
         return this._user;
     }
 
+    set user(user: CreatedUser) {
+        this._user = user;
+    }
+
     async showAuthProviders(): Promise<boolean> {
         const KEY_STORAGE_DELEGATION = "delegation";
         const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
@@ -301,6 +321,14 @@ export class OpenChat extends EventTarget {
 
     sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
         rtcConnectionsManager.sendMessage(userIds, message);
+    }
+
+    initWebRtc(): void {
+        rtcConnectionsManager.init(this.user.userId);
+    }
+
+    subscribeToWebRtc(onMessage: (message: unknown) => void): void {
+        rtcConnectionsManager.subscribe(onMessage);
     }
 
     /**
@@ -371,6 +399,19 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
+    setCachedMessageFromNotification = setCachedMessageFromNotification;
+    delegateToChatComponent = delegateToChatComponent;
+    filterWebRtcMessage = filterWebRtcMessage;
+    parseWebRtcMessage = parseWebRtcMessage;
+    startPruningLocalUpdates = startPruningLocalUpdates;
+    mergeChatMetrics = mergeChatMetrics;
+    emptyChatMetrics = emptyChatMetrics;
+    createDirectChat = createDirectChat;
+    setSelectedChat = setSelectedChat;
+    clearSelectedChat = clearSelectedChat;
+    updateSummaryWithConfirmedMessage = updateSummaryWithConfirmedMessage;
+    removeChat = removeChat;
+    canSendMessages = canSendMessages;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -410,4 +451,12 @@ export class OpenChat extends EventTarget {
     filteredProposalsStore = filteredProposalsStore;
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
+    archivedChatsStore = archivedChatsStore;
+    mutedChatsStore = mutedChatsStore;
+    pinnedChatsStore = pinnedChatsStore;
+    chatSummariesListStore = chatSummariesListStore;
+    chatsLoading = chatsLoading;
+    chatsInitialised = chatsInitialised;
+    currentChatDraftMessage = currentChatDraftMessage;
+    blockedUsers = blockedUsers;
 }

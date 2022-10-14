@@ -9,9 +9,25 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
-    import type { Notification } from "../../domain/notifications";
+    import type {
+        Notification,
+        GroupSearchResponse,
+        MessageMatch,
+        SearchAllMessagesResponse,
+        UserSummary,
+        ChatSummary,
+        EnhancedReplyContext,
+        EventWrapper,
+        GroupChatSummary,
+        GroupRules,
+        MemberRole,
+        Message,
+        Questions,
+        WebRtcMessage,
+        OpenChat,
+    } from "openchat-client";
     import Overlay from "../Overlay.svelte";
-    import { getContext, onMount, setContext, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
         dimensions,
@@ -24,79 +40,23 @@
     import type { RouteParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import type {
-        GroupSearchResponse,
-        MessageMatch,
-        SearchAllMessagesResponse,
-    } from "../../domain/search/search";
-    import type { UserSummary } from "../../domain/user/user";
-    import { blockedUsers } from "../../stores/blockedUsers";
-    import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-    import { userStore } from "../../stores/user";
     import { fullScreen } from "../../stores/settings";
     import { initNotificationStores } from "../../stores/notifications";
     import {
         closeNotificationsForChat,
         initNotificationsServiceWorker,
     } from "../../utils/notifications";
-    import { filterByChatType, RightPanelState } from "../../domain/rightPanel";
+    import { filterByChatType, RightPanelState } from "./rightPanel";
     import { rollbar } from "../../utils/logging";
-    import type {
-        ChatSummary,
-        EnhancedReplyContext,
-        EventWrapper,
-        GroupChatSummary,
-        GroupRules,
-        MemberRole,
-        Message,
-    } from "../../domain/chat/chat";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
-    import type { Questions } from "../../domain/faq";
-    import type { Share } from "../../domain/share";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import {
-        canSendMessages,
-        mergeChatMetrics,
-        userIdsFromEvents,
-    } from "../../domain/chat/chat.utils";
-    import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
-    import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import {
-        chatSummariesListStore,
-        chatSummariesStore,
-        chatsLoading,
-        selectedChatStore,
-        selectedChatId,
-        chatsInitialised,
-        createDirectChat,
-        setSelectedChat,
-        serverChatSummariesStore,
-        currentUserStore,
-        removeChat,
-        updateSummaryWithConfirmedMessage,
-        clearSelectedChat,
-        currentChatDraftMessage,
-        chatStateStore,
-    } from "../../stores/chat";
-    import { setCachedMessageFromNotification } from "../../utils/caching";
-    import { missingUserIds } from "../../domain/user/user.utils";
-    import {
-        delegateToChatComponent,
-        filterWebRtcMessage,
-        parseWebRtcMessage,
-    } from "../../utils/rtc";
-    import { startPruningLocalUpdates } from "../../stores/localMessageUpdates";
-    import { pinnedChatsStore } from "../../stores/pinnedChats";
     import type Thread from "./thread/Thread.svelte";
-    import type { WebRtcMessage } from "domain/webrtc/webrtc";
-    import { archivedChatsStore, mutedChatsStore } from "../../stores/tempChatsStore";
-    import { unconfirmed } from "stores/unconfirmed";
-    import type { OpenChat } from "openchat-client";
+    import type { Share } from "../../utils/share";
 
     export let logout: () => void;
 
@@ -158,13 +118,29 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: mutedChatsStore = client.mutedChatsStore;
+    $: archivedChatsStore = client.archivedChatsStore;
+    $: pinnedChatsStore = client.pinnedChatsStore;
+    $: blockedUsers = client.blockedUsers;
+    $: userStore = client.userStore;
+    $: unconfirmed = client.unconfirmed;
+    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: chatSummariesStore = client.chatSummariesStore;
+    $: chatsLoading = client.chatsLoading;
+    $: selectedChatStore = client.selectedChatStore;
+    $: selectedChatId = client.selectedChatId;
+    $: chatsInitialised = client.chatsInitialised;
+    $: serverChatSummariesStore = client.serverChatSummariesStore;
+    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: chatStateStore = client.chatStateStore;
+
     $: userId = client.user.userId;
     $: wasmVersion = client.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: combinedMetrics = $chatSummariesListStore
         .map((c) => c.myMetrics)
-        .reduce(mergeChatMetrics, emptyChatMetrics());
+        .reduce(client.mergeChatMetrics, client.emptyChatMetrics());
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
 
@@ -195,23 +171,23 @@
 
     onMount(() => {
         // bootstrap anything that needs a service container here
-        rtcConnectionsManager.init(client.user.userId);
-        rtcConnectionsManager.subscribe((msg) => routeRtcMessages(msg as WebRtcMessage));
+        client.initWebRtc();
+        client.subscribeToWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
         initNotificationStores();
-        initNotificationsServiceWorker(api, (n) => notificationReceived(n));
-        startPruningLocalUpdates();
+        initNotificationsServiceWorker(client.api, (n) => notificationReceived(n));
+        client.startPruningLocalUpdates();
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
-        const fromChatId = filterWebRtcMessage(msg);
+        const fromChatId = client.filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
-        const parsedMsg = parseWebRtcMessage(fromChatId, msg);
+        const parsedMsg = client.parseWebRtcMessage(fromChatId, msg);
 
         if (parsedMsg.threadRootMessageIndex !== undefined) {
             // do we have the thread window open for this thread
             threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
         } else {
-            if (delegateToChatComponent(parsedMsg)) {
+            if (client.delegateToChatComponent(parsedMsg)) {
                 currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
             } else {
                 if (parsedMsg.kind === "remote_user_sent_message") {
@@ -233,7 +209,7 @@
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (qs.get("type") === "direct") {
-                createDirectChat(chatId);
+                client.createDirectChat(chatId);
                 push(`/${chatId}`);
                 hotGroups = { kind: "idle" };
                 return;
@@ -261,7 +237,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
+        client.setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -272,7 +248,7 @@
         if (initialised) {
             if (pathParams.chatId === "threads") {
                 closeThread();
-                clearSelectedChat();
+                client.clearSelectedChat();
                 hotGroups = { kind: "idle" };
             } else if (pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
@@ -320,7 +296,7 @@
                 } else {
                     // we do *not* have a chat in the url
                     if ($selectedChatId !== undefined) {
-                        clearSelectedChat();
+                        client.clearSelectedChat();
                     }
 
                     if (!$mobileWidth && hotGroups.kind === "idle") {
@@ -433,7 +409,7 @@
             return;
         }
 
-        setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+        client.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
 
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         Promise.all([
@@ -446,7 +422,7 @@
             ),
             addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
-            updateSummaryWithConfirmedMessage(chatId, m);
+            client.updateSummaryWithConfirmedMessage(chatId, m);
 
             if ($selectedChatId === chatId) {
                 currentChatMessages?.handleMessageSentByOtherExternal(m);
@@ -455,8 +431,8 @@
     }
 
     async function addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
-        const users = userIdsFromEvents([message]);
-        const missingUsers = missingUserIds($userStore, users);
+        const users = client.userIdsFromEvents([message]);
+        const missingUsers = client.missingUserIds($userStore, users);
         if (missingUsers.length > 0) {
             const usersResp = await client.api.getUsers(
                 {
@@ -482,11 +458,11 @@
             blobData: ev.detail.data,
             blobUrl: ev.detail.url,
         };
-        user = {
+
+        client.user = {
             ...user,
             ...data,
         };
-        currentUserStore.set(user);
 
         const partialUser = $userStore[user.userId];
         if (partialUser) {
@@ -751,7 +727,7 @@
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("deleteGroupSuccess");
-                    removeChat(chatId);
+                    client.removeChat(chatId);
                 } else {
                     rollbar.warn("Unable to delete group", resp);
                     toastStore.showFailureToast("deleteGroupFailure");
@@ -772,7 +748,7 @@
             .then((resp) => {
                 if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
                     toastStore.showSuccessToast("leftGroup");
-                    removeChat(chatId);
+                    client.removeChat(chatId);
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -793,7 +769,7 @@
         if (ev.detail === $pathParams.chatId) {
             push("/");
         }
-        tick().then(() => removeChat(ev.detail));
+        tick().then(() => client.removeChat(ev.detail));
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -803,7 +779,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            createDirectChat(ev.detail);
+            client.createDirectChat(ev.detail);
             push(`/${ev.detail}`);
         }
     }
@@ -834,7 +810,7 @@
             push(`/${chat.chatId}`);
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            createDirectChat(ev.detail.sender!.userId);
+            client.createDirectChat(ev.detail.sender!.userId);
             push(`/${ev.detail.sender!.userId}`);
         }
     }
@@ -978,7 +954,7 @@
     function cancelPreview(ev: CustomEvent<string>) {
         push("/");
         tick().then(() => {
-            removeChat(ev.detail);
+            client.removeChat(ev.detail);
         });
     }
 
@@ -1042,9 +1018,9 @@
         chatStateStore.setProp(group.chatId, "rules", rules);
         addOrReplaceChat(group);
         if (group.public) {
-            trackEvent("public_group_created");
+            client.trackEvent("public_group_created");
         } else {
-            trackEvent("private_group_created");
+            client.trackEvent("private_group_created");
         }
         rightPanelHistory =
             $screenWidth === ScreenWidth.ExtraExtraLarge
@@ -1064,7 +1040,9 @@
         chats: ChatSummary[],
         selectedChatId: string | undefined
     ): ChatSummary[] {
-        return chats.filter((c) => selectedChatId !== c.chatId && canSendMessages(c, $userStore));
+        return chats.filter(
+            (c) => selectedChatId !== c.chatId && client.canSendMessages(c, $userStore)
+        );
     }
 
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
