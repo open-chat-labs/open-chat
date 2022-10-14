@@ -27,7 +27,7 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{EventIndex, MessageContent, TextContent, UserId};
+    use types::{ChatId, EventIndex, GroupRules, MessageContent, TextContent, UserId};
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -54,6 +54,49 @@ pub mod happy_path {
         match response {
             user_canister::send_message::Response::Success(result) => result,
             response => panic!("'send_message' error: {:?}", response),
+        }
+    }
+
+    pub fn create_group(
+        env: &mut StateMachine,
+        sender: &User,
+        name: &str,
+        is_public: bool,
+        history_visible_to_new_joiners: bool,
+    ) -> ChatId {
+        let response = super::create_group(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::create_group::Args {
+                is_public,
+                name: name.to_string(),
+                description: format!("{name}_description"),
+                avatar: None,
+                history_visible_to_new_joiners,
+                permissions: None,
+                rules: GroupRules::default(),
+                subtype: None,
+            },
+        );
+
+        match response {
+            user_canister::create_group::Response::Success(result) => result.chat_id,
+            response => panic!("'create_group' error: {:?}", response),
+        }
+    }
+
+    pub fn initial_state(env: &StateMachine, sender: &User) -> user_canister::initial_state::SuccessResult {
+        let response = super::initial_state(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::initial_state::Args { disable_cache: None },
+        );
+
+        match response {
+            user_canister::initial_state::Response::Success(result) => result,
+            response => panic!("'initial_state' error: {:?}", response),
         }
     }
 

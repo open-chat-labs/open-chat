@@ -28,5 +28,5 @@ fn register_users() {
     let user_index_canister::users::Response::Success(result) = response;
     assert_eq!(result.users.len(), user_count);
 
-    return_env(env, canister_ids)
+    return_env(env, canister_ids);
 }

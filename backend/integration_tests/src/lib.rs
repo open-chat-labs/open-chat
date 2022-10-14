@@ -5,6 +5,7 @@ use candid::Principal;
 use types::{CanisterId, UserId};
 
 mod client;
+mod initial_state_and_updates_tests;
 mod register_user_tests;
 mod rng;
 mod send_message_tests;
@@ -12,6 +13,7 @@ mod setup;
 mod utils;
 mod wasms;
 
+#[derive(Debug)]
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
