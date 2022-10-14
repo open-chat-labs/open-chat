@@ -11,6 +11,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+bot_api = { path = "../../../bots/api" }
+bot_c2c_client = { path = "../../../bots/c2c_client" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }

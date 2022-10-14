@@ -30,11 +30,13 @@ type SendMessageResponse =
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
+        RecipientNotFound;
         InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
+        InternalError: text;
     };
 
 type EditMessageArgs =

@@ -26,7 +26,7 @@ itertools = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
-sha2 = "0.10.2"
+sha2 = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
