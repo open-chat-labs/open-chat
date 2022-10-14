@@ -5,5 +5,5 @@ export interface AccountBalanceArgs { 'account' : AccountIdentifier }
 export type AccountIdentifier = Uint8Array;
 export interface Tokens { 'e8s' : bigint }
 export interface _SERVICE {
-  'account_balance' : ActorMethod<[AccountBalanceArgs], Tokens>
+  'account_balance' : ActorMethod<[AccountBalanceArgs], Tokens>,
 }

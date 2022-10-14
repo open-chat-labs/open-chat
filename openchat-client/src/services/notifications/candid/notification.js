@@ -14,15 +14,15 @@ export const Notification = IDL.Variant({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
+              'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
-            })
+              'width' : IDL.Nat32,
+            }),
           }),
           'File' : IDL.Record({
             'name' : IDL.Text,
@@ -31,7 +31,7 @@ export const Notification = IDL.Variant({
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Poll' : IDL.Record({
             'votes' : IDL.Record({
@@ -40,9 +40,9 @@ export const Notification = IDL.Variant({
                 'Visible' : IDL.Vec(
                   IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
                 ),
-                'Hidden' : IDL.Nat32
+                'Hidden' : IDL.Nat32,
               }),
-              'user' : IDL.Vec(IDL.Nat32)
+              'user' : IDL.Vec(IDL.Nat32),
             }),
             'ended' : IDL.Bool,
             'config' : IDL.Record({
@@ -51,8 +51,8 @@ export const Notification = IDL.Variant({
               'show_votes_before_end_date' : IDL.Bool,
               'end_date' : IDL.Opt(IDL.Nat64),
               'anonymous' : IDL.Bool,
-              'options' : IDL.Vec(IDL.Text)
-            })
+              'options' : IDL.Vec(IDL.Text),
+            }),
           }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({
@@ -63,7 +63,7 @@ export const Notification = IDL.Variant({
             ),
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
@@ -78,12 +78,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -94,10 +94,10 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Nat64
+                'proposer' : IDL.Nat64,
               }),
               'SNS' : IDL.Record({
                 'id' : IDL.Nat64,
@@ -108,12 +108,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -124,19 +124,19 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Vec(IDL.Nat8)
-              })
-            })
+                'proposer' : IDL.Vec(IDL.Nat8),
+              }),
+            }),
           }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Crypto' : IDL.Record({
             'recipient' : IDL.Principal,
@@ -146,7 +146,7 @@ export const Notification = IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -154,19 +154,19 @@ export const Notification = IDL.Variant({
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -176,19 +176,19 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -197,18 +197,18 @@ export const Notification = IDL.Variant({
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -219,36 +219,36 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'User' : IDL.Principal,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
                     'owner' : IDL.Principal,
-                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
-              })
-            })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+              }),
+            }),
           }),
           'Video' : IDL.Record({
             'height' : IDL.Nat32,
@@ -261,12 +261,12 @@ export const Notification = IDL.Variant({
             'mime_type' : IDL.Text,
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
-            'deleted_by' : IDL.Principal
-          })
+            'deleted_by' : IDL.Principal,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -276,25 +276,25 @@ export const Notification = IDL.Variant({
             'latest_event_timestamp' : IDL.Nat64,
             'participant_ids' : IDL.Vec(IDL.Principal),
             'reply_count' : IDL.Nat32,
-            'latest_event_index' : IDL.Nat32
+            'latest_event_index' : IDL.Nat32,
           })
         ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
-            'event_index' : IDL.Nat32
+            'event_index' : IDL.Nat32,
           })
         ),
         'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Principal))),
-        'message_index' : IDL.Nat32
+        'message_index' : IDL.Nat32,
       }),
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
-      'correlation_id' : IDL.Nat64
+      'correlation_id' : IDL.Nat64,
     }),
     'timestamp' : IDL.Nat64,
-    'reaction' : IDL.Text
+    'reaction' : IDL.Text,
   }),
   'DirectMessageNotification' : IDL.Record({
     'sender' : IDL.Principal,
@@ -308,15 +308,15 @@ export const Notification = IDL.Variant({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
+              'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
-            })
+              'width' : IDL.Nat32,
+            }),
           }),
           'File' : IDL.Record({
             'name' : IDL.Text,
@@ -325,7 +325,7 @@ export const Notification = IDL.Variant({
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Poll' : IDL.Record({
             'votes' : IDL.Record({
@@ -334,9 +334,9 @@ export const Notification = IDL.Variant({
                 'Visible' : IDL.Vec(
                   IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
                 ),
-                'Hidden' : IDL.Nat32
+                'Hidden' : IDL.Nat32,
               }),
-              'user' : IDL.Vec(IDL.Nat32)
+              'user' : IDL.Vec(IDL.Nat32),
             }),
             'ended' : IDL.Bool,
             'config' : IDL.Record({
@@ -345,8 +345,8 @@ export const Notification = IDL.Variant({
               'show_votes_before_end_date' : IDL.Bool,
               'end_date' : IDL.Opt(IDL.Nat64),
               'anonymous' : IDL.Bool,
-              'options' : IDL.Vec(IDL.Text)
-            })
+              'options' : IDL.Vec(IDL.Text),
+            }),
           }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({
@@ -357,7 +357,7 @@ export const Notification = IDL.Variant({
             ),
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
@@ -372,12 +372,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -388,10 +388,10 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Nat64
+                'proposer' : IDL.Nat64,
               }),
               'SNS' : IDL.Record({
                 'id' : IDL.Nat64,
@@ -402,12 +402,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -418,19 +418,19 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Vec(IDL.Nat8)
-              })
-            })
+                'proposer' : IDL.Vec(IDL.Nat8),
+              }),
+            }),
           }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Crypto' : IDL.Record({
             'recipient' : IDL.Principal,
@@ -440,7 +440,7 @@ export const Notification = IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -448,19 +448,19 @@ export const Notification = IDL.Variant({
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -470,19 +470,19 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -491,18 +491,18 @@ export const Notification = IDL.Variant({
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -513,36 +513,36 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'User' : IDL.Principal,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
                     'owner' : IDL.Principal,
-                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
-              })
-            })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+              }),
+            }),
           }),
           'Video' : IDL.Record({
             'height' : IDL.Nat32,
@@ -555,12 +555,12 @@ export const Notification = IDL.Variant({
             'mime_type' : IDL.Text,
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
-            'deleted_by' : IDL.Principal
-          })
+            'deleted_by' : IDL.Principal,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -570,25 +570,25 @@ export const Notification = IDL.Variant({
             'latest_event_timestamp' : IDL.Nat64,
             'participant_ids' : IDL.Vec(IDL.Principal),
             'reply_count' : IDL.Nat32,
-            'latest_event_index' : IDL.Nat32
+            'latest_event_index' : IDL.Nat32,
           })
         ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
-            'event_index' : IDL.Nat32
+            'event_index' : IDL.Nat32,
           })
         ),
         'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Principal))),
-        'message_index' : IDL.Nat32
+        'message_index' : IDL.Nat32,
       }),
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
-      'correlation_id' : IDL.Nat64
+      'correlation_id' : IDL.Nat64,
     }),
     'sender_name' : IDL.Text,
-    'thread_root_message_index' : IDL.Opt(IDL.Nat32)
+    'thread_root_message_index' : IDL.Opt(IDL.Nat32),
   }),
   'GroupMessageNotification' : IDL.Record({
     'mentioned' : IDL.Vec(
@@ -605,15 +605,15 @@ export const Notification = IDL.Variant({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
+              'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
-            })
+              'width' : IDL.Nat32,
+            }),
           }),
           'File' : IDL.Record({
             'name' : IDL.Text,
@@ -622,7 +622,7 @@ export const Notification = IDL.Variant({
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Poll' : IDL.Record({
             'votes' : IDL.Record({
@@ -631,9 +631,9 @@ export const Notification = IDL.Variant({
                 'Visible' : IDL.Vec(
                   IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
                 ),
-                'Hidden' : IDL.Nat32
+                'Hidden' : IDL.Nat32,
               }),
-              'user' : IDL.Vec(IDL.Nat32)
+              'user' : IDL.Vec(IDL.Nat32),
             }),
             'ended' : IDL.Bool,
             'config' : IDL.Record({
@@ -642,8 +642,8 @@ export const Notification = IDL.Variant({
               'show_votes_before_end_date' : IDL.Bool,
               'end_date' : IDL.Opt(IDL.Nat64),
               'anonymous' : IDL.Bool,
-              'options' : IDL.Vec(IDL.Text)
-            })
+              'options' : IDL.Vec(IDL.Text),
+            }),
           }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({
@@ -654,7 +654,7 @@ export const Notification = IDL.Variant({
             ),
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
@@ -669,12 +669,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -685,10 +685,10 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Nat64
+                'proposer' : IDL.Nat64,
               }),
               'SNS' : IDL.Record({
                 'id' : IDL.Nat64,
@@ -699,12 +699,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -715,19 +715,19 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Vec(IDL.Nat8)
-              })
-            })
+                'proposer' : IDL.Vec(IDL.Nat8),
+              }),
+            }),
           }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Crypto' : IDL.Record({
             'recipient' : IDL.Principal,
@@ -737,7 +737,7 @@ export const Notification = IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -745,19 +745,19 @@ export const Notification = IDL.Variant({
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -767,19 +767,19 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -788,18 +788,18 @@ export const Notification = IDL.Variant({
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -810,36 +810,36 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'User' : IDL.Principal,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
                     'owner' : IDL.Principal,
-                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
-              })
-            })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+              }),
+            }),
           }),
           'Video' : IDL.Record({
             'height' : IDL.Nat32,
@@ -852,12 +852,12 @@ export const Notification = IDL.Variant({
             'mime_type' : IDL.Text,
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
-            'deleted_by' : IDL.Principal
-          })
+            'deleted_by' : IDL.Principal,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -867,27 +867,27 @@ export const Notification = IDL.Variant({
             'latest_event_timestamp' : IDL.Nat64,
             'participant_ids' : IDL.Vec(IDL.Principal),
             'reply_count' : IDL.Nat32,
-            'latest_event_index' : IDL.Nat32
+            'latest_event_index' : IDL.Nat32,
           })
         ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
-            'event_index' : IDL.Nat32
+            'event_index' : IDL.Nat32,
           })
         ),
         'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Principal))),
-        'message_index' : IDL.Nat32
+        'message_index' : IDL.Nat32,
       }),
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
-      'correlation_id' : IDL.Nat64
+      'correlation_id' : IDL.Nat64,
     }),
     'sender_name' : IDL.Text,
     'chat_id' : IDL.Principal,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
-    'group_name' : IDL.Text
+    'group_name' : IDL.Text,
   }),
   'GroupReactionAddedNotification' : IDL.Record({
     'added_by_name' : IDL.Text,
@@ -902,15 +902,15 @@ export const Notification = IDL.Variant({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
+              'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
               'mime_type' : IDL.Text,
-              'width' : IDL.Nat32
-            })
+              'width' : IDL.Nat32,
+            }),
           }),
           'File' : IDL.Record({
             'name' : IDL.Text,
@@ -919,7 +919,7 @@ export const Notification = IDL.Variant({
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Poll' : IDL.Record({
             'votes' : IDL.Record({
@@ -928,9 +928,9 @@ export const Notification = IDL.Variant({
                 'Visible' : IDL.Vec(
                   IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
                 ),
-                'Hidden' : IDL.Nat32
+                'Hidden' : IDL.Nat32,
               }),
-              'user' : IDL.Vec(IDL.Nat32)
+              'user' : IDL.Vec(IDL.Nat32),
             }),
             'ended' : IDL.Bool,
             'config' : IDL.Record({
@@ -939,8 +939,8 @@ export const Notification = IDL.Variant({
               'show_votes_before_end_date' : IDL.Bool,
               'end_date' : IDL.Opt(IDL.Nat64),
               'anonymous' : IDL.Bool,
-              'options' : IDL.Vec(IDL.Text)
-            })
+              'options' : IDL.Vec(IDL.Text),
+            }),
           }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({
@@ -951,7 +951,7 @@ export const Notification = IDL.Variant({
             ),
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
@@ -966,12 +966,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -982,10 +982,10 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Nat64
+                'proposer' : IDL.Nat64,
               }),
               'SNS' : IDL.Record({
                 'id' : IDL.Nat64,
@@ -996,12 +996,12 @@ export const Notification = IDL.Variant({
                   'Rejected' : IDL.Null,
                   'Executed' : IDL.Null,
                   'Adopted' : IDL.Null,
-                  'Unspecified' : IDL.Null
+                  'Unspecified' : IDL.Null,
                 }),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
-                  'total' : IDL.Nat64
+                  'total' : IDL.Nat64,
                 }),
                 'title' : IDL.Text,
                 'created' : IDL.Nat64,
@@ -1012,19 +1012,19 @@ export const Notification = IDL.Variant({
                   'ReadyToSettle' : IDL.Null,
                   'AcceptVotes' : IDL.Null,
                   'Unspecified' : IDL.Null,
-                  'Settled' : IDL.Null
+                  'Settled' : IDL.Null,
                 }),
                 'summary' : IDL.Text,
-                'proposer' : IDL.Vec(IDL.Nat8)
-              })
-            })
+                'proposer' : IDL.Vec(IDL.Nat8),
+              }),
+            }),
           }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
-            'caption' : IDL.Opt(IDL.Text)
+            'caption' : IDL.Opt(IDL.Text),
           }),
           'Crypto' : IDL.Record({
             'recipient' : IDL.Principal,
@@ -1034,7 +1034,7 @@ export const Notification = IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -1042,19 +1042,19 @@ export const Notification = IDL.Variant({
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -1064,19 +1064,19 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'error_message' : IDL.Text,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Completed' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -1085,18 +1085,18 @@ export const Notification = IDL.Variant({
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'memo' : IDL.Nat64,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
@@ -1107,36 +1107,36 @@ export const Notification = IDL.Variant({
                     'Mint' : IDL.Null,
                     'Account' : IDL.Record({
                       'owner' : IDL.Principal,
-                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
-                    })
+                      'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                    }),
                   }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
               }),
               'Pending' : IDL.Variant({
                 'NNS' : IDL.Record({
                   'to' : IDL.Variant({
                     'User' : IDL.Principal,
-                    'Account' : IDL.Vec(IDL.Nat8)
+                    'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'SNS' : IDL.Record({
                   'to' : IDL.Record({
                     'owner' : IDL.Principal,
-                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8))
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
                   'memo' : IDL.Opt(IDL.Nat64),
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 })
-                })
-              })
-            })
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                }),
+              }),
+            }),
           }),
           'Video' : IDL.Record({
             'height' : IDL.Nat32,
@@ -1149,12 +1149,12 @@ export const Notification = IDL.Variant({
             'mime_type' : IDL.Text,
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
-            'width' : IDL.Nat32
+            'width' : IDL.Nat32,
           }),
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
-            'deleted_by' : IDL.Principal
-          })
+            'deleted_by' : IDL.Principal,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -1164,35 +1164,35 @@ export const Notification = IDL.Variant({
             'latest_event_timestamp' : IDL.Nat64,
             'participant_ids' : IDL.Vec(IDL.Principal),
             'reply_count' : IDL.Nat32,
-            'latest_event_index' : IDL.Nat32
+            'latest_event_index' : IDL.Nat32,
           })
         ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
-            'event_index' : IDL.Nat32
+            'event_index' : IDL.Nat32,
           })
         ),
         'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Principal))),
-        'message_index' : IDL.Nat32
+        'message_index' : IDL.Nat32,
       }),
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
-      'correlation_id' : IDL.Nat64
+      'correlation_id' : IDL.Nat64,
     }),
     'timestamp' : IDL.Nat64,
     'chat_id' : IDL.Principal,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
     'group_name' : IDL.Text,
-    'reaction' : IDL.Text
+    'reaction' : IDL.Text,
   }),
   'AddedToGroupNotification' : IDL.Record({
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
     'timestamp' : IDL.Nat64,
     'chat_id' : IDL.Principal,
-    'group_name' : IDL.Text
-  })
+    'group_name' : IDL.Text,
+  }),
 });
 

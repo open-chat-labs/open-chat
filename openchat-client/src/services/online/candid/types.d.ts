@@ -4,5 +4,5 @@ import type { ActorMethod } from '@dfinity/agent';
 export type MarkAsOnlineArgs = {};
 export type MarkAsOnlineResponse = { 'Success' : null };
 export interface _SERVICE {
-  'mark_as_online' : ActorMethod<[MarkAsOnlineArgs], MarkAsOnlineResponse>
+  'mark_as_online' : ActorMethod<[MarkAsOnlineArgs], MarkAsOnlineResponse>,
 }

@@ -1,5 +1,5 @@
 import type { PartialUserSummary, UserLookup } from "./user";
-import { init, register } from "svelte-i18n";
+import { init } from "svelte-i18n";
 import {
     buildUsernameList,
     compareUsername,
@@ -8,7 +8,7 @@ import {
     userIsOnline,
 } from "./user.utils";
 
-register("en", () => import("../../i18n/en.json"));
+// register("en", () => import("../../i18n/en.json"));
 
 const now = Date.now();
 jest.setSystemTime(now);

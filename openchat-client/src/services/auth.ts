@@ -1,7 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
-import { unregister } from "../utils/notifications";
 import { initialiseTracking, startTrackingSession } from "../utils/tracking";
 import { AuthProvider } from "../domain/auth";
 import { idbAuthClientStore } from "../stores/authProviders";
@@ -44,17 +43,17 @@ export function login(authProvider: AuthProvider): Promise<Identity> {
     });
 }
 
-function buildWindowOpenerFeatures(authProvider: AuthProvider): string {
-    const isII = authProvider === AuthProvider.II;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const width = Math.min(screenWidth, isII ? 525 : 465);
-    const height = Math.min(screenHeight, isII ? 800 : 705);
-    const left = (screenWidth - width) / 2;
-    const top = (screenHeight - height) / 2;
+// function buildWindowOpenerFeatures(authProvider: AuthProvider): string {
+//     const isII = authProvider === AuthProvider.II;
+//     const screenWidth = window.innerWidth;
+//     const screenHeight = window.innerHeight;
+//     const width = Math.min(screenWidth, isII ? 525 : 465);
+//     const height = Math.min(screenHeight, isII ? 800 : 705);
+//     const left = (screenWidth - width) / 2;
+//     const top = (screenHeight - height) / 2;
 
-    return `popup=1,toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`;
-}
+//     return `popup=1,toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`;
+// }
 
 function buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
     if (authProvider === AuthProvider.II) {
@@ -70,9 +69,8 @@ function buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
 }
 
 export async function logout(): Promise<void> {
-    await unregister();
     return authClient.then((c) => {
-        c.logout().then(() => window.location.reload());
+        return c.logout().then(() => window.location.reload());
     });
 }
 
