@@ -15,13 +15,13 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { userAvatarUrl } from "../../domain/user/user.utils";
     import { mobileWidth, ScreenHeight, screenHeight } from "../../stores/screenDimensions";
-    import type { PartialUserSummary } from "../../domain/user/user";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
+    import type { OpenChat, PartialUserSummary } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let user: PartialUserSummary;
@@ -39,7 +39,10 @@
 
 <div class="current-user-box" class:small class:rtl={$rtlStore}>
     <div class="current-user" class:rtl={$rtlStore} class:small>
-        <EditableAvatar {small} image={userAvatarUrl(user)} on:imageSelected={userAvatarSelected} />
+        <EditableAvatar
+            {small}
+            image={client.userAvatarUrl(user)}
+            on:imageSelected={userAvatarSelected} />
         <h4 class="name" class:small>{user.username}</h4>
     </div>
     <span class="menu" class:small>

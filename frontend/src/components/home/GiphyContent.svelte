@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
-    import type { GiphyContent } from "../../domain/chat/chat";
+    import type { GiphyContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
 

@@ -5,12 +5,12 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { ChatSummary } from "../../domain/chat/chat";
     import type {
         MessageMatch,
         SearchDirectChatResponse,
         SearchGroupChatResponse,
-    } from "../../domain/search/search";
+        ChatSummary,
+    } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat } from "openchat-client";

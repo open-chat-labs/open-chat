@@ -8,17 +8,13 @@
         FullMember,
         GroupChatSummary,
         Member as MemberType,
-    } from "../../../domain/chat/chat";
-    import {
-        canBlockUsers,
-        canChangeRoles,
-        canRemoveMembers,
-        canUnblockUsers,
-    } from "../../../domain/chat/chat.utils";
-    import { userStore } from "../../../stores/user";
-    import { createEventDispatcher } from "svelte";
+        OpenChat,
+        UserLookup,
+    } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
-    import type { UserLookup } from "../../../domain/user/user";
+
+    const client = getContext<OpenChat>("client");
 
     export let userId: string;
     export let closeIcon: "close" | "back";
@@ -26,6 +22,7 @@
     export let blockedUsers: Readable<Set<string>>;
     export let chat: GroupChatSummary;
 
+    $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, $members, $blockedUsers);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: others = knownUsers
@@ -115,12 +112,13 @@
     <Member
         me={false}
         member={item}
-        canTransferOwnership={canChangeRoles(chat, item.role, "owner")}
-        canMakeAdmin={canChangeRoles(chat, item.role, "admin")}
-        canDismissAdmin={item.role === "admin" && canChangeRoles(chat, "admin", "participant")}
-        canBlockUser={canBlockUsers(chat)}
-        canUnblockUser={canUnblockUsers(chat)}
-        canRemoveMember={canRemoveMembers(chat)}
+        canTransferOwnership={client.canChangeRoles(chat, item.role, "owner")}
+        canMakeAdmin={client.canChangeRoles(chat, item.role, "admin")}
+        canDismissAdmin={item.role === "admin" &&
+            client.canChangeRoles(chat, "admin", "participant")}
+        canBlockUser={client.canBlockUsers(chat)}
+        canUnblockUser={client.canUnblockUsers(chat)}
+        canRemoveMember={client.canRemoveMembers(chat)}
         on:blockUser
         on:unblockUser
         on:chatWith

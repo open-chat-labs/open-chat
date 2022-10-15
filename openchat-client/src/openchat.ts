@@ -6,12 +6,21 @@ import type { ThreadSyncDetails } from "./domain";
 import {
     buildUserAvatarUrl,
     canBlockUsers,
+    canChangePermissions,
+    canChangeRoles,
     canCreatePolls,
+    canDeleteGroup,
     canDeleteOtherUsersMessages,
+    canEditGroupDetails,
+    canForward,
+    canInviteUsers,
+    canMakeGroupPrivate,
     canPinMessages,
     canReactToMessages,
+    canRemoveMembers,
     canReplyInThread,
     canSendMessages,
+    canUnblockUsers,
     containsReaction,
     createMessage,
     findMessageById,
@@ -28,7 +37,10 @@ import {
     mergeEventsAndLocalUpdates,
     mergeSendMessageResponse,
     mergeServerEvents,
+    messageIsReadByThem,
     metricsEqual,
+    newMessageId,
+    sameUser,
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
@@ -55,8 +67,22 @@ import {
     blockUser,
     deleteMessage,
     editMessage,
+    forwardMessage,
+    handleMessageSentByOther,
+    loadDetails,
+    loadEventWindow,
+    loadNewMessages,
+    loadPreviousMessages,
+    moreNewMessagesAvailable,
+    morePreviousMessagesAvailable,
+    pinMessage,
+    refreshAffectedEvents,
     registerPollVote,
+    removeMessage,
     selectReaction,
+    sendMessageWithAttachment,
+    unpinMessage,
+    updateDetails,
     updateUserStore,
 } from "./services/common/chatThread";
 import { showTrace } from "./services/common/profiling";
@@ -74,17 +100,23 @@ import {
     chatStateStore,
     chatSummariesListStore,
     chatSummariesStore,
+    chatUpdatedStore,
     clearSelectedChat,
     createDirectChat,
     currentChatBlockedUsers,
     currentChatDraftMessage,
+    currentChatEditingEvent,
     currentChatMembers,
     currentChatPinnedMessages,
+    currentChatReplyingTo,
     currentChatRules,
     currentChatUserIds,
     currentUserStore,
     eventsStore,
+    focusMessageIndex,
     focusThreadMessageIndex,
+    isProposalGroup,
+    nextEventAndMessageIndexes,
     proposalTopicsStore,
     removeChat,
     selectedChatId,
@@ -96,6 +128,7 @@ import {
     threadsByChatStore,
     threadsFollowedByMeStore,
     updateSummaryWithConfirmedMessage,
+    userGroupKeys,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -104,6 +137,7 @@ import {
     enableAllProposalFilters,
     filteredProposalsStore,
     toggleProposalFilter,
+    toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
 import { localMessageUpdates, startPruningLocalUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
@@ -120,7 +154,7 @@ import {
 import { archivedChatsStore, mutedChatsStore } from "./stores/tempChatsStore";
 import { translationStore } from "./stores/translation";
 import { byThread, isTyping, typing } from "./stores/typing";
-import { unconfirmed } from "./stores/unconfirmed";
+import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { setCachedMessageFromNotification } from "./utils/caching";
@@ -132,8 +166,16 @@ import {
     toLongDateString,
     toShortTimeString,
 } from "./utils/date";
-import { toRecord2 } from "./utils/list";
-import { audioRecordingMimeType, fillMessage, twitterLinkRegex, youtubeRegex } from "./utils/media";
+import formatFileSize from "./utils/fileSize";
+import { groupWhile, toRecord2 } from "./utils/list";
+import {
+    audioRecordingMimeType,
+    fillMessage,
+    messageContentFromFile,
+    twitterLinkRegex,
+    youtubeRegex,
+} from "./utils/media";
+import { mergeKeepingOnlyChanged } from "./utils/object";
 import { delegateToChatComponent, filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import { toTitleCase } from "./utils/string";
 import { formatTimeRemaining } from "./utils/time";
@@ -319,6 +361,14 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
+    markMessageRead(chatId: string, messageIndex: number, messageId: bigint): void {
+        return this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+    }
+
+    isMessageRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
+        return this.messagesRead.isRead(chatId, messageIndex, messageId);
+    }
+
     sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
         rtcConnectionsManager.sendMessage(userIds, message);
     }
@@ -412,6 +462,38 @@ export class OpenChat extends EventTarget {
     updateSummaryWithConfirmedMessage = updateSummaryWithConfirmedMessage;
     removeChat = removeChat;
     canSendMessages = canSendMessages;
+    canChangeRoles = canChangeRoles;
+    canUnblockUsers = canUnblockUsers;
+    canRemoveMembers = canRemoveMembers;
+    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    canEditGroupDetails = canEditGroupDetails;
+    canChangePermissions = canChangePermissions;
+    canInviteUsers = canInviteUsers;
+    canDeleteGroup = canDeleteGroup;
+    canMakeGroupPrivate = canMakeGroupPrivate;
+    messageContentFromFile = messageContentFromFile;
+    formatFileSize = formatFileSize;
+    morePreviousMessagesAvailable = morePreviousMessagesAvailable;
+    moreNewMessagesAvailable = moreNewMessagesAvailable;
+    loadEventWindow = loadEventWindow;
+    loadPreviousMessages = loadPreviousMessages;
+    loadNewMessages = loadNewMessages;
+    handleMessageSentByOther = handleMessageSentByOther;
+    refreshAffectedEvents = refreshAffectedEvents;
+    updateDetails = updateDetails;
+    loadDetails = loadDetails;
+    messageIsReadByThem = messageIsReadByThem;
+    pinMessage = pinMessage;
+    unpinMessage = unpinMessage;
+    toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
+    groupWhile = groupWhile;
+    sameUser = sameUser;
+    nextEventAndMessageIndexes = nextEventAndMessageIndexes;
+    sendMessageWithAttachment = sendMessageWithAttachment;
+    canForward = canForward;
+    newMessageId = newMessageId;
+    forwardMessage = forwardMessage;
+    removeMessage = removeMessage;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -459,4 +541,11 @@ export class OpenChat extends EventTarget {
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;
     blockedUsers = blockedUsers;
+    focusMessageIndex = focusMessageIndex;
+    userGroupKeys = userGroupKeys;
+    chatUpdatedStore = chatUpdatedStore;
+    unconfirmedReadByThem = unconfirmedReadByThem;
+    currentChatReplyingTo = currentChatReplyingTo;
+    currentChatEditingEvent = currentChatEditingEvent;
+    isProposalGroup = isProposalGroup;
 }

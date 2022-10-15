@@ -7,21 +7,20 @@
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import AccountArrowLeftOutline from "svelte-material-icons/AccountArrowLeftOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import { AvatarSize } from "../../../domain/user/user";
     import Avatar from "../../Avatar.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { userAvatarUrl, getUserStatus } from "../../../domain/user/user.utils";
-    import { createEventDispatcher } from "svelte";
-    import type { BlockedMember, FullMember } from "../../../domain/chat/chat";
-    import { userStore } from "../../../stores/user";
+    import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { now } from "../../../stores/time";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import type { OpenChat, BlockedMember, FullMember } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
@@ -36,6 +35,7 @@
     let hovering = false;
     let viewProfile = false;
 
+    $: userStore = client.userStore;
     $: showMenu =
         canDismissAdmin ||
         canMakeAdmin ||
@@ -107,8 +107,8 @@
         <Avatar
             statusBorder={hovering && !me ? "var(--members-hv)" : "var(--members-bg)"}
             blocked={member.memberKind === "blocked_member"}
-            url={userAvatarUrl(member)}
-            status={getUserStatus($now, $userStore, member.userId)}
+            url={client.userAvatarUrl(member)}
+            status={client.getUserStatus($now, $userStore, member.userId)}
             size={AvatarSize.Small} />
     </span>
     <div class="details">

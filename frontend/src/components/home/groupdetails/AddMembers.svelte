@@ -6,7 +6,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import SelectUsers from "../SelectUsers.svelte";
-    import type { UserSummary } from "../../../domain/user/user";
+    import type { UserSummary } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";

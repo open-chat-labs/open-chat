@@ -3,10 +3,12 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { FileContent } from "../../domain/chat/chat";
-    import format from "../../utils/fileSize";
+    import type { FileContent, OpenChat } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let content: FileContent;
     export let me: boolean = false;
@@ -34,7 +36,7 @@
     </a>
 
     <div class="meta-wrapper" class:caption={content.caption !== undefined}>
-        {`${content.mimeType}-${format(content.fileSize)}`}
+        {`${content.mimeType}-${client.formatFileSize(content.fileSize)}`}
     </div>
 {/if}
 

@@ -7,13 +7,12 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { rollbar } from "../../../utils/logging";
     import Toggle from "../../Toggle.svelte";
-    import type { GroupChatSummary } from "../../../domain/chat/chat";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AreYouSure from "../../AreYouSure.svelte";
-    import * as shareFunctions from "../../../domain/share";
     import { toastStore } from "../../../stores/toast";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, GroupChatSummary } from "openchat-client";
+    import { canShare, shareLink } from "../../../utils/share";
 
     export let group: GroupChatSummary;
 
@@ -143,7 +142,7 @@
     }
 
     function onShare() {
-        shareFunctions.shareLink(link);
+        shareLink(link);
     }
 </script>
 
@@ -174,7 +173,7 @@
                     {$_("copy")}
                 </Link>
             </div>
-            {#if shareFunctions.canShare()}
+            {#if canShare()}
                 <div class="action">
                     <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link on:click={onShare}>

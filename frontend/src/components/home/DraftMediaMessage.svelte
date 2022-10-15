@@ -4,10 +4,10 @@
     import type {
         CryptocurrencyContent as CryptoContentType,
         VideoContent as VideoContentType,
-    } from "../../domain/chat/chat";
-    import type { ImageContent as ImageContentType } from "../../domain/chat/chat";
-    import type { AudioContent as AudioContentType } from "../../domain/chat/chat";
-    import type { FileContent as FileContentType } from "../../domain/chat/chat";
+        ImageContent as ImageContentType,
+        AudioContent as AudioContentType,
+        FileContent as FileContentType,
+    } from "openchat-client";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";

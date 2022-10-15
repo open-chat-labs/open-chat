@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
-    import type { GroupPermissions, PermissionRole } from "../../domain/chat/chat";
+    import type { GroupPermissions, PermissionRole } from "openchat-client";
 
     export let permissions: GroupPermissions;
     export let isPublic: boolean;

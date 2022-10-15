@@ -16,7 +16,6 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { formatMessageDate } from "../../utils/date";
     import type {
         EventWrapper,
         EnhancedReplyContext,
@@ -25,85 +24,32 @@
         Mention,
         ChatSummary,
         MessageContent,
-    } from "../../domain/chat/chat";
-    import { remainingStorage } from "../../stores/storage";
-    import {
-        canForward,
-        containsReaction,
-        createMessage,
-        findMessageById,
-        getStorageRequiredForMessage,
-        groupEvents,
-        messageIsReadByThem,
-        newMessageId,
-        sameUser,
-    } from "../../domain/chat/chat.utils";
+        OpenChat,
+        FilteredProposals,
+        WebRtcMessage,
+        MessageReadState,
+        User,
+        RemoteUserToggledReaction,
+        RemoteUserSentMessage,
+    } from "openchat-client";
     import { pop } from "../../utils/transition";
-    import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
-    import {
-        blockUser,
-        deleteMessage,
-        forwardMessage,
-        handleMessageSentByOther,
-        loadDetails,
-        loadEventWindow,
-        loadNewMessages,
-        loadPreviousMessages,
-        moreNewMessagesAvailable,
-        morePreviousMessagesAvailable,
-        pinMessage,
-        refreshAffectedEvents,
-        registerPollVote,
-        removeMessage,
-        selectReaction,
-        sendMessageWithAttachment,
-        unpinMessage,
-        updateDetails,
-    } from "../../services/common/chatThread";
-    import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { currentUserKey, userStore } from "../../stores/user";
     import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
-    import { trackEvent } from "../../utils/tracking";
-    import * as shareFunctions from "../../domain/share";
-    import {
-        currentChatDraftMessage,
-        isProposalGroup,
-        currentChatUserIds,
-        focusMessageIndex,
-        currentChatEditingEvent,
-        currentChatReplyingTo,
-        chatUpdatedStore,
-        userGroupKeys,
-        currentChatPinnedMessages,
-        chatStateStore,
-        nextEventAndMessageIndexes,
-    } from "../../stores/chat";
-    import {
-        FilteredProposals,
-        toggleProposalFilterMessageExpansion,
-    } from "../../stores/filteredProposals";
-    import { groupWhile } from "../../utils/list";
     import { pathParams } from "../../stores/routing";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import type { CreatedUser, User } from "../../domain/user/user";
-    import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-    import type { RemoteUserSentMessage, RemoteUserToggledReaction, WebRtcMessage } from "../../domain/webrtc/webrtc";
-    import { typing } from "../../stores/typing";
-    import { localMessageUpdates } from "../../stores/localMessageUpdates";
     import { push } from "svelte-spa-router";
+    import { copyMessageUrl, shareMessage } from "../../utils/share";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
     const dispatch = createEventDispatcher();
-    const api = getContext<ServiceContainer>(apiKey);
-    const user = getContext<CreatedUser>(currentUserKey);
 
     export let chat: ChatSummary;
     export let serverChat: ChatSummary;
@@ -121,6 +67,23 @@
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
 
+    $: isProposalGroup = client.isProposalGroup;
+    $: currentChatEditingEvent = client.currentChatEditingEvent;
+    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
+    $: messagesRead = client.messagesRead;
+    $: typing = client.typing;
+    $: localMessageUpdates = client.localMessageUpdates;
+    $: currentChatReplyingTo = client.currentChatReplyingTo;
+    $: remainingStorage = client.remainingStorage;
+    $: unconfirmedReadByThem = client.unconfirmedReadByThem;
+    $: unconfirmed = client.unconfirmed;
+    $: chatUpdatedStore = client.chatUpdatedStore;
+    $: userGroupKeys = client.userGroupKeys;
+    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: focusMessageIndex = client.focusMessageIndex;
+    $: chatStateStore = client.chatStateStore;
+    $: currentChatUserIds = client.currentChatUserIds;
+    $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
 
     let loadingPrev = false;
@@ -146,7 +109,7 @@
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
-        morePrevAvailable = morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -165,7 +128,7 @@
                         const chatId = chat.chatId;
                         const timer = window.setTimeout(() => {
                             if (chatId === chat.chatId) {
-                                messagesRead.markMessageRead(chat.chatId, idx, id);
+                                client.markMessageRead(chat.chatId, idx, id);
 
                                 if (chat.kind === "direct_chat") {
                                     const rtc: WebRtcMessage = {
@@ -175,10 +138,7 @@
                                         chatId: chat.chatId,
                                         userId: user.userId,
                                     };
-                                    rtcConnectionsManager.sendMessage(
-                                        [...$currentChatUserIds],
-                                        rtc
-                                    );
+                                    client.sendRtcMessage([...$currentChatUserIds], rtc);
                                 }
                             }
                             delete messageReadTimers[idx];
@@ -208,8 +168,8 @@
             }
 
             if (event.kind === "relayed_register_vote") {
-                registerPollVote(
-                    api,
+                client.registerPollVote(
+                    client.api,
                     user.userId,
                     chat.chatId,
                     undefined,
@@ -228,7 +188,7 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
@@ -288,7 +248,9 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            loadEventWindow(api, user, serverChat, chat, index).then(onMessageWindowLoaded);
+            client
+                .loadEventWindow(client.api, user, serverChat, chat, index)
+                .then(onMessageWindowLoaded);
         }
     }
 
@@ -302,7 +264,7 @@
     }
 
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
         return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
@@ -310,7 +272,7 @@
         return (
             !loadingNew &&
             calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            moreNewMessagesAvailable(serverChat)
+            client.moreNewMessagesAvailable(serverChat)
         );
     }
 
@@ -356,7 +318,9 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
+            client
+                .loadPreviousMessages(client.api, user, serverChat, chat)
+                .then(onLoadedPreviousMessages);
         }
 
         if (shouldLoadNewMessages()) {
@@ -364,7 +328,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(client.api, user, serverChat, chat).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -383,24 +347,28 @@
     function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
         if (!canReact) return;
 
-        const kind = containsReaction(user.userId, reaction, message.reactions) ? "remove" : "add";
+        const kind = client.containsReaction(user.userId, reaction, message.reactions)
+            ? "remove"
+            : "add";
 
-        selectReaction(
-            api,
-            chat,
-            user.userId,
-            undefined,
-            message.messageId,
-            reaction,
-            user.username,
-            kind
-        ).then((success) => {
-            if (success && kind === "add") {
-                trackEvent("reacted_to_message");
-            }
-        });
+        client
+            .selectReaction(
+                client.api,
+                chat,
+                user.userId,
+                undefined,
+                message.messageId,
+                reaction,
+                user.username,
+                kind
+            )
+            .then((success) => {
+                if (success && kind === "add") {
+                    client.trackEvent("reacted_to_message");
+                }
+            });
 
-        rtcConnectionsManager.sendMessage([...$currentChatUserIds], {
+        client.sendRtcMessage([...$currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
             chatType: chat.kind,
             chatId: chat.chatId,
@@ -440,7 +408,7 @@
     function doDeleteMessage(message: Message) {
         if (!canDelete && user.userId !== message.sender) return;
 
-        deleteMessage(api, chat, user.userId, undefined, message.messageId);
+        client.deleteMessage(client.api, chat, user.userId, undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -458,7 +426,7 @@
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
-        blockUser(api, chat.chatId, ev.detail.userId);
+        client.blockUser(client.api, chat.chatId, ev.detail.userId);
     }
 
     function onMessageWindowLoaded(messageIndex: number | undefined) {
@@ -533,26 +501,24 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            handleMessageSentByOther(api, user, chat, events, latestMessage);
+            client.handleMessageSentByOther(client.api, user, chat, events, latestMessage);
         }
 
-        refreshAffectedEvents(api, user, chat, affectedEvents);
-        updateDetails(api, user, chat, events);
+        client.refreshAffectedEvents(client.api, user, chat, affectedEvents);
+        client.updateDetails(client.api, user, chat, events);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            loadNewMessages(api, user, serverChat, chat);
+            client.loadNewMessages(client.api, user, serverChat, chat);
         }
     }
 
-    export function handleMessageSentByOtherExternal(
-        messageEvent: EventWrapper<Message>
-    ): void {
-        handleMessageSentByOther(api, user, chat, events, messageEvent).then(() =>
-            onLoadedNewMessages(true)
-        );
+    export function handleMessageSentByOtherExternal(messageEvent: EventWrapper<Message>): void {
+        client
+            .handleMessageSentByOther(client.api, user, chat, events, messageEvent)
+            .then(() => onLoadedNewMessages(true));
     }
 
-    $: groupedEvents = groupEvents(events, groupInner(filteredProposals)).reverse();
+    $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
 
     $: {
         if ($chatUpdatedStore !== undefined) {
@@ -571,15 +537,15 @@
             initialised = false;
 
             if ($focusMessageIndex !== undefined) {
-                loadEventWindow(api, user, serverChat, chat, $focusMessageIndex).then(
-                    (messageIndex: number | undefined) => {
-                        loadDetails(api, user, chat, events);
+                client
+                    .loadEventWindow(client.api, user, serverChat, chat, $focusMessageIndex)
+                    .then((messageIndex: number | undefined) => {
+                        client.loadDetails(client.api, user, chat, events);
                         onMessageWindowLoaded(messageIndex);
-                    }
-                );
+                    });
             } else {
-                loadPreviousMessages(api, user, serverChat, chat).then(() => {
-                    loadDetails(api, user, chat, events);
+                client.loadPreviousMessages(client.api, user, serverChat, chat).then(() => {
+                    client.loadDetails(client.api, user, chat, events);
                     onLoadedPreviousMessages();
                 });
             }
@@ -611,11 +577,13 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadNewMessages(api, user, serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(client.api, user, serverChat, chat).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadPreviousMessages(api, user, serverChat, chat).then(onLoadedPreviousMessages);
+            client
+                .loadPreviousMessages(client.api, user, serverChat, chat)
+                .then(onLoadedPreviousMessages);
         }
     }
 
@@ -632,7 +600,7 @@
         evt: EventWrapper<ChatEventType>
     ): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = messageIsReadByThem(chat, evt.event);
+            const confirmedRead = client.messageIsReadByThem(chat, evt.event);
             if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
@@ -645,17 +613,13 @@
         if (preview) return true;
 
         if (evt.event.kind === "message") {
-            const isRead = messagesRead.isRead(
+            const isRead = client.isMessageRead(
                 chat.chatId,
                 evt.event.messageIndex,
                 evt.event.messageId
             );
             if (!isRead && evt.event.sender === user.userId) {
-                messagesRead.markMessageRead(
-                    chat.chatId,
-                    evt.event.messageIndex,
-                    evt.event.messageId
-                );
+                client.markMessageRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
                 return true;
             }
             return isRead;
@@ -675,12 +639,12 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        pinMessage(api, chat, ev.detail.messageIndex);
+        client.pinMessage(client.api, chat, ev.detail.messageIndex);
     }
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        unpinMessage(api, chat, ev.detail.messageIndex);
+        client.unpinMessage(client.api, chat, ev.detail.messageIndex);
     }
 
     function registerVote(
@@ -691,8 +655,8 @@
             type: "register" | "delete";
         }>
     ) {
-        registerPollVote(
-            api,
+        client.registerPollVote(
+            client.api,
             user.userId,
             chat.chatId,
             undefined,
@@ -703,12 +667,12 @@
         );
     }
 
-    function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
+    function onShareMessage(ev: CustomEvent<Message>) {
+        shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
-    function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex);
+    function onCopyMessageUrl(ev: CustomEvent<Message>) {
+        copyMessageUrl(chat.chatId, ev.detail.messageIndex);
     }
 
     function isCollapsed(
@@ -720,13 +684,13 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
     function groupInner(filteredProposals: FilteredProposals | undefined) {
         return (events: EventWrapper<ChatEventType>[]) => {
-            return groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
+            return client.groupWhile((a, b) => inSameGroup(a, b, filteredProposals), events);
         };
     }
 
@@ -747,7 +711,7 @@
                     isCollpasedProposal(b.event, filteredProposals)
                 );
             } else {
-                return sameUser(a, b);
+                return client.sameUser(a, b);
             }
         }
         return false;
@@ -768,15 +732,15 @@
     ) {
         if (!canSend) return;
         if (textContent || fileToAttach) {
-            const storageRequired = getStorageRequiredForMessage(fileToAttach);
+            const storageRequired = client.getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
                 dispatch("upgrade", "explain");
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
+            const [nextEventIndex, nextMessageIndex] = client.nextEventAndMessageIndexes();
 
-            const msg = createMessage(
+            const msg = client.createMessage(
                 user.userId,
                 nextMessageIndex,
                 textContent,
@@ -785,9 +749,17 @@
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            sendMessageWithAttachment(api, user, serverChat, chat, events, event, mentioned).then(
-                afterSendMessage
-            );
+            client
+                .sendMessageWithAttachment(
+                    client.api,
+                    user,
+                    serverChat,
+                    chat,
+                    events,
+                    event,
+                    mentioned
+                )
+                .then(afterSendMessage);
         }
     }
 
@@ -800,7 +772,7 @@
     }
 
     export function forwardMessageExternal(msg: Message) {
-        if (!canSend || !canForward(msg.content)) return;
+        if (!canSend || !client.canForward(msg.content)) return;
 
         // TODO check storage requirements
 
@@ -810,11 +782,11 @@
             content.caption = "";
         }
 
-        const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
+        const [nextEventIndex, nextMessageIndex] = client.nextEventAndMessageIndexes();
 
         msg = {
             kind: "message",
-            messageId: newMessageId(),
+            messageId: client.newMessageId(),
             messageIndex: nextMessageIndex,
             sender: user.userId,
             content,
@@ -825,11 +797,13 @@
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-        forwardMessage(api, user, serverChat, chat, events, event).then(afterSendMessage);
+        client
+            .forwardMessage(client.api, user, serverChat, chat, events, event)
+            .then(afterSendMessage);
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const matchingMessage = findMessageById(message.messageId, events);
+        const matchingMessage = client.findMessageById(message.messageId, events);
 
         if (matchingMessage !== undefined) {
             localMessageUpdates.markReaction(message.messageId.toString(), {
@@ -841,7 +815,7 @@
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage): void {
-        const existing = findMessageById(message.messageEvent.event.messageId, events);
+        const existing = client.findMessageById(message.messageEvent.event.messageId, events);
         if (existing !== undefined) {
             return;
         }
@@ -849,14 +823,14 @@
         // We should overwrite the event index and message index to ensure these new messages always get placed at the
         // end rather than before any unconfirmed messages we have sent. Also, for direct chats the indexes can mismatch
         // due to either user being blocked temporarily, so by overwriting the indexes we avoid issues caused by this.
-        const [eventIndex, messageIndex] = nextEventAndMessageIndexes();
+        const [eventIndex, messageIndex] = client.nextEventAndMessageIndexes();
         unconfirmed.add(chat.chatId, {
             ...message.messageEvent,
             index: eventIndex,
             event: {
                 ...message.messageEvent.event,
                 messageIndex,
-            }
+            },
         });
     }
 
@@ -875,7 +849,7 @@
                 localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
                 break;
             case "remote_user_removed_message":
-                removeMessage(user.userId, chat, msg.messageId, msg.userId);
+                client.removeMessage(user.userId, chat, msg.messageId, msg.userId);
                 break;
             case "remote_user_undeleted_message":
                 localMessageUpdates.markUndeleted(msg.messageId.toString());
@@ -899,7 +873,7 @@
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
-                {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
+                {client.formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
             {#each dayGroup as innerGroup, _ui (userGroupKey(innerGroup))}
                 {#each innerGroup as evt, i (eventKey(evt))}
@@ -943,8 +917,8 @@
                         on:pinMessage={onPinMessage}
                         on:unpinMessage={onUnpinMessage}
                         on:registerVote={registerVote}
-                        on:copyMessageUrl={copyMessageUrl}
-                        on:shareMessage={shareMessage}
+                        on:copyMessageUrl={onCopyMessageUrl}
+                        on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade

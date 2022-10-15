@@ -2,15 +2,18 @@
 
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { OpenChat, UserSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { userStore } from "../../stores/user";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
     export let nowPublic: boolean;
     export let changedBy: string;
     export let timestamp: bigint;
 
+    $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
     $: visibility = (nowPublic ? $_("public") : $_("private")).toLowerCase();

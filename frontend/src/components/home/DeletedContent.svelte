@@ -2,12 +2,16 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { DeletedContent } from "../../domain/chat/chat";
-    import { userStore } from "../../stores/user";
-    import { toLongDateString, toShortTimeString } from "../../utils/date";
+    import type { DeletedContent, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
+
     export let content: DeletedContent;
+
+    $: userStore = client.userStore;
     $: date = new Date(Number(content.timestamp));
-    $: timestampStr = `${toLongDateString(date)} @ ${toShortTimeString(date)}`;
+    $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
     $: username = $userStore[content.deletedBy]?.username ?? $_("unknownUser");
 </script>
 

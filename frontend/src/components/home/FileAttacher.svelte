@@ -2,10 +2,12 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { toastStore } from "../../stores/toast";
-    import { messageContentFromFile } from "../../utils/media";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import Paperclip from "./Paperclip.svelte";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let open: boolean = false;
 
@@ -26,7 +28,8 @@
         if (e.currentTarget) {
             const target = e.currentTarget;
             if (target.files && target.files[0]) {
-                messageContentFromFile(target.files[0])
+                client
+                    .messageContentFromFile(target.files[0])
                     .then((content) => {
                         dispatch("fileSelected", content);
                     })

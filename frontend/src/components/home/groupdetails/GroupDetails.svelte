@@ -5,28 +5,12 @@
     import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Stats from "../Stats.svelte";
-    import { AvatarSize, CreatedUser } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
-    import { groupAvatarUrl } from "../../../domain/user/user.utils";
-    import type {
-        GroupChatSummary,
-        GroupPermissions,
-        GroupRules,
-        UpdateGroupResponse,
-    } from "../../../domain/chat/chat";
-    import {
-        canChangePermissions,
-        canEditGroupDetails,
-        canDeleteGroup,
-        canMakeGroupPrivate,
-        canInviteUsers,
-    } from "../../../domain/chat/chat.utils";
     import { createEventDispatcher, getContext } from "svelte";
-    import { userStore } from "../../../stores/user";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
@@ -44,21 +28,25 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
-    import { mergeKeepingOnlyChanged } from "../../../utils/object";
-    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
-    import { currentUserKey } from "../../../stores/user";
-    import { UnsupportedValueError } from "utils/error";
     import Rules from "./Rules.svelte";
+    import type {
+        OpenChat,
+        GroupChatSummary,
+        GroupPermissions,
+        GroupRules,
+        UpdateGroupResponse,
+    } from "openchat-client";
+    import { AvatarSize, UnsupportedValueError } from "openchat-client";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
     const dispatch = createEventDispatcher();
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const currentUser = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const currentUser = client.user;
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
@@ -80,6 +68,7 @@
 
     let updatedRules: GroupRules | undefined = undefined;
 
+    $: userStore = client.userStore;
     $: {
         if (updatedGroup.chatId !== chat.chatId) {
             switchChat();
@@ -139,10 +128,10 @@
     );
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: dirty = infoDirty || rulesDirty || permissionsDirty;
-    $: canEdit = canEditGroupDetails(originalGroup);
-    $: canEditPermissions = canChangePermissions(originalGroup);
-    $: canInvite = canInviteUsers(originalGroup);
-    $: avatarSrc = groupAvatarUrl(updatedGroup.avatar);
+    $: canEdit = client.canEditGroupDetails(originalGroup);
+    $: canEditPermissions = client.canChangePermissions(originalGroup);
+    $: canInvite = client.canInviteUsers(originalGroup);
+    $: avatarSrc = client.groupAvatarUrl(updatedGroup.avatar);
 
     function openUserProfile() {
         if (!myGroup) {
@@ -155,7 +144,7 @@
     }
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        const args = mergeKeepingOnlyChanged(p1, p2);
+        const args = client.mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
     }
 
@@ -250,7 +239,7 @@
     }
 
     function doUpdateInfo(): Promise<void> {
-        return api
+        return client.api
             .updateGroup(
                 updatedGroup.chatId,
                 nameDirty ? updatedGroup.name : undefined,
@@ -280,7 +269,7 @@
     }
 
     function doUpdateRules(): Promise<void> {
-        return api
+        return client.api
             .updateGroup(
                 updatedGroup.chatId,
                 undefined,
@@ -316,13 +305,13 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        const optionalPermissions = mergeKeepingOnlyChanged(
+        const optionalPermissions = client.mergeKeepingOnlyChanged(
             originalGroup.permissions,
             updatedGroup.permissions
         );
         console.log("Changed permissions: ", optionalPermissions);
 
-        return api
+        return client.api
             .updateGroup(
                 updatedGroup.chatId,
                 undefined,
@@ -517,7 +506,7 @@
             headerText={$_("stats.groupStats")}>
             <Stats stats={originalGroup.metrics} />
         </CollapsibleCard>
-        {#if canDeleteGroup(originalGroup)}
+        {#if client.canDeleteGroup(originalGroup)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
@@ -526,7 +515,7 @@
                     on:deleteGroup
                     on:makeGroupPrivate
                     group={originalGroup}
-                    canMakeGroupPrivate={canMakeGroupPrivate(originalGroup)} />
+                    canMakeGroupPrivate={client.canMakeGroupPrivate(originalGroup)} />
             </CollapsibleCard>
         {/if}
     </div>

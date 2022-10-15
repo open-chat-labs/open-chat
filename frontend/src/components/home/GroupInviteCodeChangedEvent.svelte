@@ -2,16 +2,18 @@
 
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSummary, GroupInviteCodeChange, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { userStore } from "../../stores/user";
-    import type { GroupInviteCodeChange } from "../../domain/chat/chat";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
     export let change: GroupInviteCodeChange;
     export let changedBy: string;
     export let timestamp: bigint;
 
+    $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
     $: changedStr = $_(`group.invite.${change}`);

@@ -8,8 +8,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { GIFObject, PagedGIFObject, SearchResponse } from "../../domain/giphy";
-    import type { GiphyContent } from "domain/chat/chat";
+    import type { GIFObject, PagedGIFObject, SearchResponse, GiphyContent } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 

@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import TextArea from "../../TextArea.svelte";
     import Toggle from "../../Toggle.svelte";
-    import type { GroupRules } from "../../../domain/chat/chat";
+    import type { GroupRules } from "openchat-client";
 
     const MAX_RULES_LENGTH = 1024;
 

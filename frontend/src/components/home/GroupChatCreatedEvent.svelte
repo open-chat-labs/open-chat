@@ -2,14 +2,17 @@
 
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { GroupChatCreated } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
-    import { userStore } from "../../stores/user";
+    import { getContext } from "svelte";
+    import type { OpenChat, GroupChatCreated } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     export let me: boolean;
     export let event: GroupChatCreated;
     export let timestamp: bigint;
 
+    $: userStore = client.userStore;
     $: username = me ? $_("you") : $userStore[event.created_by]?.username ?? $_("unknownUser");
     $: text = $_("groupCreatedBy", {
         values: {

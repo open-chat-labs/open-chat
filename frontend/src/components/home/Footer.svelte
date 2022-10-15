@@ -2,7 +2,6 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import EmojiPicker from "./EmojiPicker.svelte";
     import type {
@@ -14,12 +13,13 @@
         Message,
         MessageAction,
         MessageContent,
-    } from "../../domain/chat/chat";
-    import { canReplyInThread, canSendMessages } from "../../domain/chat/chat.utils";
-    import type { CreatedUser } from "../../domain/user/user";
+        CreatedUser,
+        OpenChat,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { userStore } from "../../stores/user";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let blocked: boolean;
     export let preview: boolean;
@@ -38,7 +38,12 @@
 
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
-    $: canSend = mode === "thread" ? canReplyInThread(chat) : canSendMessages(chat, $userStore);
+
+    $: userStore = client.userStore;
+    $: canSend =
+        mode === "thread"
+            ? client.canReplyInThread(chat)
+            : client.canSendMessages(chat, $userStore);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -52,7 +57,8 @@
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
-            messageContentFromFile(file)
+            client
+                .messageContentFromFile(file)
                 .then((content) => dispatch("fileSelected", content))
                 .catch((err) => toastStore.showFailureToast(err));
         }

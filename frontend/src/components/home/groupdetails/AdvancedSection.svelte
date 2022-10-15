@@ -3,7 +3,7 @@
     import { createEventDispatcher } from "svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { GroupChatSummary } from "../../../domain/chat/chat";
+    import type { GroupChatSummary } from "openchat-client";
 
     export let canMakeGroupPrivate: boolean;
     export let group: GroupChatSummary;
