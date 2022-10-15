@@ -31,7 +31,6 @@
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { rollbar } from "../../utils/logging";
-    import { setSoftDisabled } from "../../stores/notifications";
 
     const dispatch = createEventDispatcher();
 
@@ -382,7 +381,7 @@
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            on:unsubscribeNotifications={() => setSoftDisabled(true)}
+            on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
             on:upgrade
             on:showFaqQuestion
             {user}

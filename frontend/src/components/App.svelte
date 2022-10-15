@@ -65,7 +65,7 @@
         }
     }
 
-    const allRoutes = routes();
+    const allRoutes = routes(() => client.logout());
 </script>
 
 <svelte:head>

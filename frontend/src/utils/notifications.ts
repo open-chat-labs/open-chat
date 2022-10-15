@@ -1,16 +1,17 @@
 import { push } from "svelte-spa-router";
-import type { Notification, NotificationStatus } from "../domain/notifications";
-import type { ServiceContainer } from "../services/serviceContainer";
-import { notificationStatus, setSoftDisabled } from "../stores/notifications";
-import { toUint8Array } from "./base64";
+import type { ServiceContainer, Notification, OpenChat } from "openchat-client";
 import { isCanisterUrl } from "../utils/urls";
+
+function toUint8Array(base64String: string): Uint8Array {
+    return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+}
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
 export async function initNotificationsServiceWorker(
-    api: ServiceContainer,
+    client: OpenChat,
     onNotification: (notification: Notification) => void
 ): Promise<boolean> {
     if (!notificationsSupported) return false;
@@ -25,15 +26,15 @@ export async function initNotificationsServiceWorker(
         }
     });
 
-    notificationStatus.subscribe((status) => {
+    client.notificationStatus.subscribe((status) => {
         switch (status) {
             case "granted":
-                trySubscribe(api);
+                trySubscribe(client.api);
                 break;
             case "pending-init":
                 break;
             default:
-                unsubscribeNotifications(api);
+                unsubscribeNotifications(client.api);
                 break;
         }
     });
@@ -51,21 +52,6 @@ async function unregisterOldServiceWorker() {
     });
 }
 
-export function permissionToStatus(
-    permission: NotificationPermission | "pending-init"
-): NotificationStatus {
-    switch (permission) {
-        case "pending-init":
-            return "pending-init";
-        case "denied":
-            return "hard-denied";
-        case "granted":
-            return "granted";
-        default:
-            return "prompt";
-    }
-}
-
 export const notificationsSupported = supported();
 
 function supported(): boolean {
@@ -75,19 +61,6 @@ function supported(): boolean {
         "PushManager" in window &&
         "Notification" in window
     );
-}
-
-export function permissionStateToNotificationPermission(
-    perm: PermissionState
-): NotificationPermission {
-    switch (perm) {
-        case "prompt":
-            return "default";
-        case "denied":
-            return "denied";
-        case "granted":
-            return "granted";
-    }
 }
 
 export async function closeNotificationsForChat(chatId: string): Promise<void> {
@@ -155,21 +128,6 @@ function extract_p256dh_key(subscription: PushSubscription): string {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const key = json.keys!["p256dh"];
     return key;
-}
-
-export async function askForNotificationPermission(): Promise<NotificationPermission> {
-    const result: NotificationPermission = await new Promise(function (resolve, reject) {
-        const permissionResult = Notification.requestPermission(function (res) {
-            resolve(res);
-            setSoftDisabled(false);
-        });
-
-        if (permissionResult) {
-            permissionResult.then(resolve, reject);
-        }
-    });
-
-    return result;
 }
 
 export async function unsubscribeNotifications(api: ServiceContainer): Promise<void> {

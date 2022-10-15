@@ -13,12 +13,8 @@
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import FontSize from "./FontSize.svelte";
-    import { notificationStatus } from "../../../stores/notifications";
     import Stats from "../Stats.svelte";
-    import {
-        askForNotificationPermission,
-        notificationsSupported,
-    } from "../../../utils/notifications";
+    import { notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
@@ -69,6 +65,7 @@
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
 
+    $: notificationStatus = client.notificationStatus;
     $: storageStore = client.storageStore;
     $: cryptoBalance = client.cryptoBalance;
     $: userStore = client.userStore;
@@ -149,7 +146,7 @@
 
     function toggleNotifications() {
         if ($notificationStatus !== "granted") {
-            askForNotificationPermission();
+            client.askForNotificationPermission();
         } else {
             dispatch("unsubscribeNotifications");
         }

@@ -153,6 +153,12 @@ import {
 } from "./stores/filteredProposals";
 import { localMessageUpdates, startPruningLocalUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
+import {
+    askForNotificationPermission,
+    initNotificationStores,
+    notificationStatus,
+    setSoftDisabled,
+} from "./stores/notifications";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
 import {
@@ -397,6 +403,10 @@ export class OpenChat extends EventTarget {
         rtcConnectionsManager.init(this.user.userId);
     }
 
+    initNotificationStores(): void {
+        initNotificationStores();
+    }
+
     subscribeToWebRtc(onMessage: (message: unknown) => void): void {
         rtcConnectionsManager.subscribe(onMessage);
     }
@@ -527,6 +537,8 @@ export class OpenChat extends EventTarget {
     calculateMediaDimensions = calculateMediaDimensions;
     dataToBlobUrl = dataToBlobUrl;
     groupChatFromCandidate = groupChatFromCandidate;
+    askForNotificationPermission = askForNotificationPermission;
+    setSoftDisabled = setSoftDisabled;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -585,4 +597,5 @@ export class OpenChat extends EventTarget {
     currentChatFileToAttach = currentChatFileToAttach;
     currentChatTextContent = currentChatTextContent;
     numberOfThreadsStore = numberOfThreadsStore;
+    notificationStatus = notificationStatus;
 }

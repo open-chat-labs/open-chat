@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import type { CreatedUser, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";

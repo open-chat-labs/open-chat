@@ -1,8 +1,8 @@
-import type { Message, MessageContent } from "./chat/chat";
+import type { Message, MessageContent } from "openchat-client";
+import { buildCryptoTransferText, buildTransactionUrl } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import { buildCryptoTransferText, buildTransactionUrl } from "./chat/chat.utils";
 import { rollbar } from "../utils/logging";
 
 export type Share = {

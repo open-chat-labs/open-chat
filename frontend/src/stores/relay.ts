@@ -4,7 +4,7 @@
  * when they need to be handled in the main chat
  */
 
-import type { Message } from "../domain/chat/chat";
+import type { Message } from "openchat-client";
 
 export type RelayedEvent =
     | RelayedDeleteMessage

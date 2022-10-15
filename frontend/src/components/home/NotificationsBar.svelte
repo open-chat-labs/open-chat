@@ -1,9 +1,13 @@
 <script lang="ts">
+    import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
-    import { askForNotificationPermission } from "../../utils/notifications";
     import Link from "../Link.svelte";
-    import { notificationStatus, setSoftDisabled } from "../../stores/notifications";
+
+    const client = getContext<OpenChat>("client");
+
+    $: notificationStatus = client.notificationStatus;
 
     $: console.log("STATUS: ", $notificationStatus);
 </script>
@@ -12,9 +16,10 @@
     <div in:fade={{ duration: 100 }} out:fade={{ duration: 100 }} class="notification-bar">
         <div class="txt">{$_("enableNotifications")}</div>
         <div class="links">
-            <Link on:click={askForNotificationPermission} underline="always"
+            <Link on:click={() => client.askForNotificationPermission()} underline="always"
                 >{$_("yesPlease")}</Link>
-            <Link on:click={() => setSoftDisabled(true)} underline="always">{$_("noThanks")}</Link>
+            <Link on:click={() => client.setSoftDisabled(true)} underline="always"
+                >{$_("noThanks")}</Link>
         </div>
     </div>
 {/if}

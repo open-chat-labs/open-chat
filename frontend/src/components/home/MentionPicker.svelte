@@ -3,7 +3,7 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Member, PartialUserSummary, CreatedUser, OpenChat } from "openchat-client";
+    import type { Member, PartialUserSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";

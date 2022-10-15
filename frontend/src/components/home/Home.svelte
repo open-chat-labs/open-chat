@@ -41,7 +41,6 @@
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import { fullScreen } from "../../stores/settings";
-    import { initNotificationStores } from "../../stores/notifications";
     import {
         closeNotificationsForChat,
         initNotificationsServiceWorker,
@@ -172,9 +171,9 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         client.initWebRtc();
+        client.initNotificationStores();
         client.subscribeToWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
-        initNotificationStores();
-        initNotificationsServiceWorker(client.api, (n) => notificationReceived(n));
+        initNotificationsServiceWorker(client, (n) => notificationReceived(n));
         client.startPruningLocalUpdates();
     });
 
