@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { UserLookup } from "../../domain/user/user";
-    import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
+    import type { UserLookup, ChatSummary, TypersByKey } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -14,26 +13,11 @@
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
-    import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
-    import {
-        getContentAsText,
-        getDisplayDate,
-        getTypingString,
-        markAllRead,
-    } from "../../domain/chat/chat.utils";
-    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
-    import type { ChatSummary } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { TypersByKey, byChat } from "../../stores/typing";
-    import { userStore } from "../../stores/user";
-    import { messagesRead } from "../../stores/markRead";
-    import { blockedUsers } from "../../stores/blockedUsers";
-    import { pinnedChatsStore } from "../../stores/pinnedChats";
-    import { createEventDispatcher, onDestroy } from "svelte";
-    import { toTitleCase } from "../../utils/string";
+    import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -42,11 +26,19 @@
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
 
+    const client = getContext<OpenChat>("client");
+
     export let index: number;
     export let chatSummary: ChatSummary;
     export let userId: string;
     export let selected: boolean;
     export let visible: boolean;
+
+    $: pinnedChatsStore = client.pinnedChatsStore;
+    $: blockedUsers = client.blockedUsers;
+    $: messagesRead = client.messagesRead;
+    $: typingByChat = client.typingByChat;
+    $: userStore = client.userStore;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -57,23 +49,23 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                typing: getTypingString($userStore, chatSummary.chatId, typing),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
+                typing: client.getTypingString($userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: groupAvatarUrl(chatSummary),
-            typing: getTypingString($userStore, chatSummary.chatId, typing),
+            avatarUrl: client.groupAvatarUrl(chatSummary),
+            typing: client.getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
 
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
         return chat.mentions.filter(
-            (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+            (m) => !client.isMessageRead(chat.chatId, m.messageIndex, m.messageId)
         ).length;
     }
 
@@ -82,7 +74,7 @@
             return "";
         }
 
-        const latestMessageText = getContentAsText(chatSummary.latestMessage.event.content);
+        const latestMessageText = client.getContentAsText(chatSummary.latestMessage.event.content);
 
         if (chatSummary.kind === "direct_chat") {
             return latestMessageText;
@@ -90,7 +82,7 @@
 
         const user =
             chatSummary.latestMessage.event.sender === userId
-                ? toTitleCase($_("you"))
+                ? client.toTitleCase($_("you"))
                 : users[chatSummary.latestMessage.event.sender]?.username ?? $_("unknownUser");
 
         return `${user}: ${latestMessageText}`;
@@ -102,7 +94,7 @@
      * at all times.
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
-        unreadMessages = messagesRead.unreadMessageCount(
+        unreadMessages = client.unreadMessageCount(
             chatSummary.chatId,
             chatSummary.latestMessage?.event.messageIndex
         );
@@ -118,7 +110,7 @@
         delOffset = -50;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $byChat);
+    $: chat = normaliseChatSummary($now, chatSummary, $typingByChat);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {
@@ -179,7 +171,7 @@
     }
 
     function archiveChat() {
-        markAllRead(chatSummary);
+        client.markAllRead(chatSummary);
         dispatch("archiveChat", chatSummary.chatId);
     }
 
@@ -191,9 +183,9 @@
         dispatch("unarchiveChat", chatSummary.chatId);
     }
 
-    $: displayDate = getDisplayDate(chatSummary);
+    $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
-    $: preview = isPreviewing(chatSummary);
+    $: preview = client.isPreviewing(chatSummary);
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
@@ -241,17 +233,17 @@
         <!-- this date formatting is OK for now but we might want to use something like this: 
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
         <div class:rtl={$rtlStore} class="chat-date">
-            {formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
+            {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
         {#if !preview}
             {#if muted && notificationsSupported}
                 <div class="mute icon" class:rtl={$rtlStore}>
-                    <MutedIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <MutedIcon size={$iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
             {#if pinned}
                 <div class="pin icon">
-                    <PinIcon size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <PinIcon size={$iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
             {#if unreadMentions > 0}
@@ -338,7 +330,7 @@
                             {/if}
                             <MenuItem
                                 disabled={unreadMessages === 0}
-                                on:click={() => markAllRead(chatSummary)}>
+                                on:click={() => client.markAllRead(chatSummary)}>
                                 <CheckboxMultipleMarked
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
@@ -361,7 +353,7 @@
                 on:click|stopPropagation|preventDefault={deleteDirectChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
-                <Delete size={$iconSize} color={"#fff"} slot="icon" />
+                <Delete size={$iconSize} color={"#fff"} />
             </div>
         {/if}
     </div>

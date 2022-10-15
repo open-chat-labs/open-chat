@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { AvatarSize, OpenChat, TypersByKey, UserStatus } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -23,27 +22,18 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "../../domain/chat/chat";
-    import {
-        canAddMembers,
-        canCreatePolls,
-        canLeaveGroup,
-        getTypingString,
-    } from "../../domain/chat/chat.utils";
+    import type { ChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
-    import { byChat, TypersByKey } from "../../stores/typing";
-    import { userStore } from "../../stores/user";
     import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import { formatLastOnlineDate } from "../../domain/user/user.utils";
-    import { isProposalGroup } from "../../stores/chat";
     import { notificationsSupported } from "../../utils/notifications";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
@@ -54,11 +44,14 @@
 
     let viewProfile = false;
 
+    $: isProposalGroup = client.isProposalGroup;
+    $: typingByChat = client.typingByChat;
+    $: userStore = client.userStore;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
-    $: pollsAllowed = isGroup && !isBot && canCreatePolls(selectedChatSummary);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary);
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -116,20 +109,22 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                subtext: isBot ? "" : formatLastOnlineDate(now, $userStore[chatSummary.them]),
-                typing: getTypingString($userStore, chatSummary.chatId, typing),
+                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
+                subtext: isBot
+                    ? ""
+                    : client.formatLastOnlineDate(now, $userStore[chatSummary.them]),
+                typing: client.getTypingString($userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: groupAvatarUrl(chatSummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary),
             subtext: chatSummary.public
                 ? $_("publicGroupWithN", { values: { number: chatSummary.memberCount } })
                 : $_("privateGroupWithN", { values: { number: chatSummary.memberCount } }),
-            typing: getTypingString($userStore, chatSummary.chatId, typing),
+            typing: client.getTypingString($userStore, chatSummary.chatId, typing),
         };
     }
 
@@ -147,7 +142,7 @@
         dispatch("showPinned");
     }
 
-    $: chat = normaliseChatSummary($now, selectedChatSummary, $byChat);
+    $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
 </script>
 
 <SectionHeader shadow flush>
@@ -261,7 +256,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
-                            {#if canLeaveGroup(selectedChatSummary)}
+                            {#if client.canLeaveGroup(selectedChatSummary)}
                                 <MenuItem on:click={leaveGroup}>
                                     <LocationExit
                                         size={$iconSize}
@@ -277,7 +272,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("members")}</div>
                             </MenuItem>
-                            {#if canAddMembers(selectedChatSummary)}
+                            {#if client.canAddMembers(selectedChatSummary)}
                                 <MenuItem on:click={addMembers}>
                                     <AccountPlusOutline
                                         size={$iconSize}

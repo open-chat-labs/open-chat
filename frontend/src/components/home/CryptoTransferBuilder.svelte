@@ -2,53 +2,53 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { PartialUserSummary } from "../../domain/user/user";
+    import {
+        AvatarSize,
+        cryptoLookup,
+        UserStatus,
+        E8S_PER_TOKEN,
+        cryptoCurrencyList,
+    } from "openchat-client";
+    import type {
+        PartialUserSummary,
+        Cryptocurrency,
+        ChatSummary,
+        OpenChat,
+        DirectChatSummary,
+    } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import type { CreatedUser } from "../../domain/user/user";
     import { now } from "../../stores/time";
-    import { userStore } from "../../stores/user";
-    import { currentUserKey } from "../../stores/user";
-    import { formatTokens } from "../../utils/cryptoFormatter";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
-    import { cryptoBalance, lastCryptoSent } from "../../stores/crypto";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import Link from "../Link.svelte";
-    import {
-        Cryptocurrency,
-        cryptoCurrencyList,
-        cryptoLookup,
-        E8S_PER_TOKEN,
-    } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import {
-        currentChatReplyingTo,
-        currentChatMembers,
-        currentChatBlockedUsers,
-    } from "../../stores/chat";
-    import type { ChatSummary, DirectChatSummary } from "../../domain/chat/chat";
 
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let draftAmountE8s: bigint;
     export let token: Cryptocurrency;
     export let chat: ChatSummary;
 
-    const user = getContext<CreatedUser>(currentUserKey);
-
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: currentChatMembers = client.currentChatMembers;
+    $: lastCryptoSent = client.lastCryptoSent;
+    $: currentChatReplyingTo = client.currentChatReplyingTo;
+    $: cryptoBalance = client.cryptoBalance;
+    $: userStore = client.userStore;
     let refreshing = false;
     let error: string | undefined = undefined;
     let message = "";
@@ -154,9 +154,9 @@
             <div class="left">
                 <span class="avatar">
                     <Avatar
-                        url={userAvatarUrl(receiver)}
+                        url={client.userAvatarUrl(receiver)}
                         status={receiver
-                            ? getUserStatus($now, $userStore, receiver.userId)
+                            ? client.getUserStatus($now, $userStore, receiver.userId)
                             : UserStatus.None}
                         size={AvatarSize.Small} />
                 </span>
@@ -242,7 +242,10 @@
                     <div class="fee">
                         <span>
                             {$_("tokenTransfer.fee", {
-                                values: { fee: formatTokens(transferFees, 0), token: symbol },
+                                values: {
+                                    fee: client.formatTokens(transferFees, 0),
+                                    token: symbol,
+                                },
                             })}
                         </span>
                     </div>

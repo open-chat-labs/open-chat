@@ -2,14 +2,14 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { CryptocurrencyContent } from "../../domain/chat/chat";
+    import type { CryptocurrencyContent, OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import Envelope from "../Envelope.svelte";
     import { getContext } from "svelte";
-    import type { CreatedUser } from "../../domain/user/user";
-    import { currentUserKey } from "../../stores/user";
-    import { buildCryptoTransferText, buildTransactionLink } from "../../domain/chat/chat.utils";
-    import { cryptoLookup } from "../../domain/crypto";
+    import { cryptoLookup } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
@@ -20,9 +20,8 @@
 
     let symbol = cryptoLookup[content.transfer.token].symbol;
 
-    const user = getContext<CreatedUser>(currentUserKey);
-    $: transferText = buildCryptoTransferText(user.userId, senderId, content, me);
-    $: transactionLinkText = buildTransactionLink(content);
+    $: transferText = client.buildCryptoTransferText(user.userId, senderId, content, me);
+    $: transactionLinkText = client.buildTransactionLink(content);
 </script>
 
 {#if transferText !== undefined}

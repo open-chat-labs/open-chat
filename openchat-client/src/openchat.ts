@@ -4,7 +4,10 @@ import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import type { ThreadSyncDetails } from "./domain";
 import {
+    buildCryptoTransferText,
+    buildTransactionLink,
     buildUserAvatarUrl,
+    canAddMembers,
     canBlockUsers,
     canChangePermissions,
     canChangeRoles,
@@ -14,6 +17,7 @@ import {
     canEditGroupDetails,
     canForward,
     canInviteUsers,
+    canLeaveGroup,
     canMakeGroupPrivate,
     canPinMessages,
     canReactToMessages,
@@ -25,6 +29,8 @@ import {
     createMessage,
     findMessageById,
     getContentAsText,
+    getDisplayDate,
+    getFirstUnreadMention,
     getMembersString,
     getMessageContent,
     getStorageRequiredForMessage,
@@ -33,6 +39,7 @@ import {
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
+    markAllRead,
     mergeChatMetrics,
     mergeEventsAndLocalUpdates,
     mergeSendMessageResponse,
@@ -106,10 +113,12 @@ import {
     currentChatBlockedUsers,
     currentChatDraftMessage,
     currentChatEditingEvent,
+    currentChatFileToAttach,
     currentChatMembers,
     currentChatPinnedMessages,
     currentChatReplyingTo,
     currentChatRules,
+    currentChatTextContent,
     currentChatUserIds,
     currentUserStore,
     eventsStore,
@@ -153,7 +162,7 @@ import {
 } from "./stores/storage";
 import { archivedChatsStore, mutedChatsStore } from "./stores/tempChatsStore";
 import { translationStore } from "./stores/translation";
-import { byThread, isTyping, typing } from "./stores/typing";
+import { byThread, isTyping, typing, byChat as typingByChat } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -353,6 +362,10 @@ export class OpenChat extends EventTarget {
         );
     }
 
+    unreadMessageCount(chatId: string, latestMessageIndex: number | undefined): number {
+        return this.messagesRead.unreadMessageCount(chatId, latestMessageIndex);
+    }
+
     staleThreadsCount(threads: Record<string, ThreadSyncDetails[]>): number {
         return this.messagesRead.staleThreadsCount(threads);
     }
@@ -494,6 +507,13 @@ export class OpenChat extends EventTarget {
     newMessageId = newMessageId;
     forwardMessage = forwardMessage;
     removeMessage = removeMessage;
+    canLeaveGroup = canLeaveGroup;
+    canAddMembers = canAddMembers;
+    getFirstUnreadMention = getFirstUnreadMention;
+    markAllRead = markAllRead;
+    buildCryptoTransferText = buildCryptoTransferText;
+    buildTransactionLink = buildTransactionLink;
+    getDisplayDate = getDisplayDate;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -548,4 +568,7 @@ export class OpenChat extends EventTarget {
     currentChatReplyingTo = currentChatReplyingTo;
     currentChatEditingEvent = currentChatEditingEvent;
     isProposalGroup = isProposalGroup;
+    typingByChat = typingByChat;
+    currentChatFileToAttach = currentChatFileToAttach;
+    currentChatTextContent = currentChatTextContent;
 }

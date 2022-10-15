@@ -3,18 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { editMessage } from "../../services/common/chatThread";
     import { getContext, onDestroy, tick } from "svelte";
-    import {
-        canInviteUsers,
-        canReplyInThread,
-        getFirstUnreadMention,
-        getMessageContent,
-        markAllRead,
-        startTyping,
-        stopTyping,
-    } from "../../domain/chat/chat.utils";
-    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
         ChatEvent,
         ChatSummary,
@@ -24,39 +13,16 @@
         Mention,
         Message,
         MessageContent,
-    } from "../../domain/chat/chat";
+        Cryptocurrency,
+        OpenChat,
+        FilteredProposals,
+        User,
+    } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-    import { userStore } from "../../stores/user";
-    import { blockedUsers as directlyBlockedUsers } from "../../stores/blockedUsers";
-    import {
-        canBlockUsers,
-        canCreatePolls,
-        canDeleteOtherUsersMessages,
-        canPinMessages,
-        canReactToMessages,
-        canSendMessages,
-    } from "../../domain/chat/chat.utils";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
-    import type { Cryptocurrency } from "../../domain/crypto";
-    import { lastCryptoSent } from "../../stores/crypto";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import type { CreatedUser, User } from "../../domain/user/user";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../stores/user";
-    import { messagesRead } from "../../stores/markRead";
-    import {
-        currentChatFileToAttach,
-        currentChatEditingEvent,
-        currentChatReplyingTo,
-        currentChatTextContent,
-        currentChatDraftMessage,
-        currentChatMembers,
-        currentChatBlockedUsers,
-        currentChatPinnedMessages,
-    } from "../../stores/chat";
-    import type { FilteredProposals } from "../../stores/filteredProposals";
 
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
@@ -65,8 +31,8 @@
     export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const user = getContext<CreatedUser>(currentUserKey);
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     $: chatId = chat.chatId;
     let previousChatId: string | undefined = undefined;
@@ -80,17 +46,29 @@
     let showSearchHeader = false;
     let searchTerm = "";
 
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: currentChatMembers = client.currentChatMembers;
+    $: currentChatTextContent = client.currentChatTextContent;
+    $: currentChatReplyingTo = client.currentChatReplyingTo;
+    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
+    $: currentChatFileToAttach = client.currentChatFileToAttach;
+    $: currentChatEditingEvent = client.currentChatEditingEvent;
+    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: lastCryptoSent = client.lastCryptoSent;
+    $: messagesRead = client.messagesRead;
+    $: userStore = client.userStore;
+    $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = canSendMessages(chat, $userStore);
-    $: preview = isPreviewing(chat);
+    $: canSend = client.canSendMessages(chat, $userStore);
+    $: preview = client.isPreviewing(chat);
     $: {
         if (chatId !== previousChatId) {
             previousChatId = chatId;
             showSearchHeader = false;
             unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = getFirstUnreadMention(chat);
+            firstUnreadMention = client.getFirstUnreadMention(chat);
 
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
@@ -103,16 +81,13 @@
 
     let unsub = messagesRead.subscribe(() => {
         unreadMessages = getUnreadMessageCount(chat);
-        firstUnreadMention = getFirstUnreadMention(chat);
+        firstUnreadMention = client.getFirstUnreadMention(chat);
     });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
-        if (isPreviewing(chat)) return 0;
+        if (client.isPreviewing(chat)) return 0;
 
-        return messagesRead.unreadMessageCount(
-            chat.chatId,
-            chat.latestMessage?.event.messageIndex
-        );
+        return messagesRead.unreadMessageCount(chat.chatId, chat.latestMessage?.event.messageIndex);
     }
 
     function onWindowFocus() {
@@ -122,11 +97,11 @@
     onDestroy(unsub);
 
     function onMarkAllRead() {
-        markAllRead(chat);
+        client.markAllRead(chat);
     }
 
     function createPoll() {
-        if (!canCreatePolls(chat)) return;
+        if (!client.canCreatePolls(chat)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -181,10 +156,10 @@
             const msg = {
                 ...editingEvent.event,
                 edited: true,
-                content: getMessageContent(textContent ?? undefined, fileToAttach),
+                content: client.getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            editMessage(api, chat, msg, undefined);
+            client.editMessage(client.api, chat, msg, undefined);
         }
     }
 
@@ -280,13 +255,13 @@
         {serverChat}
         {events}
         {filteredProposals}
-        canPin={canPinMessages(chat)}
-        canBlockUser={canBlockUsers(chat)}
-        canDelete={canDeleteOtherUsersMessages(chat)}
-        canReplyInThread={canReplyInThread(chat)}
+        canPin={client.canPinMessages(chat)}
+        canBlockUser={client.canBlockUsers(chat)}
+        canDelete={client.canDeleteOtherUsersMessages(chat)}
+        canReplyInThread={client.canReplyInThread(chat)}
         {canSend}
-        canReact={canReactToMessages(chat)}
-        canInvite={canInviteUsers(chat)}
+        canReact={client.canReactToMessages(chat)}
+        canInvite={client.canInviteUsers(chat)}
         {preview}
         {firstUnreadMention}
         footer={showFooter}
@@ -312,8 +287,8 @@
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
             on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.chatId)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => startTyping(chat, user.userId)}
-            on:stopTyping={() => stopTyping(chat, user.userId)}
+            on:startTyping={() => client.startTyping(chat, user.userId)}
+            on:stopTyping={() => client.stopTyping(chat, user.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
