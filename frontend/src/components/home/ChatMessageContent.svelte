@@ -13,7 +13,7 @@
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import ProposalContent from "./ProposalContent.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
-    import type { MessageContent } from "../../domain/chat/chat";
+    import type { MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
 
     export let content: MessageContent;

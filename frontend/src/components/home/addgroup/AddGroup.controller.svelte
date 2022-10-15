@@ -2,19 +2,18 @@
     import { _ } from "svelte-i18n";
     import NewGroup from "./NewGroup.svelte";
     import ChooseMembers from "./ChooseMembers.svelte";
-    import type { NewGroupState } from "../../../domain/newGroup";
-    import {
+    import { defaultGroupRules } from "openchat-client";
+    import { UnsupportedValueError } from "openchat-client";
+    import type {
+        User,
         CandidateGroupChat,
         CreateGroupResponse,
-        defaultGroupRules,
-    } from "../../../domain/chat/chat";
-    import type { User } from "../../../domain/user/user";
+        NewGroupState,
+    } from "openchat-client";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { push } from "svelte-spa-router";
     import { createEventDispatcher, getContext, tick } from "svelte";
-    import { groupChatFromCandidate } from "domain/chat/chat.utils";
-    import { UnsupportedValueError } from "utils/error";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -111,7 +110,7 @@
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
-        return api
+        return client.api
             .addMembers(
                 canisterId,
                 candidateGroup.members.map((m) => m.user.userId),
@@ -136,7 +135,7 @@
     function onGroupCreated(canisterId: string) {
         const url = `/${canisterId}`;
         dispatch("groupCreated", {
-            group: groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup),
+            group: client.groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup),
             rules: candidateGroup.rules,
         });
         reset();

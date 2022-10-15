@@ -2,17 +2,12 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { apiKey } from "../../services/serviceContainer";
-    import type { CreatedUser } from "../../domain/user/user";
-    import type { ServiceContainer } from "../../services/serviceContainer";
-    import type { Cryptocurrency } from "../../domain/crypto";
+    import type { Cryptocurrency, OpenChat } from "openchat-client";
     import { rollbar } from "../../utils/logging";
-    import { formatTokens } from "../../utils/cryptoFormatter";
-    import { currentUserKey } from "../../stores/user";
 
+    const client = getContext<OpenChat>("client");
+    const user = client.user;
     const dispatch = createEventDispatcher();
-    const api = getContext<ServiceContainer>(apiKey);
-    const user = getContext<CreatedUser>(currentUserKey);
 
     export let token: Cryptocurrency = "icp";
     export let value: bigint;
@@ -31,7 +26,7 @@
         dispatch("click");
         refreshing = true;
 
-        return api
+        return client.api
             .refreshAccountBalance(token, user.cryptoAccount)
             .then((val) => {
                 dispatch("refreshed", val);
@@ -47,7 +42,7 @@
 
 <div class="container" class:align-centre={label === undefined}>
     <div class="balance">
-        <div class="amount" class:bold>{formatTokens(value, minDecimals)}</div>
+        <div class="amount" class:bold>{client.formatTokens(value, minDecimals)}</div>
         {#if label !== undefined}
             <div class="label">{label}</div>
         {/if}

@@ -4,7 +4,7 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { CreatedUser } from "../../domain/user/user";
+    import type { CreatedUser } from "openchat-client";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";

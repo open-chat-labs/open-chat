@@ -2,10 +2,17 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type { CreatedUser } from "../../domain/user/user";
+    import type {
+        CreatedUser,
+        Message,
+        EnhancedReplyContext,
+        Dimensions,
+        MessageContent,
+        OpenChat,
+    } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "../../domain/user/user";
+    import { AvatarSize } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -13,12 +20,11 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -35,28 +41,19 @@
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
-    import { containsSocialVideoLink, fillMessage, isSocialVideoLink } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { Dimensions } from "../../utils/media";
-    import type { MessageContent } from "../../domain/chat/chat";
-    import { calculateMediaDimensions } from "../../utils/layout";
     import MessageReaction from "./MessageReaction.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import { userAvatarUrl } from "../../domain/user/user.utils";
-    import * as shareFunctions from "../../domain/share";
-    import { userStore } from "../../stores/user";
     import { translationCodes } from "../../i18n/i18n";
     import { toastStore } from "stores/toast";
-    import { storageStore } from "../../stores/storage";
-    import { translationStore } from "../../stores/translation";
-    import { canForward } from "../../domain/chat/chat.utils";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
-    import { toShortTimeString } from "../../utils/date";
+    import { canShareMessage } from "../../utils/share";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -86,7 +83,7 @@
     export let inThread: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
-    export let dateFormatter: (date: Date) => string = toShortTimeString;
+    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
     export let collapsed: boolean = false;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
@@ -103,6 +100,9 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
+    $: storageStore = client.storageStore;
+    $: translationStore = client.translationStore;
+    $: userStore = client.userStore;
     $: canEdit = supportsEdit && !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
@@ -111,7 +111,7 @@
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
-    $: fill = fillMessage(msg);
+    $: fill = client.fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
@@ -274,7 +274,7 @@
                 : { width: content.desktop.width, height: content.desktop.height };
         } else if (
             content.kind === "text_content" &&
-            (isSocialVideoLink(content.text) || containsSocialVideoLink(content.text))
+            (client.isSocialVideoLink(content.text) || client.containsSocialVideoLink(content.text))
         ) {
             return { width: 560, height: 315 };
         }
@@ -299,7 +299,7 @@
 
         const parentWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
 
-        let targetMediaDimensions = calculateMediaDimensions(
+        let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
             parentWidth,
             msgBubblePaddingWidth,
@@ -334,7 +334,7 @@
     }
 
     function canShare(): boolean {
-        return shareFunctions.canShareMessage(msg.content);
+        return canShareMessage(msg.content);
     }
 
     function shareMessage() {
@@ -405,7 +405,7 @@
                 {#if first}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
-                            url={userAvatarUrl(sender)}
+                            url={client.userAvatarUrl(sender)}
                             size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
                     </div>
                 {/if}
@@ -587,7 +587,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if canForward(msg.content) && !inThread}
+                                {#if client.canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}

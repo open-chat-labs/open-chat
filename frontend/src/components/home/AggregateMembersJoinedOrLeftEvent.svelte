@@ -1,16 +1,17 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { UserLookup, UserSummary } from "../../domain/user/user";
+    import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { getMembersString } from "../../domain/chat/chat.utils";
-    import { compareIsNotYouThenUsername, compareUsername } from "../../domain/user/user.utils";
-    import { userStore } from "../../stores/user";
+
+    const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
     export let left: Set<string>;
 
+    $: userStore = client.userStore;
     $: joinedText = buildText($userStore, joined, "userJoined");
     $: leftText = buildText($userStore, left, "userLeft");
 
@@ -29,13 +30,13 @@
     }
 
     function buildUserList(userStore: UserLookup, userIds: Set<string>): string {
-        return getMembersString(
+        return client.getMembersString(
             user!,
             userStore,
             Array.from(userIds),
             $_("unknownUser"),
             $_("you"),
-            user ? compareIsNotYouThenUsername(user.userId) : compareUsername,
+            user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
             false
         );
     }

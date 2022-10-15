@@ -6,17 +6,23 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateMembersJoinedOrLeftEvent from "./AggregateMembersJoinedOrLeftEvent.svelte";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
+    import type {
+        CreatedUser,
+        UserSummary,
+        ChatEvent,
+        EventWrapper,
+        Message,
+        OpenChat,
+    } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import { push } from "svelte-spa-router";
-    import { typing, isTyping } from "../../stores/typing";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -49,6 +55,7 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
+    $: typing = client.typing;
     $: {
         userSummary = {
             kind: "user",
@@ -77,7 +84,7 @@
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
-        senderTyping={isTyping($typing, event.event.sender, chatId)}
+        senderTyping={client.isTyping($typing, event.event.sender, chatId)}
         {focused}
         {observer}
         {confirmed}

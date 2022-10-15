@@ -2,13 +2,13 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
-    import { MAX_AUDIO_SIZE } from "../../utils/media";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { MAX_AUDIO_SIZE } from "openchat-client";
     import { toastStore } from "../../stores/toast";
-    import { dataToBlobUrl } from "../../utils/blob";
-    import type { AudioContent } from "../../domain/chat/chat";
+    import type { AudioContent, OpenChat } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
 
+    const client = getContext<OpenChat>("client");
     type EventMap = {
         audioCaptured: AudioContent;
     };
@@ -92,7 +92,7 @@
                             kind: "audio_content",
                             mimeType: mimeType,
                             blobData: new Uint8Array(data),
-                            blobUrl: dataToBlobUrl(data, mimeType),
+                            blobUrl: client.dataToBlobUrl(data, mimeType),
                         });
                         stream.getTracks().forEach((track) => track.stop());
                     });

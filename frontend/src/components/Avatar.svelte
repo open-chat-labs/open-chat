@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
 
     export let url: string | undefined;

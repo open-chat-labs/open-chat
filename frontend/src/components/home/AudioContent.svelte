@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { AudioContent } from "../../domain/chat/chat";
+    import type { AudioContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";

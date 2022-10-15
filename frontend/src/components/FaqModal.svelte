@@ -2,7 +2,7 @@
     import ModalContent from "./ModalContent.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import { allQuestions, Questions } from "../domain/faq";
+    import { allQuestions, Questions } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./home/Markdown.svelte";
     import { toastStore } from "../stores/toast";

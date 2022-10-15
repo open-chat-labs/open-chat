@@ -5,33 +5,26 @@
     import ChatSummary from "./ChatSummary.svelte";
     import ThreadsSection from "./ThreadsSection.svelte";
     import { _ } from "svelte-i18n";
-    import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
+        ChatSummary as ChatSummaryType,
         GroupMatch,
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
-    } from "../../domain/search/search";
-    import type { CreatedUser, UserSummary } from "../../domain/user/user";
-    import { createEventDispatcher, onMount, tick } from "svelte";
+        CreatedUser,
+        UserSummary,
+        DataContent,
+        OpenChat,
+    } from "openchat-client";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
-    import { groupAvatarUrl, userAvatarUrl } from "../../domain/user/user.utils";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
-    import type { DataContent } from "../../domain/data/data";
-    import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
-    import {
-        chatsLoading,
-        chatSummariesListStore,
-        chatSummariesStore,
-        numberOfThreadsStore,
-        selectedChatId,
-    } from "../../stores/chat";
-    import { messagesRead } from "../../stores/markRead";
     import { menuCloser } from "../../actions/closeMenu";
+
+    const client = getContext<OpenChat>("client");
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -45,6 +38,13 @@
 
     let chatsWithUnreadMsgs: number;
 
+    $: selectedChatId = client.selectedChatId;
+    $: numberOfThreadsStore = client.numberOfThreadsStore;
+    $: chatsLoading = client.chatsLoading;
+    $: chatSummariesStore = client.chatSummariesStore;
+    $: messagesRead = client.messagesRead;
+    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
@@ -73,7 +73,7 @@
         chatsWithUnreadMsgs = chats
             ? chats.reduce(
                   (num, chat) =>
-                      messagesRead.unreadMessageCount(
+                      client.unreadMessageCount(
                           chat.chatId,
                           chat.latestMessage?.event.messageIndex
                       ) > 0
@@ -200,7 +200,7 @@
                                 {#each resp.matches as group, i (group.chatId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={groupAvatarUrl(group)}
+                                        avatarUrl={client.groupAvatarUrl(group)}
                                         on:click={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
@@ -222,7 +222,7 @@
                                 {#each resp as user, i (user.userId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={userAvatarUrl(user)}
+                                        avatarUrl={client.userAvatarUrl(user)}
                                         on:click={() => chatWith(user.userId)}>
                                         <h4 class="search-item-title">
                                             @{user.username}
@@ -241,7 +241,9 @@
                                 {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={groupAvatarUrl(messageMatchDataContent(msg))}
+                                        avatarUrl={client.groupAvatarUrl(
+                                            messageMatchDataContent(msg)
+                                        )}
                                         showSpinner={false}
                                         on:click={() => loadMessage(msg)}>
                                         <h4 class="search-item-title">
@@ -249,7 +251,7 @@
                                         </h4>
                                         <div class="search-item-desc">
                                             <Markdown
-                                                text={getContentAsText(msg.content)}
+                                                text={client.getContentAsText(msg.content)}
                                                 oneLine={true}
                                                 suppressLinks={true} />
                                         </div>

@@ -1,14 +1,12 @@
 <script lang="ts">
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { AvatarSize } from "../domain/user/user";
-    import type { UserSummary } from "../domain/user/user";
-    import { userAvatarUrl, userStatus } from "../domain/user/user.utils";
+    import { AvatarSize } from "openchat-client";
+    import type { UserSummary } from "openchat-client";
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { userStore } from "../stores/user";
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import { now } from "../stores/time";
@@ -25,6 +23,8 @@
     let users: UserSummary[] = [];
     let searching: boolean = false;
     let hovering = false;
+
+    $: userStore = client.userStore;
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -97,8 +97,8 @@
                 <span class="avatar">
                     <Avatar
                         statusBorder={hovering ? "var(--members-hv)" : "var(--members-bg)"}
-                        url={userAvatarUrl(user)}
-                        status={userStatus($now, user)}
+                        url={client.userAvatarUrl(user)}
+                        status={client.userStatus($now, user)}
                         size={AvatarSize.Small} />
                 </span>
                 <h4 class="details">

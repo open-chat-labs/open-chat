@@ -5,18 +5,19 @@
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
-    import { AvatarSize, UserStatus } from "../../../domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import Button from "../../Button.svelte";
     import Checkbox from "../../Checkbox.svelte";
-    import { groupAvatarUrl } from "../../../domain/user/user.utils";
-    import { createEventDispatcher } from "svelte";
-    import type { CandidateGroupChat } from "../../../domain/chat/chat";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { CandidateGroupChat, OpenChat } from "openchat-client";
     import { iconSize } from "../../../stores/iconSize";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import Rules from "../groupdetails/Rules.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
@@ -71,7 +72,7 @@
         <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
             <div class="sub-section photo">
                 <EditableAvatar
-                    image={groupAvatarUrl(candidateGroup.avatar)}
+                    image={client.groupAvatarUrl(candidateGroup.avatar)}
                     on:imageSelected={groupAvatarSelected} />
                 <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
             </div>

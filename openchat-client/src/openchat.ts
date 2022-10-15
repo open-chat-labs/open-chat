@@ -36,6 +36,7 @@ import {
     getStorageRequiredForMessage,
     getTypingString,
     groupBySender,
+    groupChatFromCandidate,
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
@@ -66,6 +67,7 @@ import {
     nullUser,
     phoneNumberToString,
     userAvatarUrl,
+    userStatus,
 } from "./domain/user/user.utils";
 import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
 import type { WebRtcMessage } from "./domain/webrtc/webrtc";
@@ -126,6 +128,7 @@ import {
     focusThreadMessageIndex,
     isProposalGroup,
     nextEventAndMessageIndexes,
+    numberOfThreadsStore,
     proposalTopicsStore,
     removeChat,
     selectedChatId,
@@ -166,6 +169,7 @@ import { byThread, isTyping, typing, byChat as typingByChat } from "./stores/typ
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
 import { startUserUpdatePoller, userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
+import { dataToBlobUrl } from "./utils/blob";
 import { setCachedMessageFromNotification } from "./utils/caching";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
@@ -176,10 +180,13 @@ import {
     toShortTimeString,
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
+import { calculateMediaDimensions } from "./utils/layout";
 import { groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
+    containsSocialVideoLink,
     fillMessage,
+    isSocialVideoLink,
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
@@ -399,6 +406,7 @@ export class OpenChat extends EventTarget {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
+    userStatus = userStatus;
     groupAvatarUrl = groupAvatarUrl;
     getUserStatus = getUserStatus;
     phoneNumberToString = phoneNumberToString;
@@ -514,6 +522,11 @@ export class OpenChat extends EventTarget {
     buildCryptoTransferText = buildCryptoTransferText;
     buildTransactionLink = buildTransactionLink;
     getDisplayDate = getDisplayDate;
+    isSocialVideoLink = isSocialVideoLink;
+    containsSocialVideoLink = containsSocialVideoLink;
+    calculateMediaDimensions = calculateMediaDimensions;
+    dataToBlobUrl = dataToBlobUrl;
+    groupChatFromCandidate = groupChatFromCandidate;
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -571,4 +584,5 @@ export class OpenChat extends EventTarget {
     typingByChat = typingByChat;
     currentChatFileToAttach = currentChatFileToAttach;
     currentChatTextContent = currentChatTextContent;
+    numberOfThreadsStore = numberOfThreadsStore;
 }

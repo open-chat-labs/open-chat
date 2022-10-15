@@ -9,3 +9,5 @@ export * from "./giphy";
 export * from "./notifications";
 export * from "./webrtc/webrtc";
 export * from "./search/search";
+export * from "./data/data";
+export * from "./newGroup";

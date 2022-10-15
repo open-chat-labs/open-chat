@@ -4,10 +4,9 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
-    import { AvatarSize, UserStatus } from "../../../domain/user/user";
-    import type { UserSummary } from "../../../domain/user/user";
+    import { AvatarSize, UserStatus } from "openchat-client";
     import SelectUsers from "../SelectUsers.svelte";
-    import type { CandidateGroupChat } from "../../../domain/chat/chat";
+    import type { CandidateGroupChat, UserSummary } from "openchat-client";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
