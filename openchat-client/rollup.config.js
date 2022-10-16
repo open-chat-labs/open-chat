@@ -19,7 +19,7 @@ export default {
         format: "es",
         dir: "./lib",
     },
-    // external: ["url", "fs", "path", "os"],
+    external: ["url"],
     plugins: [
         resolve({
             preferBuiltins: false,
