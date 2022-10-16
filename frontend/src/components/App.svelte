@@ -22,7 +22,26 @@
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
-    let client: OpenChat = new OpenChat();
+
+    // FIXME - fill all this in from process.env
+    let client: OpenChat = new OpenChat({
+        icUrl: "process.env.IC_URL",
+        iiDerivationOrigin: "",
+        openStorageIndexCanister: "",
+        groupIndexCanister: "",
+        notificationsCanister: "",
+        onlineCanister: "",
+        userIndexCanister: "",
+        internetIdentityUrl: "",
+        nfidUrl: "",
+        enableClientCaching: true,
+        ledgerCanisterICP: "",
+        ledgerCanisterBTC: "",
+        ledgerCanisterCHAT: "",
+        userGeekApiKey: "",
+        enableMultiCrypto: false,
+        blobUrlPattern: "",
+    });
     let profileTrace = client.showTrace();
 
     setContext<OpenChat>("client", client);

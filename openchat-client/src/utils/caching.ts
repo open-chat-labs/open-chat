@@ -78,7 +78,7 @@ export function createCacheKey(
 }
 
 export function openCache(principal: string): Database | undefined {
-    if (process.env.NODE_ENV === "test" || !process.env.CLIENT_CACHING) {
+    if (process.env.NODE_ENV === "test") {
         return undefined;
     }
     try {
@@ -483,8 +483,6 @@ export function setCachedMessageFromNotification(
     threadRootMessageIndex: number | undefined,
     message: EventWrapper<Message>
 ): void {
-    if (!process.env.CLIENT_CACHING) return;
-
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot set message from notification");
     }
@@ -500,14 +498,14 @@ async function setCachedMessageIfNotExists(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex)
+    const key = createCacheKey(chatId, messageEvent.index, threadRootMessageIndex);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
     const eventStore = tx.objectStore(store);
-    if (await eventStore.count(key) === 0) {
-        await eventStore.add(makeSerialisable(messageEvent, chatId), key)
+    if ((await eventStore.count(key)) === 0) {
+        await eventStore.add(makeSerialisable(messageEvent, chatId), key);
     }
     await tx.done;
 }

@@ -1,4 +1,5 @@
 import type { Identity } from "@dfinity/agent";
+import type { OpenChatConfig } from "../../config";
 import type { GroupSearchResponse } from "../../domain/search/search";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -8,18 +9,18 @@ import { groupSearchResponse } from "./mappers";
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
     private groupIndexService: GroupIndexService;
 
-    private constructor(identity: Identity) {
+    private constructor(identity: Identity, config: OpenChatConfig) {
         super(identity);
 
         this.groupIndexService = this.createServiceClient<GroupIndexService>(
             idlFactory,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            "process.env.GROUP_INDEX_CANISTER"
+            config.groupIndexCanister,
+            config
         );
     }
 
-    static create(identity: Identity): IGroupIndexClient {
-        return new GroupIndexClient(identity);
+    static create(identity: Identity, config: OpenChatConfig): IGroupIndexClient {
+        return new GroupIndexClient(identity, config);
     }
 
     search(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {

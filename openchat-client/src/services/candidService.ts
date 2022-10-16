@@ -1,7 +1,13 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import type { OpenChatConfig } from "../config";
 import { rollbar } from "../utils/logging";
-import { AuthError, ReplicaNotUpToDateError, SessionExpiryError, toCanisterResponseError } from "./error";
+import {
+    AuthError,
+    ReplicaNotUpToDateError,
+    SessionExpiryError,
+    toCanisterResponseError,
+} from "./error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -15,8 +21,12 @@ function debug(msg: string): void {
 export type ServiceRetryInterrupt = (iterations: number) => boolean;
 
 export abstract class CandidService {
-    protected createServiceClient<T>(factory: IDL.InterfaceFactory, canisterId: string): T {
-        const host = process.env.IC_URL;
+    protected createServiceClient<T>(
+        factory: IDL.InterfaceFactory,
+        canisterId: string,
+        config: OpenChatConfig
+    ): T {
+        const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });
         if (process.env.NODE_ENV !== "production") {
             agent.fetchRootKey();
@@ -49,7 +59,9 @@ export abstract class CandidService {
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
-                const debugInfo = `error: ${JSON.stringify(responseErr)}, args: ${JSON.stringify(args)}`;
+                const debugInfo = `error: ${JSON.stringify(responseErr)}, args: ${JSON.stringify(
+                    args
+                )}`;
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof AuthError) &&
@@ -59,9 +71,13 @@ export abstract class CandidService {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
-                        debug(`query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`);
+                        debug(
+                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                        );
                     } else {
-                        debug(`query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`);
+                        debug(
+                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                        );
                     }
 
                     return new Promise((resolve, reject) => {
@@ -78,7 +94,9 @@ export abstract class CandidService {
                         }, delay);
                     });
                 } else {
-                    debug(`query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`);
+                    debug(
+                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`
+                    );
                     throw responseErr;
                 }
             });

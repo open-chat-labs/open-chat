@@ -98,26 +98,34 @@ import { textToCode } from "../../domain/inviteCodes";
 import type { GroupInvite } from "../../services/serviceContainer";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
+import type { OpenChatConfig } from "../../config";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
     userId: string;
 
-    constructor(identity: Identity, userId: string) {
+    constructor(identity: Identity, userId: string, private config: OpenChatConfig) {
         super(identity);
         this.userId = userId;
-        this.userService = this.createServiceClient<UserService>(idlFactory, userId);
+        this.userService = this.createServiceClient<UserService>(idlFactory, userId, config);
     }
 
     static create(
         userId: string,
         identity: Identity,
+        config: OpenChatConfig,
         db: Database | undefined,
         groupInvite: GroupInvite | undefined
     ): IUserClient {
-        return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserClient(db, identity, new UserClient(identity, userId), groupInvite)
-            : new UserClient(identity, userId);
+        return db && config.enableClientCaching && !cachingLocallyDisabled()
+            ? new CachingUserClient(
+                  db,
+                  identity,
+                  config,
+                  new UserClient(identity, userId, config),
+                  groupInvite
+              )
+            : new UserClient(identity, userId, config);
     }
 
     @profile("userClient")
@@ -324,7 +332,7 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity)
+        return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [this.userId, recipientId])
             .then((content) => {
                 const req = {
@@ -346,7 +354,7 @@ export class UserClient extends CandidService implements IUserClient {
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        const dataClient = DataClient.create(this.identity);
+        const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.userId, recipientId])
             : dataClient.uploadData(message.content, [this.userId, recipientId]);

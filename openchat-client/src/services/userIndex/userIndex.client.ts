@@ -36,24 +36,25 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { cachingLocallyDisabled } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
+import type { OpenChatConfig } from "../../config";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
 
-    private constructor(identity: Identity) {
+    private constructor(identity: Identity, config: OpenChatConfig) {
         super(identity);
 
         this.userService = this.createServiceClient<UserIndexService>(
             idlFactory,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            "process.env.USER_INDEX_CANISTER"
+            config.userIndexCanister,
+            config
         );
     }
 
-    static create(identity: Identity): IUserIndexClient {
-        return process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(new UserIndexClient(identity))
-            : new UserIndexClient(identity);
+    static create(identity: Identity, config: OpenChatConfig): IUserIndexClient {
+        return config.enableClientCaching && !cachingLocallyDisabled()
+            ? new CachingUserIndexClient(new UserIndexClient(identity, config))
+            : new UserIndexClient(identity, config);
     }
 
     @profile("userIndexClient")

@@ -75,6 +75,7 @@ import { rollbar } from "../../utils/logging";
 import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
+import type { OpenChatConfig } from "../../config";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -88,6 +89,7 @@ export class CachingUserClient implements IUserClient {
     constructor(
         private db: Database,
         private identity: Identity,
+        private config: OpenChatConfig,
         private client: IUserClient,
         private groupInvite: GroupInvite | undefined
     ) {}
@@ -282,6 +284,7 @@ export class CachingUserClient implements IUserClient {
                     const groupClient = GroupClient.create(
                         chat.chatId,
                         this.identity,
+                        this.config,
                         this.db,
                         inviteCode
                     );
@@ -335,7 +338,7 @@ export class CachingUserClient implements IUserClient {
 
                     const missing = missingUserIds(get(userStore), userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity).getUsers(
+                        return UserIndexClient.create(this.identity, this.config).getUsers(
                             {
                                 userGroups: [
                                     {

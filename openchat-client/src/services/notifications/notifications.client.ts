@@ -5,21 +5,23 @@ import { CandidService } from "../candidService";
 import type { INotificationsClient } from "./notifications.client.interface";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
+import type { OpenChatConfig } from "../../config";
 
 export class NotificationsClient extends CandidService implements INotificationsClient {
     private service: NotificationsService;
 
-    private constructor(identity: Identity) {
+    private constructor(identity: Identity, config: OpenChatConfig) {
         super(identity);
 
         this.service = this.createServiceClient<NotificationsService>(
             idlFactory,
-            "process.env.NOTIFICATIONS_CANISTER"
+            config.notificationsCanister,
+            config
         );
     }
 
-    static create(identity: Identity): INotificationsClient {
-        return new NotificationsClient(identity);
+    static create(identity: Identity, config: OpenChatConfig): INotificationsClient {
+        return new NotificationsClient(identity, config);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
@@ -49,7 +51,7 @@ export class NotificationsClient extends CandidService implements INotifications
         const json = subscription.toJSON();
         return this.handleResponse(
             this.service.remove_subscription({
-                p256dh_key: json.keys!["p256dh"]
+                p256dh_key: json.keys!["p256dh"],
             }),
             toVoid
         );

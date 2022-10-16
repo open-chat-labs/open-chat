@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { getTimeUntilSessionExpiryMs } from "./auth";
+import { getTimeUntilSessionExpiryMs } from "../utils/session";
 
 export class HttpError extends Error {
     constructor(public code: number, error: Error) {
@@ -48,7 +48,10 @@ export class ReplicaNotUpToDateError extends Error {
     }
 }
 
-export function toCanisterResponseError(error: Error, identity: Identity): HttpError | ReplicaNotUpToDateError {
+export function toCanisterResponseError(
+    error: Error,
+    identity: Identity
+): HttpError | ReplicaNotUpToDateError {
     if (error instanceof ReplicaNotUpToDateError) {
         return error;
     }

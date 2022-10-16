@@ -117,6 +117,7 @@ import { userCreatedStore } from "../stores/userCreated";
 import { selectedAuthProviderStore } from "../stores/authProviders";
 import { AuthProvider } from "../domain/auth";
 import { rollbar } from "../utils/logging";
+import type { OpenChatConfig } from "../config";
 
 export const apiKey = Symbol();
 
@@ -136,16 +137,18 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
 
-    constructor(private identity: Identity) {
-        this.db = initDb(identity.getPrincipal().toString());
-        this._onlineClient = OnlineClient.create(identity);
-        this._userIndexClient = UserIndexClient.create(identity);
-        this._groupIndexClient = GroupIndexClient.create(identity);
-        this._notificationClient = NotificationsClient.create(identity);
+    constructor(private identity: Identity, private config: OpenChatConfig) {
+        if (config.enableClientCaching) {
+            this.db = initDb(identity.getPrincipal().toString());
+        }
+        this._onlineClient = OnlineClient.create(identity, config);
+        this._userIndexClient = UserIndexClient.create(identity, config);
+        this._groupIndexClient = GroupIndexClient.create(identity, config);
+        this._notificationClient = NotificationsClient.create(identity, config);
         this._ledgerClients = {
-            icp: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_ICP"),
-            btc: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_BTC"),
-            chat: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_CHAT"),
+            icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
+            btc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
+            chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
         if (this.db) {
@@ -165,7 +168,13 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     createUserClient(userId: string): ServiceContainer {
-        this._userClient = UserClient.create(userId, this.identity, this.db, this._groupInvite);
+        this._userClient = UserClient.create(
+            userId,
+            this.identity,
+            this.config,
+            this.db,
+            this._groupInvite
+        );
         return this;
     }
 
@@ -175,6 +184,7 @@ export class ServiceContainer implements MarkMessagesRead {
             this._groupClients[chatId] = GroupClient.create(
                 chatId,
                 this.identity,
+                this.config,
                 this.db,
                 inviteCode
             );
@@ -1068,14 +1078,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getBio(userId?: string): Promise<string> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.db, undefined)
+            ? UserClient.create(userId, this.identity, this.config, this.db, undefined)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.db, undefined)
+            ? UserClient.create(userId, this.identity, this.config, this.db, undefined)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -1098,7 +1108,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getUserStorageLimits(): Promise<void> {
         // do we need to do something if this fails? Not sure there's much we can do
-        return DataClient.create(this.identity).storageStatus().then(storageStore.set);
+        return DataClient.create(this.identity, this.config).storageStatus().then(storageStore.set);
     }
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
@@ -1203,14 +1213,20 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        const userClient = UserClient.create(userId, this.identity, this.db, undefined);
+        const userClient = UserClient.create(
+            userId,
+            this.identity,
+            this.config,
+            this.db,
+            undefined
+        );
         return userClient.migrateUserPrincipal();
     }
 
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string
     ): Promise<ListNervousSystemFunctionsResponse> {
-        return SnsGovernanceClient.create(this.identity, snsGovernanceCanisterId)
+        return SnsGovernanceClient.create(this.identity, this.config, snsGovernanceCanisterId)
             .listNervousSystemFunctions()
             .then((val) => {
                 snsFunctions.set(snsGovernanceCanisterId, val.functions);

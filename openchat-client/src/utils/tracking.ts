@@ -1,12 +1,13 @@
 import type { Identity } from "@dfinity/agent";
+import type { OpenChatConfig } from "../config";
 import { Usergeek } from "usergeek-ic-js";
 
 const shouldTrack = process.env.NODE_ENV === "production";
 
-export function initialiseTracking(): void {
+export function initialiseTracking({ icUrl, userGeekApiKey }: OpenChatConfig): void {
     if (shouldTrack) {
-        const apiKey = "process.env.USERGEEK_APIKEY";
-        const host = process.env.IC_URL;
+        const apiKey = userGeekApiKey;
+        const host = icUrl;
         Usergeek.init({ apiKey, host });
         console.log("Usergeek initialised");
     }

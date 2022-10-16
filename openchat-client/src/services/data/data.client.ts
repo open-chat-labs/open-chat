@@ -7,19 +7,23 @@ import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat"
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus } from "../../domain/data/data";
 import { storageStore } from "../../stores/storage";
+import type { OpenChatConfig } from "../../config";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
 
-    static create(identity: Identity): IDataClient {
-        const host = process.env.IC_URL;
+    static create(
+        identity: Identity,
+        { icUrl, openStorageIndexCanister }: OpenChatConfig
+    ): IDataClient {
+        const host = icUrl;
         const agent = new HttpAgent({ identity, host });
         if (process.env.NODE_ENV !== "production") {
             agent.fetchRootKey();
         }
         const openStorageAgent = new OpenStorageAgent(
             agent,
-            Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER")
+            Principal.fromText(openStorageIndexCanister)
         );
 
         return new DataClient(openStorageAgent);

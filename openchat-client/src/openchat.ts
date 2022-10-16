@@ -2,7 +2,8 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
-import type { ThreadSyncDetails } from "./domain";
+import type { EventWrapper, Message, ThreadSyncDetails } from "./domain";
+import { AuthProvider } from "./domain";
 import {
     buildCryptoTransferText,
     buildTransactionLink,
@@ -71,7 +72,6 @@ import {
 } from "./domain/user/user.utils";
 import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
 import type { WebRtcMessage } from "./domain/webrtc/webrtc";
-import { login, startSession } from "./services/auth";
 import {
     blockUser,
     deleteMessage,
@@ -201,11 +201,16 @@ import { mergeKeepingOnlyChanged } from "./utils/object";
 import { delegateToChatComponent, filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import { toTitleCase } from "./utils/string";
 import { formatTimeRemaining } from "./utils/time";
-import { initialiseTracking, trackEvent } from "./utils/tracking";
+import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
+import type { OpenChatConfig } from "./config";
+import { getTimeUntilSessionExpiryMs } from "./utils/session";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
+const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
+const ONE_MINUTE_MILLIS = 60 * 1000;
+const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
@@ -215,8 +220,10 @@ export class OpenChat extends EventTarget {
 
     identityState = writable<IdentityState>("loading_user");
 
-    constructor() {
+    constructor(private config: OpenChatConfig) {
         super();
+
+        console.log("OpenChatConfig: ", config);
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
@@ -226,7 +233,7 @@ export class OpenChat extends EventTarget {
             },
             storage: idbAuthClientStore,
         });
-        initialiseTracking();
+        initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
     }
@@ -242,11 +249,66 @@ export class OpenChat extends EventTarget {
 
     login(): void {
         this.identityState.set("logging_in");
-        login(get(selectedAuthProviderStore)).then((id) => this.loadedIdentity(id));
+        const authProvider = get(selectedAuthProviderStore);
+        this._authClient.then((c) => {
+            c.login({
+                identityProvider: this.buildAuthProviderUrl(authProvider),
+                maxTimeToLive: SESSION_TIMEOUT_NANOS,
+                derivationOrigin: this.config.iiDerivationOrigin,
+                onSuccess: () => this.loadedIdentity(c.getIdentity()),
+                onError: (err) => {
+                    throw new Error(err);
+                },
+            });
+        });
+    }
+
+    private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
+        if (authProvider === AuthProvider.II) {
+            return this.config.internetIdentityUrl;
+        } else {
+            return (
+                this.config.nfidUrl +
+                "&applicationLogo=" +
+                encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+                "#authorize"
+            );
+        }
+    }
+
+    // function buildWindowOpenerFeatures(authProvider: AuthProvider): string {
+    //     const isII = authProvider === AuthProvider.II;
+    //     const screenWidth = window.innerWidth;
+    //     const screenHeight = window.innerHeight;
+    //     const width = Math.min(screenWidth, isII ? 525 : 465);
+    //     const height = Math.min(screenHeight, isII ? 800 : 705);
+    //     const left = (screenWidth - width) / 2;
+    //     const top = (screenHeight - height) / 2;
+
+    //     return `popup=1,toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`;
+    // }
+
+    private startSession(identity: Identity): Promise<void> {
+        startTrackingSession(identity);
+
+        return new Promise((resolve) => {
+            const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
+            const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const self = this;
+            function timeout() {
+                self.logout().then(resolve);
+            }
+            if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
+                timeout();
+            } else {
+                setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
+            }
+        });
     }
 
     private loadUser(id: Identity) {
-        this._api = new ServiceContainer(id);
+        this._api = new ServiceContainer(id, this.config);
         this.api
             .getCurrentUser()
             .then((user) => {
@@ -304,7 +366,7 @@ export class OpenChat extends EventTarget {
             startMessagesReadTracker(this.api);
             this.startOnlinePoller();
             startSwCheckPoller();
-            startSession(id).then(() => this.logout());
+            this.startSession(id).then(() => this.logout());
             startChatPoller(this.api);
             startUserUpdatePoller(this.api);
             this.api.getUserStorageLimits();
@@ -480,7 +542,15 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    setCachedMessageFromNotification = setCachedMessageFromNotification;
+    setCachedMessageFromNotification = (
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        message: EventWrapper<Message>
+    ): void => {
+        if (this.config.enableClientCaching) {
+            setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+        }
+    };
     delegateToChatComponent = delegateToChatComponent;
     filterWebRtcMessage = filterWebRtcMessage;
     parseWebRtcMessage = parseWebRtcMessage;
