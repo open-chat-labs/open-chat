@@ -6,7 +6,6 @@ use types::{MessageIndex, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub message_index: MessageIndex,
-    #[serde(default)]
     pub correlation_id: u64,
 }
 
