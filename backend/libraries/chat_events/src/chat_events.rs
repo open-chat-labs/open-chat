@@ -21,6 +21,13 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
+    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
+        self.main.end_overdue_polls(now);
+        for thread in self.threads.values_mut() {
+            thread.end_overdue_polls(now);
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
