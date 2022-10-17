@@ -23,7 +23,7 @@ pub struct AllChatEvents {
 impl AllChatEvents {
     pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
         let mut overdue_polls = Vec::new();
-        let events_iter: Vec<_> = self
+        let messages_iter: Vec<_> = self
             .threads
             .iter()
             .flat_map(|(thread_root_message_index, events)| {
@@ -41,7 +41,7 @@ impl AllChatEvents {
             )
             .collect();
 
-        for (thread_root_message_index, message) in events_iter {
+        for (thread_root_message_index, message) in messages_iter {
             if let MessageContentInternal::Poll(p) = &message.content {
                 if let Some(end_date) = p.config.end_date {
                     if end_date < now {
