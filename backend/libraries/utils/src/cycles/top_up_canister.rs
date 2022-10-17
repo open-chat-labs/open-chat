@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::CallResult;
 use std::convert::TryInto;
-use tracing::error;
+use tracing::{error, info};
 use types::{CanisterId, Cycles};
 
 pub async fn top_up_canister(canister_id: CanisterId, amount: Cycles) -> CallResult<()> {
@@ -24,6 +24,10 @@ pub async fn top_up_canister(canister_id: CanisterId, amount: Cycles) -> CallRes
         );
         Err((code, msg))
     } else {
+        info!(
+            canister_id = canister_id.to_string().as_str(),
+            amount, "Topped up canister with cycles"
+        );
         Ok(())
     }
 }
