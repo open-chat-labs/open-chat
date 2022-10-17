@@ -24,7 +24,6 @@
     let referredBy: string | undefined = undefined;
 
     function createOpenChatClient(): OpenChat {
-        console.log("hello");
         return new OpenChat({
             icUrl: process.env.IC_URL,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
