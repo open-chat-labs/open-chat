@@ -407,10 +407,6 @@ export async function loadPreviousMessages(
     return;
 }
 
-function latestServerEventIndex(serverChat: ChatSummary): number {
-    return serverChat.latestEventIndex;
-}
-
 function earliestAvailableEventIndex(clientChat: ChatSummary): number {
     return clientChat.kind === "group_chat" ? clientChat.minVisibleEventIndex : 0;
 }
@@ -419,9 +415,13 @@ function previousMessagesCriteria(
     serverChat: ChatSummary,
     clientChat: ChatSummary
 ): [number, boolean] | undefined {
+    if (serverChat.latestEventIndex < 0) {
+        return undefined;
+    }
+
     const minLoadedEventIndex = earliestLoadedIndex(serverChat.chatId);
     if (minLoadedEventIndex === undefined) {
-        return [latestServerEventIndex(serverChat), false];
+        return [serverChat.latestEventIndex, false];
     }
     const minVisibleEventIndex = earliestAvailableEventIndex(clientChat);
     return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
@@ -456,7 +456,7 @@ export async function loadNewMessages(
     // if so, we update the chat summary to show the correct latest message.
     const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
     const newLatestMessage =
-        latestMessage !== undefined && latestMessage.index > latestServerEventIndex(serverChat);
+        latestMessage !== undefined && latestMessage.index > serverChat.latestEventIndex;
 
     if (newLatestMessage) {
         updateSummaryWithConfirmedMessage(
@@ -469,14 +469,17 @@ export async function loadNewMessages(
 }
 
 function newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
-    const maxServerEventIndex = latestServerEventIndex(serverChat);
+    if (serverChat.latestEventIndex < 0) {
+        return undefined;
+    }
+
     const loadedUpTo = confirmedUpToEventIndex(serverChat.chatId);
 
     if (loadedUpTo === undefined) {
-        return [maxServerEventIndex, false];
+        return [serverChat.latestEventIndex, false];
     }
 
-    return loadedUpTo < maxServerEventIndex ? [loadedUpTo + 1, true] : undefined;
+    return loadedUpTo < serverChat.latestEventIndex ? [loadedUpTo + 1, true] : undefined;
 }
 
 function confirmedUpToEventIndex(chatId: string): number | undefined {
@@ -489,13 +492,14 @@ function confirmedUpToEventIndex(chatId: string): number | undefined {
 
 export function morePreviousMessagesAvailable(clientChat: ChatSummary): boolean {
     return (
+        clientChat.latestEventIndex >= 0 &&
         (earliestLoadedIndex(clientChat.chatId) ?? Number.MAX_VALUE) >
         earliestAvailableEventIndex(clientChat)
     );
 }
 
 export function moreNewMessagesAvailable(serverChat: ChatSummary): boolean {
-    return (confirmedUpToEventIndex(serverChat.chatId) ?? -1) < latestServerEventIndex(serverChat);
+    return (confirmedUpToEventIndex(serverChat.chatId) ?? -1) < serverChat.latestEventIndex;
 }
 
 export function refreshAffectedEvents(
