@@ -7,6 +7,7 @@ import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat"
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus } from "../../domain/data/data";
 import { storageStore } from "../../stores/storage";
+import { buildBlobUrl } from "domain/chat/chat.utils";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -71,9 +72,12 @@ export class DataClient implements IDataClient {
                     content.blobData
                 );
 
+                const ref = this.extractBlobReference(response)
+
                 updatedContent = {
                     ...content,
-                    blobReference: this.extractBlobReference(response),
+                    blobReference: ref,
+                    blobUrl: buildBlobUrl(ref.canisterId, ref.blobId, "blobs")
                 };
                 byteLimit = Number(response.projectedAllowance.byteLimit);
                 bytesUsed = Number(response.projectedAllowance.bytesUsedAfterOperation);
@@ -99,15 +103,19 @@ export class DataClient implements IDataClient {
                         content.imageData.blobData
                     ),
                 ]).then(([video, image]) => {
+                    const videoRef = this.extractBlobReference(video);
+                    const imageRef = this.extractBlobReference(image);
                     updatedContent = {
                         ...content,
                         videoData: {
                             ...content.videoData,
-                            blobReference: this.extractBlobReference(video),
+                            blobReference: videoRef,
+                            blobUrl: buildBlobUrl(videoRef.canisterId, videoRef.blobId, "blobs"),
                         },
                         imageData: {
                             ...content.imageData,
-                            blobReference: this.extractBlobReference(image),
+                            blobReference: imageRef,
+                            blobUrl: buildBlobUrl(imageRef.canisterId, imageRef.blobId, "blobs"),
                         },
                     };
                     byteLimit = Number(video.projectedAllowance.byteLimit);
@@ -161,6 +169,7 @@ export class DataClient implements IDataClient {
                             canisterId: content.blobReference.canisterId,
                             blobId: response.newFileId,
                         },
+                        blobUrl: buildBlobUrl(content.blobReference.canisterId, content.blobReference.blobId, "blobs")
                     };
                 } else {
                     if (response.kind === "allowance_exceeded") {
@@ -206,6 +215,7 @@ export class DataClient implements IDataClient {
                                     canisterId: videoCanisterId,
                                     blobId: video.newFileId,
                                 },
+                                blobUrl: buildBlobUrl(videoCanisterId, video.newFileId, "blobs")
                             },
                             imageData: {
                                 ...content.imageData,
@@ -213,6 +223,7 @@ export class DataClient implements IDataClient {
                                     canisterId: imageCanisterId,
                                     blobId: image.newFileId,
                                 },
+                                blobUrl: buildBlobUrl(imageCanisterId, image.newFileId, "blobs")
                             },
                         };
                     } else if (video.kind === "success") {
