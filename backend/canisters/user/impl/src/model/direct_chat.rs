@@ -13,7 +13,6 @@ pub struct DirectChat {
     pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
-    #[serde(default)]
     pub is_bot: bool,
 }
 
