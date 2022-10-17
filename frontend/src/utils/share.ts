@@ -1,4 +1,4 @@
-import type { Message, MessageContent } from "openchat-client";
+import type { Message, MessageContent, MessageFormatter } from "openchat-client";
 import { buildCryptoTransferText, buildTransactionUrl } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
@@ -93,8 +93,13 @@ export function canShareMessage(content: MessageContent): boolean {
     return true;
 }
 
-export function shareMessage(userId: string, me: boolean, msg: Message): void {
-    buildShareFromMessage(userId, me, msg).then(
+export function shareMessage(
+    formatter: MessageFormatter,
+    userId: string,
+    me: boolean,
+    msg: Message
+): void {
+    buildShareFromMessage(formatter, userId, me, msg).then(
         (share) =>
             navigator.share(share).catch((e: DOMException) => {
                 if (e.name !== "AbortError") {
@@ -123,7 +128,12 @@ export function shareLink(url: string): void {
     });
 }
 
-async function buildShareFromMessage(userId: string, me: boolean, msg: Message): Promise<Share> {
+async function buildShareFromMessage(
+    formatter: MessageFormatter,
+    userId: string,
+    me: boolean,
+    msg: Message
+): Promise<Share> {
     const content = msg.content;
     if (content.kind === "deleted_content" || content.kind === "placeholder_content") {
         return Promise.reject();
@@ -187,7 +197,7 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
         // TODO:
         share.text = "TODO: Poll content";
     } else if (content.kind === "crypto_content") {
-        let text = buildCryptoTransferText(userId, msg.sender, content, me);
+        let text = buildCryptoTransferText(formatter, userId, msg.sender, content, me);
         if (content.caption !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";

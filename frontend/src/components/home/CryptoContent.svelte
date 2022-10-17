@@ -20,8 +20,8 @@
 
     let symbol = cryptoLookup[content.transfer.token].symbol;
 
-    $: transferText = client.buildCryptoTransferText(user.userId, senderId, content, me);
-    $: transactionLinkText = client.buildTransactionLink(content);
+    $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
+    $: transactionLinkText = client.buildTransactionLink($_, content);
 </script>
 
 {#if transferText !== undefined}

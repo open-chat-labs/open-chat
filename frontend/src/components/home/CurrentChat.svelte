@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onDestroy, tick } from "svelte";
+    import { getContext, onDestroy, onMount, tick } from "svelte";
     import type {
         ChatEvent,
         ChatSummary,
@@ -79,9 +79,11 @@
         }
     }
 
-    let unsub = messagesRead.subscribe(() => {
-        unreadMessages = getUnreadMessageCount(chat);
-        firstUnreadMention = client.getFirstUnreadMention(chat);
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            unreadMessages = getUnreadMessageCount(chat);
+            firstUnreadMention = client.getFirstUnreadMention(chat);
+        });
     });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
@@ -93,8 +95,6 @@
     function onWindowFocus() {
         closeNotificationsForChat(chatId);
     }
-
-    onDestroy(unsub);
 
     function onMarkAllRead() {
         client.markAllRead(chat);

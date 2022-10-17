@@ -113,8 +113,8 @@
                 userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
                 subtext: isBot
                     ? ""
-                    : client.formatLastOnlineDate(now, $userStore[chatSummary.them]),
-                typing: client.getTypingString($userStore, chatSummary.chatId, typing),
+                    : client.formatLastOnlineDate($_, now, $userStore[chatSummary.them]),
+                typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }
         return {
@@ -124,7 +124,7 @@
             subtext: chatSummary.public
                 ? $_("publicGroupWithN", { values: { number: chatSummary.memberCount } })
                 : $_("privateGroupWithN", { values: { number: chatSummary.memberCount } }),
-            typing: client.getTypingString($userStore, chatSummary.chatId, typing),
+            typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
         };
     }
 

@@ -23,24 +23,30 @@
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
 
-    let client: OpenChat = new OpenChat({
-        icUrl: "process.env.IC_URL",
-        iiDerivationOrigin: "process.env.II_DERIVATION_ORIGIN",
-        openStorageIndexCanister: "process.env.OPEN_STORAGE_INDEX_CANISTER",
-        groupIndexCanister: "process.env.GROUP_INDEX_CANISTER",
-        notificationsCanister: "process.env.NOTIFICATIONS_CANISTER",
-        onlineCanister: "process.env.ONLINE_CANISTER",
-        userIndexCanister: "process.env.USER_INDEX_CANISTER",
-        internetIdentityUrl: "process.env.INTERNET_IDENTITY_URL",
-        nfidUrl: "process.env.NFID_URL",
-        enableClientCaching: Boolean(process.env.CLIENT_CACHING),
-        ledgerCanisterICP: "process.env.LEDGER_CANISTER_ICP",
-        ledgerCanisterBTC: "process.env.LEDGER_CANISTER_BTC",
-        ledgerCanisterCHAT: "process.env.LEDGER_CANISTER_CHAT",
-        userGeekApiKey: "process.env.USERGEEK_APIKEY",
-        enableMultiCrypto: Boolean(process.env.ENABLE_MULTI_CRYPTO),
-        blobUrlPattern: "process.env.BLOB_URL_PATTERN",
-    });
+    function createOpenChatClient(): OpenChat {
+        return new OpenChat({
+            icUrl: process.env.IC_URL,
+            iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
+            openStorageIndexCanister: process.env.OPEN_STORAGE_INDEX_CANISTER!,
+            groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
+            notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
+            onlineCanister: process.env.ONLINE_CANISTER!,
+            userIndexCanister: process.env.USER_INDEX_CANISTER!,
+            internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
+            nfidUrl: process.env.NFID_URL!,
+            enableClientCaching: Boolean(process.env.CLIENT_CACHING),
+            ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
+            ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
+            ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
+            userGeekApiKey: process.env.USERGEEK_APIKEY!,
+            enableMultiCrypto: Boolean(process.env.ENABLE_MULTI_CRYPTO),
+            blobUrlPattern: process.env.BLOB_URL_PATTERN!,
+            i18nFormatter: $_,
+        });
+    }
+
+    let client: OpenChat = createOpenChatClient();
+
     let profileTrace = client.showTrace();
 
     setContext<OpenChat>("client", client);

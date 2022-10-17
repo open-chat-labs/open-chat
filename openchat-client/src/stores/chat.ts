@@ -93,6 +93,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
+                        (k) => k, // FIXME -> or maybe this is ok
                         currentUser.userId,
                         summary,
                         unconfirmed,
@@ -381,9 +382,9 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
             userIds.add(chat.them);
         } else if (chat.latestMessage !== undefined) {
             userIds.add(chat.latestMessage.event.sender);
-            extractUserIdsFromMentions(getContentAsText(chat.latestMessage.event.content)).forEach(
-                (id) => userIds.add(id)
-            );
+            extractUserIdsFromMentions(
+                getContentAsText((k) => k, chat.latestMessage.event.content)
+            ).forEach((id) => userIds.add(id));
         }
     });
     return userIds;

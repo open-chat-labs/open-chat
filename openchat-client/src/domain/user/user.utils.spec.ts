@@ -1,5 +1,5 @@
 import type { PartialUserSummary, UserLookup } from "./user";
-import { init } from "svelte-i18n";
+import { init, _ } from "svelte-i18n";
 import {
     buildUsernameList,
     compareUsername,
@@ -114,7 +114,7 @@ describe("build username list", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
         userIds.push("beta");
 
-        const result = buildUsernameList(new Set(userIds), "alpha", lookup, 2);
+        const result = buildUsernameList(_, new Set(userIds), "alpha", lookup, 2);
 
         expect(result).toEqual("a, b, and you, and 2 more");
     });
@@ -122,7 +122,7 @@ describe("build username list", () => {
     test("show all", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
 
-        const result = buildUsernameList(new Set(userIds), undefined, lookup);
+        const result = buildUsernameList(_, new Set(userIds), undefined, lookup);
 
         expect(result).toEqual("a, b, julian_jelfs, alpha");
     });
@@ -130,7 +130,7 @@ describe("build username list", () => {
     test("don't show 1 more", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
 
-        const result = buildUsernameList(new Set(userIds), undefined, lookup, 3);
+        const result = buildUsernameList(_, new Set(userIds), undefined, lookup, 3);
 
         expect(result).toEqual("a, b, julian_jelfs, alpha");
     });
@@ -139,7 +139,7 @@ describe("build username list", () => {
         const userIds = Object.entries(lookup).map(([k, _]) => k);
         userIds.push("beta");
 
-        const result = buildUsernameList(new Set(userIds), undefined, lookup);
+        const result = buildUsernameList(_, new Set(userIds), undefined, lookup);
 
         expect(result).toEqual("a, b, julian_jelfs, alpha, and 1 more");
     });

@@ -1,4 +1,4 @@
-import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
+import { init, locale, addMessages, getLocaleFromNavigator, _ } from "svelte-i18n";
 import { configKeys } from "../utils/config";
 
 import en from "./en.json";
@@ -11,6 +11,7 @@ import cn from "./cn.json";
 import jp from "./jp.json";
 import ru from "./ru.json";
 import iw from "./iw.json";
+import { get } from "svelte/store";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -94,4 +95,8 @@ export function getStoredLocale(): string {
 export function setLocale(code: string): void {
     locale.set(code);
     localStorage.setItem(configKeys.locale, code);
+}
+
+export function i18nFormatter(str: string): string {
+    return get(_)(str);
 }

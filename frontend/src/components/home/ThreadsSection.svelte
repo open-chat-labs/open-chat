@@ -3,7 +3,7 @@
     import { pop } from "../../utils/transition";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -13,15 +13,15 @@
     $: selected = $pathParams.chatId === "threads";
     $: numStaleThreads = client.staleThreadsCount($threadsByChatStore);
 
-    const unsub = messagesRead.subscribe(() => {
-        numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
-    });
-
     function onClick() {
         push("/threads");
     }
 
-    onDestroy(unsub);
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
+        });
+    });
 </script>
 
 <div role="button" class="threads" class:selected on:click={onClick}>

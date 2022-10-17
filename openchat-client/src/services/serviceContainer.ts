@@ -700,7 +700,11 @@ export class ServiceContainer implements MarkMessagesRead {
         return {
             ...userSummary,
             blobData: undefined,
-            blobUrl: buildUserAvatarUrl(userSummary.userId, ref?.blobId ?? undefined),
+            blobUrl: buildUserAvatarUrl(
+                this.config.blobUrlPattern,
+                userSummary.userId,
+                ref?.blobId ?? undefined
+            ),
         };
     }
 
@@ -713,7 +717,12 @@ export class ServiceContainer implements MarkMessagesRead {
             ? {
                   ...dataContent,
                   blobData: undefined,
-                  blobUrl: buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+                  blobUrl: buildBlobUrl(
+                      this.config.blobUrlPattern,
+                      ref.canisterId,
+                      ref.blobId,
+                      blobType
+                  ),
               }
             : dataContent;
     }

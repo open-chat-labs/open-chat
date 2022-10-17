@@ -42,7 +42,7 @@ import { distinctBy, groupWhile, toRecord } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { _ } from "svelte-i18n";
+import type { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
 import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
@@ -58,6 +58,7 @@ import type { TypersByKey } from "../../stores/typing";
 import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import type { UnconfirmedMessages } from "../../stores/unconfirmed";
 import type { LocalMessageUpdates, LocalReaction } from "./chat";
+import type { MessageFormatter } from "../../utils/i18n";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -68,7 +69,7 @@ export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
-export function getContentAsText(content: MessageContent): string {
+export function getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
     let text;
     if (content.kind === "text_content") {
         text = content.text;
@@ -82,7 +83,7 @@ export function getContentAsText(content: MessageContent): string {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
-            get(_)("tokenTransfer.transfer", {
+            formatter("tokenTransfer.transfer", {
                 values: { token: toSymbol(content.transfer.token) },
             }),
             content.caption
@@ -96,7 +97,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "proposal_content") {
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
-        text = captionedContent(get(_)("giphyMessage"), content.caption);
+        text = captionedContent(formatter("giphyMessage"), content.caption);
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -116,6 +117,7 @@ function captionedContent(type: string, caption?: string): string {
 }
 
 export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
+    const fakeFormatter = (k: string) => k;
     return events.reduce<Set<string>>((userIds, e) => {
         if ("userIds" in e.event) {
             e.event.userIds.forEach((u) => userIds.add(u));
@@ -128,13 +130,13 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     e.event.repliesTo.kind === "rehydrated_reply_context"
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
-                    extractUserIdsFromMentions(getContentAsText(e.event.repliesTo.content)).forEach(
-                        (id) => userIds.add(id)
-                    );
+                    extractUserIdsFromMentions(
+                        getContentAsText(fakeFormatter, e.event.repliesTo.content)
+                    ).forEach((id) => userIds.add(id));
                 }
-                extractUserIdsFromMentions(getContentAsText(e.event.content)).forEach((id) =>
-                    userIds.add(id)
-                );
+                extractUserIdsFromMentions(
+                    getContentAsText(fakeFormatter, e.event.content)
+                ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
             case "member_left":
@@ -331,6 +333,7 @@ export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message
 }
 
 export function getTypingString(
+    formatter: MessageFormatter,
     users: UserLookup,
     key: string,
     typing: TypersByKey
@@ -338,13 +341,12 @@ export function getTypingString(
     const typers = typing[key];
     if (typers === undefined || typers.size === 0) return undefined;
 
-    const format = get(_);
     if (typers.size > 1) {
-        return format("membersAreTyping", { values: { number: typers.size } });
+        return formatter("membersAreTyping", { values: { number: typers.size } });
     } else {
         const userIds = [...typers];
-        const username = users[userIds[0]]?.username ?? format("unknown");
-        return format("memberIsTyping", { values: { username } });
+        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        return formatter("memberIsTyping", { values: { username } });
     }
 }
 
@@ -588,14 +590,22 @@ function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
     ];
 }
 
-function messageMentionsUser(userId: string, msg: EventWrapper<Message>): boolean {
-    const txt = getContentAsText(msg.event.content);
+function messageMentionsUser(
+    formatter: MessageFormatter,
+    userId: string,
+    msg: EventWrapper<Message>
+): boolean {
+    const txt = getContentAsText(formatter, msg.event.content);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
-function mentionsFromMessages(userId: string, messages: EventWrapper<Message>[]): Mention[] {
+function mentionsFromMessages(
+    formatter: MessageFormatter,
+    userId: string,
+    messages: EventWrapper<Message>[]
+): Mention[] {
     return messages.reduce((mentions, msg) => {
-        if (messageMentionsUser(userId, msg)) {
+        if (messageMentionsUser(formatter, userId, msg)) {
             mentions.push({
                 messageId: msg.event.messageId,
                 messageIndex: msg.event.messageIndex,
@@ -638,6 +648,7 @@ export function mergeUnconfirmedThreadsIntoSummary(
 }
 
 export function mergeUnconfirmedIntoSummary(
+    formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
@@ -651,7 +662,7 @@ export function mergeUnconfirmedIntoSummary(
     let latestEventIndex = chatSummary.latestEventIndex;
     let mentions = chatSummary.kind === "group_chat" ? chatSummary.mentions : [];
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
-        const incomingMentions = mentionsFromMessages(userId, unconfirmedMessages);
+        const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
@@ -1299,6 +1310,7 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
 }
 
 export function buildCryptoTransferText(
+    formatter: MessageFormatter,
     myUserId: string,
     senderId: string,
     content: CryptocurrencyContent,
@@ -1312,8 +1324,8 @@ export function buildCryptoTransferText(
         const lookup = get(userStore);
 
         return userId === myUserId
-            ? get(_)("you")
-            : `${lookup[userId]?.username ?? get(_)("unknown")}`;
+            ? formatter("you")
+            : `${lookup[userId]?.username ?? formatter("unknown")}`;
     }
 
     const values = {
@@ -1330,13 +1342,16 @@ export function buildCryptoTransferText(
             ? "pendingSentByYou"
             : "pendingSent";
 
-    return get(_)(`tokenTransfer.${key}`, { values });
+    return formatter(`tokenTransfer.${key}`, { values });
 }
 
-export function buildTransactionLink(content: CryptocurrencyContent): string | undefined {
+export function buildTransactionLink(
+    formatter: MessageFormatter,
+    content: CryptocurrencyContent
+): string | undefined {
     const url = buildTransactionUrl(content);
     return url !== undefined
-        ? get(_)("tokenTransfer.viewTransaction", { values: { url } })
+        ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
@@ -1400,20 +1415,21 @@ export function canForward(content: MessageContent): boolean {
     );
 }
 
-export function buildUserAvatarUrl(userId: string, avatarId?: bigint): string {
+export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: bigint): string {
     return avatarId !== undefined
-        ? buildBlobUrl(userId, avatarId, "avatar")
+        ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
         ? OPENCHAT_BOT_AVATAR_URL
         : buildIdenticonUrl(userId);
 }
 
 export function buildBlobUrl(
+    pattern: string,
     canisterId: string,
     blobId: bigint,
     blobType: "blobs" | "avatar"
 ): string {
-    return `${"process.env.BLOB_URL_PATTERN"
+    return `${pattern
         .replace("{canisterId}", canisterId)
         .replace("{blobType}", blobType)}${blobId}`;
 }

@@ -34,7 +34,7 @@
         myUserId: string | undefined
     ): string | undefined {
         if (voters === undefined || voters.length === 0 || !showVotes) return undefined;
-        return client.buildUsernameList(new Set(voters), myUserId, userStore);
+        return client.buildUsernameList(_, new Set(voters), myUserId, userStore);
     }
 
     function buildTooltipText(): string {

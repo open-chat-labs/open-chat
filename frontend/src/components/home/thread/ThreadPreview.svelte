@@ -13,7 +13,7 @@
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { AvatarSize } from "openchat-client";
     import Markdown from "../Markdown.svelte";
     import Avatar from "../../Avatar.svelte";
@@ -69,21 +69,21 @@
         }
     }
 
-    const unsub = messagesRead.subscribe(() => {
-        if (syncDetails !== undefined) {
-            unreadCount = client.unreadThreadMessageCount(
-                thread.chatId,
-                threadRootMessageIndex,
-                syncDetails.latestMessageIndex
-            );
-        }
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            if (syncDetails !== undefined) {
+                unreadCount = client.unreadThreadMessageCount(
+                    thread.chatId,
+                    threadRootMessageIndex,
+                    syncDetails.latestMessageIndex
+                );
+            }
+        });
     });
 
     function selectThread() {
         push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
     }
-
-    onDestroy(unsub);
 </script>
 
 <div class="wrapper">
@@ -103,7 +103,7 @@
                 </h4>
                 <div class="root-msg">
                     <Markdown
-                        text={client.getContentAsText(thread.rootMessage.event.content)}
+                        text={client.getContentAsText($_, thread.rootMessage.event.content)}
                         oneLine={true}
                         suppressLinks={true} />
                 </div>

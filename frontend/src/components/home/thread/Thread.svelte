@@ -642,6 +642,7 @@
 
     function shareMessage(ev: CustomEvent<Message>) {
         shareFunctions.shareMessage(
+            $_,
             client.user.userId,
             ev.detail.sender === client.user.userId,
             ev.detail

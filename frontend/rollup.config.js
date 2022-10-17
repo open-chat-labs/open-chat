@@ -72,13 +72,13 @@ if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
 if (production && !process.env.USERGEEK_APIKEY) {
     throw Error("USERGEEK_APIKEY environment variable not set");
 }
-const WEBPUSH_SERVICE_WORKER_PATH = env === "development" ? "sw.js" : "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
 console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
+console.log("PROPOSAL_BOT_CANISTER", process.env.PROPOSALS_BOT_CANISTER);
 
 function serve() {
     return dev({
@@ -162,23 +162,28 @@ export default {
             "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
             "process.env.NODE_ENV": JSON.stringify(env),
             "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
-            "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
+            "process.env.ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.ROLLBAR_ACCESS_TOKEN),
             "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
             "process.env.IC_URL": maybeStringify(process.env.IC_URL),
             "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
-            "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
-            "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
-            "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
-            "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
-            "process.env.PROPOSALS_BOT_CANISTER": process.env.PROPOSALS_BOT_CANISTER,
-            "process.env.OPEN_STORAGE_INDEX_CANISTER": process.env.OPEN_STORAGE_INDEX_CANISTER,
-            "process.env.LEDGER_CANISTER_ICP": process.env.LEDGER_CANISTER_ICP,
-            "process.env.LEDGER_CANISTER_BTC": process.env.LEDGER_CANISTER_BTC,
-            "process.env.LEDGER_CANISTER_CHAT": process.env.LEDGER_CANISTER_CHAT,
+            "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),
+            "process.env.GROUP_INDEX_CANISTER": JSON.stringify(process.env.GROUP_INDEX_CANISTER),
+            "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
+                process.env.NOTIFICATIONS_CANISTER
+            ),
+            "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
+            "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
+                process.env.PROPOSALS_BOT_CANISTER
+            ),
+            "process.env.OPEN_STORAGE_INDEX_CANISTER": JSON.stringify(
+                process.env.OPEN_STORAGE_INDEX_CANISTER
+            ),
+            "process.env.LEDGER_CANISTER_ICP": JSON.stringify(process.env.LEDGER_CANISTER_ICP),
+            "process.env.LEDGER_CANISTER_BTC": JSON.stringify(process.env.LEDGER_CANISTER_BTC),
+            "process.env.LEDGER_CANISTER_CHAT": JSON.stringify(process.env.LEDGER_CANISTER_CHAT),
             "process.env.ENABLE_MULTI_CRYPTO": process.env.ENABLE_MULTI_CRYPTO,
-            "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
-            "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
-            "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+            "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
+            "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY

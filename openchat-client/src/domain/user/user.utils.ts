@@ -1,4 +1,5 @@
-import { _ } from "svelte-i18n";
+import type { MessageFormatter } from "../../utils/i18n";
+import type { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import {
     PartialUserSummary,
@@ -95,7 +96,11 @@ export function extractUserIdsFromMentions(text: string): string[] {
     return [...text.matchAll(mentionRegex)].map((m) => m[1]);
 }
 
-export function formatLastOnlineDate(now: number, user: PartialUserSummary | undefined): string {
+export function formatLastOnlineDate(
+    formatter: MessageFormatter,
+    now: number,
+    user: PartialUserSummary | undefined
+): string {
     const TWO_MINUTES_MS = 120 * 1000;
     if (user === undefined || now - Number(user.updated) > TWO_MINUTES_MS) {
         return "";
@@ -106,32 +111,35 @@ export function formatLastOnlineDate(now: number, user: PartialUserSummary | und
     const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
     if (minutesSinceLastOnline < 2) {
-        return get(_)("onlineNow");
+        return formatter("onlineNow");
     }
 
     let durationText: string;
     if (minutesSinceLastOnline < 60) {
-        durationText = get(_)("durationMins", { values: { duration: minutesSinceLastOnline } });
+        durationText = formatter("durationMins", {
+            values: { duration: minutesSinceLastOnline },
+        });
     } else {
         const hoursSinceLastOnline = Math.floor(minutesSinceLastOnline / 60);
         if (hoursSinceLastOnline === 1) {
-            durationText = get(_)("oneHour");
+            durationText = formatter("oneHour");
         } else if (hoursSinceLastOnline < 24) {
-            durationText = get(_)("durationHours", {
+            durationText = formatter("durationHours", {
                 values: { duration: hoursSinceLastOnline },
             });
         } else {
             const daysSinceLastOnline = Math.floor(hoursSinceLastOnline / 24);
             durationText =
                 daysSinceLastOnline === 1
-                    ? get(_)("oneDay")
-                    : get(_)("durationDays", { values: { duration: daysSinceLastOnline } });
+                    ? formatter("oneDay")
+                    : formatter("durationDays", { values: { duration: daysSinceLastOnline } });
         }
     }
-    return get(_)("lastOnline", { values: { duration: durationText } });
+    return formatter("lastOnline", { values: { duration: durationText } });
 }
 
 export function buildUsernameList(
+    formatter: typeof _,
     userIds: Set<string>,
     myUserId: string | undefined,
     users: UserLookup,
@@ -158,13 +166,14 @@ export function buildUsernameList(
     let usernames = usernamesArray.join(", ");
 
     if (includesMe) {
-        usernames += usernames.length === 0 ? get(_)("you") : get(_)("reactions.andYou");
+        usernames +=
+            usernames.length === 0 ? get(formatter)("you") : get(formatter)("reactions.andYou");
     }
 
     const n = userIds.size - (usernamesArray.length + (includesMe ? 1 : 0));
 
     if (n > 0) {
-        usernames += get(_)("andNMore", { values: { n } });
+        usernames += get(formatter)("andNMore", { values: { n } });
     }
 
     return usernames;

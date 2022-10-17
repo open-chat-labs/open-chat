@@ -49,6 +49,8 @@
     $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
+    $: console.log("Messages read: ", messagesRead);
+
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
             return (
@@ -68,21 +70,6 @@
         searchTerm !== ""
             ? $chatSummariesListStore.filter(chatMatchesSearch)
             : $chatSummariesListStore;
-
-    let unsub = messagesRead.subscribe((_val) => {
-        chatsWithUnreadMsgs = chats
-            ? chats.reduce(
-                  (num, chat) =>
-                      client.unreadMessageCount(
-                          chat.chatId,
-                          chat.latestMessage?.event.messageIndex
-                      ) > 0
-                          ? num + 1
-                          : num,
-                  0
-              )
-            : 0;
-    });
 
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
@@ -140,6 +127,21 @@
             if (chatListElement) {
                 chatListElement.scrollTop = $chatListScroll;
             }
+        });
+
+        let unsub = messagesRead.subscribe((_val) => {
+            chatsWithUnreadMsgs = chats
+                ? chats.reduce(
+                      (num, chat) =>
+                          client.unreadMessageCount(
+                              chat.chatId,
+                              chat.latestMessage?.event.messageIndex
+                          ) > 0
+                              ? num + 1
+                              : num,
+                      0
+                  )
+                : 0;
         });
 
         return () => {
@@ -251,7 +253,7 @@
                                         </h4>
                                         <div class="search-item-desc">
                                             <Markdown
-                                                text={client.getContentAsText(msg.content)}
+                                                text={client.getContentAsText($_, msg.content)}
                                                 oneLine={true}
                                                 suppressLinks={true} />
                                         </div>

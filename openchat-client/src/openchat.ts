@@ -225,6 +225,8 @@ export class OpenChat extends EventTarget {
 
         console.log("OpenChatConfig: ", config);
 
+        console.log("MessageRead: ", this.messagesRead);
+
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
         this._authClient = AuthClient.create({

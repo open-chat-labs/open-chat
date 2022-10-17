@@ -668,7 +668,7 @@
     }
 
     function onShareMessage(ev: CustomEvent<Message>) {
-        shareMessage(user.userId, ev.detail.sender === user.userId, ev.detail);
+        shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
     function onCopyMessageUrl(ev: CustomEvent<Message>) {

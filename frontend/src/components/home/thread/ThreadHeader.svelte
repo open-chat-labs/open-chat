@@ -45,12 +45,13 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
+            $_,
             $userStore,
             `${chatSummary.chatId}_${threadRootMessageIndex}`,
             typing
         );
 
-        const msgTxt = client.getContentAsText(rootEvent.event.content);
+        const msgTxt = client.getContentAsText($_, rootEvent.event.content);
         const subtext =
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {

@@ -17,7 +17,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { createEventDispatcher, getContext, onDestroy } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -51,14 +51,14 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
-                typing: client.getTypingString($userStore, chatSummary.chatId, typing),
+                typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary),
-            typing: client.getTypingString($userStore, chatSummary.chatId, typing),
+            typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
         };
     }
 
@@ -74,7 +74,10 @@
             return "";
         }
 
-        const latestMessageText = client.getContentAsText(chatSummary.latestMessage.event.content);
+        const latestMessageText = client.getContentAsText(
+            $_,
+            chatSummary.latestMessage.event.content
+        );
 
         if (chatSummary.kind === "direct_chat") {
             return latestMessageText;
@@ -118,9 +121,9 @@
         updateUnreadCounts(chatSummary);
     }
 
-    const unsub = messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
-
-    onDestroy(unsub);
+    onMount(() => {
+        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    });
 
     let maxDelOffset = -50;
     let delOffset = maxDelOffset;

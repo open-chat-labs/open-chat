@@ -5,7 +5,7 @@
     import { pop } from "../../utils/transition";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onMount } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,15 +28,15 @@
         lastMessageIndex
     );
 
-    const unsub = messagesRead.subscribe(() => {
-        unreadCount = client.unreadThreadMessageCount(
-            chatId,
-            threadRootMessageIndex,
-            lastMessageIndex
-        );
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            unreadCount = client.unreadThreadMessageCount(
+                chatId,
+                threadRootMessageIndex,
+                lastMessageIndex
+            );
+        });
     });
-
-    onDestroy(unsub);
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>

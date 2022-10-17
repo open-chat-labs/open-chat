@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
     import { AvatarSize, PublicProfile } from "openchat-client";
@@ -23,10 +24,10 @@
     let user: PartialUserSummary | undefined;
 
     $: modal = alignTo === undefined || $mobileWidth;
-    $: status = client.formatLastOnlineDate(Date.now(), user);
+    $: status = client.formatLastOnlineDate($_, Date.now(), user);
     $: avatarUrl =
         profile !== undefined
-            ? client.buildUserAvatarUrl(userId, profile.avatarId)
+            ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
             : "../assets/unknownUserAvatar.svg";
 
     onMount(async () => {
