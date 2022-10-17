@@ -41,6 +41,7 @@
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             enableMultiCrypto: Boolean(process.env.ENABLE_MULTI_CRYPTO),
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
+            proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
         });
     }

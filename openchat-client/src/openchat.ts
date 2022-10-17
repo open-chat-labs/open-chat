@@ -173,7 +173,14 @@ import { archivedChatsStore, mutedChatsStore } from "./stores/tempChatsStore";
 import { translationStore } from "./stores/translation";
 import { byThread, isTyping, typing, byChat as typingByChat } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
-import { startUserUpdatePoller, userStore } from "./stores/user";
+import {
+    openChatBotUser,
+    OPENCHAT_BOT_USER_ID,
+    proposalsBotUser,
+    specialUsers,
+    startUserUpdatePoller,
+    userStore,
+} from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
 import { setCachedMessageFromNotification } from "./utils/caching";
@@ -226,6 +233,11 @@ export class OpenChat extends EventTarget {
         console.log("OpenChatConfig: ", config);
 
         console.log("MessageRead: ", this.messagesRead);
+
+        specialUsers.set({
+            [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+            [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
+        });
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");

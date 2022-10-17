@@ -17,5 +17,6 @@ export type OpenChatConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    proposalBotCanister: string;
     i18nFormatter: MessageFormatter;
 };
