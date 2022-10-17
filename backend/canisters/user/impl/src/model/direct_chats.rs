@@ -1,6 +1,4 @@
 use crate::model::direct_chat::DirectChat;
-use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
-use candid::Principal;
 use chat_events::PushMessageArgs;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -14,15 +12,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    pub fn set_is_bot(&mut self) {
-        let proposals_bot_user_id: UserId = Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into();
-        for chat in self.direct_chats.values_mut() {
-            if chat.them == OPENCHAT_BOT_USER_ID || chat.them == proposals_bot_user_id {
-                chat.is_bot = true;
-            }
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }
