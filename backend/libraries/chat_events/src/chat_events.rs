@@ -21,6 +21,41 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
+    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
+        let mut overdue_polls = Vec::new();
+        let messages_iter: Vec<_> = self
+            .threads
+            .iter()
+            .flat_map(|(thread_root_message_index, events)| {
+                events
+                    .iter()
+                    .filter_map(|e| e.event.as_message())
+                    .map(|m| (Some(*thread_root_message_index), m))
+            })
+            .chain(
+                self.main
+                    .events
+                    .iter()
+                    .filter_map(|e| e.event.as_message())
+                    .map(|e| (None, e)),
+            )
+            .collect();
+
+        for (thread_root_message_index, message) in messages_iter {
+            if let MessageContentInternal::Poll(p) = &message.content {
+                if let Some(end_date) = p.config.end_date {
+                    if end_date < now {
+                        overdue_polls.push((thread_root_message_index, message.message_index));
+                    }
+                }
+            }
+        }
+
+        for (thread_root_message_index, message_index) in overdue_polls {
+            self.end_poll(thread_root_message_index, message_index, 0, now);
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
