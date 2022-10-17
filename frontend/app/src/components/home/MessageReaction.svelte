@@ -35,7 +35,7 @@
             return $_("reactions.youClickToRemove");
         }
 
-        return client.buildUsernameList(_, userIds, myUserId, userStore);
+        return client.buildUsernameList($_, userIds, myUserId, userStore);
     }
 
     async function buildReactionCode(reaction: string): Promise<string | undefined> {

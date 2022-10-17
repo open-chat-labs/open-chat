@@ -232,8 +232,6 @@ export class OpenChat extends EventTarget {
 
         console.log("OpenChatConfig: ", config);
 
-        console.log("MessageRead: ", this.messagesRead);
-
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),

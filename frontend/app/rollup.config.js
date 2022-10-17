@@ -8,7 +8,7 @@ import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import dfxJson from "../dfx.json";
+import dfxJson from "../../dfx.json";
 import inject from "rollup-plugin-inject";
 import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
@@ -31,8 +31,8 @@ console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
     const canisterPath = dfxNetwork.startsWith("ic")
-        ? path.join(__dirname, "..", "canister_ids.json")
-        : path.join(__dirname, "..", ".dfx", dfxNetwork, "canister_ids.json");
+        ? path.join(__dirname, "../..", "canister_ids.json")
+        : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));

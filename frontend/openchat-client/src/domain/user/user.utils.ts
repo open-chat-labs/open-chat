@@ -1,6 +1,4 @@
 import type { MessageFormatter } from "../../utils/i18n";
-import type { _ } from "svelte-i18n";
-import { get } from "svelte/store";
 import {
     PartialUserSummary,
     PhoneNumber,
@@ -139,7 +137,7 @@ export function formatLastOnlineDate(
 }
 
 export function buildUsernameList(
-    formatter: typeof _,
+    formatter: MessageFormatter,
     userIds: Set<string>,
     myUserId: string | undefined,
     users: UserLookup,
@@ -166,14 +164,13 @@ export function buildUsernameList(
     let usernames = usernamesArray.join(", ");
 
     if (includesMe) {
-        usernames +=
-            usernames.length === 0 ? get(formatter)("you") : get(formatter)("reactions.andYou");
+        usernames += usernames.length === 0 ? formatter("you") : formatter("reactions.andYou");
     }
 
     const n = userIds.size - (usernamesArray.length + (includesMe ? 1 : 0));
 
     if (n > 0) {
-        usernames += get(formatter)("andNMore", { values: { n } });
+        usernames += formatter("andNMore", { values: { n } });
     }
 
     return usernames;

@@ -576,6 +576,7 @@ export async function updateDetails(
                 blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
                 pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
                 latestEventIndex,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
             });
             chatStateStore.setProp(clientChat.chatId, "members", gd.members);

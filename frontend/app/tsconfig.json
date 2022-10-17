@@ -3,6 +3,7 @@
     "include": ["./src/**/*"],
     "exclude": ["node_modules/*", "__sapper__/*", "public/*"],
     "compilerOptions": {
+        "moduleResolution": "node",
         "resolveJsonModule": true,
         "experimentalDecorators": true,
         "module": "es2020",

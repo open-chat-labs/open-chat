@@ -49,8 +49,6 @@
     $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
-    $: console.log("Messages read: ", messagesRead);
-
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
             return (

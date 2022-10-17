@@ -4,10 +4,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
-import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
-
-dotenv.config();
 
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
