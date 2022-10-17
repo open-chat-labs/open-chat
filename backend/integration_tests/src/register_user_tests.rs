@@ -1,11 +1,9 @@
 use crate::client;
-use crate::rng::random_principal;
 use crate::setup::{return_env, setup_env};
 
 #[test]
 fn register_users() {
-    let controller = random_principal();
-    let (mut env, canister_ids) = setup_env(controller);
+    let (mut env, canister_ids) = setup_env();
 
     let user_count = 5usize;
 
