@@ -501,7 +501,7 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            client.handleMessageSentByOther(client.api, user, chat, events, latestMessage);
+            client.handleMessageSentByOther(client.api, user, chat, latestMessage);
         }
 
         client.refreshAffectedEvents(client.api, user, chat, affectedEvents);
@@ -514,7 +514,7 @@
 
     export function handleMessageSentByOtherExternal(messageEvent: EventWrapper<Message>): void {
         client
-            .handleMessageSentByOther(client.api, user, chat, events, messageEvent)
+            .handleMessageSentByOther(client.api, user, chat, messageEvent)
             .then(() => onLoadedNewMessages(true));
     }
 

@@ -717,7 +717,6 @@ export async function handleMessageSentByOther(
     api: ServiceContainer,
     user: CreatedUser,
     clientChat: ChatSummary,
-    _currentEvents: EventWrapper<ChatEvent>[], // FIXME - not used
     messageEvent: EventWrapper<Message>
 ): Promise<void> {
     const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
