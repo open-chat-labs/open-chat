@@ -22,9 +22,37 @@ pub struct AllChatEvents {
 
 impl AllChatEvents {
     pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
-        self.main.end_overdue_polls(now);
-        for thread in self.threads.values_mut() {
-            thread.end_overdue_polls(now);
+        let mut overdue_polls = Vec::new();
+        let events_iter: Vec<_> = self
+            .threads
+            .iter()
+            .flat_map(|(thread_root_message_index, events)| {
+                events
+                    .iter()
+                    .filter_map(|e| e.event.as_message())
+                    .map(|m| (Some(*thread_root_message_index), m))
+            })
+            .chain(
+                self.main
+                    .events
+                    .iter()
+                    .filter_map(|e| e.event.as_message())
+                    .map(|e| (None, e)),
+            )
+            .collect();
+
+        for (thread_root_message_index, message) in events_iter {
+            if let MessageContentInternal::Poll(p) = &message.content {
+                if let Some(end_date) = p.config.end_date {
+                    if end_date < now {
+                        overdue_polls.push((thread_root_message_index, message.message_index));
+                    }
+                }
+            }
+        }
+
+        for (thread_root_message_index, message_index) in overdue_polls {
+            self.end_poll(thread_root_message_index, message_index, 0, now);
         }
     }
 
@@ -831,22 +859,6 @@ impl ChatEvents {
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
             message_index_map: BTreeMap::new(),
-        }
-    }
-
-    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
-        let mut overdue_polls = Vec::new();
-        for message in self.events.iter().filter_map(|e| e.event.as_message()) {
-            if let MessageContentInternal::Poll(p) = &message.content {
-                if let Some(end_date) = p.config.end_date {
-                    if end_date < now {
-                        overdue_polls.push(message.message_index);
-                    }
-                }
-            }
-        }
-        for message_index in overdue_polls {
-            self.end_poll(message_index, now);
         }
     }
 
