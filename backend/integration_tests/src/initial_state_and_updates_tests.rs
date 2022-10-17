@@ -1,25 +1,24 @@
-use crate::rng::random_principal;
 use crate::setup::{return_env, setup_env};
-use crate::{client, CanisterIds, User};
+use crate::{client, User};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use itertools::Itertools;
 use std::time::Duration;
-use types::{ChatId, UserId};
+use types::{CanisterId, ChatId, UserId};
 
 // zzyk3-openc-hatbo-tq7my-cai
 const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[test]
 fn initial_state() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, _),
         group2: (group2, _),
         direct: (user2, ..),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let initial_state = client::user::happy_path::initial_state(&env, &user);
 
@@ -37,14 +36,14 @@ fn initial_state() {
 
 #[test]
 fn updates_all_updated() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, send_group_result1),
         group2: (group2, send_group_result2),
         direct: (user2, _, send_direct_result2),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -78,14 +77,14 @@ fn updates_all_updated() {
 
 #[test]
 fn updates_some_updated() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, send_group_result1),
         group2: (group2, send_group_result2),
         direct: (user2, send_direct_result1, ..),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -119,14 +118,14 @@ fn updates_some_updated() {
 
 #[test]
 fn updates_none_updated() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, send_group_result1),
         group2: (group2, send_group_result2),
         direct: (.., send_direct_result2),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -157,14 +156,14 @@ fn updates_none_updated() {
 
 #[test]
 fn updates_all_chats_added() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, _),
         group2: (group2, _),
         direct: (user2, send_direct_result1, _),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -189,14 +188,14 @@ fn updates_all_chats_added() {
 
 #[test]
 fn updates_some_chats_added() {
-    let TestEnv {
-        env,
-        canister_ids,
+    let (mut env, canister_ids) = setup_env();
+
+    let TestData {
         user,
         group1: (group1, send_group_result1),
         group2: (group2, _),
         direct: (.., send_direct_result2),
-    } = init_test_data();
+    } = init_test_data(&mut env, canister_ids.user_index);
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -222,35 +221,30 @@ fn updates_some_chats_added() {
     return_env(env, canister_ids);
 }
 
-fn init_test_data() -> TestEnv {
-    let controller = random_principal();
-    let (mut env, canister_ids) = setup_env(controller);
-
+fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {
     let one_second = Duration::from_secs(1);
 
-    let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user1 = client::user_index::happy_path::register_user(env, user_index);
     env.advance_time(one_second);
-    let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    env.advance_time(one_second);
-
-    let group1 = client::user::happy_path::create_group(&mut env, &user1, "TEST_NAME1", false, false);
-    client::group::happy_path::add_participants(&mut env, &user1, group1, vec![user2.user_id]);
-    let send_group_result1 = client::group::happy_path::send_text_message(&mut env, &user2, group1, "3");
+    let user2 = client::user_index::happy_path::register_user(env, user_index);
     env.advance_time(one_second);
 
-    let group2 = client::user::happy_path::create_group(&mut env, &user1, "TEST_NAME2", false, false);
-    client::group::happy_path::add_participants(&mut env, &user1, group2, vec![user2.user_id]);
-    let send_group_result2 = client::group::happy_path::send_text_message(&mut env, &user2, group2, "4");
+    let group1 = client::user::happy_path::create_group(env, &user1, "TEST_NAME1", false, false);
+    client::group::happy_path::add_participants(env, &user1, group1, vec![user2.user_id]);
+    let send_group_result1 = client::group::happy_path::send_text_message(env, &user2, group1, "3");
     env.advance_time(one_second);
 
-    let send_direct_result1 = client::user::happy_path::send_text_message(&mut env, &user2, user1.user_id, "1");
-    env.advance_time(one_second);
-    let send_direct_result2 = client::user::happy_path::send_text_message(&mut env, &user2, user1.user_id, "2");
+    let group2 = client::user::happy_path::create_group(env, &user1, "TEST_NAME2", false, false);
+    client::group::happy_path::add_participants(env, &user1, group2, vec![user2.user_id]);
+    let send_group_result2 = client::group::happy_path::send_text_message(env, &user2, group2, "4");
     env.advance_time(one_second);
 
-    TestEnv {
-        env,
-        canister_ids,
+    let send_direct_result1 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "1");
+    env.advance_time(one_second);
+    let send_direct_result2 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "2");
+    env.advance_time(one_second);
+
+    TestData {
         user: user1,
         group1: (group1, send_group_result1),
         group2: (group2, send_group_result2),
@@ -258,9 +252,7 @@ fn init_test_data() -> TestEnv {
     }
 }
 
-struct TestEnv {
-    env: StateMachine,
-    canister_ids: CanisterIds,
+struct TestData {
     user: User,
     direct: (
         User,

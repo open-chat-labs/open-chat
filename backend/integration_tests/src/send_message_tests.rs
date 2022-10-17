@@ -1,12 +1,11 @@
 use crate::client;
-use crate::rng::{random_message_id, random_principal};
+use crate::rng::random_message_id;
 use crate::setup::{return_env, setup_env};
 use types::{ChatEvent, MessageContent, TextContent};
 
 #[test]
 fn send_message_succeeds() {
-    let controller = random_principal();
-    let (mut env, canister_ids) = setup_env(controller);
+    let (mut env, canister_ids) = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -24,8 +23,7 @@ fn send_message_succeeds() {
 
 #[test]
 fn empty_message_fails() {
-    let controller = random_principal();
-    let (mut env, canister_ids) = setup_env(controller);
+    let (mut env, canister_ids) = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -50,8 +48,7 @@ fn empty_message_fails() {
 
 #[test]
 fn text_too_long_fails() {
-    let controller = random_principal();
-    let (mut env, canister_ids) = setup_env(controller);
+    let (mut env, canister_ids) = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
