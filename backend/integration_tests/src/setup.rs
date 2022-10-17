@@ -1,4 +1,5 @@
 use crate::client::{create_canister, install_canister};
+use crate::rng::random_principal;
 use crate::{wasms, CanisterIds};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
@@ -12,16 +13,16 @@ lazy_static! {
     static ref ENV: Mutex<Vec<(StateMachine, CanisterIds)>> = Mutex::default();
 }
 
-pub fn setup_env(controller: Principal) -> (StateMachine, CanisterIds) {
+pub fn setup_env() -> (StateMachine, CanisterIds) {
     if let Some((env, canister_ids)) = try_take_existing_env() {
         return (env, canister_ids);
     }
-    setup_fresh_env(controller)
+    setup_fresh_env()
 }
 
-pub fn setup_fresh_env(controller: Principal) -> (StateMachine, CanisterIds) {
+pub fn setup_fresh_env() -> (StateMachine, CanisterIds) {
     let mut env = StateMachine::new();
-    let canister_ids = install_canisters(&mut env, controller);
+    let canister_ids = install_canisters(&mut env, random_principal());
     (env, canister_ids)
 }
 

@@ -6,6 +6,7 @@ use types::{CanisterId, UserId};
 
 mod client;
 mod initial_state_and_updates_tests;
+mod poll_tests;
 mod register_user_tests;
 mod rng;
 mod send_message_tests;

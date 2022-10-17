@@ -26,7 +26,7 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{ChatId, MessageContent, TextContent, UserId};
+    use types::{ChatId, EventIndex, MessageContent, MessageIndex, PollVotes, TextContent, UserId, VoteOperation};
 
     pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {
         let response = super::add_participants(
@@ -72,6 +72,56 @@ pub mod happy_path {
         match response {
             group_canister::send_message::Response::Success(result) => result,
             response => panic!("'send_message' error: {:?}", response),
+        }
+    }
+
+    pub fn register_poll_vote(
+        env: &mut StateMachine,
+        sender: &User,
+        group_chat_id: ChatId,
+        message_index: MessageIndex,
+        poll_option: u32,
+    ) -> PollVotes {
+        let response = super::register_poll_vote(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::register_poll_vote::Args {
+                thread_root_message_index: None,
+                message_index,
+                poll_option,
+                operation: VoteOperation::RegisterVote,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::register_poll_vote::Response::Success(result) => result,
+            response => panic!("'register_poll_vote' error: {:?}", response),
+        }
+    }
+
+    pub fn events_by_index(
+        env: &StateMachine,
+        sender: &User,
+        group_chat_id: ChatId,
+        events: Vec<EventIndex>,
+    ) -> group_canister::events_by_index::SuccessResult {
+        let response = super::events_by_index(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events_by_index::Args {
+                thread_root_message_index: None,
+                events,
+                invite_code: None,
+                latest_client_event_index: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_by_index' error: {:?}", response),
         }
     }
 }
