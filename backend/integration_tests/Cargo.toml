@@ -10,18 +10,21 @@ edition = "2021"
 
 [dependencies]
 callback_canister = { path = "../canisters/callback/api" }
-candid = "0.7.17"
+candid = "0.8.3"
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "e947becfc936de3f189e331a2c43834de54373b4" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 notifications_canister = { path = "../canisters/notifications/api" }
 online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = "0.8.5"
-serde = "1.0.137"
-serde_bytes = "0.11.6"
+serde = "1.0.145"
+serde_bytes = "0.11.7"
 types = { path = "../../backend/libraries/types", default-features = false }
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }
+
+[patch.crates-io]
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "3849c7bede6db8c5d6c310aaa1b2dcada34aed62" }

@@ -83,7 +83,7 @@ impl SmsReader for IcAgent {
             .await?;
 
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        let response_bytes = self.agent.wait(request_id, self.canister_id, false, waiter).await?;
+        let response_bytes = self.agent.wait(request_id, self.canister_id, waiter).await?;
 
         let user_index_canister::remove_sms_messages::Response::Success =
             Decode!(&response_bytes, user_index_canister::remove_sms_messages::Response)?;
