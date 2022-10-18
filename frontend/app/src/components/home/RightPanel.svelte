@@ -86,8 +86,7 @@
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if ($selectedChatId !== undefined) {
-            //FIXME - block user doesn't need to be passed api or selected chat id
-            client.blockUser(client.api, $selectedChatId, ev.detail.userId);
+            client.blockUser($selectedChatId, ev.detail.userId);
         }
     }
 

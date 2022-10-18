@@ -3,6 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import type {
+    ChatEvent,
     ChatSummary,
     EventWrapper,
     Message,
@@ -62,7 +63,7 @@ import {
     userIdsFromEvents,
 } from "./domain/chat/chat.utils";
 import { emptyChatMetrics, isPreviewing } from "./domain/chat/chat.utils.shared";
-import type { CreatedUser, IdentityState } from "./domain/user/user";
+import type { CreatedUser, IdentityState, User } from "./domain/user/user";
 import {
     buildUsernameList,
     compareIsNotYouThenUsername,
@@ -532,9 +533,52 @@ export class OpenChat extends EventTarget {
     stopTyping = stopTyping;
     mergeEventsAndLocalUpdates = mergeEventsAndLocalUpdates;
     isPreviewing = isPreviewing;
-    deleteMessage = deleteMessage;
-    registerPollVote = registerPollVote;
-    selectReaction = selectReaction;
+    deleteMessage(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint
+    ): Promise<boolean> {
+        return deleteMessage(this.api, this.user.userId, chat, threadRootMessageIndex, messageId);
+    }
+    registerPollVote(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        messageIndex: number,
+        answerIndex: number,
+        type: "register" | "delete"
+    ): void {
+        return registerPollVote(
+            this.api,
+            this.user.userId,
+            chatId,
+            threadRootMessageIndex,
+            messageId,
+            messageIndex,
+            answerIndex,
+            type
+        );
+    }
+    selectReaction(
+        chat: ChatSummary,
+        userId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        reaction: string,
+        username: string,
+        kind: "add" | "remove"
+    ): Promise<boolean> {
+        return selectReaction(
+            this.api,
+            chat,
+            userId,
+            threadRootMessageIndex,
+            messageId,
+            reaction,
+            username,
+            kind
+        );
+    }
     updateUserStore = updateUserStore;
     isTyping = isTyping;
     trackEvent = trackEvent;
@@ -544,7 +588,9 @@ export class OpenChat extends EventTarget {
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
-    blockUser = blockUser;
+    blockUser(chatId: string, userId: string): Promise<void> {
+        return blockUser(this.api, chatId, userId);
+    }
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     enableAllProposalFilters = enableAllProposalFilters;
@@ -593,24 +639,75 @@ export class OpenChat extends EventTarget {
     formatFileSize = formatFileSize;
     morePreviousMessagesAvailable = morePreviousMessagesAvailable;
     moreNewMessagesAvailable = moreNewMessagesAvailable;
-    loadEventWindow = loadEventWindow;
-    loadPreviousMessages = loadPreviousMessages;
-    loadNewMessages = loadNewMessages;
-    handleMessageSentByOther = handleMessageSentByOther;
-    refreshAffectedEvents = refreshAffectedEvents;
-    updateDetails = updateDetails;
-    loadDetails = loadDetails;
+    loadEventWindow(
+        serverChat: ChatSummary,
+        chat: ChatSummary,
+        messageIndex: number
+    ): Promise<number | undefined> {
+        return loadEventWindow(this.api, this.user, serverChat, chat, messageIndex);
+    }
+    loadPreviousMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<void> {
+        return loadPreviousMessages(this.api, this.user, serverChat, clientChat);
+    }
+    loadNewMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<boolean> {
+        return loadNewMessages(this.api, this.user, serverChat, clientChat);
+    }
+    handleMessageSentByOther(
+        clientChat: ChatSummary,
+        messageEvent: EventWrapper<Message>
+    ): Promise<void> {
+        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent);
+    }
+    refreshAffectedEvents(clientChat: ChatSummary, affectedEventIndexes: number[]): Promise<void> {
+        return refreshAffectedEvents(this.api, this.user, clientChat, affectedEventIndexes);
+    }
+    updateDetails(
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[]
+    ): Promise<void> {
+        return updateDetails(this.api, this.user, clientChat, currentEvents);
+    }
+    loadDetails(clientChat: ChatSummary, currentEvents: EventWrapper<ChatEvent>[]): Promise<void> {
+        return loadDetails(this.api, this.user, clientChat, currentEvents);
+    }
     messageIsReadByThem = messageIsReadByThem;
-    pinMessage = pinMessage;
-    unpinMessage = unpinMessage;
+    pinMessage(clientChat: ChatSummary, messageIndex: number): void {
+        return pinMessage(this.api, clientChat, messageIndex);
+    }
+    unpinMessage(clientChat: ChatSummary, messageIndex: number): void {
+        return unpinMessage(this.api, clientChat, messageIndex);
+    }
     toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
     sameUser = sameUser;
     nextEventAndMessageIndexes = nextEventAndMessageIndexes;
-    sendMessageWithAttachment = sendMessageWithAttachment;
+    sendMessageWithAttachment(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[],
+        evt: EventWrapper<Message>,
+        mentioned: User[]
+    ): Promise<number | undefined> {
+        return sendMessageWithAttachment(
+            this.api,
+            this.user,
+            serverChat,
+            clientChat,
+            currentEvents,
+            evt,
+            mentioned
+        );
+    }
     canForward = canForward;
     newMessageId = newMessageId;
-    forwardMessage = forwardMessage;
+    forwardMessage(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[],
+        evt: EventWrapper<Message>
+    ): Promise<number | undefined> {
+        return forwardMessage(this.api, this.user, serverChat, clientChat, currentEvents, evt);
+    }
     removeMessage = removeMessage;
     canLeaveGroup = canLeaveGroup;
     canAddMembers = canAddMembers;

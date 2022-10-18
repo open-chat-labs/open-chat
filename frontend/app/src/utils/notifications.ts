@@ -1,5 +1,5 @@
 import { push } from "svelte-spa-router";
-import type { ServiceContainer, Notification, OpenChat } from "openchat-client";
+import type { Notification, OpenChat, ServiceContainer } from "openchat-client";
 import { isCanisterUrl } from "../utils/urls";
 
 function toUint8Array(base64String: string): Uint8Array {

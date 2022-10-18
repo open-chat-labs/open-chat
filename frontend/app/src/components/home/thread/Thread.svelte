@@ -521,8 +521,6 @@
 
         if ($selectedChatId !== undefined) {
             client.registerPollVote(
-                client.api,
-                client.user.userId,
                 $selectedChatId,
                 threadRootMessageIndex,
                 ev.detail.messageId,
@@ -539,13 +537,7 @@
             return;
         }
 
-        client.deleteMessage(
-            client.api,
-            chat,
-            client.user.userId,
-            threadRootMessageIndex,
-            ev.detail.messageId
-        );
+        client.deleteMessage(chat, threadRootMessageIndex, ev.detail.messageId);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -568,7 +560,6 @@
 
         client
             .selectReaction(
-                client.api,
                 chat,
                 client.user.userId,
                 threadRootMessageIndex,

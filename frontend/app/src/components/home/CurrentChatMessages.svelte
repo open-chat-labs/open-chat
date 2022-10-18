@@ -169,8 +169,6 @@
 
             if (event.kind === "relayed_register_vote") {
                 client.registerPollVote(
-                    client.api,
-                    user.userId,
                     chat.chatId,
                     undefined,
                     event.data.messageId,
@@ -248,9 +246,7 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            client
-                .loadEventWindow(client.api, user, serverChat, chat, index)
-                .then(onMessageWindowLoaded);
+            client.loadEventWindow(serverChat, chat, index).then(onMessageWindowLoaded);
         }
     }
 
@@ -318,9 +314,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client
-                .loadPreviousMessages(client.api, user, serverChat, chat)
-                .then(onLoadedPreviousMessages);
+            client.loadPreviousMessages(serverChat, chat).then(onLoadedPreviousMessages);
         }
 
         if (shouldLoadNewMessages()) {
@@ -328,7 +322,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            client.loadNewMessages(client.api, user, serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(serverChat, chat).then(onLoadedNewMessages);
         }
 
         setIfInsideFromBottomThreshold();
@@ -353,7 +347,6 @@
 
         client
             .selectReaction(
-                client.api,
                 chat,
                 user.userId,
                 undefined,
@@ -408,7 +401,7 @@
     function doDeleteMessage(message: Message) {
         if (!canDelete && user.userId !== message.sender) return;
 
-        client.deleteMessage(client.api, chat, user.userId, undefined, message.messageId);
+        client.deleteMessage(chat, undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -426,7 +419,7 @@
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
-        client.blockUser(client.api, chat.chatId, ev.detail.userId);
+        client.blockUser(chat.chatId, ev.detail.userId);
     }
 
     function onMessageWindowLoaded(messageIndex: number | undefined) {
@@ -501,21 +494,19 @@
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            client.handleMessageSentByOther(client.api, user, chat, latestMessage);
+            client.handleMessageSentByOther(chat, latestMessage);
         }
 
-        client.refreshAffectedEvents(client.api, user, chat, affectedEvents);
-        client.updateDetails(client.api, user, chat, events);
+        client.refreshAffectedEvents(chat, affectedEvents);
+        client.updateDetails(chat, events);
 
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            client.loadNewMessages(client.api, user, serverChat, chat);
+            client.loadNewMessages(serverChat, chat);
         }
     }
 
     export function handleMessageSentByOtherExternal(messageEvent: EventWrapper<Message>): void {
-        client
-            .handleMessageSentByOther(client.api, user, chat, messageEvent)
-            .then(() => onLoadedNewMessages(true));
+        client.handleMessageSentByOther(chat, messageEvent).then(() => onLoadedNewMessages(true));
     }
 
     $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
@@ -538,14 +529,14 @@
 
             if ($focusMessageIndex !== undefined) {
                 client
-                    .loadEventWindow(client.api, user, serverChat, chat, $focusMessageIndex)
+                    .loadEventWindow(serverChat, chat, $focusMessageIndex)
                     .then((messageIndex: number | undefined) => {
-                        client.loadDetails(client.api, user, chat, events);
+                        client.loadDetails(chat, events);
                         onMessageWindowLoaded(messageIndex);
                     });
             } else {
-                client.loadPreviousMessages(client.api, user, serverChat, chat).then(() => {
-                    client.loadDetails(client.api, user, chat, events);
+                client.loadPreviousMessages(serverChat, chat).then(() => {
+                    client.loadDetails(chat, events);
                     onLoadedPreviousMessages();
                 });
             }
@@ -577,13 +568,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            client.loadNewMessages(client.api, user, serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(serverChat, chat).then(onLoadedNewMessages);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client
-                .loadPreviousMessages(client.api, user, serverChat, chat)
-                .then(onLoadedPreviousMessages);
+            client.loadPreviousMessages(serverChat, chat).then(onLoadedPreviousMessages);
         }
     }
 
@@ -639,12 +628,12 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.pinMessage(client.api, chat, ev.detail.messageIndex);
+        client.pinMessage(chat, ev.detail.messageIndex);
     }
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.unpinMessage(client.api, chat, ev.detail.messageIndex);
+        client.unpinMessage(chat, ev.detail.messageIndex);
     }
 
     function registerVote(
@@ -656,8 +645,6 @@
         }>
     ) {
         client.registerPollVote(
-            client.api,
-            user.userId,
             chat.chatId,
             undefined,
             ev.detail.messageId,
@@ -750,15 +737,7 @@
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             client
-                .sendMessageWithAttachment(
-                    client.api,
-                    user,
-                    serverChat,
-                    chat,
-                    events,
-                    event,
-                    mentioned
-                )
+                .sendMessageWithAttachment(serverChat, chat, events, event, mentioned)
                 .then(afterSendMessage);
         }
     }
@@ -797,9 +776,7 @@
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-        client
-            .forwardMessage(client.api, user, serverChat, chat, events, event)
-            .then(afterSendMessage);
+        client.forwardMessage(serverChat, chat, events, event).then(afterSendMessage);
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {

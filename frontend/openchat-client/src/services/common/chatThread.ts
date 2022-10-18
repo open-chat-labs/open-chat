@@ -105,8 +105,8 @@ export function selectReaction(
 
 export function deleteMessage(
     api: ServiceContainer,
-    chat: ChatSummary,
     userId: string,
+    chat: ChatSummary,
     threadRootMessageIndex: number | undefined,
     messageId: bigint
 ): Promise<boolean> {
