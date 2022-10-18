@@ -226,6 +226,8 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     MessageSentByOther,
+    SentMessage,
+    UpgradeRequired,
 } from "./events";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -757,22 +759,47 @@ export class OpenChat extends EventTarget {
     groupWhile = groupWhile;
     sameUser = sameUser;
     nextEventAndMessageIndexes = nextEventAndMessageIndexes;
+
     sendMessageWithAttachment(
         serverChat: ChatSummary,
         clientChat: ChatSummary,
         currentEvents: EventWrapper<ChatEvent>[],
-        evt: EventWrapper<Message>,
-        mentioned: User[]
+        textContent: string | undefined,
+        mentioned: User[],
+        fileToAttach: MessageContent | undefined
     ): Promise<number | undefined> {
-        return sendMessageWithAttachment(
-            this.api,
-            this.user,
-            serverChat,
-            clientChat,
-            currentEvents,
-            evt,
-            mentioned
-        );
+        if (textContent || fileToAttach) {
+            const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
+            if (get(remainingStorage) < storageRequired) {
+                this.dispatchEvent(new UpgradeRequired("explain"));
+                return Promise.resolve(undefined);
+            }
+
+            const [nextEventIndex, nextMessageIndex] = this.nextEventAndMessageIndexes();
+
+            const msg = this.createMessage(
+                this.user.userId,
+                nextMessageIndex,
+                textContent,
+                get(currentChatReplyingTo),
+                fileToAttach
+            );
+            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+
+            return sendMessageWithAttachment(
+                this.api,
+                this.user,
+                serverChat,
+                clientChat,
+                currentEvents,
+                event,
+                mentioned
+            ).then((jumpTo) => {
+                this.dispatchEvent(new SentMessage(jumpTo));
+                return jumpTo;
+            });
+        }
+        return Promise.resolve(undefined);
     }
     canForward = canForward;
     newMessageId = newMessageId;

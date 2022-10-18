@@ -157,7 +157,10 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
-        currentChatMessages?.sendMessageWithAttachmentExternal(
+        client.sendMessageWithAttachment(
+            serverChat,
+            chat,
+            events,
             textContent,
             mentioned,
             fileToAttach

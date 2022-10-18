@@ -36,6 +36,8 @@
         ChatUpdated,
         LoadedMessageWindow,
         LoadedPreviousMessages,
+        SentMessage,
+        UpgradeRequired,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
     import { menuStore } from "../../stores/menu";
@@ -206,6 +208,12 @@
         }
         if (ev instanceof ChatUpdated) {
             chatUpdated();
+        }
+        if (ev instanceof SentMessage) {
+            afterSendMessage(ev.detail);
+        }
+        if (ev instanceof UpgradeRequired) {
+            dispatch("upgrade", ev.detail);
         }
         console.log("openchat_event received: ", ev);
     }
@@ -711,38 +719,8 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    export function sendMessageWithAttachmentExternal(
-        textContent: string | undefined,
-        mentioned: User[],
-        fileToAttach: MessageContent | undefined
-    ) {
-        if (!canSend) return;
-        if (textContent || fileToAttach) {
-            const storageRequired = client.getStorageRequiredForMessage(fileToAttach);
-            if ($remainingStorage < storageRequired) {
-                dispatch("upgrade", "explain");
-                return;
-            }
-
-            const [nextEventIndex, nextMessageIndex] = client.nextEventAndMessageIndexes();
-
-            const msg = client.createMessage(
-                user.userId,
-                nextMessageIndex,
-                textContent,
-                $currentChatReplyingTo,
-                fileToAttach
-            );
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-
-            client
-                .sendMessageWithAttachment(serverChat, chat, events, event, mentioned)
-                .then(afterSendMessage);
-        }
-    }
-
     function afterSendMessage(jumpingTo: number | undefined) {
-        if (jumpingTo !== undefined) {
+        if (jumpingTo !== undefined && jumpingTo !== null) {
             onMessageWindowLoaded(jumpingTo);
         } else {
             tick().then(() => scrollBottom("smooth"));
