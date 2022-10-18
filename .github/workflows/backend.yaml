@@ -16,9 +16,6 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
@@ -35,9 +32,6 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
@@ -55,9 +49,6 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
