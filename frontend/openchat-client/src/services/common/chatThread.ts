@@ -189,7 +189,7 @@ export async function updateUserStore(
     userStore.addMany(resp.users);
 }
 
-export async function editMessage(
+export function editMessage(
     api: ServiceContainer,
     chat: ChatSummary,
     msg: Message,
@@ -494,7 +494,7 @@ export function morePreviousMessagesAvailable(clientChat: ChatSummary): boolean 
     return (
         clientChat.latestEventIndex >= 0 &&
         (earliestLoadedIndex(clientChat.chatId) ?? Number.MAX_VALUE) >
-        earliestAvailableEventIndex(clientChat)
+            earliestAvailableEventIndex(clientChat)
     );
 }
 

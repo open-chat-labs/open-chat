@@ -141,25 +141,14 @@
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
-            editMessageWithAttachment(text, $currentChatFileToAttach, $currentChatEditingEvent);
+            client.editMessageWithAttachment(
+                chat,
+                text,
+                $currentChatFileToAttach,
+                $currentChatEditingEvent
+            );
         } else {
             sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
-        }
-    }
-
-    function editMessageWithAttachment(
-        textContent: string | undefined,
-        fileToAttach: MessageContent | undefined,
-        editingEvent: EventWrapper<Message>
-    ) {
-        if (textContent || fileToAttach) {
-            const msg = {
-                ...editingEvent.event,
-                edited: true,
-                content: client.getMessageContent(textContent ?? undefined, fileToAttach),
-            };
-
-            client.editMessage(client.api, chat, msg, undefined);
         }
     }
 

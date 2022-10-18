@@ -243,7 +243,13 @@
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
-            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
+            client.editMessageWithAttachment(
+                chat,
+                text,
+                $fileToAttach,
+                $editingEvent,
+                threadRootMessageIndex
+            );
         } else {
             sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
@@ -428,22 +434,6 @@
                 userId: userId,
                 threadRootMessageIndex,
             });
-        }
-    }
-
-    function editMessageWithAttachment(
-        textContent: string | undefined,
-        fileToAttach: MessageContent | undefined,
-        editingEvent: EventWrapper<Message>
-    ) {
-        if (textContent || fileToAttach) {
-            const msg = {
-                ...editingEvent.event,
-                edited: true,
-                content: client.getMessageContent(textContent ?? undefined, fileToAttach),
-            };
-
-            client.editMessage(client.api, chat, msg, threadRootMessageIndex);
         }
     }
 

@@ -2,7 +2,13 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
-import type { EventWrapper, Message, ThreadSyncDetails } from "./domain";
+import type {
+    ChatSummary,
+    EventWrapper,
+    Message,
+    MessageContent,
+    ThreadSyncDetails,
+} from "./domain";
 import { AuthProvider } from "./domain";
 import {
     buildCryptoTransferText,
@@ -527,7 +533,6 @@ export class OpenChat extends EventTarget {
     mergeEventsAndLocalUpdates = mergeEventsAndLocalUpdates;
     isPreviewing = isPreviewing;
     deleteMessage = deleteMessage;
-    editMessage = editMessage;
     registerPollVote = registerPollVote;
     selectReaction = selectReaction;
     updateUserStore = updateUserStore;
@@ -621,6 +626,23 @@ export class OpenChat extends EventTarget {
     groupChatFromCandidate = groupChatFromCandidate;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
+
+    editMessageWithAttachment(
+        chat: ChatSummary,
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined,
+        editingEvent: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): void {
+        if (textContent || fileToAttach) {
+            const msg = {
+                ...editingEvent.event,
+                edited: true,
+                content: this.getMessageContent(textContent ?? undefined, fileToAttach),
+            };
+            editMessage(this.api, chat, msg, threadRootMessageIndex);
+        }
+    }
 
     /**
      * Reactive state provided in the form of svelte stores
