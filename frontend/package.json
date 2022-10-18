@@ -8,6 +8,8 @@
     "build:prod": "turbo run build:prod",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "validate": "turbo run validate",
     "dev": "turbo run dev"
   },
   "author": "julian.jelfs@gmail.com",
