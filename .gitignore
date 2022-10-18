@@ -6,8 +6,6 @@ wasms/
 
 **/*.rs.bk
 
-package-lock.json
-
 .DS_Store
 **/*.env
 **/*.env_v1
