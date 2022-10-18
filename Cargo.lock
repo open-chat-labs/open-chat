@@ -4326,6 +4326,7 @@ dependencies = [
  "tracing",
  "types 0.1.0",
  "user_index_canister",
+ "user_index_canister_client",
 ]
 
 [[package]]
