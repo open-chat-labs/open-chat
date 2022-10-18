@@ -21,11 +21,12 @@
       "inputs": ["src/**/*.ts"]
     },
     "typecheck": {
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "outputs": [],
+      "outputs": ["^build"],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "lint": {
