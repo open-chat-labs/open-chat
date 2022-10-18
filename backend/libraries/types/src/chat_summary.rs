@@ -95,6 +95,15 @@ pub enum ChatSummaryUpdates {
     Group(GroupChatSummaryUpdates),
 }
 
+impl ChatSummaryUpdates {
+    pub fn chat_id(&self) -> ChatId {
+        match self {
+            ChatSummaryUpdates::Direct(d) => d.chat_id,
+            ChatSummaryUpdates::Group(g) => g.chat_id,
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,

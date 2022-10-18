@@ -20,7 +20,6 @@ pub struct User {
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub is_bot: bool,
 }
 

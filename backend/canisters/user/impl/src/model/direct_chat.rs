@@ -13,10 +13,11 @@ pub struct DirectChat {
     pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
+    pub is_bot: bool,
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, now: TimestampMillis) -> DirectChat {
+    pub fn new(them: UserId, is_bot: bool, now: TimestampMillis) -> DirectChat {
         DirectChat {
             them,
             date_created: now,
@@ -26,6 +27,7 @@ impl DirectChat {
             read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
+            is_bot,
         }
     }
 

@@ -521,7 +521,7 @@ export function createDirectChat(chatId: string): void {
                 readByMeUpTo: undefined,
                 readByThemUpTo: undefined,
                 latestMessage: undefined,
-                latestEventIndex: 0,
+                latestEventIndex: -1,
                 dateCreated: BigInt(Date.now()),
                 notificationsMuted: false,
                 metrics: emptyChatMetrics(),

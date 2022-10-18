@@ -148,7 +148,7 @@ impl Participants {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()
-                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| p.notifications_muted.value))
+                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| !p.notifications_muted.value))
                 .copied()
                 .collect()
         } else {

@@ -40,13 +40,14 @@ impl DirectChats {
         their_user_id: UserId,
         their_message_index: Option<MessageIndex>,
         args: PushMessageArgs,
+        is_bot: bool,
     ) -> EventWrapper<Message> {
         let chat_id = ChatId::from(their_user_id);
         let now = args.now;
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),
-            Vacant(e) => e.insert(DirectChat::new(their_user_id, args.now)),
+            Vacant(e) => e.insert(DirectChat::new(their_user_id, is_bot, args.now)),
         };
 
         let message_event = chat.events.push_message(args);

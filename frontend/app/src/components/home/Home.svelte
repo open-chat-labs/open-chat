@@ -299,7 +299,7 @@
                     }
 
                     if (!$mobileWidth && hotGroups.kind === "idle") {
-                        whatsHot();
+                        whatsHot(false);
                     }
 
                     filterChatSpecificRightPanelStates();
@@ -957,8 +957,10 @@
         });
     }
 
-    function whatsHot() {
-        push("/");
+    function whatsHot(navigate: boolean = true) {
+        if (navigate) {
+            push("/");
+        }
         tick().then(() => {
             interruptRecommended = false;
             hotGroups = { kind: "loading" };
@@ -1097,7 +1099,7 @@
             on:searchEntered={performSearch}
             on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}
-            on:whatsHot={whatsHot}
+            on:whatsHot={() => whatsHot(true)}
             on:newGroup={newGroup}
             on:profile={showProfile}
             on:logout={logout}
@@ -1131,7 +1133,7 @@
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:cancelRecommendations={cancelRecommendations}
-            on:recommend={whatsHot}
+            on:recommend={() => whatsHot(false)}
             on:dismissRecommendation={dismissRecommendation}
             on:upgrade={upgrade}
             on:showPinned={showPinned}

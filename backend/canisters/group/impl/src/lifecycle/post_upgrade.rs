@@ -7,6 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
+use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -15,8 +16,10 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+
+    data.events.end_overdue_polls(env.now());
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
