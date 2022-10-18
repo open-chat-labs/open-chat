@@ -172,7 +172,9 @@
     }
 
     function forwardMessage(msg: Message) {
-        currentChatMessages?.forwardMessageExternal(msg);
+        if (!canSend || !client.canForward(msg.content)) return;
+
+        client.forwardMessage(serverChat, chat, events, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {

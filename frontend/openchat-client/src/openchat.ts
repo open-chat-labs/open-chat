@@ -760,6 +760,48 @@ export class OpenChat extends EventTarget {
     sameUser = sameUser;
     nextEventAndMessageIndexes = nextEventAndMessageIndexes;
 
+    forwardMessage(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[],
+        msg: Message
+    ): Promise<number | undefined> {
+        // TODO check storage requirements
+
+        // Only forward the primary content not the caption
+        const content = { ...msg.content };
+        if ("caption" in content) {
+            content.caption = "";
+        }
+
+        const [nextEventIndex, nextMessageIndex] = this.nextEventAndMessageIndexes();
+
+        msg = {
+            kind: "message",
+            messageId: this.newMessageId(),
+            messageIndex: nextMessageIndex,
+            sender: this.user.userId,
+            content,
+            repliesTo: undefined,
+            reactions: [],
+            edited: false,
+            forwarded: msg.content.kind !== "giphy_content",
+        };
+        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+
+        return forwardMessage(
+            this.api,
+            this.user,
+            serverChat,
+            clientChat,
+            currentEvents,
+            event
+        ).then((jumpTo) => {
+            this.dispatchEvent(new SentMessage(jumpTo));
+            return jumpTo;
+        });
+    }
+
     sendMessageWithAttachment(
         serverChat: ChatSummary,
         clientChat: ChatSummary,
@@ -803,14 +845,6 @@ export class OpenChat extends EventTarget {
     }
     canForward = canForward;
     newMessageId = newMessageId;
-    forwardMessage(
-        serverChat: ChatSummary,
-        clientChat: ChatSummary,
-        currentEvents: EventWrapper<ChatEvent>[],
-        evt: EventWrapper<Message>
-    ): Promise<number | undefined> {
-        return forwardMessage(this.api, this.user, serverChat, clientChat, currentEvents, evt);
-    }
     removeMessage = removeMessage;
     canLeaveGroup = canLeaveGroup;
     canAddMembers = canAddMembers;

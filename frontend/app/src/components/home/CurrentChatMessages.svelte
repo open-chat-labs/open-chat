@@ -727,35 +727,6 @@
         }
     }
 
-    export function forwardMessageExternal(msg: Message) {
-        if (!canSend || !client.canForward(msg.content)) return;
-
-        // TODO check storage requirements
-
-        // Only forward the primary content not the caption
-        let content = { ...msg.content };
-        if ("caption" in content) {
-            content.caption = "";
-        }
-
-        const [nextEventIndex, nextMessageIndex] = client.nextEventAndMessageIndexes();
-
-        msg = {
-            kind: "message",
-            messageId: client.newMessageId(),
-            messageIndex: nextMessageIndex,
-            sender: user.userId,
-            content,
-            repliesTo: undefined,
-            reactions: [],
-            edited: false,
-            forwarded: msg.content.kind !== "giphy_content",
-        };
-        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-
-        client.forwardMessage(serverChat, chat, events, event).then(afterSendMessage);
-    }
-
     function remoteUserSentMessage(message: RemoteUserSentMessage): void {
         const existing = client.findMessageById(message.messageEvent.event.messageId, events);
         if (existing !== undefined) {
