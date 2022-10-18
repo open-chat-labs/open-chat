@@ -69,4 +69,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --package integration_tests
+          args: --release --package integration_tests -- --test-threads 4
