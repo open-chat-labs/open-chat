@@ -26,7 +26,8 @@
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "outputs": ["^build"],
+      "dependsOn": ["^build"],
+      "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "lint": {
