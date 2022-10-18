@@ -10,7 +10,6 @@
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
     import type {
-        Notification,
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
@@ -41,10 +40,7 @@
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import { fullScreen } from "../../stores/settings";
-    import {
-        closeNotificationsForChat,
-        initNotificationsServiceWorker,
-    } from "../../utils/notifications";
+    import { closeNotificationsForChat, subscribeToNotifications } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "./rightPanel";
     import { rollbar } from "../../utils/logging";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -132,9 +128,7 @@
     $: serverChatSummariesStore = client.serverChatSummariesStore;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
-
     $: userId = client.user.userId;
-    $: wasmVersion = client.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: combinedMetrics = $chatSummariesListStore
@@ -169,12 +163,8 @@
         ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
-        // bootstrap anything that needs a service container here
-        client.initWebRtc();
-        client.initNotificationStores();
-        client.subscribeToWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
-        initNotificationsServiceWorker(client, (n) => notificationReceived(n));
-        client.startPruningLocalUpdates();
+        client.initWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
+        subscribeToNotifications(client, (n) => client.notificationReceived(n));
     });
 
     function routeRtcMessages(msg: WebRtcMessage) {
@@ -220,7 +210,7 @@
                         code,
                     };
                 }
-                if (!(await previewChat(chatId))) {
+                if (!(await client.previewChat(chatId))) {
                     replace("/");
                     return;
                 }
@@ -336,116 +326,6 @@
         rightPanelHistory = rightPanelHistory.filter(
             (panel) => panel.kind !== "message_thread_panel"
         );
-    }
-
-    /**
-     * We may wish to look at chats without joining them.
-     * If the chat is either a public group or a private group with an invite code then
-     * we load the chat summary directly.
-     * We will then add that chat to our chat list locally with a custom role of "Previewer"
-     * This will allow us to interact with the chat in a readonly mode.
-     *
-     * We will load the chat and then add it to the chat list. If we refresh the page
-     * it will just disappear (unless of course we still have the canisterId in the url)
-     */
-    function previewChat(chatId: string): Promise<boolean> {
-        return client.api.getPublicGroupSummary(chatId).then((maybeChat) => {
-            if (maybeChat === undefined) {
-                return false;
-            }
-            addOrReplaceChat(maybeChat);
-            return true;
-        });
-    }
-
-    function addOrReplaceChat(chat: ChatSummary): void {
-        serverChatSummariesStore.update((summaries) => {
-            return {
-                ...summaries,
-                [chat.chatId]: chat,
-            };
-        });
-    }
-
-    function notificationReceived(notification: Notification): void {
-        let chatId: string;
-        let threadRootMessageIndex: number | undefined = undefined;
-        let message: EventWrapper<Message>;
-        switch (notification.kind) {
-            case "direct_notification": {
-                chatId = notification.sender;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
-                break;
-            }
-            case "group_notification": {
-                chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
-                break;
-            }
-            case "direct_reaction": {
-                chatId = notification.them;
-                message = notification.message;
-                break;
-            }
-            case "group_reaction":
-                chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                message = notification.message;
-                break;
-            case "added_to_group_notification":
-                return;
-        }
-
-        if (threadRootMessageIndex !== undefined) {
-            // TODO fix this for thread messages
-            return;
-        }
-
-        const chat = $serverChatSummariesStore[chatId];
-        if (chat === undefined || chat.latestEventIndex >= message.index) {
-            return;
-        }
-
-        client.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
-
-        const chatType = chat.kind === "direct_chat" ? "direct" : "group";
-        Promise.all([
-            client.api.rehydrateMessage(
-                chatType,
-                chatId,
-                message,
-                undefined,
-                chat.latestEventIndex
-            ),
-            addMissingUsersFromMessage(message),
-        ]).then(([m, _]) => {
-            client.updateSummaryWithConfirmedMessage(chatId, m);
-
-            if ($selectedChatId === chatId) {
-                currentChatMessages?.handleMessageSentByOtherExternal(m);
-            }
-        });
-    }
-
-    async function addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
-        const users = client.userIdsFromEvents([message]);
-        const missingUsers = client.missingUserIds($userStore, users);
-        if (missingUsers.length > 0) {
-            const usersResp = await client.api.getUsers(
-                {
-                    userGroups: [
-                        {
-                            users: missingUsers,
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                },
-                true
-            );
-            userStore.addMany(usersResp.users);
-        }
     }
 
     function resetRightPanel() {
@@ -876,7 +756,7 @@
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
-        addOrReplaceChat(ev.detail);
+        client.addOrReplaceChat(ev.detail);
     }
 
     function showPinned() {
@@ -920,10 +800,10 @@
             .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp.kind === "group_chat") {
-                    addOrReplaceChat(resp);
+                    client.addOrReplaceChat(resp);
                     return true;
                 } else if (resp.kind === "already_in_group") {
-                    addOrReplaceChat({
+                    client.addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
@@ -1017,7 +897,7 @@
     function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
         const { group, rules } = ev.detail;
         chatStateStore.setProp(group.chatId, "rules", rules);
-        addOrReplaceChat(group);
+        client.addOrReplaceChat(group);
         if (group.public) {
             client.trackEvent("public_group_created");
         } else {

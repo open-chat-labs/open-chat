@@ -3,6 +3,7 @@ export * from "./stores";
 export { OpenChat } from "./openchat";
 export { OpenChatConfig } from "./config";
 export * from "./services";
+export * from "./events";
 
 export { ONE_GB } from "./stores/storage";
 export { FilteredProposals } from "./stores/filteredProposals";

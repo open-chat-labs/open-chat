@@ -311,15 +311,7 @@
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const matchingMessage = client.findMessageById(message.messageId, $events);
-
-        if (matchingMessage !== undefined) {
-            localMessageUpdates.markReaction(message.messageId.toString(), {
-                reaction: message.reaction,
-                kind: message.added ? "add" : "remove",
-                userId: message.userId,
-            });
-        }
+        client.remoteUserToggledReaction($events, message);
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {

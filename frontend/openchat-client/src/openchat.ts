@@ -9,6 +9,7 @@ import type {
     Message,
     MessageContent,
     ThreadSyncDetails,
+    Notification,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -78,7 +79,7 @@ import {
     userStatus,
 } from "./domain/user/user.utils";
 import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
-import type { WebRtcMessage } from "./domain/webrtc/webrtc";
+import type { RemoteUserToggledReaction, WebRtcMessage } from "./domain/webrtc/webrtc";
 import {
     blockUser,
     deleteMessage,
@@ -219,6 +220,13 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import { getTimeUntilSessionExpiryMs } from "./utils/session";
+import {
+    ChatUpdated,
+    LoadedMessageWindow,
+    LoadedNewMessages,
+    LoadedPreviousMessages,
+    MessageSentByOther,
+} from "./events";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -255,6 +263,28 @@ export class OpenChat extends EventTarget {
         initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+
+        chatUpdatedStore.subscribe((val) => {
+            if (val !== undefined) {
+                const aff = val.affectedEvents;
+                this.chatUpdated(aff);
+                chatUpdatedStore.set(undefined);
+            }
+        });
+    }
+
+    private chatUpdated(affectedEvents: number[]): void {
+        const chat = get(selectedChatStore);
+        if (chat === undefined) return;
+        // The chat summary has been updated which means the latest message may be new
+        const latestMessage = chat.latestMessage;
+        if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
+            this.handleMessageSentByOther(chat, latestMessage);
+        }
+
+        this.refreshAffectedEvents(chat, affectedEvents);
+        this.updateDetails(chat, get(eventsStore));
+        this.dispatchEvent(new ChatUpdated());
     }
 
     private loadedIdentity(id: Identity) {
@@ -388,6 +418,8 @@ export class OpenChat extends EventTarget {
             this.startSession(id).then(() => this.logout());
             startChatPoller(this.api);
             startUserUpdatePoller(this.api);
+            startPruningLocalUpdates();
+            initNotificationStores();
             this.api.getUserStorageLimits();
             this.identityState.set("logged_in");
 
@@ -480,16 +512,48 @@ export class OpenChat extends EventTarget {
         rtcConnectionsManager.sendMessage(userIds, message);
     }
 
-    initWebRtc(): void {
-        rtcConnectionsManager.init(this.user.userId);
+    initWebRtc(onMessage: (message: unknown) => void): void {
+        rtcConnectionsManager.init(this.user.userId).then((_) => {
+            rtcConnectionsManager.subscribe(onMessage);
+        });
     }
 
-    initNotificationStores(): void {
-        initNotificationStores();
+    previewChat(chatId: string): Promise<boolean> {
+        return this.api.getPublicGroupSummary(chatId).then((maybeChat) => {
+            if (maybeChat === undefined) {
+                return false;
+            }
+            this.addOrReplaceChat(maybeChat);
+            return true;
+        });
     }
 
-    subscribeToWebRtc(onMessage: (message: unknown) => void): void {
-        rtcConnectionsManager.subscribe(onMessage);
+    addOrReplaceChat(chat: ChatSummary): void {
+        serverChatSummariesStore.update((summaries) => {
+            return {
+                ...summaries,
+                [chat.chatId]: chat,
+            };
+        });
+    }
+
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
+        const users = this.userIdsFromEvents([message]);
+        const missingUsers = this.missingUserIds(get(userStore), users);
+        if (missingUsers.length > 0) {
+            const usersResp = await this.api.getUsers(
+                {
+                    userGroups: [
+                        {
+                            users: missingUsers,
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                },
+                true
+            );
+            userStore.addMany(usersResp.users);
+        }
     }
 
     /**
@@ -605,7 +669,7 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    setCachedMessageFromNotification = (
+    private setCachedMessageFromNotification = (
         chatId: string,
         threadRootMessageIndex: number | undefined,
         message: EventWrapper<Message>
@@ -617,13 +681,11 @@ export class OpenChat extends EventTarget {
     delegateToChatComponent = delegateToChatComponent;
     filterWebRtcMessage = filterWebRtcMessage;
     parseWebRtcMessage = parseWebRtcMessage;
-    startPruningLocalUpdates = startPruningLocalUpdates;
     mergeChatMetrics = mergeChatMetrics;
     emptyChatMetrics = emptyChatMetrics;
     createDirectChat = createDirectChat;
     setSelectedChat = setSelectedChat;
     clearSelectedChat = clearSelectedChat;
-    updateSummaryWithConfirmedMessage = updateSummaryWithConfirmedMessage;
     removeChat = removeChat;
     canSendMessages = canSendMessages;
     canChangeRoles = canChangeRoles;
@@ -644,19 +706,33 @@ export class OpenChat extends EventTarget {
         chat: ChatSummary,
         messageIndex: number
     ): Promise<number | undefined> {
-        return loadEventWindow(this.api, this.user, serverChat, chat, messageIndex);
+        return loadEventWindow(this.api, this.user, serverChat, chat, messageIndex).then((idx) => {
+            if (idx !== undefined) {
+                this.dispatchEvent(new LoadedMessageWindow(idx));
+            }
+            return idx;
+        });
     }
     loadPreviousMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<void> {
-        return loadPreviousMessages(this.api, this.user, serverChat, clientChat);
+        return loadPreviousMessages(this.api, this.user, serverChat, clientChat).then(() => {
+            this.dispatchEvent(new LoadedPreviousMessages());
+            return;
+        });
     }
     loadNewMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<boolean> {
-        return loadNewMessages(this.api, this.user, serverChat, clientChat);
+        return loadNewMessages(this.api, this.user, serverChat, clientChat).then((res) => {
+            this.dispatchEvent(new LoadedNewMessages(res));
+            return res;
+        });
     }
     handleMessageSentByOther(
         clientChat: ChatSummary,
         messageEvent: EventWrapper<Message>
     ): Promise<void> {
-        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent);
+        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent).then(() => {
+            this.dispatchEvent(new MessageSentByOther(messageEvent));
+            return;
+        });
     }
     refreshAffectedEvents(clientChat: ChatSummary, affectedEventIndexes: number[]): Promise<void> {
         return refreshAffectedEvents(this.api, this.user, clientChat, affectedEventIndexes);
@@ -741,6 +817,81 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    notificationReceived(notification: Notification): void {
+        let chatId: string;
+        let threadRootMessageIndex: number | undefined = undefined;
+        let message: EventWrapper<Message>;
+        switch (notification.kind) {
+            case "direct_notification": {
+                chatId = notification.sender;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            }
+            case "group_notification": {
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            }
+            case "direct_reaction": {
+                chatId = notification.them;
+                message = notification.message;
+                break;
+            }
+            case "group_reaction":
+                chatId = notification.chatId;
+                threadRootMessageIndex = notification.threadRootMessageIndex;
+                message = notification.message;
+                break;
+            case "added_to_group_notification":
+                return;
+        }
+
+        if (threadRootMessageIndex !== undefined) {
+            // TODO fix this for thread messages
+            return;
+        }
+
+        const chat = get(serverChatSummariesStore)[chatId];
+        if (chat === undefined || chat.latestEventIndex >= message.index) {
+            return;
+        }
+
+        this.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+
+        const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+        Promise.all([
+            this.api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
+            this.addMissingUsersFromMessage(message),
+        ]).then(([m, _]) => {
+            updateSummaryWithConfirmedMessage(chatId, m);
+
+            if (get(selectedChatId) === chatId) {
+                this.handleMessageSentByOther(chat, m);
+            }
+        });
+    }
+
+    setFocusMessageIndex(chatId: string, messageIndex: number | undefined): void {
+        chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
+    }
+
+    remoteUserToggledReaction(
+        events: EventWrapper<ChatEvent>[],
+        message: RemoteUserToggledReaction
+    ): void {
+        const matchingMessage = this.findMessageById(message.messageId, events);
+
+        if (matchingMessage !== undefined) {
+            localMessageUpdates.markReaction(message.messageId.toString(), {
+                reaction: message.reaction,
+                kind: message.added ? "add" : "remove",
+                userId: message.userId,
+            });
+        }
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -789,7 +940,6 @@ export class OpenChat extends EventTarget {
     blockedUsers = blockedUsers;
     focusMessageIndex = focusMessageIndex;
     userGroupKeys = userGroupKeys;
-    chatUpdatedStore = chatUpdatedStore;
     unconfirmedReadByThem = unconfirmedReadByThem;
     currentChatReplyingTo = currentChatReplyingTo;
     currentChatEditingEvent = currentChatEditingEvent;

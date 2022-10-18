@@ -16,7 +16,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import type {
+    import {
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
@@ -31,6 +31,11 @@
         User,
         RemoteUserToggledReaction,
         RemoteUserSentMessage,
+        LoadedNewMessages,
+        MessageSentByOther,
+        ChatUpdated,
+        LoadedMessageWindow,
+        LoadedPreviousMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
     import { menuStore } from "../../stores/menu";
@@ -77,7 +82,6 @@
     $: remainingStorage = client.remainingStorage;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
-    $: chatUpdatedStore = client.chatUpdatedStore;
     $: userGroupKeys = client.userGroupKeys;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
@@ -179,8 +183,32 @@
             }
         });
 
-        return relayUnsubscribe;
+        client.addEventListener("openchat_event", clientEvent);
+
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+            relayUnsubscribe();
+        };
     });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof LoadedNewMessages) {
+            onLoadedNewMessages(ev.detail);
+        }
+        if (ev instanceof MessageSentByOther) {
+            onLoadedNewMessages(true);
+        }
+        if (ev instanceof LoadedPreviousMessages) {
+            onLoadedPreviousMessages();
+        }
+        if (ev instanceof LoadedMessageWindow) {
+            onMessageWindowLoaded(ev.detail);
+        }
+        if (ev instanceof ChatUpdated) {
+            chatUpdated();
+        }
+        console.log("openchat_event received: ", ev);
+    }
 
     beforeUpdate(() => (previousScrollHeight = messagesDiv?.scrollHeight));
 
@@ -218,14 +246,13 @@
         loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
-            chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
-
+            client.setFocusMessageIndex(chat.chatId, undefined);
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        chatStateStore.setProp(chat.chatId, "focusMessageIndex", index);
+        client.setFocusMessageIndex(chat.chatId, index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
@@ -242,11 +269,11 @@
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    chatStateStore.setProp(chat.chatId, "focusMessageIndex", undefined);
+                    client.setFocusMessageIndex(chat.chatId, undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            client.loadEventWindow(serverChat, chat, index).then(onMessageWindowLoaded);
+            client.loadEventWindow(serverChat, chat, index);
         }
     }
 
@@ -314,7 +341,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client.loadPreviousMessages(serverChat, chat).then(onLoadedPreviousMessages);
+            client.loadPreviousMessages(serverChat, chat);
         }
 
         if (shouldLoadNewMessages()) {
@@ -322,7 +349,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            client.loadNewMessages(serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(serverChat, chat);
         }
 
         setIfInsideFromBottomThreshold();
@@ -490,37 +517,13 @@
         return firstKey;
     }
 
-    function chatUpdated(affectedEvents: number[]): void {
-        // The chat summary has been updated which means the latest message may be new
-        const latestMessage = chat.latestMessage;
-        if (latestMessage !== undefined && latestMessage.event.sender !== user.userId) {
-            client.handleMessageSentByOther(chat, latestMessage);
-        }
-
-        client.refreshAffectedEvents(chat, affectedEvents);
-        client.updateDetails(chat, events);
-
+    function chatUpdated(): void {
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
             client.loadNewMessages(serverChat, chat);
         }
     }
 
-    export function handleMessageSentByOtherExternal(messageEvent: EventWrapper<Message>): void {
-        client.handleMessageSentByOther(chat, messageEvent).then(() => onLoadedNewMessages(true));
-    }
-
     $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
-
-    $: {
-        if ($chatUpdatedStore !== undefined) {
-            const aff = $chatUpdatedStore.affectedEvents;
-            // we need to wait on a tick here to make sure that all the derived stores are up to date
-            tick().then(() => {
-                chatUpdated(aff);
-                chatUpdatedStore.set(undefined);
-            });
-        }
-    }
 
     $: {
         if (chat.chatId !== currentChatId) {
@@ -528,16 +531,12 @@
             initialised = false;
 
             if ($focusMessageIndex !== undefined) {
-                client
-                    .loadEventWindow(serverChat, chat, $focusMessageIndex)
-                    .then((messageIndex: number | undefined) => {
-                        client.loadDetails(chat, events);
-                        onMessageWindowLoaded(messageIndex);
-                    });
+                client.loadEventWindow(serverChat, chat, $focusMessageIndex).then(() => {
+                    client.loadDetails(chat, events);
+                });
             } else {
                 client.loadPreviousMessages(serverChat, chat).then(() => {
                     client.loadDetails(chat, events);
-                    onLoadedPreviousMessages();
                 });
             }
         }
@@ -568,11 +567,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            client.loadNewMessages(serverChat, chat).then(onLoadedNewMessages);
+            client.loadNewMessages(serverChat, chat);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client.loadPreviousMessages(serverChat, chat).then(onLoadedPreviousMessages);
+            client.loadPreviousMessages(serverChat, chat);
         }
     }
 
@@ -779,18 +778,6 @@
         client.forwardMessage(serverChat, chat, events, event).then(afterSendMessage);
     }
 
-    function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        const matchingMessage = client.findMessageById(message.messageId, events);
-
-        if (matchingMessage !== undefined) {
-            localMessageUpdates.markReaction(message.messageId.toString(), {
-                reaction: message.reaction,
-                kind: message.added ? "add" : "remove",
-                userId: message.userId,
-            });
-        }
-    }
-
     function remoteUserSentMessage(message: RemoteUserSentMessage): void {
         const existing = client.findMessageById(message.messageEvent.event.messageId, events);
         if (existing !== undefined) {
@@ -820,7 +807,7 @@
                 typing.stopTyping(msg.userId);
                 break;
             case "remote_user_toggled_reaction":
-                remoteUserToggledReaction(msg);
+                client.remoteUserToggledReaction(events, msg);
                 break;
             case "remote_user_deleted_message":
                 localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);

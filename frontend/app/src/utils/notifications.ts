@@ -10,7 +10,7 @@ function toUint8Array(base64String: string): Uint8Array {
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
-export async function initNotificationsServiceWorker(
+export async function subscribeToNotifications(
     client: OpenChat,
     onNotification: (notification: Notification) => void
 ): Promise<boolean> {
