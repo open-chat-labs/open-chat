@@ -13,6 +13,7 @@ garcon = { workspace = true }
 ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 user_index_canister = { path = "../../canisters/user_index/api" }
+user_index_canister_client = { path = "../../canisters/user_index/client" }
 openssl = { workspace = true, features = ["vendored"] }
 serde = { workspace = true }
 tokio = { workspace = true }

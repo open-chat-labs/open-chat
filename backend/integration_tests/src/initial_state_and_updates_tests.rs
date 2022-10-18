@@ -4,13 +4,16 @@ use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use itertools::Itertools;
 use std::time::Duration;
+use test_case::test_case;
 use types::{CanisterId, ChatId, UserId};
 
 // zzyk3-openc-hatbo-tq7my-cai
 const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+const ONE_DAY: Duration = Duration::from_secs(24 * 60 * 60);
 
-#[test]
-fn initial_state() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn initial_state(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -19,6 +22,10 @@ fn initial_state() {
         group2: (group2, _),
         direct: (user2, ..),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let initial_state = client::user::happy_path::initial_state(&env, &user);
 
@@ -34,8 +41,9 @@ fn initial_state() {
     return_env(env, canister_ids);
 }
 
-#[test]
-fn updates_all_updated() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn updates_all_updated(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -44,6 +52,10 @@ fn updates_all_updated() {
         group2: (group2, send_group_result2),
         direct: (user2, _, send_direct_result2),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -75,8 +87,9 @@ fn updates_all_updated() {
     return_env(env, canister_ids);
 }
 
-#[test]
-fn updates_some_updated() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn updates_some_updated(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -85,6 +98,10 @@ fn updates_some_updated() {
         group2: (group2, send_group_result2),
         direct: (user2, send_direct_result1, ..),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -116,8 +133,9 @@ fn updates_some_updated() {
     return_env(env, canister_ids);
 }
 
-#[test]
-fn updates_none_updated() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn updates_none_updated(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -126,6 +144,10 @@ fn updates_none_updated() {
         group2: (group2, send_group_result2),
         direct: (.., send_direct_result2),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -154,8 +176,9 @@ fn updates_none_updated() {
     return_env(env, canister_ids);
 }
 
-#[test]
-fn updates_all_chats_added() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn updates_all_chats_added(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -164,6 +187,10 @@ fn updates_all_chats_added() {
         group2: (group2, _),
         direct: (user2, send_direct_result1, _),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
@@ -186,8 +213,9 @@ fn updates_all_chats_added() {
     return_env(env, canister_ids);
 }
 
-#[test]
-fn updates_some_chats_added() {
+#[test_case(false; "with_no_delay")]
+#[test_case(true; "with_delay")]
+fn updates_some_chats_added(delay: bool) {
     let (mut env, canister_ids) = setup_env();
 
     let TestData {
@@ -196,6 +224,10 @@ fn updates_some_chats_added() {
         group2: (group2, _),
         direct: (.., send_direct_result2),
     } = init_test_data(&mut env, canister_ids.user_index);
+
+    if delay {
+        env.advance_time(ONE_DAY);
+    }
 
     let updates_args = user_canister::updates::Args {
         updates_since: user_canister::updates::UpdatesSince {
