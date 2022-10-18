@@ -5,18 +5,18 @@ import typescript from "@rollup/plugin-typescript";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
-import * as fs from "fs";
-import * as path from "path";
-import * as rimraf from "rimraf";
+// import * as fs from "fs";
+// import * as path from "path";
+// import * as rimraf from "rimraf";
 
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 console.log("PROD", production);
 
-if (production) {
-    rimraf.sync(path.join(__dirname, "lib"));
-    fs.mkdirSync("lib");
-}
+// if (production) {
+//     rimraf.sync(path.join(__dirname, "lib"));
+//     fs.mkdirSync("lib");
+// }
 
 export default {
     input: `./src/index.ts`,
