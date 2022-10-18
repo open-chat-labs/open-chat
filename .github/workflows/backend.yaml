@@ -39,8 +39,8 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-  test:
-    name: run tests
+  unit_tests:
+    name: run unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -53,3 +53,20 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --release --workspace --exclude integration_tests
+
+  integration_tests:
+    name: run integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --package integration_tests
