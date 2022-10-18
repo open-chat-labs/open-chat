@@ -1,11 +1,8 @@
 use crate::sms_reader::SmsReader;
 use async_trait::async_trait;
-use candid::{Decode, Encode};
-use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
-use std::time::Duration;
 use tracing::error;
 use types::{CanisterId, Error};
 
@@ -59,15 +56,9 @@ impl SmsReader for IcAgent {
     async fn get(&self, from_index: u64) -> Result<user_index_canister::sms_messages::SuccessResult, Error> {
         let args = user_index_canister::sms_messages::Args { from_index };
 
-        let response = self
-            .agent
-            .query(&self.canister_id, "sms_messages")
-            .with_arg(Encode!(&args)?)
-            .call()
-            .await?;
+        let response = user_index_canister_client::sms_messages(&self.agent, &self.canister_id, &args).await?;
 
-        let user_index_canister::sms_messages::Response::Success(result) =
-            Decode!(&response, user_index_canister::sms_messages::Response)?;
+        let user_index_canister::sms_messages::Response::Success(result) = response;
 
         Ok(result)
     }
@@ -75,18 +66,7 @@ impl SmsReader for IcAgent {
     async fn remove(&self, up_to_index: u64) -> Result<(), Error> {
         let args = user_index_canister::remove_sms_messages::Args { up_to_index };
 
-        let request_id = self
-            .agent
-            .update(&self.canister_id, "remove_sms_messages")
-            .with_arg(Encode!(&args)?)
-            .call()
-            .await?;
-
-        let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        let response_bytes = self.agent.wait(request_id, self.canister_id, waiter).await?;
-
-        let user_index_canister::remove_sms_messages::Response::Success =
-            Decode!(&response_bytes, user_index_canister::remove_sms_messages::Response)?;
+        user_index_canister_client::remove_sms_messages(&self.agent, &self.canister_id, &args).await?;
 
         Ok(())
     }
