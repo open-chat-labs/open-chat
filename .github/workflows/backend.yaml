@@ -53,7 +53,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --workspace --exclude integration_tests
+          args: --workspace --exclude integration_tests
 
   integration_tests:
     name: run integration tests

@@ -11,4 +11,4 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
-cargo test --release --package integration_tests -- --test-threads 4
+cargo test --release --package integration_tests -- --test-threads 2
