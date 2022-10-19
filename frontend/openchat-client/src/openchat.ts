@@ -580,6 +580,32 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    archiveChat(chatId: string): Promise<boolean> {
+        archivedChatsStore.set(chatId, true);
+        return this.api
+            .archiveChat(chatId)
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                rollbar.error("Error archiving chat", err);
+                archivedChatsStore.set(chatId, false);
+                return false;
+            });
+    }
+
+    unarchiveChat(chatId: string): Promise<boolean> {
+        archivedChatsStore.set(chatId, false);
+        return this.api
+            .unarchiveChat(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                rollbar.error("Error un-archiving chat", err);
+                archivedChatsStore.set(chatId, true);
+                return false;
+            });
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
@@ -1013,7 +1039,6 @@ export class OpenChat extends EventTarget {
     filteredProposalsStore = filteredProposalsStore;
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
-    archivedChatsStore = archivedChatsStore;
     pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
     chatsLoading = chatsLoading;

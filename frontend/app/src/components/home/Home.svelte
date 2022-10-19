@@ -113,7 +113,6 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: archivedChatsStore = client.archivedChatsStore;
     $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
     $: userStore = client.userStore;
@@ -497,14 +496,12 @@
     }
 
     function onArchiveChat(ev: CustomEvent<string>) {
-        const chatId = ev.detail;
-        archivedChatsStore.set(chatId, true);
-        client.api.archiveChat(chatId).catch((err) => {
-            toastStore.showFailureToast("archiveChatFailed");
-            rollbar.error("Error archiving chat", err);
-            archivedChatsStore.set(chatId, false);
+        client.archiveChat(ev.detail).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("archiveChatFailed");
+            }
         });
-        if (chatId === $selectedChatId) {
+        if (ev.detail === $selectedChatId) {
             push("/");
         }
     }
@@ -514,11 +511,10 @@
     }
 
     function unarchiveChat(chatId: string) {
-        archivedChatsStore.set(chatId, false);
-        client.api.unarchiveChat(chatId).catch((err) => {
-            toastStore.showFailureToast("unarchiveChatFailed");
-            rollbar.error("Error un-archiving chat", err);
-            archivedChatsStore.set(chatId, true);
+        client.unarchiveChat(chatId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("unarchiveChatFailed");
+            }
         });
     }
 
