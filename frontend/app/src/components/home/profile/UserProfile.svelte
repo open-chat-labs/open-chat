@@ -48,7 +48,6 @@
     const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
-    export let metrics: ChatMetrics;
 
     let originalBio = "";
     let userbio = "";
@@ -65,6 +64,7 @@
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
 
+    $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: storageStore = client.storageStore;
     $: cryptoBalance = client.cryptoBalance;
@@ -436,7 +436,7 @@
             on:toggle={statsSectionOpen.toggle}
             open={$statsSectionOpen}
             headerText={$_("stats.userStats")}>
-            <Stats stats={metrics} />
+            <Stats stats={$userMetrics} />
         </CollapsibleCard>
     </div>
     <div class="advanced">

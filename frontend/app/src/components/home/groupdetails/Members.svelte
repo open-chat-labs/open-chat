@@ -15,8 +15,8 @@
     import type { Readable } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
+    const userId = client.user.userId;
 
-    export let userId: string;
     export let closeIcon: "close" | "back";
     export let members: Readable<MemberType[]>;
     export let blockedUsers: Readable<Set<string>>;

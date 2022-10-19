@@ -121,7 +121,6 @@
     $: chatsInitialised = client.chatsInitialised;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
-    $: userMetrics = client.userMetrics;
     $: userId = client.user.userId;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
@@ -888,8 +887,6 @@
     {/if}
     {#if $numberOfColumns === 3}
         <RightPanel
-            {userId}
-            metrics={$userMetrics}
             bind:rightPanelHistory
             bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
@@ -914,8 +911,6 @@
             class="right-wrapper"
             class:rtl={$rtlStore}>
             <RightPanel
-                {userId}
-                metrics={$userMetrics}
                 bind:rightPanelHistory
                 bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}

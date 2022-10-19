@@ -35,8 +35,6 @@
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
-    export let userId: string;
-    export let metrics: ChatMetrics;
     export let thread: Thread | undefined;
 
     const client = getContext<OpenChat>("client");
@@ -54,7 +52,7 @@
     $: chatStateStore = client.chatStateStore;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
-    $: user = $userStore[userId] ?? client.nullUser("unknown");
+    $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
@@ -92,7 +90,7 @@
 
     async function onTransferOwnership(ev: CustomEvent<FullMember>) {
         if ($selectedChatId !== undefined) {
-            const success = await transferOwnership($selectedChatId, userId, ev.detail);
+            const success = await transferOwnership($selectedChatId, currentUser.userId, ev.detail);
             if (success) {
                 toastStore.showSuccessToast("transferOwnershipSucceeded");
             } else {
@@ -359,7 +357,6 @@
         <Members
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             chat={$groupChat}
-            {userId}
             members={currentChatMembers}
             blockedUsers={currentChatBlockedUsers}
             on:close={popHistory}
@@ -384,7 +381,6 @@
             on:upgrade
             on:showFaqQuestion
             {user}
-            {metrics}
             on:userAvatarSelected
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
