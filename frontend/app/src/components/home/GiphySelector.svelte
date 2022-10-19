@@ -27,7 +27,6 @@
     let pageSize = 25;
     let pageNum = -1;
     let selectedGif: PagedGIFObject | undefined;
-    let containerWidth: number = 0;
     let containerElement: HTMLDivElement;
     const gutter = 5;
     let imgWidth = 0;
@@ -43,6 +42,7 @@
     const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}&q=`;
 
     $: {
+        let containerWidth = containerElement?.clientWidth ?? 0;
         let numCols = $mobileWidth ? 2 : 4;
         let availWidth = containerWidth - (numCols - 1) * gutter;
         imgWidth = availWidth / numCols;
@@ -220,11 +220,7 @@
                             alt={selectedGif?.title} />
                     </div>
                 {:else}
-                    <div
-                        class="giphy-container"
-                        bind:clientWidth={containerWidth}
-                        on:scroll={onScroll}
-                        bind:this={containerElement}>
+                    <div class="giphy-container" on:scroll={onScroll} bind:this={containerElement}>
                         {#each Object.values(gifCache) as item (item.key)}
                             <img
                                 class="thumb"
