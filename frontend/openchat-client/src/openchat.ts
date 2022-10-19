@@ -646,6 +646,33 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    blockUserFromDirectChat(userId: string): Promise<boolean> {
+        blockedUsers.add(userId);
+        return this.api
+            .blockUserFromDirectChat(userId)
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                rollbar.error("Error blocking user", err);
+                blockedUsers.delete(userId);
+                return false;
+            });
+    }
+
+    unblockUserFromDirectChat(userId: string): Promise<boolean> {
+        blockedUsers.delete(userId);
+        return this.api
+            .unblockUserFromDirectChat(userId)
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                rollbar.error("Error unblocking user", err);
+                blockedUsers.add(userId);
+                return false;
+            });
+    }
     /**
      * Wrap a bunch of pure utility functions
      */

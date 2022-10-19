@@ -113,7 +113,6 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: blockedUsers = client.blockedUsers;
     $: userStore = client.userStore;
     $: unconfirmed = client.unconfirmed;
     $: chatSummariesListStore = client.chatSummariesListStore;
@@ -421,39 +420,23 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
-        blockedUsers.add(ev.detail.userId);
-        client.api
-            .blockUserFromDirectChat(ev.detail.userId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("blockUserSucceeded");
-                } else {
-                    toastStore.showFailureToast("blockUserFailed");
-                }
-            })
-            .catch((err) => {
+        client.blockUserFromDirectChat(ev.detail.userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
                 toastStore.showFailureToast("blockUserFailed");
-                rollbar.error("Error blocking user", err);
-                blockedUsers.delete(ev.detail.userId);
-            });
+            }
+        });
     }
 
     function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        blockedUsers.delete(ev.detail.userId);
-        client.api
-            .unblockUserFromDirectChat(ev.detail.userId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("unblockUserSucceeded");
-                } else {
-                    toastStore.showFailureToast("unblockUserFailed");
-                }
-            })
-            .catch((err) => {
+        client.unblockUserFromDirectChat(ev.detail.userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("unblockUserSucceeded");
+            } else {
                 toastStore.showFailureToast("unblockUserFailed");
-                rollbar.error("Error unblocking user", err);
-                blockedUsers.add(ev.detail.userId);
-            });
+            }
+        });
     }
 
     function pinChat(ev: CustomEvent<string>) {
