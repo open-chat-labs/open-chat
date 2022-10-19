@@ -1,0 +1,38 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "pipeline": {
+    "build": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build", "typecheck", "validate", "lint", "test"]
+    },
+    "build:prod_test": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build:prod_test", "typecheck", "validate", "lint", "test"]
+    },
+    "build:prod": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build:prod", "typecheck", "validate", "lint", "test"]
+    },
+    "dev": {
+      "cache": false
+    },
+    "test": {
+      "outputs": [],
+      "inputs": ["src/**/*.ts"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+    "validate": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+    "lint": {
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    }
+  }
+}

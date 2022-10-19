@@ -50,7 +50,7 @@
       "build": "./scripts/generate-wasm.sh group_canister_impl"
     },
     "website": {
-      "source": ["frontend/build", "frontend/public"],
+      "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"
     },
     "open_storage_index": {
@@ -69,21 +69,15 @@
       }
     },
     "ic": {
-      "providers": [
-        "https://ic0.app/"
-      ],
+      "providers": ["https://ic0.app/"],
       "type": "persistent"
     },
     "ic_test": {
-      "providers": [
-        "https://ic0.app/"
-      ],
+      "providers": ["https://ic0.app/"],
       "type": "persistent"
     },
     "web_test": {
-      "providers": [
-        "https://ic0.app/"
-      ],
+      "providers": ["https://ic0.app/"],
       "type": "persistent"
     }
   },

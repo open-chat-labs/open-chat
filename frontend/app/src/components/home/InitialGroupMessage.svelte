@@ -1,0 +1,60 @@
+<svelte:options immutable={true} />
+
+<script lang="ts">
+    import Avatar from "../Avatar.svelte";
+    import { AvatarSize, UserStatus } from "openchat-client";
+    import type { GroupChatSummary } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
+
+    export let group: GroupChatSummary;
+    export let noVisibleEvents: boolean;
+</script>
+
+<div class="container">
+    <div>{$_("group.welcome")}<span class="name">{group.name}</span></div>
+    {#if group.description.length > 0}
+        <div>
+            {group.description}
+        </div>
+    {/if}
+    <div class="pop">
+        <Avatar
+            url={client.groupAvatarUrl(group)}
+            status={UserStatus.None}
+            size={AvatarSize.ExtraLarge} />
+    </div>
+    <div>
+        {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
+            values: { number: group.memberCount },
+        })}
+    </div>
+    {#if noVisibleEvents}
+        <div>{$_("group.historyPrivateMessage")}</div>
+    {/if}
+</div>
+
+<style type="text/scss">
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+        margin: $sp4 auto;
+        text-align: center;
+        background-color: var(--timeline-bg);
+        color: var(--timeline-txt);
+        @include font(book, normal, fs-70);
+        max-width: 480px;
+    }
+
+    .pop {
+        @include pop(400ms);
+    }
+
+    .name {
+        font-weight: bold;
+    }
+</style>
