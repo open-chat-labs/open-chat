@@ -508,25 +508,6 @@ export class ServiceContainer implements MarkMessagesRead {
         return content;
     }
 
-    private rehydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
-        return events.map((e) => {
-            if (e.event.kind === "message") {
-                const original = e.event.content;
-                const rehydrated = this.rehydrateMessageContent(original);
-                if (original !== rehydrated) {
-                    return {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            content: rehydrated,
-                        },
-                    };
-                }
-            }
-            return e;
-        });
-    }
-
     /**
      * Given a list of events, identify all eventIndexes which we may need to look up
      * In practice this means the event indexes of embedded reply contexts
@@ -614,37 +595,35 @@ export class ServiceContainer implements MarkMessagesRead {
         }, {});
     }
 
-    private rehydrateMissingReplies<T extends ChatEvent>(
+    private rehydrateEvent<T extends ChatEvent>(
+        ev: EventWrapper<T>,
         defaultChatId: string,
-        events: EventWrapper<T>[],
-        missing: Record<string, EventWrapper<Message>[]>
-    ): EventWrapper<T>[] {
-        return events.map((ev) => {
+        missingReplies: Record<string, EventWrapper<Message>[]>
+    ): EventWrapper<T> {
+        if (ev.event.kind === "message") {
+            const originalContent = ev.event.content;
+            const rehydratedContent = this.rehydrateMessageContent(originalContent);
+
+            const originalReplyContext = ev.event.repliesTo;
+            let rehydratedReplyContext = undefined;
             if (
-                ev.event.kind === "message" &&
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
                 const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                const messageEvents = missing[chatId];
+                const messageEvents = missingReplies[chatId];
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
-                    return {
-                        ...ev,
-                        event: {
-                            ...ev.event,
-                            repliesTo: {
-                                kind: "rehydrated_reply_context",
-                                content: this.rehydrateMessageContent(msg.content),
-                                senderId: msg.sender,
-                                messageId: msg.messageId,
-                                messageIndex: msg.messageIndex,
-                                eventIndex: idx,
-                                chatId,
-                                edited: msg.edited,
-                            },
-                        },
+                    rehydratedReplyContext = {
+                        kind: "rehydrated_reply_context",
+                        content: this.rehydrateMessageContent(msg.content),
+                        senderId: msg.sender,
+                        messageId: msg.messageId,
+                        messageIndex: msg.messageIndex,
+                        eventIndex: idx,
+                        chatId,
+                        edited: msg.edited,
                     };
                 } else {
                     console.error(
@@ -658,10 +637,20 @@ export class ServiceContainer implements MarkMessagesRead {
                         chatId
                     );
                 }
-                return ev;
             }
-            return ev;
-        });
+
+            if (originalContent !== rehydratedContent || rehydratedReplyContext !== undefined) {
+                return {
+                    ...ev,
+                    event: {
+                        ...ev.event,
+                        content: rehydratedContent,
+                        repliesTo: rehydratedReplyContext ?? originalReplyContext
+                    }
+                }
+            }
+        }
+        return ev;
     }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
@@ -684,14 +673,8 @@ export class ServiceContainer implements MarkMessagesRead {
             threadRootMessageIndex,
             latestClientEventIndex
         );
-        resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
-        resp.events = this.rehydrateEventList(resp.events);
-        resp.affectedEvents = this.rehydrateMissingReplies(
-            currentChatId,
-            resp.affectedEvents,
-            missing
-        );
-        resp.affectedEvents = this.rehydrateEventList(resp.affectedEvents);
+        resp.events = resp.events.map((e) => this.rehydrateEvent(e, currentChatId, missing));
+        resp.affectedEvents = resp.affectedEvents.map((e) => this.rehydrateEvent(e, currentChatId, missing));
         return resp;
     }
 
@@ -741,9 +724,7 @@ export class ServiceContainer implements MarkMessagesRead {
             threadRootMessageIndex,
             latestClientEventIndex
         );
-        [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
-        [message] = this.rehydrateEventList([message]);
-        return message;
+        return this.rehydrateEvent(message, currentChatId, missing);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -1316,30 +1297,13 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientMainEventIndex
         );
 
-        const replies = this.rehydrateEventList(
-            this.rehydrateMissingReplies(thread.chatId, thread.latestReplies, threadMissing)
-        );
-
-        const [rootMsg] = this.rehydrateEventList(
-            this.rehydrateMissingReplies(thread.chatId, [thread.rootMessage], rootMissing)
-        );
+        const latestReplies = thread.latestReplies.map((r) => this.rehydrateEvent(r, thread.chatId, threadMissing));
+        const rootMessage = this.rehydrateEvent(thread.rootMessage, thread.chatId, rootMissing);
 
         return {
             ...thread,
-            rootMessage: {
-                ...rootMsg,
-                event: {
-                    ...rootMsg.event,
-                    content: this.rehydrateMessageContent(rootMsg.event.content),
-                },
-            },
-            latestReplies: replies.map((r) => ({
-                ...r,
-                event: {
-                    ...r.event,
-                    content: this.rehydrateMessageContent(r.event.content),
-                },
-            })),
+            rootMessage,
+            latestReplies,
         };
     }
 }
