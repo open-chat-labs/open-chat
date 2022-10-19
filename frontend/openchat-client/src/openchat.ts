@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import type {
     ChatEvent,
     ChatSummary,
@@ -229,6 +229,7 @@ import {
     SentMessage,
     UpgradeRequired,
 } from "./events";
+import { LiveState } from "./liveState";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -241,11 +242,14 @@ export class OpenChat extends EventTarget {
     private _api: ServiceContainer | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
+    private _liveState: LiveState;
 
     identityState = writable<IdentityState>("loading_user");
 
     constructor(private config: OpenChatConfig) {
         super();
+
+        this._liveState = new LiveState();
 
         console.log("OpenChatConfig: ", config);
 
@@ -276,7 +280,7 @@ export class OpenChat extends EventTarget {
     }
 
     private chatUpdated(affectedEvents: number[]): void {
-        const chat = get(selectedChatStore);
+        const chat = this._liveState.selectedChat;
         if (chat === undefined) return;
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
@@ -285,7 +289,7 @@ export class OpenChat extends EventTarget {
         }
 
         this.refreshAffectedEvents(chat, affectedEvents);
-        this.updateDetails(chat, get(eventsStore));
+        this.updateDetails(chat, this._liveState.events);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -300,7 +304,7 @@ export class OpenChat extends EventTarget {
 
     login(): void {
         this.identityState.set("logging_in");
-        const authProvider = get(selectedAuthProviderStore);
+        const authProvider = this._liveState.selectedAuthProvider;
         this._authClient.then((c) => {
             c.login({
                 identityProvider: this.buildAuthProviderUrl(authProvider),
@@ -475,7 +479,7 @@ export class OpenChat extends EventTarget {
         const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
         const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
         const noDelegation = ls == null && idb == null;
-        return !get(userCreatedStore) && noDelegation;
+        return !this._liveState.userCreated && noDelegation;
     }
 
     unreadThreadMessageCount(
@@ -541,7 +545,7 @@ export class OpenChat extends EventTarget {
 
     private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = this.userIdsFromEvents([message]);
-        const missingUsers = this.missingUserIds(get(userStore), users);
+        const missingUsers = this.missingUserIds(this._liveState.userStore, users);
         if (missingUsers.length > 0) {
             const usersResp = await this.api.getUsers(
                 {
@@ -812,7 +816,7 @@ export class OpenChat extends EventTarget {
     ): Promise<number | undefined> {
         if (textContent || fileToAttach) {
             const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
-            if (get(remainingStorage) < storageRequired) {
+            if (this._liveState.remainingStorage < storageRequired) {
                 this.dispatchEvent(new UpgradeRequired("explain"));
                 return Promise.resolve(undefined);
             }
@@ -823,7 +827,7 @@ export class OpenChat extends EventTarget {
                 this.user.userId,
                 nextMessageIndex,
                 textContent,
-                get(currentChatReplyingTo),
+                this._liveState.currentChatReplyingTo,
                 fileToAttach
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
@@ -914,7 +918,7 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        const chat = get(serverChatSummariesStore)[chatId];
+        const chat = this._liveState.serverChatSummaries[chatId];
         if (chat === undefined || chat.latestEventIndex >= message.index) {
             return;
         }
@@ -928,7 +932,7 @@ export class OpenChat extends EventTarget {
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
 
-            if (get(selectedChatId) === chatId) {
+            if (this._liveState.selectedChatId === chatId) {
                 this.handleMessageSentByOther(chat, m);
             }
         });

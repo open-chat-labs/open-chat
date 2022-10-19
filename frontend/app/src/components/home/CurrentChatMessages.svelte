@@ -23,13 +23,10 @@
         Message,
         Mention,
         ChatSummary,
-        MessageContent,
         OpenChat,
         FilteredProposals,
         WebRtcMessage,
         MessageReadState,
-        User,
-        RemoteUserToggledReaction,
         RemoteUserSentMessage,
         LoadedNewMessages,
         MessageSentByOther,
@@ -80,8 +77,6 @@
     $: messagesRead = client.messagesRead;
     $: typing = client.typing;
     $: localMessageUpdates = client.localMessageUpdates;
-    $: currentChatReplyingTo = client.currentChatReplyingTo;
-    $: remainingStorage = client.remainingStorage;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
     $: userGroupKeys = client.userGroupKeys;
