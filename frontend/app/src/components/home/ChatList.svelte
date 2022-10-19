@@ -25,6 +25,7 @@
     import { menuCloser } from "../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
+    const createdUser = client.user;
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -32,7 +33,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let createdUser: CreatedUser;
 
     const dispatch = createEventDispatcher();
 

@@ -825,7 +825,6 @@
 <main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
-            {user}
             {groupSearchResults}
             {userSearchResults}
             {messageSearchResults}
