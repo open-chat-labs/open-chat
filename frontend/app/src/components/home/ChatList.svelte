@@ -11,7 +11,6 @@
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
-        CreatedUser,
         UserSummary,
         DataContent,
         OpenChat,
@@ -180,7 +179,6 @@
                     <ChatSummary
                         index={i}
                         {chatSummary}
-                        {userId}
                         selected={$selectedChatId === chatSummary.chatId}
                         visible={searchTerm !== "" || !chatSummary.archived}
                         on:chatSelected={chatSelected}

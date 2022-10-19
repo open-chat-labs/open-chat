@@ -4,6 +4,7 @@ import type {
     ChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    ThreadSyncDetails,
     UserLookup,
 } from "./domain";
 import { selectedAuthProviderStore } from "./stores/authProviders";
@@ -16,6 +17,7 @@ import {
     selectedServerChatStore,
     currentChatReplyingTo,
     chatSummariesListStore,
+    threadsByChatStore,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -38,6 +40,7 @@ export class LiveState {
     selectedChatId: string | undefined;
     pinnedChats!: string[];
     chatSummariesList!: ChatSummary[];
+    threadsByChat!: Record<string, ThreadSyncDetails[]>;
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -53,5 +56,6 @@ export class LiveState {
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
         pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
+        threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
     }
 }

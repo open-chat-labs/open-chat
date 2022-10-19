@@ -12,6 +12,8 @@ import type {
     Notification,
     GroupChatSummary,
     MemberRole,
+    GroupRules,
+    GroupPermissions,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -791,6 +793,35 @@ export class OpenChat extends EventTarget {
             .catch((err) => {
                 rollbar.error("Unable to join group", err);
                 return "failure";
+            });
+    }
+
+    updateGroupRules(chatId: string, rules: GroupRules | undefined): Promise<boolean> {
+        return this.api
+            .updateGroup(chatId, undefined, undefined, rules, undefined, undefined)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                rollbar.error("Update group rules failed: ", err);
+                return false;
+            });
+    }
+
+    updateGroupPermissions(
+        chatId: string,
+        originalPermissions: GroupPermissions,
+        updatedPermissions: GroupPermissions
+    ): Promise<boolean> {
+        const optionalPermissions = this.mergeKeepingOnlyChanged(
+            originalPermissions,
+            updatedPermissions
+        );
+
+        return this.api
+            .updateGroup(chatId, undefined, undefined, undefined, optionalPermissions, undefined)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                rollbar.error("Update permissions failed: ", err);
+                return false;
             });
     }
 

@@ -19,7 +19,7 @@
 
     onMount(() => {
         return messagesRead.subscribe(() => {
-            numStaleThreads = messagesRead.staleThreadsCount($threadsByChatStore);
+            numStaleThreads = client.staleThreadsCount($threadsByChatStore);
         });
     });
 </script>
