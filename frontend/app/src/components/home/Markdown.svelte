@@ -15,11 +15,13 @@
     export let suppressLinks: boolean = false;
 
     let sanitized = "unsafe";
+    let singleEmoji = false;
+
     $: userStore = client.userStore;
     $: options = {
         breaks: !oneLine,
     };
-    let singleEmoji = false;
+
     onMount(() => isSingleEmoji(text).then((b) => singleEmoji = b));
 
     function replaceUserIds(text: string): string {
