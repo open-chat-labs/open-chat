@@ -121,7 +121,6 @@
     $: chatsInitialised = client.chatsInitialised;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
-    $: userId = client.user.userId;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: x = $rtlStore ? -500 : 500;
