@@ -20,7 +20,6 @@
     export let pinned: boolean;
     export let crypto: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
-    export let float: boolean;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
     let pinnedColor = crypto
@@ -32,7 +31,7 @@
         : "var(--currentChat-msg-txt)";
 </script>
 
-<div class="time-and-ticks" class:float class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -65,6 +64,7 @@
         @include font(light, normal, fs-50);
         display: flex;
         align-items: center;
+        float: right;
         margin-top: 7px;
         pointer-events: none;
 
@@ -72,16 +72,9 @@
             margin-top: 4px;
         }
 
-        &.float {
-            float: right;
-        }
-
         &.rtl {
             clear: right;
-
-            &.float {
-                float: left;
-            }
+            float: left;
         }
 
         .time {
