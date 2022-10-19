@@ -230,6 +230,7 @@ import {
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
+import { rollbar } from "./utils/logging";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -560,6 +561,23 @@ export class OpenChat extends EventTarget {
             );
             userStore.addMany(usersResp.users);
         }
+    }
+
+    toggleMuteNotifications(chatId: string, mute: boolean): Promise<boolean> {
+        mutedChatsStore.set(chatId, mute);
+        return this.api
+            .toggleMuteNotifications(chatId, mute)
+            .then((resp) => {
+                if (resp !== "success") {
+                    mutedChatsStore.set(chatId, !mute);
+                }
+                return resp === "success";
+            })
+            .catch((err) => {
+                rollbar.error("Error toggling mute notifications", err);
+                mutedChatsStore.set(chatId, !mute);
+                return false;
+            });
     }
 
     /**
@@ -996,7 +1014,6 @@ export class OpenChat extends EventTarget {
     cryptoBalance = cryptoBalance;
     selectedServerChatStore = selectedServerChatStore;
     archivedChatsStore = archivedChatsStore;
-    mutedChatsStore = mutedChatsStore;
     pinnedChatsStore = pinnedChatsStore;
     chatSummariesListStore = chatSummariesListStore;
     chatsLoading = chatsLoading;

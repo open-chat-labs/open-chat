@@ -113,7 +113,6 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: mutedChatsStore = client.mutedChatsStore;
     $: archivedChatsStore = client.archivedChatsStore;
     $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
@@ -927,29 +926,14 @@
     }
 
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
-        const mute = ev.detail.mute;
-        const chatId = ev.detail.chatId;
-        const op = mute ? "muted" : "unmuted";
-
-        mutedChatsStore.set(chatId, mute);
-
-        let success = false;
-        client.api
-            .toggleMuteNotifications(chatId, mute)
-            .then((resp) => {
-                success = resp === "success";
-            })
-            .catch((err) => {
-                rollbar.error("Error toggling mute notifications", err);
-            })
-            .finally(() => {
-                if (!success) {
-                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                        values: { operation: $_(op) },
-                    });
-                    mutedChatsStore.set(chatId, !mute);
-                }
-            });
+        const op = ev.detail.mute ? "muted" : "unmuted";
+        client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                    values: { operation: $_(op) },
+                });
+            }
+        });
     }
 
     function showLandingPageRoute(route: string) {
