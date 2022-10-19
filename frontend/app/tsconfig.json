@@ -1,0 +1,17 @@
+{
+    "extends": "@tsconfig/svelte/tsconfig.json",
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules/*", "__sapper__/*", "public/*"],
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "module": "es2020",
+        "strict": true,
+        "types": ["svelte", "jest", "node", "@types/dom-mediacapture-record"],
+        "paths": {
+            "*": ["./src/*"]
+        },
+        "lib": ["es2020", "webworker", "DOM", "DOM.Iterable"]
+    }
+}
