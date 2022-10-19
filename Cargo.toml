@@ -35,6 +35,7 @@ members = [
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
     "backend/data_generator",
+    "backend/integration_tests",
     "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
@@ -83,6 +84,7 @@ ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be921
 ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
 ic-ledger-types = "0.1.2"
 ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
 ic-utils = "0.22.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
@@ -106,6 +108,7 @@ serde_json = "1.0.86"
 sha2 = "0.10.6"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
 syn = "1.0.102"
+test-case = "2.2.2"
 tokio = "1.21.2"
 tracing = "0.1.37"
 tracing-attributes = "0.1.23"

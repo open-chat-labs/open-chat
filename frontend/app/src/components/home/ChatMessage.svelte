@@ -52,6 +52,7 @@
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
     import { canShareMessage } from "../../utils/share";
+    import { isSingleEmoji } from "../../utils/emojis";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -118,6 +119,8 @@
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: inert = deleted || collapsed;
+    $: isTextWithSingleEmoji =
+        msg.content.kind === "text_content" && isSingleEmoji(msg.content.text);
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -499,7 +502,8 @@
                     {readByThem}
                     {crypto}
                     {chatType}
-                    {dateFormatter} />
+                    {dateFormatter}
+                    float={!isTextWithSingleEmoji} />
             {/if}
 
             {#if debug}

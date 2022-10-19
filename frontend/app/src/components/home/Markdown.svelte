@@ -3,12 +3,12 @@
 <script lang="ts">
     import { marked } from "marked";
     import { rollbar } from "../../utils/logging";
-    import { DOMPurifyDefault, DOMPurifyOneLine } from "utils/domPurify";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
+    import { isSingleEmoji } from "../../utils/emojis";
 
     const client = getContext<OpenChat>("client");
-
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
@@ -51,7 +51,12 @@
     }
 </script>
 
-<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks>
+<p
+    class="markdown-wrapper"
+    class:inline
+    class:oneLine
+    class:suppressLinks
+    class:single-emoji={isSingleEmoji(text)}>
     {@html sanitized}
 </p>
 
@@ -182,5 +187,12 @@
             @include ellipsis();
             word-wrap: break-word;
         }
+    }
+
+    .single-emoji:not(.oneLine) {
+        display: block;
+        text-align: center;
+        font-size: 3.5rem;
+        line-height: 3.5rem;
     }
 </style>
