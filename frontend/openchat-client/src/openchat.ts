@@ -52,7 +52,6 @@ import {
     groupMessagesByDate,
     makeRtcConnections,
     markAllRead,
-    mergeChatMetrics,
     mergeEventsAndLocalUpdates,
     mergeSendMessageResponse,
     mergeServerEvents,
@@ -65,7 +64,7 @@ import {
     stopTyping,
     userIdsFromEvents,
 } from "./domain/chat/chat.utils";
-import { emptyChatMetrics, isPreviewing } from "./domain/chat/chat.utils.shared";
+import { isPreviewing } from "./domain/chat/chat.utils.shared";
 import type { CreatedUser, IdentityState, User } from "./domain/user/user";
 import {
     buildUsernameList,
@@ -121,6 +120,7 @@ import {
     chatSummariesStore,
     chatUpdatedStore,
     clearSelectedChat,
+    userMetrics,
     createDirectChat,
     currentChatBlockedUsers,
     currentChatDraftMessage,
@@ -919,8 +919,6 @@ export class OpenChat extends EventTarget {
     delegateToChatComponent = delegateToChatComponent;
     filterWebRtcMessage = filterWebRtcMessage;
     parseWebRtcMessage = parseWebRtcMessage;
-    mergeChatMetrics = mergeChatMetrics;
-    emptyChatMetrics = emptyChatMetrics;
     createDirectChat = createDirectChat;
     setSelectedChat = setSelectedChat;
     clearSelectedChat = clearSelectedChat;
@@ -1244,4 +1242,5 @@ export class OpenChat extends EventTarget {
     currentChatTextContent = currentChatTextContent;
     numberOfThreadsStore = numberOfThreadsStore;
     notificationStatus = notificationStatus;
+    userMetrics = userMetrics;
 }

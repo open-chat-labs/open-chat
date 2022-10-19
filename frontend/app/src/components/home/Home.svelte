@@ -119,15 +119,12 @@
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: chatsInitialised = client.chatsInitialised;
-    $: serverChatSummariesStore = client.serverChatSummariesStore;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
+    $: userMetrics = client.userMetrics;
     $: userId = client.user.userId;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: combinedMetrics = $chatSummariesListStore
-        .map((c) => c.myMetrics)
-        .reduce(client.mergeChatMetrics, client.emptyChatMetrics());
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
 
@@ -892,7 +889,7 @@
     {#if $numberOfColumns === 3}
         <RightPanel
             {userId}
-            metrics={combinedMetrics}
+            metrics={$userMetrics}
             bind:rightPanelHistory
             bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
@@ -918,7 +915,7 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
-                metrics={combinedMetrics}
+                metrics={$userMetrics}
                 bind:rightPanelHistory
                 bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}

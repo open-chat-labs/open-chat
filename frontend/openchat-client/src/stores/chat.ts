@@ -21,6 +21,7 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
+    mergeChatMetrics,
 } from "../domain/chat/chat.utils";
 import { userStore } from "./user";
 import { Poller } from "../services/poller";
@@ -122,6 +123,10 @@ export const chatSummariesListStore = derived(
         return pinned.concat(unpinned);
     }
 );
+
+export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
+    return $chats.map((c) => c.myMetrics).reduce(mergeChatMetrics, emptyChatMetrics());
+});
 
 export const selectedChatId = writable<string | undefined>(undefined);
 export const chatsLoading = writable(false);
