@@ -113,7 +113,6 @@
     let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: pinnedChatsStore = client.pinnedChatsStore;
     $: blockedUsers = client.blockedUsers;
     $: userStore = client.userStore;
     $: unconfirmed = client.unconfirmed;
@@ -458,40 +457,22 @@
     }
 
     function pinChat(ev: CustomEvent<string>) {
-        const pinnedChatLimit = 5;
-        if ($pinnedChatsStore.length >= pinnedChatLimit) {
-            toastStore.showSuccessToast("pinChat.limitExceeded", {
-                values: { limit: pinnedChatLimit },
-            });
-            return;
-        }
-
-        const chatId = ev.detail;
-        pinnedChatsStore.pin(chatId);
-        client.api
-            .pinChat(chatId)
-            .then((resp) => {
-                if (resp.kind === "pinned_limit_reached") {
-                    toastStore.showFailureToast("pinChat.limitExceeded", {
-                        values: { limit: resp.limit },
-                    });
-                    pinnedChatsStore.unpin(chatId);
-                }
-            })
-            .catch((err) => {
+        client.pinChat(ev.detail).then((resp) => {
+            if (resp.kind === "limit_exceeded") {
+                toastStore.showSuccessToast("pinChat.limitExceeded", {
+                    values: { limit: resp.limit },
+                });
+            } else if (resp.kind === "failure") {
                 toastStore.showFailureToast("pinChat.failed");
-                rollbar.error("Error pinning chat", err);
-                pinnedChatsStore.unpin(chatId);
-            });
+            }
+        });
     }
 
     function unpinChat(ev: CustomEvent<string>) {
-        const chatId = ev.detail;
-        pinnedChatsStore.unpin(chatId);
-        client.api.unpinChat(chatId).catch((err) => {
-            toastStore.showFailureToast("pinChat.unpinFailed");
-            rollbar.error("Error unpinning chat", err);
-            pinnedChatsStore.pin(chatId);
+        client.unpinChat(ev.detail).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinChat.unpinFailed");
+            }
         });
     }
 

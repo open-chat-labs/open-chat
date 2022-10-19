@@ -19,6 +19,7 @@ import {
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
+import { pinnedChatsStore } from "./stores/pinnedChats";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -34,6 +35,7 @@ export class LiveState {
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: Record<string, ChatSummary>;
     selectedChatId: string | undefined;
+    pinnedChats!: string[];
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -47,5 +49,6 @@ export class LiveState {
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
         selectedServerChatStore.subscribe((data) => (this.selectedChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
+        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
     }
 }

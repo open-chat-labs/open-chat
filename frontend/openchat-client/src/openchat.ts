@@ -238,6 +238,11 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 
+type PinChatResponse =
+    | { kind: "success" }
+    | { kind: "limit_exceeded"; limit: number }
+    | { kind: "failure" };
+
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
     private _api: ServiceContainer | undefined;
@@ -602,6 +607,41 @@ export class OpenChat extends EventTarget {
             .catch((err) => {
                 rollbar.error("Error un-archiving chat", err);
                 archivedChatsStore.set(chatId, true);
+                return false;
+            });
+    }
+
+    pinChat(chatId: string): Promise<PinChatResponse> {
+        const pinnedChatLimit = 5;
+        if (this._liveState.pinnedChats.length >= pinnedChatLimit) {
+            return Promise.resolve({ kind: "limit_exceeded", limit: pinnedChatLimit });
+        }
+
+        pinnedChatsStore.pin(chatId);
+        return this.api
+            .pinChat(chatId)
+            .then((resp) => {
+                if (resp.kind === "pinned_limit_reached") {
+                    pinnedChatsStore.unpin(chatId);
+                    return { kind: "limit_exceeded", limit: resp.limit } as PinChatResponse;
+                }
+                return { kind: "success" } as PinChatResponse;
+            })
+            .catch((err) => {
+                rollbar.error("Error pinning chat", err);
+                pinnedChatsStore.unpin(chatId);
+                return { kind: "failure" };
+            });
+    }
+
+    unpinChat(chatId: string): Promise<boolean> {
+        pinnedChatsStore.unpin(chatId);
+        return this.api
+            .unpinChat(chatId)
+            .then((_) => true)
+            .catch((err) => {
+                rollbar.error("Error unpinning chat", err);
+                pinnedChatsStore.pin(chatId);
                 return false;
             });
     }
