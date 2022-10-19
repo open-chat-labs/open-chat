@@ -8,14 +8,6 @@ To run locally you will need to do the following:
 
 `npm i`
 
-## Start a local IC replica
-
-Make sure that you have a locally running IC replica. The recommended approach is to clone the [internet identity repo](https://github.com/dfinity/internet-identity) then cd into that directory and run `dfx start`.
-
-In a separate terminal in the same directory, run `II_ENV=development dfx deploy --no-wallet --argument '(null)'`
-
-Make a note of the canister ID created for the internet-identity.
-
 ## Build and deploy server canisters
 
 The frontend depends on both the generated types of the back end services and also requires instances of the relevant canisters to be deployed to the local IC replica.
@@ -101,10 +93,8 @@ To run storybook simply run `npm run storybook` and it should start running on `
 
 Prefer to write storybook stories as svelte components rather than using js.
 
-## Local Ledger
+## ICP for local testing
 
-To get ICP when testing locally, run the following command -
+To get ICP when testing locally you need to use the NNS Dapp, this can be found at `http://qsgjb-riaaa-aaaaa-aaaga-cai.localhost:8080/`.
 
-```
-dfx --identity $IDENTITY canister call ledger send_dfx '(record { memo = 0; amount = record { e8s = 1000000000 }; fee = record { e8s = 0 }; to = "$LEDGER_ACCOUNT" })'
-```
+From the NNS Dapp click 'Get ICPs', then you can transfer ICP to your OpenChat account (you can find your ledger account under 'Profile' from the main menu).
