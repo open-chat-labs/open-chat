@@ -19,7 +19,6 @@
         EventWrapper,
         GroupChatSummary,
         GroupRules,
-        MemberRole,
         Message,
         Questions,
         WebRtcMessage,
@@ -42,7 +41,6 @@
     import { fullScreen } from "../../stores/settings";
     import { closeNotificationsForChat, subscribeToNotifications } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "./rightPanel";
-    import { rollbar } from "../../utils/logging";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -328,33 +326,14 @@
         rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore);
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        const data = {
-            blobData: ev.detail.data,
-            blobUrl: ev.detail.url,
-        };
-
-        client.user = {
-            ...user,
-            ...data,
-        };
-
-        const partialUser = $userStore[user.userId];
-        if (partialUser) {
-            userStore.add({
-                ...partialUser,
-                ...data,
-            });
-        }
-
-        client.api
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .setUserAvatar(data.blobData!)
-            .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
-            .catch((err) => {
-                rollbar.error("Failed to update user's avatar", err);
+    function userAvatarSelected(ev: CustomEvent<{ data: Uint8Array }>): void {
+        client.setUserAvatar(ev.detail.data).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("avatarUpdated");
+            } else {
                 toastStore.showFailureToast("avatarUpdateFailed");
-            });
+            }
+        });
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
@@ -530,77 +509,40 @@
     }
 
     function makeGroupPrivate(chatId: string): Promise<void> {
-        return client.api
-            .makeGroupPrivate(chatId)
-            .then((resp) => {
-                if (resp === "success") {
-                    serverChatSummariesStore.update((summaries) => {
-                        const summary = summaries[chatId];
-                        if (summary === undefined || summary.kind !== "group_chat") {
-                            return summaries;
-                        }
-
-                        return {
-                            ...summaries,
-                            [chatId]: {
-                                ...summary,
-                                public: false,
-                            },
-                        };
-                    });
-                } else {
-                    toastStore.showFailureToast("makeGroupPrivateFailed");
-                }
-            })
-            .catch((err) => {
+        return client.makeGroupPrivate(chatId).then((success) => {
+            if (!success) {
                 toastStore.showFailureToast("makeGroupPrivateFailed");
-                rollbar.error("Error making group private", err);
-            });
+            }
+        });
     }
 
     function deleteGroup(chatId: string): Promise<void> {
         push("/");
-        return client.api
-            .deleteGroup(chatId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("deleteGroupSuccess");
-                    client.removeChat(chatId);
-                } else {
-                    rollbar.warn("Unable to delete group", resp);
-                    toastStore.showFailureToast("deleteGroupFailure");
-                    push(`/${chatId}`);
-                }
-            })
-            .catch((err) => {
+        return client.deleteGroup(chatId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("deleteGroupSuccess");
+            } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                rollbar.error("Unable to delete group", err);
                 push(`/${chatId}`);
-            });
+            }
+        });
     }
 
     function leaveGroup(chatId: string): Promise<void> {
         push("/");
-        return client.api
-            .leaveGroup(chatId)
-            .then((resp) => {
-                if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
-                    toastStore.showSuccessToast("leftGroup");
-                    client.removeChat(chatId);
+
+        return client.leaveGroup(chatId).then((resp) => {
+            if (resp === "success") {
+                toastStore.showSuccessToast("leftGroup");
+            } else {
+                if (resp === "owner_cannot_leave") {
+                    toastStore.showFailureToast("ownerCantLeave");
                 } else {
-                    if (resp === "owner_cannot_leave") {
-                        toastStore.showFailureToast("ownerCantLeave");
-                    } else {
-                        toastStore.showFailureToast("failedToLeaveGroup");
-                    }
-                    push(`/${chatId}`);
+                    toastStore.showFailureToast("failedToLeaveGroup");
                 }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("failedToLeaveGroup");
-                rollbar.error("Unable to leave group", err);
                 push(`/${chatId}`);
-            });
+            }
+        });
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
@@ -755,36 +697,17 @@
 
     async function doJoinGroup(group: GroupChatSummary, select: boolean): Promise<void> {
         joining = group;
-        return client.api
-            .joinGroup(group.chatId)
+        return client
+            .joinGroup(group)
             .then((resp) => {
-                if (resp.kind === "group_chat") {
-                    client.addOrReplaceChat(resp);
-                    return true;
-                } else if (resp.kind === "already_in_group") {
-                    client.addOrReplaceChat({
-                        ...group,
-                        myRole: "participant" as MemberRole,
-                    });
-                    return true;
-                } else {
-                    if (resp.kind === "blocked") {
-                        toastStore.showFailureToast("youreBlocked");
-                    } else {
-                        toastStore.showFailureToast("joinGroupFailed");
-                    }
-                    return false;
-                }
-            })
-            .then((success) => {
-                if (success && select) {
+                if (resp === "blocked") {
+                    toastStore.showFailureToast("youreBlocked");
+                } else if (resp === "failure") {
+                    toastStore.showFailureToast("joinGroupFailed");
+                } else if (select) {
                     hotGroups = { kind: "idle" };
                     push(`/${group.chatId}`);
                 }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to join group", err);
-                toastStore.showFailureToast("joinGroupFailed");
             })
             .finally(() => (joining = undefined));
     }

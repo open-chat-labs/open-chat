@@ -15,6 +15,7 @@ import {
     selectedChatStore,
     selectedServerChatStore,
     currentChatReplyingTo,
+    chatSummariesListStore,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -36,6 +37,7 @@ export class LiveState {
     serverChatSummaries!: Record<string, ChatSummary>;
     selectedChatId: string | undefined;
     pinnedChats!: string[];
+    chatSummariesList!: ChatSummary[];
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -50,5 +52,6 @@ export class LiveState {
         selectedServerChatStore.subscribe((data) => (this.selectedChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
         pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
+        chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
     }
 }

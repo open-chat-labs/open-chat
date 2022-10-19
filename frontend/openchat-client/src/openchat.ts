@@ -10,6 +10,8 @@ import type {
     MessageContent,
     ThreadSyncDetails,
     Notification,
+    GroupChatSummary,
+    MemberRole,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -673,6 +675,125 @@ export class OpenChat extends EventTarget {
                 return false;
             });
     }
+
+    setUserAvatar(data: Uint8Array): Promise<boolean> {
+        this.user = {
+            ...this.user,
+            ...data,
+        };
+
+        const partialUser = this._liveState.userStore[this.user.userId];
+        if (partialUser) {
+            userStore.add({
+                ...partialUser,
+                ...data,
+            });
+        }
+
+        return this.api
+            .setUserAvatar(data)
+            .then((_resp) => true)
+            .catch((err) => {
+                rollbar.error("Failed to update user's avatar", err);
+                return false;
+            });
+    }
+
+    makeGroupPrivate(chatId: string): Promise<boolean> {
+        return this.api
+            .makeGroupPrivate(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    serverChatSummariesStore.update((summaries) => {
+                        const summary = summaries[chatId];
+                        if (summary === undefined || summary.kind !== "group_chat") {
+                            return summaries;
+                        }
+
+                        return {
+                            ...summaries,
+                            [chatId]: {
+                                ...summary,
+                                public: false,
+                            },
+                        };
+                    });
+                    return true;
+                } else {
+                    return false;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Error making group private", err);
+                return false;
+            });
+    }
+
+    deleteGroup(chatId: string): Promise<boolean> {
+        return this.api
+            .deleteGroup(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    this.removeChat(chatId);
+                    return true;
+                } else {
+                    rollbar.warn("Unable to delete group", resp);
+                    return false;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to delete group", err);
+                return false;
+            });
+    }
+
+    leaveGroup(chatId: string): Promise<"success" | "failure" | "owner_cannot_leave"> {
+        return this.api
+            .leaveGroup(chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
+                    this.removeChat(chatId);
+                    return "success";
+                } else {
+                    if (resp === "owner_cannot_leave") {
+                        return "owner_cannot_leave";
+                    } else {
+                        return "failure";
+                    }
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to leave group", err);
+                return "failure";
+            });
+    }
+
+    async joinGroup(group: GroupChatSummary): Promise<"success" | "blocked" | "failure"> {
+        return this.api
+            .joinGroup(group.chatId)
+            .then((resp) => {
+                if (resp.kind === "group_chat") {
+                    this.addOrReplaceChat(resp);
+                    return "success";
+                } else if (resp.kind === "already_in_group") {
+                    this.addOrReplaceChat({
+                        ...group,
+                        myRole: "participant" as MemberRole,
+                    });
+                    return "success";
+                } else {
+                    if (resp.kind === "blocked") {
+                        return "blocked";
+                    }
+                    return "failure";
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                return "failure";
+            });
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
