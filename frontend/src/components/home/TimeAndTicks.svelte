@@ -16,6 +16,7 @@
     export let fill: boolean;
     export let pinned: boolean;
     export let crypto: boolean;
+    export let float: boolean;
     export let dateFormatter: (date: Date) => string = toShortTimeString;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
@@ -28,7 +29,7 @@
         : "var(--currentChat-msg-txt)";
 </script>
 
-<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:float class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -61,7 +62,6 @@
         @include font(light, normal, fs-50);
         display: flex;
         align-items: center;
-        float: right;
         margin-top: 7px;
         pointer-events: none;
 
@@ -69,9 +69,16 @@
             margin-top: 4px;
         }
 
+        &.float {
+            float: right;
+        }
+
         &.rtl {
             clear: right;
-            float: left;
+
+            &.float {
+                float: left;
+            }
         }
 
         .time {

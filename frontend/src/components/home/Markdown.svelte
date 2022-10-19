@@ -4,7 +4,8 @@
     import { userStore } from "../../stores/user";
     import { marked } from "marked";
     import { rollbar } from "../../utils/logging";
-    import { DOMPurifyDefault, DOMPurifyOneLine } from "utils/domPurify";
+    import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
+    import { isSingleEmoji } from "../../utils/emojis";
 
     export let text: string;
     export let inline: boolean = true;
@@ -47,7 +48,7 @@
     }
 </script>
 
-<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks>
+<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks class:single-emoji={isSingleEmoji(text)}>
     {@html sanitized}
 </p>
 
@@ -178,5 +179,12 @@
             @include ellipsis();
             word-wrap: break-word;
         }
+    }
+
+    .single-emoji:not(.oneLine) {
+        display: block;
+        text-align: center;
+        font-size: 3.5rem;
+        line-height: 3.5rem;
     }
 </style>
