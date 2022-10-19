@@ -3,7 +3,7 @@
 <script lang="ts">
     import { marked } from "marked";
     import { rollbar } from "../../utils/logging";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
@@ -19,6 +19,8 @@
     $: options = {
         breaks: !oneLine,
     };
+    let singleEmoji = false;
+    onMount(() => isSingleEmoji(text).then((b) => singleEmoji = b));
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
@@ -56,7 +58,7 @@
     class:inline
     class:oneLine
     class:suppressLinks
-    class:single-emoji={isSingleEmoji(text)}>
+    class:singleEmoji>
     {@html sanitized}
 </p>
 
@@ -189,7 +191,7 @@
         }
     }
 
-    .single-emoji:not(.oneLine) {
+    .singleEmoji:not(.oneLine) {
         display: block;
         text-align: center;
         font-size: 3.5rem;
