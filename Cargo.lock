@@ -947,7 +947,6 @@ dependencies = [
  "futures",
  "garcon",
  "group_canister",
- "group_canister_client",
  "group_index_canister",
  "group_index_canister_client",
  "ic-agent",
@@ -958,7 +957,6 @@ dependencies = [
  "serde",
  "types 0.1.0",
  "user_canister",
- "user_canister_client",
  "user_index_canister",
  "user_index_canister_client",
 ]
@@ -1661,23 +1659,6 @@ name = "data-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
-
-[[package]]
-name = "data_generator"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "clap",
- "futures",
- "group_canister",
- "ic-agent",
- "lipsum",
- "rand",
- "tokio",
- "types 0.1.0",
- "user_canister",
- "utils",
-]
 
 [[package]]
 name = "debug_stub_derive"
@@ -4883,16 +4864,6 @@ name = "linux-raw-sys"
 version = "0.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
-
-[[package]]
-name = "lipsum"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8451846f1f337e44486666989fbce40be804da139d5a4477d6b88ece5dc69f4"
-dependencies = [
- "rand",
- "rand_chacha",
-]
 
 [[package]]
 name = "lock_api"

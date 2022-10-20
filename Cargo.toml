@@ -34,7 +34,6 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
-    "backend/data_generator",
     "backend/integration_tests",
     "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
