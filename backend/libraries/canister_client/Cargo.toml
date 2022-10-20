@@ -14,7 +14,6 @@ dirs = { workspace = true }
 futures = { workspace = true }
 garcon = { workspace = true }
 group_canister = { path = "../../canisters/group/api" }
-group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
 ic-agent = { workspace = true }
@@ -24,7 +23,6 @@ proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 serde = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
-user_canister_client = { path = "../../canisters/user/client" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_client = { path = "../../canisters/user_index/client" }
 online_users_aggregator_canister = { path = "../../canisters/online_users_aggregator/api" }
