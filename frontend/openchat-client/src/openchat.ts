@@ -451,6 +451,7 @@ export class OpenChat extends EventTarget {
             initNotificationStores();
             this.api.getUserStorageLimits();
             this.identityState.set("logged_in");
+            this.initWebRtc();
 
             // FIXME - not sure what to do about this
             // if (isCanisterUrl) {

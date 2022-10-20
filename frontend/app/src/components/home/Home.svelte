@@ -149,7 +149,6 @@
         ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
-        client.initWebRtc();
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
