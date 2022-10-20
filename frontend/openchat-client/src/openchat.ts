@@ -233,7 +233,6 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
-    MessageSentByOther,
     SentMessage,
     ThreadClosed,
     ThreadMessagesLoaded,
@@ -1118,10 +1117,7 @@ export class OpenChat extends EventTarget {
         clientChat: ChatSummary,
         messageEvent: EventWrapper<Message>
     ): Promise<void> {
-        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent).then(() => {
-            this.dispatchEvent(new MessageSentByOther(messageEvent));
-            return;
-        });
+        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent);
     }
     refreshAffectedEvents(clientChat: ChatSummary, affectedEventIndexes: number[]): Promise<void> {
         return refreshAffectedEvents(this.api, this.user, clientChat, affectedEventIndexes);
