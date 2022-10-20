@@ -1389,7 +1389,7 @@ export class OpenChat extends EventTarget {
             // this is a webrtc message relating to the selected thread
             this.handleWebRtcMessageInternal(
                 fromChatId,
-                msg,
+                parsedMsg,
                 selectedChat,
                 threadEvents,
                 parsedMsg.threadRootMessageIndex
@@ -1397,7 +1397,13 @@ export class OpenChat extends EventTarget {
         } else {
             if (selectedChat !== undefined && fromChatId === selectedChat.chatId) {
                 // this is a webrtc message relating to the selected chat
-                this.handleWebRtcMessageInternal(fromChatId, msg, selectedChat, events, undefined);
+                this.handleWebRtcMessageInternal(
+                    fromChatId,
+                    parsedMsg,
+                    selectedChat,
+                    events,
+                    undefined
+                );
             } else {
                 if (parsedMsg.kind === "remote_user_sent_message") {
                     unconfirmed.add(fromChatId, parsedMsg.messageEvent);
@@ -1439,7 +1445,6 @@ export class OpenChat extends EventTarget {
                 localMessageUpdates.markUndeleted(msg.messageId.toString());
                 break;
             case "remote_user_sent_message":
-                // FIXME - one more thing to sort out
                 this.remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
                 break;
             case "remote_user_read_message":
