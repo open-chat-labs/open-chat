@@ -264,11 +264,6 @@ export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focu
     () => undefined
 );
 
-export const focusThreadMessageIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "focusThreadMessageIndex"
->(chatStateStore, "focusThreadMessageIndex", () => undefined);
-
 export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
     chatStateStore,
     "userGroupKeys",
@@ -313,8 +308,7 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 export function setSelectedChat(
     api: ServiceContainer,
     chat: ChatSummary,
-    messageIndex?: number,
-    threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
+    messageIndex?: number
 ): void {
     // TODO don't think this should be in here really
     if (
@@ -343,7 +337,6 @@ export function setSelectedChat(
     // initialise a bunch of stores
     chatStateStore.clear(chat.chatId);
     chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
-    chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.setProp(
         chat.chatId,
         "userIds",

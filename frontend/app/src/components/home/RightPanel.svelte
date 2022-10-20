@@ -391,7 +391,6 @@
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
-            focusMessageIndex={$focusThreadMessageIndex}
             chat={$selectedChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}

@@ -43,9 +43,9 @@
     const client = getContext<OpenChat>("client");
 
     export let rootEvent: EventWrapper<Message>;
-    export let focusMessageIndex: number | undefined;
     export let chat: ChatSummary;
 
+    let focusMessageIndex: number | undefined = undefined;
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
@@ -569,7 +569,6 @@
 
     function clearFocusIndex() {
         focusMessageIndex = undefined;
-        chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", undefined);
     }
 
     function goToMessageIndex(index: number) {

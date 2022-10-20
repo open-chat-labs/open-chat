@@ -175,11 +175,7 @@
         }
     }
 
-    async function newChatSelected(
-        chatId: string,
-        messageIndex?: number,
-        threadMessageIndex?: number
-    ): Promise<void> {
+    async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
         interruptRecommended = true;
 
         let chat = $chatSummariesStore[chatId];
@@ -215,7 +211,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        client.setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
+        client.setSelectedChat(client.api, chat, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -250,20 +246,11 @@
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
-                        newChatSelected(
-                            pathParams.chatId,
-                            pathParams.messageIndex,
-                            pathParams.threadMessageIndex
-                        );
+                        newChatSelected(pathParams.chatId, pathParams.messageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            chatStateStore.setProp(
-                                pathParams.chatId,
-                                "focusThreadMessageIndex",
-                                pathParams.threadMessageIndex
-                            );
                             currentChatMessages?.scrollToMessageIndex(
                                 pathParams.messageIndex,
                                 false,

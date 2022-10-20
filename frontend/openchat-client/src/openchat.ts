@@ -137,7 +137,6 @@ import {
     currentUserStore,
     eventsStore,
     focusMessageIndex,
-    focusThreadMessageIndex,
     isProposalGroup,
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
@@ -1251,7 +1250,6 @@ export class OpenChat extends EventTarget {
     selectedChatStore = selectedChatStore;
     currentChatPinnedMessages = currentChatPinnedMessages;
     currentChatRules = currentChatRules;
-    focusThreadMessageIndex = focusThreadMessageIndex;
     proposalTopicsStore = proposalTopicsStore;
     filteredProposalsStore = filteredProposalsStore;
     cryptoBalance = cryptoBalance;
