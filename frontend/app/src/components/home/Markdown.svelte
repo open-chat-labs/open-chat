@@ -15,14 +15,12 @@
     export let suppressLinks: boolean = false;
 
     let sanitized = "unsafe";
-    let singleEmoji = false;
 
+    $: singleEmoji = isSingleEmoji(text);
     $: userStore = client.userStore;
     $: options = {
         breaks: !oneLine,
     };
-
-    onMount(() => isSingleEmoji(text).then((b) => singleEmoji = b));
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
@@ -198,5 +196,6 @@
         text-align: center;
         font-size: 3.5rem;
         line-height: 3.5rem;
+        color: var(--markdown-fg-bright);
     }
 </style>

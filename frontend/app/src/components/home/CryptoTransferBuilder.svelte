@@ -53,12 +53,12 @@
     let error: string | undefined = undefined;
     let message = "";
     let confirming = false;
-    let receiver: PartialUserSummary | undefined =
-        chat.kind === "direct_chat" ? $userStore[(chat as DirectChatSummary).them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
 
+    $: receiver =
+        chat.kind === "direct_chat" ? $userStore[(chat as DirectChatSummary).them] : undefined;
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
