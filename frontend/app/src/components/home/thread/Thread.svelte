@@ -3,26 +3,18 @@
     import Footer from "../Footer.svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import {
-        ChatEvent,
         ChatSummary,
         EnhancedReplyContext,
-        EventsResponse,
         EventWrapper,
         Message,
         MessageContent,
-        SendMessageSuccess,
         ThreadSummary,
-        TransferSuccess,
         User,
         Cryptocurrency,
-        RemoteUserRemovedMessage,
-        RemoteUserSentMessage,
-        RemoteUserToggledReaction,
-        WebRtcMessage,
         ThreadMessagesLoaded,
+        SentThreadMessage,
     } from "openchat-client";
-    import { immutableStore } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import Fab from "../../Fab.svelte";
@@ -33,8 +25,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import { rollbar } from "../../../utils/logging";
-    import { toastStore } from "../../../stores/toast";
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
@@ -45,6 +35,7 @@
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
+    export let serverChat: ChatSummary;
 
     let focusMessageIndex: number | undefined = undefined;
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -66,25 +57,24 @@
     $: currentChatMembers = client.currentChatMembers;
     $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: currentChatUserIds = client.currentChatUserIds;
-    $: remainingStorage = client.remainingStorage;
     $: typing = client.typing;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
     $: localMessageUpdates = client.localMessageUpdates;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: threadEvents = client.threadEvents;
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
-
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
         };
     });
 
     function clientEvent(ev: Event): void {
+        if (ev instanceof SentThreadMessage) {
+            onSentMessage(ev.detail);
+        }
         if (ev instanceof ThreadMessagesLoaded) {
             if (ev.detail && $withinThreshold) {
                 scrollBottom();
@@ -100,8 +90,6 @@
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
-            console.log("thread selected in component");
-
             // this we move into client.openThread
             previousRootEvent = rootEvent;
             initialised = false;
@@ -168,11 +156,17 @@
         .reverse() as EventWrapper<Message>[][][];
     $: preview = client.isPreviewing(chat);
     $: pollsAllowed = client.canCreatePolls(chat);
-    $: unconfirmedKey = `${chat.chatId}_${threadRootMessageIndex}`;
-    $: isFollowedByMe =
-        $threadsFollowedByMeStore[chat.chatId]?.has(threadRootMessageIndex) ?? false;
+    $: selectedThreadKey = client.selectedThreadKey;
 
-    const dispatch = createEventDispatcher();
+    function onSentMessage(event: EventWrapper<Message>) {
+        const summary: ThreadSummary = {
+            participantIds: new Set<string>([client.user.userId]),
+            numberOfReplies: event.event.messageIndex + 1,
+            latestEventIndex: event.index,
+            latestEventTimestamp: event.timestamp,
+        };
+        localMessageUpdates.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+    }
 
     function calculateFromBottom(): number {
         return -(messagesDiv?.scrollTop ?? 0);
@@ -204,190 +198,20 @@
         draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
-    function newMessage(
-        textContent: string | undefined,
-        fileToAttach: MessageContent | undefined,
-        nextMessageIndex: number
-    ): Message {
-        return client.createMessage(
-            client.user.userId,
-            nextMessageIndex,
-            textContent,
-            $replyingTo,
-            fileToAttach
-        );
-    }
-
-    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
-        // make sure the chatId matches
-        if (fromChatId !== chat.chatId) return;
-
-        // make sure that the root message index matches
-        if (msg.threadRootMessageIndex !== rootEvent.event.messageIndex) return;
-
-        switch (msg.kind) {
-            case "remote_user_typing":
-                typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
-                break;
-            case "remote_user_stopped_typing":
-                typing.stopTyping(msg.userId);
-                break;
-            case "remote_user_toggled_reaction":
-                remoteUserToggledReaction(msg);
-                break;
-            case "remote_user_removed_message":
-                remoteUserRemovedMessage(msg);
-                break;
-            case "remote_user_deleted_message":
-                localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
-                break;
-            case "remote_user_undeleted_message":
-                localMessageUpdates.markUndeleted(msg.messageId.toString());
-                break;
-            case "remote_user_sent_message":
-                remoteUserSentMessage(msg);
-                break;
-        }
-    }
-
-    function remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
-        removeMessage(message.messageId, message.userId);
-    }
-
-    function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        client.remoteUserToggledReaction($threadEvents, message);
-    }
-
-    function remoteUserSentMessage(message: RemoteUserSentMessage) {
-        const existing = client.findMessageById(
-            message.messageEvent.event.messageId,
-            $threadEvents
-        );
-        if (existing !== undefined) {
-            return;
-        }
-
-        const [eventIndex, messageIndex] = getNextEventAndMessageIndexes($threadEvents);
-        unconfirmed.add(unconfirmedKey, {
-            ...message.messageEvent,
-            index: eventIndex,
-            event: {
-                ...message.messageEvent.event,
-                messageIndex,
-            },
-        });
-
-        // since we will only get here if we actually have the thread open
-        // we should mark read up to this message too
-        client.markThreadRead(chat.chatId, threadRootMessageIndex, messageIndex);
-    }
-
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
-        if (!canSend) return;
-
-        if (textContent || fileToAttach) {
-            const storageRequired = client.getStorageRequiredForMessage(fileToAttach);
-            if ($remainingStorage < storageRequired) {
-                dispatch("upgrade", "explain");
-                return;
-            }
-
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes($threadEvents);
-
-            const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-
-            unconfirmed.add(unconfirmedKey, event);
-            scrollBottom();
-            client.markThreadRead(chat.chatId, threadRootMessageIndex, nextMessageIndex);
-
-            client.api
-                .sendMessage(chat, client.user, mentioned, msg, threadRootMessageIndex)
-                .then(([resp, msg]) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        confirmMessage(msg, resp);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            client.api.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                client.user.cryptoAccount
-                            );
-                        }
-                        client.trackEvent("sent_threaded_message");
-                    } else {
-                        unconfirmed.delete(unconfirmedKey, msg.messageId);
-                        removeMessage(msg.messageId, client.user.userId);
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    unconfirmed.delete(unconfirmedKey, msg.messageId);
-                    removeMessage(msg.messageId, client.user.userId);
-                    toastStore.showFailureToast("errorSendingMessage");
-                    rollbar.error("Exception sending message", err);
-                });
-
-            client.sendRtcMessage([...$currentChatUserIds], {
-                kind: "remote_user_sent_message",
-                chatType: chat.kind,
-                chatId: chat.chatId,
-                messageEvent: client.serialiseMessageForRtc(event),
-                userId: client.user.userId,
-                threadRootMessageIndex,
-            });
-
-            const summary: ThreadSummary = {
-                participantIds: new Set<string>([client.user.userId]),
-                numberOfReplies: nextMessageIndex + 1,
-                latestEventIndex: nextEventIndex,
-                latestEventTimestamp: BigInt(Date.now()),
-            };
-
-            localMessageUpdates.markThreadSummaryUpdated(
-                rootEvent.event.messageId.toString(),
-                summary
-            );
-        }
-    }
-
-    function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
-        if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
-            const confirmed = client.mergeSendMessageResponse(candidate, resp);
-            // FIXME - need to sort this out
-            // serverEventsStore.update((events) => client.mergeServerEvents(events, [confirmed]));
-        }
-    }
-
-    function removeMessage(messageId: bigint, userId: string) {
-        unconfirmed.delete(unconfirmedKey, messageId);
-        if (userId === client.user.userId) {
-            client.sendRtcMessage([...$currentChatUserIds], {
-                kind: "remote_user_removed_message",
-                chatType: chat.kind,
-                chatId: chat.chatId,
-                messageId: messageId,
-                userId: userId,
-                threadRootMessageIndex,
-            });
-        }
-    }
-
-    function getNextEventAndMessageIndexes(events: EventWrapper<ChatEvent>[]): [number, number] {
-        return events.reduce(
-            ([maxEvtIdx, maxMsgIdx], evt) => {
-                const msgIdx =
-                    evt.event.kind === "message"
-                        ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
-                        : maxMsgIdx;
-                const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
-                return [evtIdx, msgIdx];
-            },
-            [0, 0]
+        client.sendMessageWithAttachment(
+            serverChat,
+            chat,
+            $threadEvents,
+            textContent,
+            mentioned,
+            fileToAttach,
+            $replyingTo,
+            threadRootMessageIndex
         );
     }
 
@@ -630,7 +454,10 @@
                             senderId={evt.event.sender}
                             focused={evt.event.messageIndex === focusMessageIndex}
                             {observer}
-                            confirmed={!unconfirmed.contains(unconfirmedKey, evt.event.messageId)}
+                            confirmed={!unconfirmed.contains(
+                                $selectedThreadKey ?? "",
+                                evt.event.messageId
+                            )}
                             senderTyping={client.isTyping(
                                 $typing,
                                 evt.event.sender,

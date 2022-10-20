@@ -22,6 +22,8 @@ import {
     threadEvents,
     selectedThreadKey,
     threadsFollowedByMeStore,
+    currentChatUserIds,
+    selectedThreadRootMessageIndex,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -50,6 +52,8 @@ export class LiveState {
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedThreadKey: string | undefined;
     threadsFollowedByMe!: Record<string, Set<number>>;
+    currentChatUserIds!: Set<string>;
+    selectedThreadRootMessageIndex: number | undefined;
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -70,5 +74,9 @@ export class LiveState {
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedThreadKey.subscribe((data) => (this.selectedThreadKey = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
+        currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
+        selectedThreadRootMessageIndex.subscribe(
+            (data) => (this.selectedThreadRootMessageIndex = data)
+        );
     }
 }

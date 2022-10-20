@@ -129,6 +129,16 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
 });
 
 export const selectedChatId = writable<string | undefined>(undefined);
+export const selectedThreadRootMessageIndex = writable<number | undefined>(undefined);
+export const selectedThreadKey = derived(
+    [selectedChatId, selectedThreadRootMessageIndex],
+    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
+        if ($selectedChatId !== undefined && $selectedThreadRootMessageIndex !== undefined) {
+            return `${$selectedChatId}_${$selectedThreadRootMessageIndex}`;
+        }
+        return undefined;
+    }
+);
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
 export const chatUpdatedStore: Writable<{ affectedEvents: number[] } | undefined> =
@@ -149,6 +159,22 @@ export const selectedChatStore = derived(
         return $chatSummaries[$selectedChatId];
     }
 );
+
+export function nextEventAndMessageIndexesForThread(
+    events: EventWrapper<ChatEvent>[]
+): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0]
+    );
+}
 
 export function nextEventAndMessageIndexes(): [number, number] {
     const chat = get(selectedServerChatStore);
@@ -246,7 +272,6 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     serverEvents: [],
 }));
 
-export const selectedThreadKey = writable<string | undefined>(undefined);
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 export const threadEvents = derived(
     [threadServerEventsStore, unconfirmed, localMessageUpdates, selectedThreadKey],
@@ -573,7 +598,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
 
 export function addServerEventsToStores(
     chatId: string,
-    newEvents: EventWrapper<ChatEvent>[]
+    newEvents: EventWrapper<ChatEvent>[],
+    threadRootMessageIndex: number | undefined
 ): void {
     if (newEvents.length === 0) {
         return;
@@ -581,19 +607,35 @@ export function addServerEventsToStores(
 
     for (const event of newEvents) {
         if (event.event.kind === "message") {
-            if (unconfirmed.delete(chatId, event.event.messageId)) {
-                messagesRead.confirmMessage(
-                    chatId,
-                    event.event.messageIndex,
-                    event.event.messageId
-                );
+            const key =
+                threadRootMessageIndex === undefined
+                    ? chatId
+                    : `${chatId}_${threadRootMessageIndex}`;
+            if (unconfirmed.delete(key, event.event.messageId)) {
+                if (threadRootMessageIndex === undefined) {
+                    messagesRead.confirmMessage(
+                        chatId,
+                        event.event.messageIndex,
+                        event.event.messageId
+                    );
+                } else {
+                    messagesRead.markThreadRead(
+                        chatId,
+                        threadRootMessageIndex,
+                        event.event.messageIndex
+                    );
+                }
             }
         }
     }
 
-    chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-        mergeServerEvents(events, newEvents)
-    );
+    if (threadRootMessageIndex === undefined) {
+        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+            mergeServerEvents(events, newEvents)
+        );
+    } else {
+        threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
+    }
 }
 
 export function clearServerEvents(chatId: string): void {

@@ -20,7 +20,6 @@
         GroupRules,
         Message,
         Questions,
-        WebRtcMessage,
         OpenChat,
         ThreadSelected,
         ThreadClosed,
@@ -49,7 +48,6 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { numberOfColumns } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import type Thread from "./thread/Thread.svelte";
     import type { Share } from "../../utils/share";
 
     export let logout: () => void;
@@ -109,11 +107,9 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
-    let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
     $: userStore = client.userStore;
-    $: unconfirmed = client.unconfirmed;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: chatsLoading = client.chatsLoading;
@@ -153,7 +149,7 @@
         ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
-        client.initWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
+        client.initWebRtc();
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
@@ -168,25 +164,6 @@
         }
         if (ev instanceof ThreadClosed) {
             closeThread();
-        }
-    }
-
-    function routeRtcMessages(msg: WebRtcMessage) {
-        const fromChatId = client.filterWebRtcMessage(msg);
-        if (fromChatId === undefined) return;
-        const parsedMsg = client.parseWebRtcMessage(fromChatId, msg);
-
-        if (parsedMsg.threadRootMessageIndex !== undefined) {
-            // do we have the thread window open for this thread
-            threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
-        } else {
-            if (client.delegateToChatComponent(parsedMsg)) {
-                currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
-            } else {
-                if (parsedMsg.kind === "remote_user_sent_message") {
-                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
-                }
-            }
         }
     }
 
@@ -610,7 +587,11 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(ev: { threadRootMessageId: bigint; initiating: boolean }) {
+    function openThread(ev: {
+        threadRootMessageIndex: number;
+        threadRootMessageId: bigint;
+        initiating: boolean;
+    }) {
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
@@ -619,6 +600,7 @@
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
+                    threadRootMessageIndex: ev.threadRootMessageIndex,
                     threadRootMessageId: ev.threadRootMessageId,
                 },
             ];
@@ -879,7 +861,6 @@
     {#if $numberOfColumns === 3}
         <RightPanel
             bind:rightPanelHistory
-            bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -903,7 +884,6 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 bind:rightPanelHistory
-                bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}

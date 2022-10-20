@@ -11,7 +11,6 @@
     import type {
         AddMembersResponse,
         ChatEvent,
-        ChatMetrics,
         EventWrapper,
         FullMember,
         GroupChatSummary,
@@ -35,7 +34,6 @@
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
-    export let thread: Thread | undefined;
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
@@ -44,6 +42,7 @@
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
+    $: selectedServerChatStore = client.selectedServerChatStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -384,13 +383,13 @@
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
-    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
+    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
         <Thread
-            bind:this={thread}
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
             chat={$selectedChatStore}
+            serverChat={$selectedServerChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />

@@ -27,7 +27,6 @@
         FilteredProposals,
         WebRtcMessage,
         MessageReadState,
-        RemoteUserSentMessage,
         LoadedNewMessages,
         ChatUpdated,
         LoadedMessageWindow,
@@ -74,8 +73,6 @@
     $: currentChatEditingEvent = client.currentChatEditingEvent;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: messagesRead = client.messagesRead;
-    $: typing = client.typing;
-    $: localMessageUpdates = client.localMessageUpdates;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
     $: userGroupKeys = client.userGroupKeys;
@@ -259,7 +256,7 @@
             const msgEvent = findMessageEvent(index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
-                    client.openThread(chat.chatId, msgEvent.event.messageId, false);
+                    client.openThread(msgEvent.event.messageId, msgEvent.event.messageIndex, false);
                 } else {
                     client.closeThread();
                 }
@@ -384,16 +381,6 @@
                     client.trackEvent("reacted_to_message");
                 }
             });
-
-        client.sendRtcMessage([...$currentChatUserIds], {
-            kind: "remote_user_toggled_reaction",
-            chatType: chat.kind,
-            chatId: chat.chatId,
-            messageId: message.messageId,
-            reaction,
-            userId: user.userId,
-            added: kind === "add",
-        });
     }
 
     function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -703,55 +690,6 @@
             onMessageWindowLoaded(jumpingTo);
         } else {
             tick().then(() => scrollBottom("smooth"));
-        }
-    }
-
-    function remoteUserSentMessage(message: RemoteUserSentMessage): void {
-        const existing = client.findMessageById(message.messageEvent.event.messageId, events);
-        if (existing !== undefined) {
-            return;
-        }
-
-        // We should overwrite the event index and message index to ensure these new messages always get placed at the
-        // end rather than before any unconfirmed messages we have sent. Also, for direct chats the indexes can mismatch
-        // due to either user being blocked temporarily, so by overwriting the indexes we avoid issues caused by this.
-        const [eventIndex, messageIndex] = client.nextEventAndMessageIndexes();
-        unconfirmed.add(chat.chatId, {
-            ...message.messageEvent,
-            index: eventIndex,
-            event: {
-                ...message.messageEvent.event,
-                messageIndex,
-            },
-        });
-    }
-
-    export function handleWebRtcMessage(fromChatId: string, msg: WebRtcMessage): void {
-        switch (msg.kind) {
-            case "remote_user_typing":
-                typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
-                break;
-            case "remote_user_stopped_typing":
-                typing.stopTyping(msg.userId);
-                break;
-            case "remote_user_toggled_reaction":
-                client.remoteUserToggledReaction(events, msg);
-                break;
-            case "remote_user_deleted_message":
-                localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
-                break;
-            case "remote_user_removed_message":
-                client.removeMessage(user.userId, chat, msg.messageId, msg.userId);
-                break;
-            case "remote_user_undeleted_message":
-                localMessageUpdates.markUndeleted(msg.messageId.toString());
-                break;
-            case "remote_user_sent_message":
-                remoteUserSentMessage(msg);
-                break;
-            case "remote_user_read_message":
-                unconfirmedReadByThem.add(BigInt(msg.messageId));
-                break;
         }
     }
 </script>

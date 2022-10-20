@@ -181,7 +181,7 @@
         if (msg.thread !== undefined) {
             push(`/${chatId}/${msg.messageIndex}`);
         } else {
-            client.openThread(chatId, msg.messageId, true);
+            client.openThread(msg.messageId, msg.messageIndex, true);
         }
     }
 
