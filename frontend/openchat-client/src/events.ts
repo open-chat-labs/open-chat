@@ -1,5 +1,3 @@
-import type { EventWrapper, Message } from "./domain";
-
 export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
     constructor(mode: "explain" | "icp" | "sms") {
         super("openchat_event", { detail: mode });
