@@ -30,7 +30,9 @@ const dfxNetwork = process.env.DFX_NETWORK;
 console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
-    const canisterPath = dfxNetwork.startsWith("ic")
+    const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");
+    const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
+    const canisterPath = dfxJson["networks"][dfxNetwork]["type"] === "persistent"
         ? path.join(__dirname, "../..", "canister_ids.json")
         : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
 
