@@ -263,11 +263,9 @@
             const msgEvent = findMessageEvent(index);
             if (msgEvent) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
-                    dispatch("openThread", {
-                        rootEvent: msgEvent,
-                    });
+                    client.openThread(chat.chatId, msgEvent.event.messageId, false);
                 } else {
-                    dispatch("closeThread");
+                    client.closeThread();
                 }
             }
             if (!preserveFocus) {
@@ -532,16 +530,6 @@
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
-
-            if ($focusMessageIndex !== undefined) {
-                client.loadEventWindow(serverChat, chat, $focusMessageIndex).then(() => {
-                    client.loadDetails(chat, events);
-                });
-            } else {
-                client.loadPreviousMessages(serverChat, chat).then(() => {
-                    client.loadDetails(chat, events);
-                });
-            }
         }
     }
 
@@ -814,7 +802,6 @@
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith
-                        on:initiateThread
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
                         on:deleteMessage={onDeleteMessage}

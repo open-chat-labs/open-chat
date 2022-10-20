@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { writable } from "svelte/store";
+import { derived, Writable, writable } from "svelte/store";
 import type {
     ChatEvent,
     ChatSummary,
@@ -14,6 +14,8 @@ import type {
     MemberRole,
     GroupRules,
     GroupPermissions,
+    ThreadSummary,
+    EventsResponse,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -152,6 +154,9 @@ import {
     threadsFollowedByMeStore,
     updateSummaryWithConfirmedMessage,
     userGroupKeys,
+    threadServerEventsStore,
+    threadEvents,
+    selectedThreadKey,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -230,6 +235,9 @@ import {
     LoadedPreviousMessages,
     MessageSentByOther,
     SentMessage,
+    ThreadClosed,
+    ThreadMessagesLoaded,
+    ThreadSelected,
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -252,7 +260,6 @@ export class OpenChat extends EventTarget {
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
-
     identityState = writable<IdentityState>("loading_user");
 
     constructor(private config: OpenChatConfig) {
@@ -952,6 +959,120 @@ export class OpenChat extends EventTarget {
     createDirectChat = createDirectChat;
     setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
         setSelectedChat(this.api, chat, messageIndex);
+
+        const { selectedChat, selectedServerChat, focusMessageIndex, events } = this._liveState;
+        if (selectedChat !== undefined && selectedServerChat !== undefined) {
+            if (focusMessageIndex !== undefined) {
+                this.loadEventWindow(selectedServerChat, selectedChat, focusMessageIndex).then(
+                    () => {
+                        this.loadDetails(chat, events);
+                    }
+                );
+            } else {
+                this.loadPreviousMessages(selectedServerChat, selectedChat).then(() => {
+                    this.loadDetails(selectedChat, events);
+                });
+            }
+        }
+    }
+    openThread(chatId: string, threadRootMessageId: bigint, initiating: boolean): void {
+        // this is our chance to set up some state
+        console.log("thread selected in library");
+        selectedThreadKey.set(`${chatId}_${threadRootMessageId}`);
+        this.dispatchEvent(new ThreadSelected(threadRootMessageId, initiating));
+    }
+    closeThread(): void {
+        this.dispatchEvent(new ThreadClosed());
+    }
+    clearThreadEvents(): void {
+        threadServerEventsStore.set([]);
+    }
+    async loadThreadMessages(
+        chat: ChatSummary,
+        rootEvent: EventWrapper<Message>,
+        thread: ThreadSummary,
+        range: [number, number],
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number,
+        clearEvents: boolean
+    ): Promise<void> {
+        const { selectedThreadKey } = this._liveState;
+        if (selectedThreadKey === undefined) return;
+
+        const chatId = chat.chatId;
+        const eventsResponse = await this.api.chatEvents(
+            chat,
+            range,
+            startIndex,
+            ascending,
+            threadRootMessageIndex,
+            thread.latestEventIndex
+        );
+        if (chatId !== chat.chatId) {
+            // the chat has changed while we were loading the messages
+            return;
+        }
+
+        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            if (clearEvents) {
+                threadServerEventsStore.set([]);
+            }
+            const [newEvents, _] = await this.handleThreadEventsResponse(
+                chatId,
+                rootEvent,
+                eventsResponse
+            );
+
+            for (const event of newEvents) {
+                if (event.event.kind === "message") {
+                    unconfirmed.delete(selectedThreadKey, event.event.messageId);
+                }
+            }
+
+            threadServerEventsStore.update((events) => this.mergeServerEvents(events, newEvents));
+            this.makeRtcConnections(
+                this.user.userId,
+                chat,
+                this._liveState.threadEvents,
+                this._liveState.userStore
+            );
+
+            const isFollowedByMe =
+                this._liveState.threadsFollowedByMe[chat.chatId]?.has(threadRootMessageIndex) ??
+                false;
+            if (isFollowedByMe) {
+                const lastLoadedMessageIdx = this.lastMessageIndex(this._liveState.threadEvents);
+                if (lastLoadedMessageIdx !== undefined) {
+                    this.markThreadRead(chat.chatId, threadRootMessageIndex, lastLoadedMessageIdx);
+                }
+            }
+            this.dispatchEvent(new ThreadMessagesLoaded(ascending));
+        }
+    }
+    private async handleThreadEventsResponse(
+        chatId: string,
+        rootEvent: EventWrapper<Message>,
+        resp: EventsResponse<ChatEvent>
+    ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
+        if (resp === "events_failed") return [[], new Set()];
+
+        const events = resp.events.concat(resp.affectedEvents);
+
+        const userIds = this.userIdsFromEvents(events);
+        userIds.add(rootEvent.event.sender);
+        await this.updateUserStore(this.api, chatId, this.user.userId, userIds);
+
+        return [events, userIds];
+    }
+    private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const evt = events[i].event;
+            if (evt.kind === "message") {
+                return evt.messageIndex;
+            }
+        }
+        return undefined;
     }
     clearSelectedChat = clearSelectedChat;
     removeChat = removeChat;
@@ -1274,4 +1395,5 @@ export class OpenChat extends EventTarget {
     numberOfThreadsStore = numberOfThreadsStore;
     notificationStatus = notificationStatus;
     userMetrics = userMetrics;
+    threadEvents = threadEvents;
 }

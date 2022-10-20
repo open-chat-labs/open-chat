@@ -239,12 +239,9 @@
         bind:this={currentChatMessages}
         on:replyPrivatelyTo
         on:replyTo={replyTo}
-        on:openThread
         on:chatWith
         on:upgrade
         on:forward
-        on:closeThread
-        on:initiateThread
         {chat}
         {serverChat}
         {events}

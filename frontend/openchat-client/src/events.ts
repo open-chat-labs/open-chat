@@ -41,3 +41,24 @@ export class ChatUpdated extends Event {
         super("openchat_event");
     }
 }
+
+export class ThreadMessagesLoaded extends CustomEvent<boolean> {
+    constructor(ascending: boolean) {
+        super("openchat_event", { detail: ascending });
+    }
+}
+
+export class ThreadSelected extends CustomEvent<{
+    initiating: boolean;
+    threadRootMessageId: bigint;
+}> {
+    constructor(threadRootMessageId: bigint, initiating: boolean) {
+        super("openchat_event", { detail: { threadRootMessageId, initiating } });
+    }
+}
+
+export class ThreadClosed extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}

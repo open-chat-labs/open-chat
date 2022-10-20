@@ -2,7 +2,7 @@
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import type {
+    import {
         ChatEvent,
         ChatSummary,
         EnhancedReplyContext,
@@ -19,9 +19,10 @@
         RemoteUserSentMessage,
         RemoteUserToggledReaction,
         WebRtcMessage,
+        ThreadMessagesLoaded,
     } from "openchat-client";
     import { immutableStore } from "openchat-client";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import Fab from "../../Fab.svelte";
@@ -62,46 +63,67 @@
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
-    let serverEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
-
     $: currentChatMembers = client.currentChatMembers;
-    $: chatStateStore = client.chatStateStore;
     $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
     $: currentChatUserIds = client.currentChatUserIds;
     $: remainingStorage = client.remainingStorage;
     $: typing = client.typing;
-    $: userStore = client.userStore;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
     $: localMessageUpdates = client.localMessageUpdates;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: events = derived(
-        [serverEventsStore, unconfirmed, localMessageUpdates],
-        ([serverEvents, unconf, localUpdates]) => {
-            return client.mergeEventsAndLocalUpdates(
-                serverEvents,
-                unconf[unconfirmedKey]?.messages ?? [],
-                localUpdates
-            );
+    $: threadEvents = client.threadEvents;
+
+    onMount(() => {
+        client.addEventListener("openchat_event", clientEvent);
+
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
+    });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof ThreadMessagesLoaded) {
+            if (ev.detail && $withinThreshold) {
+                scrollBottom();
+            }
+            tick().then(() => {
+                if (focusMessageIndex !== undefined) {
+                    goToMessageIndex(focusMessageIndex);
+                }
+            });
         }
-    );
+        console.log("openchat_event received: ", ev);
+    }
 
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
+            console.log("thread selected in component");
+
+            // this we move into client.openThread
             previousRootEvent = rootEvent;
             initialised = false;
             if (thread !== undefined) {
-                loadThreadMessages(
-                    [0, thread.latestEventIndex],
-                    thread.latestEventIndex,
-                    false,
-                    threadRootMessageIndex,
-                    true
-                );
+                loading = true;
+                client
+                    .loadThreadMessages(
+                        chat,
+                        rootEvent,
+                        thread,
+                        [0, thread.latestEventIndex],
+                        thread.latestEventIndex,
+                        false,
+                        threadRootMessageIndex,
+                        true
+                    )
+                    .finally(() => {
+                        loading = false;
+                        initialised = true;
+                    });
             } else {
-                serverEventsStore.set([]);
+                client.clearThreadEvents();
             }
         } else {
             // we haven't changed the thread we are looking at, but the thread's latest index has changed (i.e. an event has been added by someone else)
@@ -109,13 +131,22 @@
                 thread !== undefined &&
                 thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
             ) {
-                loadThreadMessages(
-                    [0, thread.latestEventIndex],
-                    (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
-                    true,
-                    threadRootMessageIndex,
-                    false
-                );
+                loading = true;
+                client
+                    .loadThreadMessages(
+                        chat,
+                        rootEvent,
+                        thread,
+                        [0, thread.latestEventIndex],
+                        (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
+                        true,
+                        threadRootMessageIndex,
+                        false
+                    )
+                    .finally(() => {
+                        loading = false;
+                        initialised = true;
+                    });
             }
         }
     }
@@ -133,7 +164,7 @@
     $: canSend = client.canReplyInThread(chat);
     $: canReact = client.canReactToMessages(chat);
     $: messages = client
-        .groupEvents([rootEvent, ...$events])
+        .groupEvents([rootEvent, ...$threadEvents])
         .reverse() as EventWrapper<Message>[][][];
     $: preview = client.isPreviewing(chat);
     $: pollsAllowed = client.canCreatePolls(chat);
@@ -143,95 +174,8 @@
 
     const dispatch = createEventDispatcher();
 
-    async function loadThreadMessages(
-        range: [number, number],
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number,
-        clearEvents: boolean
-    ): Promise<void> {
-        if (thread === undefined || chat === undefined) return;
-        loading = true;
-
-        const chatId = chat.chatId;
-        const eventsResponse = await client.api.chatEvents(
-            chat,
-            range,
-            startIndex,
-            ascending,
-            threadRootMessageIndex,
-            thread.latestEventIndex
-        );
-        if (chatId !== chat.chatId) {
-            // the chat has changed while we were loading the messages
-            return;
-        }
-
-        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            if (clearEvents) {
-                serverEventsStore.set([]);
-            }
-            const [newEvents, _] = await handleEventsResponse(eventsResponse);
-
-            for (const event of newEvents) {
-                if (event.event.kind === "message") {
-                    unconfirmed.delete(unconfirmedKey, event.event.messageId);
-                }
-            }
-
-            serverEventsStore.update((events) => client.mergeServerEvents(events, newEvents));
-            client.makeRtcConnections(client.user.userId, chat, $events, $userStore);
-            if (ascending && $withinThreshold) {
-                scrollBottom();
-            }
-            tick().then(() => {
-                if (focusMessageIndex !== undefined) {
-                    goToMessageIndex(focusMessageIndex);
-                }
-            });
-
-            if (isFollowedByMe) {
-                const lastLoadedMessageIdx = lastMessageIndex($events);
-                if (lastLoadedMessageIdx !== undefined) {
-                    client.markThreadRead(
-                        chat.chatId,
-                        threadRootMessageIndex,
-                        lastLoadedMessageIdx
-                    );
-                }
-            }
-        }
-
-        initialised = true;
-        loading = false;
-    }
-
-    function lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-        for (let i = events.length - 1; i >= 0; i--) {
-            const evt = events[i].event;
-            if (evt.kind === "message") {
-                return evt.messageIndex;
-            }
-        }
-        return undefined;
-    }
-
     function calculateFromBottom(): number {
         return -(messagesDiv?.scrollTop ?? 0);
-    }
-
-    async function handleEventsResponse(
-        resp: EventsResponse<ChatEvent>
-    ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
-        if (resp === "events_failed") return [[], new Set()];
-
-        const events = resp.events.concat(resp.affectedEvents);
-
-        const userIds = client.userIdsFromEvents(events);
-        userIds.add(rootEvent.event.sender);
-        await client.updateUserStore(client.api, chat.chatId, client.user.userId, userIds);
-
-        return [events, userIds];
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -311,16 +255,19 @@
     }
 
     function remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
-        client.remoteUserToggledReaction($events, message);
+        client.remoteUserToggledReaction($threadEvents, message);
     }
 
     function remoteUserSentMessage(message: RemoteUserSentMessage) {
-        const existing = client.findMessageById(message.messageEvent.event.messageId, $events);
+        const existing = client.findMessageById(
+            message.messageEvent.event.messageId,
+            $threadEvents
+        );
         if (existing !== undefined) {
             return;
         }
 
-        const [eventIndex, messageIndex] = getNextEventAndMessageIndexes($events);
+        const [eventIndex, messageIndex] = getNextEventAndMessageIndexes($threadEvents);
         unconfirmed.add(unconfirmedKey, {
             ...message.messageEvent,
             index: eventIndex,
@@ -349,7 +296,7 @@
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes($events);
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes($threadEvents);
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
@@ -411,7 +358,8 @@
     function confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(unconfirmedKey, candidate.messageId)) {
             const confirmed = client.mergeSendMessageResponse(candidate, resp);
-            serverEventsStore.update((events) => client.mergeServerEvents(events, [confirmed]));
+            // FIXME - need to sort this out
+            // serverEventsStore.update((events) => client.mergeServerEvents(events, [confirmed]));
         }
     }
 

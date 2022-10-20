@@ -9,20 +9,21 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
-    import type {
+    import {
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
-        EventWrapper,
         GroupChatSummary,
         GroupRules,
         Message,
         Questions,
         WebRtcMessage,
         OpenChat,
+        ThreadSelected,
+        ThreadClosed,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -154,7 +155,21 @@
     onMount(() => {
         client.initWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
+        client.addEventListener("openchat_event", clientEvent);
+
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
     });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof ThreadSelected) {
+            openThread(ev.detail);
+        }
+        if (ev instanceof ThreadClosed) {
+            closeThread();
+        }
+    }
 
     function routeRtcMessages(msg: WebRtcMessage) {
         const fromChatId = client.filterWebRtcMessage(msg);
@@ -595,24 +610,18 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+    function openThread(ev: { threadRootMessageId: bigint; initiating: boolean }) {
         if ($selectedChatId !== undefined) {
+            if (ev.initiating) {
+                creatingThread = true;
+                replace(`/${$selectedChatId}`);
+            }
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    rootEvent: ev.detail.rootEvent,
+                    threadRootMessageId: ev.threadRootMessageId,
                 },
             ];
-        }
-    }
-
-    function initiateThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
-    ) {
-        if ($selectedChatId !== undefined) {
-            creatingThread = true;
-            replace(`/${$selectedChatId}`);
-            openThread(ev);
         }
     }
 
@@ -845,7 +854,6 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:initiateThread={initiateThread}
             on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
@@ -855,7 +863,6 @@
             on:addMembers={addMembers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:openThread={openThread}
             on:showMembers={showMembers}
             on:updateChat={updateChat}
             on:joinGroup={joinGroup}
@@ -866,7 +873,6 @@
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
-            on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}

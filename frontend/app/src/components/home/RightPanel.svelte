@@ -48,7 +48,6 @@
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatRules = client.currentChatRules;
-    $: focusThreadMessageIndex = client.focusThreadMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
@@ -330,7 +329,7 @@
 
     $: threadRootEvent =
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
-            ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
+            ? findMessage($eventsStore, lastState.threadRootMessageId)
             : undefined;
 </script>
 

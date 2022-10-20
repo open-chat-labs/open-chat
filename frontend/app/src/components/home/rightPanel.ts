@@ -17,7 +17,7 @@ export type NoPanel = {
 
 export type MessageThreadPanel = {
     kind: "message_thread_panel";
-    rootEvent: EventWrapper<Message>;
+    threadRootMessageId: bigint;
 };
 
 export type GroupDetailsPanel = {
