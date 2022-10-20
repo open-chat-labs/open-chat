@@ -30,12 +30,6 @@ export class LoadedMessageWindow extends CustomEvent<number> {
     }
 }
 
-export class MessageSentByOther extends CustomEvent<EventWrapper<Message>> {
-    constructor(messageEvent: EventWrapper<Message>) {
-        super("openchat_event", { detail: messageEvent });
-    }
-}
-
 export class ChatUpdated extends Event {
     constructor() {
         super("openchat_event");
