@@ -211,7 +211,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        client.setSelectedChat(client.api, chat, messageIndex);
+        client.setSelectedChat(chat, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }

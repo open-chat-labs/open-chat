@@ -950,7 +950,9 @@ export class OpenChat extends EventTarget {
     filterWebRtcMessage = filterWebRtcMessage;
     parseWebRtcMessage = parseWebRtcMessage;
     createDirectChat = createDirectChat;
-    setSelectedChat = setSelectedChat;
+    setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
+        setSelectedChat(this.api, chat, messageIndex);
+    }
     clearSelectedChat = clearSelectedChat;
     removeChat = removeChat;
     canSendMessages = canSendMessages;
