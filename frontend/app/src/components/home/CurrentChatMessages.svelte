@@ -29,7 +29,6 @@
         MessageReadState,
         RemoteUserSentMessage,
         LoadedNewMessages,
-        MessageSentByOther,
         ChatUpdated,
         LoadedMessageWindow,
         LoadedPreviousMessages,
@@ -191,9 +190,6 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof MessageSentByOther) {
-            onLoadedNewMessages(true);
         }
         if (ev instanceof LoadedPreviousMessages) {
             onLoadedPreviousMessages();
