@@ -16,7 +16,8 @@ export class DataClient implements IDataClient {
     static create(identity: Identity, config: OpenChatConfig): IDataClient {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity, host });
-        if (process.env.NODE_ENV !== "production") {
+        const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
+        if (!isMainnet) {
             agent.fetchRootKey();
         }
         const openStorageAgent = new OpenStorageAgent(
