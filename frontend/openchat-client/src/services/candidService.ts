@@ -1,7 +1,6 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { OpenChatConfig } from "../config";
-import { rollbar } from "../utils/logging";
 import {
     AuthError,
     ReplicaNotUpToDateError,
@@ -13,7 +12,6 @@ const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
 
 function debug(msg: string): void {
-    rollbar.debug(msg);
     console.log(msg);
 }
 

@@ -3,7 +3,7 @@
     import { fade } from "svelte/transition";
     import Link from "./Link.svelte";
     import { rtlStore } from "../stores/rtl";
-    import { rollbar } from "../utils/logging";
+    import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
@@ -32,7 +32,7 @@
                 calculatePosition();
             }
         } catch (e: any) {
-            rollbar.error("Failed to open modal", e);
+            logger.error("Failed to open modal", e);
             onClose();
         }
     });

@@ -7,7 +7,7 @@
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN, ONE_GB } from "openchat-client";
-    import { rollbar } from "utils/logging";
+    import { logger } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import type { OpenChat } from "openchat-client";
@@ -50,7 +50,7 @@
             })
             .catch((err) => {
                 error = $_("unableToRefreshAccountBalance", { values: { token } });
-                rollbar.error("Unable to refresh user's ICP account balance", err);
+                logger.error("Unable to refresh user's ICP account balance", err);
             })
             .finally(() => (refreshing = false));
     }
@@ -86,12 +86,12 @@
                     confirmed = true;
                 } else {
                     error = $_("register.unableToConfirmFee");
-                    rollbar.error("Unable to upgrade storage", resp);
+                    logger.error("Unable to upgrade storage", resp);
                 }
             })
             .catch((err) => {
                 error = $_("register.unableToConfirmFee");
-                rollbar.error("Unable to upgrade storage", err);
+                logger.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
     }

@@ -21,7 +21,6 @@ import {
     clearServerEvents,
 } from "../../stores/chat";
 import { userStore } from "../../stores/user";
-import { rollbar } from "../../utils/logging";
 import { toastStore } from "../../stores/toast";
 import { localMessageUpdates } from "../../stores/localMessageUpdates";
 import {
@@ -205,13 +204,12 @@ export function editMessage(
         .editMessage(chat, msg, threadRootMessageIndex)
         .then((resp) => {
             if (resp !== "success") {
-                rollbar.warn("Error response editing", resp);
                 toastStore.showFailureToast("errorEditingMessage");
                 localMessageUpdates.revertEditedContent(msg.messageId.toString());
             }
         })
         .catch((err) => {
-            rollbar.error("Exception sending message", err);
+            api.logError("Exception sending message", err);
             toastStore.showFailureToast("errorEditingMessage");
             localMessageUpdates.revertEditedContent(msg.messageId.toString());
         });
@@ -237,13 +235,13 @@ export function registerPollVote(
         .then((resp) => {
             if (resp !== "success") {
                 toastStore.showFailureToast("poll.voteFailed");
-                rollbar.error("Poll vote failed: ", resp);
+                api.logError("Poll vote failed: ", resp);
                 console.log("poll vote failed: ", resp);
             }
         })
         .catch((err) => {
             toastStore.showFailureToast("poll.voteFailed");
-            rollbar.error("Poll vote failed: ", err);
+            api.logError("Poll vote failed: ", err);
             console.log("poll vote failed: ", err);
         });
 }
@@ -282,7 +280,7 @@ export function blockUser(api: ServiceContainer, chatId: string, userId: string)
         })
         .catch((err) => {
             toastStore.showFailureToast("blockUserFailed");
-            rollbar.error("Error blocking user", err);
+            api.logError("Error blocking user", err);
             unblockUserLocally(chatId, userId);
         });
 }
@@ -622,13 +620,13 @@ export function unpinMessage(
             .then((resp) => {
                 if (resp !== "success" && resp !== "no_change") {
                     toastStore.showFailureToast("unpinMessageFailed");
-                    rollbar.error("Unpin message failed: ", resp);
+                    api.logError("Unpin message failed: ", resp);
                     addPinnedMessage(clientChat.chatId, messageIndex);
                 }
             })
             .catch((err) => {
                 toastStore.showFailureToast("unpinMessageFailed");
-                rollbar.error("Unpin message failed: ", err);
+                api.logError("Unpin message failed: ", err);
                 addPinnedMessage(clientChat.chatId, messageIndex);
             });
     }
@@ -645,13 +643,13 @@ export function pinMessage(
             .then((resp) => {
                 if (resp !== "success" && resp !== "no_change") {
                     toastStore.showFailureToast("pinMessageFailed");
-                    rollbar.error("Pin message failed: ", resp);
+                    api.logError("Pin message failed: ", resp);
                     removePinnedMessage(clientChat.chatId, messageIndex);
                 }
             })
             .catch((err) => {
                 toastStore.showFailureToast("pinMessageFailed");
-                rollbar.error("Pin message failed: ", err);
+                api.logError("Pin message failed: ", err);
                 removePinnedMessage(clientChat.chatId, messageIndex);
             });
     }
@@ -781,7 +779,6 @@ export function forwardMessage(
                 trackEvent("forward_message");
             } else {
                 removeMessage(user.userId, clientChat, msg.messageId, user.userId, undefined);
-                rollbar.warn("Error response forwarding message", resp);
                 toastStore.showFailureToast("errorSendingMessage");
             }
         })
@@ -789,7 +786,7 @@ export function forwardMessage(
             removeMessage(user.userId, clientChat, evt.event.messageId, user.userId, undefined);
             console.log(err);
             toastStore.showFailureToast("errorSendingMessage");
-            rollbar.error("Exception forwarding message", err);
+            api.logError("Exception forwarding message", err);
         });
 
     return sendMessage(api, user, serverChat, clientChat, currentEvents, evt, undefined);
@@ -837,7 +834,6 @@ export function sendMessageWithAttachment(
                     user.userId,
                     threadRootMessageIndex
                 );
-                rollbar.warn("Error response sending message", resp);
                 toastStore.showFailureToast("errorSendingMessage");
             }
         })
@@ -851,7 +847,7 @@ export function sendMessageWithAttachment(
             );
             console.log(err);
             toastStore.showFailureToast("errorSendingMessage");
-            rollbar.error("Exception sending message", err);
+            api.logError("Exception sending message", err);
         });
 
     return sendMessage(

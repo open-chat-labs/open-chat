@@ -6,7 +6,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
@@ -43,7 +43,6 @@
                 )
                 .then((resp) => {
                     if (resp === "events_failed") {
-                        rollbar.warn("Unable to load pinned messages: ", resp);
                         messages = { kind: "error", error: "Unable to load pinned messages" };
                     } else {
                         messages = {
@@ -55,7 +54,7 @@
                     }
                 })
                 .catch((err) => {
-                    rollbar.error("Unable to load pinned messages: ", err);
+                    logger.error("Unable to load pinned messages: ", err);
                     messages = { kind: "error", error: err.toString() };
                 });
         } else {

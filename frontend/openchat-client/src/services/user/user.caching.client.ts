@@ -71,7 +71,6 @@ import { messagesRead } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "../../stores/user";
 import { UserIndexClient } from "../userIndex/userIndex.client";
-import { rollbar } from "../../utils/logging";
 import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
@@ -96,7 +95,7 @@ export class CachingUserClient implements IUserClient {
 
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
         setCachedChats(this.db, this.userId, resp).catch((err) =>
-            rollbar.error("Error setting cached chats", err)
+            this.config.logger.error("Error setting cached chats", err)
         );
         return resp;
     }
@@ -107,7 +106,7 @@ export class CachingUserClient implements IUserClient {
         threadRootMessageIndex?: number
     ): EventsResponse<T> {
         setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
-            rollbar.error("Error writing cached group events", err)
+            this.config.logger.error("Error writing cached group events", err)
         );
         return resp;
     }
@@ -452,7 +451,7 @@ export class CachingUserClient implements IUserClient {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         removeCachedChat(this.db, this.userId, chatId).catch((err) =>
-            rollbar.error("Failed to remove chat from cache", err)
+            this.config.logger.error("Failed to remove chat from cache", err)
         );
         return this.client.leaveGroup(chatId);
     }

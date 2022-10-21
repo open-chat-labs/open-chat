@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { rollbar } from "utils/logging";
+import { logger } from "utils/logging";
 import { fontSizeScale } from "./fontSize";
 import { rtlStore } from "./rtl";
 import { mobileWidth } from "./screenDimensions";
@@ -14,7 +14,7 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     if (menu !== undefined) {
         if (!menuAnchor) {
             // debug logging - will remove later
-            rollbar.error("trying to remove menu when menu anchor is null");
+            logger.error("trying to remove menu when menu anchor is null");
         } else {
             if (menuAnchor.contains(menu)) {
                 menuAnchor.removeChild(menu);

@@ -19,4 +19,7 @@ export type OpenChatConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     i18nFormatter: MessageFormatter;
+    logger: {
+        error(message?: unknown, ...optionalParams: unknown[]): void;
+    };
 };

@@ -29,7 +29,7 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import Rules from "./Rules.svelte";
     import type {
         OpenChat,
@@ -263,7 +263,7 @@
                 }
             })
             .catch((err) => {
-                rollbar.error("Update group failed: ", err);
+                logger.error("Update group failed: ", err);
                 toastStore.showFailureToast("groupUpdateFailed");
             });
     }

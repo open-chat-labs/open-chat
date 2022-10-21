@@ -19,6 +19,7 @@
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
     import { isCanisterUrl } from "../utils/urls";
+    import { logger } from "../utils/logging";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -43,6 +44,7 @@
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
+            logger: logger,
         });
     }
 

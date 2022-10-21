@@ -14,7 +14,6 @@ import type {
     SendMessageResponse,
     SendMessageSuccess,
 } from "../domain/chat/chat";
-import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
 const CACHE_VERSION = 47;
@@ -81,39 +80,31 @@ export function openCache(principal: string): Database | undefined {
     if (process.env.NODE_ENV === "test") {
         return undefined;
     }
-    try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-            upgrade(db, _oldVersion, _newVersion) {
-                try {
-                    if (db.objectStoreNames.contains("chat_events")) {
-                        db.deleteObjectStore("chat_events");
-                    }
-                    if (db.objectStoreNames.contains("thread_events")) {
-                        db.deleteObjectStore("thread_events");
-                    }
-                    if (db.objectStoreNames.contains("chats")) {
-                        db.deleteObjectStore("chats");
-                    }
-                    if (db.objectStoreNames.contains("group_details")) {
-                        db.deleteObjectStore("group_details");
-                    }
-                    const chatEvents = db.createObjectStore("chat_events");
-                    chatEvents.createIndex("messageIdx", "messageKey");
-                    const threadEvents = db.createObjectStore("thread_events");
-                    threadEvents.createIndex("messageIdx", "messageKey");
-                    db.createObjectStore("chats");
-                    db.createObjectStore("group_details");
-                    if (!db.objectStoreNames.contains("soft_disabled")) {
-                        db.createObjectStore("soft_disabled");
-                    }
-                } catch (err) {
-                    rollbar.error("Unable to upgrade indexDB", err as Error);
-                }
-            },
-        });
-    } catch (err) {
-        rollbar.error("Unable to open indexDB", err as Error);
-    }
+    return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
+        upgrade(db, _oldVersion, _newVersion) {
+            if (db.objectStoreNames.contains("chat_events")) {
+                db.deleteObjectStore("chat_events");
+            }
+            if (db.objectStoreNames.contains("thread_events")) {
+                db.deleteObjectStore("thread_events");
+            }
+            if (db.objectStoreNames.contains("chats")) {
+                db.deleteObjectStore("chats");
+            }
+            if (db.objectStoreNames.contains("group_details")) {
+                db.deleteObjectStore("group_details");
+            }
+            const chatEvents = db.createObjectStore("chat_events");
+            chatEvents.createIndex("messageIdx", "messageKey");
+            const threadEvents = db.createObjectStore("thread_events");
+            threadEvents.createIndex("messageIdx", "messageKey");
+            db.createObjectStore("chats");
+            db.createObjectStore("group_details");
+            if (!db.objectStoreNames.contains("soft_disabled")) {
+                db.createObjectStore("soft_disabled");
+            }
+        },
+    });
 }
 
 export async function removeCachedChat(
@@ -470,9 +461,7 @@ export function setCachedMessageFromSendResponse(
 
         const event = messageToEvent(message, resp);
 
-        setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex).catch((err) =>
-            rollbar.error("Unable to write message to cache: ", err)
-        );
+        setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
 
         return [resp, message];
     };
@@ -487,9 +476,7 @@ export function setCachedMessageFromNotification(
         throw new Error("Unable to open indexDB, cannot set message from notification");
     }
 
-    setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex).catch((err) =>
-        rollbar.error("Unable to write notification message to the cache", err)
-    );
+    setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex);
 }
 
 async function setCachedMessageIfNotExists(

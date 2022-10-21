@@ -11,7 +11,7 @@
         NewGroupState,
     } from "openchat-client";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import { push } from "svelte-spa-router";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import type { OpenChat } from "openchat-client";
@@ -92,14 +92,14 @@
                             onGroupCreated(resp.canisterId);
                         })
                         .catch((err) => {
-                            rollbar.error("Unable to add members to group", err);
+                            logger.error("Unable to add members to group", err);
                             toastStore.showFailureToast("addMembersFailed");
                             newGroupState = "group_form";
                         });
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to create group", err);
+                logger.error("Unable to create group", err);
                 toastStore.showFailureToast("groupCreationFailed");
                 newGroupState = "group_form";
             })

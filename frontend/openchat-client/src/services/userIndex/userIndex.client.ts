@@ -53,7 +53,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     static create(identity: Identity, config: OpenChatConfig): IUserIndexClient {
         return config.enableClientCaching && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(new UserIndexClient(identity, config))
+            ? new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger)
             : new UserIndexClient(identity, config);
     }
 

@@ -29,7 +29,6 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
-import { rollbar } from "../utils/logging";
 import type { CreatedUser } from "../domain/user/user";
 import DRange from "drange";
 import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
@@ -540,7 +539,7 @@ async function loadChats(api: ServiceContainer) {
             chatsInitialised.set(true);
         }
     } catch (err) {
-        rollbar.error("Error loading chats", err as Error);
+        api.logError("Error loading chats", err as Error);
         throw err;
     } finally {
         chatsLoading.set(false);

@@ -19,7 +19,7 @@ import type {
 import { groupBy } from "../../utils/list";
 import { isUserSummary } from "../../utils/user";
 import { profile } from "../common/profiling";
-import { rollbar } from "../../utils/logging";
+import type { Logger } from "../../utils/logging";
 import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
 
 /**
@@ -27,7 +27,7 @@ import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCac
  * indexDB for holding users
  */
 export class CachingUserIndexClient implements IUserIndexClient {
-    constructor(private client: IUserIndexClient) {}
+    constructor(private client: IUserIndexClient, private logger: Logger) {}
 
     @profile("userIndexCachingClient")
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
@@ -52,7 +52,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         );
 
         setCachedUsers(mergedResponse.users.filter(isUserSummary)).catch((err) =>
-            rollbar.error("Failed to save users to the cache", err)
+            this.logger.error("Failed to save users to the cache", err)
         );
 
         return mergedResponse;

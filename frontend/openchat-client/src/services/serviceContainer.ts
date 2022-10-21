@@ -116,7 +116,7 @@ import { snsFunctions } from "../stores/snsFunctions";
 import { userCreatedStore } from "../stores/userCreated";
 import { selectedAuthProviderStore } from "../stores/authProviders";
 import { AuthProvider } from "../domain/auth";
-import { rollbar } from "../utils/logging";
+import type { Logger } from "../utils/logging";
 import type { OpenChatConfig } from "../config";
 
 export const apiKey = Symbol();
@@ -136,8 +136,10 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
+    private _logger: Logger;
 
     constructor(private identity: Identity, private config: OpenChatConfig) {
+        this._logger = config.logger;
         if (config.enableClientCaching) {
             this.db = initDb(identity.getPrincipal().toString());
         }
@@ -161,6 +163,10 @@ export class ServiceContainer implements MarkMessagesRead {
                 userStore.set(lookup);
             });
         }
+    }
+
+    logError(message?: unknown, ...optionalParams: unknown[]): void {
+        this._logger.error(message, optionalParams);
     }
 
     public set groupInvite(value: GroupInvite) {
@@ -606,10 +612,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
             const originalReplyContext = ev.event.repliesTo;
             let rehydratedReplyContext = undefined;
-            if (
-                ev.event.repliesTo &&
-                ev.event.repliesTo.kind === "raw_reply_context"
-            ) {
+            if (ev.event.repliesTo && ev.event.repliesTo.kind === "raw_reply_context") {
                 const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
                 const messageEvents = missingReplies[chatId];
                 const idx = ev.event.repliesTo.eventIndex;
@@ -626,12 +629,7 @@ export class ServiceContainer implements MarkMessagesRead {
                         edited: msg.edited,
                     };
                 } else {
-                    console.error(
-                        "Reply context not found, this should never happen",
-                        defaultChatId,
-                        chatId
-                    );
-                    rollbar.error(
+                    this._logger.error(
                         "Reply context not found, this should never happen",
                         defaultChatId,
                         chatId
@@ -645,9 +643,9 @@ export class ServiceContainer implements MarkMessagesRead {
                     event: {
                         ...ev.event,
                         content: rehydratedContent,
-                        repliesTo: rehydratedReplyContext ?? originalReplyContext
-                    }
-                }
+                        repliesTo: rehydratedReplyContext ?? originalReplyContext,
+                    },
+                };
             }
         }
         return ev;
@@ -674,7 +672,9 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientEventIndex
         );
         resp.events = resp.events.map((e) => this.rehydrateEvent(e, currentChatId, missing));
-        resp.affectedEvents = resp.affectedEvents.map((e) => this.rehydrateEvent(e, currentChatId, missing));
+        resp.affectedEvents = resp.affectedEvents.map((e) =>
+            this.rehydrateEvent(e, currentChatId, missing)
+        );
         return resp;
     }
 
@@ -1297,7 +1297,9 @@ export class ServiceContainer implements MarkMessagesRead {
             latestClientMainEventIndex
         );
 
-        const latestReplies = thread.latestReplies.map((r) => this.rehydrateEvent(r, thread.chatId, threadMissing));
+        const latestReplies = thread.latestReplies.map((r) =>
+            this.rehydrateEvent(r, thread.chatId, threadMissing)
+        );
         const rootMessage = this.rehydrateEvent(thread.rootMessage, thread.chatId, rootMissing);
 
         return {

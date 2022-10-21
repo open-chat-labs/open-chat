@@ -1,6 +1,7 @@
+import type { Logger } from "openchat-client";
 import Rollbar from "rollbar";
 
-export const rollbar = Rollbar.init({
+const rollbar = Rollbar.init({
     accessToken: process.env.ROLLBAR_ACCESS_TOKEN,
     captureUncaught: true,
     autoInstrument: false,
@@ -28,3 +29,9 @@ export function debug<T>(data: T, msg?: string): T {
     }
     return data;
 }
+
+export const logger: Logger = {
+    error(message?: unknown, ...optionalParams: unknown[]): void {
+        rollbar.error(message as string, optionalParams);
+    },
+};
