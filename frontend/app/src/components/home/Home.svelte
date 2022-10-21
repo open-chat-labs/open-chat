@@ -628,10 +628,6 @@
         }
     }
 
-    function updateChat(ev: CustomEvent<ChatSummary>) {
-        client.addOrReplaceChat(ev.detail);
-    }
-
     function showPinned() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
@@ -845,7 +841,6 @@
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:showMembers={showMembers}
-            on:updateChat={updateChat}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:cancelRecommendations={cancelRecommendations}
@@ -870,7 +865,6 @@
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:makeGroupPrivate={triggerConfirm}
-            on:updateChat={updateChat}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -893,7 +887,6 @@
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:makeGroupPrivate={triggerConfirm}
-                on:updateChat={updateChat}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>

@@ -79,7 +79,6 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
-    $: currentChatUserIds = client.currentChatUserIds;
     $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
 
@@ -126,17 +125,7 @@
                         const timer = window.setTimeout(() => {
                             if (chatId === chat.chatId) {
                                 client.markMessageRead(chat.chatId, idx, id);
-
-                                if (chat.kind === "direct_chat") {
-                                    const rtc: WebRtcMessage = {
-                                        kind: "remote_user_read_message",
-                                        chatType: chat.kind,
-                                        messageId: id,
-                                        chatId: chat.chatId,
-                                        userId: user.userId,
-                                    };
-                                    client.sendRtcMessage([...$currentChatUserIds], rtc);
-                                }
+                                client.broadcastMessageRead(chat, id);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);

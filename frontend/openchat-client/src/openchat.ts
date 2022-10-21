@@ -77,14 +77,11 @@ import {
     groupMessagesByDate,
     makeRtcConnections,
     markAllRead,
-    mergeEventsAndLocalUpdates,
-    mergeSendMessageResponse,
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
     newMessageId,
     sameUser,
-    serialiseMessageForRtc,
     startTyping,
     stopTyping,
     userIdsFromEvents,
@@ -179,7 +176,6 @@ import {
     currentChatReplyingTo,
     currentChatRules,
     currentChatTextContent,
-    currentChatUserIds,
     currentUserStore,
     eventsStore,
     focusMessageIndex,
@@ -226,7 +222,6 @@ import { profileStore } from "./stores/profiling";
 import {
     percentageStorageRemaining,
     percentageStorageUsed,
-    remainingStorage,
     storageInGb,
     storageStore,
     updateStorageLimit,
@@ -350,11 +345,11 @@ export class OpenChat extends EventTarget {
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
-            this.handleMessageSentByOther(chat, latestMessage);
+            handleMessageSentByOther(this.api, this.user, chat, latestMessage);
         }
 
-        this.refreshAffectedEvents(chat, affectedEvents);
-        this.updateDetails(chat, this._liveState.events);
+        refreshAffectedEvents(this.api, this.user, chat, affectedEvents);
+        updateDetails(this.api, this.user, chat, this._liveState.events);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -578,11 +573,11 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.isRead(chatId, messageIndex, messageId);
     }
 
-    sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
+    private sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
         rtcConnectionsManager.sendMessage(userIds, message);
     }
 
-    initWebRtc(): void {
+    private initWebRtc(): void {
         rtcConnectionsManager.init(this.user.userId).then((_) => {
             rtcConnectionsManager.subscribe((msg) =>
                 this.handleWebRtcMessage(msg as WebRtcMessage)
@@ -913,13 +908,8 @@ export class OpenChat extends EventTarget {
     getMessageContent = getMessageContent;
     getStorageRequiredForMessage = getStorageRequiredForMessage;
     groupEvents = groupEvents;
-    makeRtcConnections = makeRtcConnections;
-    mergeSendMessageResponse = mergeSendMessageResponse;
-    mergeServerEvents = mergeServerEvents;
-    serialiseMessageForRtc = serialiseMessageForRtc;
     startTyping = startTyping;
     stopTyping = stopTyping;
-    mergeEventsAndLocalUpdates = mergeEventsAndLocalUpdates;
     isPreviewing = isPreviewing;
     deleteMessage(
         chat: ChatSummary,
@@ -1013,8 +1003,6 @@ export class OpenChat extends EventTarget {
             setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
         }
     };
-    filterWebRtcMessage = filterWebRtcMessage;
-    parseWebRtcMessage = parseWebRtcMessage;
     createDirectChat = createDirectChat;
     setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
         setSelectedChat(this.api, chat, messageIndex);
@@ -1024,12 +1012,12 @@ export class OpenChat extends EventTarget {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(selectedServerChat, selectedChat, focusMessageIndex).then(
                     () => {
-                        this.loadDetails(chat, events);
+                        loadDetails(this.api, this.user, chat, events);
                     }
                 );
             } else {
                 this.loadPreviousMessages(selectedServerChat, selectedChat).then(() => {
-                    this.loadDetails(selectedChat, events);
+                    loadDetails(this.api, this.user, selectedChat, events);
                 });
             }
         }
@@ -1094,8 +1082,8 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            threadServerEventsStore.update((events) => this.mergeServerEvents(events, newEvents));
-            this.makeRtcConnections(
+            threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
+            makeRtcConnections(
                 this.user.userId,
                 chat,
                 this._liveState.threadEvents,
@@ -1178,24 +1166,6 @@ export class OpenChat extends EventTarget {
             return res;
         });
     }
-    handleMessageSentByOther(
-        clientChat: ChatSummary,
-        messageEvent: EventWrapper<Message>
-    ): Promise<void> {
-        return handleMessageSentByOther(this.api, this.user, clientChat, messageEvent);
-    }
-    refreshAffectedEvents(clientChat: ChatSummary, affectedEventIndexes: number[]): Promise<void> {
-        return refreshAffectedEvents(this.api, this.user, clientChat, affectedEventIndexes);
-    }
-    updateDetails(
-        clientChat: ChatSummary,
-        currentEvents: EventWrapper<ChatEvent>[]
-    ): Promise<void> {
-        return updateDetails(this.api, this.user, clientChat, currentEvents);
-    }
-    loadDetails(clientChat: ChatSummary, currentEvents: EventWrapper<ChatEvent>[]): Promise<void> {
-        return loadDetails(this.api, this.user, clientChat, currentEvents);
-    }
     messageIsReadByThem = messageIsReadByThem;
     pinMessage(clientChat: ChatSummary, messageIndex: number): void {
         return pinMessage(this.api, clientChat, messageIndex);
@@ -1206,8 +1176,6 @@ export class OpenChat extends EventTarget {
     toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
     sameUser = sameUser;
-    nextEventAndMessageIndexes = nextEventAndMessageIndexes;
-    nextEventAndMessageIndexesForThread = nextEventAndMessageIndexesForThread;
 
     forwardMessage(
         serverChat: ChatSummary,
@@ -1223,11 +1191,11 @@ export class OpenChat extends EventTarget {
             content.caption = "";
         }
 
-        const [nextEventIndex, nextMessageIndex] = this.nextEventAndMessageIndexes();
+        const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
 
         msg = {
             kind: "message",
-            messageId: this.newMessageId(),
+            messageId: newMessageId(),
             messageIndex: nextMessageIndex,
             sender: this.user.userId,
             content,
@@ -1270,8 +1238,8 @@ export class OpenChat extends EventTarget {
 
             const [nextEventIndex, nextMessageIndex] =
                 threadRootMessageIndex !== undefined
-                    ? this.nextEventAndMessageIndexesForThread(currentEvents)
-                    : this.nextEventAndMessageIndexes();
+                    ? nextEventAndMessageIndexesForThread(currentEvents)
+                    : nextEventAndMessageIndexes();
 
             const msg = this.createMessage(
                 this.user.userId,
@@ -1303,8 +1271,6 @@ export class OpenChat extends EventTarget {
         return Promise.resolve(undefined);
     }
     canForward = canForward;
-    newMessageId = newMessageId;
-    removeMessage = removeMessage;
     canLeaveGroup = canLeaveGroup;
     canAddMembers = canAddMembers;
     getFirstUnreadMention = getFirstUnreadMention;
@@ -1392,7 +1358,7 @@ export class OpenChat extends EventTarget {
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if (this._liveState.selectedChatId === chatId) {
-                this.handleMessageSentByOther(chat, m);
+                handleMessageSentByOther(this.api, this.user, chat, m);
             }
         });
     }
@@ -1417,11 +1383,11 @@ export class OpenChat extends EventTarget {
     }
 
     handleWebRtcMessage(msg: WebRtcMessage): void {
-        const fromChatId = this.filterWebRtcMessage(msg);
+        const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
         // this means we have a selected chat but it doesn't mean it's the same as this message
-        const parsedMsg = this.parseWebRtcMessage(fromChatId, msg);
+        const parsedMsg = parseWebRtcMessage(fromChatId, msg);
         const { selectedChat, threadEvents, events } = this._liveState;
 
         if (
@@ -1477,7 +1443,7 @@ export class OpenChat extends EventTarget {
                 localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
                 break;
             case "remote_user_removed_message":
-                this.removeMessage(
+                removeMessage(
                     this.user.userId,
                     chat,
                     msg.messageId,
@@ -1510,8 +1476,8 @@ export class OpenChat extends EventTarget {
 
         const [eventIndex, messageIndex] =
             threadRootMessageIndex !== undefined
-                ? this.nextEventAndMessageIndexesForThread(events)
-                : this.nextEventAndMessageIndexes();
+                ? nextEventAndMessageIndexesForThread(events)
+                : nextEventAndMessageIndexes();
 
         const key =
             threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
@@ -1737,6 +1703,23 @@ export class OpenChat extends EventTarget {
         return this.api.createGroupChat(candidate);
     }
 
+    markThreadSummaryUpdated(threadRootMessageId: string, summary: ThreadSummary): void {
+        localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
+    }
+
+    broadcastMessageRead(chat: ChatSummary, messageId: bigint): void {
+        if (chat.kind === "direct_chat") {
+            const rtc: WebRtcMessage = {
+                kind: "remote_user_read_message",
+                chatType: chat.kind,
+                messageId: messageId,
+                chatId: chat.chatId,
+                userId: this.user.userId,
+            };
+            this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+        }
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -1745,7 +1728,6 @@ export class OpenChat extends EventTarget {
     percentageStorageUsed = percentageStorageUsed;
     storageStore = storageStore;
     storageInGb = storageInGb;
-    remainingStorage = remainingStorage;
     userStore = userStore;
     userCreatedStore = userCreatedStore;
     selectedAuthProviderStore = selectedAuthProviderStore;
@@ -1756,13 +1738,11 @@ export class OpenChat extends EventTarget {
     chatSummariesStore = chatSummariesStore;
     typersByThread = byThread;
     typing = typing;
-    currentChatUserIds = currentChatUserIds;
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
     currentChatBlockedUsers = currentChatBlockedUsers;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
-    localMessageUpdates = localMessageUpdates;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;

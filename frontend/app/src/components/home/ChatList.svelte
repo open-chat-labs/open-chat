@@ -45,7 +45,6 @@
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
-    $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {

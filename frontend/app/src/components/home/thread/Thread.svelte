@@ -60,7 +60,6 @@
     $: typing = client.typing;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
-    $: localMessageUpdates = client.localMessageUpdates;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
 
@@ -165,7 +164,7 @@
             latestEventIndex: event.index,
             latestEventTimestamp: event.timestamp,
         };
-        localMessageUpdates.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
     }
 
     function calculateFromBottom(): number {
