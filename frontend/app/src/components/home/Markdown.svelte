@@ -192,5 +192,6 @@
         font-size: 3.5rem;
         line-height: 3.5rem;
         color: var(--markdown-fg-bright);
+        @include pop(300ms);
     }
 </style>

@@ -338,8 +338,7 @@
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
-            on:showMembers
-            on:updateChat />
+            on:showMembers />
     {:else if lastState.kind === "add_members"}
         <AddMembers
             busy={savingMembers}

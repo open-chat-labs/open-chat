@@ -259,7 +259,7 @@
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                     };
-                    dispatch("updateChat", originalGroup);
+                    client.addOrReplaceChat(originalGroup);
                 }
             })
             .catch((err) => {
@@ -304,7 +304,7 @@
                         ...originalGroup,
                         permissions: updatedGroup.permissions,
                     };
-                    dispatch("updateChat", originalGroup);
+                    client.addOrReplaceChat(originalGroup);
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
                 }
