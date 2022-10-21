@@ -29,12 +29,12 @@ export async function subscribeToNotifications(
     client.notificationStatus.subscribe((status) => {
         switch (status) {
             case "granted":
-                trySubscribe(client.api);
+                trySubscribe(client);
                 break;
             case "pending-init":
                 break;
             default:
-                unsubscribeNotifications(client.api);
+                unsubscribeNotifications(client);
                 break;
         }
     });
@@ -75,7 +75,7 @@ export async function closeNotificationsForChat(chatId: string): Promise<void> {
     }
 }
 
-async function trySubscribe(api: ServiceContainer): Promise<boolean> {
+async function trySubscribe(client: OpenChat): Promise<boolean> {
     const registration = await getRegistration();
     if (registration === undefined) {
         return false;
@@ -85,7 +85,7 @@ async function trySubscribe(api: ServiceContainer): Promise<boolean> {
     let pushSubscription = await registration.pushManager.getSubscription();
     if (pushSubscription) {
         // Check if the subscription has already been pushed to the notifications canister
-        if (await api.subscriptionExists(extract_p256dh_key(pushSubscription))) {
+        if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
             return true;
         }
     } else {
@@ -98,7 +98,7 @@ async function trySubscribe(api: ServiceContainer): Promise<boolean> {
 
     // Add the subscription to the user record on the notifications canister
     try {
-        await api.pushSubscription(pushSubscription);
+        await client.pushSubscription(pushSubscription);
         return true;
     } catch (e) {
         console.log("Push subscription failed: ", e);
@@ -130,13 +130,13 @@ function extract_p256dh_key(subscription: PushSubscription): string {
     return key;
 }
 
-export async function unsubscribeNotifications(api: ServiceContainer): Promise<void> {
+export async function unsubscribeNotifications(client: OpenChat): Promise<void> {
     const registration = await getRegistration();
     if (registration !== undefined) {
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
-            if (await api.subscriptionExists(extract_p256dh_key(pushSubscription))) {
-                await api.removeSubscription(pushSubscription);
+            if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
+                await client.removeSubscription(pushSubscription);
             }
         }
     }

@@ -53,7 +53,7 @@
         referredBy: string | undefined
     ): void {
         state.set({ kind: "spinning" });
-        client.api.registerUser(username, challengeAttempt, referredBy).then((resp) => {
+        client.registerUser(username, challengeAttempt, referredBy).then((resp) => {
             state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 error.set("register.usernameTaken");
@@ -81,7 +81,7 @@
         state.set({ kind: "spinning" });
         challenge.set(undefined);
         challengeAttempt = undefined;
-        client.api.createChallenge().then((challengeResponse) => {
+        client.createChallenge().then((challengeResponse) => {
             if (challengeResponse.kind === "challenge") {
                 challenge.set(challengeResponse);
                 if ($username !== undefined) {
@@ -102,7 +102,7 @@
 
     function loadUser(): void {
         state.set({ kind: "spinning" });
-        client.api.getCurrentUser().then((resp) => {
+        client.getCurrentUser().then((resp) => {
             if (resp.kind === "created_user") {
                 createdUser = resp;
                 dispatch("createdUser", createdUser);

@@ -17,6 +17,26 @@ import type {
     ThreadSummary,
     EventsResponse,
     EnhancedReplyContext,
+    AddMembersResponse,
+    RemoveMemberResponse,
+    ChangeRoleResponse,
+    RegisterProposalVoteResponse,
+    SearchAllMessagesResponse,
+    GroupSearchResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+    Cryptocurrency,
+    Tokens,
+    ThreadPreview,
+    PendingCryptocurrencyWithdrawal,
+    WithdrawCryptocurrencyResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
+    InviteCodeResponse,
+    UpdateGroupResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -70,7 +90,26 @@ import {
     userIdsFromEvents,
 } from "./domain/chat/chat.utils";
 import { isPreviewing } from "./domain/chat/chat.utils.shared";
-import type { CreatedUser, IdentityState, User } from "./domain/user/user";
+import type {
+    ChallengeAttempt,
+    CheckUsernameResponse,
+    ConfirmPhoneNumberResponse,
+    CreateChallengeResponse,
+    CreatedUser,
+    CurrentUserResponse,
+    IdentityState,
+    PartialUserSummary,
+    PhoneNumber,
+    PublicProfile,
+    RegisterUserResponse,
+    SetBioResponse,
+    SetUsernameResponse,
+    SubmitPhoneNumberResponse,
+    User,
+    UsersArgs,
+    UsersResponse,
+    UserSummary,
+} from "./domain/user/user";
 import {
     buildUsernameList,
     compareIsNotYouThenUsername,
@@ -114,7 +153,7 @@ import {
 } from "./services/common/chatThread";
 import { showTrace } from "./services/common/profiling";
 import { Poller } from "./services/poller";
-import { ServiceContainer } from "./services/serviceContainer";
+import { GroupInvite, ServiceContainer } from "./services/serviceContainer";
 import {
     idbAuthClientStore,
     lsAuthClientStore,
@@ -249,6 +288,7 @@ import {
 } from "./events";
 import { LiveState } from "./liveState";
 import type { Logger } from "./utils/logging";
+import type { ServiceRetryInterrupt } from "./services/candidService";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -477,9 +517,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    // FIXME - find a way to automatically proxy openChat.doStuff to openChat.api.doStuff without having to write a bunch of code
-    // so that we don't have to type client.api.doStuff in the calling code
-    get api(): ServiceContainer {
+    private get api(): ServiceContainer {
         if (this._api === undefined)
             throw new Error("OpenChat tried to make an api call before the api was available");
         return this._api;
@@ -1492,6 +1530,211 @@ export class OpenChat extends EventTarget {
         if (threadRootMessageIndex !== undefined) {
             this.markThreadRead(chatId, threadRootMessageIndex, messageIndex);
         }
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this.api.checkUsername(username);
+    }
+
+    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+        return this.api.searchUsers(searchTerm, maxResults);
+    }
+
+    registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt,
+        referredBy: string | undefined
+    ): Promise<RegisterUserResponse> {
+        return this.api.registerUser(username, challengeAttempt, referredBy);
+    }
+
+    createChallenge(): Promise<CreateChallengeResponse> {
+        return this.api.createChallenge();
+    }
+
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        return this.api.getCurrentUser();
+    }
+
+    subscriptionExists(p256dh_key: string): Promise<boolean> {
+        return this.api.subscriptionExists(p256dh_key);
+    }
+
+    pushSubscription(subscription: PushSubscription): Promise<void> {
+        return this.api.pushSubscription(subscription);
+    }
+
+    removeSubscription(subscription: PushSubscription): Promise<void> {
+        return this.api.removeSubscription(subscription);
+    }
+
+    addMembers(
+        chatId: string,
+        userIds: string[],
+        myUsername: string,
+        allowBlocked: boolean
+    ): Promise<AddMembersResponse> {
+        return this.api.addMembers(chatId, userIds, myUsername, allowBlocked);
+    }
+
+    removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
+        return this.api.removeMember(chatId, userId);
+    }
+
+    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
+        return this.api.changeRole(chatId, userId, newRole);
+    }
+
+    registerProposalVote(
+        chatId: string,
+        messageIndex: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.api.registerProposalVote(chatId, messageIndex, adopt);
+    }
+
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+        return this.api.getRecommendedGroups(interrupt);
+    }
+
+    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+        return this.api.getGroupRules(chatId);
+    }
+
+    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
+        return this.api.searchAllMessages(searchTerm, maxResults);
+    }
+
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this.searchGroups(searchTerm, maxResults);
+    }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.api.dismissRecommendation(chatId);
+    }
+
+    set groupInvite(value: GroupInvite) {
+        this.api.groupInvite = value;
+    }
+
+    async searchChat(
+        chat: ChatSummary,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchDirectChatResponse | SearchGroupChatResponse> {
+        if (chat.kind === "group_chat") {
+            return this.api.searchGroupChat(chat.chatId, searchTerm, maxResults);
+        } else {
+            return this.api.searchDirectChat(chat.chatId, searchTerm, maxResults);
+        }
+    }
+
+    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+        return this.api.refreshAccountBalance(crypto, account);
+    }
+
+    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
+        return this.api.confirmPhoneNumber(code);
+    }
+
+    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
+        return this.api.submitPhoneNumber(phoneNumber);
+    }
+
+    upgradeStorage(newLimitBytes: number): Promise<boolean> {
+        return this.api
+            .upgradeStorage(newLimitBytes)
+            .then((resp) => {
+                const success = resp.kind === "success" || resp.kind === "success_no_change";
+                if (!success) {
+                    this.updateStorageLimit(newLimitBytes);
+                    this._logger.error("Unable to upgrade storage", resp);
+                }
+                return success;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to upgrade storage", err);
+                return false;
+            });
+    }
+
+    async threadPreviews(
+        threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
+    ): Promise<ThreadPreview[]> {
+        return this.api.threadPreviews(threadsByChat);
+    }
+
+    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
+        return this.api.getUsers(users, allowStale);
+    }
+
+    getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
+        return this.api.getUser(userId, allowStale);
+    }
+
+    getPublicProfile(userId?: string): Promise<PublicProfile> {
+        return this.api.getPublicProfile(userId);
+    }
+
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+        return this.api.setUsername(userId, username);
+    }
+
+    setBio(bio: string): Promise<SetBioResponse> {
+        return this.api.setBio(bio);
+    }
+
+    getBio(userId?: string): Promise<string> {
+        return this.api.getBio(userId);
+    }
+
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse> {
+        return this.api.withdrawCryptocurrency(domain);
+    }
+
+    getGroupMessagesByMessageIndex(
+        chatId: string,
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
+        return this.api.getGroupMessagesByMessageIndex(
+            chatId,
+            messageIndexes,
+            latestClientEventIndex
+        );
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.api.getInviteCode(chatId);
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.api.enableInviteCode(chatId);
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.api.disableInviteCode(chatId);
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.resetInviteCode(chatId);
+    }
+
+    updateGroup(
+        chatId: string,
+        name?: string,
+        desc?: string,
+        rules?: GroupRules,
+        permissions?: Partial<GroupPermissions>,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
+        return this.api.updateGroup(chatId, name, desc, rules, permissions, avatar);
+    }
+
+    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return this.api.createGroupChat(candidate);
     }
 
     /**

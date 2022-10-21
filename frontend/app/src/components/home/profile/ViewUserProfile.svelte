@@ -32,8 +32,8 @@
 
     onMount(async () => {
         try {
-            const task1 = client.api.getUser(userId);
-            profile = await client.api.getPublicProfile(userId);
+            const task1 = client.getUser(userId);
+            profile = await client.getPublicProfile(userId);
             user = await task1;
         } catch (e: any) {
             logger.error("Failed to load user profile", e);

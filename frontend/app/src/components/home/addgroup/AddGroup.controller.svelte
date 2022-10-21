@@ -79,7 +79,7 @@
     function createGroup() {
         busy = true;
 
-        client.api
+        client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -110,7 +110,7 @@
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
-        return client.api
+        return client
             .addMembers(
                 canisterId,
                 candidateGroup.members.map((m) => m.user.userId),

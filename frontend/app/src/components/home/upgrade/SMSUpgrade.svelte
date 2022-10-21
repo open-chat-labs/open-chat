@@ -67,7 +67,7 @@
             phoneNumber = { countryCode, number: phoneNumberStr };
 
             busy = true;
-            client.api
+            client
                 .submitPhoneNumber(phoneNumber)
                 .then((resp) => {
                     if (resp === "already_registered") {
@@ -92,7 +92,7 @@
 
     function submitCode() {
         busy = true;
-        client.api
+        client
             .confirmPhoneNumber(codeValue)
             .then((resp) => {
                 if (resp.kind === "already_claimed") {

@@ -177,7 +177,7 @@
 
     function transferOwnership(chatId: string, me: string, them: FullMember): Promise<boolean> {
         transferOwnershipLocally(chatId, me, them.userId);
-        return client.api
+        return client
             .changeRole(chatId, them.userId, "owner")
             .then((resp) => {
                 if (resp !== "success") {
@@ -197,7 +197,7 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
         );
-        return client.api
+        return client
             .changeRole(chatId, userId, "participant")
             .then((resp) => {
                 if (resp !== "success") {
@@ -214,7 +214,7 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
         );
-        return client.api
+        return client
             .changeRole(chatId, userId, "admin")
             .then((resp) => {
                 if (resp !== "success") {
@@ -228,7 +228,7 @@
     }
 
     function removeMember(chatId: string, userId: string): Promise<void> {
-        return client.api
+        return client
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
@@ -295,7 +295,7 @@
         users: UserSummary[]
     ): Promise<boolean> {
         addMembersLocally(chatId, viaUnblock, users);
-        return client.api
+        return client
             .addMembers(
                 chatId,
                 users.map((u) => u.userId),

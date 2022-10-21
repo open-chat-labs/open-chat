@@ -52,7 +52,7 @@
                 return;
             }
             searching = true;
-            client.api
+            client
                 .searchUsers(value)
                 .then((u) => (users = u))
                 .catch((_err) => toastStore.showFailureToast("userSearchFailed"))

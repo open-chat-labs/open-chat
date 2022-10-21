@@ -28,7 +28,7 @@
 
         const currTimer = timer;
 
-        client.api
+        client
             .checkUsername(value)
             .then((resp) => {
                 if (currTimer !== timer) return;
