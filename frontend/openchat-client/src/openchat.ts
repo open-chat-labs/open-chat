@@ -105,7 +105,6 @@ import type {
     SetBioResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
-    UpgradeStorageResponse,
     User,
     UsersArgs,
     UsersResponse,
