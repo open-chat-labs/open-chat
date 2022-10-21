@@ -17,7 +17,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -27,10 +27,10 @@
     import { notificationsSupported } from "../../utils/notifications";
 
     const client = getContext<OpenChat>("client");
+    const userId = client.user.userId;
 
     export let index: number;
     export let chatSummary: ChatSummary;
-    export let userId: string;
     export let selected: boolean;
     export let visible: boolean;
 

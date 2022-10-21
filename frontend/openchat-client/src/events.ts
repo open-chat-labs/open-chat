@@ -1,3 +1,5 @@
+import type { EventWrapper, Message } from "./domain";
+
 export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
     constructor(mode: "explain" | "icp" | "sms") {
         super("openchat_event", { detail: mode });
@@ -22,6 +24,12 @@ export class SentMessage extends CustomEvent<number | undefined> {
     }
 }
 
+export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
+    constructor(event: EventWrapper<Message>) {
+        super("openchat_event", { detail: event });
+    }
+}
+
 export class LoadedMessageWindow extends CustomEvent<number> {
     constructor(messageIndex: number) {
         super("openchat_event", { detail: messageIndex });
@@ -29,6 +37,30 @@ export class LoadedMessageWindow extends CustomEvent<number> {
 }
 
 export class ChatUpdated extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
+export class ThreadMessagesLoaded extends CustomEvent<boolean> {
+    constructor(ascending: boolean) {
+        super("openchat_event", { detail: ascending });
+    }
+}
+
+export class ThreadSelected extends CustomEvent<{
+    initiating: boolean;
+    threadRootMessageId: bigint;
+    threadRootMessageIndex: number;
+}> {
+    constructor(threadRootMessageId: bigint, threadRootMessageIndex: number, initiating: boolean) {
+        super("openchat_event", {
+            detail: { threadRootMessageId, initiating, threadRootMessageIndex },
+        });
+    }
+}
+
+export class ThreadClosed extends Event {
     constructor() {
         super("openchat_event");
     }

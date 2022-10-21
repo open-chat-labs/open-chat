@@ -269,29 +269,16 @@
     }
 
     function doUpdateRules(): Promise<void> {
-        return client.api
-            .updateGroup(
-                updatedGroup.chatId,
-                undefined,
-                undefined,
-                updatedRules,
-                undefined,
-                undefined
-            )
-            .then((resp) => {
-                if (resp === "success") {
-                    dispatch("updateGroupRules", {
-                        chatId: updatedGroup.chatId,
-                        rules: updatedRules,
-                    });
-                } else {
-                    toastStore.showFailureToast("group.rulesUpdateFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Update group rules failed: ", err);
+        return client.updateGroupRules(updatedGroup.chatId, updatedRules).then((success) => {
+            if (success) {
+                dispatch("updateGroupRules", {
+                    chatId: updatedGroup.chatId,
+                    rules: updatedRules,
+                });
+            } else {
                 toastStore.showFailureToast("group.rulesUpdateFailed");
-            });
+            }
+        });
     }
 
     function updatePermissions() {
@@ -305,23 +292,14 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        const optionalPermissions = client.mergeKeepingOnlyChanged(
-            originalGroup.permissions,
-            updatedGroup.permissions
-        );
-        console.log("Changed permissions: ", optionalPermissions);
-
-        return client.api
-            .updateGroup(
+        return client
+            .updateGroupPermissions(
                 updatedGroup.chatId,
-                undefined,
-                undefined,
-                undefined,
-                optionalPermissions,
-                undefined
+                originalGroup.permissions,
+                updatedGroup.permissions
             )
-            .then((resp) => {
-                if (resp === "success") {
+            .then((success) => {
+                if (success) {
                     originalGroup = {
                         ...originalGroup,
                         permissions: updatedGroup.permissions,
@@ -330,10 +308,6 @@
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
                 }
-            })
-            .catch((err) => {
-                rollbar.error("Update permissions failed: ", err);
-                toastStore.showFailureToast("group.permissionsUpdateFailed");
             });
     }
 

@@ -14,7 +14,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let user: CreatedUser;
 
     // TODO - this component doesn't do anything now. We could remove it but it might be a useful abstraction
 </script>
@@ -42,7 +41,6 @@
             on:archiveChat
             on:unarchiveChat
             on:toggleMuteNotifications
-            createdUser={user}
             {searchResultsAvailable}
             {searchTerm}
             {searching}

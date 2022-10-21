@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onDestroy, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import type {
         ChatEvent,
         ChatSummary,
@@ -163,7 +163,9 @@
             events,
             textContent,
             mentioned,
-            fileToAttach
+            fileToAttach,
+            $currentChatReplyingTo,
+            undefined
         );
     }
 
@@ -239,12 +241,9 @@
         bind:this={currentChatMessages}
         on:replyPrivatelyTo
         on:replyTo={replyTo}
-        on:openThread
         on:chatWith
         on:upgrade
         on:forward
-        on:closeThread
-        on:initiateThread
         {chat}
         {serverChat}
         {events}

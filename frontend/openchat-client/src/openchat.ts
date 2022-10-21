@@ -12,6 +12,11 @@ import type {
     Notification,
     GroupChatSummary,
     MemberRole,
+    GroupRules,
+    GroupPermissions,
+    ThreadSummary,
+    EventsResponse,
+    EnhancedReplyContext,
 } from "./domain";
 import { AuthProvider } from "./domain";
 import {
@@ -80,7 +85,11 @@ import {
     userStatus,
 } from "./domain/user/user.utils";
 import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
-import type { RemoteUserToggledReaction, WebRtcMessage } from "./domain/webrtc/webrtc";
+import type {
+    RemoteUserSentMessage,
+    RemoteUserToggledReaction,
+    WebRtcMessage,
+} from "./domain/webrtc/webrtc";
 import {
     blockUser,
     deleteMessage,
@@ -135,7 +144,6 @@ import {
     currentUserStore,
     eventsStore,
     focusMessageIndex,
-    focusThreadMessageIndex,
     isProposalGroup,
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
@@ -151,6 +159,11 @@ import {
     threadsFollowedByMeStore,
     updateSummaryWithConfirmedMessage,
     userGroupKeys,
+    threadServerEventsStore,
+    threadEvents,
+    selectedThreadKey,
+    nextEventAndMessageIndexesForThread,
+    selectedThreadRootMessageIndex,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -215,7 +228,7 @@ import {
     youtubeRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
-import { delegateToChatComponent, filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
+import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import { toTitleCase } from "./utils/string";
 import { formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
@@ -228,6 +241,10 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     SentMessage,
+    SentThreadMessage,
+    ThreadClosed,
+    ThreadMessagesLoaded,
+    ThreadSelected,
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -250,7 +267,6 @@ export class OpenChat extends EventTarget {
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
-
     identityState = writable<IdentityState>("loading_user");
 
     constructor(private config: OpenChatConfig) {
@@ -435,6 +451,7 @@ export class OpenChat extends EventTarget {
             initNotificationStores();
             this.api.getUserStorageLimits();
             this.identityState.set("logged_in");
+            this.initWebRtc();
 
             // FIXME - not sure what to do about this
             // if (isCanisterUrl) {
@@ -525,9 +542,11 @@ export class OpenChat extends EventTarget {
         rtcConnectionsManager.sendMessage(userIds, message);
     }
 
-    initWebRtc(onMessage: (message: unknown) => void): void {
+    initWebRtc(): void {
         rtcConnectionsManager.init(this.user.userId).then((_) => {
-            rtcConnectionsManager.subscribe(onMessage);
+            rtcConnectionsManager.subscribe((msg) =>
+                this.handleWebRtcMessage(msg as WebRtcMessage)
+            );
         });
     }
 
@@ -793,6 +812,35 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    updateGroupRules(chatId: string, rules: GroupRules | undefined): Promise<boolean> {
+        return this.api
+            .updateGroup(chatId, undefined, undefined, rules, undefined, undefined)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                rollbar.error("Update group rules failed: ", err);
+                return false;
+            });
+    }
+
+    updateGroupPermissions(
+        chatId: string,
+        originalPermissions: GroupPermissions,
+        updatedPermissions: GroupPermissions
+    ): Promise<boolean> {
+        const optionalPermissions = this.mergeKeepingOnlyChanged(
+            originalPermissions,
+            updatedPermissions
+        );
+
+        return this.api
+            .updateGroup(chatId, undefined, undefined, undefined, optionalPermissions, undefined)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                rollbar.error("Update permissions failed: ", err);
+                return false;
+            });
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
@@ -869,7 +917,7 @@ export class OpenChat extends EventTarget {
         username: string,
         kind: "add" | "remove"
     ): Promise<boolean> {
-        return selectReaction(
+        const result = selectReaction(
             this.api,
             chat,
             userId,
@@ -879,6 +927,17 @@ export class OpenChat extends EventTarget {
             username,
             kind
         );
+        this.sendRtcMessage([...this._liveState.currentChatUserIds], {
+            kind: "remote_user_toggled_reaction",
+            chatType: chat.kind,
+            chatId: chat.chatId,
+            messageId: messageId,
+            reaction,
+            userId,
+            added: kind === "add",
+            threadRootMessageIndex,
+        });
+        return result;
     }
     updateUserStore = updateUserStore;
     isTyping = isTyping;
@@ -915,11 +974,131 @@ export class OpenChat extends EventTarget {
             setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
         }
     };
-    delegateToChatComponent = delegateToChatComponent;
     filterWebRtcMessage = filterWebRtcMessage;
     parseWebRtcMessage = parseWebRtcMessage;
     createDirectChat = createDirectChat;
-    setSelectedChat = setSelectedChat;
+    setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
+        setSelectedChat(this.api, chat, messageIndex);
+
+        const { selectedChat, selectedServerChat, focusMessageIndex, events } = this._liveState;
+        if (selectedChat !== undefined && selectedServerChat !== undefined) {
+            if (focusMessageIndex !== undefined) {
+                this.loadEventWindow(selectedServerChat, selectedChat, focusMessageIndex).then(
+                    () => {
+                        this.loadDetails(chat, events);
+                    }
+                );
+            } else {
+                this.loadPreviousMessages(selectedServerChat, selectedChat).then(() => {
+                    this.loadDetails(selectedChat, events);
+                });
+            }
+        }
+    }
+    openThread(
+        threadRootMessageId: bigint,
+        threadRootMessageIndex: number,
+        initiating: boolean
+    ): void {
+        selectedThreadRootMessageIndex.set(threadRootMessageIndex);
+        this.dispatchEvent(
+            new ThreadSelected(threadRootMessageId, threadRootMessageIndex, initiating)
+        );
+    }
+    closeThread(): void {
+        selectedThreadRootMessageIndex.set(undefined);
+        this.dispatchEvent(new ThreadClosed());
+    }
+    clearThreadEvents(): void {
+        threadServerEventsStore.set([]);
+    }
+    async loadThreadMessages(
+        chat: ChatSummary,
+        rootEvent: EventWrapper<Message>,
+        thread: ThreadSummary,
+        range: [number, number],
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number,
+        clearEvents: boolean
+    ): Promise<void> {
+        const { selectedThreadKey } = this._liveState;
+        if (selectedThreadKey === undefined) return;
+
+        const chatId = chat.chatId;
+        const eventsResponse = await this.api.chatEvents(
+            chat,
+            range,
+            startIndex,
+            ascending,
+            threadRootMessageIndex,
+            thread.latestEventIndex
+        );
+        if (chatId !== chat.chatId) {
+            // the chat has changed while we were loading the messages
+            return;
+        }
+
+        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            if (clearEvents) {
+                threadServerEventsStore.set([]);
+            }
+            const [newEvents, _] = await this.handleThreadEventsResponse(
+                chatId,
+                rootEvent,
+                eventsResponse
+            );
+
+            for (const event of newEvents) {
+                if (event.event.kind === "message") {
+                    unconfirmed.delete(selectedThreadKey, event.event.messageId);
+                }
+            }
+
+            threadServerEventsStore.update((events) => this.mergeServerEvents(events, newEvents));
+            this.makeRtcConnections(
+                this.user.userId,
+                chat,
+                this._liveState.threadEvents,
+                this._liveState.userStore
+            );
+
+            const isFollowedByMe =
+                this._liveState.threadsFollowedByMe[chat.chatId]?.has(threadRootMessageIndex) ??
+                false;
+            if (isFollowedByMe) {
+                const lastLoadedMessageIdx = this.lastMessageIndex(this._liveState.threadEvents);
+                if (lastLoadedMessageIdx !== undefined) {
+                    this.markThreadRead(chat.chatId, threadRootMessageIndex, lastLoadedMessageIdx);
+                }
+            }
+            this.dispatchEvent(new ThreadMessagesLoaded(ascending));
+        }
+    }
+    private async handleThreadEventsResponse(
+        chatId: string,
+        rootEvent: EventWrapper<Message>,
+        resp: EventsResponse<ChatEvent>
+    ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
+        if (resp === "events_failed") return [[], new Set()];
+
+        const events = resp.events.concat(resp.affectedEvents);
+
+        const userIds = this.userIdsFromEvents(events);
+        userIds.add(rootEvent.event.sender);
+        await this.updateUserStore(this.api, chatId, this.user.userId, userIds);
+
+        return [events, userIds];
+    }
+    private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const evt = events[i].event;
+            if (evt.kind === "message") {
+                return evt.messageIndex;
+            }
+        }
+        return undefined;
+    }
     clearSelectedChat = clearSelectedChat;
     removeChat = removeChat;
     canSendMessages = canSendMessages;
@@ -989,6 +1168,7 @@ export class OpenChat extends EventTarget {
     groupWhile = groupWhile;
     sameUser = sameUser;
     nextEventAndMessageIndexes = nextEventAndMessageIndexes;
+    nextEventAndMessageIndexesForThread = nextEventAndMessageIndexesForThread;
 
     forwardMessage(
         serverChat: ChatSummary,
@@ -1038,7 +1218,9 @@ export class OpenChat extends EventTarget {
         currentEvents: EventWrapper<ChatEvent>[],
         textContent: string | undefined,
         mentioned: User[],
-        fileToAttach: MessageContent | undefined
+        fileToAttach: MessageContent | undefined,
+        replyingTo: EnhancedReplyContext | undefined,
+        threadRootMessageIndex: number | undefined
     ): Promise<number | undefined> {
         if (textContent || fileToAttach) {
             const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
@@ -1047,13 +1229,16 @@ export class OpenChat extends EventTarget {
                 return Promise.resolve(undefined);
             }
 
-            const [nextEventIndex, nextMessageIndex] = this.nextEventAndMessageIndexes();
+            const [nextEventIndex, nextMessageIndex] =
+                threadRootMessageIndex !== undefined
+                    ? this.nextEventAndMessageIndexesForThread(currentEvents)
+                    : this.nextEventAndMessageIndexes();
 
             const msg = this.createMessage(
                 this.user.userId,
                 nextMessageIndex,
                 textContent,
-                this._liveState.currentChatReplyingTo,
+                replyingTo,
                 fileToAttach
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
@@ -1065,9 +1250,14 @@ export class OpenChat extends EventTarget {
                 clientChat,
                 currentEvents,
                 event,
-                mentioned
+                mentioned,
+                threadRootMessageIndex
             ).then((jumpTo) => {
-                this.dispatchEvent(new SentMessage(jumpTo));
+                if (threadRootMessageIndex !== undefined) {
+                    this.dispatchEvent(new SentThreadMessage(event));
+                } else {
+                    this.dispatchEvent(new SentMessage(jumpTo));
+                }
                 return jumpTo;
             });
         }
@@ -1183,6 +1373,122 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    handleWebRtcMessage(msg: WebRtcMessage): void {
+        const fromChatId = this.filterWebRtcMessage(msg);
+        if (fromChatId === undefined) return;
+
+        // this means we have a selected chat but it doesn't mean it's the same as this message
+        const parsedMsg = this.parseWebRtcMessage(fromChatId, msg);
+        const { selectedChat, threadEvents, events } = this._liveState;
+
+        if (
+            parsedMsg.threadRootMessageIndex !== undefined &&
+            parsedMsg.threadRootMessageIndex === this._liveState.selectedThreadRootMessageIndex &&
+            selectedChat !== undefined &&
+            fromChatId === selectedChat.chatId
+        ) {
+            // this is a webrtc message relating to the selected thread
+            this.handleWebRtcMessageInternal(
+                fromChatId,
+                parsedMsg,
+                selectedChat,
+                threadEvents,
+                parsedMsg.threadRootMessageIndex
+            );
+        } else {
+            if (selectedChat !== undefined && fromChatId === selectedChat.chatId) {
+                // this is a webrtc message relating to the selected chat
+                this.handleWebRtcMessageInternal(
+                    fromChatId,
+                    parsedMsg,
+                    selectedChat,
+                    events,
+                    undefined
+                );
+            } else {
+                if (parsedMsg.kind === "remote_user_sent_message") {
+                    unconfirmed.add(fromChatId, parsedMsg.messageEvent);
+                }
+            }
+        }
+    }
+
+    private handleWebRtcMessageInternal(
+        fromChatId: string,
+        msg: WebRtcMessage,
+        chat: ChatSummary,
+        events: EventWrapper<ChatEvent>[],
+        threadRootMessageIndex: number | undefined
+    ): void {
+        switch (msg.kind) {
+            case "remote_user_typing":
+                typing.startTyping(fromChatId, msg.userId, msg.threadRootMessageIndex);
+                break;
+            case "remote_user_stopped_typing":
+                typing.stopTyping(msg.userId);
+                break;
+            case "remote_user_toggled_reaction":
+                this.remoteUserToggledReaction(events, msg);
+                break;
+            case "remote_user_deleted_message":
+                localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
+                break;
+            case "remote_user_removed_message":
+                this.removeMessage(
+                    this.user.userId,
+                    chat,
+                    msg.messageId,
+                    msg.userId,
+                    threadRootMessageIndex
+                );
+                break;
+            case "remote_user_undeleted_message":
+                localMessageUpdates.markUndeleted(msg.messageId.toString());
+                break;
+            case "remote_user_sent_message":
+                this.remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
+                break;
+            case "remote_user_read_message":
+                unconfirmedReadByThem.add(BigInt(msg.messageId));
+                break;
+        }
+    }
+
+    private remoteUserSentMessage(
+        chatId: string,
+        message: RemoteUserSentMessage,
+        events: EventWrapper<ChatEvent>[],
+        threadRootMessageIndex: number | undefined
+    ) {
+        const existing = this.findMessageById(message.messageEvent.event.messageId, events);
+        if (existing !== undefined) {
+            return;
+        }
+
+        const [eventIndex, messageIndex] =
+            threadRootMessageIndex !== undefined
+                ? this.nextEventAndMessageIndexesForThread(events)
+                : this.nextEventAndMessageIndexes();
+
+        const key =
+            threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
+
+        unconfirmed.add(key, {
+            ...message.messageEvent,
+            index: eventIndex,
+            event: {
+                ...message.messageEvent.event,
+                messageIndex,
+            },
+        });
+
+        // since we will only get here if we actually have the thread open
+        // we should mark read up to this message too
+        if (threadRootMessageIndex !== undefined) {
+            this.markThreadRead(chatId, threadRootMessageIndex, messageIndex);
+        }
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -1216,7 +1522,6 @@ export class OpenChat extends EventTarget {
     selectedChatStore = selectedChatStore;
     currentChatPinnedMessages = currentChatPinnedMessages;
     currentChatRules = currentChatRules;
-    focusThreadMessageIndex = focusThreadMessageIndex;
     proposalTopicsStore = proposalTopicsStore;
     filteredProposalsStore = filteredProposalsStore;
     cryptoBalance = cryptoBalance;
@@ -1239,4 +1544,6 @@ export class OpenChat extends EventTarget {
     numberOfThreadsStore = numberOfThreadsStore;
     notificationStatus = notificationStatus;
     userMetrics = userMetrics;
+    threadEvents = threadEvents;
+    selectedThreadKey = selectedThreadKey;
 }

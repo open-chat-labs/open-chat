@@ -342,7 +342,7 @@ export async function handleEventsResponse(
     const userIds = userIdsFromEvents(events);
     await updateUserStore(api, chat.chatId, user.userId, userIds);
 
-    addServerEventsToStores(chat.chatId, events);
+    addServerEventsToStores(chat.chatId, events, undefined);
 
     makeRtcConnections(user.userId, chat, events, get(userStore));
 }
@@ -661,7 +661,8 @@ export function removeMessage(
     currentUserId: string,
     clientChat: ChatSummary,
     messageId: bigint,
-    userId: string
+    userId: string,
+    threadRootMessageIndex: number | undefined
 ): void {
     if (userId === currentUserId) {
         const userIds = chatStateStore.getProp(clientChat.chatId, "userIds");
@@ -671,10 +672,17 @@ export function removeMessage(
             chatId: clientChat.chatId,
             messageId: messageId,
             userId: userId,
+            threadRootMessageIndex,
         });
     }
-    unconfirmed.delete(clientChat.chatId, messageId);
-    messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
+    const key =
+        threadRootMessageIndex === undefined
+            ? clientChat.chatId
+            : `${clientChat.chatId}_${threadRootMessageIndex}`;
+    unconfirmed.delete(key, messageId);
+    if (threadRootMessageIndex === undefined) {
+        messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
+    }
 }
 
 export async function sendMessage(
@@ -683,37 +691,49 @@ export async function sendMessage(
     serverChat: ChatSummary,
     clientChat: ChatSummary,
     currentEvents: EventWrapper<ChatEvent>[],
-    messageEvent: EventWrapper<Message>
+    messageEvent: EventWrapper<Message>,
+    threadRootMessageIndex: number | undefined
 ): Promise<number | undefined> {
     let jumpingTo: number | undefined = undefined;
-    if (!upToDate(clientChat, currentEvents)) {
-        jumpingTo = await loadEventWindow(
-            api,
-            user,
-            serverChat,
-            clientChat,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientChat.latestMessage!.event.messageIndex
-        );
+    const key =
+        threadRootMessageIndex === undefined
+            ? clientChat.chatId
+            : `${clientChat.chatId}_${threadRootMessageIndex}`;
+
+    if (threadRootMessageIndex === undefined) {
+        if (!upToDate(clientChat, currentEvents)) {
+            jumpingTo = await loadEventWindow(
+                api,
+                user,
+                serverChat,
+                clientChat,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                clientChat.latestMessage!.event.messageIndex
+            );
+        }
     }
 
-    unconfirmed.add(clientChat.chatId, messageEvent);
+    unconfirmed.add(key, messageEvent);
+
     rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.chatId, "userIds")], {
         kind: "remote_user_sent_message",
         chatType: clientChat.kind,
         chatId: clientChat.chatId,
         messageEvent: serialiseMessageForRtc(messageEvent),
         userId: user.userId,
+        threadRootMessageIndex,
     });
 
-    // mark our own messages as read manually since we will not be observing them
-    messagesRead.markMessageRead(
-        clientChat.chatId,
-        messageEvent.event.messageIndex,
-        messageEvent.event.messageId
-    );
+    if (threadRootMessageIndex === undefined) {
+        // mark our own messages as read manually since we will not be observing them
+        messagesRead.markMessageRead(
+            clientChat.chatId,
+            messageEvent.event.messageIndex,
+            messageEvent.event.messageId
+        );
 
-    currentChatDraftMessage.clear(clientChat.chatId);
+        currentChatDraftMessage.clear(clientChat.chatId);
+    }
 
     return jumpingTo;
 }
@@ -757,22 +777,22 @@ export function forwardMessage(
     api.sendMessage(clientChat, user, [], evt.event)
         .then(([resp, msg]) => {
             if (resp.kind === "success") {
-                onSendMessageSuccess(clientChat.chatId, resp, msg);
+                onSendMessageSuccess(clientChat.chatId, resp, msg, undefined);
                 trackEvent("forward_message");
             } else {
-                removeMessage(user.userId, clientChat, msg.messageId, user.userId);
+                removeMessage(user.userId, clientChat, msg.messageId, user.userId, undefined);
                 rollbar.warn("Error response forwarding message", resp);
                 toastStore.showFailureToast("errorSendingMessage");
             }
         })
         .catch((err) => {
-            removeMessage(user.userId, clientChat, evt.event.messageId, user.userId);
+            removeMessage(user.userId, clientChat, evt.event.messageId, user.userId, undefined);
             console.log(err);
             toastStore.showFailureToast("errorSendingMessage");
             rollbar.error("Exception forwarding message", err);
         });
 
-    return sendMessage(api, user, serverChat, clientChat, currentEvents, evt);
+    return sendMessage(api, user, serverChat, clientChat, currentEvents, evt, undefined);
 }
 
 export function sendMessageWithAttachment(
@@ -782,22 +802,27 @@ export function sendMessageWithAttachment(
     clientChat: ChatSummary,
     currentEvents: EventWrapper<ChatEvent>[],
     evt: EventWrapper<Message>,
-    mentioned: User[]
+    mentioned: User[],
+    threadRootMessageIndex: number | undefined
 ): Promise<number | undefined> {
-    api.sendMessage(clientChat, user, mentioned, evt.event)
+    api.sendMessage(clientChat, user, mentioned, evt.event, threadRootMessageIndex)
         .then(([resp, msg]) => {
             if (resp.kind === "success" || resp.kind === "transfer_success") {
-                onSendMessageSuccess(clientChat.chatId, resp, msg);
+                onSendMessageSuccess(clientChat.chatId, resp, msg, threadRootMessageIndex);
                 if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                     api.refreshAccountBalance(msg.content.transfer.token, user.cryptoAccount);
                 }
-                if (clientChat.kind === "direct_chat") {
-                    trackEvent("sent_direct_message");
+                if (threadRootMessageIndex !== undefined) {
+                    trackEvent("sent_threaded_message");
                 } else {
-                    if (clientChat.public) {
-                        trackEvent("sent_public_group_message");
+                    if (clientChat.kind === "direct_chat") {
+                        trackEvent("sent_direct_message");
                     } else {
-                        trackEvent("sent_private_group_message");
+                        if (clientChat.public) {
+                            trackEvent("sent_public_group_message");
+                        } else {
+                            trackEvent("sent_private_group_message");
+                        }
                     }
                 }
                 if (msg.repliesTo !== undefined) {
@@ -805,28 +830,50 @@ export function sendMessageWithAttachment(
                     trackEvent("replied_to_message");
                 }
             } else {
-                removeMessage(user.userId, clientChat, msg.messageId, user.userId);
+                removeMessage(
+                    user.userId,
+                    clientChat,
+                    msg.messageId,
+                    user.userId,
+                    threadRootMessageIndex
+                );
                 rollbar.warn("Error response sending message", resp);
                 toastStore.showFailureToast("errorSendingMessage");
             }
         })
         .catch((err) => {
-            removeMessage(user.userId, clientChat, evt.event.messageId, user.userId);
+            removeMessage(
+                user.userId,
+                clientChat,
+                evt.event.messageId,
+                user.userId,
+                threadRootMessageIndex
+            );
             console.log(err);
             toastStore.showFailureToast("errorSendingMessage");
             rollbar.error("Exception sending message", err);
         });
 
-    return sendMessage(api, user, serverChat, clientChat, currentEvents, evt);
+    return sendMessage(
+        api,
+        user,
+        serverChat,
+        clientChat,
+        currentEvents,
+        evt,
+        threadRootMessageIndex
+    );
 }
 
 function onSendMessageSuccess(
     chatId: string,
     resp: SendMessageSuccess | TransferSuccess,
-    msg: Message
+    msg: Message,
+    threadRootMessageIndex: number | undefined
 ) {
     const event = mergeSendMessageResponse(msg, resp);
-
-    addServerEventsToStores(chatId, [event]);
-    updateSummaryWithConfirmedMessage(chatId, event);
+    addServerEventsToStores(chatId, [event], threadRootMessageIndex);
+    if (threadRootMessageIndex === undefined) {
+        updateSummaryWithConfirmedMessage(chatId, event);
+    }
 }
