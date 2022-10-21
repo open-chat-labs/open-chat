@@ -28,7 +28,8 @@ export abstract class CandidService {
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });
-        if (process.env.NODE_ENV !== "production") {
+        const fetchRootKey = config.icUrl !== undefined && !config.icUrl.includes("ic0.app");
+        if (fetchRootKey) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {
