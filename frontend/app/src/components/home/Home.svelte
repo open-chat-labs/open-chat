@@ -9,20 +9,20 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
-    import type {
+    import {
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
-        EventWrapper,
         GroupChatSummary,
         GroupRules,
         Message,
         Questions,
-        WebRtcMessage,
         OpenChat,
+        ThreadSelected,
+        ThreadClosed,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -48,7 +48,6 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { numberOfColumns } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import type Thread from "./thread/Thread.svelte";
     import type { Share } from "../../utils/share";
 
     export let logout: () => void;
@@ -108,11 +107,9 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
-    let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
     $: userStore = client.userStore;
-    $: unconfirmed = client.unconfirmed;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: chatsLoading = client.chatsLoading;
@@ -152,34 +149,24 @@
         ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
-        client.initWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
+        client.addEventListener("openchat_event", clientEvent);
+
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
     });
 
-    function routeRtcMessages(msg: WebRtcMessage) {
-        const fromChatId = client.filterWebRtcMessage(msg);
-        if (fromChatId === undefined) return;
-        const parsedMsg = client.parseWebRtcMessage(fromChatId, msg);
-
-        if (parsedMsg.threadRootMessageIndex !== undefined) {
-            // do we have the thread window open for this thread
-            threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
-        } else {
-            if (client.delegateToChatComponent(parsedMsg)) {
-                currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
-            } else {
-                if (parsedMsg.kind === "remote_user_sent_message") {
-                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
-                }
-            }
+    function clientEvent(ev: Event): void {
+        if (ev instanceof ThreadSelected) {
+            openThread(ev.detail);
+        }
+        if (ev instanceof ThreadClosed) {
+            closeThread();
         }
     }
 
-    async function newChatSelected(
-        chatId: string,
-        messageIndex?: number,
-        threadMessageIndex?: number
-    ): Promise<void> {
+    async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
         interruptRecommended = true;
 
         let chat = $chatSummariesStore[chatId];
@@ -215,7 +202,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        client.setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
+        client.setSelectedChat(chat, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -250,20 +237,11 @@
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
-                        newChatSelected(
-                            pathParams.chatId,
-                            pathParams.messageIndex,
-                            pathParams.threadMessageIndex
-                        );
+                        newChatSelected(pathParams.chatId, pathParams.messageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            chatStateStore.setProp(
-                                pathParams.chatId,
-                                "focusThreadMessageIndex",
-                                pathParams.threadMessageIndex
-                            );
                             currentChatMessages?.scrollToMessageIndex(
                                 pathParams.messageIndex,
                                 false,
@@ -608,24 +586,23 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+    function openThread(ev: {
+        threadRootMessageIndex: number;
+        threadRootMessageId: bigint;
+        initiating: boolean;
+    }) {
         if ($selectedChatId !== undefined) {
+            if (ev.initiating) {
+                creatingThread = true;
+                replace(`/${$selectedChatId}`);
+            }
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    rootEvent: ev.detail.rootEvent,
+                    threadRootMessageIndex: ev.threadRootMessageIndex,
+                    threadRootMessageId: ev.threadRootMessageId,
                 },
             ];
-        }
-    }
-
-    function initiateThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
-    ) {
-        if ($selectedChatId !== undefined) {
-            creatingThread = true;
-            replace(`/${$selectedChatId}`);
-            openThread(ev);
         }
     }
 
@@ -825,7 +802,6 @@
 <main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
-            {user}
             {groupSearchResults}
             {userSearchResults}
             {messageSearchResults}
@@ -859,7 +835,6 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:initiateThread={initiateThread}
             on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
@@ -869,7 +844,6 @@
             on:addMembers={addMembers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:openThread={openThread}
             on:showMembers={showMembers}
             on:updateChat={updateChat}
             on:joinGroup={joinGroup}
@@ -880,14 +854,12 @@
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
-            on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
     {#if $numberOfColumns === 3}
         <RightPanel
             bind:rightPanelHistory
-            bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -911,7 +883,6 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 bind:rightPanelHistory
-                bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}

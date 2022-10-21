@@ -4,7 +4,6 @@ import { derived, get } from "svelte/store";
 export type RouteParams = {
     chatId?: string;
     messageIndex?: number;
-    threadMessageIndex?: number;
     open: boolean;
 };
 

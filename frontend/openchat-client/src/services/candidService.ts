@@ -28,8 +28,8 @@ export abstract class CandidService {
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });
-        const fetchRootKey = config.icUrl !== undefined && !config.icUrl.includes("ic0.app");
-        if (fetchRootKey) {
+        const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
+        if (!isMainnet) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {

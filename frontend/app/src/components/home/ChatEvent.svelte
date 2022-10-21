@@ -69,16 +69,6 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
-
-    function initiateThread() {
-        if (event.event.kind === "message") {
-            if (event.event.thread !== undefined) {
-                push(`/${chatId}/${event.event.messageIndex}`);
-            } else {
-                dispatch("initiateThread", { rootEvent: event });
-            }
-        }
-    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -114,7 +104,6 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:initiateThread={initiateThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser

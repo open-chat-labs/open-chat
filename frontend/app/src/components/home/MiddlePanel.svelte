@@ -55,7 +55,6 @@
             serverChat={$selectedServerChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
-            on:initiateThread
             on:unblockUser
             on:clearSelection
             on:blockUser
@@ -71,9 +70,7 @@
             on:cancelPreview
             on:showPinned
             on:toggleMuteNotifications
-            on:openThread
             on:goToMessageIndex
-            on:closeThread
             on:forward />
     {/if}
 </Panel>

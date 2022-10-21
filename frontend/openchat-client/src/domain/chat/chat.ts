@@ -787,7 +787,6 @@ export type ChatSpecificState = {
     rules?: GroupRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
-    focusThreadMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
 };

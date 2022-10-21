@@ -1,4 +1,4 @@
-import type { ChatSummary, EventWrapper, GroupPermissions, Message } from "openchat-client";
+import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -17,7 +17,8 @@ export type NoPanel = {
 
 export type MessageThreadPanel = {
     kind: "message_thread_panel";
-    rootEvent: EventWrapper<Message>;
+    threadRootMessageIndex: number;
+    threadRootMessageId: bigint;
 };
 
 export type GroupDetailsPanel = {
