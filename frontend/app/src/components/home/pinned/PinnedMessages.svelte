@@ -35,7 +35,7 @@
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
-            client.api
+            client
                 .getGroupMessagesByMessageIndex(
                     chatId,
                     pinned,

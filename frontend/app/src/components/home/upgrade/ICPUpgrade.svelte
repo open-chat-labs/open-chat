@@ -42,7 +42,7 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        client.api
+        client
             .refreshAccountBalance(token, client.user.cryptoAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
@@ -76,22 +76,16 @@
 
         const newLimitBytes = Math.floor((newLimit * ONE_GB) / 10);
 
-        client.api
+        client
             .upgradeStorage(newLimitBytes)
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "success_no_change") {
+            .then((success) => {
+                if (success) {
                     refreshBalance();
-                    client.updateStorageLimit(newLimitBytes);
                     error = undefined;
                     confirmed = true;
                 } else {
                     error = $_("register.unableToConfirmFee");
-                    logger.error("Unable to upgrade storage", resp);
                 }
-            })
-            .catch((err) => {
-                error = $_("register.unableToConfirmFee");
-                logger.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
     }

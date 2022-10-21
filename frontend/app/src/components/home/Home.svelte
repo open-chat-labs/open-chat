@@ -181,7 +181,7 @@
             } else {
                 const code = qs.get("code");
                 if (code) {
-                    client.api.groupInvite = {
+                    client.groupInvite = {
                         chatId,
                         code,
                     };
@@ -323,7 +323,7 @@
 
     function dismissRecommendation(ev: CustomEvent<string>) {
         hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
-        client.api.dismissRecommendation(ev.detail);
+        client.dismissRecommendation(ev.detail);
     }
 
     function showFaqQuestion(ev: CustomEvent<Questions>) {
@@ -337,12 +337,12 @@
         if (searchTerm !== "") {
             searching = true;
             const lowercase = searchTerm.toLowerCase();
-            groupSearchResults = client.api.searchGroups(lowercase, 10);
-            userSearchResults = client.api.searchUsers(lowercase, 10).then((resp) => {
+            groupSearchResults = client.searchGroups(lowercase, 10);
+            userSearchResults = client.searchUsers(lowercase, 10).then((resp) => {
                 userStore.addMany(resp);
                 return resp;
             });
-            messageSearchResults = client.api.searchAllMessages(lowercase, 10);
+            messageSearchResults = client.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
                     groupSearchResults,
@@ -648,7 +648,7 @@
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await client.api.getGroupRules(group.chatId);
+        const rules = await client.getGroupRules(group.chatId);
 
         if (rules === undefined) {
             toastStore.showFailureToast("group.getRulesFailed");
@@ -698,7 +698,7 @@
         tick().then(() => {
             interruptRecommended = false;
             hotGroups = { kind: "loading" };
-            client.api
+            client
                 .getRecommendedGroups((_n: number) => interruptRecommended)
                 .then((resp) => (hotGroups = { kind: "success", data: resp }))
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));

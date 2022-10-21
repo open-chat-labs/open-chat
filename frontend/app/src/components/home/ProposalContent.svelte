@@ -91,7 +91,7 @@
         proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
         let success = false;
-        client.api
+        client
             .registerProposalVote(chatId, messageIndex, adopt)
             .then((resp) => {
                 if (resp === "success") {

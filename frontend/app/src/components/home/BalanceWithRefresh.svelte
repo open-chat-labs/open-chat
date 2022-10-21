@@ -26,7 +26,7 @@
         dispatch("click");
         refreshing = true;
 
-        return client.api
+        return client
             .refreshAccountBalance(token, user.cryptoAccount)
             .then((val) => {
                 dispatch("refreshed", val);

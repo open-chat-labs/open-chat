@@ -40,7 +40,7 @@
             return;
         }
         loading = true;
-        client.api
+        client
             .getInviteCode(group.chatId)
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -71,7 +71,7 @@
         if (loading) return;
         loading = true;
         if (checked) {
-            client.api
+            client
                 .enableInviteCode(group.chatId)
                 .then((resp) => {
                     if (resp.kind === "success") {
@@ -91,7 +91,7 @@
                     loading = false;
                 });
         } else {
-            client.api
+            client
                 .disableInviteCode(group.chatId)
                 .catch((err) => {
                     code = undefined;
@@ -106,7 +106,7 @@
     }
 
     function resetLink(): Promise<void> {
-        return client.api
+        return client
             .resetInviteCode(group.chatId)
             .then((resp) => {
                 if (resp.kind === "success") {

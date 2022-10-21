@@ -85,12 +85,7 @@
             searching = true;
             const lowercase = searchTerm.toLowerCase();
             try {
-                let response: SearchDirectChatResponse | SearchGroupChatResponse;
-                if (chat.kind === "group_chat") {
-                    response = await client.api.searchGroupChat(chat.chatId, lowercase, 50);
-                } else {
-                    response = await client.api.searchDirectChat(chat.chatId, lowercase, 50);
-                }
+                let response = await client.searchChat(chat, lowercase, 50);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {

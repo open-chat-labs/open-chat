@@ -239,7 +239,7 @@
     }
 
     function doUpdateInfo(): Promise<void> {
-        return client.api
+        return client
             .updateGroup(
                 updatedGroup.chatId,
                 nameDirty ? updatedGroup.name : undefined,

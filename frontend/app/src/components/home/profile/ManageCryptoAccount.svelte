@@ -52,7 +52,7 @@
 
         withdrawing = true;
         error = undefined;
-        client.api
+        client
             .withdrawCryptocurrency({
                 kind: "pending",
                 token: token,

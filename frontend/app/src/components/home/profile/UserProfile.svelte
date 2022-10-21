@@ -76,7 +76,7 @@
     $: bioDirty = userbio !== originalBio;
 
     onMount(() => {
-        client.api.getBio().then((bio) => {
+        client.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
     });
@@ -93,7 +93,7 @@
 
         if (bioDirty) {
             promises.push(
-                client.api
+                client
                     .setBio(userbio)
                     .then((resp) => {
                         if (resp === "bio_too_long") {
@@ -111,7 +111,7 @@
 
         if (validUsername !== undefined) {
             promises.push(
-                client.api
+                client
                     .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
