@@ -34,7 +34,7 @@
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { Cryptocurrency, cryptoCurrencyList } from "openchat-client";
@@ -104,7 +104,7 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        rollbar.error("Unable to save user bio: ", err);
+                        logger.error("Unable to save user bio: ", err);
                     })
             );
         }
@@ -136,7 +136,7 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        rollbar.error("Unable to save username: ", err);
+                        logger.error("Unable to save username: ", err);
                     })
             );
         }

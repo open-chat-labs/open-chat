@@ -2,8 +2,8 @@
 
 <script lang="ts">
     import { marked } from "marked";
-    import { rollbar } from "../../utils/logging";
-    import { getContext, onMount } from "svelte";
+    import { logger } from "../../utils/logging";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
@@ -41,24 +41,19 @@
                 parsed = marked.parse(parsed, options);
             }
         } catch (err: any) {
-            rollbar.error("Error parsing markdown: ", err);
+            logger.error("Error parsing markdown: ", err);
         }
 
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
             sanitized = domPurify.sanitize(parsed);
         } catch (err: any) {
-            rollbar.error("Error sanitizing message content: ", err);
+            logger.error("Error sanitizing message content: ", err);
         }
     }
 </script>
 
-<p
-    class="markdown-wrapper"
-    class:inline
-    class:oneLine
-    class:suppressLinks
-    class:singleEmoji>
+<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks class:singleEmoji>
     {@html sanitized}
 </p>
 

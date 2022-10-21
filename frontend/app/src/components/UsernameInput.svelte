@@ -1,7 +1,7 @@
 <script lang="ts">
     import Input from "./Input.svelte";
     import { _ } from "svelte-i18n";
-    import { rollbar } from "../utils/logging";
+    import { logger } from "../utils/logging";
     import type { OpenChat } from "openchat-client";
 
     const MIN_USERNAME_LENGTH = 5;
@@ -53,7 +53,7 @@
             })
             .catch((err) => {
                 error = "register.errorCheckingUsername";
-                rollbar.error("Unable to check username: ", err);
+                logger.error("Unable to check username: ", err);
             })
             .finally(stopChecking);
     }

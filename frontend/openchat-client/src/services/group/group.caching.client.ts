@@ -50,7 +50,7 @@ import {
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../domain/chat/chat.utils";
-import { rollbar } from "../../utils/logging";
+import type { Logger } from "../../utils/logging";
 import type { ServiceRetryInterrupt } from "../candidService";
 
 /**
@@ -61,7 +61,8 @@ export class CachingGroupClient implements IGroupClient {
     constructor(
         private db: Promise<IDBPDatabase<ChatSchema>>,
         private chatId: string,
-        private client: IGroupClient
+        private client: IGroupClient,
+        private logger: Logger
     ) {}
 
     private setCachedEvents<T extends ChatEvent>(
@@ -69,7 +70,7 @@ export class CachingGroupClient implements IGroupClient {
         threadRootMessageIndex?: number
     ): EventsResponse<T> {
         setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
-            rollbar.error("Error writing cached group events", err)
+            this.logger.error("Error writing cached group events", err)
         );
         return resp;
     }

@@ -105,7 +105,8 @@ export class GroupClient extends CandidService implements IGroupClient {
             ? new CachingGroupClient(
                   db,
                   chatId,
-                  new GroupClient(identity, config, chatId, inviteCode)
+                  new GroupClient(identity, config, chatId, inviteCode),
+                  config.logger
               )
             : new GroupClient(identity, config, chatId, inviteCode);
     }

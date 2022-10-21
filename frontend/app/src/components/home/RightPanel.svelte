@@ -29,7 +29,7 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { rollbar } from "../../utils/logging";
+    import { logger } from "../../utils/logging";
 
     const dispatch = createEventDispatcher();
 
@@ -181,7 +181,6 @@
             .changeRole(chatId, them.userId, "owner")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to transfer ownership", resp);
                     undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
                     return false;
                 }
@@ -189,7 +188,7 @@
             })
             .catch((err) => {
                 undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
-                rollbar.error("Unable to transfer ownership", err);
+                logger.error("Unable to transfer ownership", err);
                 return false;
             });
     }
@@ -202,12 +201,11 @@
             .changeRole(chatId, userId, "participant")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to dismiss as admin", resp);
                     toastStore.showFailureToast("dismissAsAdminFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to dismiss as admin", err);
+                logger.error("Unable to dismiss as admin", err);
                 toastStore.showFailureToast("dismissAsAdminFailed");
             });
     }
@@ -220,12 +218,11 @@
             .changeRole(chatId, userId, "admin")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to make admin", resp);
                     toastStore.showFailureToast("makeAdminFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to make admin", err);
+                logger.error("Unable to make admin", err);
                 toastStore.showFailureToast("makeAdminFailed");
             });
     }
@@ -235,12 +232,11 @@
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to remove member", resp);
                     toastStore.showFailureToast("removeMemberFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to remove member", err);
+                logger.error("Unable to remove member", err);
                 toastStore.showFailureToast("removeMemberFailed");
             });
     }
@@ -311,13 +307,12 @@
                     return true;
                 } else {
                     removeMembersLocally(chatId, viaUnblock, users, resp);
-                    rollbar.warn("AddMembersFailed", resp);
                     return false;
                 }
             })
             .catch((err) => {
                 removeMembersLocally(chatId, viaUnblock, users, { kind: "unknown" });
-                rollbar.error("AddMembersFailed", err);
+                logger.error("AddMembersFailed", err);
                 return false;
             });
     }

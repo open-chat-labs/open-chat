@@ -5,7 +5,7 @@
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import Toggle from "../../Toggle.svelte";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -49,12 +49,12 @@
                     code = resp.code;
                 } else {
                     error = unauthorized;
-                    rollbar.error("Unauthorized response calling getInviteCode");
+                    logger.error("Unauthorized response calling getInviteCode");
                 }
             })
             .catch((err) => {
                 error = $_("group.invite.errorGettingLink");
-                rollbar.error("Unable to get invite code: ", err);
+                logger.error("Unable to get invite code: ", err);
             })
             .finally(() => {
                 loading = false;
@@ -79,13 +79,13 @@
                     } else {
                         error = unauthorized;
                         checked = false;
-                        rollbar.error("Unauthorized response calling enableInviteCode");
+                        logger.error("Unauthorized response calling enableInviteCode");
                     }
                 })
                 .catch((err) => {
                     checked = false;
                     error = $_("group.invite.errorEnablingLink");
-                    rollbar.error("Unable to enable invite code: ", err);
+                    logger.error("Unable to enable invite code: ", err);
                 })
                 .finally(() => {
                     loading = false;
@@ -97,7 +97,7 @@
                     code = undefined;
                     checked = true;
                     error = $_("group.invite.errorDisablingLink");
-                    rollbar.error("Unable to disable invite code: ", err);
+                    logger.error("Unable to disable invite code: ", err);
                 })
                 .finally(() => {
                     loading = false;
@@ -113,12 +113,12 @@
                     code = resp.code;
                 } else {
                     error = unauthorized;
-                    rollbar.error("Unauthorized response calling resetInviteCode");
+                    logger.error("Unauthorized response calling resetInviteCode");
                 }
             })
             .catch((err) => {
                 error = $_("group.invite.errorResettingLink");
-                rollbar.error("Unable to reset invite code: ", err);
+                logger.error("Unable to reset invite code: ", err);
             });
     }
 

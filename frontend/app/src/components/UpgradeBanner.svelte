@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rollbar } from "../utils/logging";
+    import { logger } from "../utils/logging";
     import { Poller, Version } from "openchat-client";
 
     const VERSION_INTERVAL = 60 * 1000;
@@ -48,7 +48,7 @@
             })
             .catch((err) => {
                 errorCount += 1;
-                rollbar.error(`Unable to load server version ${errorCount} times`, err);
+                logger.error(`Unable to load server version ${errorCount} times`, err);
                 return clientVersion;
             });
     }

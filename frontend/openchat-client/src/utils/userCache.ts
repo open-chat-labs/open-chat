@@ -1,6 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type { UserSummary } from "../domain/user/user";
-import { rollbar } from "./logging";
 
 const CACHE_VERSION = 1;
 
@@ -26,24 +25,15 @@ export function lazyOpenUserCache(): UserDatabase {
     return db;
 }
 
-export function openUserCache(): UserDatabase {
-    try {
-        return openDB<UserSchema>(`openchat_users`, CACHE_VERSION, {
-            upgrade(db, _oldVersion, _newVersion, _transaction) {
-                try {
-                    if (db.objectStoreNames.contains("users")) {
-                        db.deleteObjectStore("users");
-                    }
-                    db.createObjectStore("users");
-                } catch (err) {
-                    rollbar.error("Unable to upgrade indexedDB for users", err as Error);
-                }
-            },
-        });
-    } catch (err) {
-        rollbar.error("Unable to open indexedDB for users", err as Error);
-        throw err;
-    }
+function openUserCache(): UserDatabase {
+    return openDB<UserSchema>(`openchat_users`, CACHE_VERSION, {
+        upgrade(db, _oldVersion, _newVersion, _transaction) {
+            if (db.objectStoreNames.contains("users")) {
+                db.deleteObjectStore("users");
+            }
+            db.createObjectStore("users");
+        },
+    });
 }
 
 export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> {

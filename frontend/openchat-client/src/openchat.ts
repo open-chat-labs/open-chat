@@ -248,7 +248,7 @@ import {
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
-import { rollbar } from "./utils/logging";
+import type { Logger } from "./utils/logging";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -268,10 +268,12 @@ export class OpenChat extends EventTarget {
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
+    private _logger: Logger;
 
     constructor(private config: OpenChatConfig) {
         super();
 
+        this._logger = config.logger;
         this._liveState = new LiveState();
 
         console.log("OpenChatConfig: ", config);
@@ -599,7 +601,7 @@ export class OpenChat extends EventTarget {
                 return resp === "success";
             })
             .catch((err) => {
-                rollbar.error("Error toggling mute notifications", err);
+                this._logger.error("Error toggling mute notifications", err);
                 mutedChatsStore.set(chatId, !mute);
                 return false;
             });
@@ -613,7 +615,7 @@ export class OpenChat extends EventTarget {
                 return resp === "success";
             })
             .catch((err) => {
-                rollbar.error("Error archiving chat", err);
+                this._logger.error("Error archiving chat", err);
                 archivedChatsStore.set(chatId, false);
                 return false;
             });
@@ -625,7 +627,7 @@ export class OpenChat extends EventTarget {
             .unarchiveChat(chatId)
             .then((resp) => resp === "success")
             .catch((err) => {
-                rollbar.error("Error un-archiving chat", err);
+                this._logger.error("Error un-archiving chat", err);
                 archivedChatsStore.set(chatId, true);
                 return false;
             });
@@ -648,7 +650,7 @@ export class OpenChat extends EventTarget {
                 return { kind: "success" } as PinChatResponse;
             })
             .catch((err) => {
-                rollbar.error("Error pinning chat", err);
+                this._logger.error("Error pinning chat", err);
                 pinnedChatsStore.unpin(chatId);
                 return { kind: "failure" };
             });
@@ -660,7 +662,7 @@ export class OpenChat extends EventTarget {
             .unpinChat(chatId)
             .then((_) => true)
             .catch((err) => {
-                rollbar.error("Error unpinning chat", err);
+                this._logger.error("Error unpinning chat", err);
                 pinnedChatsStore.pin(chatId);
                 return false;
             });
@@ -674,7 +676,7 @@ export class OpenChat extends EventTarget {
                 return resp === "success";
             })
             .catch((err) => {
-                rollbar.error("Error blocking user", err);
+                this._logger.error("Error blocking user", err);
                 blockedUsers.delete(userId);
                 return false;
             });
@@ -688,7 +690,7 @@ export class OpenChat extends EventTarget {
                 return resp === "success";
             })
             .catch((err) => {
-                rollbar.error("Error unblocking user", err);
+                this._logger.error("Error unblocking user", err);
                 blockedUsers.add(userId);
                 return false;
             });
@@ -712,7 +714,7 @@ export class OpenChat extends EventTarget {
             .setUserAvatar(data)
             .then((_resp) => true)
             .catch((err) => {
-                rollbar.error("Failed to update user's avatar", err);
+                this._logger.error("Failed to update user's avatar", err);
                 return false;
             });
     }
@@ -742,7 +744,7 @@ export class OpenChat extends EventTarget {
                 }
             })
             .catch((err) => {
-                rollbar.error("Error making group private", err);
+                this._logger.error("Error making group private", err);
                 return false;
             });
     }
@@ -755,12 +757,11 @@ export class OpenChat extends EventTarget {
                     this.removeChat(chatId);
                     return true;
                 } else {
-                    rollbar.warn("Unable to delete group", resp);
                     return false;
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to delete group", err);
+                this._logger.error("Unable to delete group", err);
                 return false;
             });
     }
@@ -781,7 +782,7 @@ export class OpenChat extends EventTarget {
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to leave group", err);
+                this._logger.error("Unable to leave group", err);
                 return "failure";
             });
     }
@@ -807,7 +808,7 @@ export class OpenChat extends EventTarget {
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to join group", err);
+                this._logger.error("Unable to join group", err);
                 return "failure";
             });
     }
@@ -817,7 +818,7 @@ export class OpenChat extends EventTarget {
             .updateGroup(chatId, undefined, undefined, rules, undefined, undefined)
             .then((resp) => resp === "success")
             .catch((err) => {
-                rollbar.error("Update group rules failed: ", err);
+                this._logger.error("Update group rules failed: ", err);
                 return false;
             });
     }
@@ -836,7 +837,7 @@ export class OpenChat extends EventTarget {
             .updateGroup(chatId, undefined, undefined, undefined, optionalPermissions, undefined)
             .then((resp) => resp === "success")
             .catch((err) => {
-                rollbar.error("Update permissions failed: ", err);
+                this._logger.error("Update permissions failed: ", err);
                 return false;
             });
     }
@@ -1279,7 +1280,11 @@ export class OpenChat extends EventTarget {
     dataToBlobUrl = dataToBlobUrl;
     groupChatFromCandidate = groupChatFromCandidate;
     askForNotificationPermission = askForNotificationPermission;
-    setSoftDisabled = setSoftDisabled;
+    setSoftDisabled(softDisabled: boolean): void {
+        setSoftDisabled(softDisabled).catch((err) =>
+            this._logger.error("Failed to set soft disabled", err)
+        );
+    }
 
     editMessageWithAttachment(
         chat: ChatSummary,

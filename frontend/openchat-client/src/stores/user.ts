@@ -2,7 +2,6 @@ import { Poller } from "../services/poller";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { derived, get, writable } from "svelte/store";
 import { chunk, groupBy } from "../utils/list";
-import { rollbar } from "../utils/logging";
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 import { chatSummariesStore, currentUserStore } from "./chat";
 
@@ -130,7 +129,7 @@ async function updateUsers(api: ServiceContainer) {
             }
         }
     } catch (err) {
-        rollbar.error("Error updating users", err as Error);
+        api.logError("Error updating users", err as Error);
     }
 }
 

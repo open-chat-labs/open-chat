@@ -1,7 +1,6 @@
 import type { NotificationStatus } from "src/domain";
 import { derived, writable } from "svelte/store";
 import { getSoftDisabled, storeSoftDisabled } from "../utils/caching";
-import { rollbar } from "../utils/logging";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -28,14 +27,12 @@ export async function initNotificationStores(): Promise<void> {
     }
 }
 
-export function setSoftDisabled(softDisabled: boolean): void {
+export function setSoftDisabled(softDisabled: boolean): Promise<void> {
     // add to indexdb so service worker has access
-    storeSoftDisabled(softDisabled).catch((err) =>
-        rollbar.error("Failed to set soft disabled", err)
-    );
-
-    // add to svelte store
-    softDisabledStore.set(softDisabled);
+    return storeSoftDisabled(softDisabled).finally(() => {
+        // add to svelte store
+        softDisabledStore.set(softDisabled);
+    });
 }
 
 function permissionStateToNotificationPermission(perm: PermissionState): NotificationPermission {
