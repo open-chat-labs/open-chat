@@ -73,8 +73,16 @@
             } else if (resp === "success") {
                 error.set(undefined);
                 loadUser();
+                if (referredBy !== undefined) {
+                    clearReferralCode();
+                }
             }
         });
+    }
+
+    function clearReferralCode() {
+        history.replaceState(null, "", "/#/");
+        localStorage.removeItem("openchat_referredby");
     }
 
     function createChallenge(): void {
