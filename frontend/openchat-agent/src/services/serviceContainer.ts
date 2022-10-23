@@ -23,6 +23,7 @@ import type {
     MigrateUserPrincipalResponse,
     ArchiveChatResponse,
     CreatedUser,
+    UserLookup,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -84,7 +85,7 @@ import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
-import type { BlobReference, DataContent } from "../domain/data/data";
+import type { BlobReference, DataContent, StorageStatus } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type {
     GroupSearchResponse,
@@ -92,32 +93,25 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "../domain/search/search";
-import { MarkMessagesRead, messagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
-import { storageStore } from "../stores/storage";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import type { Cryptocurrency, Tokens } from "../domain/crypto";
-import { cryptoBalance } from "../stores/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
-import { userStore } from "../stores/user";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
-import { snsFunctions } from "../stores/snsFunctions";
-import { userCreatedStore } from "../stores/userCreated";
-import { selectedAuthProviderStore } from "../stores/authProviders";
-import { AuthProvider } from "../domain/auth";
 import type { Logger } from "../utils/logging";
-import type { OpenChatConfig } from "../config";
+import type { AgentConfig } from "../config";
+import { LoadedCachedUsers, MessagesReadFromServer } from "src/events";
 
 export const apiKey = Symbol();
 
@@ -126,7 +120,7 @@ export type GroupInvite = {
     code: string;
 };
 
-export class ServiceContainer implements MarkMessagesRead {
+export class ServiceContainer extends EventTarget {
     private _userIndexClient: IUserIndexClient;
     private _onlineClient: IOnlineClient;
     private _groupIndexClient: IGroupIndexClient;
@@ -138,7 +132,8 @@ export class ServiceContainer implements MarkMessagesRead {
     private db?: Database;
     private _logger: Logger;
 
-    constructor(private identity: Identity, private config: OpenChatConfig) {
+    constructor(private identity: Identity, private config: AgentConfig) {
+        super();
         this._logger = config.logger;
         if (config.enableClientCaching) {
             this.db = initDb(identity.getPrincipal().toString());
@@ -160,7 +155,9 @@ export class ServiceContainer implements MarkMessagesRead {
                     users.map((user) => this.rehydrateUserSummary(user)),
                     (u) => u.userId
                 );
-                userStore.set(lookup);
+                // FIXME - make sure something handleds this event - we might not be able to do this in the ctor like this
+                this.dispatchEvent(new LoadedCachedUsers(lookup));
+                // userStore.set(lookup);
             });
         }
     }
@@ -798,11 +795,19 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
-                messagesRead.syncWithServer(
-                    chat.chatId,
-                    chat.readByMeUpTo,
-                    threadsReadFromChat(chat)
+                // FIXME - make sure something is handling this event
+                this.dispatchEvent(
+                    new MessagesReadFromServer(
+                        chat.chatId,
+                        chat.readByMeUpTo,
+                        threadsReadFromChat(chat)
+                    )
                 );
+                // messagesRead.syncWithServer(
+                //     chat.chatId,
+                //     chat.readByMeUpTo,
+                //     threadsReadFromChat(chat)
+                // );
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
@@ -831,8 +836,11 @@ export class ServiceContainer implements MarkMessagesRead {
         };
     }
 
-    getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(selectedChatId).then((resp) => {
+    getInitialState(
+        userStore: UserLookup,
+        selectedChatId: string | undefined
+    ): Promise<MergedUpdatesResponse> {
+        return this.userClient.getInitialState(userStore, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(resp, false);
         });
     }
@@ -840,21 +848,26 @@ export class ServiceContainer implements MarkMessagesRead {
     getUpdates(
         currentState: CurrentChatState,
         args: UpdateArgs,
+        userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getUpdates(currentState, args, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(resp);
-        });
+        return this.userClient
+            .getUpdates(currentState, args, userStore, selectedChatId)
+            .then((resp) => {
+                return this.handleMergedUpdatesResponse(resp);
+            });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser().then((response) => {
-            if (response.kind === "created_user") {
-                userCreatedStore.set(true);
-                selectedAuthProviderStore.init(AuthProvider.II);
-            }
-            return response;
-        });
+        // FIXME - make sure the caller sets the relevant stores
+        // return this._userIndexClient.getCurrentUser().then((response) => {
+        //     if (response.kind === "created_user") {
+        //         userCreatedStore.set(true);
+        //         selectedAuthProviderStore.init(AuthProvider.II);
+        //     }
+        //     return response;
+        // });
+        return this._userIndexClient.getCurrentUser();
     }
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
@@ -1096,9 +1109,11 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.registerUser(username, challengeAttempt, referredBy);
     }
 
-    getUserStorageLimits(): Promise<void> {
+    getUserStorageLimits(): Promise<StorageStatus> {
         // do we need to do something if this fails? Not sure there's much we can do
-        return DataClient.create(this.identity, this.config).storageStatus().then(storageStore.set);
+        // FIXME - make sure that the caller of this function updates the storageStore
+        // return DataClient.create(this.identity, this.config).storageStatus().then(storageStore.set);
+        return DataClient.create(this.identity, this.config).storageStatus();
     }
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
@@ -1106,10 +1121,12 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this._ledgerClients[crypto].accountBalance(account).then((val) => {
-            cryptoBalance.set(crypto, val);
-            return val;
-        });
+        // FIXME - make sure the caller of this function sets the cryptoBalance store
+        // return this._ledgerClients[crypto].accountBalance(account).then((val) => {
+        //     cryptoBalance.set(crypto, val);
+        //     return val;
+        // });
+        return this._ledgerClients[crypto].accountBalance(account);
     }
 
     getGroupMessagesByMessageIndex(
@@ -1216,12 +1233,18 @@ export class ServiceContainer implements MarkMessagesRead {
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string
     ): Promise<ListNervousSystemFunctionsResponse> {
-        return SnsGovernanceClient.create(this.identity, this.config, snsGovernanceCanisterId)
-            .listNervousSystemFunctions()
-            .then((val) => {
-                snsFunctions.set(snsGovernanceCanisterId, val.functions);
-                return val;
-            });
+        //FIXME - make sure the caller of this function updates the snsFunctions store
+        // return SnsGovernanceClient.create(this.identity, this.config, snsGovernanceCanisterId)
+        //     .listNervousSystemFunctions()
+        //     .then((val) => {
+        //         snsFunctions.set(snsGovernanceCanisterId, val.functions);
+        //         return val;
+        //     });
+        return SnsGovernanceClient.create(
+            this.identity,
+            this.config,
+            snsGovernanceCanisterId
+        ).listNervousSystemFunctions();
     }
 
     async threadPreviews(

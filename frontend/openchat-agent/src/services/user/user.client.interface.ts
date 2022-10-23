@@ -37,6 +37,7 @@ import type {
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
+    UserLookup,
 } from "../../domain/user/user";
 import type { ServiceRetryInterrupt } from "../candidService";
 
@@ -45,9 +46,13 @@ export interface IUserClient {
     getUpdates(
         currentState: CurrentChatState,
         args: UpdateArgs,
+        userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
-    getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse>;
+    getInitialState(
+        userStore: UserLookup,
+        selectedChatId: string | undefined
+    ): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,

@@ -1,6 +1,6 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import type { OpenChatConfig } from "../config";
+import type { AgentConfig } from "../config";
 import {
     AuthError,
     ReplicaNotUpToDateError,
@@ -22,7 +22,7 @@ export abstract class CandidService {
     protected createServiceClient<T>(
         factory: IDL.InterfaceFactory,
         canisterId: string,
-        config: OpenChatConfig
+        config: AgentConfig
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });

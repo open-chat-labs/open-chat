@@ -17,10 +17,13 @@ import type {
     UserSummary,
 } from "../../domain/user/user";
 import { groupBy } from "../../utils/list";
-import { isUserSummary } from "../../utils/user";
 import { profile } from "../common/profiling";
 import type { Logger } from "../../utils/logging";
 import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
+
+function isUserSummary(user: PartialUserSummary): user is UserSummary {
+    return user.username !== undefined;
+}
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to

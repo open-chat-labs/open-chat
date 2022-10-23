@@ -56,6 +56,7 @@ import type {
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
+    UserLookup,
 } from "../../domain/user/user";
 import type {
     SearchDirectChatResponse,
@@ -66,21 +67,19 @@ import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { get } from "svelte/store";
-import { messagesRead } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
-import { userStore } from "../../stores/user";
 import { UserIndexClient } from "../userIndex/userIndex.client";
 import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
+import { MessagesReadFromServer } from "src/events";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
  * indexDB for holding chat messages
  */
-export class CachingUserClient implements IUserClient {
+export class CachingUserClient extends EventTarget implements IUserClient {
     public get userId(): string {
         return this.client.userId;
     }
@@ -88,10 +87,12 @@ export class CachingUserClient implements IUserClient {
     constructor(
         private db: Database,
         private identity: Identity,
-        private config: OpenChatConfig,
+        private config: AgentConfig,
         private client: IUserClient,
         private groupInvite: GroupInvite | undefined
-    ) {}
+    ) {
+        super();
+    }
 
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
         setCachedChats(this.db, this.userId, resp).catch((err) =>
@@ -241,7 +242,8 @@ export class CachingUserClient implements IUserClient {
     private async primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
-        selectedChatId: string | undefined
+        selectedChatId: string | undefined,
+        userStore: UserLookup
     ): Promise<void> {
         const cachedChats =
             cachedResponse === undefined
@@ -264,11 +266,20 @@ export class CachingUserClient implements IUserClient {
         for (const batch of chunk(orderedChats, batchSize)) {
             const eventsPromises = batch.map((chat) => {
                 // horrible having to do this but if we don't the message read tracker will not be in the right state
-                messagesRead.syncWithServer(
-                    chat.chatId,
-                    chat.readByMeUpTo,
-                    threadsReadFromChat(chat)
+
+                this.dispatchEvent(
+                    new MessagesReadFromServer(
+                        chat.chatId,
+                        chat.readByMeUpTo,
+                        threadsReadFromChat(chat)
+                    )
                 );
+                // FIXME - handle this event
+                // messagesRead.syncWithServer(
+                //     chat.chatId,
+                //     chat.readByMeUpTo,
+                //     threadsReadFromChat(chat)
+                // );
 
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);
@@ -335,7 +346,10 @@ export class CachingUserClient implements IUserClient {
                         return result;
                     }, new Set<string>());
 
-                    const missing = missingUserIds(get(userStore), userIds);
+                    // FIXME - not sure how to deal with this yet
+                    // perhaps we just look in indexeddb instead?
+                    // what is acutally *adding* the missing users we load into the userStore
+                    const missing = missingUserIds(userStore, userIds);
                     if (missing.length > 0) {
                         return UserIndexClient.create(this.identity, this.config).getUsers(
                             {
@@ -356,7 +370,10 @@ export class CachingUserClient implements IUserClient {
     }
 
     @profile("userCachingClient")
-    async getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        userStore: UserLookup,
+        selectedChatId: string | undefined
+    ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
@@ -364,19 +381,20 @@ export class CachingUserClient implements IUserClient {
                 .getUpdates(
                     cachedChats,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
+                    userStore,
                     selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
-                    this.primeCaches(cachedChats, resp, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
-                .getInitialState(selectedChatId)
+                .getInitialState(userStore, selectedChatId)
                 .then((resp) => {
-                    this.primeCaches(cachedChats, resp, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
@@ -387,13 +405,14 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         currentState: CurrentChatState,
         args: UpdateArgs,
+        userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(currentState, args, selectedChatId) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(currentState, args, userStore, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
-                this.primeCaches(cachedChats, resp, selectedChatId);
+                this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                 return resp;
             })
             .then((resp) => this.setCachedChats(resp));

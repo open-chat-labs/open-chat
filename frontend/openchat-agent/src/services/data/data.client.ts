@@ -6,14 +6,14 @@ import type { IDataClient } from "./data.client.interface";
 import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus } from "../../domain/data/data";
-import { storageStore } from "../../stores/storage";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../domain/chat/chat.utils";
+import { StorageUpdated } from "../../events";
 
-export class DataClient implements IDataClient {
+export class DataClient extends EventTarget implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
 
-    static create(identity: Identity, config: OpenChatConfig): IDataClient {
+    static create(identity: Identity, config: AgentConfig): IDataClient {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity, host });
         const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
@@ -28,7 +28,8 @@ export class DataClient implements IDataClient {
         return new DataClient(openStorageAgent, config);
     }
 
-    constructor(openStorageAgent: OpenStorageAgent, private config: OpenChatConfig) {
+    constructor(openStorageAgent: OpenStorageAgent, private config: AgentConfig) {
+        super();
         this.openStorageAgent = openStorageAgent;
     }
 
@@ -146,10 +147,12 @@ export class DataClient implements IDataClient {
         }
 
         if (bytesUsed !== undefined && byteLimit !== undefined) {
-            storageStore.set({
-                byteLimit,
-                bytesUsed,
-            });
+            this.dispatchEvent(
+                new StorageUpdated({
+                    byteLimit,
+                    bytesUsed,
+                })
+            );
         }
 
         return updatedContent;
@@ -274,10 +277,17 @@ export class DataClient implements IDataClient {
         }
 
         if (bytesUsed !== undefined && byteLimit !== undefined) {
-            storageStore.set({
-                byteLimit,
-                bytesUsed,
-            });
+            this.dispatchEvent(
+                new StorageUpdated({
+                    byteLimit,
+                    bytesUsed,
+                })
+            );
+            // FIXME - handle this event in the OpenChat client
+            // storageStore.set({
+            //     byteLimit,
+            //     bytesUsed,
+            // });
         }
 
         if (error !== undefined) {

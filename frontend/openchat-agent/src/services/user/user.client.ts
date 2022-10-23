@@ -84,6 +84,7 @@ import type {
     PublicProfile,
     SetBioResponse,
     UnpinChatResponse,
+    UserLookup,
 } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
@@ -98,13 +99,13 @@ import { textToCode } from "../../domain/inviteCodes";
 import type { GroupInvite } from "../../services/serviceContainer";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
     userId: string;
 
-    constructor(identity: Identity, userId: string, private config: OpenChatConfig) {
+    constructor(identity: Identity, userId: string, private config: AgentConfig) {
         super(identity);
         this.userId = userId;
         this.userService = this.createServiceClient<UserService>(idlFactory, userId, config);
@@ -113,7 +114,7 @@ export class UserClient extends CandidService implements IUserClient {
     static create(
         userId: string,
         identity: Identity,
-        config: OpenChatConfig,
+        config: AgentConfig,
         db: Database | undefined,
         groupInvite: GroupInvite | undefined
     ): IUserClient {
@@ -234,7 +235,10 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        _userStore: UserLookup,
+        _selectedChatId?: string
+    ): Promise<MergedUpdatesResponse> {
         const disableCache =
             localStorage.getItem("openchat_disable_initial_state_cache") === "true";
 
@@ -258,6 +262,7 @@ export class UserClient extends CandidService implements IUserClient {
     async getUpdates(
         currentState: CurrentChatState,
         args: UpdateArgs,
+        _userStore: UserLookup,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
         const updatesResponse = await this.handleQueryResponse(

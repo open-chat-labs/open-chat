@@ -937,6 +937,7 @@ export class OpenChat extends EventTarget {
             type
         );
     }
+
     selectReaction(
         chat: ChatSummary,
         userId: string,
@@ -946,16 +947,63 @@ export class OpenChat extends EventTarget {
         username: string,
         kind: "add" | "remove"
     ): Promise<boolean> {
-        const result = selectReaction(
-            this.api,
-            chat,
-            userId,
-            threadRootMessageIndex,
-            messageId,
+        localMessageUpdates.markReaction(messageId.toString(), {
             reaction,
-            username,
-            kind
-        );
+            kind,
+            userId,
+        });
+
+        function undoLocally() {
+            localMessageUpdates.markReaction(messageId.toString(), {
+                reaction,
+                kind: kind === "add" ? "remove" : "add",
+                userId,
+            });
+        }
+
+        const result = (
+            chat.kind === "direct_chat"
+                ? kind == "add"
+                    ? this.api.addDirectChatReaction(
+                          chat.chatId,
+                          messageId,
+                          reaction,
+                          username,
+                          threadRootMessageIndex
+                      )
+                    : this.api.removeDirectChatReaction(
+                          chat.chatId,
+                          messageId,
+                          reaction,
+                          threadRootMessageIndex
+                      )
+                : kind === "add"
+                ? this.api.addGroupChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      username,
+                      threadRootMessageIndex
+                  )
+                : this.api.removeGroupChatReaction(
+                      chat.chatId,
+                      messageId,
+                      reaction,
+                      threadRootMessageIndex
+                  )
+        )
+            .then((resp) => {
+                if (resp !== "success" && resp !== "no_change") {
+                    undoLocally();
+                    return false;
+                }
+                return true;
+            })
+            .catch((_) => {
+                undoLocally();
+                return false;
+            });
+
         this.sendRtcMessage([...this._liveState.currentChatUserIds], {
             kind: "remote_user_toggled_reaction",
             chatType: chat.kind,

@@ -1,5 +1,5 @@
 {
-    "name": "openchat-client",
+    "name": "openchat-agent",
     "version": "1.0.0",
     "description": "Typescript library for interacting with the OpenChat backend",
     "main": "lib/index.js",
@@ -27,12 +27,7 @@
         "idb": "^6.1.5",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
-        "peerjs": "^1.4.7",
-        "svelte": "^3.51.0",
-        "svelte-i18n": "^3.4.0",
-        "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
-        "uuid": "^9.0.0",
-        "openchat-agent": "*"
+        "uuid": "^9.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.17.9",
@@ -85,7 +80,6 @@
             "ts"
         ],
         "moduleNameMapper": {
-            "peerjs": "<rootDir>/src/dummyModule.js",
             "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"

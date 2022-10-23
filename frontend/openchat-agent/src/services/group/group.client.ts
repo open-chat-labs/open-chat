@@ -79,14 +79,14 @@ import { profile } from "../common/profiling";
 import { textToCode } from "../../domain/inviteCodes";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { generateUint64 } from "../../utils/rng";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
 
     constructor(
         identity: Identity,
-        private config: OpenChatConfig,
+        private config: AgentConfig,
         private chatId: string,
         private inviteCode: string | undefined
     ) {
@@ -97,7 +97,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     static create(
         chatId: string,
         identity: Identity,
-        config: OpenChatConfig,
+        config: AgentConfig,
         db: Database | undefined,
         inviteCode: string | undefined
     ): IGroupClient {

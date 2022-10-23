@@ -39,69 +39,7 @@ import { unconfirmed } from "../../stores/unconfirmed";
 import { messagesRead } from "../../stores/markRead";
 import { trackEvent } from "../../utils/tracking";
 
-export function selectReaction(
-    api: ServiceContainer,
-    chat: ChatSummary,
-    userId: string,
-    threadRootMessageIndex: number | undefined,
-    messageId: bigint,
-    reaction: string,
-    username: string,
-    kind: "add" | "remove"
-): Promise<boolean> {
-    localMessageUpdates.markReaction(messageId.toString(), {
-        reaction,
-        kind,
-        userId,
-    });
-
-    function undoLocally() {
-        localMessageUpdates.markReaction(messageId.toString(), {
-            reaction,
-            kind: kind === "add" ? "remove" : "add",
-            userId,
-        });
-    }
-
-    return (
-        chat.kind === "direct_chat"
-            ? kind == "add"
-                ? api.addDirectChatReaction(
-                      chat.chatId,
-                      messageId,
-                      reaction,
-                      username,
-                      threadRootMessageIndex
-                  )
-                : api.removeDirectChatReaction(
-                      chat.chatId,
-                      messageId,
-                      reaction,
-                      threadRootMessageIndex
-                  )
-            : kind === "add"
-            ? api.addGroupChatReaction(
-                  chat.chatId,
-                  messageId,
-                  reaction,
-                  username,
-                  threadRootMessageIndex
-              )
-            : api.removeGroupChatReaction(chat.chatId, messageId, reaction, threadRootMessageIndex)
-    )
-        .then((resp) => {
-            if (resp !== "success" && resp !== "no_change") {
-                undoLocally();
-                return false;
-            }
-            return true;
-        })
-        .catch((_) => {
-            undoLocally();
-            return false;
-        });
-}
-
+//FIXME - probably just about all of these functions should just be moved inside the OpenChat class itself
 export function deleteMessage(
     api: ServiceContainer,
     userId: string,
