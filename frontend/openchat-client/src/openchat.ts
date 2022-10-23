@@ -37,11 +37,33 @@ import type {
     UpdateGroupResponse,
     CandidateGroupChat,
     CreateGroupResponse,
-} from "./domain";
-import { AuthProvider } from "./domain";
+    ChallengeAttempt,
+    CheckUsernameResponse,
+    ConfirmPhoneNumberResponse,
+    CreateChallengeResponse,
+    CreatedUser,
+    CurrentUserResponse,
+    IdentityState,
+    PartialUserSummary,
+    PhoneNumber,
+    PublicProfile,
+    RegisterUserResponse,
+    SetBioResponse,
+    SetUsernameResponse,
+    SubmitPhoneNumberResponse,
+    User,
+    UsersArgs,
+    UsersResponse,
+    UserSummary,
+    RemoteUserSentMessage,
+    RemoteUserToggledReaction,
+    WebRtcMessage,
+    GroupInvite,
+    ServiceContainer,
+} from "openchat-agent";
+import { AuthProvider } from "openchat-agent";
+import { getContentAsText, getDisplayDate, userIdsFromEvents } from "openchat-agent";
 import {
-    buildCryptoTransferText,
-    buildTransactionLink,
     buildUserAvatarUrl,
     canAddMembers,
     canBlockUsers,
@@ -64,13 +86,10 @@ import {
     containsReaction,
     createMessage,
     findMessageById,
-    getContentAsText,
-    getDisplayDate,
     getFirstUnreadMention,
     getMembersString,
     getMessageContent,
     getStorageRequiredForMessage,
-    getTypingString,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -82,31 +101,8 @@ import {
     metricsEqual,
     newMessageId,
     sameUser,
-    startTyping,
-    stopTyping,
-    userIdsFromEvents,
-} from "./domain/chat/chat.utils";
-import { isPreviewing } from "./domain/chat/chat.utils.shared";
-import type {
-    ChallengeAttempt,
-    CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
-    CreateChallengeResponse,
-    CreatedUser,
-    CurrentUserResponse,
-    IdentityState,
-    PartialUserSummary,
-    PhoneNumber,
-    PublicProfile,
-    RegisterUserResponse,
-    SetBioResponse,
-    SetUsernameResponse,
-    SubmitPhoneNumberResponse,
-    User,
-    UsersArgs,
-    UsersResponse,
-    UserSummary,
-} from "./domain/user/user";
+    isPreviewing,
+} from "./utils/chat.utils";
 import {
     buildUsernameList,
     compareIsNotYouThenUsername,
@@ -121,11 +117,6 @@ import {
     userStatus,
 } from "./domain/user/user.utils";
 import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
-import type {
-    RemoteUserSentMessage,
-    RemoteUserToggledReaction,
-    WebRtcMessage,
-} from "./domain/webrtc/webrtc";
 import {
     blockUser,
     deleteMessage,
@@ -142,15 +133,13 @@ import {
     refreshAffectedEvents,
     registerPollVote,
     removeMessage,
-    selectReaction,
     sendMessageWithAttachment,
     unpinMessage,
     updateDetails,
     updateUserStore,
 } from "./services/common/chatThread";
 import { showTrace } from "./services/common/profiling";
-import { Poller } from "./services/poller";
-import { GroupInvite, ServiceContainer } from "./services/serviceContainer";
+import { Poller } from "./utils/poller";
 import {
     idbAuthClientStore,
     lsAuthClientStore,

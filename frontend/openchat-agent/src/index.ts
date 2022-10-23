@@ -9,4 +9,5 @@ export {
     emptyChatMetrics,
     indexRangeForChat,
     userIdsFromEvents,
+    getDisplayDate,
 } from "./utils/chat";
