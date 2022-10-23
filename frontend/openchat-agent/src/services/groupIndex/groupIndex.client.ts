@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 import type { GroupSearchResponse } from "../../domain/search/search";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
@@ -9,7 +9,7 @@ import { groupSearchResponse } from "./mappers";
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
     private groupIndexService: GroupIndexService;
 
-    private constructor(identity: Identity, config: OpenChatConfig) {
+    private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
         this.groupIndexService = this.createServiceClient<GroupIndexService>(
@@ -19,7 +19,7 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         );
     }
 
-    static create(identity: Identity, config: OpenChatConfig): IGroupIndexClient {
+    static create(identity: Identity, config: AgentConfig): IGroupIndexClient {
         return new GroupIndexClient(identity, config);
     }
 

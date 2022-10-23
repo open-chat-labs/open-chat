@@ -5,12 +5,12 @@ import { CandidService } from "../candidService";
 import type { INotificationsClient } from "./notifications.client.interface";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 
 export class NotificationsClient extends CandidService implements INotificationsClient {
     private service: NotificationsService;
 
-    private constructor(identity: Identity, config: OpenChatConfig) {
+    private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
         this.service = this.createServiceClient<NotificationsService>(
@@ -20,7 +20,7 @@ export class NotificationsClient extends CandidService implements INotifications
         );
     }
 
-    static create(identity: Identity, config: OpenChatConfig): INotificationsClient {
+    static create(identity: Identity, config: AgentConfig): INotificationsClient {
         return new NotificationsClient(identity, config);
     }
 

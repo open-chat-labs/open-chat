@@ -62,8 +62,8 @@ import {
     archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
-import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
+import { compareChats, mergeChatUpdates } from "../../utils/chat";
+import { MAX_EVENTS } from "../../constants";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {

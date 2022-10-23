@@ -1,11 +1,11 @@
-import type { ServiceContainer } from "../services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import type {
     MarkReadRequest,
     MarkReadResponse,
     ThreadRead,
     ThreadSyncDetails,
-} from "../domain/chat/chat";
+    ServiceContainer,
+} from "openchat-agent";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;

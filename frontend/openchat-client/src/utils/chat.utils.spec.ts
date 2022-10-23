@@ -1,4 +1,3 @@
-import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
@@ -8,7 +7,10 @@ import type {
     PollConfig,
     PollVotes,
     PollContent,
-} from "./chat";
+    PartialUserSummary,
+    UserLookup,
+    UserSummary,
+} from "openchat-agent";
 import {
     addVoteToPoll,
     enoughVisibleMessages,

@@ -49,7 +49,7 @@ import {
 } from "../../utils/caching";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
-import { MAX_MISSING } from "../../domain/chat/chat.utils";
+import { MAX_MISSING } from "../../constants";
 import type { Logger } from "../../utils/logging";
 import type { ServiceRetryInterrupt } from "../candidService";
 

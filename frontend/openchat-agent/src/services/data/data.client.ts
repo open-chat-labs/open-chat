@@ -7,7 +7,7 @@ import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat"
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus } from "../../domain/data/data";
 import type { AgentConfig } from "../../config";
-import { buildBlobUrl } from "../../domain/chat/chat.utils";
+import { buildBlobUrl } from "../../utils/chat";
 import { StorageUpdated } from "../../events";
 
 export class DataClient extends EventTarget implements IDataClient {

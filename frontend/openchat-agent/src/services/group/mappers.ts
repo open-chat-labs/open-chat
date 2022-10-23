@@ -537,19 +537,25 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 
 export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse,
-    chatId: string,
-    threadRootMessageIndex: number | undefined,
+    _chatId: string,
+    _threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
 ): EventsResponse<Message> {
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        ensureReplicaIsUpToDate(
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex
-        );
+        // FIXME - this is a big problem
+        // a) it references a store
+        // b) the value of the store *must* be live i.e. it cannot be simply passed in
+        // c) it cannot be pushed to the calling code (the client) because it must happen before the result gets cached
+        // :thinking_face:
+        // Latest event index by chat (Record<string, number>) *must* be captured in the openchat-agent as well
+        // ensureReplicaIsUpToDate(
+        //     chatId,
+        //     threadRootMessageIndex,
+        //     latestClientEventIndexPreRequest,
+        //     latestEventIndex
+        // );
 
         return {
             events: candid.Success.messages.map(messageWrapper),

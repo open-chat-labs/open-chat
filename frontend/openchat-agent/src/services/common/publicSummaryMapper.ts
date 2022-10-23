@@ -1,4 +1,4 @@
-import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
+import { emptyChatMetrics } from "../../utils/chat";
 import type { GroupChatSummary } from "../../domain/chat/chat";
 import type {
     ApiPublicGroupSummary,

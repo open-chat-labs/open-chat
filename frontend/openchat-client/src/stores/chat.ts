@@ -8,30 +8,33 @@ import type {
     Message,
     MessageContent,
     ThreadSyncDetails,
-} from "../domain/chat/chat";
-import { unconfirmed } from "./unconfirmed";
-import { derived, get, Readable, writable, Writable } from "svelte/store";
-import { immutableStore } from "./immutable";
+    ServiceContainer,
+    CreatedUser,
+} from "openchat-agent";
 import {
     compareChats,
     getContentAsText,
     getFirstUnreadMessageIndex,
+    updateArgsFromChats,
+    extractUserIdsFromMentions,
+    missingUserIds,
+    emptyChatMetrics,
+} from "openchat-agent";
+import { unconfirmed } from "./unconfirmed";
+import { derived, get, Readable, writable, Writable } from "svelte/store";
+import { immutableStore } from "./immutable";
+import {
     getNextEventAndMessageIndexes,
     mergeServerEvents,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
-    updateArgsFromChats,
     mergeChatMetrics,
-} from "../domain/chat/chat.utils";
+} from "../utils/chat.utils";
 import { userStore } from "./user";
-import { Poller } from "../services/poller";
-import type { ServiceContainer } from "../services/serviceContainer";
-import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
+import { Poller } from "../utils/poller";
 import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
-import type { CreatedUser } from "../domain/user/user";
 import DRange from "drange";
-import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -449,6 +452,7 @@ async function loadChats(api: ServiceContainer) {
         chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
         const selectedChat = get(selectedChatStore);
+        const userLookup = get(userStore);
         const currentState: CurrentChatState = {
             chatSummaries: chats,
             blockedUsers: get(blockedUsers),
@@ -456,8 +460,9 @@ async function loadChats(api: ServiceContainer) {
         };
         const chatsResponse =
             chatUpdatesSince === undefined
-                ? await api.getInitialState(selectedChat?.chatId)
+                ? await api.getInitialState(userLookup, selectedChat?.chatId)
                 : await api.getUpdates(
+                      userLookup,
                       currentState,
                       updateArgsFromChats(chatUpdatesSince, chats),
                       selectedChat?.chatId

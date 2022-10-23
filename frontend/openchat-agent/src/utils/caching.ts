@@ -1,7 +1,8 @@
-import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils.shared";
+import { MAX_EVENTS } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
+    ChatSummary,
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
@@ -124,6 +125,10 @@ export async function getCachedChats(
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
     return await (await db).get("chats", userId);
+}
+
+function isPreviewing(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
 export async function setCachedChats(

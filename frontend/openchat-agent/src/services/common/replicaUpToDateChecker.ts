@@ -1,16 +1,18 @@
-import { get } from "svelte/store";
-import { serverChatSummariesStore } from "../../stores/chat";
+// import { get } from "svelte/store";
+// import { serverChatSummariesStore } from "../../stores/chat";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function ensureReplicaIsUpToDate(
-    chatId: string,
+    _chatId: string,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined,
     latestEventIndex: number
 ): void {
     const latestClientEventIndex =
         threadRootMessageIndex === undefined
-            ? get(serverChatSummariesStore)[chatId]?.latestEventIndex
+            ? // FIXME - can't do this
+              // ? get(serverChatSummariesStore)[chatId]?.latestEventIndex
+              0
             : latestClientEventIndexPreRequest;
 
     if (latestClientEventIndex !== undefined && latestEventIndex < latestClientEventIndex) {

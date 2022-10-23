@@ -1,8 +1,7 @@
-import { Poller } from "../services/poller";
-import type { ServiceContainer } from "../services/serviceContainer";
+import { Poller } from "../utils/poller";
+import type { ServiceContainer, PartialUserSummary, UserLookup } from "openchat-agent";
 import { derived, get, writable } from "svelte/store";
 import { chunk, groupBy } from "../utils/list";
-import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 import { chatSummariesStore, currentUserStore } from "./chat";
 
 const ONE_MINUTE = 60 * 1000;

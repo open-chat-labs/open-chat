@@ -107,7 +107,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
-import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../domain/chat/chat.utils";
+import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../utils/chat";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { Logger } from "../utils/logging";
 import type { AgentConfig } from "../config";

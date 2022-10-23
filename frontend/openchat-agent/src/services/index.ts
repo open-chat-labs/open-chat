@@ -1,2 +1,2 @@
 export { SessionExpiryError } from "./error";
-export { Poller } from "./poller";
+export { ServiceContainer } from "./serviceContainer";

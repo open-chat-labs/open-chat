@@ -3,12 +3,12 @@ import { idlFactory, OnlineService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { IOnlineClient } from "./online.client.interface";
 import { toVoid } from "../../utils/mapping";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 
 export class OnlineClient extends CandidService implements IOnlineClient {
     private service: OnlineService;
 
-    private constructor(identity: Identity, config: OpenChatConfig) {
+    private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
         this.service = this.createServiceClient<OnlineService>(
@@ -18,7 +18,7 @@ export class OnlineClient extends CandidService implements IOnlineClient {
         );
     }
 
-    static create(identity: Identity, config: OpenChatConfig): IOnlineClient {
+    static create(identity: Identity, config: AgentConfig): IOnlineClient {
         return new OnlineClient(identity, config);
     }
 

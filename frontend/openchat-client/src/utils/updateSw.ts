@@ -2,7 +2,7 @@
  * Periodically check whether there is a new service worker available
  */
 
-import { Poller } from "../services/poller";
+import { Poller } from "../utils/poller";
 
 export async function startSwCheckPoller(): Promise<void> {
     if ("serviceWorker" in navigator) {

@@ -36,12 +36,12 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { cachingLocallyDisabled } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
-import type { OpenChatConfig } from "../../config";
+import type { AgentConfig } from "../../config";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
 
-    private constructor(identity: Identity, config: OpenChatConfig) {
+    private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
         this.userService = this.createServiceClient<UserIndexService>(
@@ -51,7 +51,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity, config: OpenChatConfig): IUserIndexClient {
+    static create(identity: Identity, config: AgentConfig): IUserIndexClient {
         return config.enableClientCaching && !cachingLocallyDisabled()
             ? new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger)
             : new UserIndexClient(identity, config);

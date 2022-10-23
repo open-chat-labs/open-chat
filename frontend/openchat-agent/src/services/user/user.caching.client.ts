@@ -42,11 +42,11 @@ import {
     compareChats,
     getFirstUnreadMessageIndex,
     indexRangeForChat,
-    MAX_MISSING,
     threadsReadFromChat,
     updateArgsFromChats,
     userIdsFromEvents,
-} from "../../domain/chat/chat.utils";
+} from "../../utils/chat";
+import { MAX_MISSING } from "../../constants";
 import type { BlobReference } from "../../domain/data/data";
 import type {
     ArchiveChatResponse,
@@ -281,6 +281,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                 //     threadsReadFromChat(chat)
                 // );
 
+                // FIXME - this is just returning the value from the chat at the moment
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);
 

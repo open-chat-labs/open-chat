@@ -1,4 +1,4 @@
-import { enoughVisibleMessages, nextIndex } from "../../domain/chat/chat.utils";
+import { enoughVisibleMessages, nextIndex } from "../../utils/chat";
 import type { ChatEvent, EventWrapper, EventsResponse, IndexRange } from "../../domain/chat/chat";
 
 const MAX_RECURSION = 10;

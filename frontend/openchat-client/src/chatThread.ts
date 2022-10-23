@@ -7,10 +7,13 @@ import type {
     Message,
     SendMessageSuccess,
     TransferSuccess,
-} from "../../domain/chat/chat";
-import { missingUserIds } from "../../domain/user/user.utils";
-import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-import type { ServiceContainer } from "../../services/serviceContainer";
+    ServiceContainer,
+    CreatedUser,
+    User,
+} from "openchat-agent";
+import { missingUserIds } from "openchat-agent";
+//FIXME - rtc manager should be in the client project
+// import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
@@ -19,25 +22,23 @@ import {
     addServerEventsToStores,
     confirmedEventIndexesLoaded,
     clearServerEvents,
-} from "../../stores/chat";
-import { userStore } from "../../stores/user";
-import { toastStore } from "../../stores/toast";
-import { localMessageUpdates } from "../../stores/localMessageUpdates";
+} from "./stores/chat";
+import { userStore } from "./stores/user";
+import { toastStore } from "./stores/toast";
+import { localMessageUpdates } from "./stores/localMessageUpdates";
+import { indexRangeForChat, userIdsFromEvents } from "openchat-agent";
 import {
-    indexRangeForChat,
     makeRtcConnections,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
     upToDate,
-    userIdsFromEvents,
-} from "../../domain/chat/chat.utils";
-import type { CreatedUser, User } from "../../domain/user/user";
+} from "./utils/chat.utils";
 import { get } from "svelte/store";
-import { findLast } from "../../utils/list";
-import { indexIsInRanges } from "../../utils/range";
-import { unconfirmed } from "../../stores/unconfirmed";
-import { messagesRead } from "../../stores/markRead";
-import { trackEvent } from "../../utils/tracking";
+import { findLast } from "./utils/list";
+import { indexIsInRanges } from "./utils/range";
+import { unconfirmed } from "./stores/unconfirmed";
+import { messagesRead } from "./stores/markRead";
+import { trackEvent } from "./utils/tracking";
 
 //FIXME - probably just about all of these functions should just be moved inside the OpenChat class itself
 export function deleteMessage(
