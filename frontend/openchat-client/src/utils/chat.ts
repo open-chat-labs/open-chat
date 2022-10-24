@@ -43,6 +43,8 @@ import type { UnconfirmedMessages } from "../stores/unconfirmed";
 import type { MessageFormatter } from "./i18n";
 import { get } from "svelte/store";
 import { formatTokens } from "./cryptoFormatter";
+import { currentChatUserIds } from "../stores/chat";
+import type { TypersByKey } from "../stores/typing";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1168,4 +1170,50 @@ export function buildCryptoTransferText(
 
 function toSymbol(token: Cryptocurrency): string {
     return cryptoLookup[token].symbol;
+}
+
+export function stopTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_stopped_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
+}
+
+export function startTyping(
+    { kind, chatId }: ChatSummary,
+    userId: string,
+    threadRootMessageIndex?: number
+): void {
+    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+        kind: "remote_user_typing",
+        chatType: kind,
+        chatId,
+        userId,
+        threadRootMessageIndex,
+    });
+}
+
+export function getTypingString(
+    formatter: MessageFormatter,
+    users: UserLookup,
+    key: string,
+    typing: TypersByKey
+): string | undefined {
+    const typers = typing[key];
+    if (typers === undefined || typers.size === 0) return undefined;
+
+    if (typers.size > 1) {
+        return formatter("membersAreTyping", { values: { number: typers.size } });
+    } else {
+        const userIds = [...typers];
+        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        return formatter("memberIsTyping", { values: { username } });
+    }
 }

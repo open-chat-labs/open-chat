@@ -275,6 +275,9 @@ import {
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
+import { getTypingString } from "./utils/chat";
+import { startTyping } from "./utils/chat";
+import { stopTyping } from "./utils/chat";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;

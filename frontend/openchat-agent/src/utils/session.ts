@@ -1,13 +1,14 @@
 import type { Identity } from "@dfinity/agent";
-import { DelegationIdentity } from "@dfinity/identity";
+import type { DelegationIdentity } from "@dfinity/identity";
 
 export function getTimeUntilSessionExpiryMs(identity: Identity): number {
-    if (!(identity instanceof DelegationIdentity)) {
+    if (!("getDelegation" in identity)) {
+        // if (!(identity instanceof DelegationIdentity)) {
         return 0;
     }
 
     const expiryDateTimestampMs = Number(
-        identity
+        (identity as DelegationIdentity)
             .getDelegation()
             .delegations.map((d) => d.delegation.expiration)
             .reduce((current, next) => (next < current ? next : current)) / BigInt(1_000_000)

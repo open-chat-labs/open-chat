@@ -12,8 +12,6 @@ import type {
     User,
 } from "openchat-agent";
 import { missingUserIds } from "openchat-agent";
-//FIXME - rtc manager should be in the client project
-// import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
 import DRange from "drange";
 import {
     currentChatDraftMessage,
@@ -32,13 +30,14 @@ import {
     mergeSendMessageResponse,
     serialiseMessageForRtc,
     upToDate,
-} from "./utils/chat.utils";
+} from "./utils/chat";
 import { get } from "svelte/store";
 import { findLast } from "./utils/list";
 import { indexIsInRanges } from "./utils/range";
 import { unconfirmed } from "./stores/unconfirmed";
 import { messagesRead } from "./stores/markRead";
 import { trackEvent } from "./utils/tracking";
+import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 
 //FIXME - probably just about all of these functions should just be moved inside the OpenChat class itself
 export function deleteMessage(
