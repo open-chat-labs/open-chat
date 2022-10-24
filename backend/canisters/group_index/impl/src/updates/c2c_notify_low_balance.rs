@@ -1,7 +1,8 @@
-use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE};
+use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_TOP_UP_AMOUNT};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use types::{ChatId, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse};
+use utils::consts::MIN_CYCLES_BALANCE;
 use utils::cycles::{can_spend_cycles, top_up_canister};
 
 #[update_msgpack]

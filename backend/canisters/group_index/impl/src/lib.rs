@@ -21,7 +21,6 @@ mod model;
 mod queries;
 mod updates;
 
-const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes

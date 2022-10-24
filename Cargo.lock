@@ -29,7 +29,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
  "once_cell",
  "version_check",
 ]
@@ -114,7 +114,7 @@ checksum = "10f203db73a71dfa2fb6dd22763990fa26f3d2625a6da2da900d23b87d26be27"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -125,7 +125,7 @@ checksum = "76464446b8bc32758d7e88ee1a804d9914cd9b1cb264c029899680b0be29826f"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -576,7 +576,7 @@ dependencies = [
  "either",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -813,8 +813,9 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "futures",
  "http_request",
  "ic-cdk 0.6.1",
@@ -825,7 +826,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types 0.1.0",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -893,7 +894,7 @@ dependencies = [
  "lazy_static",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -905,7 +906,7 @@ dependencies = [
  "lazy_static",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -913,7 +914,7 @@ name = "candid_gen"
 version = "0.1.0"
 dependencies = [
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -922,7 +923,16 @@ version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
+]
+
+[[package]]
+name = "candid_gen"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f#adc65b50d60e36fb70c302772345e024c8782e4f"
+dependencies = [
+ "quote 1.0.21",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -933,7 +943,7 @@ dependencies = [
  "quote 1.0.21",
  "serde",
  "serde_tokenstream",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -998,6 +1008,11 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071#cfc89a86ae59ee7a12e155ddbc2df74713575071"
+
+[[package]]
+name = "canister_state_macros"
+version = "0.1.0"
 source = "git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7#d9c575fb4b91e1cfe80add0746eac389df33c8f7"
 
 [[package]]
@@ -1006,7 +1021,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1135,7 +1150,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1205,7 +1220,7 @@ dependencies = [
  "convert_case 0.4.0",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1217,7 +1232,7 @@ dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1506,7 +1521,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdffe87e1d521a10f9696f833fe502293ea446d7f256c06128293a4119bdf4cb"
 dependencies = [
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1599,7 +1614,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "scratch",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1616,7 +1631,32 @@ checksum = "dcb67a6de1f602736dd7eaead0080cf3435df806c61b24b13328db128c58868f"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
+]
+
+[[package]]
+name = "cycles_dispenser"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f#adc65b50d60e36fb70c302772345e024c8782e4f"
+dependencies = [
+ "candid 0.8.3",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f)",
+ "serde",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f)",
+]
+
+[[package]]
+name = "cycles_dispenser_client"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f#adc65b50d60e36fb70c302772345e024c8782e4f"
+dependencies = [
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071)",
+ "cycles_dispenser",
+ "ic-cdk 0.6.1",
+ "rmp-serde",
+ "serde",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f)",
+ "utils 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f)",
 ]
 
 [[package]]
@@ -1640,7 +1680,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "strsim",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1651,7 +1691,7 @@ checksum = "9c972679f83bdf9c42bd905396b6c3588a843a17f0f16dfcfa3e2c5d57441835"
 dependencies = [
  "darling_core",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1711,7 +1751,7 @@ dependencies = [
  "nom",
  "num-bigint 0.4.3",
  "num-traits",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1735,7 +1775,7 @@ checksum = "8aed3b3c608dc56cf36c45fe979d04eda51242e6703d8d0bb03426ef7c41db6a"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "synstructure",
 ]
 
@@ -1746,7 +1786,7 @@ source = "git+https://github.com/dfinity-lab/derive_more?branch=master#9f1b894e6
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1759,7 +1799,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "rustc_version",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1904,7 +1944,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e18997d4604542d0736fae2c5ad6de987f0a50530cbcc14a7ce5a685328a252d"
 dependencies = [
  "ct-codecs",
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
 ]
 
 [[package]]
@@ -1931,7 +1971,7 @@ dependencies = [
  "enum-ordinalize",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -1991,7 +2031,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "rustc_version",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -2076,7 +2116,7 @@ dependencies = [
  "num-traits",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -2245,7 +2285,7 @@ checksum = "42cd15d1c7456c04dbdf7e88bcd69760d74f3a798d6444e16974b505b0e62f17"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -2319,9 +2359,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4eb1a864a501629691edf6c15a593b7a51eebaa1e8468e9ddc623de7c9b58ec6"
+checksum = "c05aeb6a22b8f62540c194aac980f2115af067bfe15a0734d7277a768d396b31"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -2400,7 +2440,7 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -2428,7 +2468,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -2471,8 +2511,9 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -2491,7 +2532,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -3041,7 +3082,7 @@ dependencies = [
  "quote 1.0.21",
  "serde",
  "serde_tokenstream",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -3164,7 +3205,7 @@ name = "ic-crypto-getrandom-for-wasm"
 version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=f7e3c96a2be92186718f6a1e67eea37bf3252c00#f7e3c96a2be92186718f6a1e67eea37bf3252c00"
 dependencies = [
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
 ]
 
 [[package]]
@@ -4488,7 +4529,7 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.6.1",
@@ -4504,7 +4545,7 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_index_canister",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -4917,7 +4958,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "regex-syntax",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5024,7 +5065,7 @@ dependencies = [
  "cfg-if 0.1.10",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5173,8 +5214,9 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "http_request",
  "ic-cdk 0.6.1",
  "ic-cdk-macros",
@@ -5186,7 +5228,7 @@ dependencies = [
  "types 0.1.0",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -5340,7 +5382,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5411,8 +5453,9 @@ version = "0.1.0"
 dependencies = [
  "candid 0.8.3",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "http_request",
  "ic-cdk 0.6.1",
  "ic-cdk-macros",
@@ -5423,7 +5466,7 @@ dependencies = [
  "types 0.1.0",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -5466,7 +5509,7 @@ checksum = "b501e44f11665960c7e7fcf062c7d96a14ade4aa98116c004b2e37b5be7d736c"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5716,7 +5759,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5782,7 +5825,7 @@ checksum = "069bdb1e05adc7a8990dce9cc75370895fbe4e3d58b9b73bf1aee56359344a55"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5943,7 +5986,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c142c0e46b57171fe0c528bee8c5b7569e80f0c17e377cd0e30ea57dbc11bb51"
 dependencies = [
  "proc-macro2",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -5966,7 +6009,7 @@ dependencies = [
  "proc-macro-error-attr",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "version_check",
 ]
 
@@ -6037,8 +6080,9 @@ version = "0.1.0"
 dependencies = [
  "candid 0.8.3",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -6054,7 +6098,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types 0.1.0",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -6119,7 +6163,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -6216,7 +6260,7 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
 ]
 
 [[package]]
@@ -6267,7 +6311,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b033d837a7cf162d7993aded9304e30a83213c648b6e389db233191f891e5c2b"
 dependencies = [
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
  "redox_syscall",
  "thiserror",
 ]
@@ -6736,7 +6780,7 @@ checksum = "81fa1584d3d1bcacd84c277a0dfe21f5b0f6accf4a23d04d4c6d61f1af522b4c"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -6758,7 +6802,7 @@ checksum = "d6deb15c3a535e81438110111d90168d91721652f502abb147f31cde129f683d"
 dependencies = [
  "proc-macro2",
  "serde",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -6792,7 +6836,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7140,7 +7184,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "rustversion",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7153,7 +7197,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.21",
  "rustversion",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7181,9 +7225,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.102"
+version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fcd952facd492f9be3ef0d0b7032a6e442ee9b361d4acc2b1d0c4aaa5f613a1"
+checksum = "a864042229133ada95abf3b54fdc62ef5ccabe9515b64717bcb9a1919e59445d"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
@@ -7213,7 +7257,7 @@ checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "unicode-xid 0.2.4",
 ]
 
@@ -7267,7 +7311,7 @@ checksum = "0ee42b4e559f17bce0385ebf511a7beb67d5cc33c12c96b7f4e9789919d9c10f"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7329,7 +7373,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7355,7 +7399,7 @@ checksum = "982d17546b47146b28f7c22e3d08465f6b8903d0ea13c1660d9d84a6e7adcdbb"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7467,7 +7511,7 @@ checksum = "9724f9a975fb987ef7a3cd9be0350edcbe130698af5b8f7a631e23d42d052484"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7611,7 +7655,7 @@ dependencies = [
  "proc-macro2",
  "prost-build",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7686,7 +7730,7 @@ checksum = "4017f8f45139870ca7e672686113917c71c7a6e02d4924eda67186083c03081a"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -7822,6 +7866,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "types"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f#adc65b50d60e36fb70c302772345e024c8782e4f"
+dependencies = [
+ "candid 0.8.3",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "ucd-trie"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7940,7 +7994,7 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -7974,7 +8028,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -8019,9 +8073,10 @@ dependencies = [
  "candid 0.8.3",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
  "captcha",
+ "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -8047,7 +8102,7 @@ dependencies = [
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",
- "utils",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -8062,7 +8117,7 @@ version = "0.1.0"
 dependencies = [
  "candid 0.8.3",
  "canister_client_macros 0.1.0",
- "getrandom 0.2.7",
+ "getrandom 0.2.8",
  "ic-cdk 0.6.1",
  "itertools",
  "msgpack",
@@ -8071,6 +8126,18 @@ dependencies = [
  "serde_bytes",
  "tracing",
  "types 0.1.0",
+]
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f#adc65b50d60e36fb70c302772345e024c8782e4f"
+dependencies = [
+ "candid 0.8.3",
+ "getrandom 0.2.8",
+ "ic-cdk 0.6.1",
+ "rand",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=adc65b50d60e36fb70c302772345e024c8782e4f)",
 ]
 
 [[package]]
@@ -8176,7 +8243,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "wasm-bindgen-shared",
 ]
 
@@ -8210,7 +8277,7 @@ checksum = "07bc0c051dc5f23e307b13285f9d75df86bfdf816c5721e573dec1f9b8aa193c"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -8597,6 +8664,6 @@ checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
  "proc-macro2",
  "quote 1.0.21",
- "syn 1.0.102",
+ "syn 1.0.103",
  "synstructure",
 ]

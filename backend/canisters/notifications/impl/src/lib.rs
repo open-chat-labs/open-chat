@@ -64,7 +64,6 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
-    #[serde(skip_deserializing)]
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub test_mode: bool,
