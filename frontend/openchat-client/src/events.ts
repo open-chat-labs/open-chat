@@ -12,6 +12,12 @@ export class LoadedNewMessages extends CustomEvent<boolean> {
     }
 }
 
+export class SendMessageFailed extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
 export class LoadedPreviousMessages extends Event {
     constructor() {
         super("openchat_event");

@@ -261,6 +261,7 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
+    SendMessageFailed,
     SentMessage,
     SentThreadMessage,
     ThreadClosed,
@@ -273,7 +274,6 @@ import { getTypingString } from "./utils/chat";
 import { startTyping } from "./utils/chat";
 import { stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
-import { toastStore } from "./stores/toast";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1680,7 +1680,7 @@ export class OpenChat extends EventTarget {
         clientChat: ChatSummary,
         currentEvents: EventWrapper<ChatEvent>[],
         msg: Message
-    ): Promise<number | undefined> {
+    ): void {
         // TODO check storage requirements
 
         // Only forward the primary content not the caption
@@ -1712,23 +1712,19 @@ export class OpenChat extends EventTarget {
                     trackEvent("forward_message");
                 } else {
                     this.removeMessage(clientChat, msg.messageId, this.user.userId, undefined);
-                    // FIXME - remove toast
-                    toastStore.showFailureToast("errorSendingMessage");
+                    this.dispatchEvent(new SendMessageFailed());
                 }
             })
             .catch((err) => {
                 this.removeMessage(clientChat, event.event.messageId, this.user.userId, undefined);
-                console.log(err);
-                toastStore.showFailureToast("errorSendingMessage");
+                this.dispatchEvent(new SendMessageFailed());
                 this._logger.error("Exception forwarding message", err);
             });
 
-        return this.sendMessage(serverChat, clientChat, currentEvents, event, undefined).then(
-            (jumpTo) => {
-                this.dispatchEvent(new SentMessage(jumpTo));
-                return jumpTo;
-            }
-        );
+        this.sendMessage(serverChat, clientChat, currentEvents, event, undefined).then((jumpTo) => {
+            this.dispatchEvent(new SentMessage(jumpTo));
+            return jumpTo;
+        });
     }
 
     private onSendMessageSuccess(
@@ -1805,12 +1801,12 @@ export class OpenChat extends EventTarget {
         fileToAttach: MessageContent | undefined,
         replyingTo: EnhancedReplyContext | undefined,
         threadRootMessageIndex: number | undefined
-    ): Promise<number | undefined> {
+    ): void {
         if (textContent || fileToAttach) {
             const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
             if (this._liveState.remainingStorage < storageRequired) {
                 this.dispatchEvent(new UpgradeRequired("explain"));
-                return Promise.resolve(undefined);
+                return;
             }
 
             const [nextEventIndex, nextMessageIndex] =
@@ -1867,8 +1863,7 @@ export class OpenChat extends EventTarget {
                             this.user.userId,
                             threadRootMessageIndex
                         );
-                        // FIXME - remove toast
-                        toastStore.showFailureToast("errorSendingMessage");
+                        this.dispatchEvent(new SendMessageFailed());
                     }
                 })
                 .catch((err) => {
@@ -1878,12 +1873,11 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
-                    console.log(err);
-                    toastStore.showFailureToast("errorSendingMessage");
                     this._logger.error("Exception sending message", err);
+                    this.dispatchEvent(new SendMessageFailed());
                 });
 
-            return this.sendMessage(
+            this.sendMessage(
                 serverChat,
                 clientChat,
                 currentEvents,
@@ -1898,7 +1892,6 @@ export class OpenChat extends EventTarget {
                 return jumpTo;
             });
         }
-        return Promise.resolve(undefined);
     }
 
     canForward = canForward;
