@@ -1,2 +1,2 @@
 export * from "./user";
-export { extractUserIdsFromMentions, missingUserIds } from "./user.utils";
+export { extractUserIdsFromMentions, missingUserIds, userStatus } from "./user.utils";

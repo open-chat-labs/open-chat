@@ -1,6 +1,6 @@
-import type { UserLookup } from "openchat-agent";
+import type { PartialUserSummary, UserLookup } from "openchat-agent";
 import { init, addMessages, _ } from "svelte-i18n";
-import { buildUsernameList } from "./user";
+import { buildUsernameList, compareUsername } from "./user";
 import { get } from "svelte/store";
 
 addMessages("en", {
@@ -81,5 +81,29 @@ describe("build username list", () => {
         const result = buildUsernameList(get(_), new Set(userIds), undefined, lookup);
 
         expect(result).toEqual("a, b, julian_jelfs, alpha, and 1 more");
+    });
+});
+
+describe("compare username", () => {
+    function toUser(username: string | undefined): PartialUserSummary {
+        return { kind: "user", userId: "a", username, lastOnline: now, updated: BigInt(0) };
+    }
+    test("works with non-null usernames", () => {
+        const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);
+        const sorted = users.sort(compareUsername);
+        expect(sorted.map((u) => u.username)).toEqual(["foxtrot", "lima", "yanky", "zulu"]);
+    });
+
+    test("works with non-null usernames", () => {
+        const users = ["zulu", undefined, "yanky", undefined, "foxtrot", "lima"].map(toUser);
+        const sorted = users.sort(compareUsername);
+        expect(sorted.map((u) => u.username)).toEqual([
+            "foxtrot",
+            "lima",
+            "yanky",
+            "zulu",
+            undefined,
+            undefined,
+        ]);
     });
 });

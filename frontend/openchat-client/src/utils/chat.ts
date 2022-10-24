@@ -1,6 +1,5 @@
-import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
-import { compareUsersOnlineFirst, nullUser } from "../user/user.utils";
-import type {
+import { compareUsersOnlineFirst, nullUser } from "./user";
+import {
     ChatSummary,
     EventWrapper,
     GroupChatSummary,
@@ -8,10 +7,8 @@ import type {
     TextContent,
     ChatEvent,
     ReplyContext,
-    UpdateArgs,
     Reaction,
     Message,
-    IndexRange,
     Mention,
     CandidateGroupChat,
     PollVotes,
@@ -23,23 +20,25 @@ import type {
     ChatMetrics,
     SendMessageSuccess,
     TransferSuccess,
-    ThreadRead,
     ThreadSummary,
-} from "./chat";
-import { distinctBy, groupWhile } from "../../utils/list";
-import { areOnSameDay } from "../../utils/date";
+    PartialUserSummary,
+    UserLookup,
+    UserSummary,
+    LocalMessageUpdates,
+    LocalReaction,
+    emptyChatMetrics,
+} from "openchat-agent";
+import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-agent";
+import { distinctBy, groupWhile } from "../utils/list";
+import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
-import { UnsupportedValueError } from "../../utils/error";
-import type { _ } from "svelte-i18n";
-import { messagesRead } from "../../stores/markRead";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../../stores/user";
-import { Cryptocurrency, cryptoLookup } from "../crypto";
+import { messagesRead } from "../stores/markRead";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
-import type { UnconfirmedMessages } from "../../stores/unconfirmed";
-import type { LocalMessageUpdates, LocalReaction } from "./chat";
-import type { MessageFormatter } from "../../utils/i18n";
+import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
+import type { UnconfirmedMessages } from "../stores/unconfirmed";
+import type { MessageFormatter } from "./i18n";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute

@@ -1,5 +1,12 @@
 import type { MessageFormatter } from "./i18n";
-import type { PartialUserSummary, UserLookup } from "openchat-agent";
+import {
+    PartialUserSummary,
+    UserLookup,
+    UserStatus,
+    UserSummary,
+    userStatus,
+    PhoneNumber,
+} from "openchat-agent";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -81,4 +88,58 @@ export function buildUsernameList(
     }
 
     return usernames;
+}
+
+export function nullUser(username: string): UserSummary {
+    return {
+        kind: "user",
+        userId: "null_user", // this might cause problems if we try to create a Principal from it
+        username,
+        lastOnline: 0,
+        updated: BigInt(0),
+    };
+}
+
+export function compareUsersOnlineFirst(u1: PartialUserSummary, u2: PartialUserSummary): number {
+    const now = Date.now();
+    const u1Online = userStatus(now, u1) === UserStatus.Online;
+    const u2Online = userStatus(now, u2) === UserStatus.Online;
+
+    if (u1Online !== u2Online) {
+        return u1Online ? -1 : 1;
+    }
+    return compareUsername(u1, u2);
+}
+
+export function compareUsername(u1: PartialUserSummary, u2: PartialUserSummary): number {
+    if (u2.username === undefined) return -1;
+    if (u1.username === undefined) return 1;
+    return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+}
+
+export function compareIsNotYouThenUsername(
+    yourUserId: string
+): (u1: PartialUserSummary, u2: PartialUserSummary) => number {
+    return (u1: PartialUserSummary, u2: PartialUserSummary) => {
+        const u1IsYou = u1.userId === yourUserId;
+        const u2IsYou = u2.userId === yourUserId;
+        if (u1IsYou !== u2IsYou) {
+            return u1IsYou ? 1 : -1;
+        }
+        if (u2.username === undefined) return -1;
+        if (u1.username === undefined) return 1;
+        return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+    };
+}
+
+export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+    return dataContent?.blobUrl ?? "../assets/group.svg";
+}
+
+export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+    return dataContent?.blobUrl ?? "../assets/unknownUserAvatar.svg";
+}
+
+export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {
+    return `(+${countryCode}) ${number}`;
 }

@@ -29,7 +29,7 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
-} from "../utils/chat.utils";
+} from "../utils/chat";
 import { userStore } from "./user";
 import { Poller } from "../utils/poller";
 import { blockedUsers } from "./blockedUsers";
@@ -462,9 +462,9 @@ async function loadChats(api: ServiceContainer) {
             chatUpdatesSince === undefined
                 ? await api.getInitialState(userLookup, selectedChat?.chatId)
                 : await api.getUpdates(
-                      userLookup,
                       currentState,
                       updateArgsFromChats(chatUpdatesSince, chats),
+                      userLookup,
                       selectedChat?.chatId
                   );
 

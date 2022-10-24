@@ -1,10 +1,5 @@
-import type { PartialUserSummary, UserLookup } from "./user";
-import {
-    compareUsername,
-    extractUserIdsFromMentions,
-    missingUserIds,
-    userIsOnline,
-} from "./user.utils";
+import type { UserLookup } from "./user";
+import { extractUserIdsFromMentions, missingUserIds, userIsOnline } from "./user.utils";
 
 const now = Date.now();
 jest.setSystemTime(now);
@@ -75,29 +70,5 @@ describe("missing userIds", () => {
     test("should work", () => {
         const missing = missingUserIds(lookup, new Set(["a", "b", "c", "d", "e"]));
         ["c", "d", "e"].forEach((u) => expect(missing.includes(u)).toBe(true));
-    });
-});
-
-describe("compare username", () => {
-    function toUser(username: string | undefined): PartialUserSummary {
-        return { kind: "user", userId: "a", username, lastOnline: now, updated: BigInt(0) };
-    }
-    test("works with non-null usernames", () => {
-        const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);
-        const sorted = users.sort(compareUsername);
-        expect(sorted.map((u) => u.username)).toEqual(["foxtrot", "lima", "yanky", "zulu"]);
-    });
-
-    test("works with non-null usernames", () => {
-        const users = ["zulu", undefined, "yanky", undefined, "foxtrot", "lima"].map(toUser);
-        const sorted = users.sort(compareUsername);
-        expect(sorted.map((u) => u.username)).toEqual([
-            "foxtrot",
-            "lima",
-            "yanky",
-            "zulu",
-            undefined,
-            undefined,
-        ]);
     });
 });

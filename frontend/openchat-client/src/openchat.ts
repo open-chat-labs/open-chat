@@ -2,7 +2,7 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
-import type {
+import {
     ChatEvent,
     ChatSummary,
     EventWrapper,
@@ -60,6 +60,12 @@ import type {
     WebRtcMessage,
     GroupInvite,
     ServiceContainer,
+    Logger,
+    ServiceRetryInterrupt,
+    getTimeUntilSessionExpiryMs,
+    getUserStatus,
+    missingUserIds,
+    userStatus,
 } from "openchat-agent";
 import { AuthProvider } from "openchat-agent";
 import { getContentAsText, getDisplayDate, userIdsFromEvents } from "openchat-agent";
@@ -102,21 +108,18 @@ import {
     newMessageId,
     sameUser,
     isPreviewing,
-} from "./utils/chat.utils";
+} from "./utils/chat";
 import {
     buildUsernameList,
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
-    getUserStatus,
     groupAvatarUrl,
-    missingUserIds,
     nullUser,
     phoneNumberToString,
     userAvatarUrl,
-    userStatus,
-} from "./domain/user/user.utils";
-import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
+} from "./utils/user";
+import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import {
     blockUser,
     deleteMessage,
@@ -137,8 +140,8 @@ import {
     unpinMessage,
     updateDetails,
     updateUserStore,
-} from "./services/common/chatThread";
-import { showTrace } from "./services/common/profiling";
+} from "./chatThread";
+import { showTrace } from "./utils/profiling";
 import { Poller } from "./utils/poller";
 import {
     idbAuthClientStore,
@@ -229,7 +232,6 @@ import {
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
-import { setCachedMessageFromNotification } from "./utils/caching";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
@@ -257,7 +259,6 @@ import { formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
-import { getTimeUntilSessionExpiryMs } from "./utils/session";
 import {
     ChatUpdated,
     LoadedMessageWindow,
@@ -271,8 +272,6 @@ import {
     UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
-import type { Logger } from "./utils/logging";
-import type { ServiceRetryInterrupt } from "./services/candidService";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;

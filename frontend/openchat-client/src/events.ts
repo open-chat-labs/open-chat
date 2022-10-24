@@ -1,4 +1,4 @@
-import type { EventWrapper, Message } from "./domain";
+import type { EventWrapper, Message } from "openchat-agent";
 
 export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
     constructor(mode: "explain" | "icp" | "sms") {

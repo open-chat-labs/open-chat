@@ -1,4 +1,4 @@
-import type { WebRtcMessage } from "./webrtc";
+import type { WebRtcMessage } from "openchat-agent";
 import Peer, { DataConnection } from "peerjs";
 
 export class RtcConnectionsManager {

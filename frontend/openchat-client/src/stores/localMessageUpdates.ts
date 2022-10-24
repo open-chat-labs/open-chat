@@ -6,7 +6,7 @@ import type {
     MessageContent,
     ThreadSummary,
 } from "openchat-agent";
-import { mergeThreadSummaries } from "../domain/chat/chat.utils";
+import { mergeThreadSummaries } from "../utils/chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL: number = 30 * 1000;
 const store = writable<Record<string, LocalMessageUpdates>>({});

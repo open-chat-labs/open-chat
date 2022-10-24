@@ -1,2 +1,3 @@
 export { SessionExpiryError } from "./error";
-export { ServiceContainer } from "./serviceContainer";
+export { ServiceContainer, GroupInvite } from "./serviceContainer";
+export { ServiceRetryInterrupt } from "./candidService";
