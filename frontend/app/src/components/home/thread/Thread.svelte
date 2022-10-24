@@ -28,6 +28,7 @@
     import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
+    import { toastStore } from "stores/toast";
 
     const FROM_BOTTOM_THRESHOLD = 600;
 
@@ -180,13 +181,19 @@
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
-            client.editMessageWithAttachment(
-                chat,
-                text,
-                $fileToAttach,
-                $editingEvent,
-                threadRootMessageIndex
-            );
+            client
+                .editMessageWithAttachment(
+                    chat,
+                    text,
+                    $fileToAttach,
+                    $editingEvent,
+                    threadRootMessageIndex
+                )
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast("errorEditingMessage");
+                    }
+                });
         } else {
             sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
@@ -283,14 +290,20 @@
         }
 
         if ($selectedChatId !== undefined) {
-            client.registerPollVote(
-                $selectedChatId,
-                threadRootMessageIndex,
-                ev.detail.messageId,
-                ev.detail.messageIndex,
-                ev.detail.answerIndex,
-                ev.detail.type
-            );
+            client
+                .registerPollVote(
+                    $selectedChatId,
+                    threadRootMessageIndex,
+                    ev.detail.messageId,
+                    ev.detail.messageIndex,
+                    ev.detail.answerIndex,
+                    ev.detail.type
+                )
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast("poll.voteFailed");
+                    }
+                });
         }
     }
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
+import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import {
@@ -67,9 +68,17 @@ import {
     missingUserIds,
     userStatus,
     setCachedMessageFromNotification,
+    EventsSuccessResult,
+    SendMessageSuccess,
+    TransferSuccess,
 } from "openchat-agent";
-import { AuthProvider } from "openchat-agent";
-import { getContentAsText, getDisplayDate, userIdsFromEvents } from "openchat-agent";
+import {
+    AuthProvider,
+    indexRangeForChat,
+    userIdsFromEvents,
+    getContentAsText,
+    getDisplayDate,
+} from "openchat-agent";
 import {
     buildUserAvatarUrl,
     canAddMembers,
@@ -111,6 +120,9 @@ import {
     isPreviewing,
     buildTransactionLink,
     buildCryptoTransferText,
+    mergeSendMessageResponse,
+    upToDate,
+    serialiseMessageForRtc,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -123,27 +135,6 @@ import {
     userAvatarUrl,
 } from "./utils/user";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
-import {
-    blockUser,
-    deleteMessage,
-    editMessage,
-    forwardMessage,
-    handleMessageSentByOther,
-    loadDetails,
-    loadEventWindow,
-    loadNewMessages,
-    loadPreviousMessages,
-    moreNewMessagesAvailable,
-    morePreviousMessagesAvailable,
-    pinMessage,
-    refreshAffectedEvents,
-    registerPollVote,
-    removeMessage,
-    sendMessageWithAttachment,
-    unpinMessage,
-    updateDetails,
-    updateUserStore,
-} from "./chatThread";
 import { showTrace } from "./utils/profiling";
 import { Poller } from "./utils/poller";
 import {
@@ -194,6 +185,9 @@ import {
     selectedThreadKey,
     nextEventAndMessageIndexesForThread,
     selectedThreadRootMessageIndex,
+    clearServerEvents,
+    confirmedEventIndexesLoaded,
+    addServerEventsToStores,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -245,7 +239,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -278,6 +272,8 @@ import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
 import { startTyping } from "./utils/chat";
 import { stopTyping } from "./utils/chat";
+import { indexIsInRanges } from "./utils/range";
+import { toastStore } from "./stores/toast";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -339,11 +335,11 @@ export class OpenChat extends EventTarget {
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
-            handleMessageSentByOther(this.api, this.user, chat, latestMessage);
+            this.handleMessageSentByOther(chat, latestMessage);
         }
 
-        refreshAffectedEvents(this.api, this.user, chat, affectedEvents);
-        updateDetails(this.api, this.user, chat, this._liveState.events);
+        this.refreshAffectedEvents(chat, affectedEvents);
+        this.updateDetails(chat, this._liveState.events);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -905,13 +901,6 @@ export class OpenChat extends EventTarget {
     startTyping = startTyping;
     stopTyping = stopTyping;
     isPreviewing = isPreviewing;
-    deleteMessage(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
-        messageId: bigint
-    ): Promise<boolean> {
-        return deleteMessage(this.api, this.user.userId, chat, threadRootMessageIndex, messageId);
-    }
     registerPollVote(
         chatId: string,
         threadRootMessageIndex: number | undefined,
@@ -919,17 +908,71 @@ export class OpenChat extends EventTarget {
         messageIndex: number,
         answerIndex: number,
         type: "register" | "delete"
-    ): void {
-        return registerPollVote(
-            this.api,
-            this.user.userId,
-            chatId,
-            threadRootMessageIndex,
-            messageId,
-            messageIndex,
+    ): Promise<boolean> {
+        const userId = this.user.userId;
+
+        localMessageUpdates.markPollVote(messageId.toString(), {
             answerIndex,
-            type
-        );
+            type,
+            userId,
+        });
+
+        return this.api
+            .registerPollVote(chatId, messageIndex, answerIndex, type, threadRootMessageIndex)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Poll vote failed: ", err);
+                return false;
+            });
+    }
+    deleteMessage(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint
+    ): Promise<boolean> {
+        const messageIdString = messageId.toString();
+
+        localMessageUpdates.markDeleted(messageIdString, this.user.userId);
+
+        const recipients = [...chatStateStore.getProp(chat.chatId, "userIds")];
+        const chatType = chat.kind;
+        const chatId = chat.chatId;
+        const userId = this.user.userId;
+
+        rtcConnectionsManager.sendMessage(recipients, {
+            kind: "remote_user_deleted_message",
+            chatType,
+            chatId,
+            messageId,
+            userId,
+            threadRootMessageIndex,
+        });
+
+        function undelete() {
+            rtcConnectionsManager.sendMessage(recipients, {
+                kind: "remote_user_undeleted_message",
+                chatType,
+                chatId,
+                messageId,
+                userId,
+                threadRootMessageIndex,
+            });
+            localMessageUpdates.markUndeleted(messageIdString);
+        }
+
+        return this.api
+            .deleteMessage(chat, messageId, threadRootMessageIndex)
+            .then((resp) => {
+                const success = resp === "success";
+                if (!success) {
+                    undelete();
+                }
+                return success;
+            })
+            .catch((_) => {
+                undelete();
+                return false;
+            });
     }
 
     selectReaction(
@@ -1010,7 +1053,126 @@ export class OpenChat extends EventTarget {
         });
         return result;
     }
-    updateUserStore = updateUserStore;
+
+    async loadEventWindow(
+        serverChat: ChatSummary,
+        chat: ChatSummary,
+        messageIndex: number
+    ): Promise<number | undefined> {
+        if (messageIndex >= 0) {
+            const range = indexRangeForChat(serverChat);
+            const eventsPromise: Promise<EventsResponse<ChatEvent>> =
+                chat.kind === "direct_chat"
+                    ? this.api.directChatEventsWindow(
+                          range,
+                          chat.them,
+                          messageIndex,
+                          chat.latestEventIndex
+                      )
+                    : this.api.groupChatEventsWindow(
+                          range,
+                          chat.chatId,
+                          messageIndex,
+                          chat.latestEventIndex
+                      );
+            const eventsResponse = await eventsPromise;
+
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
+            await this.handleEventsResponse(chat, eventsResponse, false);
+
+            this.dispatchEvent(new LoadedMessageWindow(messageIndex));
+
+            return messageIndex;
+        }
+    }
+
+    private async handleEventsResponse(
+        chat: ChatSummary,
+        resp: EventsResponse<ChatEvent>,
+        keepCurrentEvents = true
+    ): Promise<void> {
+        if (resp === "events_failed") return;
+
+        if (!keepCurrentEvents) {
+            clearServerEvents(chat.chatId);
+            chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
+        } else if (!this.isContiguous(chat.chatId, resp)) {
+            return;
+        }
+
+        // Only include affected events that overlap with already loaded events
+        const confirmedLoaded = confirmedEventIndexesLoaded(chat.chatId);
+        const events = resp.events.concat(
+            resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded))
+        );
+
+        const userIds = userIdsFromEvents(events);
+        await this.updateUserStore(chat.chatId, userIds);
+
+        addServerEventsToStores(chat.chatId, events, undefined);
+
+        makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
+    }
+
+    private isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
+        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
+
+        if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
+
+        const firstIndex = response.events[0].index;
+        const lastIndex = response.events[response.events.length - 1].index;
+        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
+
+        const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
+
+        if (!isContiguous) {
+            console.log(
+                "Events in response are not contiguous with the loaded events",
+                confirmedLoaded,
+                firstIndex,
+                lastIndex
+            );
+        }
+
+        return isContiguous;
+    }
+
+    private async updateUserStore(chatId: string, userIdsFromEvents: Set<string>): Promise<void> {
+        const userId = this.user.userId;
+        const allUserIds = new Set<string>();
+        chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
+        chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
+        userIdsFromEvents.forEach((u) => allUserIds.add(u));
+
+        chatStateStore.updateProp(chatId, "userIds", (userIds) => {
+            allUserIds.forEach((u) => {
+                if (u !== userId) {
+                    userIds.add(u);
+                }
+            });
+            return userIds;
+        });
+
+        const resp = await this.api.getUsers(
+            {
+                userGroups: [
+                    {
+                        users: missingUserIds(
+                            this._liveState.userStore,
+                            new Set<string>(allUserIds)
+                        ),
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            },
+            true
+        );
+
+        userStore.addMany(resp.users);
+    }
     isTyping = isTyping;
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
@@ -1019,8 +1181,42 @@ export class OpenChat extends EventTarget {
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
-    blockUser(chatId: string, userId: string): Promise<void> {
-        return blockUser(this.api, chatId, userId);
+    private blockUserLocally(chatId: string, userId: string): void {
+        chatStateStore.updateProp(chatId, "blockedUsers", (b) => b.add(userId));
+        chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
+    }
+
+    private unblockUserLocally(chatId: string, userId: string): void {
+        chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
+            b.delete(userId);
+            return b;
+        });
+        chatStateStore.updateProp(chatId, "members", (p) => [
+            ...p,
+            {
+                role: "participant",
+                userId,
+                username: this._liveState.userStore[userId]?.username ?? "unknown",
+            },
+        ]);
+    }
+
+    blockUser(chatId: string, userId: string): Promise<boolean> {
+        this.blockUserLocally(chatId, userId);
+        return this.api
+            .blockUserFromGroupChat(chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.unblockUserLocally(chatId, userId);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Error blocking user", err);
+                this.unblockUserLocally(chatId, userId);
+                return false;
+            });
     }
     nullUser = nullUser;
     toTitleCase = toTitleCase;
@@ -1054,12 +1250,12 @@ export class OpenChat extends EventTarget {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(selectedServerChat, selectedChat, focusMessageIndex).then(
                     () => {
-                        loadDetails(this.api, this.user, chat, events);
+                        this.loadDetails(chat, events);
                     }
                 );
             } else {
                 this.loadPreviousMessages(selectedServerChat, selectedChat).then(() => {
-                    loadDetails(this.api, this.user, selectedChat, events);
+                    this.loadDetails(selectedChat, events);
                 });
             }
         }
@@ -1155,7 +1351,7 @@ export class OpenChat extends EventTarget {
 
         const userIds = this.userIdsFromEvents(events);
         userIds.add(rootEvent.event.sender);
-        await this.updateUserStore(this.api, chatId, this.user.userId, userIds);
+        await this.updateUserStore(chatId, userIds);
 
         return [events, userIds];
     }
@@ -1182,38 +1378,298 @@ export class OpenChat extends EventTarget {
     canMakeGroupPrivate = canMakeGroupPrivate;
     messageContentFromFile = messageContentFromFile;
     formatFileSize = formatFileSize;
-    morePreviousMessagesAvailable = morePreviousMessagesAvailable;
-    moreNewMessagesAvailable = moreNewMessagesAvailable;
-    loadEventWindow(
-        serverChat: ChatSummary,
-        chat: ChatSummary,
-        messageIndex: number
-    ): Promise<number | undefined> {
-        return loadEventWindow(this.api, this.user, serverChat, chat, messageIndex).then((idx) => {
-            if (idx !== undefined) {
-                this.dispatchEvent(new LoadedMessageWindow(idx));
-            }
-            return idx;
-        });
-    }
-    loadPreviousMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<void> {
-        return loadPreviousMessages(this.api, this.user, serverChat, clientChat).then(() => {
-            this.dispatchEvent(new LoadedPreviousMessages());
+
+    async loadPreviousMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<void> {
+        const criteria = this.previousMessagesCriteria(serverChat, clientChat);
+
+        const eventsResponse = criteria
+            ? await this.loadEvents(serverChat, clientChat, criteria[0], criteria[1])
+            : undefined;
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
             return;
-        });
+        }
+
+        await this.handleEventsResponse(clientChat, eventsResponse);
+        this.dispatchEvent(new LoadedPreviousMessages());
+        return;
     }
-    loadNewMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<boolean> {
-        return loadNewMessages(this.api, this.user, serverChat, clientChat).then((res) => {
-            this.dispatchEvent(new LoadedNewMessages(res));
-            return res;
-        });
+
+    private loadEvents(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary,
+        startIndex: number,
+        ascending: boolean
+    ): Promise<EventsResponse<ChatEvent>> {
+        return this.api.chatEvents(
+            clientChat,
+            indexRangeForChat(serverChat),
+            startIndex,
+            ascending,
+            undefined,
+            clientChat.latestEventIndex
+        );
+    }
+
+    private previousMessagesCriteria(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary
+    ): [number, boolean] | undefined {
+        if (serverChat.latestEventIndex < 0) {
+            return undefined;
+        }
+
+        const minLoadedEventIndex = this.earliestLoadedIndex(serverChat.chatId);
+        if (minLoadedEventIndex === undefined) {
+            return [serverChat.latestEventIndex, false];
+        }
+        const minVisibleEventIndex = this.earliestAvailableEventIndex(clientChat);
+        return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
+            ? [minLoadedEventIndex - 1, false]
+            : undefined;
+    }
+
+    private earliestAvailableEventIndex(clientChat: ChatSummary): number {
+        return clientChat.kind === "group_chat" ? clientChat.minVisibleEventIndex : 0;
+    }
+
+    private earliestLoadedIndex(chatId: string): number | undefined {
+        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
+        return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
+    }
+
+    async loadNewMessages(serverChat: ChatSummary, clientChat: ChatSummary): Promise<boolean> {
+        const criteria = this.newMessageCriteria(serverChat);
+
+        const eventsResponse = criteria
+            ? await this.loadEvents(serverChat, clientChat, criteria[0], criteria[1])
+            : undefined;
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return false;
+        }
+
+        await this.handleEventsResponse(clientChat, eventsResponse);
+
+        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
+        // if so, we update the chat summary to show the correct latest message.
+        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
+        const newLatestMessage =
+            latestMessage !== undefined && latestMessage.index > serverChat.latestEventIndex;
+
+        if (newLatestMessage) {
+            updateSummaryWithConfirmedMessage(
+                clientChat.chatId,
+                latestMessage as EventWrapper<Message>
+            );
+        }
+
+        this.dispatchEvent(new LoadedNewMessages(newLatestMessage));
+        return newLatestMessage;
+    }
+
+    morePreviousMessagesAvailable(clientChat: ChatSummary): boolean {
+        return (
+            clientChat.latestEventIndex >= 0 &&
+            (this.earliestLoadedIndex(clientChat.chatId) ?? Number.MAX_VALUE) >
+                this.earliestAvailableEventIndex(clientChat)
+        );
+    }
+
+    moreNewMessagesAvailable(serverChat: ChatSummary): boolean {
+        return (
+            (this.confirmedUpToEventIndex(serverChat.chatId) ?? -1) < serverChat.latestEventIndex
+        );
+    }
+
+    private async loadDetails(
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[]
+    ): Promise<void> {
+        // currently this is only meaningful for group chats, but we'll set it up generically just in case
+        if (clientChat.kind === "group_chat") {
+            if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
+                const resp = await this.api.getGroupDetails(
+                    clientChat.chatId,
+                    clientChat.latestEventIndex
+                );
+                if (resp !== "caller_not_in_group") {
+                    chatStateStore.setProp(clientChat.chatId, "detailsLoaded", true);
+                    chatStateStore.setProp(
+                        clientChat.chatId,
+                        "latestEventIndex",
+                        resp.latestEventIndex
+                    );
+                    chatStateStore.setProp(clientChat.chatId, "members", resp.members);
+                    chatStateStore.setProp(clientChat.chatId, "blockedUsers", resp.blockedUsers);
+                    chatStateStore.setProp(
+                        clientChat.chatId,
+                        "pinnedMessages",
+                        resp.pinnedMessages
+                    );
+                    chatStateStore.setProp(clientChat.chatId, "rules", resp.rules);
+                }
+                await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
+            } else {
+                await this.updateDetails(clientChat, currentEvents);
+            }
+        }
+    }
+
+    private async updateDetails(
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[]
+    ): Promise<void> {
+        if (clientChat.kind === "group_chat") {
+            const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
+            if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
+                const gd = await this.api.getGroupDetailsUpdates(clientChat.chatId, {
+                    members: chatStateStore.getProp(clientChat.chatId, "members"),
+                    blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
+                    pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
+                    latestEventIndex,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+                });
+                chatStateStore.setProp(clientChat.chatId, "members", gd.members);
+                chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
+                chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
+                chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
+                await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
+            }
+        }
+    }
+
+    private refreshAffectedEvents(
+        clientChat: ChatSummary,
+        affectedEventIndexes: number[]
+    ): Promise<void> {
+        const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
+        const filtered = affectedEventIndexes.filter((e) => indexIsInRanges(e, confirmedLoaded));
+        if (filtered.length === 0) {
+            return Promise.resolve();
+        }
+
+        const eventsPromise =
+            clientChat.kind === "direct_chat"
+                ? this.api.directChatEventsByEventIndex(
+                      clientChat.them,
+                      filtered,
+                      undefined,
+                      clientChat.latestEventIndex
+                  )
+                : this.api.groupChatEventsByEventIndex(
+                      clientChat.chatId,
+                      filtered,
+                      undefined,
+                      clientChat.latestEventIndex
+                  );
+
+        return eventsPromise.then((resp) => this.handleEventsResponse(clientChat, resp));
+    }
+
+    private newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
+        if (serverChat.latestEventIndex < 0) {
+            return undefined;
+        }
+
+        const loadedUpTo = this.confirmedUpToEventIndex(serverChat.chatId);
+
+        if (loadedUpTo === undefined) {
+            return [serverChat.latestEventIndex, false];
+        }
+
+        return loadedUpTo < serverChat.latestEventIndex ? [loadedUpTo + 1, true] : undefined;
+    }
+    private confirmedUpToEventIndex(chatId: string): number | undefined {
+        const ranges = confirmedEventIndexesLoaded(chatId).subranges();
+        if (ranges.length > 0) {
+            return ranges[0].high;
+        }
+        return undefined;
     }
     messageIsReadByThem = messageIsReadByThem;
-    pinMessage(clientChat: ChatSummary, messageIndex: number): void {
-        return pinMessage(this.api, clientChat, messageIndex);
+    private addPinnedMessage(chatId: string, messageIndex: number): void {
+        chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
+            s.add(messageIndex);
+            return new Set(s);
+        });
     }
-    unpinMessage(clientChat: ChatSummary, messageIndex: number): void {
-        return unpinMessage(this.api, clientChat, messageIndex);
+
+    private removePinnedMessage(chatId: string, messageIndex: number): void {
+        chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
+            s.delete(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    unpinMessage(clientChat: ChatSummary, messageIndex: number): Promise<boolean> {
+        if (clientChat.kind === "group_chat") {
+            this.removePinnedMessage(clientChat.chatId, messageIndex);
+            return this.api
+                .unpinMessage(clientChat.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        this.addPinnedMessage(clientChat.chatId, messageIndex);
+                        return false;
+                    }
+                    return true;
+                })
+                .catch((err) => {
+                    this._logger.error("Unpin message failed: ", err);
+                    this.addPinnedMessage(clientChat.chatId, messageIndex);
+                    return false;
+                });
+        }
+        return Promise.resolve(false);
+    }
+
+    pinMessage(clientChat: ChatSummary, messageIndex: number): Promise<boolean> {
+        if (clientChat.kind === "group_chat") {
+            this.addPinnedMessage(clientChat.chatId, messageIndex);
+            this.api
+                .pinMessage(clientChat.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        this.removePinnedMessage(clientChat.chatId, messageIndex);
+                        return false;
+                    }
+                    return true;
+                })
+                .catch((err) => {
+                    this._logger.error("Pin message failed: ", err);
+                    this.removePinnedMessage(clientChat.chatId, messageIndex);
+                    return false;
+                });
+        }
+        return Promise.resolve(false);
+    }
+
+    private removeMessage(
+        clientChat: ChatSummary,
+        messageId: bigint,
+        userId: string,
+        threadRootMessageIndex: number | undefined
+    ): void {
+        if (userId === this.user.userId) {
+            const userIds = chatStateStore.getProp(clientChat.chatId, "userIds");
+            rtcConnectionsManager.sendMessage([...userIds], {
+                kind: "remote_user_removed_message",
+                chatType: clientChat.kind,
+                chatId: clientChat.chatId,
+                messageId: messageId,
+                userId: userId,
+                threadRootMessageIndex,
+            });
+        }
+        const key =
+            threadRootMessageIndex === undefined
+                ? clientChat.chatId
+                : `${clientChat.chatId}_${threadRootMessageIndex}`;
+        unconfirmed.delete(key, messageId);
+        if (threadRootMessageIndex === undefined) {
+            messagesRead.removeUnconfirmedMessage(clientChat.chatId, messageId);
+        }
     }
     toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
@@ -1248,17 +1704,96 @@ export class OpenChat extends EventTarget {
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-        return forwardMessage(
-            this.api,
-            this.user,
-            serverChat,
-            clientChat,
-            currentEvents,
-            event
-        ).then((jumpTo) => {
-            this.dispatchEvent(new SentMessage(jumpTo));
-            return jumpTo;
-        });
+        this.api
+            .sendMessage(clientChat, this.user, [], event.event)
+            .then(([resp, msg]) => {
+                if (resp.kind === "success") {
+                    this.onSendMessageSuccess(clientChat.chatId, resp, msg, undefined);
+                    trackEvent("forward_message");
+                } else {
+                    this.removeMessage(clientChat, msg.messageId, this.user.userId, undefined);
+                    // FIXME - remove toast
+                    toastStore.showFailureToast("errorSendingMessage");
+                }
+            })
+            .catch((err) => {
+                this.removeMessage(clientChat, event.event.messageId, this.user.userId, undefined);
+                console.log(err);
+                toastStore.showFailureToast("errorSendingMessage");
+                this._logger.error("Exception forwarding message", err);
+            });
+
+        return this.sendMessage(serverChat, clientChat, currentEvents, event, undefined).then(
+            (jumpTo) => {
+                this.dispatchEvent(new SentMessage(jumpTo));
+                return jumpTo;
+            }
+        );
+    }
+
+    private onSendMessageSuccess(
+        chatId: string,
+        resp: SendMessageSuccess | TransferSuccess,
+        msg: Message,
+        threadRootMessageIndex: number | undefined
+    ) {
+        const event = mergeSendMessageResponse(msg, resp);
+        addServerEventsToStores(chatId, [event], threadRootMessageIndex);
+        if (threadRootMessageIndex === undefined) {
+            updateSummaryWithConfirmedMessage(chatId, event);
+        }
+    }
+
+    private async sendMessage(
+        serverChat: ChatSummary,
+        clientChat: ChatSummary,
+        currentEvents: EventWrapper<ChatEvent>[],
+        messageEvent: EventWrapper<Message>,
+        threadRootMessageIndex: number | undefined
+    ): Promise<number | undefined> {
+        let jumpingTo: number | undefined = undefined;
+        const key =
+            threadRootMessageIndex === undefined
+                ? clientChat.chatId
+                : `${clientChat.chatId}_${threadRootMessageIndex}`;
+
+        if (threadRootMessageIndex === undefined) {
+            if (!upToDate(clientChat, currentEvents)) {
+                jumpingTo = await this.loadEventWindow(
+                    serverChat,
+                    clientChat,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    clientChat.latestMessage!.event.messageIndex
+                );
+            }
+        }
+
+        unconfirmed.add(key, messageEvent);
+
+        rtcConnectionsManager.sendMessage(
+            [...chatStateStore.getProp(clientChat.chatId, "userIds")],
+            {
+                kind: "remote_user_sent_message",
+                chatType: clientChat.kind,
+                chatId: clientChat.chatId,
+                messageEvent: serialiseMessageForRtc(messageEvent),
+                userId: this.user.userId,
+                threadRootMessageIndex,
+            }
+        );
+
+        if (threadRootMessageIndex === undefined) {
+            // mark our own messages as read manually since we will not be observing them
+            messagesRead.markMessageRead(
+                clientChat.chatId,
+                messageEvent.event.messageIndex,
+                messageEvent.event.messageId
+            );
+
+            currentChatDraftMessage.clear(clientChat.chatId);
+        }
+
+        return jumpingTo;
     }
 
     sendMessageWithAttachment(
@@ -1292,14 +1827,67 @@ export class OpenChat extends EventTarget {
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            return sendMessageWithAttachment(
-                this.api,
-                this.user,
+            this.api
+                .sendMessage(clientChat, this.user, mentioned, event.event, threadRootMessageIndex)
+                .then(([resp, msg]) => {
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
+                        this.onSendMessageSuccess(
+                            clientChat.chatId,
+                            resp,
+                            msg,
+                            threadRootMessageIndex
+                        );
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            this.api.refreshAccountBalance(
+                                msg.content.transfer.token,
+                                this.user.cryptoAccount
+                            );
+                        }
+                        if (threadRootMessageIndex !== undefined) {
+                            trackEvent("sent_threaded_message");
+                        } else {
+                            if (clientChat.kind === "direct_chat") {
+                                trackEvent("sent_direct_message");
+                            } else {
+                                if (clientChat.public) {
+                                    trackEvent("sent_public_group_message");
+                                } else {
+                                    trackEvent("sent_private_group_message");
+                                }
+                            }
+                        }
+                        if (msg.repliesTo !== undefined) {
+                            // double counting here which I think is OK since we are limited to string events
+                            trackEvent("replied_to_message");
+                        }
+                    } else {
+                        this.removeMessage(
+                            clientChat,
+                            msg.messageId,
+                            this.user.userId,
+                            threadRootMessageIndex
+                        );
+                        // FIXME - remove toast
+                        toastStore.showFailureToast("errorSendingMessage");
+                    }
+                })
+                .catch((err) => {
+                    this.removeMessage(
+                        clientChat,
+                        event.event.messageId,
+                        this.user.userId,
+                        threadRootMessageIndex
+                    );
+                    console.log(err);
+                    toastStore.showFailureToast("errorSendingMessage");
+                    this._logger.error("Exception sending message", err);
+                });
+
+            return this.sendMessage(
                 serverChat,
                 clientChat,
                 currentEvents,
                 event,
-                mentioned,
                 threadRootMessageIndex
             ).then((jumpTo) => {
                 if (threadRootMessageIndex !== undefined) {
@@ -1312,6 +1900,7 @@ export class OpenChat extends EventTarget {
         }
         return Promise.resolve(undefined);
     }
+
     canForward = canForward;
     canLeaveGroup = canLeaveGroup;
     canAddMembers = canAddMembers;
@@ -1338,15 +1927,35 @@ export class OpenChat extends EventTarget {
         fileToAttach: MessageContent | undefined,
         editingEvent: EventWrapper<Message>,
         threadRootMessageIndex?: number
-    ): void {
+    ): Promise<boolean> {
         if (textContent || fileToAttach) {
             const msg = {
                 ...editingEvent.event,
                 edited: true,
                 content: this.getMessageContent(textContent ?? undefined, fileToAttach),
             };
-            editMessage(this.api, chat, msg, threadRootMessageIndex);
+            localMessageUpdates.markContentEdited(msg.messageId.toString(), msg.content);
+
+            if (threadRootMessageIndex === undefined) {
+                currentChatDraftMessage.clear(chat.chatId);
+            }
+
+            return this.api
+                .editMessage(chat, msg, threadRootMessageIndex)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        localMessageUpdates.revertEditedContent(msg.messageId.toString());
+                        return false;
+                    }
+                    return true;
+                })
+                .catch((err) => {
+                    this._logger.error("Exception sending message", err);
+                    localMessageUpdates.revertEditedContent(msg.messageId.toString());
+                    return false;
+                });
         }
+        return Promise.resolve(false);
     }
 
     notificationReceived(notification: Notification): void {
@@ -1400,8 +2009,34 @@ export class OpenChat extends EventTarget {
             updateSummaryWithConfirmedMessage(chatId, m);
 
             if (this._liveState.selectedChatId === chatId) {
-                handleMessageSentByOther(this.api, this.user, chat, m);
+                this.handleMessageSentByOther(chat, m);
             }
+        });
+    }
+
+    private async handleMessageSentByOther(
+        clientChat: ChatSummary,
+        messageEvent: EventWrapper<Message>
+    ): Promise<void> {
+        const confirmedLoaded = confirmedEventIndexesLoaded(clientChat.chatId);
+
+        if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
+            // We already have this confirmed message
+            return;
+        }
+
+        const isAdjacentToAlreadyLoadedEvents =
+            indexIsInRanges(messageEvent.index - 1, confirmedLoaded) ||
+            indexIsInRanges(messageEvent.index + 1, confirmedLoaded);
+
+        if (!isAdjacentToAlreadyLoadedEvents) {
+            return;
+        }
+
+        await this.handleEventsResponse(clientChat, {
+            events: [messageEvent],
+            affectedEvents: [],
+            latestEventIndex: undefined,
         });
     }
 
@@ -1485,13 +2120,7 @@ export class OpenChat extends EventTarget {
                 localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
                 break;
             case "remote_user_removed_message":
-                removeMessage(
-                    this.user.userId,
-                    chat,
-                    msg.messageId,
-                    msg.userId,
-                    threadRootMessageIndex
-                );
+                this.removeMessage(chat, msg.messageId, msg.userId, threadRootMessageIndex);
                 break;
             case "remote_user_undeleted_message":
                 localMessageUpdates.markUndeleted(msg.messageId.toString());
