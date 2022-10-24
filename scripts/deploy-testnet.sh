@@ -21,7 +21,6 @@ dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-c
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 proposals_bot
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 cycles_dispenser
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 open_storage_index
-OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id open_storage_index)
 
 # Install the OpenChat canisters
-./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $OPEN_STORAGE_INDEX_CANISTER_ID $LEDGER_CANISTER_ID true
+./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $LEDGER_CANISTER_ID true
