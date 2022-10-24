@@ -66,6 +66,7 @@ import {
     getUserStatus,
     missingUserIds,
     userStatus,
+    setCachedMessageFromNotification,
 } from "openchat-agent";
 import { AuthProvider } from "openchat-agent";
 import { getContentAsText, getDisplayDate, userIdsFromEvents } from "openchat-agent";
@@ -108,6 +109,8 @@ import {
     newMessageId,
     sameUser,
     isPreviewing,
+    buildTransactionLink,
+    buildCryptoTransferText,
 } from "./utils/chat";
 import {
     buildUsernameList,

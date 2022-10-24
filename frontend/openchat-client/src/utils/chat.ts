@@ -27,18 +27,22 @@ import {
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
+    Cryptocurrency,
+    cryptoLookup,
 } from "openchat-agent";
 import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-agent";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { messagesRead } from "../stores/markRead";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../stores/user";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import type { UnconfirmedMessages } from "../stores/unconfirmed";
 import type { MessageFormatter } from "./i18n";
+import { get } from "svelte/store";
+import { formatTokens } from "./cryptoFormatter";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1106,4 +1110,62 @@ export function findMessageById(
         }
     }
     return undefined;
+}
+
+export function buildTransactionLink(
+    formatter: MessageFormatter,
+    content: CryptocurrencyContent
+): string | undefined {
+    const url = buildTransactionUrl(content);
+    return url !== undefined
+        ? formatter("tokenTransfer.viewTransaction", { values: { url } })
+        : undefined;
+}
+
+export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
+    if (content.transfer.kind !== "completed") {
+        return undefined;
+    }
+    // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
+    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
+}
+
+export function buildCryptoTransferText(
+    formatter: MessageFormatter,
+    myUserId: string,
+    senderId: string,
+    content: CryptocurrencyContent,
+    me: boolean
+): string | undefined {
+    if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
+        return undefined;
+    }
+
+    function username(userId: string): string {
+        const lookup = get(userStore);
+
+        return userId === myUserId
+            ? formatter("you")
+            : `${lookup[userId]?.username ?? formatter("unknown")}`;
+    }
+
+    const values = {
+        amount: formatTokens(content.transfer.amountE8s, 0),
+        receiver: username(content.transfer.recipient),
+        sender: username(senderId),
+        token: toSymbol(content.transfer.token),
+    };
+
+    const key =
+        content.transfer.kind === "completed"
+            ? "confirmedSent"
+            : me
+            ? "pendingSentByYou"
+            : "pendingSent";
+
+    return formatter(`tokenTransfer.${key}`, { values });
+}
+
+function toSymbol(token: Cryptocurrency): string {
+    return cryptoLookup[token].symbol;
 }
