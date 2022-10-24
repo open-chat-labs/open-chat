@@ -283,11 +283,6 @@ export class DataClient extends EventTarget implements IDataClient {
                     bytesUsed,
                 })
             );
-            // FIXME - handle this event in the OpenChat client
-            // storageStore.set({
-            //     byteLimit,
-            //     bytesUsed,
-            // });
         }
 
         if (error !== undefined) {

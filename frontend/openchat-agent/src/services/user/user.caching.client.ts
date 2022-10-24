@@ -274,12 +274,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                         threadsReadFromChat(chat)
                     )
                 );
-                // FIXME - handle this event
-                // messagesRead.syncWithServer(
-                //     chat.chatId,
-                //     chat.readByMeUpTo,
-                //     threadsReadFromChat(chat)
-                // );
 
                 // FIXME - this is just returning the value from the chat at the moment
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);

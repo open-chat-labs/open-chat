@@ -96,7 +96,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
-                        (k) => k, // FIXME -> or maybe this is ok
+                        (k) => k,
                         currentUser.userId,
                         summary,
                         unconfirmed,
@@ -354,10 +354,15 @@ export function setSelectedChat(
     // TODO don't think this should be in here really
     if (
         chat.kind === "group_chat" &&
-        chat.subtype?.kind === "governance_proposals" &&
+        chat.subtype !== undefined &&
+        chat.subtype.kind === "governance_proposals" &&
         !chat.subtype.isNns
     ) {
-        api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
+        const { governanceCanisterId } = chat.subtype;
+        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+            snsFunctions.set(governanceCanisterId, val.functions);
+            return val;
+        });
     }
 
     if (messageIndex === undefined) {

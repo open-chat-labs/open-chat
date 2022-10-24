@@ -148,18 +148,19 @@ export class ServiceContainer extends EventTarget {
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
+    }
+
+    getAllCachedUsers(): Promise<UserLookup> {
         if (this.db) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            measure("getAllUsers", () => getAllUsers()).then((users) => {
+            return measure("getAllUsers", () => getAllUsers()).then((users) => {
                 const lookup = toRecord(
                     users.map((user) => this.rehydrateUserSummary(user)),
                     (u) => u.userId
                 );
-                // FIXME - make sure something handleds this event - we might not be able to do this in the ctor like this
-                this.dispatchEvent(new LoadedCachedUsers(lookup));
-                // userStore.set(lookup);
+                return lookup;
             });
         }
+        return Promise.resolve({});
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -795,7 +796,6 @@ export class ServiceContainer extends EventTarget {
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
-                // FIXME - make sure something is handling this event
                 this.dispatchEvent(
                     new MessagesReadFromServer(
                         chat.chatId,
@@ -803,11 +803,6 @@ export class ServiceContainer extends EventTarget {
                         threadsReadFromChat(chat)
                     )
                 );
-                // messagesRead.syncWithServer(
-                //     chat.chatId,
-                //     chat.readByMeUpTo,
-                //     threadsReadFromChat(chat)
-                // );
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
@@ -859,14 +854,6 @@ export class ServiceContainer extends EventTarget {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        // FIXME - make sure the caller sets the relevant stores
-        // return this._userIndexClient.getCurrentUser().then((response) => {
-        //     if (response.kind === "created_user") {
-        //         userCreatedStore.set(true);
-        //         selectedAuthProviderStore.init(AuthProvider.II);
-        //     }
-        //     return response;
-        // });
         return this._userIndexClient.getCurrentUser();
     }
 
@@ -1110,9 +1097,6 @@ export class ServiceContainer extends EventTarget {
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
-        // do we need to do something if this fails? Not sure there's much we can do
-        // FIXME - make sure that the caller of this function updates the storageStore
-        // return DataClient.create(this.identity, this.config).storageStatus().then(storageStore.set);
         return DataClient.create(this.identity, this.config).storageStatus();
     }
 
@@ -1121,11 +1105,6 @@ export class ServiceContainer extends EventTarget {
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        // FIXME - make sure the caller of this function sets the cryptoBalance store
-        // return this._ledgerClients[crypto].accountBalance(account).then((val) => {
-        //     cryptoBalance.set(crypto, val);
-        //     return val;
-        // });
         return this._ledgerClients[crypto].accountBalance(account);
     }
 
@@ -1233,13 +1212,6 @@ export class ServiceContainer extends EventTarget {
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string
     ): Promise<ListNervousSystemFunctionsResponse> {
-        //FIXME - make sure the caller of this function updates the snsFunctions store
-        // return SnsGovernanceClient.create(this.identity, this.config, snsGovernanceCanisterId)
-        //     .listNervousSystemFunctions()
-        //     .then((val) => {
-        //         snsFunctions.set(snsGovernanceCanisterId, val.functions);
-        //         return val;
-        //     });
         return SnsGovernanceClient.create(
             this.identity,
             this.config,

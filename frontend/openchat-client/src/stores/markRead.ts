@@ -306,7 +306,6 @@ export class MessageReadTracker {
 
 export const messagesRead = new MessageReadTracker();
 
-// FIXME - nothing seems to be calling this
 export function startMessagesReadTracker(api: ServiceContainer): void {
     messagesRead.start(api);
 }

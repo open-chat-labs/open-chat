@@ -1,13 +1,7 @@
-import type { StorageStatus, ThreadRead, UserSummary } from "./domain";
+import type { StorageStatus, ThreadRead } from "./domain";
 
 export class StorageUpdated extends CustomEvent<StorageStatus> {
     constructor(detail: StorageStatus) {
-        super("openchat_event", { detail });
-    }
-}
-
-export class LoadedCachedUsers extends CustomEvent<Record<string, UserSummary>> {
-    constructor(detail: Record<string, UserSummary>) {
         super("openchat_event", { detail });
     }
 }

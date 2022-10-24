@@ -24,6 +24,7 @@
         ThreadSelected,
         ThreadClosed,
         SendMessageFailed,
+        MessagesReadFromServer,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -165,8 +166,8 @@
         if (ev instanceof ThreadClosed) {
             closeThread();
         }
-        // This can occur either for chat messages or thread messages so we'll just handle it here
         if (ev instanceof SendMessageFailed) {
+            // This can occur either for chat messages or thread messages so we'll just handle it here
             toastStore.showFailureToast("errorSendingMessage");
         }
     }

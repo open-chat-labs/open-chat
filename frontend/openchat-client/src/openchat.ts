@@ -71,6 +71,9 @@ import {
     EventsSuccessResult,
     SendMessageSuccess,
     TransferSuccess,
+    MessagesReadFromServer,
+    LoadedCachedUsers,
+    StorageUpdated,
 } from "openchat-agent";
 import {
     AuthProvider,
@@ -412,8 +415,23 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    private handleAgentEvent(ev: Event): void {
+        if (ev instanceof MessagesReadFromServer) {
+            messagesRead.syncWithServer(
+                ev.detail.chatId,
+                ev.detail.readByMeUpTo,
+                ev.detail.threadsRead
+            );
+        }
+        if (ev instanceof StorageUpdated) {
+            storageStore.set(ev.detail);
+        }
+        console.log("Event received from agent: ", ev);
+    }
+
     private loadUser(id: Identity) {
         this._api = new ServiceContainer(id, this.config);
+        this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         this.api
             .getCurrentUser()
             .then((user) => {
@@ -443,6 +461,7 @@ export class OpenChat extends EventTarget {
                     this.logout();
                 }
             });
+        this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -476,7 +495,7 @@ export class OpenChat extends EventTarget {
             startUserUpdatePoller(this.api);
             startPruningLocalUpdates();
             initNotificationStores();
-            this.api.getUserStorageLimits();
+            this.api.getUserStorageLimits().then(storageStore.set);
             this.identityState.set("logged_in");
             this.initWebRtc();
 
@@ -1834,7 +1853,7 @@ export class OpenChat extends EventTarget {
                             threadRootMessageIndex
                         );
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            this.api.refreshAccountBalance(
+                            this.refreshAccountBalance(
                                 msg.content.transfer.token,
                                 this.user.cryptoAccount
                             );
@@ -2183,7 +2202,13 @@ export class OpenChat extends EventTarget {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.api.getCurrentUser();
+        return this.api.getCurrentUser().then((response) => {
+            if (response.kind === "created_user") {
+                userCreatedStore.set(true);
+                selectedAuthProviderStore.init(AuthProvider.II);
+            }
+            return response;
+        });
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
@@ -2260,7 +2285,10 @@ export class OpenChat extends EventTarget {
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this.api.refreshAccountBalance(crypto, account);
+        return this.api.refreshAccountBalance(crypto, account).then((val) => {
+            cryptoBalance.set(crypto, val);
+            return val;
+        });
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
