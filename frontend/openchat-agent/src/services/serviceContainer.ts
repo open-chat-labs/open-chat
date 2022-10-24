@@ -111,7 +111,7 @@ import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../utils/
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { Logger } from "../utils/logging";
 import type { AgentConfig } from "../config";
-import { LoadedCachedUsers, MessagesReadFromServer } from "src/events";
+import { MessagesReadFromServer } from "src/events";
 
 export const apiKey = Symbol();
 

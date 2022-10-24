@@ -72,7 +72,6 @@ import {
     SendMessageSuccess,
     TransferSuccess,
     MessagesReadFromServer,
-    LoadedCachedUsers,
     StorageUpdated,
 } from "openchat-agent";
 import {
@@ -2080,33 +2079,23 @@ export class OpenChat extends EventTarget {
         const { selectedChat, threadEvents, events } = this._liveState;
 
         if (
-            parsedMsg.threadRootMessageIndex !== undefined &&
-            parsedMsg.threadRootMessageIndex === this._liveState.selectedThreadRootMessageIndex &&
             selectedChat !== undefined &&
-            fromChatId === selectedChat.chatId
+            fromChatId === selectedChat.chatId &&
+            parsedMsg.threadRootMessageIndex === this._liveState.selectedThreadRootMessageIndex
         ) {
-            // this is a webrtc message relating to the selected thread
             this.handleWebRtcMessageInternal(
                 fromChatId,
                 parsedMsg,
                 selectedChat,
-                threadEvents,
+                parsedMsg.threadRootMessageIndex === undefined ? events : threadEvents,
                 parsedMsg.threadRootMessageIndex
             );
         } else {
-            if (selectedChat !== undefined && fromChatId === selectedChat.chatId) {
-                // this is a webrtc message relating to the selected chat
-                this.handleWebRtcMessageInternal(
-                    fromChatId,
-                    parsedMsg,
-                    selectedChat,
-                    events,
-                    undefined
-                );
-            } else {
-                if (parsedMsg.kind === "remote_user_sent_message") {
-                    unconfirmed.add(fromChatId, parsedMsg.messageEvent);
-                }
+            if (
+                parsedMsg.kind === "remote_user_sent_message" &&
+                parsedMsg.threadRootMessageIndex === undefined
+            ) {
+                unconfirmed.add(fromChatId, parsedMsg.messageEvent);
             }
         }
     }
