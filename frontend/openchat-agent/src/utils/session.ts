@@ -3,7 +3,6 @@ import type { DelegationIdentity } from "@dfinity/identity";
 
 export function getTimeUntilSessionExpiryMs(identity: Identity): number {
     if (!("getDelegation" in identity)) {
-        // if (!(identity instanceof DelegationIdentity)) {
         return 0;
     }
 
