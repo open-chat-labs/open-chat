@@ -1,15 +1,14 @@
 #!/bin/sh
 
-# Pass in network name, IC url, identity name, OpenStorage index canisterId, CyclesDispenser canisterId, Ledger canisterId, and test mode (true/false)
+# Pass in network name, IC url, identity name, OpenStorage index canisterId, Ledger canisterId, and test mode (true/false)
 # eg './deploy.sh ic https://ic0.app/ openchat rturd-qaaaa-aaaaf-aabaq-cai rwlgt-iiaaa-aaaaa-aaaaa-cai ryjl3-tyaaa-aaaaa-aaaba-cai false'
 
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-CYCLES_DISPENSER_CANISTER_ID=$4
-OPEN_STORAGE_INDEX_CANISTER_ID=$5
-LEDGER_CANISTER_ID=$6
-TEST_MODE=$7
+OPEN_STORAGE_INDEX_CANISTER_ID=$4
+LEDGER_CANISTER_ID=$5
+TEST_MODE=$6
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -23,6 +22,7 @@ NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notificatio
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network $NETWORK id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network $NETWORK id callback)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
+CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
