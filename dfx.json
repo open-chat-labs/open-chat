@@ -53,16 +53,16 @@
       "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"
     },
-    "open_storage_index": {
-      "type": "custom",
-      "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
-      "candid": "backend/canisters/open_storage/index.init.did",
-      "build": ""
-    },
     "cycles_dispenser": {
       "type": "custom",
       "wasm": "backend/canisters/cycles_dispenser/cycles_dispenser.wasm.gz",
       "candid": "backend/canisters/cycles_dispenser/cycles_dispenser.init.did",
+      "build": ""
+    },
+    "open_storage_index": {
+      "type": "custom",
+      "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
+      "candid": "backend/canisters/open_storage/index.init.did",
       "build": ""
     }
   },
