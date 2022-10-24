@@ -1,14 +1,13 @@
 #!/bin/sh
 
-# Pass in network name, IC url, identity name, OpenStorage index canisterId, Ledger canisterId, and test mode (true/false)
-# eg './deploy.sh ic https://ic0.app/ openchat rturd-qaaaa-aaaaf-aabaq-cai ryjl3-tyaaa-aaaaa-aaaba-cai false'
+# Pass in network name, IC url, identity name, Ledger canisterId, and test mode (true/false)
+# eg './deploy.sh ic https://ic0.app/ openchat ryjl3-tyaaa-aaaaa-aaaba-cai false'
 
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-OPEN_STORAGE_INDEX_CANISTER_ID=$4
-LEDGER_CANISTER_ID=$5
-TEST_MODE=$6
+LEDGER_CANISTER_ID=$4
+TEST_MODE=$5
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -22,6 +21,7 @@ NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notificatio
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network $NETWORK id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network $NETWORK id callback)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
+OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id open_storage_index)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
