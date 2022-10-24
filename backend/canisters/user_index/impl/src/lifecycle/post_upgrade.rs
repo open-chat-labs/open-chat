@@ -31,7 +31,7 @@ fn post_upgrade(args: Args) {
 
     cycles_dispenser_client::init(
         Principal::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap(),
-        MIN_CYCLES_BALANCE,
+        2 * MIN_CYCLES_BALANCE,
     );
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
