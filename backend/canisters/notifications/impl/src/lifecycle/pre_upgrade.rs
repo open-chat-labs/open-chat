@@ -16,7 +16,9 @@ fn pre_upgrade() {
     let log_messages = messages_container.logs.drain_messages();
     let trace_messages = messages_container.traces.drain_messages();
 
-    let stable_state = (state.data, log_messages, trace_messages);
+    let cycles_dispenser_client_state = cycles_dispenser_client::serialize_to_bytes();
+
+    let stable_state = (state.data, log_messages, trace_messages, cycles_dispenser_client_state);
 
     serialize_to_stable_memory(stable_state, UPGRADE_BUFFER_SIZE).unwrap();
 }

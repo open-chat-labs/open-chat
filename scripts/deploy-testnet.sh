@@ -17,6 +17,7 @@ dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-c
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 online_users_aggregator
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 callback
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 proposals_bot
+dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 cycles_dispenser
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 open_storage_index
 
 # Install the OpenChat canisters

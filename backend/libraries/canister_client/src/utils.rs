@@ -1,4 +1,4 @@
-use crate::{CanisterName, OpenStorageCanisterName, TestIdentity};
+use crate::TestIdentity;
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -88,26 +88,21 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
         .expect("Failed to install wasm");
 }
 
-pub fn get_canister_wasm(canister_name: CanisterName, version: Version) -> CanisterWasm {
-    let file_name = canister_name.to_string() + "_canister_impl.wasm.gz";
-    let bytes = read_file_from_local_bin(&file_name);
-
-    CanisterWasm { module: bytes, version }
-}
-
-pub fn get_open_storage_canister_wasm(canister_name: OpenStorageCanisterName, version: Version) -> CanisterWasm {
-    let file_name = canister_name.to_string() + "_canister.wasm.gz";
-    let bytes = read_file_from_local_bin(&file_name);
-
-    CanisterWasm { module: bytes, version }
-}
-
-pub fn read_file_from_local_bin(file_name: &str) -> Vec<u8> {
-    let mut file_path =
+pub fn get_canister_wasm(canister_name: impl ToString, version: Version) -> CanisterWasm {
+    let mut local_bin_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
-    file_path.push("local-bin");
-    file_path.push(&file_name);
+    local_bin_path.push("local-bin");
 
+    let file_name = file_by_prefix(&canister_name.to_string(), &local_bin_path)
+        .unwrap_or_else(|| panic!("Couldn't find file for canister '{}'", canister_name.to_string()));
+
+    let file_path = local_bin_path.join(file_name);
+    let bytes = read_file(file_path);
+
+    CanisterWasm { module: bytes, version }
+}
+
+pub fn read_file(file_path: PathBuf) -> Vec<u8> {
     let mut file = File::open(&file_path).unwrap_or_else(|_| panic!("Failed to open file: {}", file_path.to_str().unwrap()));
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).expect("Failed to read file");
@@ -124,4 +119,12 @@ pub fn delay() -> garcon::Delay {
 
 pub fn is_mainnet(url: &str) -> bool {
     url.contains("ic0.app")
+}
+
+fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
+    let dir = std::fs::read_dir(dir).unwrap();
+
+    dir.filter_map(|f| f.ok())
+        .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))
+        .find(|f| f.starts_with(file_name_prefix))
 }

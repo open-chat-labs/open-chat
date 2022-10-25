@@ -19,6 +19,7 @@ fn heartbeat() {
     retrieve_proposals::run();
     push_proposals::run();
     update_proposals::run();
+    cycles_dispenser_client::run();
 }
 
 mod retrieve_proposals {

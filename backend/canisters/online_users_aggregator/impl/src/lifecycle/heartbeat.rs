@@ -6,6 +6,7 @@ use types::CanisterId;
 #[heartbeat]
 fn heartbeat() {
     flush_online_users::run();
+    cycles_dispenser_client::run();
 }
 
 mod flush_online_users {

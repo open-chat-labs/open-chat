@@ -1,5 +1,5 @@
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
-use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE, USER_LIMIT};
+use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -8,7 +8,7 @@ use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::register_user::{Response::*, *};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::CREATE_CANISTER_CYCLES_FEE;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
 #[update]
 #[trace]

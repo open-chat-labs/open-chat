@@ -21,6 +21,7 @@ NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notificatio
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network $NETWORK id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network $NETWORK id callback)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
+CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id open_storage_index)
 
 cargo run \
@@ -34,5 +35,6 @@ cargo run \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
   $CALLBACK_CANISTER_ID \
   $PROPOSALS_BOT_CANISTER_ID \
+  $CYCLES_DISPENSER_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
   $LEDGER_CANISTER_ID \

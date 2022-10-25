@@ -1,11 +1,13 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{Data, LOG_MESSAGES};
+use candid::Principal;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use proposals_bot_canister::post_upgrade::Args;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
+use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -24,6 +26,11 @@ fn post_upgrade(args: Args) {
     if !log_messages.is_empty() || !trace_messages.is_empty() {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
+
+    cycles_dispenser_client::init(
+        Principal::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap(),
+        2 * MIN_CYCLES_BALANCE,
+    );
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
