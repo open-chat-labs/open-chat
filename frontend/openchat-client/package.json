@@ -12,8 +12,7 @@
         "typecheck:watch": "tsc --noEmit -w",
         "test": "jest --detectOpenHandles --runInBand",
         "test:watch": "jest --watch --detectOpenHandles --runInBand",
-        "lint": "eslint ./src --fix",
-        "codegen": "sh ./codegen.sh"
+        "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
