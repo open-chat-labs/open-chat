@@ -34,6 +34,10 @@
       "outputs": ["lib/**", "build/**"],
       "dependsOn": ["^build:prod", "typecheck", "validate", "lint", "test"]
     },
+    "build:testnet": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build:testnet", "typecheck", "validate", "lint", "test"]
+    },
     "dev": {
       "cache": false
     },

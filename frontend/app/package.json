@@ -6,6 +6,7 @@
         "build": "sh ./build_dev.sh",
         "build:prod": "sh ./build_prod.sh",
         "build:prod_test": "sh ./build_prod_test.sh",
+        "build:testnet": "sh ./build_testnet.sh",
         "dev": "sh ./build_dev.sh -w",
         "start": "sirv public --no-clear",
         "validate": "svelte-check",
