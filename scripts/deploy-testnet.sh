@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# Deploys everything needed to test OpenChat locally (OpenChat, OpenStorage and the NNS canisters)
-
 NETWORK=$1
 IC_URL=$2
 IDENTITY=${3:-default}

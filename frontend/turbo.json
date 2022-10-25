@@ -4,7 +4,6 @@
     "INTERNET_IDENTITY",
     "NFID_URL",
     "DFX_NETWORK",
-    "CLIENT_CACHING",
     "IC_URL",
     "II_DERIVATION_ORIGIN",
     "II_ALTERNATIVE_ORIGINS",
@@ -35,10 +34,15 @@
       "outputs": ["lib/**", "build/**"],
       "dependsOn": ["^build:prod", "typecheck", "validate", "lint", "test"]
     },
+    "build:testnet": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build:testnet", "typecheck", "validate", "lint", "test"]
+    },
     "dev": {
       "cache": false
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },

@@ -4,9 +4,9 @@ import type {
     LocalPollVote,
     LocalReaction,
     MessageContent,
-    ThreadSummary
-} from "../domain/chat/chat";
-import { mergeThreadSummaries } from "../domain/chat/chat.utils";
+    ThreadSummary,
+} from "openchat-agent";
+import { mergeThreadSummaries } from "../utils/chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL: number = 30 * 1000;
 const store = writable<Record<string, LocalMessageUpdates>>({});
@@ -26,43 +26,51 @@ export const localMessageUpdates = {
         applyUpdate(messageId, (_) => ({ editedContent: undefined }));
     },
     markReaction: (messageId: string, reaction: LocalReaction): void => {
-        applyUpdate(messageId, (updates) => ({ reactions: [...updates?.reactions ?? [], reaction] }));
+        applyUpdate(messageId, (updates) => ({
+            reactions: [...(updates?.reactions ?? []), reaction],
+        }));
     },
     markPollVote: (messageId: string, vote: LocalPollVote): void => {
-        applyUpdate(messageId, (updates) => ({ pollVotes: [...updates?.pollVotes ?? [], vote] }));
+        applyUpdate(messageId, (updates) => ({ pollVotes: [...(updates?.pollVotes ?? []), vote] }));
     },
     markThreadSummaryUpdated: (threadRootMessageId: string, summary: ThreadSummary): void => {
         applyUpdate(threadRootMessageId, (updates) => {
             return {
-                threadSummary: updates?.threadSummary === undefined
-                    ? summary
-                    : mergeThreadSummaries(updates.threadSummary, summary)
-            }
+                threadSummary:
+                    updates?.threadSummary === undefined
+                        ? summary
+                        : mergeThreadSummaries(updates.threadSummary, summary),
+            };
         });
-    }
-}
+    },
+};
 
-function applyUpdate(messageId: string, updateFn: (current: LocalMessageUpdates) => Partial<LocalMessageUpdates>): void {
-    store.update(state => {
+function applyUpdate(
+    messageId: string,
+    updateFn: (current: LocalMessageUpdates) => Partial<LocalMessageUpdates>
+): void {
+    store.update((state) => {
         const updates = state[messageId];
         state[messageId] = {
             ...updates,
             ...updateFn(updates),
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
         };
         return state;
-    })
+    });
 }
 
 function pruneLocalUpdates(): void {
     const now = Date.now();
-    store.update((state) => Object.entries(state).reduce((result, [messageId, updates]) => {
-        // Only keep updates which are < 30 seconds old
-        if (now - updates.lastUpdated < 30 * 1000) {
-            result[messageId] = updates;
-        }
-        return result;
-    }, {} as Record<string, LocalMessageUpdates>));
+    store.update((state) =>
+        Object.entries(state).reduce((result, [messageId, updates]) => {
+            // Only keep updates which are < 30 seconds old
+            if (now - updates.lastUpdated < 30 * 1000) {
+                result[messageId] = updates;
+            }
+            return result;
+        }, {} as Record<string, LocalMessageUpdates>)
+    );
 }
 
 export function startPruningLocalUpdates(): void {

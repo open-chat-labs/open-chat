@@ -5,7 +5,6 @@ export INTERNET_IDENTITY_URL=http://127.0.0.1:8080?canisterId=qhbym-qaaaa-aaaaa-
 export NFID_URL=http://localhost:8080?canisterId=qhbym-qaaaa-aaaaa-aaafq-cai
 export DFX_NETWORK=local
 export DEV_PORT=5001
-export CLIENT_CACHING=true
 export LEDGER_CANISTER_ICP=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_BTC=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_CHAT=ryjl3-tyaaa-aaaaa-aaaba-cai

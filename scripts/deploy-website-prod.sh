@@ -4,7 +4,7 @@
 # eg './deploy-website-prod.sh openchat 2.0.305'
 
 IDENTITY=$1
-VERSION=$2
+export OPENCHAT_WEBSITE_VERSION=$2
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -15,12 +15,12 @@ then
   cargo install icx-asset
 fi
 
-OPENCHAT_WEBSITE_VERSION=$VERSION npm run --prefix frontend build:prod
+npm run --prefix frontend build:prod
 
 dfx --identity $IDENTITY deploy --network ic --no-wallet website
 icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload 6hsbt-vqaaa-aaaaf-aaafq-cai /.well-known/ii-alternative-origins=frontend/app/build/.well-known/ii-alternative-origins
 
-TAG=v$VERSION-website
+TAG=v$OPENCHAT_WEBSITE_VERSION-website
 
 git tag $TAG HEAD
 git push origin tag $TAG

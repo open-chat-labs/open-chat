@@ -8,30 +8,33 @@ import type {
     Message,
     MessageContent,
     ThreadSyncDetails,
-} from "../domain/chat/chat";
+    OpenChatAgent,
+    CreatedUser,
+} from "openchat-agent";
+import {
+    compareChats,
+    getContentAsText,
+    updateArgsFromChats,
+    extractUserIdsFromMentions,
+    missingUserIds,
+    emptyChatMetrics,
+} from "openchat-agent";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
-    compareChats,
-    getContentAsText,
-    getFirstUnreadMessageIndex,
     getNextEventAndMessageIndexes,
     mergeServerEvents,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
-    updateArgsFromChats,
     mergeChatMetrics,
-} from "../domain/chat/chat.utils";
+    getFirstUnreadMessageIndex,
+} from "../utils/chat";
 import { userStore } from "./user";
-import { Poller } from "../services/poller";
-import type { ServiceContainer } from "../services/serviceContainer";
-import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
+import { Poller } from "../utils/poller";
 import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
-import type { CreatedUser } from "../domain/user/user";
 import DRange from "drange";
-import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -93,7 +96,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
-                        (k) => k, // FIXME -> or maybe this is ok
+                        (k) => k,
                         currentUser.userId,
                         summary,
                         unconfirmed,
@@ -344,17 +347,22 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function setSelectedChat(
-    api: ServiceContainer,
+    api: OpenChatAgent,
     chat: ChatSummary,
     messageIndex?: number
 ): void {
     // TODO don't think this should be in here really
     if (
         chat.kind === "group_chat" &&
-        chat.subtype?.kind === "governance_proposals" &&
+        chat.subtype !== undefined &&
+        chat.subtype.kind === "governance_proposals" &&
         !chat.subtype.isNns
     ) {
-        api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
+        const { governanceCanisterId } = chat.subtype;
+        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+            snsFunctions.set(governanceCanisterId, val.functions);
+            return val;
+        });
     }
 
     if (messageIndex === undefined) {
@@ -436,7 +444,7 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
     });
 }
 
-async function loadChats(api: ServiceContainer) {
+async function loadChats(api: OpenChatAgent) {
     try {
         const currentUser = get(currentUserStore);
         if (currentUser === undefined) {
@@ -449,6 +457,7 @@ async function loadChats(api: ServiceContainer) {
         chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
         const selectedChat = get(selectedChatStore);
+        const userLookup = get(userStore);
         const currentState: CurrentChatState = {
             chatSummaries: chats,
             blockedUsers: get(blockedUsers),
@@ -456,10 +465,11 @@ async function loadChats(api: ServiceContainer) {
         };
         const chatsResponse =
             chatUpdatesSince === undefined
-                ? await api.getInitialState(selectedChat?.chatId)
+                ? await api.getInitialState(userLookup, selectedChat?.chatId)
                 : await api.getUpdates(
                       currentState,
                       updateArgsFromChats(chatUpdatesSince, chats),
+                      userLookup,
                       selectedChat?.chatId
                   );
 
@@ -568,7 +578,7 @@ export function createDirectChat(chatId: string): void {
     });
 }
 
-export function startChatPoller(api: ServiceContainer): Poller {
+export function startChatPoller(api: OpenChatAgent): Poller {
     return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
 }
 

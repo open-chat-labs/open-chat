@@ -32,9 +32,10 @@ console.log("DFX_NETWORK: ", dfxNetwork);
 if (dfxNetwork) {
     const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");
     const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
-    const canisterPath = dfxJson["networks"][dfxNetwork]["type"] === "persistent"
-        ? path.join(__dirname, "../..", "canister_ids.json")
-        : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
+    const canisterPath =
+        dfxJson["networks"][dfxNetwork]["type"] === "persistent"
+            ? path.join(__dirname, "../..", "canister_ids.json")
+            : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
@@ -166,7 +167,6 @@ export default {
             "process.env.NODE_ENV": JSON.stringify(env),
             "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
             "process.env.ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.ROLLBAR_ACCESS_TOKEN),
-            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
             "process.env.IC_URL": maybeStringify(process.env.IC_URL),
             "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
             "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),

@@ -6,6 +6,7 @@
     "build": "turbo run build",
     "build:prod_test": "turbo run build:prod_test",
     "build:prod": "turbo run build:prod",
+    "build:testnet": "turbo run build:testnet",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -15,7 +16,8 @@
   "author": "julian.jelfs@gmail.com",
   "workspaces": [
     "app",
-    "openchat-client"
+    "openchat-client",
+    "openchat-agent"
   ],
   "devDependencies": {
     "turbo": "^1.5.6"

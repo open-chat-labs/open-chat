@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 
 import { get, writable } from "svelte/store";
-import type {
-    EnhancedReplyContext,
-    EventWrapper,
-    Message,
-    MessageContent,
-} from "../domain/chat/chat";
+import type { EnhancedReplyContext, EventWrapper, Message, MessageContent } from "openchat-agent";
 import { userStore } from "./user";
 
 type KeyType = string | number | symbol;
