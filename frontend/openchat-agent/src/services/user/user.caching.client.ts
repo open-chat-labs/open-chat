@@ -73,7 +73,7 @@ import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
 import type { AgentConfig } from "../../config";
-import { MessagesReadFromServer } from "src/events";
+import { MessagesReadFromServer, UsersLoaded } from "src/events";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -341,21 +341,31 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                         return result;
                     }, new Set<string>());
 
-                    // FIXME - what is acutally *adding* the missing users we load into the userStore
                     const missing = missingUserIds(userStore, userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.config).getUsers(
-                            {
-                                userGroups: [
-                                    {
-                                        users: missing,
-                                        updatedSince: BigInt(0),
-                                    },
-                                ],
-                            },
-                            true,
-                            () => true
-                        );
+                        return UserIndexClient.create(this.identity, this.config)
+                            .getUsers(
+                                {
+                                    userGroups: [
+                                        {
+                                            users: missing,
+                                            updatedSince: BigInt(0),
+                                        },
+                                    ],
+                                },
+                                true,
+                                () => true
+                            )
+                            .then((val) => {
+                                // update the in-scope user lookup just so we don't do more lookups than we need to
+                                val.users.forEach((user) => {
+                                    userStore[user.userId] = user;
+                                });
+
+                                // also dispatch an event with the users so that they make it into the client store
+                                this.dispatchEvent(new UsersLoaded(val.users));
+                                return val;
+                            });
                     }
                 });
             }

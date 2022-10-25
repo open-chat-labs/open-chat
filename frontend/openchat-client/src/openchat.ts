@@ -73,6 +73,7 @@ import {
     TransferSuccess,
     MessagesReadFromServer,
     StorageUpdated,
+    UsersLoaded,
 } from "openchat-agent";
 import {
     AuthProvider,
@@ -424,6 +425,9 @@ export class OpenChat extends EventTarget {
         }
         if (ev instanceof StorageUpdated) {
             storageStore.set(ev.detail);
+        }
+        if (ev instanceof UsersLoaded) {
+            userStore.addMany(ev.detail);
         }
         console.log("Event received from agent: ", ev);
     }

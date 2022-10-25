@@ -201,14 +201,6 @@ function getLatestMessage(
     if (chat.latestMessage === undefined) return updatedChat.latestMessage;
     if (updatedChat.latestMessage === undefined) return chat.latestMessage;
 
-    // If the local message is unconfirmed, treat that as the latest
-    // FIXME - we can get round this by adding an unconfirmed flag to the client side message representation
-    // const isLocalLatestUnconfirmed = unconfirmed.contains(
-    //     chat.chatId,
-    //     chat.latestMessage.event.messageId
-    // );
-    // if (isLocalLatestUnconfirmed) return chat.latestMessage;
-
     // Otherwise take the one with the highest event index, if they match, take the server version since it may have had
     // subsequent updates (eg. deleted)
     return updatedChat.latestMessage.index >= chat.latestMessage.index
