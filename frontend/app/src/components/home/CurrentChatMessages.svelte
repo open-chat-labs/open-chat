@@ -25,7 +25,6 @@
         ChatSummary,
         OpenChat,
         FilteredProposals,
-        WebRtcMessage,
         MessageReadState,
         LoadedNewMessages,
         ChatUpdated,
@@ -43,6 +42,7 @@
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
     import { copyMessageUrl, shareMessage } from "../../utils/share";
+    import { toastStore } from "../../stores/toast";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -419,7 +419,13 @@
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
-        client.blockUser(chat.chatId, ev.detail.userId);
+        client.blockUser(chat.chatId, ev.detail.userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
+        });
     }
 
     function onMessageWindowLoaded(messageIndex: number | undefined) {
@@ -590,12 +596,20 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.pinMessage(chat, ev.detail.messageIndex);
+        client.pinMessage(chat, ev.detail.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinMessageFailed");
+            }
+        });
     }
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.unpinMessage(chat, ev.detail.messageIndex);
+        client.unpinMessage(chat, ev.detail.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("unpinMessageFailed");
+            }
+        });
     }
 
     function registerVote(

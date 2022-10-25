@@ -6,7 +6,7 @@ import type {
     EventWrapper,
     ThreadSyncDetails,
     UserLookup,
-} from "./domain";
+} from "openchat-agent";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
     serverChatSummariesStore,

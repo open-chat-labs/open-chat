@@ -1,6 +1,6 @@
-import type { NotificationStatus } from "src/domain";
+import type { NotificationStatus } from "openchat-agent";
 import { derived, writable } from "svelte/store";
-import { getSoftDisabled, storeSoftDisabled } from "../utils/caching";
+import { getSoftDisabled, storeSoftDisabled } from "openchat-agent";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;

@@ -10,7 +10,6 @@ export type OpenChatConfig = {
     userIndexCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
-    enableClientCaching: boolean;
     ledgerCanisterICP: string;
     ledgerCanisterBTC: string;
     ledgerCanisterCHAT: string;
