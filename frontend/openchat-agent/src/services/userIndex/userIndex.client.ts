@@ -33,7 +33,6 @@ import {
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { cachingLocallyDisabled } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
@@ -52,9 +51,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     static create(identity: Identity, config: AgentConfig): IUserIndexClient {
-        return config.enableClientCaching && !cachingLocallyDisabled()
-            ? new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger)
-            : new UserIndexClient(identity, config);
+        return new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger);
     }
 
     @profile("userIndexClient")

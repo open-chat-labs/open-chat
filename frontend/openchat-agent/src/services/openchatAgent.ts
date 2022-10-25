@@ -129,7 +129,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
-    private db?: Database;
+    private db: Database;
     private _logger: Logger;
     private _userId: string | undefined;
 
@@ -143,9 +143,7 @@ export class OpenChatAgent extends EventTarget {
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
-        if (config.enableClientCaching) {
-            this.db = initDb(identity.getPrincipal().toString());
-        }
+        this.db = initDb(identity.getPrincipal().toString());
         this._onlineClient = OnlineClient.create(identity, config);
         this._userIndexClient = UserIndexClient.create(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
@@ -159,16 +157,13 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getAllCachedUsers(): Promise<UserLookup> {
-        if (this.db) {
-            return measure("getAllUsers", () => getAllUsers()).then((users) => {
-                const lookup = toRecord(
-                    users.map((user) => this.rehydrateUserSummary(user)),
-                    (u) => u.userId
-                );
-                return lookup;
-            });
-        }
-        return Promise.resolve({});
+        return measure("getAllUsers", () => getAllUsers()).then((users) => {
+            const lookup = toRecord(
+                users.map((user) => this.rehydrateUserSummary(user)),
+                (u) => u.userId
+            );
+            return lookup;
+        });
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {

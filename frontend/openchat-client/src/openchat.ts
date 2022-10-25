@@ -1254,15 +1254,7 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    private setCachedMessageFromNotification = (
-        chatId: string,
-        threadRootMessageIndex: number | undefined,
-        message: EventWrapper<Message>
-    ): void => {
-        if (this.config.enableClientCaching) {
-            setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
-        }
-    };
+    setCachedMessageFromNotification = setCachedMessageFromNotification;
     createDirectChat = createDirectChat;
     setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
         setSelectedChat(this.api, chat, messageIndex);

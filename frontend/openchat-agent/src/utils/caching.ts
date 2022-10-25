@@ -63,10 +63,6 @@ function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
 }
 
-export function cachingLocallyDisabled(): boolean {
-    return !!localStorage.getItem("openchat_nocache");
-}
-
 export function createCacheKey(
     chatId: string,
     index: number,
@@ -77,10 +73,7 @@ export function createCacheKey(
         : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
-export function openCache(principal: string): Database | undefined {
-    if (process.env.NODE_ENV === "test") {
-        return undefined;
-    }
+export function openCache(principal: string): Database {
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
         upgrade(db, _oldVersion, _newVersion) {
             if (db.objectStoreNames.contains("chat_events")) {
@@ -557,7 +550,7 @@ export function getDb(): Database | undefined {
     return db;
 }
 
-export function initDb(principal: string): Database | undefined {
+export function initDb(principal: string): Database {
     db = openCache(principal);
     return db;
 }

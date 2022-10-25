@@ -64,7 +64,7 @@ import {
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, mergeChatUpdates } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
-import { cachingLocallyDisabled, Database } from "../../utils/caching";
+import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
     apiGroupPermissions,
@@ -115,18 +115,16 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database | undefined,
+        db: Database,
         groupInvite: GroupInvite | undefined
     ): IUserClient {
-        return db && config.enableClientCaching && !cachingLocallyDisabled()
-            ? new CachingUserClient(
-                  db,
-                  identity,
-                  config,
-                  new UserClient(identity, userId, config),
-                  groupInvite
-              )
-            : new UserClient(identity, userId, config);
+        return new CachingUserClient(
+            db,
+            identity,
+            config,
+            new UserClient(identity, userId, config),
+            groupInvite
+        );
     }
 
     @profile("userClient")

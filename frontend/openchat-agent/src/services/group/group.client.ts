@@ -67,7 +67,7 @@ import {
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
-import { cachingLocallyDisabled, Database } from "../../utils/caching";
+import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
@@ -100,17 +100,15 @@ export class GroupClient extends CandidService implements IGroupClient {
         chatId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database | undefined,
+        db: Database,
         inviteCode: string | undefined
     ): IGroupClient {
-        return db !== undefined && config.enableClientCaching && !cachingLocallyDisabled()
-            ? new CachingGroupClient(
-                  db,
-                  chatId,
-                  new GroupClient(userId, identity, config, chatId, inviteCode),
-                  config.logger
-              )
-            : new GroupClient(userId, identity, config, chatId, inviteCode);
+        return new CachingGroupClient(
+            db,
+            chatId,
+            new GroupClient(userId, identity, config, chatId, inviteCode),
+            config.logger
+        );
     }
 
     @profile("groupClient")
