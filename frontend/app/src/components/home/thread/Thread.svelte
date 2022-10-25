@@ -85,7 +85,6 @@
                 }
             });
         }
-        console.log("openchat_event received: ", ev);
     }
 
     $: {

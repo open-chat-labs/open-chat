@@ -192,7 +192,6 @@
         if (ev instanceof UpgradeRequired) {
             dispatch("upgrade", ev.detail);
         }
-        console.log("openchat_event received: ", ev);
     }
 
     beforeUpdate(() => (previousScrollHeight = messagesDiv?.scrollHeight));
