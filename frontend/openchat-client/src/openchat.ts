@@ -429,7 +429,6 @@ export class OpenChat extends EventTarget {
         if (ev instanceof UsersLoaded) {
             userStore.addMany(ev.detail);
         }
-        console.log("Event received from agent: ", ev);
     }
 
     private loadUser(id: Identity) {
