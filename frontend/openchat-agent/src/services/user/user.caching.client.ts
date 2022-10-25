@@ -69,7 +69,7 @@ import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { UserIndexClient } from "../userIndex/userIndex.client";
-import type { GroupInvite } from "../../services/serviceContainer";
+import type { GroupInvite } from "../../services/openchatAgent";
 import type { ServiceRetryInterrupt } from "../candidService";
 import { configKeys } from "../../utils/config";
 import type { AgentConfig } from "../../config";

@@ -1,3 +1,3 @@
 export { SessionExpiryError } from "./error";
-export { ServiceContainer, GroupInvite } from "./serviceContainer";
+export { OpenChatAgent, GroupInvite } from "./openchatAgent";
 export { ServiceRetryInterrupt } from "./candidService";

@@ -1,5 +1,5 @@
 import { Poller } from "../utils/poller";
-import type { ServiceContainer, PartialUserSummary, UserLookup } from "openchat-agent";
+import type { OpenChatAgent, PartialUserSummary, UserLookup } from "openchat-agent";
 import { derived, get, writable } from "svelte/store";
 import { chunk, groupBy } from "../utils/list";
 import { chatSummariesStore, currentUserStore } from "./chat";
@@ -84,7 +84,7 @@ export const userStore = {
     },
 };
 
-async function updateUsers(api: ServiceContainer) {
+async function updateUsers(api: OpenChatAgent) {
     try {
         const currentUser = get(currentUserStore);
         if (currentUser === undefined) {
@@ -132,6 +132,6 @@ async function updateUsers(api: ServiceContainer) {
     }
 }
 
-export function startUserUpdatePoller(api: ServiceContainer): Poller {
+export function startUserUpdatePoller(api: OpenChatAgent): Poller {
     return new Poller(() => updateUsers(api), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
 }

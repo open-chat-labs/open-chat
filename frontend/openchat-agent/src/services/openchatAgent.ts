@@ -120,7 +120,7 @@ export type GroupInvite = {
     code: string;
 };
 
-export class ServiceContainer extends EventTarget {
+export class OpenChatAgent extends EventTarget {
     private _userIndexClient: IUserIndexClient;
     private _onlineClient: IOnlineClient;
     private _groupIndexClient: IGroupIndexClient;
@@ -135,7 +135,7 @@ export class ServiceContainer extends EventTarget {
 
     private get userId(): string {
         if (this._userId === undefined) {
-            throw new Error("ServiceContainer attempted to access _userId before it is set");
+            throw new Error("OpenChatAgent attempted to access _userId before it is set");
         }
         return this._userId;
     }
@@ -179,7 +179,7 @@ export class ServiceContainer extends EventTarget {
         this._groupInvite = value;
     }
 
-    createUserClient(userId: string): ServiceContainer {
+    createUserClient(userId: string): OpenChatAgent {
         this._userId = userId;
         this._userClient = UserClient.create(
             userId,

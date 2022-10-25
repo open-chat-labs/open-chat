@@ -60,7 +60,7 @@ import {
     RemoteUserToggledReaction,
     WebRtcMessage,
     GroupInvite,
-    ServiceContainer,
+    OpenChatAgent,
     Logger,
     ServiceRetryInterrupt,
     getTimeUntilSessionExpiryMs,
@@ -291,7 +291,7 @@ type PinChatResponse =
 
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
-    private _api: ServiceContainer | undefined;
+    private _api: OpenChatAgent | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
@@ -433,7 +433,7 @@ export class OpenChat extends EventTarget {
     }
 
     private loadUser(id: Identity) {
-        this._api = new ServiceContainer(id, this.config);
+        this._api = new OpenChatAgent(id, this.config);
         this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         this.api
             .getCurrentUser()
@@ -524,7 +524,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    private get api(): ServiceContainer {
+    private get api(): OpenChatAgent {
         if (this._api === undefined)
             throw new Error("OpenChat tried to make an api call before the api was available");
         return this._api;

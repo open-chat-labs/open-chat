@@ -96,7 +96,7 @@ import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { textToCode } from "../../domain/inviteCodes";
-import type { GroupInvite } from "../../services/serviceContainer";
+import type { GroupInvite } from "../../services/openchatAgent";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";

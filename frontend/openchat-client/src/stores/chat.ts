@@ -8,7 +8,7 @@ import type {
     Message,
     MessageContent,
     ThreadSyncDetails,
-    ServiceContainer,
+    OpenChatAgent,
     CreatedUser,
 } from "openchat-agent";
 import {
@@ -347,7 +347,7 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function setSelectedChat(
-    api: ServiceContainer,
+    api: OpenChatAgent,
     chat: ChatSummary,
     messageIndex?: number
 ): void {
@@ -444,7 +444,7 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
     });
 }
 
-async function loadChats(api: ServiceContainer) {
+async function loadChats(api: OpenChatAgent) {
     try {
         const currentUser = get(currentUserStore);
         if (currentUser === undefined) {
@@ -578,7 +578,7 @@ export function createDirectChat(chatId: string): void {
     });
 }
 
-export function startChatPoller(api: ServiceContainer): Poller {
+export function startChatPoller(api: OpenChatAgent): Poller {
     return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
 }
 
