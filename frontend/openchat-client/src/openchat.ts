@@ -1640,7 +1640,7 @@ export class OpenChat extends EventTarget {
     pinMessage(clientChat: ChatSummary, messageIndex: number): Promise<boolean> {
         if (clientChat.kind === "group_chat") {
             this.addPinnedMessage(clientChat.chatId, messageIndex);
-            this.api
+            return this.api
                 .pinMessage(clientChat.chatId, messageIndex)
                 .then((resp) => {
                     if (resp !== "success" && resp !== "no_change") {
