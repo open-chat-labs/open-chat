@@ -14,7 +14,6 @@ import type {
 import {
     compareChats,
     getContentAsText,
-    getFirstUnreadMessageIndex,
     updateArgsFromChats,
     extractUserIdsFromMentions,
     missingUserIds,
@@ -29,6 +28,7 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
+    getFirstUnreadMessageIndex,
 } from "../utils/chat";
 import { userStore } from "./user";
 import { Poller } from "../utils/poller";

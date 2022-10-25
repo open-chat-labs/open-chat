@@ -275,7 +275,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     )
                 );
 
-                // FIXME - this is just returning the value from the chat at the moment
                 const targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 const range = indexRangeForChat(chat);
 
@@ -342,9 +341,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                         return result;
                     }, new Set<string>());
 
-                    // FIXME - not sure how to deal with this yet
-                    // perhaps we just look in indexeddb instead?
-                    // what is acutally *adding* the missing users we load into the userStore
+                    // FIXME - what is acutally *adding* the missing users we load into the userStore
                     const missing = missingUserIds(userStore, userIds);
                     if (missing.length > 0) {
                         return UserIndexClient.create(this.identity, this.config).getUsers(

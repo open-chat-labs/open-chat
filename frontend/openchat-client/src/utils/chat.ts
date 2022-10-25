@@ -1217,3 +1217,12 @@ export function getTypingString(
         return formatter("memberIsTyping", { values: { username } });
     }
 }
+
+export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
+    if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+
+    return messagesRead.getFirstUnreadMessageIndex(
+        chat.chatId,
+        chat.latestMessage?.event.messageIndex
+    );
+}

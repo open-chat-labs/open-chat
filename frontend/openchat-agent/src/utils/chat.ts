@@ -278,14 +278,7 @@ export function identity<T>(x: T): T {
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
     if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
-
     return chat.readByMeUpTo;
-
-    // FIXME - we cannot access messageRead from the agent project
-    // return messagesRead.getFirstUnreadMessageIndex(
-    //     chat.chatId,
-    //     chat.latestMessage?.event.messageIndex
-    // );
 }
 
 export function indexRangeForChat(chat: ChatSummary): IndexRange {

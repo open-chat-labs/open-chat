@@ -5,7 +5,6 @@ export * from "./events";
 export {
     compareChats,
     getContentAsText,
-    getFirstUnreadMessageIndex,
     updateArgsFromChats,
     emptyChatMetrics,
     indexRangeForChat,
