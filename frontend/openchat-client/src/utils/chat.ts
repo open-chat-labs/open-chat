@@ -29,6 +29,7 @@ import {
     emptyChatMetrics,
     Cryptocurrency,
     cryptoLookup,
+    LocalPollVote,
 } from "openchat-agent";
 import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-agent";
 import { distinctBy, groupWhile } from "../utils/list";
@@ -591,22 +592,17 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
     }
 }
 
-function updateEventPollContent(
-    message: Message,
-    answerIndex: number,
-    type: "register" | "delete",
-    userId: string
-): Message {
-    if (message.content.kind === "poll_content") {
-        return {
-            ...message,
-            content: {
-                ...message.content,
-                votes: updatePollVotes(userId, message.content, answerIndex, type),
-            },
+function updatePollContent(
+    content: PollContent,
+    votes: LocalPollVote[]
+): PollContent {
+    for (const vote of votes) {
+        content = {
+            ...content,
+            votes: updatePollVotes(vote.userId, content, vote.answerIndex, vote.type)
         };
     }
-    return message;
+    return content;
 }
 
 export function updatePollVotes(
@@ -1030,15 +1026,8 @@ function mergeLocalUpdates(
         message.reactions = reactions;
     }
 
-    if (localUpdates?.pollVotes !== undefined) {
-        for (const pollVote of localUpdates.pollVotes) {
-            message = updateEventPollContent(
-                message,
-                pollVote.answerIndex,
-                pollVote.type,
-                pollVote.userId
-            );
-        }
+    if (localUpdates?.pollVotes !== undefined && message.content.kind === "poll_content") {
+        message.content = updatePollContent(message.content, localUpdates.pollVotes);
     }
 
     if (localUpdates?.threadSummary !== undefined) {
@@ -1061,11 +1050,15 @@ function mergeLocalUpdates(
                     timestamp: replyContextLocalUpdates.deleted.timestamp,
                 },
             };
-        } else if (replyContextLocalUpdates.editedContent !== undefined) {
-            message.repliesTo = {
-                ...message.repliesTo,
-                content: replyContextLocalUpdates.editedContent,
-            };
+        } else {
+            message.repliesTo = { ...message.repliesTo };
+
+            if (replyContextLocalUpdates.editedContent !== undefined) {
+                message.repliesTo.content = replyContextLocalUpdates.editedContent;
+            }
+            if (replyContextLocalUpdates.pollVotes !== undefined && message.repliesTo.content.kind === "poll_content") {
+                message.repliesTo.content = updatePollContent(message.repliesTo.content, replyContextLocalUpdates.pollVotes);
+            }
         }
     }
     return message;
