@@ -120,6 +120,15 @@ export async function removeCachedChat(
     }
 }
 
+export async function openDbAndGetCachedChats(
+    principal: string
+): Promise<MergedUpdatesResponse | undefined> {
+    const db = openCache(principal);
+    if (db !== undefined) {
+        return getCachedChats(db, principal);
+    }
+}
+
 export async function getCachedChats(
     db: Database,
     userId: string

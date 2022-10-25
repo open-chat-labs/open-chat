@@ -287,6 +287,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                             ? this.groupInvite.code
                             : undefined;
                     const groupClient = GroupClient.create(
+                        this.client.userId,
                         chat.chatId,
                         this.identity,
                         this.config,

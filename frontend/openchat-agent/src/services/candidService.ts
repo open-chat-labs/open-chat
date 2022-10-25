@@ -49,7 +49,7 @@ export abstract class CandidService {
 
     protected handleQueryResponse<From, To>(
         serviceCall: () => Promise<From>,
-        mapper: (from: From) => To,
+        mapper: (from: From) => To | Promise<To>,
         args?: unknown,
         interrupt?: ServiceRetryInterrupt,
         retries = 0

@@ -383,9 +383,10 @@ export function transferWithinGroupResponse(
     recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
-        const transfer = "NNS" in candid.Success.transfer
-            ? candid.Success.transfer.NNS
-            : candid.Success.transfer.SNS;
+        const transfer =
+            "NNS" in candid.Success.transfer
+                ? candid.Success.transfer.NNS
+                : candid.Success.transfer.SNS;
 
         return {
             kind: "transfer_success",
@@ -448,20 +449,17 @@ export function sendMessageResponse(
         };
     }
     if ("TransferSuccessV2" in candid) {
-        const transfer = "NNS" in candid.TransferSuccessV2.transfer
-            ? candid.TransferSuccessV2.transfer.NNS
-            : candid.TransferSuccessV2.transfer.SNS;
+        const transfer =
+            "NNS" in candid.TransferSuccessV2.transfer
+                ? candid.TransferSuccessV2.transfer.NNS
+                : candid.TransferSuccessV2.transfer.SNS;
 
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(
-                transfer,
-                sender,
-                recipient
-            ),
+            transfer: completedCryptoTransfer(transfer, sender, recipient),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -560,15 +558,17 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
-export function getEventsResponse(
+export async function getEventsResponse(
+    userId: string,
     candid: ApiEventsResponse,
     chatId: string,
     latestClientEventIndexPreRequest: number | undefined
-): EventsResponse<DirectChatEvent> {
+): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
-        ensureReplicaIsUpToDate(
+        await ensureReplicaIsUpToDate(
+            userId,
             chatId,
             undefined,
             latestClientEventIndexPreRequest,
@@ -1031,7 +1031,5 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
     const owner = candid.owner.toString();
     const subaccount = optional(candid.subaccount, bytesToHexString);
 
-    return subaccount !== undefined
-        ? `${owner}:${subaccount}`
-        : owner;
+    return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
 }

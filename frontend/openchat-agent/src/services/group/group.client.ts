@@ -85,6 +85,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
 
     constructor(
+        private userId: string,
         identity: Identity,
         private config: AgentConfig,
         private chatId: string,
@@ -95,6 +96,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(
+        userId: string,
         chatId: string,
         identity: Identity,
         config: AgentConfig,
@@ -105,10 +107,10 @@ export class GroupClient extends CandidService implements IGroupClient {
             ? new CachingGroupClient(
                   db,
                   chatId,
-                  new GroupClient(identity, config, chatId, inviteCode),
+                  new GroupClient(userId, identity, config, chatId, inviteCode),
                   config.logger
               )
-            : new GroupClient(identity, config, chatId, inviteCode);
+            : new GroupClient(userId, identity, config, chatId, inviteCode);
     }
 
     @profile("groupClient")
@@ -123,10 +125,13 @@ export class GroupClient extends CandidService implements IGroupClient {
             invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
+        // FIXME - this always seems to through a ReplicaNotUpToDate error for threads.
+        // Not sure if it is an existing issue as it doesn't break anything
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
             (resp) =>
                 getEventsResponse(
+                    this.userId,
                     resp,
                     this.chatId,
                     threadRootMessageIndex,
@@ -153,7 +158,14 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            (resp) => getEventsResponse(resp, this.chatId, undefined, latestClientEventIndex),
+            (resp) =>
+                getEventsResponse(
+                    this.userId,
+                    resp,
+                    this.chatId,
+                    undefined,
+                    latestClientEventIndex
+                ),
             args,
             interrupt
         );
@@ -181,6 +193,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 () => this.groupService.events(args),
                 (resp) =>
                     getEventsResponse(
+                        this.userId,
                         resp,
                         this.chatId,
                         threadRootMessageIndex,
@@ -480,6 +493,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.messages_by_message_index(args),
             (resp) =>
                 getMessagesByMessageIndexResponse(
+                    this.userId,
                     resp,
                     this.chatId,
                     undefined,

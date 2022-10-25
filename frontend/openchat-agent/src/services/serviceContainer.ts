@@ -131,6 +131,14 @@ export class ServiceContainer extends EventTarget {
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
     private _logger: Logger;
+    private _userId: string | undefined;
+
+    private get userId(): string {
+        if (this._userId === undefined) {
+            throw new Error("ServiceContainer attempted to access _userId before it is set");
+        }
+        return this._userId;
+    }
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
@@ -172,6 +180,7 @@ export class ServiceContainer extends EventTarget {
     }
 
     createUserClient(userId: string): ServiceContainer {
+        this._userId = userId;
         this._userClient = UserClient.create(
             userId,
             this.identity,
@@ -186,6 +195,7 @@ export class ServiceContainer extends EventTarget {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
+                this.userId,
                 chatId,
                 this.identity,
                 this.config,
