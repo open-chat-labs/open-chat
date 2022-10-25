@@ -56,12 +56,14 @@
 
     $: identityState = client.identityState;
 
-    onMount(() => {
-        referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
-        if (referredBy !== undefined) {
-            history.replaceState(null, "", "/#/");
-        }
+    function getReferralCode(): string | undefined {
+        const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
+        const lsParam = localStorage.getItem("openchat_referredby") ?? undefined;
+        return qsParam ?? lsParam;
+    }
 
+    onMount(() => {
+        referredBy = getReferralCode();
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }

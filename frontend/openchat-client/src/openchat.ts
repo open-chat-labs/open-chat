@@ -2250,7 +2250,7 @@ export class OpenChat extends EventTarget {
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.searchGroups(searchTerm, maxResults);
+        return this.api.searchGroups(searchTerm, maxResults);
     }
 
     dismissRecommendation(chatId: string): Promise<void> {

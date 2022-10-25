@@ -43,12 +43,14 @@ if (dfxNetwork) {
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
+        process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.open_storage_index[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
+        console.log("OpenStorageIndex: ", process.env.OPEN_STORAGE_INDEX_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -80,7 +82,6 @@ console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
 console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
-console.log("PROPOSAL_BOT_CANISTER", process.env.PROPOSALS_BOT_CANISTER);
 
 function serve() {
     return dev({
