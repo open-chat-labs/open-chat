@@ -15,7 +15,8 @@
   "author": "julian.jelfs@gmail.com",
   "workspaces": [
     "app",
-    "openchat-client"
+    "openchat-client",
+    "openchat-agent"
   ],
   "devDependencies": {
     "turbo": "^1.5.6"

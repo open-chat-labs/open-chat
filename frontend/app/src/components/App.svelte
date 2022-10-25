@@ -35,7 +35,6 @@
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
-            enableClientCaching: Boolean(process.env.CLIENT_CACHING),
             ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
             ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,

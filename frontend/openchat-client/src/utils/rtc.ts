@@ -1,7 +1,6 @@
-import type { ChatSummary, DirectChatSummary, MessageContent } from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary, MessageContent, WebRtcMessage } from "openchat-agent";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
-import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { blockedUsers } from "../stores/blockedUsers";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {

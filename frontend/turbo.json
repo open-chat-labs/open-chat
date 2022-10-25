@@ -4,7 +4,6 @@
     "INTERNET_IDENTITY",
     "NFID_URL",
     "DFX_NETWORK",
-    "CLIENT_CACHING",
     "IC_URL",
     "II_DERIVATION_ORIGIN",
     "II_ALTERNATIVE_ORIGINS",
@@ -39,6 +38,7 @@
       "cache": false
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },
