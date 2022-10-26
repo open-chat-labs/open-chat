@@ -4,6 +4,7 @@ use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
+use itertools::Itertools;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -126,5 +127,7 @@ fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
 
     dir.filter_map(|f| f.ok())
         .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))
-        .find(|f| f.starts_with(file_name_prefix))
+        .filter(|f| f.starts_with(file_name_prefix))
+        .sorted_unstable_by_key(|f| f.len())
+        .next()
 }
