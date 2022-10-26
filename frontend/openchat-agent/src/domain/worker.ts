@@ -10,12 +10,19 @@ import type {
     UpdateArgs,
 } from "./chat";
 import type { StorageStatus } from "./data/data";
-import type { CurrentUserResponse, PartialUserSummary, UserLookup } from "./user";
+import type {
+    CurrentUserResponse,
+    PartialUserSummary,
+    UserLookup,
+    UsersArgs,
+    UsersResponse,
+} from "./user";
 
 /**
  * Worker request types
  */
 export type WorkerRequest =
+    | GetUsersRequest
     | ChatEventsRequest
     | CreateUserClientRequest
     | InitRequest
@@ -29,6 +36,10 @@ export type InitRequest = WorkerRequestCommon<Omit<AgentConfig, "logger">> & {
 
 export type CurrentUserRequest = WorkerRequestCommon & {
     kind: "getCurrentUser";
+};
+
+export type GetUsersRequest = WorkerRequestCommon<{ users: UsersArgs; allowStale: boolean }> & {
+    kind: "getUsers";
 };
 
 export type ChatEventsRequest = WorkerRequestCommon<{
@@ -71,6 +82,7 @@ type WorkerRequestCommon<T = unknown> = {
  * Worker response types
  */
 export type WorkerResponse =
+    | WorkerGetUsersResponse
     | InitResponse
     | GetCurrentUserResponse
     | WorkerUpdatesResponse
@@ -100,6 +112,8 @@ export type WorkerCreateUserClientResponse = WorkerResponseCommon<undefined>;
 export type GetCurrentUserResponse = WorkerResponseCommon<CurrentUserResponse>;
 
 export type WorkerUpdatesResponse = WorkerResponseCommon<MergedUpdatesResponse>;
+
+export type WorkerGetUsersResponse = WorkerResponseCommon<UsersResponse>;
 
 export type WorkerChatEventsResponse = WorkerResponseCommon<EventsResponse<ChatEvent>>;
 

@@ -5,7 +5,6 @@ import {
     MergedUpdatesResponse,
     CurrentChatState,
     UpdateArgs,
-    DataContent,
     OpenChatAgent,
     UsersArgs,
     UsersResponse,
@@ -21,6 +20,8 @@ import {
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
+//FIXME - we need some sort of timeout for request-response calls to worker
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PromiseResolver<T> = [(val: T | PromiseLike<T>) => void, (reason?: any) => void];
 
@@ -33,8 +34,7 @@ export class OpenChatAgentWorker extends EventTarget {
     private _pendingRequests: Record<string, PromiseResolver<any>> = {};
     public ready: Promise<boolean>;
 
-    // FIXME - initialisation is going to be async now
-    constructor(private config: OpenChatConfig, private api: OpenChatAgent) {
+    constructor(private config: OpenChatConfig) {
         super();
         this._worker = new Worker("worker.js");
         const req: Omit<WorkerRequest, "correlationId"> = {
@@ -177,10 +177,12 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale);
-    }
-
-    logError(message?: unknown, ...optionalParams: unknown[]): void {
-        return this.api.logError(message, optionalParams);
+        return this.sendRequest({
+            kind: "getUsers",
+            payload: {
+                users,
+                allowStale,
+            },
+        });
     }
 }

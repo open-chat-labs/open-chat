@@ -440,7 +440,7 @@ export class OpenChat extends EventTarget {
 
     private async loadUser(id: Identity) {
         this._api = new OpenChatAgent(id, this.config);
-        this._workerApi = new OpenChatAgentWorker(this.config, this.api);
+        this._workerApi = new OpenChatAgentWorker(this.config);
         this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         await this._workerApi.ready;
@@ -643,7 +643,7 @@ export class OpenChat extends EventTarget {
         const users = this.userIdsFromEvents([message]);
         const missingUsers = this.missingUserIds(this._liveState.userStore, users);
         if (missingUsers.length > 0) {
-            const usersResp = await this.api.getUsers(
+            const usersResp = await this.apiWorker.getUsers(
                 {
                     userGroups: [
                         {
@@ -1201,7 +1201,7 @@ export class OpenChat extends EventTarget {
             return userIds;
         });
 
-        const resp = await this.api.getUsers(
+        const resp = await this.apiWorker.getUsers(
             {
                 userGroups: [
                     {
@@ -2352,7 +2352,7 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale);
+        return this.apiWorker.getUsers(users, allowStale);
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
@@ -2455,6 +2455,7 @@ export class OpenChat extends EventTarget {
         };
     }
 
+    // FIXME - this is duplicated
     private extractUserIdsFromMentions(text: string): string[] {
         return [...text.matchAll(/@UserId\(([\d\w-]+)\)/g)].map((m) => m[1]);
     }
@@ -2511,7 +2512,7 @@ export class OpenChat extends EventTarget {
                     }
                 }
                 userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers(
+                const usersResponse = await this.apiWorker.getUsers(
                     {
                         userGroups: [
                             {

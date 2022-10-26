@@ -159,4 +159,11 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                 })
             );
     }
+    if (kind === "getUsers") {
+        agent.getUsers(payload.users, payload.allowStale).then((resp) =>
+            sendResponse(msg.data, {
+                response: resp,
+            })
+        );
+    }
 };
