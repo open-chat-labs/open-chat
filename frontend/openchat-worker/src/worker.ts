@@ -166,4 +166,18 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
             })
         );
     }
+    if (kind === "getAllCachedUsers") {
+        agent.getAllCachedUsers().then((resp) =>
+            sendResponse(msg.data, {
+                response: resp,
+            })
+        );
+    }
+    if (kind === "markMessagesRead") {
+        agent.markMessagesRead(payload).then((resp) =>
+            sendResponse(msg.data, {
+                response: resp,
+            })
+        );
+    }
 };

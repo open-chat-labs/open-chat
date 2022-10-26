@@ -5,7 +5,6 @@ import {
     MergedUpdatesResponse,
     CurrentChatState,
     UpdateArgs,
-    OpenChatAgent,
     UsersArgs,
     UsersResponse,
     MessagesReadFromServer,
@@ -16,11 +15,14 @@ import {
     IndexRange,
     EventsResponse,
     ChatEvent,
+    MarkReadRequest,
+    MarkReadResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
 //FIXME - we need some sort of timeout for request-response calls to worker
+//FIXME - we need a generic error handling mechnism to catch and relay exceptions
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PromiseResolver<T> = [(val: T | PromiseLike<T>) => void, (reason?: any) => void];
@@ -183,6 +185,20 @@ export class OpenChatAgentWorker extends EventTarget {
                 users,
                 allowStale,
             },
+        });
+    }
+
+    getAllCachedUsers(): Promise<UserLookup> {
+        return this.sendRequest({
+            kind: "getAllCachedUsers",
+            payload: undefined,
+        });
+    }
+
+    markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
+        return this.sendRequest({
+            kind: "markMessagesRead",
+            payload: request,
         });
     }
 }

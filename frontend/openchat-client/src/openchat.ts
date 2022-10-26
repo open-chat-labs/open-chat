@@ -473,7 +473,7 @@ export class OpenChat extends EventTarget {
                     this.logout();
                 }
             });
-        this.api.getAllCachedUsers().then((users) => userStore.set(users));
+        this.apiWorker.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -489,6 +489,7 @@ export class OpenChat extends EventTarget {
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
             this.api.createUserClient(user.userId);
+            this.apiWorker.createUserClient(user.userId);
             this.api.initUserPrincipalMigration(principalMigrationNewPrincipal);
             return;
         }
@@ -500,7 +501,7 @@ export class OpenChat extends EventTarget {
             currentUserStore.set(user);
             this.api.createUserClient(user.userId);
             this.apiWorker.createUserClient(user.userId);
-            startMessagesReadTracker(this.api);
+            startMessagesReadTracker(this.apiWorker);
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());

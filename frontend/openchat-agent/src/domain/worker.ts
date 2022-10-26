@@ -5,6 +5,8 @@ import type {
     CurrentChatState,
     EventsResponse,
     IndexRange,
+    MarkReadRequest,
+    MarkReadResponse,
     MergedUpdatesResponse,
     ThreadRead,
     UpdateArgs,
@@ -21,7 +23,15 @@ import type {
 /**
  * Worker request types
  */
+
+type WorkerRequestCommon<T = unknown> = {
+    correlationId: string;
+    payload: T;
+};
+
 export type WorkerRequest =
+    | MarkMessagesReadRequest
+    | GetAllCachedUsersRequest
     | GetUsersRequest
     | ChatEventsRequest
     | CreateUserClientRequest
@@ -36,6 +46,14 @@ export type InitRequest = WorkerRequestCommon<Omit<AgentConfig, "logger">> & {
 
 export type CurrentUserRequest = WorkerRequestCommon & {
     kind: "getCurrentUser";
+};
+
+export type MarkMessagesReadRequest = WorkerRequestCommon<MarkReadRequest> & {
+    kind: "markMessagesRead";
+};
+
+export type GetAllCachedUsersRequest = WorkerRequestCommon & {
+    kind: "getAllCachedUsers";
 };
 
 export type GetUsersRequest = WorkerRequestCommon<{ users: UsersArgs; allowStale: boolean }> & {
@@ -73,15 +91,12 @@ export type WorkerInitialStateRequest = WorkerRequestCommon<{
     kind: "getInitialState";
 };
 
-type WorkerRequestCommon<T = unknown> = {
-    correlationId: string;
-    payload: T;
-};
-
 /**
  * Worker response types
  */
 export type WorkerResponse =
+    | WorkerMarkReadResponse
+    | WorkerGetAllCachedUsersResponse
     | WorkerGetUsersResponse
     | InitResponse
     | GetCurrentUserResponse
@@ -108,29 +123,23 @@ export type WorkerEvent =
     | RelayedUsersLoaded;
 
 export type WorkerCreateUserClientResponse = WorkerResponseCommon<undefined>;
-
 export type GetCurrentUserResponse = WorkerResponseCommon<CurrentUserResponse>;
-
+export type WorkerMarkReadResponse = WorkerResponseCommon<MarkReadResponse>;
+export type WorkerGetAllCachedUsersResponse = WorkerResponseCommon<UserLookup>;
 export type WorkerUpdatesResponse = WorkerResponseCommon<MergedUpdatesResponse>;
-
 export type WorkerGetUsersResponse = WorkerResponseCommon<UsersResponse>;
-
 export type WorkerChatEventsResponse = WorkerResponseCommon<EventsResponse<ChatEvent>>;
-
 export type InitResponse = WorkerResponseCommon<undefined>;
-
 export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     subkind: "messages_read_from_server";
     chatId: string;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
 }>;
-
 export type RelayedStorageUpdated = WorkerEventCommon<{
     subkind: "storage_updated";
     status: StorageStatus;
 }>;
-
 export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: PartialUserSummary[];
