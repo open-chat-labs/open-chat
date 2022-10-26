@@ -21,6 +21,8 @@ import {
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
+const WORKER_TIMEOUT = 1000 * 10;
+
 //FIXME - we need some sort of timeout for request-response calls to worker
 //FIXME - we need a generic error handling mechnism to catch and relay exceptions
 
@@ -86,9 +88,15 @@ export class OpenChatAgentWorker extends EventTarget {
                 }
             } else if (ev.data.kind === "worker_response") {
                 console.debug("WORKER: response: ", ev);
-                const [resolve, _reject] = this._pendingRequests[ev.data.correlationId];
+                const [resolve, _] = this._pendingRequests[ev.data.correlationId];
                 if (resolve !== undefined) {
                     resolve(ev.data.response);
+                }
+            } else if (ev.data.kind === "worker_error") {
+                console.debug("WORKER: error: ", ev);
+                const [_, reject] = this._pendingRequests[ev.data.correlationId];
+                if (reject !== undefined) {
+                    reject(ev.data.error);
                 }
             } else {
                 console.debug("WORKER: unknown message: ", ev);
@@ -106,6 +114,12 @@ export class OpenChatAgentWorker extends EventTarget {
         this._worker.postMessage(correlated);
         const promise = new Promise<Resp>((resolve, reject) => {
             this._pendingRequests[correlated.correlationId] = [resolve, reject];
+            window.setTimeout(() => {
+                reject(
+                    `Request of kind ${req.kind} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
+                );
+                delete this._pendingRequests[correlated.correlationId];
+            }, WORKER_TIMEOUT);
         });
         return promise;
     }

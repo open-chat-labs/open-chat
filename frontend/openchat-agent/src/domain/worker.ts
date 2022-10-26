@@ -92,6 +92,15 @@ export type WorkerInitialStateRequest = WorkerRequestCommon<{
 };
 
 /**
+ * Worker error type
+ */
+export type WorkerError = {
+    kind: "worker_error";
+    correlationId: string;
+    error: unknown;
+};
+
+/**
  * Worker response types
  */
 export type WorkerResponse =
@@ -110,17 +119,7 @@ type WorkerResponseCommon<T> = {
     response: T;
 };
 
-type WorkerEventCommon<T> = {
-    kind: "worker_event";
-    event: T;
-};
-
-export type FromWorker = WorkerResponse | WorkerEvent;
-
-export type WorkerEvent =
-    | RelayedMessagesReadFromServer
-    | RelayedStorageUpdated
-    | RelayedUsersLoaded;
+export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;
 
 export type WorkerCreateUserClientResponse = WorkerResponseCommon<undefined>;
 export type GetCurrentUserResponse = WorkerResponseCommon<CurrentUserResponse>;
@@ -130,6 +129,18 @@ export type WorkerUpdatesResponse = WorkerResponseCommon<MergedUpdatesResponse>;
 export type WorkerGetUsersResponse = WorkerResponseCommon<UsersResponse>;
 export type WorkerChatEventsResponse = WorkerResponseCommon<EventsResponse<ChatEvent>>;
 export type InitResponse = WorkerResponseCommon<undefined>;
+
+/** Worker event types */
+type WorkerEventCommon<T> = {
+    kind: "worker_event";
+    event: T;
+};
+
+export type WorkerEvent =
+    | RelayedMessagesReadFromServer
+    | RelayedStorageUpdated
+    | RelayedUsersLoaded;
+
 export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     subkind: "messages_read_from_server";
     chatId: string;

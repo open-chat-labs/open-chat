@@ -505,7 +505,7 @@ export class OpenChat extends EventTarget {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            const _chatPoller = new Poller(
+            new Poller(
                 () => this.loadChats(),
                 CHAT_UPDATE_INTERVAL,
                 CHAT_UPDATE_IDLE_INTERVAL,

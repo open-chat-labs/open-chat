@@ -65,10 +65,19 @@ function handleAgentEvent(ev: Event): void {
     }
 }
 
-function sendResponse(
-    { correlationId }: WorkerRequest,
-    msg: Omit<WorkerResponse, "correlationId" | "kind">
-): void {
+type Uncorrelated = Omit<WorkerResponse, "correlationId" | "kind">;
+
+const sendError = (correlationId: string) => (_: unknown) => {
+    return (error: unknown) => {
+        postMessage({
+            kind: "worker_error",
+            correlationId,
+            error,
+        });
+    };
+};
+
+function sendResponse(correlationId: string, msg: Uncorrelated): void {
     postMessage({
         kind: "worker_response",
         correlationId,
@@ -85,7 +94,7 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 
 self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
     console.debug("WORKER: ", msg.data.kind);
-    const { kind, payload } = msg.data;
+    const { kind, payload, correlationId } = msg.data;
 
     if (kind === "init") {
         getIdentity().then((id) => {
@@ -98,86 +107,116 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                     },
                 });
                 agent.addEventListener("openchat_event", handleAgentEvent);
-                sendResponse(msg.data, {
+                sendResponse(correlationId, {
                     response: undefined,
                 });
             }
         });
     }
+
     if (!agent) {
         console.debug("WORKER: agent does not exist: ", msg.data);
         return;
     }
 
-    if (kind === "getCurrentUser") {
-        agent.getCurrentUser().then((resp) =>
-            sendResponse(msg.data, {
-                response: resp,
-            })
-        );
-    }
-    if (kind === "getInitialState") {
-        agent.getInitialState(payload.userStore, payload.selectedChatId).then((resp) =>
-            sendResponse(msg.data, {
-                response: resp,
-            })
-        );
-    }
-    if (kind === "getUpdates") {
-        agent
-            .getUpdates(
-                payload.currentState,
-                payload.args,
-                payload.userStore,
-                payload.selectedChatId
-            )
-            .then((resp) =>
-                sendResponse(msg.data, {
-                    response: resp,
-                })
-            );
-    }
-    if (kind === "createUserClient") {
-        agent.createUserClient(payload.userId);
-        sendResponse(msg.data, {
-            response: undefined,
-        });
-    }
-    if (kind === "chatEvents") {
-        agent
-            .chatEvents(
-                payload.chat,
-                payload.eventIndexRange,
-                payload.startIndex,
-                payload.ascending,
-                payload.threadRootMessageIndex,
-                payload.latestClientEventIndex
-            )
-            .then((resp) =>
-                sendResponse(msg.data, {
-                    response: resp,
-                })
-            );
-    }
-    if (kind === "getUsers") {
-        agent.getUsers(payload.users, payload.allowStale).then((resp) =>
-            sendResponse(msg.data, {
-                response: resp,
-            })
-        );
-    }
-    if (kind === "getAllCachedUsers") {
-        agent.getAllCachedUsers().then((resp) =>
-            sendResponse(msg.data, {
-                response: resp,
-            })
-        );
-    }
-    if (kind === "markMessagesRead") {
-        agent.markMessagesRead(payload).then((resp) =>
-            sendResponse(msg.data, {
-                response: resp,
-            })
-        );
+    switch (kind) {
+        case "getCurrentUser":
+            agent
+                .getCurrentUser()
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getInitialState":
+            agent
+                .getInitialState(payload.userStore, payload.selectedChatId)
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getUpdates":
+            agent
+                .getUpdates(
+                    payload.currentState,
+                    payload.args,
+                    payload.userStore,
+                    payload.selectedChatId
+                )
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "createUserClient":
+            agent.createUserClient(payload.userId);
+            sendResponse(correlationId, {
+                response: undefined,
+            });
+            break;
+
+        case "chatEvents":
+            agent
+                .chatEvents(
+                    payload.chat,
+                    payload.eventIndexRange,
+                    payload.startIndex,
+                    payload.ascending,
+                    payload.threadRootMessageIndex,
+                    payload.latestClientEventIndex
+                )
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getUsers":
+            agent
+                .getUsers(payload.users, payload.allowStale)
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getAllCachedUsers":
+            agent
+                .getAllCachedUsers()
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "markMessagesRead":
+            agent
+                .markMessagesRead(payload)
+                .then((resp) =>
+                    sendResponse(correlationId, {
+                        response: resp,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        default:
+            console.log("WORKER: unknown message kind received: ", kind);
     }
 };
