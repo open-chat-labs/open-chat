@@ -961,6 +961,7 @@ dependencies = [
  "group_index_canister_client",
  "ic-agent",
  "ic-utils 0.22.0",
+ "itertools",
  "notifications_canister",
  "online_users_aggregator_canister",
  "proposals_bot_canister",
