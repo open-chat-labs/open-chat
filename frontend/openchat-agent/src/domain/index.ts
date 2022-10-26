@@ -11,3 +11,4 @@ export * from "./webrtc/webrtc";
 export * from "./search/search";
 export * from "./data/data";
 export * from "./newGroup";
+export * from "./worker";

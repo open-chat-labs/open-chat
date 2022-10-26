@@ -237,8 +237,10 @@ export class UserClient extends CandidService implements IUserClient {
         _userStore: UserLookup,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
-        const disableCache =
-            localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        // FIXME - can't access localstorage in a worker
+        // const disableCache =
+        //     localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        const disableCache = false;
 
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({ disable_cache: [disableCache] }),

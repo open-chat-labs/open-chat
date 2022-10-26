@@ -14,10 +14,6 @@ export interface UserSchema extends DBSchema {
     };
 }
 
-export function cachingLocallyDisabled(): boolean {
-    return !!localStorage.getItem("openchat_nocache");
-}
-
 export function lazyOpenUserCache(): UserDatabase {
     if (db) return db;
     console.log("user db undefined, opening db");

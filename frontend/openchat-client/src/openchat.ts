@@ -74,6 +74,9 @@ import {
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
+    DataContent,
+    CurrentChatState,
+    UpdateArgs,
 } from "openchat-agent";
 import {
     AuthProvider,
@@ -178,7 +181,6 @@ import {
     selectedServerChatStore,
     serverChatSummariesStore,
     setSelectedChat,
-    startChatPoller,
     threadsByChatStore,
     threadsFollowedByMeStore,
     updateSummaryWithConfirmedMessage,
@@ -277,12 +279,15 @@ import { getTypingString } from "./utils/chat";
 import { startTyping } from "./utils/chat";
 import { stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
+import { OpenChatAgentWorker } from "./agentWorker";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
+const CHAT_UPDATE_INTERVAL = 5000;
+const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -292,11 +297,13 @@ type PinChatResponse =
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
     private _api: OpenChatAgent | undefined;
+    private _workerApi: OpenChatAgentWorker | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
+    private _chatUpdatesSince: bigint | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -431,10 +438,13 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    private loadUser(id: Identity) {
+    private async loadUser(id: Identity) {
         this._api = new OpenChatAgent(id, this.config);
+        this._workerApi = new OpenChatAgentWorker(this.config, this.api);
         this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
-        this.api
+        this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
+        await this._workerApi.ready;
+        this.apiWorker
             .getCurrentUser()
             .then((user) => {
                 switch (user.kind) {
@@ -489,11 +499,17 @@ export class OpenChat extends EventTarget {
         } else {
             currentUserStore.set(user);
             this.api.createUserClient(user.userId);
+            this.apiWorker.createUserClient(user.userId);
             startMessagesReadTracker(this.api);
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            startChatPoller(this.api);
+            const _chatPoller = new Poller(
+                () => this.loadChats(),
+                CHAT_UPDATE_INTERVAL,
+                CHAT_UPDATE_IDLE_INTERVAL,
+                true
+            );
             startUserUpdatePoller(this.api);
             startPruningLocalUpdates();
             initNotificationStores();
@@ -527,6 +543,14 @@ export class OpenChat extends EventTarget {
         if (this._api === undefined)
             throw new Error("OpenChat tried to make an api call before the api was available");
         return this._api;
+    }
+
+    private get apiWorker(): OpenChatAgentWorker {
+        if (this._workerApi === undefined)
+            throw new Error(
+                "OpenChat tried to make a worker api call before the api was available"
+            );
+        return this._workerApi;
     }
 
     get hasUser(): boolean {
@@ -1414,7 +1438,7 @@ export class OpenChat extends EventTarget {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<ChatEvent>> {
-        return this.api.chatEvents(
+        return this.apiWorker.chatEvents(
             clientChat,
             indexRangeForChat(serverChat),
             startIndex,
@@ -1551,6 +1575,27 @@ export class OpenChat extends EventTarget {
                 await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
             }
         }
+    }
+
+    private buildBlobUrl(canisterId: string, blobId: bigint, blobType: "blobs" | "avatar"): string {
+        return `${this.config.blobUrlPattern
+            .replace("{canisterId}", canisterId)
+            .replace("{blobType}", blobType)}${blobId}`;
+    }
+
+    // this is unavoidably duplicated from the agent
+    private rehydrateDataContent<T extends DataContent>(
+        dataContent: T,
+        blobType: "blobs" | "avatar" = "blobs"
+    ): T {
+        const ref = dataContent.blobReference;
+        return ref !== undefined
+            ? {
+                  ...dataContent,
+                  blobData: undefined,
+                  blobUrl: this.buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+              }
+            : dataContent;
     }
 
     private refreshAffectedEvents(
@@ -2186,7 +2231,7 @@ export class OpenChat extends EventTarget {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.api.getCurrentUser().then((response) => {
+        return this.apiWorker.getCurrentUser().then((response) => {
             if (response.kind === "created_user") {
                 userCreatedStore.set(true);
                 selectedAuthProviderStore.init(AuthProvider.II);
@@ -2393,6 +2438,149 @@ export class OpenChat extends EventTarget {
                 userId: this.user.userId,
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+        }
+    }
+
+    private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
+        return {
+            updatesSince: {
+                timestamp,
+                groupChats: chatSummaries
+                    .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
+                    .map((g) => ({
+                        chatId: g.chatId,
+                        lastUpdated: (g as GroupChatSummary).lastUpdated,
+                    })),
+            },
+        };
+    }
+
+    private extractUserIdsFromMentions(text: string): string[] {
+        return [...text.matchAll(/@UserId\(([\d\w-]+)\)/g)].map((m) => m[1]);
+    }
+
+    private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
+        const userIds = new Set<string>();
+        chats.forEach((chat) => {
+            if (chat.kind === "direct_chat") {
+                userIds.add(chat.them);
+            } else if (chat.latestMessage !== undefined) {
+                userIds.add(chat.latestMessage.event.sender);
+                this.extractUserIdsFromMentions(
+                    getContentAsText((k) => k, chat.latestMessage.event.content)
+                ).forEach((id) => userIds.add(id));
+            }
+        });
+        return userIds;
+    }
+
+    private async loadChats() {
+        try {
+            if (this.user === undefined) {
+                console.log("Current user not set, cannot load chats");
+                return;
+            }
+            const init = this._liveState.chatsInitialised;
+            chatsLoading.set(!init);
+
+            const chats = Object.values(this._liveState.serverChatSummaries);
+            const selectedChat = this._liveState.selectedChat;
+            const userLookup = this._liveState.userStore;
+            const currentState: CurrentChatState = {
+                chatSummaries: chats,
+                blockedUsers: this._liveState.blockedUsers,
+                pinnedChats: this._liveState.pinnedChats,
+            };
+            const chatsResponse =
+                this._chatUpdatesSince === undefined
+                    ? await this.apiWorker.getInitialState(userLookup, selectedChat?.chatId)
+                    : await this.apiWorker.getUpdates(
+                          currentState,
+                          this.updateArgsFromChats(this._chatUpdatesSince, chats),
+                          userLookup,
+                          selectedChat?.chatId
+                      );
+
+            this._chatUpdatesSince = chatsResponse.timestamp;
+
+            if (chatsResponse.wasUpdated) {
+                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                if (!init) {
+                    for (const userId of this.user.referrals) {
+                        userIds.add(userId);
+                    }
+                }
+                userIds.add(this.user.userId);
+                const usersResponse = await this.api.getUsers(
+                    {
+                        userGroups: [
+                            {
+                                users: missingUserIds(this._liveState.userStore, userIds),
+                                updatedSince: BigInt(0),
+                            },
+                        ],
+                    },
+                    true
+                );
+
+                userStore.addMany(usersResponse.users);
+
+                if (chatsResponse.blockedUsers !== undefined) {
+                    blockedUsers.set(chatsResponse.blockedUsers);
+                }
+
+                if (chatsResponse.pinnedChats !== undefined) {
+                    pinnedChatsStore.set(chatsResponse.pinnedChats);
+                }
+
+                const selectedChat = this._liveState.selectedChat;
+                let selectedChatInvalid = true;
+
+                serverChatSummariesStore.set(
+                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
+                        rec[chat.chatId] = chat;
+                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
+                            selectedChatInvalid = false;
+                        }
+                        return rec;
+                    }, {})
+                );
+
+                if (selectedChatInvalid) {
+                    clearSelectedChat();
+                } else if (selectedChat !== undefined) {
+                    chatUpdatedStore.set({
+                        affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
+                    });
+                }
+
+                if (chatsResponse.avatarIdUpdate !== undefined) {
+                    const blobReference =
+                        chatsResponse.avatarIdUpdate === "set_to_none"
+                            ? undefined
+                            : {
+                                  canisterId: this.user.userId,
+                                  blobId: chatsResponse.avatarIdUpdate.value,
+                              };
+                    const dataContent = {
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    const user = {
+                        ...this._liveState.userStore[this.user.userId],
+                        ...dataContent,
+                    };
+                    userStore.add(this.rehydrateDataContent(user, "avatar"));
+                }
+
+                chatsInitialised.set(true);
+            }
+        } catch (err) {
+            this.config.logger.error("Error loading chats", err as Error);
+            throw err;
+        } finally {
+            chatsLoading.set(false);
         }
     }
 

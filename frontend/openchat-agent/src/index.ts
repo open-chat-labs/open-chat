@@ -5,13 +5,14 @@ export * from "./events";
 export {
     compareChats,
     getContentAsText,
-    updateArgsFromChats,
     emptyChatMetrics,
     indexRangeForChat,
     userIdsFromEvents,
     getDisplayDate,
     eventIsVisible,
 } from "./utils/chat";
+
+export { AgentConfig } from "./config";
 
 export { getUserStatus, userStatus, missingUserIds } from "./domain/user/user.utils";
 

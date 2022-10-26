@@ -24,11 +24,14 @@ import {
     threadsFollowedByMeStore,
     currentChatUserIds,
     selectedThreadRootMessageIndex,
+    chatsInitialised,
+    chatsLoading,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
 import { pinnedChatsStore } from "./stores/pinnedChats";
+import { blockedUsers } from "./stores/blockedUsers";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -54,6 +57,9 @@ export class LiveState {
     threadsFollowedByMe!: Record<string, Set<number>>;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
+    chatsInitialised!: boolean;
+    chatsLoading!: boolean;
+    blockedUsers!: Set<string>;
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -78,5 +84,8 @@ export class LiveState {
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data)
         );
+        chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
+        chatsLoading.subscribe((data) => (this.chatsLoading = data));
+        blockedUsers.subscribe((data) => (this.blockedUsers = data));
     }
 }

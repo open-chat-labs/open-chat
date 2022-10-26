@@ -71,7 +71,7 @@ import { missingUserIds } from "../../domain/user/user.utils";
 import { UserIndexClient } from "../userIndex/userIndex.client";
 import type { GroupInvite } from "../../services/openchatAgent";
 import type { ServiceRetryInterrupt } from "../candidService";
-import { configKeys } from "../../utils/config";
+// import { configKeys } from "../../utils/config";
 import type { AgentConfig } from "../../config";
 import { MessagesReadFromServer, UsersLoaded } from "src/events";
 
@@ -250,8 +250,12 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
 
-        const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
-        const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
+        // FIXME - can't access localstorage in a worker
+        // const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
+        // const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
+
+        const limitTo = 50;
+        const batchSize = 5;
 
         const orderedChats = nextResponse.chatSummaries
             .filter(

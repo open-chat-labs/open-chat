@@ -98,8 +98,19 @@ function serve() {
     });
 }
 
+// this is a bit ridiculous but there we are ...
+fs.mkdirSync("_temp");
+fs.copyFileSync(
+    path.join(__dirname, "build", "worker.js"),
+    path.join(__dirname, "_temp", "worker.js")
+);
 rimraf.sync(path.join(__dirname, "build"));
 fs.mkdirSync("build");
+fs.copyFileSync(
+    path.join(__dirname, "_temp", "worker.js"),
+    path.join(__dirname, "build", "worker.js")
+);
+rimraf.sync(path.join(__dirname, "_temp"));
 
 if (version) {
     fs.writeFileSync("build/version", JSON.stringify({ version }));

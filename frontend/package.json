@@ -17,7 +17,8 @@
   "workspaces": [
     "app",
     "openchat-client",
-    "openchat-agent"
+    "openchat-agent",
+    "openchat-worker"
   ],
   "devDependencies": {
     "turbo": "^1.5.6"

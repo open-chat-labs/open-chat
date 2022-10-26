@@ -694,7 +694,7 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
-    rehydrateDataContent<T extends DataContent>(
+    private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
         blobType: "blobs" | "avatar" = "blobs"
     ): T {

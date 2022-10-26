@@ -7,7 +7,7 @@
         "experimentalDecorators": true,
         "esModuleInterop": true,
         "importsNotUsedAsValues": "error",
-        "lib": ["es2020", "WebWorker"],
+        "lib": ["dom", "es2020"],
         "module": "es2020",
         "moduleResolution": "node",
         "noUnusedLocals": true,
@@ -19,8 +19,8 @@
         "sourceMap": true,
         "strict": true,
         "target": "es2020",
-        "types": ["jest", "node"]
+        "types": ["svelte", "jest", "node"]
     },
-    "exclude": ["node_modules/*", "../node_modules/*", "lib/*"],
+    "exclude": ["node_modules/*", "lib/*"],
     "include": ["src/**/*"]
 }
