@@ -10,8 +10,9 @@ const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CachedHotGroups {
     groups: Vec<CachedPublicGroupSummary>,
+    #[serde(default)]
+    next_due: TimestampMillis,
     last_updated: TimestampMillis,
-    update_in_progress: bool,
 }
 
 impl CachedHotGroups {
@@ -25,8 +26,8 @@ impl CachedHotGroups {
     }
 
     pub fn start_update_if_due(&mut self, now: TimestampMillis) -> bool {
-        if !self.update_in_progress && now > self.last_updated + HOT_GROUPS_CACHE_DURATION {
-            self.update_in_progress = true;
+        if now > self.next_due {
+            self.next_due = now + HOT_GROUPS_CACHE_DURATION;
             true
         } else {
             false
@@ -38,7 +39,6 @@ impl CachedHotGroups {
 
         self.groups = groups;
         self.last_updated = now;
-        self.update_in_progress = false;
 
         trace!(?chat_ids, "Cached hot groups updated");
     }
