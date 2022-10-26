@@ -1,13 +1,11 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{Data, LOG_MESSAGES};
-use candid::Principal;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
-use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -17,8 +15,12 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
-        deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+    let (mut data, log_messages, trace_messages, cycles_dispenser_client_state): (
+        Data,
+        Vec<LogMessage>,
+        Vec<LogMessage>,
+        Vec<u8>,
+    ) = deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.public_groups.hydrate();
 
@@ -29,10 +31,7 @@ fn post_upgrade(args: Args) {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
 
-    cycles_dispenser_client::init(
-        Principal::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap(),
-        2 * MIN_CYCLES_BALANCE,
-    );
+    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
