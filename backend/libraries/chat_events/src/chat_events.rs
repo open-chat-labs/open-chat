@@ -519,7 +519,7 @@ impl AllChatEvents {
             .events
             .since(min_visible_event_index)
             .iter()
-            .filter_map(|e| e.event.as_message().map(|m| (e, m)))
+            .filter_map(|e| e.event.as_message().filter(|m| m.deleted_by.is_none()).map(|m| (e, m)))
             .filter_map(|(e, m)| {
                 let mut document: Document = (&m.content).into();
                 document.set_age(now - e.timestamp);
