@@ -2056,7 +2056,13 @@ export class OpenChat extends EventTarget {
 
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         Promise.all([
-            this.api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
+            this.apiWorker.rehydrateMessage(
+                chatType,
+                chatId,
+                message,
+                undefined,
+                chat.latestEventIndex
+            ),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -2213,7 +2219,7 @@ export class OpenChat extends EventTarget {
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.api.checkUsername(username);
+        return this.apiWorker.checkUsername(username);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {

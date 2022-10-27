@@ -23,6 +23,9 @@ import {
     GroupChatDetails,
     DirectChatEvent,
     GroupChatEvent,
+    EventWrapper,
+    Message,
+    CheckUsernameResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -338,6 +341,34 @@ export class OpenChatAgentWorker extends EventTarget {
                 eventIndexes,
                 threadRootMessageIndex,
                 latestClientEventIndex,
+            },
+        });
+    }
+
+    rehydrateMessage(
+        chatType: "direct" | "group",
+        currentChatId: string,
+        message: EventWrapper<Message>,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventWrapper<Message>> {
+        return this.sendRequest({
+            kind: "rehydrateMessage",
+            payload: {
+                chatType,
+                currentChatId,
+                message,
+                threadRootMessageIndex,
+                latestClientEventIndex,
+            },
+        });
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this.sendRequest({
+            kind: "checkUsername",
+            payload: {
+                username,
             },
         });
     }

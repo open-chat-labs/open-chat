@@ -317,6 +317,34 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "rehydrateMessage":
+            agent
+                .rehydrateMessage(
+                    payload.chatType,
+                    payload.currentChatId,
+                    payload.message,
+                    payload.threadRootMessageIndex,
+                    payload.latestClientEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "checkUsername":
+            agent
+                .checkUsername(payload.username)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }

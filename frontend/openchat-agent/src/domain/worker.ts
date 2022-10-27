@@ -5,6 +5,7 @@ import type {
     CurrentChatState,
     DirectChatEvent,
     EventsResponse,
+    EventWrapper,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
@@ -12,11 +13,13 @@ import type {
     MarkReadRequest,
     MarkReadResponse,
     MergedUpdatesResponse,
+    Message,
     ThreadRead,
     UpdateArgs,
 } from "./chat";
 import type { StorageStatus } from "./data/data";
 import type {
+    CheckUsernameResponse,
     CurrentUserResponse,
     PartialUserSummary,
     UserLookup,
@@ -34,6 +37,8 @@ type WorkerRequestCommon<T = unknown> = {
 };
 
 export type WorkerRequest =
+    | CheckUsernameRequest
+    | RehydrateMessageRequest
     | DirectChatEventsByEventIndexRequest
     | GroupChatEventsByEventIndexRequest
     | DirectChatEventsWindowRequest
@@ -51,6 +56,11 @@ export type WorkerRequest =
     | WorkerUpdatesRequest
     | WorkerInitialStateRequest;
 
+export type CheckUsernameRequest = WorkerRequestCommon<{
+    username: string;
+}> & {
+    kind: "checkUsername";
+};
 export type DirectChatEventsWindowRequest = WorkerRequestCommon<{
     eventIndexRange: IndexRange;
     theirUserId: string;
@@ -85,6 +95,16 @@ export type GroupChatEventsByEventIndexRequest = WorkerRequestCommon<{
     latestClientEventIndex: number | undefined;
 }> & {
     kind: "groupChatEventsByEventIndex";
+};
+
+export type RehydrateMessageRequest = WorkerRequestCommon<{
+    chatType: "direct" | "group";
+    currentChatId: string;
+    message: EventWrapper<Message>;
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+}> & {
+    kind: "rehydrateMessage";
 };
 
 export type InitRequest = WorkerRequestCommon<Omit<AgentConfig, "logger">> & {
@@ -169,6 +189,8 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | WorkerCheckUsernameResponse
+    | WorkerRehydrateMessageResponse
     | WorkerDirectChatEventsWindowResponse
     | WorkerGroupChatEventsWindowResponse
     | WorkerDirectChatEventsByEventIndexResponse
@@ -216,6 +238,8 @@ export type WorkerGetGroupDetailsResponse = WorkerResponseCommon<GroupChatDetail
 export type WorkerGetGroupDetailUpdatesResponse = WorkerResponseCommon<GroupChatDetails>;
 export type WorkerMarkAsOnlineResponse = WorkerResponseCommon<undefined>;
 export type InitResponse = WorkerResponseCommon<undefined>;
+export type WorkerCheckUsernameResponse = WorkerResponseCommon<CheckUsernameResponse>;
+export type WorkerRehydrateMessageResponse = WorkerResponseCommon<EventWrapper<Message>>;
 
 /** Worker event types */
 type WorkerEventCommon<T> = {
