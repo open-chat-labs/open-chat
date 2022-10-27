@@ -21,5 +21,4 @@ export type OpenChatConfig = {
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };
-    userWorker: boolean;
 };

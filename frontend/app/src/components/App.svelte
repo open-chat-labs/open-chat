@@ -87,6 +87,7 @@
     }
 
     function unhandledError(ev: Event) {
+        console.trace("Unhandled error: ", ev);
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
             client.logout();
             ev.preventDefault();

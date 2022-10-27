@@ -623,7 +623,9 @@ export class OpenChatAgent extends EventTarget {
                 if (msg) {
                     rehydratedReplyContext = {
                         kind: "rehydrated_reply_context",
-                        content: this.rehydrateMessageContent(msg.content),
+                        content: JSON.parse(
+                            JSON.stringify(this.rehydrateMessageContent(msg.content))
+                        ),
                         senderId: msg.sender,
                         messageId: msg.messageId,
                         messageIndex: msg.messageIndex,

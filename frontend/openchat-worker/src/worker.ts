@@ -1,3 +1,5 @@
+import "core-js/actual/structured-clone";
+
 import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import {
@@ -69,6 +71,7 @@ type Uncorrelated = Omit<WorkerResponse, "correlationId" | "kind">;
 
 const sendError = (correlationId: string) => (_: unknown) => {
     return (error: unknown) => {
+        console.debug("WORKER: sending error: ", error);
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -78,6 +81,7 @@ const sendError = (correlationId: string) => (_: unknown) => {
 };
 
 function sendResponse(correlationId: string, msg: Uncorrelated): void {
+    console.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
         correlationId,
@@ -93,7 +97,7 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 }
 
 self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
-    console.debug("WORKER: ", msg.data.kind);
+    console.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const { kind, payload, correlationId } = msg.data;
 
     if (kind === "init") {
@@ -175,11 +179,11 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                     payload.threadRootMessageIndex,
                     payload.latestClientEventIndex
                 )
-                .then((resp) =>
+                .then((resp) => {
                     sendResponse(correlationId, {
                         response: resp,
-                    })
-                )
+                    });
+                })
                 .catch(sendError(correlationId));
             break;
 

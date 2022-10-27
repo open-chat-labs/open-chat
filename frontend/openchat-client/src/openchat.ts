@@ -1429,6 +1429,7 @@ export class OpenChat extends EventTarget {
         }
 
         await this.handleEventsResponse(clientChat, eventsResponse);
+
         this.dispatchEvent(new LoadedPreviousMessages());
         return;
     }

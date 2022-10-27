@@ -17,6 +17,8 @@ import {
     ChatEvent,
     MarkReadRequest,
     MarkReadResponse,
+    WorkerResponse,
+    WorkerError,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -26,8 +28,12 @@ const WORKER_TIMEOUT = 1000 * 10;
 //FIXME - we need some sort of timeout for request-response calls to worker
 //FIXME - we need a generic error handling mechnism to catch and relay exceptions
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PromiseResolver<T> = [(val: T | PromiseLike<T>) => void, (reason?: any) => void];
+type PromiseResolver<T> = {
+    resolve: (val: T | PromiseLike<T>) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reject: (reason?: any) => void;
+    timeout: number;
+};
 
 /**
  * This is a wrapper around the OpenChatAgent which brokers communication with the agent inside a web worker
@@ -35,7 +41,7 @@ type PromiseResolver<T> = [(val: T | PromiseLike<T>) => void, (reason?: any) => 
 export class OpenChatAgentWorker extends EventTarget {
     private _worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private _pendingRequests: Record<string, PromiseResolver<any>> = {};
+    private _pending: Map<string, PromiseResolver<any>> = new Map();
     public ready: Promise<boolean>;
 
     constructor(private config: OpenChatConfig) {
@@ -69,39 +75,57 @@ export class OpenChatAgentWorker extends EventTarget {
         });
 
         this._worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-            if (ev.data.kind === "worker_event") {
-                console.debug("WORKER: relayed event: ", ev.data.event);
-                if (ev.data.event.subkind === "messages_read_from_server") {
+            if (!ev.data) {
+                console.debug("WORKER_CLIENT: event message with no data received");
+                return;
+            }
+
+            const data = ev.data;
+
+            if (data.kind === "worker_event") {
+                if (data.event.subkind === "messages_read_from_server") {
                     this.dispatchEvent(
                         new MessagesReadFromServer(
-                            ev.data.event.chatId,
-                            ev.data.event.readByMeUpTo,
-                            ev.data.event.threadsRead
+                            data.event.chatId,
+                            data.event.readByMeUpTo,
+                            data.event.threadsRead
                         )
                     );
                 }
-                if (ev.data.event.subkind === "storage_updated") {
-                    this.dispatchEvent(new StorageUpdated(ev.data.event.status));
+                if (data.event.subkind === "storage_updated") {
+                    this.dispatchEvent(new StorageUpdated(data.event.status));
                 }
-                if (ev.data.event.subkind === "users_loaded") {
-                    this.dispatchEvent(new UsersLoaded(ev.data.event.users));
+                if (data.event.subkind === "users_loaded") {
+                    this.dispatchEvent(new UsersLoaded(data.event.users));
                 }
-            } else if (ev.data.kind === "worker_response") {
-                console.debug("WORKER: response: ", ev);
-                const [resolve, _] = this._pendingRequests[ev.data.correlationId];
-                if (resolve !== undefined) {
-                    resolve(ev.data.response);
-                }
-            } else if (ev.data.kind === "worker_error") {
-                console.debug("WORKER: error: ", ev);
-                const [_, reject] = this._pendingRequests[ev.data.correlationId];
-                if (reject !== undefined) {
-                    reject(ev.data.error);
-                }
+            } else if (data.kind === "worker_response") {
+                console.debug("WORKER_CLIENT: response: ", ev);
+                this.resolveResponse(data);
+            } else if (data.kind === "worker_error") {
+                console.debug("WORKER_CLIENT: error: ", ev);
+                this.resolveError(data);
             } else {
-                console.debug("WORKER: unknown message: ", ev);
+                console.debug("WORKER_CLIENT: unknown message: ", ev);
             }
         };
+    }
+
+    private resolveResponse(data: WorkerResponse): void {
+        const promise = this._pending.get(data.correlationId);
+        if (promise !== undefined) {
+            promise.resolve(data.response);
+            window.clearTimeout(promise.timeout);
+            this._pending.delete(data.correlationId);
+        }
+    }
+
+    private resolveError(data: WorkerError): void {
+        const promise = this._pending.get(data.correlationId);
+        if (promise !== undefined) {
+            promise.reject(data.error);
+            window.clearTimeout(promise.timeout);
+            this._pending.delete(data.correlationId);
+        }
     }
 
     private sendRequest<Req extends Omit<WorkerRequest, "correlationId">, Resp = void>(
@@ -113,13 +137,16 @@ export class OpenChatAgentWorker extends EventTarget {
         };
         this._worker.postMessage(correlated);
         const promise = new Promise<Resp>((resolve, reject) => {
-            this._pendingRequests[correlated.correlationId] = [resolve, reject];
-            window.setTimeout(() => {
-                reject(
-                    `Request of kind ${req.kind} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
-                );
-                delete this._pendingRequests[correlated.correlationId];
-            }, WORKER_TIMEOUT);
+            this._pending.set(correlated.correlationId, {
+                resolve,
+                reject,
+                timeout: window.setTimeout(() => {
+                    reject(
+                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
+                    );
+                    this._pending.delete(correlated.correlationId);
+                }, WORKER_TIMEOUT),
+            });
         });
         return promise;
     }
