@@ -527,7 +527,7 @@ export class OpenChat extends EventTarget {
 
     private startOnlinePoller() {
         new Poller(
-            () => this.api.markAsOnline() ?? Promise.resolve(),
+            () => this.apiWorker.markAsOnline() ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
             undefined,
             true
@@ -1109,13 +1109,13 @@ export class OpenChat extends EventTarget {
             const range = indexRangeForChat(serverChat);
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 chat.kind === "direct_chat"
-                    ? this.api.directChatEventsWindow(
+                    ? this.apiWorker.directChatEventsWindow(
                           range,
                           chat.them,
                           messageIndex,
                           chat.latestEventIndex
                       )
-                    : this.api.groupChatEventsWindow(
+                    : this.apiWorker.groupChatEventsWindow(
                           range,
                           chat.chatId,
                           messageIndex,
@@ -1329,7 +1329,7 @@ export class OpenChat extends EventTarget {
         if (selectedThreadKey === undefined) return;
 
         const chatId = chat.chatId;
-        const eventsResponse = await this.api.chatEvents(
+        const eventsResponse = await this.apiWorker.chatEvents(
             chat,
             range,
             startIndex,
@@ -1528,7 +1528,7 @@ export class OpenChat extends EventTarget {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat") {
             if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
-                const resp = await this.api.getGroupDetails(
+                const resp = await this.apiWorker.getGroupDetails(
                     clientChat.chatId,
                     clientChat.latestEventIndex
                 );
@@ -1562,7 +1562,7 @@ export class OpenChat extends EventTarget {
         if (clientChat.kind === "group_chat") {
             const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
-                const gd = await this.api.getGroupDetailsUpdates(clientChat.chatId, {
+                const gd = await this.apiWorker.getGroupDetailsUpdates(clientChat.chatId, {
                     members: chatStateStore.getProp(clientChat.chatId, "members"),
                     blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
                     pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
@@ -1612,13 +1612,13 @@ export class OpenChat extends EventTarget {
 
         const eventsPromise =
             clientChat.kind === "direct_chat"
-                ? this.api.directChatEventsByEventIndex(
+                ? this.apiWorker.directChatEventsByEventIndex(
                       clientChat.them,
                       filtered,
                       undefined,
                       clientChat.latestEventIndex
                   )
-                : this.api.groupChatEventsByEventIndex(
+                : this.apiWorker.groupChatEventsByEventIndex(
                       clientChat.chatId,
                       filtered,
                       undefined,

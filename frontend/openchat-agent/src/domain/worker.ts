@@ -3,7 +3,11 @@ import type {
     ChatEvent,
     ChatSummary,
     CurrentChatState,
+    DirectChatEvent,
     EventsResponse,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
+    GroupChatEvent,
     IndexRange,
     MarkReadRequest,
     MarkReadResponse,
@@ -30,6 +34,13 @@ type WorkerRequestCommon<T = unknown> = {
 };
 
 export type WorkerRequest =
+    | DirectChatEventsByEventIndexRequest
+    | GroupChatEventsByEventIndexRequest
+    | DirectChatEventsWindowRequest
+    | GroupChatEventsWindowRequest
+    | MarkAsOnlineRequest
+    | GetGroupDetailsRequest
+    | GetGroupDetailUpdatesRequest
     | MarkMessagesReadRequest
     | GetAllCachedUsersRequest
     | GetUsersRequest
@@ -39,6 +50,42 @@ export type WorkerRequest =
     | CurrentUserRequest
     | WorkerUpdatesRequest
     | WorkerInitialStateRequest;
+
+export type DirectChatEventsWindowRequest = WorkerRequestCommon<{
+    eventIndexRange: IndexRange;
+    theirUserId: string;
+    messageIndex: number;
+    latestClientMainEventIndex: number | undefined;
+}> & {
+    kind: "directChatEventsWindow";
+};
+
+export type GroupChatEventsWindowRequest = WorkerRequestCommon<{
+    eventIndexRange: IndexRange;
+    chatId: string;
+    messageIndex: number;
+    latestClientMainEventIndex: number | undefined;
+}> & {
+    kind: "groupChatEventsWindow";
+};
+
+export type DirectChatEventsByEventIndexRequest = WorkerRequestCommon<{
+    theirUserId: string;
+    eventIndexes: number[];
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+}> & {
+    kind: "directChatEventsByEventIndex";
+};
+
+export type GroupChatEventsByEventIndexRequest = WorkerRequestCommon<{
+    chatId: string;
+    eventIndexes: number[];
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+}> & {
+    kind: "groupChatEventsByEventIndex";
+};
 
 export type InitRequest = WorkerRequestCommon<Omit<AgentConfig, "logger">> & {
     kind: "init";
@@ -52,8 +99,26 @@ export type MarkMessagesReadRequest = WorkerRequestCommon<MarkReadRequest> & {
     kind: "markMessagesRead";
 };
 
+export type GetGroupDetailsRequest = WorkerRequestCommon<{
+    chatId: string;
+    latestEventIndex: number;
+}> & {
+    kind: "getGroupDetails";
+};
+
+export type GetGroupDetailUpdatesRequest = WorkerRequestCommon<{
+    chatId: string;
+    previous: GroupChatDetails;
+}> & {
+    kind: "getGroupDetailsUpdates";
+};
+
 export type GetAllCachedUsersRequest = WorkerRequestCommon & {
     kind: "getAllCachedUsers";
+};
+
+export type MarkAsOnlineRequest = WorkerRequestCommon & {
+    kind: "markAsOnline";
 };
 
 export type GetUsersRequest = WorkerRequestCommon<{ users: UsersArgs; allowStale: boolean }> & {
@@ -104,6 +169,13 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | WorkerDirectChatEventsWindowResponse
+    | WorkerGroupChatEventsWindowResponse
+    | WorkerDirectChatEventsByEventIndexResponse
+    | WorkerGroupChatEventsByEventIndexResponse
+    | WorkerMarkAsOnlineResponse
+    | WorkerGetGroupDetailsResponse
+    | WorkerGetGroupDetailUpdatesResponse
     | WorkerMarkReadResponse
     | WorkerGetAllCachedUsersResponse
     | WorkerGetUsersResponse
@@ -128,6 +200,21 @@ export type WorkerGetAllCachedUsersResponse = WorkerResponseCommon<UserLookup>;
 export type WorkerUpdatesResponse = WorkerResponseCommon<MergedUpdatesResponse>;
 export type WorkerGetUsersResponse = WorkerResponseCommon<UsersResponse>;
 export type WorkerChatEventsResponse = WorkerResponseCommon<EventsResponse<ChatEvent>>;
+export type WorkerDirectChatEventsWindowResponse = WorkerResponseCommon<
+    EventsResponse<DirectChatEvent>
+>;
+export type WorkerGroupChatEventsWindowResponse = WorkerResponseCommon<
+    EventsResponse<GroupChatEvent>
+>;
+export type WorkerDirectChatEventsByEventIndexResponse = WorkerResponseCommon<
+    EventsResponse<DirectChatEvent>
+>;
+export type WorkerGroupChatEventsByEventIndexResponse = WorkerResponseCommon<
+    EventsResponse<GroupChatEvent>
+>;
+export type WorkerGetGroupDetailsResponse = WorkerResponseCommon<GroupChatDetailsResponse>;
+export type WorkerGetGroupDetailUpdatesResponse = WorkerResponseCommon<GroupChatDetails>;
+export type WorkerMarkAsOnlineResponse = WorkerResponseCommon<undefined>;
 export type InitResponse = WorkerResponseCommon<undefined>;
 
 /** Worker event types */

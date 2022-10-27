@@ -127,9 +127,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
         case "getCurrentUser":
             agent
                 .getCurrentUser()
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));
@@ -138,9 +138,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
         case "getInitialState":
             agent
                 .getInitialState(payload.userStore, payload.selectedChatId)
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));
@@ -154,9 +154,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                     payload.userStore,
                     payload.selectedChatId
                 )
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));
@@ -179,9 +179,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                     payload.threadRootMessageIndex,
                     payload.latestClientEventIndex
                 )
-                .then((resp) => {
+                .then((response) => {
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     });
                 })
                 .catch(sendError(correlationId));
@@ -190,9 +190,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
         case "getUsers":
             agent
                 .getUsers(payload.users, payload.allowStale)
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));
@@ -201,9 +201,9 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
         case "getAllCachedUsers":
             agent
                 .getAllCachedUsers()
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));
@@ -212,9 +212,106 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
         case "markMessagesRead":
             agent
                 .markMessagesRead(payload)
-                .then((resp) =>
+                .then((response) =>
                     sendResponse(correlationId, {
-                        response: resp,
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getGroupDetails":
+            agent
+                .getGroupDetails(payload.chatId, payload.latestEventIndex)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getGroupDetailsUpdates":
+            agent
+                .getGroupDetailsUpdates(payload.chatId, payload.previous)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "markAsOnline":
+            agent
+                .markAsOnline()
+                .then((_) =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "directChatEventsWindow":
+            agent
+                .directChatEventsWindow(
+                    payload.eventIndexRange,
+                    payload.theirUserId,
+                    payload.messageIndex,
+                    payload.latestClientMainEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "groupChatEventsWindow":
+            agent
+                .groupChatEventsWindow(
+                    payload.eventIndexRange,
+                    payload.chatId,
+                    payload.messageIndex,
+                    payload.latestClientMainEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "directChatEventsByEventIndex":
+            agent
+                .directChatEventsByEventIndex(
+                    payload.theirUserId,
+                    payload.eventIndexes,
+                    payload.threadRootMessageIndex,
+                    payload.latestClientEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "groupChatEventsByEventIndex":
+            agent
+                .groupChatEventsByEventIndex(
+                    payload.chatId,
+                    payload.eventIndexes,
+                    payload.threadRootMessageIndex,
+                    payload.latestClientEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
                     })
                 )
                 .catch(sendError(correlationId));

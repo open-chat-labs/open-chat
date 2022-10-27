@@ -19,14 +19,15 @@ import {
     MarkReadResponse,
     WorkerResponse,
     WorkerError,
+    GroupChatDetailsResponse,
+    GroupChatDetails,
+    DirectChatEvent,
+    GroupChatEvent,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
 const WORKER_TIMEOUT = 1000 * 10;
-
-//FIXME - we need some sort of timeout for request-response calls to worker
-//FIXME - we need a generic error handling mechnism to catch and relay exceptions
 
 type PromiseResolver<T> = {
     resolve: (val: T | PromiseLike<T>) => void;
@@ -240,6 +241,104 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "markMessagesRead",
             payload: request,
+        });
+    }
+
+    getGroupDetails(chatId: string, latestEventIndex: number): Promise<GroupChatDetailsResponse> {
+        return this.sendRequest({
+            kind: "getGroupDetails",
+            payload: {
+                chatId,
+                latestEventIndex,
+            },
+        });
+    }
+
+    async getGroupDetailsUpdates(
+        chatId: string,
+        previous: GroupChatDetails
+    ): Promise<GroupChatDetails> {
+        return this.sendRequest({
+            kind: "getGroupDetailsUpdates",
+            payload: {
+                chatId,
+                previous,
+            },
+        });
+    }
+
+    markAsOnline(): Promise<void> {
+        return this.sendRequest({
+            kind: "markAsOnline",
+            payload: undefined,
+        });
+    }
+
+    directChatEventsWindow(
+        eventIndexRange: IndexRange,
+        theirUserId: string,
+        messageIndex: number,
+        latestClientMainEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return this.sendRequest({
+            kind: "directChatEventsWindow",
+            payload: {
+                eventIndexRange,
+                theirUserId,
+                messageIndex,
+                latestClientMainEventIndex,
+            },
+        });
+    }
+
+    groupChatEventsWindow(
+        eventIndexRange: IndexRange,
+        chatId: string,
+        messageIndex: number,
+        latestClientMainEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.sendRequest({
+            kind: "groupChatEventsWindow",
+            payload: {
+                eventIndexRange,
+                chatId,
+                messageIndex,
+                latestClientMainEventIndex,
+            },
+        });
+    }
+
+    directChatEventsByEventIndex(
+        theirUserId: string,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return this.sendRequest({
+            kind: "directChatEventsByEventIndex",
+            payload: {
+                theirUserId,
+                eventIndexes,
+                threadRootMessageIndex,
+                latestClientEventIndex,
+            },
+        });
+    }
+
+    groupChatEventsByEventIndex(
+        chatId: string,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.sendRequest({
+            kind: "groupChatEventsByEventIndex",
+            payload: {
+                chatId,
+                eventIndexes,
+                threadRootMessageIndex,
+                latestClientEventIndex,
+            },
         });
     }
 }
