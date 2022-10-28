@@ -1,4 +1,4 @@
-import type { ServiceRetryInterrupt } from "../services";
+import type { GroupInvite, ServiceRetryInterrupt } from "../services";
 import type { AgentConfig } from "../config";
 import type {
     AddMembersResponse,
@@ -47,13 +47,16 @@ import type {
     ArchiveChatResponse,
     ChallengeAttempt,
     CheckUsernameResponse,
+    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
+    PhoneNumber,
     PinChatResponse,
     RegisterUserResponse,
+    SubmitPhoneNumberResponse,
     UnpinChatResponse,
     User,
     UserLookup,
@@ -61,7 +64,13 @@ import type {
     UsersResponse,
     UserSummary,
 } from "./user";
-import type { SearchAllMessagesResponse } from "./search/search";
+import type {
+    GroupSearchResponse,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+} from "./search/search";
+import type { Cryptocurrency, Tokens } from "./crypto";
 
 /**
  * Worker request types
@@ -73,6 +82,8 @@ type Request<T = unknown> = {
 };
 
 export type WorkerRequest =
+    | DismissRecommendations
+    | SearchGroups
     | SearchAllMessages
     | GetGroupRules
     | GetRecommendedGroups
@@ -132,13 +143,73 @@ export type WorkerRequest =
     | Init
     | CurrentUser
     | GetUpdates
+    | SetGroupInvite
+    | SearchGroupChat
+    | SearchDirectChat
+    | RefreshAccountBalance
+    | ConfirmPhoneNumber
+    | SubmitPhoneNumber
     | GetInitialState;
+
+type SubmitPhoneNumber = Request<{
+    phoneNumber: PhoneNumber;
+}> & {
+    kind: "submitPhoneNumber";
+};
+
+type ConfirmPhoneNumber = Request<{
+    code: string;
+}> & {
+    kind: "confirmPhoneNumber";
+};
+
+type RefreshAccountBalance = Request<{
+    crypto: Cryptocurrency;
+    account: string;
+}> & {
+    kind: "refreshAccountBalance";
+};
+
+type SearchDirectChat = Request<{
+    userId: string;
+    searchTerm: string;
+    maxResults: number;
+}> & {
+    kind: "searchDirectChat";
+};
+
+type SearchGroupChat = Request<{
+    chatId: string;
+    searchTerm: string;
+    maxResults: number;
+}> & {
+    kind: "searchGroupChat";
+};
+
+type SetGroupInvite = Request<{
+    value: GroupInvite;
+}> & {
+    kind: "groupInvite";
+};
+
+type DismissRecommendations = Request<{
+    chatId: string;
+}> & {
+    kind: "dismissRecommendation";
+};
+
+type SearchGroups = Request<{
+    searchTerm: string;
+    maxResults: number;
+}> & {
+    kind: "searchAllMessages";
+};
 
 type SearchAllMessages = Request<{
     searchTerm: string;
     maxResults: number;
 }> & {
-    kind: "searchAllMessages";
+    kind: "searchGroups";
 };
 
 type GetGroupRules = Request<{
@@ -563,6 +634,12 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | Response<SubmitPhoneNumberResponse>
+    | Response<ConfirmPhoneNumberResponse>
+    | Response<Tokens>
+    | Response<SearchDirectChatResponse>
+    | Response<SearchGroupChatResponse>
+    | Response<GroupSearchResponse>
     | Response<SearchAllMessagesResponse>
     | Response<GroupRules | undefined>
     | Response<GroupChatSummary[]>

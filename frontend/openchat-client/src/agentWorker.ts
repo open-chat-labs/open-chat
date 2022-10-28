@@ -63,6 +63,15 @@ import {
     RegisterProposalVoteResponse,
     ServiceRetryInterrupt,
     SearchAllMessagesResponse,
+    GroupSearchResponse,
+    GroupInvite,
+    SearchGroupChatResponse,
+    SearchDirectChatResponse,
+    Cryptocurrency,
+    Tokens,
+    ConfirmPhoneNumberResponse,
+    PhoneNumber,
+    SubmitPhoneNumberResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -896,6 +905,92 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 searchTerm,
                 maxResults,
+            },
+        });
+    }
+
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this.sendRequest({
+            kind: "searchGroups",
+            payload: {
+                searchTerm,
+                maxResults,
+            },
+        });
+    }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.sendRequest({
+            kind: "dismissRecommendation",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    set groupInvite(value: GroupInvite) {
+        this.sendRequest({
+            kind: "groupInvite",
+            payload: {
+                value,
+            },
+        });
+    }
+
+    searchGroupChat(
+        chatId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchGroupChatResponse> {
+        return this.sendRequest({
+            kind: "searchGroupChat",
+            payload: {
+                chatId,
+                searchTerm,
+                maxResults,
+            },
+        });
+    }
+
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchDirectChatResponse> {
+        return this.sendRequest({
+            kind: "searchDirectChat",
+            payload: {
+                userId,
+                searchTerm,
+                maxResults,
+            },
+        });
+    }
+
+    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+        return this.sendRequest({
+            kind: "refreshAccountBalance",
+            payload: {
+                crypto,
+                account,
+            },
+        });
+    }
+
+    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
+        return this.sendRequest({
+            kind: "confirmPhoneNumber",
+            payload: {
+                code,
+            },
+        });
+    }
+
+    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
+        return this.sendRequest({
+            kind: "submitPhoneNumber",
+            payload: {
+                phoneNumber,
             },
         });
     }

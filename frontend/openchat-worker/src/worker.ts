@@ -863,6 +863,90 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "searchGroups":
+            agent
+                .searchGroups(payload.searchTerm, payload.maxResults)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "dismissRecommendation":
+            agent
+                .dismissRecommendation(payload.chatId)
+                .then(() =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "groupInvite":
+            agent.groupInvite = payload.value;
+            sendResponse(correlationId, {
+                response: undefined,
+            });
+            break;
+
+        case "searchGroupChat":
+            agent
+                .searchGroupChat(payload.chatId, payload.searchTerm, payload.maxResults)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "searchDirectChat":
+            agent
+                .searchDirectChat(payload.userId, payload.searchTerm, payload.maxResults)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "refreshAccountBalance":
+            agent
+                .refreshAccountBalance(payload.crypto, payload.account)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "confirmPhoneNumber":
+            agent
+                .confirmPhoneNumber(payload.code)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "submitPhoneNumber":
+            agent
+                .submitPhoneNumber(payload.phoneNumber)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }
