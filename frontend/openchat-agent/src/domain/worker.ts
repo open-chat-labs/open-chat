@@ -21,10 +21,12 @@ import type { StorageStatus } from "./data/data";
 import type {
     CheckUsernameResponse,
     CurrentUserResponse,
+    MigrateUserPrincipalResponse,
     PartialUserSummary,
     UserLookup,
     UsersArgs,
     UsersResponse,
+    UserSummary,
 } from "./user";
 
 /**
@@ -37,6 +39,10 @@ type WorkerRequestCommon<T = unknown> = {
 };
 
 export type WorkerRequest =
+    | GetUserStorageLimitsRequest
+    | InitUserPrincipalMigrationRequest
+    | MigrateUserPrincipalRequest
+    | SearchUsersRequest
     | CheckUsernameRequest
     | RehydrateMessageRequest
     | DirectChatEventsByEventIndexRequest
@@ -56,11 +62,35 @@ export type WorkerRequest =
     | WorkerUpdatesRequest
     | WorkerInitialStateRequest;
 
+export type GetUserStorageLimitsRequest = WorkerRequestCommon & {
+    kind: "getUserStorageLimits";
+};
+
+export type InitUserPrincipalMigrationRequest = WorkerRequestCommon<{
+    newPrincipal: string;
+}> & {
+    kind: "initUserPrincipalMigration";
+};
+
+export type MigrateUserPrincipalRequest = WorkerRequestCommon<{
+    userId: string;
+}> & {
+    kind: "migrateUserPrincipal";
+};
+
 export type CheckUsernameRequest = WorkerRequestCommon<{
     username: string;
 }> & {
     kind: "checkUsername";
 };
+
+export type SearchUsersRequest = WorkerRequestCommon<{
+    searchTerm: string;
+    maxResults: number;
+}> & {
+    kind: "searchUsers";
+};
+
 export type DirectChatEventsWindowRequest = WorkerRequestCommon<{
     eventIndexRange: IndexRange;
     theirUserId: string;
@@ -189,6 +219,10 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | WorkerGetUserStorageLimitsResponse
+    | WorkerInitUserPrincipalMigrationResponse
+    | WorkerMigrateUserPrincipalResponse
+    | WorkerSearchUsersResponse
     | WorkerCheckUsernameResponse
     | WorkerRehydrateMessageResponse
     | WorkerDirectChatEventsWindowResponse
@@ -215,6 +249,8 @@ type WorkerResponseCommon<T> = {
 
 export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;
 
+export type WorkerGetUserStorageLimitsResponse = WorkerResponseCommon<StorageStatus>;
+export type WorkerInitUserPrincipalMigrationResponse = WorkerResponseCommon<undefined>;
 export type WorkerCreateUserClientResponse = WorkerResponseCommon<undefined>;
 export type GetCurrentUserResponse = WorkerResponseCommon<CurrentUserResponse>;
 export type WorkerMarkReadResponse = WorkerResponseCommon<MarkReadResponse>;
@@ -239,7 +275,9 @@ export type WorkerGetGroupDetailUpdatesResponse = WorkerResponseCommon<GroupChat
 export type WorkerMarkAsOnlineResponse = WorkerResponseCommon<undefined>;
 export type InitResponse = WorkerResponseCommon<undefined>;
 export type WorkerCheckUsernameResponse = WorkerResponseCommon<CheckUsernameResponse>;
+export type WorkerSearchUsersResponse = WorkerResponseCommon<UserSummary[]>;
 export type WorkerRehydrateMessageResponse = WorkerResponseCommon<EventWrapper<Message>>;
+export type WorkerMigrateUserPrincipalResponse = WorkerResponseCommon<MigrateUserPrincipalResponse>;
 
 /** Worker event types */
 type WorkerEventCommon<T> = {

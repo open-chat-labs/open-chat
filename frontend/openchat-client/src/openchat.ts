@@ -60,7 +60,6 @@ import {
     RemoteUserToggledReaction,
     WebRtcMessage,
     GroupInvite,
-    OpenChatAgent,
     Logger,
     ServiceRetryInterrupt,
     getTimeUntilSessionExpiryMs,
@@ -229,7 +228,6 @@ import {
     OPENCHAT_BOT_USER_ID,
     proposalsBotUser,
     specialUsers,
-    startUserUpdatePoller,
     userStore,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -244,7 +242,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupWhile, toRecord2 } from "./utils/list";
+import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -288,6 +286,9 @@ const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -296,7 +297,6 @@ type PinChatResponse =
 
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
-    private _api: OpenChatAgent | undefined;
     private _workerApi: OpenChatAgentWorker | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
@@ -358,7 +358,7 @@ export class OpenChat extends EventTarget {
         const anon = id.getPrincipal().isAnonymous();
         this.identityState.set(anon ? "requires_login" : "loading_user");
         if (!anon) {
-            this.loadUser(id);
+            this.loadUser();
         }
     }
 
@@ -438,13 +438,11 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    private async loadUser(id: Identity) {
-        this._api = new OpenChatAgent(id, this.config);
+    private async loadUser() {
         this._workerApi = new OpenChatAgentWorker(this.config);
-        this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         await this._workerApi.ready;
-        this.apiWorker
+        this.api
             .getCurrentUser()
             .then((user) => {
                 switch (user.kind) {
@@ -473,7 +471,7 @@ export class OpenChat extends EventTarget {
                     this.logout();
                 }
             });
-        this.apiWorker.getAllCachedUsers().then((users) => userStore.set(users));
+        this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -489,19 +487,17 @@ export class OpenChat extends EventTarget {
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
             this.api.createUserClient(user.userId);
-            this.apiWorker.createUserClient(user.userId);
             this.api.initUserPrincipalMigration(principalMigrationNewPrincipal);
             return;
         }
 
         if (user.canisterUpgradeStatus === "in_progress") {
             this.identityState.set("upgrading_user");
-            window.setTimeout(() => this.loadUser(id), UPGRADE_POLL_INTERVAL);
+            window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
         } else {
             currentUserStore.set(user);
             this.api.createUserClient(user.userId);
-            this.apiWorker.createUserClient(user.userId);
-            startMessagesReadTracker(this.apiWorker);
+            startMessagesReadTracker(this.api);
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
@@ -511,7 +507,7 @@ export class OpenChat extends EventTarget {
                 CHAT_UPDATE_IDLE_INTERVAL,
                 true
             );
-            startUserUpdatePoller(this.api);
+            new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             startPruningLocalUpdates();
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
@@ -527,7 +523,7 @@ export class OpenChat extends EventTarget {
 
     private startOnlinePoller() {
         new Poller(
-            () => this.apiWorker.markAsOnline() ?? Promise.resolve(),
+            () => this.api.markAsOnline() ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
             undefined,
             true
@@ -540,13 +536,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    private get api(): OpenChatAgent {
-        if (this._api === undefined)
-            throw new Error("OpenChat tried to make an api call before the api was available");
-        return this._api;
-    }
-
-    private get apiWorker(): OpenChatAgentWorker {
+    private get api(): OpenChatAgentWorker {
         if (this._workerApi === undefined)
             throw new Error(
                 "OpenChat tried to make a worker api call before the api was available"
@@ -644,7 +634,7 @@ export class OpenChat extends EventTarget {
         const users = this.userIdsFromEvents([message]);
         const missingUsers = this.missingUserIds(this._liveState.userStore, users);
         if (missingUsers.length > 0) {
-            const usersResp = await this.apiWorker.getUsers(
+            const usersResp = await this.api.getUsers(
                 {
                     userGroups: [
                         {
@@ -1109,13 +1099,13 @@ export class OpenChat extends EventTarget {
             const range = indexRangeForChat(serverChat);
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 chat.kind === "direct_chat"
-                    ? this.apiWorker.directChatEventsWindow(
+                    ? this.api.directChatEventsWindow(
                           range,
                           chat.them,
                           messageIndex,
                           chat.latestEventIndex
                       )
-                    : this.apiWorker.groupChatEventsWindow(
+                    : this.api.groupChatEventsWindow(
                           range,
                           chat.chatId,
                           messageIndex,
@@ -1202,7 +1192,7 @@ export class OpenChat extends EventTarget {
             return userIds;
         });
 
-        const resp = await this.apiWorker.getUsers(
+        const resp = await this.api.getUsers(
             {
                 userGroups: [
                     {
@@ -1329,7 +1319,7 @@ export class OpenChat extends EventTarget {
         if (selectedThreadKey === undefined) return;
 
         const chatId = chat.chatId;
-        const eventsResponse = await this.apiWorker.chatEvents(
+        const eventsResponse = await this.api.chatEvents(
             chat,
             range,
             startIndex,
@@ -1440,7 +1430,7 @@ export class OpenChat extends EventTarget {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<ChatEvent>> {
-        return this.apiWorker.chatEvents(
+        return this.api.chatEvents(
             clientChat,
             indexRangeForChat(serverChat),
             startIndex,
@@ -1528,7 +1518,7 @@ export class OpenChat extends EventTarget {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat") {
             if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
-                const resp = await this.apiWorker.getGroupDetails(
+                const resp = await this.api.getGroupDetails(
                     clientChat.chatId,
                     clientChat.latestEventIndex
                 );
@@ -1562,7 +1552,7 @@ export class OpenChat extends EventTarget {
         if (clientChat.kind === "group_chat") {
             const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
-                const gd = await this.apiWorker.getGroupDetailsUpdates(clientChat.chatId, {
+                const gd = await this.api.getGroupDetailsUpdates(clientChat.chatId, {
                     members: chatStateStore.getProp(clientChat.chatId, "members"),
                     blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
                     pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
@@ -1612,13 +1602,13 @@ export class OpenChat extends EventTarget {
 
         const eventsPromise =
             clientChat.kind === "direct_chat"
-                ? this.apiWorker.directChatEventsByEventIndex(
+                ? this.api.directChatEventsByEventIndex(
                       clientChat.them,
                       filtered,
                       undefined,
                       clientChat.latestEventIndex
                   )
-                : this.apiWorker.groupChatEventsByEventIndex(
+                : this.api.groupChatEventsByEventIndex(
                       clientChat.chatId,
                       filtered,
                       undefined,
@@ -2056,13 +2046,7 @@ export class OpenChat extends EventTarget {
 
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
         Promise.all([
-            this.apiWorker.rehydrateMessage(
-                chatType,
-                chatId,
-                message,
-                undefined,
-                chat.latestEventIndex
-            ),
+            this.api.rehydrateMessage(chatType, chatId, message, undefined, chat.latestEventIndex),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -2219,7 +2203,7 @@ export class OpenChat extends EventTarget {
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.apiWorker.checkUsername(username);
+        return this.api.checkUsername(username);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -2239,7 +2223,7 @@ export class OpenChat extends EventTarget {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.apiWorker.getCurrentUser().then((response) => {
+        return this.api.getCurrentUser().then((response) => {
             if (response.kind === "created_user") {
                 userCreatedStore.set(true);
                 selectedAuthProviderStore.init(AuthProvider.II);
@@ -2360,7 +2344,7 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.apiWorker.getUsers(users, allowStale);
+        return this.api.getUsers(users, allowStale);
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
@@ -2483,6 +2467,53 @@ export class OpenChat extends EventTarget {
         return userIds;
     }
 
+    private async updateUsers() {
+        try {
+            if (this.user === undefined) {
+                console.log("Current user not set, cannot update users");
+                return;
+            }
+
+            const allUsers = this._liveState.userStore;
+            const usersToUpdate = new Set<string>([this.user.userId]);
+
+            // Update all users we have direct chats with
+            for (const chat of this._liveState.chatSummariesList) {
+                if (chat.kind == "direct_chat") {
+                    usersToUpdate.add(chat.them);
+                }
+            }
+
+            // Also update any users who haven't been updated for at least an hour
+            const now = BigInt(Date.now());
+            for (const user of Object.values(allUsers)) {
+                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                    usersToUpdate.add(user.userId);
+                }
+            }
+
+            console.log(`getting updates for ${usersToUpdate.size} user(s)`);
+            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
+                const userGroups = groupBy<string, bigint>(batch, (u) => {
+                    return allUsers[u]?.updated ?? BigInt(0);
+                });
+
+                const usersResp = await this.api.getUsers({
+                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                        users,
+                        updatedSince,
+                    })),
+                });
+                userStore.addMany(usersResp.users);
+                if (usersResp.serverTimestamp !== undefined) {
+                    userStore.setUpdated(batch, usersResp.serverTimestamp);
+                }
+            }
+        } catch (err) {
+            this._logger.error("Error updating users", err as Error);
+        }
+    }
+
     private async loadChats() {
         try {
             if (this.user === undefined) {
@@ -2502,8 +2533,8 @@ export class OpenChat extends EventTarget {
             };
             const chatsResponse =
                 this._chatUpdatesSince === undefined
-                    ? await this.apiWorker.getInitialState(userLookup, selectedChat?.chatId)
-                    : await this.apiWorker.getUpdates(
+                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId)
+                    : await this.api.getUpdates(
                           currentState,
                           this.updateArgsFromChats(this._chatUpdatesSince, chats),
                           userLookup,
@@ -2520,7 +2551,7 @@ export class OpenChat extends EventTarget {
                     }
                 }
                 userIds.add(this.user.userId);
-                const usersResponse = await this.apiWorker.getUsers(
+                const usersResponse = await this.api.getUsers(
                     {
                         userGroups: [
                             {

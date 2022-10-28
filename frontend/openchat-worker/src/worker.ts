@@ -96,7 +96,17 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
     });
 }
 
-self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
+// FIXME - not sure what to do with this
+self.addEventListener("error", (err: ErrorEvent) => {
+    console.error("WORKER: unhandled error: ", err);
+});
+
+// FIXME - not sure what to do with this
+self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
+    console.error("WORKER: unhandled promise rejection: ", err);
+});
+
+self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
     console.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const { kind, payload, correlationId } = msg.data;
 
@@ -345,7 +355,51 @@ self.onmessage = (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "searchUsers":
+            agent
+                .searchUsers(payload.searchTerm, payload.maxResults)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "migrateUserPrincipal":
+            agent
+                .migrateUserPrincipal(payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "initUserPrincipalMigration":
+            agent
+                .initUserPrincipalMigration(payload.newPrincipal)
+                .then(() =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getUserStorageLimits":
+            agent
+                .getUserStorageLimits()
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }
-};
+});

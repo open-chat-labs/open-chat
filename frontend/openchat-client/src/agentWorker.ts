@@ -26,6 +26,9 @@ import {
     EventWrapper,
     Message,
     CheckUsernameResponse,
+    UserSummary,
+    MigrateUserPrincipalResponse,
+    StorageStatus,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -370,6 +373,41 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 username,
             },
+        });
+    }
+
+    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+        return this.sendRequest({
+            kind: "searchUsers",
+            payload: {
+                searchTerm,
+                maxResults,
+            },
+        });
+    }
+
+    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
+        return this.sendRequest({
+            kind: "migrateUserPrincipal",
+            payload: {
+                userId,
+            },
+        });
+    }
+
+    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+        return this.sendRequest({
+            kind: "initUserPrincipalMigration",
+            payload: {
+                newPrincipal,
+            },
+        });
+    }
+
+    getUserStorageLimits(): Promise<StorageStatus> {
+        return this.sendRequest({
+            kind: "getUserStorageLimits",
+            payload: undefined,
         });
     }
 }
