@@ -1,7 +1,10 @@
+import type { ServiceRetryInterrupt } from "../services";
 import type { AgentConfig } from "../config";
 import type {
+    AddMembersResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    ChangeRoleResponse,
     ChatEvent,
     ChatSummary,
     CurrentChatState,
@@ -24,10 +27,13 @@ import type {
     MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
+    MemberRole,
     MergedUpdatesResponse,
     Message,
     PinMessageResponse,
     RegisterPollVoteResponse,
+    RegisterProposalVoteResponse,
+    RemoveMemberResponse,
     SendMessageResponse,
     ThreadRead,
     UnblockUserResponse,
@@ -39,12 +45,15 @@ import type { BlobReference, StorageStatus } from "./data/data";
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
     ArchiveChatResponse,
+    ChallengeAttempt,
     CheckUsernameResponse,
+    CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
     PinChatResponse,
+    RegisterUserResponse,
     UnpinChatResponse,
     User,
     UserLookup,
@@ -52,6 +61,7 @@ import type {
     UsersResponse,
     UserSummary,
 } from "./user";
+import type { SearchAllMessagesResponse } from "./search/search";
 
 /**
  * Worker request types
@@ -63,6 +73,18 @@ type Request<T = unknown> = {
 };
 
 export type WorkerRequest =
+    | SearchAllMessages
+    | GetGroupRules
+    | GetRecommendedGroups
+    | RegisterProposalVote
+    | ChangeRole
+    | RemoveMember
+    | AddMembers
+    | PushSub
+    | RemoveSub
+    | SubscriptionExists
+    | CreateChallenge
+    | RegisterUser
     | EditMessage
     | SendMessage
     | UnpinMessage
@@ -111,6 +133,87 @@ export type WorkerRequest =
     | CurrentUser
     | GetUpdates
     | GetInitialState;
+
+type SearchAllMessages = Request<{
+    searchTerm: string;
+    maxResults: number;
+}> & {
+    kind: "searchAllMessages";
+};
+
+type GetGroupRules = Request<{
+    chatId: string;
+}> & {
+    kind: "getGroupRules";
+};
+
+type GetRecommendedGroups = Request<{
+    interrupt: ServiceRetryInterrupt;
+}> & {
+    kind: "getRecommendedGroups";
+};
+
+type RegisterProposalVote = Request<{
+    chatId: string;
+    messageIndex: number;
+    adopt: boolean;
+}> & {
+    kind: "registerProposalVote";
+};
+
+type ChangeRole = Request<{
+    chatId: string;
+    userId: string;
+    newRole: MemberRole;
+}> & {
+    kind: "changeRole";
+};
+
+type RemoveMember = Request<{
+    chatId: string;
+    userId: string;
+}> & {
+    kind: "removeMember";
+};
+
+type AddMembers = Request<{
+    chatId: string;
+    userIds: string[];
+    myUsername: string;
+    allowBlocked: boolean;
+}> & {
+    kind: "addMembers";
+};
+
+type RemoveSub = Request<{
+    subscription: PushSubscription;
+}> & {
+    kind: "removeSubscription";
+};
+
+type PushSub = Request<{
+    subscription: PushSubscription;
+}> & {
+    kind: "pushSubscription";
+};
+
+type SubscriptionExists = Request<{
+    p256dh_key: string;
+}> & {
+    kind: "subscriptionExists";
+};
+
+type CreateChallenge = Request & {
+    kind: "createChallenge";
+};
+
+type RegisterUser = Request<{
+    username: string;
+    challengeAttempt: ChallengeAttempt;
+    referredBy: string | undefined;
+}> & {
+    kind: "registerUser";
+};
 
 type EditMessage = Request<{
     chat: ChatSummary;
@@ -460,6 +563,16 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | Response<SearchAllMessagesResponse>
+    | Response<GroupRules | undefined>
+    | Response<GroupChatSummary[]>
+    | Response<RegisterProposalVoteResponse>
+    | Response<ChangeRoleResponse>
+    | Response<AddMembersResponse>
+    | Response<RemoveMemberResponse>
+    | Response<boolean>
+    | Response<RegisterUserResponse>
+    | Response<CreateChallengeResponse>
     | Response<EditMessageResponse>
     | Response<[SendMessageResponse, Message]>
     | Response<UnpinMessageResponse>

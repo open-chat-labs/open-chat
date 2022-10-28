@@ -54,6 +54,15 @@ import {
     CreatedUser,
     User,
     EditMessageResponse,
+    RegisterUserResponse,
+    ChallengeAttempt,
+    CreateChallengeResponse,
+    AddMembersResponse,
+    RemoveMemberResponse,
+    MemberRole,
+    RegisterProposalVoteResponse,
+    ServiceRetryInterrupt,
+    SearchAllMessagesResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -755,6 +764,138 @@ export class OpenChatAgentWorker extends EventTarget {
                 chat,
                 msg,
                 threadRootMessageIndex,
+            },
+        });
+    }
+
+    registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt,
+        referredBy: string | undefined
+    ): Promise<RegisterUserResponse> {
+        return this.sendRequest({
+            kind: "registerUser",
+            payload: {
+                username,
+                challengeAttempt,
+                referredBy,
+            },
+        });
+    }
+
+    createChallenge(): Promise<CreateChallengeResponse> {
+        return this.sendRequest({
+            kind: "createChallenge",
+            payload: undefined,
+        });
+    }
+
+    subscriptionExists(p256dh_key: string): Promise<boolean> {
+        return this.sendRequest({
+            kind: "subscriptionExists",
+            payload: {
+                p256dh_key,
+            },
+        });
+    }
+
+    pushSubscription(subscription: PushSubscription): Promise<void> {
+        return this.sendRequest({
+            kind: "pushSubscription",
+            payload: {
+                subscription,
+            },
+        });
+    }
+
+    removeSubscription(subscription: PushSubscription): Promise<void> {
+        return this.sendRequest({
+            kind: "removeSubscription",
+            payload: {
+                subscription,
+            },
+        });
+    }
+
+    addMembers(
+        chatId: string,
+        userIds: string[],
+        myUsername: string,
+        allowBlocked: boolean
+    ): Promise<AddMembersResponse> {
+        return this.sendRequest({
+            kind: "addMembers",
+            payload: {
+                chatId,
+                userIds,
+                myUsername,
+                allowBlocked,
+            },
+        });
+    }
+
+    removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
+        return this.sendRequest({
+            kind: "removeMember",
+            payload: {
+                chatId,
+                userId,
+            },
+        });
+    }
+
+    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
+        return this.sendRequest({
+            kind: "changeRole",
+            payload: {
+                chatId,
+                userId,
+                newRole,
+            },
+        });
+    }
+
+    registerProposalVote(
+        chatId: string,
+        messageIndex: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.sendRequest({
+            kind: "registerProposalVote",
+            payload: {
+                chatId,
+                messageIndex,
+                adopt,
+            },
+        });
+    }
+
+    // FIXME - this is going to be a problem as we cannot
+    // pass a function to a worker (not serialisable)
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+        return this.sendRequest({
+            kind: "getRecommendedGroups",
+            payload: {
+                interrupt,
+            },
+        });
+    }
+
+    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+        return this.sendRequest({
+            kind: "getGroupRules",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
+        return this.sendRequest({
+            kind: "searchAllMessages",
+            payload: {
+                searchTerm,
+                maxResults,
             },
         });
     }

@@ -726,6 +726,143 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "registerUser":
+            agent
+                .registerUser(payload.username, payload.challengeAttempt, payload.referredBy)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "createChallenge":
+            agent
+                .createChallenge()
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "subscriptionExists":
+            agent
+                .subscriptionExists(payload.p256dh_key)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "pushSubscription":
+            agent
+                .pushSubscription(payload.subscription)
+                .then(() =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "removeSubscription":
+            agent
+                .removeSubscription(payload.subscription)
+                .then(() =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "addMembers":
+            agent
+                .addMembers(
+                    payload.chatId,
+                    payload.userIds,
+                    payload.myUsername,
+                    payload.allowBlocked
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "removeMember":
+            agent
+                .removeMember(payload.chatId, payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "changeRole":
+            agent
+                .changeRole(payload.chatId, payload.userId, payload.newRole)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "registerProposalVote":
+            agent
+                .registerProposalVote(payload.chatId, payload.messageIndex, payload.adopt)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getRecommendedGroups":
+            agent
+                .getRecommendedGroups(payload.interrupt)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getGroupRules":
+            agent
+                .getGroupRules(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "searchAllMessages":
+            agent
+                .searchAllMessages(payload.searchTerm, payload.maxResults)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }
