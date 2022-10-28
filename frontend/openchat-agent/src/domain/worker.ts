@@ -4,14 +4,18 @@ import type {
     AddMembersResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
     ChatSummary,
+    CreateGroupResponse,
     CurrentChatState,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
+    DisableInviteCodeResponse,
     EditMessageResponse,
+    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
@@ -21,6 +25,7 @@ import type {
     GroupPermissions,
     GroupRules,
     IndexRange,
+    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -30,16 +35,20 @@ import type {
     MemberRole,
     MergedUpdatesResponse,
     Message,
+    PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     RemoveMemberResponse,
     SendMessageResponse,
+    ThreadPreview,
     ThreadRead,
+    ThreadSyncDetails,
     UnblockUserResponse,
     UnpinMessageResponse,
     UpdateArgs,
     UpdateGroupResponse,
+    WithdrawCryptocurrencyResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { ToggleMuteNotificationResponse } from "./notifications";
@@ -55,9 +64,13 @@ import type {
     PartialUserSummary,
     PhoneNumber,
     PinChatResponse,
+    PublicProfile,
     RegisterUserResponse,
+    SetBioResponse,
+    SetUsernameResponse,
     SubmitPhoneNumberResponse,
     UnpinChatResponse,
+    UpgradeStorageResponse,
     User,
     UserLookup,
     UsersArgs,
@@ -149,7 +162,102 @@ export type WorkerRequest =
     | RefreshAccountBalance
     | ConfirmPhoneNumber
     | SubmitPhoneNumber
+    | UpgradeStorage
+    | GetThreadPreviews
+    | GetUser
+    | GetPublicProfile
+    | SetUsername
+    | SetBio
+    | GetBio
+    | WithdrawCrypto
+    | GroupMessagesByMessageIndex
+    | GetInviteCode
+    | EnableInviteCode
+    | DisableInviteCode
+    | CreateGroupChat
     | GetInitialState;
+
+type CreateGroupChat = Request<{
+    candidate: CandidateGroupChat;
+}> & {
+    kind: "createGroupChat";
+};
+
+type DisableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "disableInviteCode";
+};
+
+type EnableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "enableInviteCode";
+};
+
+type GetInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "getInviteCode";
+};
+
+type GroupMessagesByMessageIndex = Request<{
+    chatId: string;
+    messageIndexes: Set<number>;
+    latestClientEventIndex: number | undefined;
+}> & {
+    kind: "getGroupMessagesByMessageIndex";
+};
+
+type WithdrawCrypto = Request<{
+    domain: PendingCryptocurrencyWithdrawal;
+}> & {
+    kind: "withdrawCryptocurrency";
+};
+
+type GetBio = Request<{
+    userId?: string;
+}> & {
+    kind: "getBio";
+};
+
+type SetBio = Request<{
+    bio: string;
+}> & {
+    kind: "setBio";
+};
+
+type SetUsername = Request<{
+    userId: string;
+    username: string;
+}> & {
+    kind: "setUsername";
+};
+
+type GetPublicProfile = Request<{
+    userId?: string;
+}> & {
+    kind: "getPublicProfile";
+};
+
+type GetUser = Request<{
+    userId: string;
+    allowStale: boolean;
+}> & {
+    kind: "getUser";
+};
+
+type GetThreadPreviews = Request<{
+    threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>;
+}> & {
+    kind: "threadPreviews";
+};
+
+type UpgradeStorage = Request<{
+    newLimitBytes: number;
+}> & {
+    kind: "upgradeStorage";
+};
 
 type SubmitPhoneNumber = Request<{
     phoneNumber: PhoneNumber;
@@ -634,6 +742,19 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
+    | Response<CreateGroupResponse>
+    | Response<DisableInviteCodeResponse>
+    | Response<EnableInviteCodeResponse>
+    | Response<InviteCodeResponse>
+    | Response<EventsResponse<Message>>
+    | Response<WithdrawCryptocurrencyResponse>
+    | Response<string>
+    | Response<SetBioResponse>
+    | Response<SetUsernameResponse>
+    | Response<PublicProfile>
+    | Response<PartialUserSummary | undefined>
+    | Response<UpgradeStorageResponse>
+    | Response<ThreadPreview[]>
     | Response<SubmitPhoneNumberResponse>
     | Response<ConfirmPhoneNumberResponse>
     | Response<Tokens>

@@ -947,6 +947,153 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "upgradeStorage":
+            agent
+                .upgradeStorage(payload.newLimitBytes)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "threadPreviews":
+            agent
+                .threadPreviews(payload.threadsByChat)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getUser":
+            agent
+                .getUser(payload.userId, payload.allowStale)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getPublicProfile":
+            agent
+                .getPublicProfile(payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "setUsername":
+            agent
+                .setUsername(payload.userId, payload.username)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "setBio":
+            agent
+                .setBio(payload.bio)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getBio":
+            agent
+                .getBio(payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "withdrawCryptocurrency":
+            agent
+                .withdrawCryptocurrency(payload.domain)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getGroupMessagesByMessageIndex":
+            agent
+                .getGroupMessagesByMessageIndex(
+                    payload.chatId,
+                    payload.messageIndexes,
+                    payload.latestClientEventIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "getInviteCode":
+            agent
+                .getInviteCode(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "enableInviteCode":
+            agent
+                .enableInviteCode(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "disableInviteCode":
+            agent
+                .disableInviteCode(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "createGroupChat":
+            agent
+                .createGroupChat(payload.candidate)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }

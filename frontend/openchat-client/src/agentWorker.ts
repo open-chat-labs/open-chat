@@ -72,6 +72,20 @@ import {
     ConfirmPhoneNumberResponse,
     PhoneNumber,
     SubmitPhoneNumberResponse,
+    UpgradeStorageResponse,
+    ThreadPreview,
+    ThreadSyncDetails,
+    PartialUserSummary,
+    PublicProfile,
+    SetUsernameResponse,
+    SetBioResponse,
+    PendingCryptocurrencyWithdrawal,
+    WithdrawCryptocurrencyResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -991,6 +1005,135 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "submitPhoneNumber",
             payload: {
                 phoneNumber,
+            },
+        });
+    }
+
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
+        return this.sendRequest({
+            kind: "upgradeStorage",
+            payload: {
+                newLimitBytes,
+            },
+        });
+    }
+
+    async threadPreviews(
+        threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
+    ): Promise<ThreadPreview[]> {
+        return this.sendRequest({
+            kind: "threadPreviews",
+            payload: {
+                threadsByChat,
+            },
+        });
+    }
+
+    async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
+        return this.sendRequest({
+            kind: "getUser",
+            payload: {
+                userId,
+                allowStale,
+            },
+        });
+    }
+
+    getPublicProfile(userId?: string): Promise<PublicProfile> {
+        return this.sendRequest({
+            kind: "getPublicProfile",
+            payload: {
+                userId,
+            },
+        });
+    }
+
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+        return this.sendRequest({
+            kind: "setUsername",
+            payload: {
+                userId,
+                username,
+            },
+        });
+    }
+
+    setBio(bio: string): Promise<SetBioResponse> {
+        return this.sendRequest({
+            kind: "setBio",
+            payload: {
+                bio,
+            },
+        });
+    }
+
+    getBio(userId?: string): Promise<string> {
+        return this.sendRequest({
+            kind: "getBio",
+            payload: {
+                userId,
+            },
+        });
+    }
+
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse> {
+        return this.sendRequest({
+            kind: "withdrawCryptocurrency",
+            payload: {
+                domain,
+            },
+        });
+    }
+
+    getGroupMessagesByMessageIndex(
+        chatId: string,
+        messageIndexes: Set<number>,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<Message>> {
+        return this.sendRequest({
+            kind: "getGroupMessagesByMessageIndex",
+            payload: {
+                chatId,
+                messageIndexes,
+                latestClientEventIndex,
+            },
+        });
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.sendRequest({
+            kind: "getInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "enableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "disableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return this.sendRequest({
+            kind: "createGroupChat",
+            payload: {
+                candidate,
             },
         });
     }
