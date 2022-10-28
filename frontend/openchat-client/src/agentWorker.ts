@@ -29,6 +29,31 @@ import {
     UserSummary,
     MigrateUserPrincipalResponse,
     StorageStatus,
+    GroupChatSummary,
+    ToggleMuteNotificationResponse,
+    ArchiveChatResponse,
+    PinChatResponse,
+    UnpinChatResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    BlobReference,
+    MakeGroupPrivateResponse,
+    DeleteGroupResponse,
+    LeaveGroupResponse,
+    JoinGroupResponse,
+    UpdateGroupResponse,
+    GroupPermissions,
+    GroupRules,
+    RegisterPollVoteResponse,
+    DeleteMessageResponse,
+    AddRemoveReactionResponse,
+    ListNervousSystemFunctionsResponse,
+    UnpinMessageResponse,
+    PinMessageResponse,
+    SendMessageResponse,
+    CreatedUser,
+    User,
+    EditMessageResponse,
 } from "openchat-agent";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -408,6 +433,329 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "getUserStorageLimits",
             payload: undefined,
+        });
+    }
+
+    getPublicGroupSummary(chatId: string): Promise<GroupChatSummary | undefined> {
+        return this.sendRequest({
+            kind: "getPublicGroupSummary",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    toggleMuteNotifications(
+        chatId: string,
+        muted: boolean
+    ): Promise<ToggleMuteNotificationResponse> {
+        return this.sendRequest({
+            kind: "toggleMuteNotifications",
+            payload: {
+                chatId,
+                muted,
+            },
+        });
+    }
+
+    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.sendRequest({
+            kind: "archiveChat",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+        return this.sendRequest({
+            kind: "unarchiveChat",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    pinChat(chatId: string): Promise<PinChatResponse> {
+        return this.sendRequest({
+            kind: "pinChat",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+        return this.sendRequest({
+            kind: "unpinChat",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
+        return this.sendRequest({
+            kind: "blockUserFromDirectChat",
+            payload: {
+                userId,
+            },
+        });
+    }
+
+    unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
+        return this.sendRequest({
+            kind: "unblockUserFromDirectChat",
+            payload: {
+                userId,
+            },
+        });
+    }
+
+    setUserAvatar(data: Uint8Array): Promise<BlobReference> {
+        return this.sendRequest({
+            kind: "setUserAvatar",
+            payload: {
+                data,
+            },
+        });
+    }
+
+    makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {
+        return this.sendRequest({
+            kind: "makeGroupPrivate",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
+        return this.sendRequest({
+            kind: "deleteGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.sendRequest({
+            kind: "leaveGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        return this.sendRequest({
+            kind: "joinGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    updateGroup(
+        chatId: string,
+        name?: string,
+        desc?: string,
+        rules?: GroupRules,
+        permissions?: Partial<GroupPermissions>,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
+        return this.sendRequest({
+            kind: "updateGroup",
+            payload: {
+                chatId,
+                name,
+                desc,
+                rules,
+                permissions,
+                avatar,
+            },
+        });
+    }
+
+    registerPollVote(
+        chatId: string,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
+    ): Promise<RegisterPollVoteResponse> {
+        return this.sendRequest({
+            kind: "registerPollVote",
+            payload: {
+                chatId,
+                messageIdx,
+                answerIdx,
+                voteType,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    deleteMessage(
+        chat: ChatSummary,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.sendRequest({
+            kind: "deleteMessage",
+            payload: {
+                chat,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    addDirectChatReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        username: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.sendRequest({
+            kind: "addDirectChatReaction",
+            payload: {
+                otherUserId,
+                messageId,
+                reaction,
+                username,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    removeDirectChatReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.sendRequest({
+            kind: "removeDirectChatReaction",
+            payload: {
+                otherUserId,
+                messageId,
+                reaction,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    addGroupChatReaction(
+        chatId: string,
+        messageId: bigint,
+        reaction: string,
+        username: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.sendRequest({
+            kind: "addGroupChatReaction",
+            payload: {
+                chatId,
+                messageId,
+                reaction,
+                username,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    removeGroupChatReaction(
+        chatId: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<AddRemoveReactionResponse> {
+        return this.sendRequest({
+            kind: "removeGroupChatReaction",
+            payload: {
+                chatId,
+                messageId,
+                reaction,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    blockUserFromGroupChat(chatId: string, userId: string): Promise<BlockUserResponse> {
+        return this.sendRequest({
+            kind: "blockUserFromGroupChat",
+            payload: {
+                chatId,
+                userId,
+            },
+        });
+    }
+
+    listNervousSystemFunctions(
+        snsGovernanceCanisterId: string
+    ): Promise<ListNervousSystemFunctionsResponse> {
+        return this.sendRequest({
+            kind: "listNervousSystemFunctions",
+            payload: {
+                snsGovernanceCanisterId,
+            },
+        });
+    }
+
+    unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.sendRequest({
+            kind: "unpinMessage",
+            payload: {
+                chatId,
+                messageIndex,
+            },
+        });
+    }
+
+    pinMessage(chatId: string, messageIndex: number): Promise<PinMessageResponse> {
+        return this.sendRequest({
+            kind: "pinMessage",
+            payload: {
+                chatId,
+                messageIndex,
+            },
+        });
+    }
+
+    sendMessage(
+        chat: ChatSummary,
+        user: CreatedUser,
+        mentioned: User[],
+        msg: Message,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        return this.sendRequest({
+            kind: "sendMessage",
+            payload: {
+                chat,
+                user,
+                mentioned,
+                msg,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    editMessage(
+        chat: ChatSummary,
+        msg: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.sendRequest({
+            kind: "editMessage",
+            payload: {
+                chat,
+                msg,
+                threadRootMessageIndex,
+            },
         });
     }
 }

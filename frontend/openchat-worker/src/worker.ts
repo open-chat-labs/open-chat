@@ -399,6 +399,333 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "getPublicGroupSummary":
+            agent
+                .getPublicGroupSummary(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "toggleMuteNotifications":
+            agent
+                .toggleMuteNotifications(payload.chatId, payload.muted)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "archiveChat":
+            agent
+                .archiveChat(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "unarchiveChat":
+            agent
+                .unarchiveChat(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "pinChat":
+            agent
+                .pinChat(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "unpinChat":
+            agent
+                .unpinChat(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "blockUserFromDirectChat":
+            agent
+                .blockUserFromDirectChat(payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "unblockUserFromDirectChat":
+            agent
+                .unblockUserFromDirectChat(payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "setUserAvatar":
+            agent
+                .setUserAvatar(payload.data)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "makeGroupPrivate":
+            agent
+                .makeGroupPrivate(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "deleteGroup":
+            agent
+                .deleteGroup(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "leaveGroup":
+            agent
+                .leaveGroup(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "joinGroup":
+            agent
+                .joinGroup(payload.chatId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "updateGroup":
+            agent
+                .updateGroup(
+                    payload.chatId,
+                    payload.name,
+                    payload.desc,
+                    payload.rules,
+                    payload.permissions,
+                    payload.avatar
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "registerPollVote":
+            agent
+                .registerPollVote(
+                    payload.chatId,
+                    payload.messageIdx,
+                    payload.answerIdx,
+                    payload.voteType,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "deleteMessage":
+            agent
+                .deleteMessage(payload.chat, payload.messageId, payload.threadRootMessageIndex)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "addDirectChatReaction":
+            agent
+                .addDirectChatReaction(
+                    payload.otherUserId,
+                    payload.messageId,
+                    payload.reaction,
+                    payload.username,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "removeDirectChatReaction":
+            agent
+                .removeDirectChatReaction(
+                    payload.otherUserId,
+                    payload.messageId,
+                    payload.reaction,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "addGroupChatReaction":
+            agent
+                .addGroupChatReaction(
+                    payload.chatId,
+                    payload.messageId,
+                    payload.reaction,
+                    payload.username,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "removeGroupChatReaction":
+            agent
+                .removeGroupChatReaction(
+                    payload.chatId,
+                    payload.messageId,
+                    payload.reaction,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "blockUserFromGroupChat":
+            agent
+                .blockUserFromGroupChat(payload.chatId, payload.userId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "listNervousSystemFunctions":
+            agent
+                .listNervousSystemFunctions(payload.snsGovernanceCanisterId)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "unpinMessage":
+            agent
+                .unpinMessage(payload.chatId, payload.messageIndex)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "pinMessage":
+            agent
+                .pinMessage(payload.chatId, payload.messageIndex)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "sendMessage":
+            agent
+                .sendMessage(
+                    payload.chat,
+                    payload.user,
+                    payload.mentioned,
+                    payload.msg,
+                    payload.threadRootMessageIndex
+                )
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
+        case "editMessage":
+            agent
+                .editMessage(payload.chat, payload.msg, payload.threadRootMessageIndex)
+                .then((response) =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }

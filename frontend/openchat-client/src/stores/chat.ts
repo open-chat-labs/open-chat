@@ -7,7 +7,6 @@ import type {
     Message,
     MessageContent,
     ThreadSyncDetails,
-    OpenChatAgent,
     CreatedUser,
 } from "openchat-agent";
 import { compareChats, emptyChatMetrics } from "openchat-agent";
@@ -32,6 +31,7 @@ import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByC
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
+import type { OpenChatAgentWorker } from "../agentWorker";
 
 export type ChatState = {
     chatId: string;
@@ -331,7 +331,7 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function setSelectedChat(
-    api: OpenChatAgent,
+    api: OpenChatAgentWorker,
     chat: ChatSummary,
     messageIndex?: number
 ): void {

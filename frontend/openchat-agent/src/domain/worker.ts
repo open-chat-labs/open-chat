@@ -1,28 +1,52 @@
 import type { AgentConfig } from "../config";
 import type {
+    AddRemoveReactionResponse,
+    BlockUserResponse,
     ChatEvent,
     ChatSummary,
     CurrentChatState,
+    DeleteGroupResponse,
+    DeleteMessageResponse,
     DirectChatEvent,
+    EditMessageResponse,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
+    GroupChatSummary,
+    GroupPermissions,
+    GroupRules,
     IndexRange,
+    JoinGroupResponse,
+    LeaveGroupResponse,
+    ListNervousSystemFunctionsResponse,
+    MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
     MergedUpdatesResponse,
     Message,
+    PinMessageResponse,
+    RegisterPollVoteResponse,
+    SendMessageResponse,
     ThreadRead,
+    UnblockUserResponse,
+    UnpinMessageResponse,
     UpdateArgs,
+    UpdateGroupResponse,
 } from "./chat";
-import type { StorageStatus } from "./data/data";
+import type { BlobReference, StorageStatus } from "./data/data";
+import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
+    ArchiveChatResponse,
     CheckUsernameResponse,
+    CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
+    PinChatResponse,
+    UnpinChatResponse,
+    User,
     UserLookup,
     UsersArgs,
     UsersResponse,
@@ -33,65 +57,282 @@ import type {
  * Worker request types
  */
 
-type WorkerRequestCommon<T = unknown> = {
+type Request<T = unknown> = {
     correlationId: string;
     payload: T;
 };
 
 export type WorkerRequest =
-    | GetUserStorageLimitsRequest
-    | InitUserPrincipalMigrationRequest
-    | MigrateUserPrincipalRequest
-    | SearchUsersRequest
-    | CheckUsernameRequest
-    | RehydrateMessageRequest
-    | DirectChatEventsByEventIndexRequest
-    | GroupChatEventsByEventIndexRequest
-    | DirectChatEventsWindowRequest
-    | GroupChatEventsWindowRequest
-    | MarkAsOnlineRequest
-    | GetGroupDetailsRequest
-    | GetGroupDetailUpdatesRequest
-    | MarkMessagesReadRequest
-    | GetAllCachedUsersRequest
-    | GetUsersRequest
-    | ChatEventsRequest
-    | CreateUserClientRequest
-    | InitRequest
-    | CurrentUserRequest
-    | WorkerUpdatesRequest
-    | WorkerInitialStateRequest;
+    | EditMessage
+    | SendMessage
+    | UnpinMessage
+    | PinMessage
+    | ListNervousSystemFunctions
+    | BlockUserFromGroup
+    | AddGroupChatReaction
+    | RemoveGroupChatReaction
+    | RemoveDirectChatReaction
+    | AddDirectChatReaction
+    | DeleteMessage
+    | RegisterPollVote
+    | UpdateGroup
+    | JoinGroup
+    | LeaveGroup
+    | DeleteGroup
+    | MakeGroupPrivate
+    | SetUserAvatar
+    | UnblockUserFromDirectChat
+    | BlockUserFromDirectChat
+    | UnpinChat
+    | PinChat
+    | UnArchiveChat
+    | ArchiveChat
+    | ToggleMuteNotifications
+    | GetPublicGroupSummary
+    | GetUserStorageLimits
+    | InitUserPrincipalMigration
+    | MigrateUserPrincipal
+    | SearchUsers
+    | CheckUsername
+    | RehydrateMessage
+    | DirectChatEventsByEventIndex
+    | GroupChatEventsByEventIndex
+    | DirectChatEventsWindow
+    | GroupChatEventsWindow
+    | MarkAsOnline
+    | GetGroupDetails
+    | GetGroupDetailUpdates
+    | MarkMessagesRead
+    | GetAllCachedUsers
+    | GetUsers
+    | ChatEvents
+    | CreateUserClient
+    | Init
+    | CurrentUser
+    | GetUpdates
+    | GetInitialState;
 
-export type GetUserStorageLimitsRequest = WorkerRequestCommon & {
+type EditMessage = Request<{
+    chat: ChatSummary;
+    msg: Message;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "editMessage";
+};
+
+type SendMessage = Request<{
+    chat: ChatSummary;
+    user: CreatedUser;
+    mentioned: User[];
+    msg: Message;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "sendMessage";
+};
+
+type PinMessage = Request<{
+    chatId: string;
+    messageIndex: number;
+}> & {
+    kind: "pinMessage";
+};
+
+type UnpinMessage = Request<{
+    chatId: string;
+    messageIndex: number;
+}> & {
+    kind: "unpinMessage";
+};
+
+type ListNervousSystemFunctions = Request<{
+    snsGovernanceCanisterId: string;
+}> & {
+    kind: "listNervousSystemFunctions";
+};
+
+type BlockUserFromGroup = Request<{
+    chatId: string;
+    userId: string;
+}> & {
+    kind: "blockUserFromGroupChat";
+};
+
+type AddGroupChatReaction = Request<{
+    chatId: string;
+    messageId: bigint;
+    reaction: string;
+    username: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "addGroupChatReaction";
+};
+
+type RemoveGroupChatReaction = Request<{
+    chatId: string;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "removeGroupChatReaction";
+};
+
+type RemoveDirectChatReaction = Request<{
+    otherUserId: string;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "removeDirectChatReaction";
+};
+
+type AddDirectChatReaction = Request<{
+    otherUserId: string;
+    messageId: bigint;
+    reaction: string;
+    username: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "addDirectChatReaction";
+};
+
+type DeleteMessage = Request<{
+    chat: ChatSummary;
+    messageId: bigint;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "deleteMessage";
+};
+
+type RegisterPollVote = Request<{
+    chatId: string;
+    messageIdx: number;
+    answerIdx: number;
+    voteType: "register" | "delete";
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "registerPollVote";
+};
+
+type UpdateGroup = Request<{
+    chatId: string;
+    name?: string;
+    desc?: string;
+    rules?: GroupRules;
+    permissions?: Partial<GroupPermissions>;
+    avatar?: Uint8Array;
+}> & {
+    kind: "updateGroup";
+};
+
+type JoinGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "joinGroup";
+};
+
+type LeaveGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "leaveGroup";
+};
+
+type DeleteGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "deleteGroup";
+};
+
+type MakeGroupPrivate = Request<{
+    chatId: string;
+}> & {
+    kind: "makeGroupPrivate";
+};
+
+type SetUserAvatar = Request<{
+    data: Uint8Array;
+}> & {
+    kind: "setUserAvatar";
+};
+
+type UnblockUserFromDirectChat = Request<{
+    userId: string;
+}> & {
+    kind: "unblockUserFromDirectChat";
+};
+
+type BlockUserFromDirectChat = Request<{
+    userId: string;
+}> & {
+    kind: "blockUserFromDirectChat";
+};
+
+type UnpinChat = Request<{
+    chatId: string;
+}> & {
+    kind: "unpinChat";
+};
+
+type PinChat = Request<{
+    chatId: string;
+}> & {
+    kind: "pinChat";
+};
+
+type UnArchiveChat = Request<{
+    chatId: string;
+}> & {
+    kind: "unarchiveChat";
+};
+
+type ArchiveChat = Request<{
+    chatId: string;
+}> & {
+    kind: "archiveChat";
+};
+
+type ToggleMuteNotifications = Request<{
+    chatId: string;
+    muted: boolean;
+}> & {
+    kind: "toggleMuteNotifications";
+};
+
+type GetPublicGroupSummary = Request<{
+    chatId: string;
+}> & {
+    kind: "getPublicGroupSummary";
+};
+
+type GetUserStorageLimits = Request & {
     kind: "getUserStorageLimits";
 };
 
-export type InitUserPrincipalMigrationRequest = WorkerRequestCommon<{
+type InitUserPrincipalMigration = Request<{
     newPrincipal: string;
 }> & {
     kind: "initUserPrincipalMigration";
 };
 
-export type MigrateUserPrincipalRequest = WorkerRequestCommon<{
+type MigrateUserPrincipal = Request<{
     userId: string;
 }> & {
     kind: "migrateUserPrincipal";
 };
 
-export type CheckUsernameRequest = WorkerRequestCommon<{
+type CheckUsername = Request<{
     username: string;
 }> & {
     kind: "checkUsername";
 };
 
-export type SearchUsersRequest = WorkerRequestCommon<{
+type SearchUsers = Request<{
     searchTerm: string;
     maxResults: number;
 }> & {
     kind: "searchUsers";
 };
 
-export type DirectChatEventsWindowRequest = WorkerRequestCommon<{
+type DirectChatEventsWindow = Request<{
     eventIndexRange: IndexRange;
     theirUserId: string;
     messageIndex: number;
@@ -100,7 +341,7 @@ export type DirectChatEventsWindowRequest = WorkerRequestCommon<{
     kind: "directChatEventsWindow";
 };
 
-export type GroupChatEventsWindowRequest = WorkerRequestCommon<{
+type GroupChatEventsWindow = Request<{
     eventIndexRange: IndexRange;
     chatId: string;
     messageIndex: number;
@@ -109,7 +350,7 @@ export type GroupChatEventsWindowRequest = WorkerRequestCommon<{
     kind: "groupChatEventsWindow";
 };
 
-export type DirectChatEventsByEventIndexRequest = WorkerRequestCommon<{
+type DirectChatEventsByEventIndex = Request<{
     theirUserId: string;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
@@ -118,7 +359,7 @@ export type DirectChatEventsByEventIndexRequest = WorkerRequestCommon<{
     kind: "directChatEventsByEventIndex";
 };
 
-export type GroupChatEventsByEventIndexRequest = WorkerRequestCommon<{
+type GroupChatEventsByEventIndex = Request<{
     chatId: string;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
@@ -127,7 +368,7 @@ export type GroupChatEventsByEventIndexRequest = WorkerRequestCommon<{
     kind: "groupChatEventsByEventIndex";
 };
 
-export type RehydrateMessageRequest = WorkerRequestCommon<{
+type RehydrateMessage = Request<{
     chatType: "direct" | "group";
     currentChatId: string;
     message: EventWrapper<Message>;
@@ -137,45 +378,45 @@ export type RehydrateMessageRequest = WorkerRequestCommon<{
     kind: "rehydrateMessage";
 };
 
-export type InitRequest = WorkerRequestCommon<Omit<AgentConfig, "logger">> & {
+type Init = Request<Omit<AgentConfig, "logger">> & {
     kind: "init";
 };
 
-export type CurrentUserRequest = WorkerRequestCommon & {
+type CurrentUser = Request & {
     kind: "getCurrentUser";
 };
 
-export type MarkMessagesReadRequest = WorkerRequestCommon<MarkReadRequest> & {
+type MarkMessagesRead = Request<MarkReadRequest> & {
     kind: "markMessagesRead";
 };
 
-export type GetGroupDetailsRequest = WorkerRequestCommon<{
+type GetGroupDetails = Request<{
     chatId: string;
     latestEventIndex: number;
 }> & {
     kind: "getGroupDetails";
 };
 
-export type GetGroupDetailUpdatesRequest = WorkerRequestCommon<{
+type GetGroupDetailUpdates = Request<{
     chatId: string;
     previous: GroupChatDetails;
 }> & {
     kind: "getGroupDetailsUpdates";
 };
 
-export type GetAllCachedUsersRequest = WorkerRequestCommon & {
+type GetAllCachedUsers = Request & {
     kind: "getAllCachedUsers";
 };
 
-export type MarkAsOnlineRequest = WorkerRequestCommon & {
+type MarkAsOnline = Request & {
     kind: "markAsOnline";
 };
 
-export type GetUsersRequest = WorkerRequestCommon<{ users: UsersArgs; allowStale: boolean }> & {
+type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
     kind: "getUsers";
 };
 
-export type ChatEventsRequest = WorkerRequestCommon<{
+type ChatEvents = Request<{
     chat: ChatSummary;
     eventIndexRange: IndexRange;
     startIndex: number;
@@ -186,11 +427,11 @@ export type ChatEventsRequest = WorkerRequestCommon<{
     kind: "chatEvents";
 };
 
-export type CreateUserClientRequest = WorkerRequestCommon<{ userId: string }> & {
+type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-export type WorkerUpdatesRequest = WorkerRequestCommon<{
+type GetUpdates = Request<{
     currentState: CurrentChatState;
     args: UpdateArgs;
     userStore: UserLookup;
@@ -199,7 +440,7 @@ export type WorkerUpdatesRequest = WorkerRequestCommon<{
     kind: "getUpdates";
 };
 
-export type WorkerInitialStateRequest = WorkerRequestCommon<{
+type GetInitialState = Request<{
     userStore: UserLookup;
     selectedChatId: string | undefined;
 }> & {
@@ -219,65 +460,57 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponse =
-    | WorkerGetUserStorageLimitsResponse
-    | WorkerInitUserPrincipalMigrationResponse
-    | WorkerMigrateUserPrincipalResponse
-    | WorkerSearchUsersResponse
-    | WorkerCheckUsernameResponse
-    | WorkerRehydrateMessageResponse
-    | WorkerDirectChatEventsWindowResponse
-    | WorkerGroupChatEventsWindowResponse
-    | WorkerDirectChatEventsByEventIndexResponse
-    | WorkerGroupChatEventsByEventIndexResponse
-    | WorkerMarkAsOnlineResponse
-    | WorkerGetGroupDetailsResponse
-    | WorkerGetGroupDetailUpdatesResponse
-    | WorkerMarkReadResponse
-    | WorkerGetAllCachedUsersResponse
-    | WorkerGetUsersResponse
-    | InitResponse
-    | GetCurrentUserResponse
-    | WorkerUpdatesResponse
-    | WorkerChatEventsResponse
-    | WorkerCreateUserClientResponse;
+    | Response<EditMessageResponse>
+    | Response<[SendMessageResponse, Message]>
+    | Response<UnpinMessageResponse>
+    | Response<PinMessageResponse>
+    | Response<ListNervousSystemFunctionsResponse>
+    | Response<AddRemoveReactionResponse>
+    | Response<DeleteMessageResponse>
+    | Response<RegisterPollVoteResponse>
+    | Response<UpdateGroupResponse>
+    | Response<JoinGroupResponse>
+    | Response<DeleteGroupResponse>
+    | Response<LeaveGroupResponse>
+    | Response<MakeGroupPrivateResponse>
+    | Response<BlobReference>
+    | Response<UnblockUserResponse>
+    | Response<BlockUserResponse>
+    | Response<UnpinChatResponse>
+    | Response<PinChatResponse>
+    | Response<ArchiveChatResponse>
+    | Response<ArchiveChatResponse>
+    | Response<ToggleMuteNotificationResponse>
+    | Response<GroupChatSummary | undefined>
+    | Response<StorageStatus>
+    | Response<undefined>
+    | Response<MigrateUserPrincipalResponse>
+    | Response<UserSummary[]>
+    | Response<CheckUsernameResponse>
+    | Response<EventWrapper<Message>>
+    | Response<EventsResponse<DirectChatEvent>>
+    | Response<EventsResponse<GroupChatEvent>>
+    | Response<EventsResponse<DirectChatEvent>>
+    | Response<EventsResponse<GroupChatEvent>>
+    | Response<undefined>
+    | Response<GroupChatDetailsResponse>
+    | Response<GroupChatDetails>
+    | Response<MarkReadResponse>
+    | Response<UserLookup>
+    | Response<UsersResponse>
+    | Response<undefined>
+    | Response<CurrentUserResponse>
+    | Response<MergedUpdatesResponse>
+    | Response<EventsResponse<ChatEvent>>
+    | Response<undefined>;
 
-type WorkerResponseCommon<T> = {
+type Response<T> = {
     kind: "worker_response";
     correlationId: string;
     response: T;
 };
 
 export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;
-
-export type WorkerGetUserStorageLimitsResponse = WorkerResponseCommon<StorageStatus>;
-export type WorkerInitUserPrincipalMigrationResponse = WorkerResponseCommon<undefined>;
-export type WorkerCreateUserClientResponse = WorkerResponseCommon<undefined>;
-export type GetCurrentUserResponse = WorkerResponseCommon<CurrentUserResponse>;
-export type WorkerMarkReadResponse = WorkerResponseCommon<MarkReadResponse>;
-export type WorkerGetAllCachedUsersResponse = WorkerResponseCommon<UserLookup>;
-export type WorkerUpdatesResponse = WorkerResponseCommon<MergedUpdatesResponse>;
-export type WorkerGetUsersResponse = WorkerResponseCommon<UsersResponse>;
-export type WorkerChatEventsResponse = WorkerResponseCommon<EventsResponse<ChatEvent>>;
-export type WorkerDirectChatEventsWindowResponse = WorkerResponseCommon<
-    EventsResponse<DirectChatEvent>
->;
-export type WorkerGroupChatEventsWindowResponse = WorkerResponseCommon<
-    EventsResponse<GroupChatEvent>
->;
-export type WorkerDirectChatEventsByEventIndexResponse = WorkerResponseCommon<
-    EventsResponse<DirectChatEvent>
->;
-export type WorkerGroupChatEventsByEventIndexResponse = WorkerResponseCommon<
-    EventsResponse<GroupChatEvent>
->;
-export type WorkerGetGroupDetailsResponse = WorkerResponseCommon<GroupChatDetailsResponse>;
-export type WorkerGetGroupDetailUpdatesResponse = WorkerResponseCommon<GroupChatDetails>;
-export type WorkerMarkAsOnlineResponse = WorkerResponseCommon<undefined>;
-export type InitResponse = WorkerResponseCommon<undefined>;
-export type WorkerCheckUsernameResponse = WorkerResponseCommon<CheckUsernameResponse>;
-export type WorkerSearchUsersResponse = WorkerResponseCommon<UserSummary[]>;
-export type WorkerRehydrateMessageResponse = WorkerResponseCommon<EventWrapper<Message>>;
-export type WorkerMigrateUserPrincipalResponse = WorkerResponseCommon<MigrateUserPrincipalResponse>;
 
 /** Worker event types */
 type WorkerEventCommon<T> = {
