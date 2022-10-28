@@ -22,24 +22,20 @@ import type {
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
     CurrentChatState,
-} from "../../domain/chat/chat";
-import type { BlobReference } from "../../domain/data/data";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
-import type {
-    SearchDirectChatResponse,
-    SearchAllMessagesResponse,
-} from "../../domain/search/search";
-import type {
     ArchiveChatResponse,
+    BlobReference,
     CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    ServiceRetryInterrupt,
     SetBioResponse,
+    ToggleMuteNotificationResponse,
     UnpinChatResponse,
     UserLookup,
-} from "../../domain/user/user";
-import type { ServiceRetryInterrupt } from "../candidService";
+} from "openchat-shared";
 
 export interface IUserClient {
     userId: string;

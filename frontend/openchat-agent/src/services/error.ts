@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { getTimeUntilSessionExpiryMs } from "../utils/session";
+import { getTimeUntilSessionExpiryMs } from "openchat-shared";
 
 export class HttpError extends Error {
     constructor(public code: number, error: Error) {

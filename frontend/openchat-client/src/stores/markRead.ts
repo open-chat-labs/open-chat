@@ -4,7 +4,7 @@ import type {
     MarkReadResponse,
     ThreadRead,
     ThreadSyncDetails,
-} from "openchat-agent";
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import type { OpenChatAgentWorker } from "src/agentWorker";
 

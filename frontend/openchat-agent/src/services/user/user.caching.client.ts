@@ -1,4 +1,4 @@
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -24,7 +24,26 @@ import type {
     ChatEvent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
-} from "../../domain/chat/chat";
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    GroupInvite,
+    MigrateUserPrincipalResponse,
+    missingUserIds,
+    PinChatResponse,
+    PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    ServiceRetryInterrupt,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    UserLookup,
+    userIdsFromEvents,
+    indexRangeForChat,
+    MessagesReadFromServer,
+    UsersLoaded,
+} from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
     Database,
@@ -41,39 +60,16 @@ import {
 import {
     compareChats,
     getFirstUnreadMessageIndex,
-    indexRangeForChat,
     threadsReadFromChat,
     updateArgsFromChats,
-    userIdsFromEvents,
 } from "../../utils/chat";
 import { MAX_MISSING } from "../../constants";
-import type { BlobReference } from "../../domain/data/data";
-import type {
-    ArchiveChatResponse,
-    CreatedUser,
-    MigrateUserPrincipalResponse,
-    PinChatResponse,
-    PublicProfile,
-    SetBioResponse,
-    UnpinChatResponse,
-    UserLookup,
-} from "../../domain/user/user";
-import type {
-    SearchDirectChatResponse,
-    SearchAllMessagesResponse,
-} from "../../domain/search/search";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { missingUserIds } from "../../domain/user/user.utils";
 import { UserIndexClient } from "../userIndex/userIndex.client";
-import type { GroupInvite } from "../../services/openchatAgent";
-import type { ServiceRetryInterrupt } from "../candidService";
-// import { configKeys } from "../../utils/config";
 import type { AgentConfig } from "../../config";
-import { MessagesReadFromServer, UsersLoaded } from "src/events";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to

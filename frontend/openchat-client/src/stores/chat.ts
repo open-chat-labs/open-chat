@@ -1,4 +1,4 @@
-import type {
+import {
     ChatEvent,
     ChatSpecificState,
     ChatSummary,
@@ -8,8 +8,9 @@ import type {
     MessageContent,
     ThreadSyncDetails,
     CreatedUser,
-} from "openchat-agent";
-import { compareChats, emptyChatMetrics } from "openchat-agent";
+    compareChats,
+    emptyChatMetrics,
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";

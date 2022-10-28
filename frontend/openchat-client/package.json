@@ -30,7 +30,8 @@
         "svelte-i18n": "^3.4.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
         "uuid": "^9.0.0",
-        "openchat-agent": "*"
+        "openchat-worker": "*",
+        "openchat-shared": "*"
     },
     "devDependencies": {
         "@babel/core": "^7.17.9",

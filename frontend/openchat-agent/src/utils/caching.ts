@@ -1,6 +1,6 @@
 import { MAX_EVENTS } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type {
+import {
     ChatEvent,
     ChatSummary,
     EventsResponse,
@@ -14,8 +14,8 @@ import type {
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-} from "../domain/chat/chat";
-import { UnsupportedValueError } from "./error";
+    UnsupportedValueError,
+} from "openchat-shared";
 
 const CACHE_VERSION = 47;
 

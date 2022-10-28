@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type { UserSummary } from "../domain/user/user";
+import type { UserSummary } from "openchat-shared";
 
 const CACHE_VERSION = 1;
 

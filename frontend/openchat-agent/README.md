@@ -3,6 +3,8 @@
 This library attempts to encapsulate the OpenChat front end service layer. This means all of the interaction with the
 back end canisters, all mapping to front end domain types and all interactions with the indexeddb cache.
 
+This library is designed to run entirely within a web worker so be aware that some things like local storage cannot be accessed here.
+
 The golden rule of the open chat agent is that it does not depend on openchat client. App state is maintained by the openchat client and
 openchat agent just provides services.
 
@@ -18,5 +20,4 @@ Would be nice to design this from the beginning to be usable by a third party so
 -   service interface
 -   service container
 -   mapping functions
--   domain types (and pure functions operating on those types)
 -   utility functions

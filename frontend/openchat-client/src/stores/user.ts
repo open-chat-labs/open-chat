@@ -1,4 +1,4 @@
-import type { PartialUserSummary, UserLookup } from "openchat-agent";
+import type { PartialUserSummary, UserLookup } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
 export const currentUserKey = Symbol();

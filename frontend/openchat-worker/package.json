@@ -22,7 +22,7 @@
         "core-js": "^3.26.0",
         "core-js-pure": "^3.26.0",
         "drange": "^2.0.1",
-        "openchat-agent": "*",
+        "openchat-shared": "*",
         "uuid": "^9.0.0"
     },
     "devDependencies": {

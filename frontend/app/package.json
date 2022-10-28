@@ -104,6 +104,7 @@
         "svelte-spa-router": "^3.2.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
         "uuid": "^9.0.0",
-        "openchat-client": "*"
+        "openchat-client": "*",
+        "openchat-shared": "*"
     }
 }

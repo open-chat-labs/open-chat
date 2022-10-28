@@ -1,6 +1,7 @@
-import type { NotificationStatus } from "openchat-agent";
 import { derived, writable } from "svelte/store";
-import { getSoftDisabled, storeSoftDisabled } from "openchat-agent";
+
+// FIXME - this is a problem. Since this is not needed in the service worker any more we can just move this to local storage
+import { getSoftDisabled, storeSoftDisabled, NotificationStatus } from "openchat-shared";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;

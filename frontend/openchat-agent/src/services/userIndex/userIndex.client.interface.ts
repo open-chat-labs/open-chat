@@ -1,4 +1,3 @@
-import type { ServiceRetryInterrupt } from "../candidService";
 import type {
     CreateChallengeResponse,
     ChallengeAttempt,
@@ -14,7 +13,8 @@ import type {
     UserSummary,
     RegisterUserResponse,
     UpgradeStorageResponse,
-} from "../../domain/user/user";
+    ServiceRetryInterrupt,
+} from "openchat-shared";
 
 export interface IUserIndexClient {
     getCurrentUser: () => Promise<CurrentUserResponse>;

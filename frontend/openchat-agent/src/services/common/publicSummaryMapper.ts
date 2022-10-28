@@ -1,5 +1,4 @@
 import { emptyChatMetrics } from "../../utils/chat";
-import type { GroupChatSummary } from "../../domain/chat/chat";
 import type {
     ApiPublicGroupSummary,
     ApiPublicSummaryResponse,
@@ -7,6 +6,7 @@ import type {
 import { optional } from "../../utils/mapping";
 import { message } from "./chatMappers";
 import { apiGroupSubtype } from "../../services/user/mappers";
+import type { GroupChatSummary } from "openchat-shared";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
     return {

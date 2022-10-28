@@ -1,4 +1,4 @@
-import { openDbAndGetCachedChats } from "src/utils/caching";
+import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
 
 export async function ensureReplicaIsUpToDate(

@@ -1,5 +1,5 @@
 import { enoughVisibleMessages, nextIndex } from "../../utils/chat";
-import type { ChatEvent, EventWrapper, EventsResponse, IndexRange } from "../../domain/chat/chat";
+import type { ChatEvent, EventWrapper, EventsResponse, IndexRange } from "openchat-shared";
 
 const MAX_RECURSION = 10;
 

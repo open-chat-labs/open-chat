@@ -5,7 +5,7 @@ import type {
     LocalReaction,
     MessageContent,
     ThreadSummary,
-} from "openchat-agent";
+} from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL: number = 30 * 1000;

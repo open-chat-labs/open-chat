@@ -1,124 +1,119 @@
 import type { Identity } from "@dfinity/agent";
-import type {
-    CheckUsernameResponse,
-    CurrentUserResponse,
-    SetUsernameResponse,
-    SubmitPhoneNumberResponse,
-    ConfirmPhoneNumberResponse,
-    PhoneNumber,
-    ResendCodeResponse,
-    UsersArgs,
-    UsersResponse,
-    UserSummary,
-    User,
-    SetBioResponse,
-    RegisterUserResponse,
-    UpgradeStorageResponse,
-    PartialUserSummary,
-    ChallengeAttempt,
-    CreateChallengeResponse,
-    PublicProfile,
-    PinChatResponse,
-    UnpinChatResponse,
-    MigrateUserPrincipalResponse,
-    ArchiveChatResponse,
-    CreatedUser,
-    UserLookup,
-} from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type {
-    EventsResponse,
-    UpdateArgs,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    DirectChatEvent,
-    GroupChatEvent,
-    ChatEvent,
-    ChatSummary,
-    MergedUpdatesResponse,
-    AddMembersResponse,
-    Message,
-    SendMessageResponse,
-    RemoveMemberResponse,
-    BlockUserResponse,
-    UnblockUserResponse,
-    LeaveGroupResponse,
-    MarkReadResponse,
-    UpdateGroupResponse,
-    AddRemoveReactionResponse,
-    IndexRange,
-    EventWrapper,
-    DeleteMessageResponse,
-    JoinGroupResponse,
-    EditMessageResponse,
-    MarkReadRequest,
-    ChangeRoleResponse,
-    GroupChatDetailsResponse,
-    GroupChatDetails,
-    DeleteGroupResponse,
-    MessageContent,
-    GroupChatSummary,
-    MemberRole,
-    PinMessageResponse,
-    UnpinMessageResponse,
-    RegisterPollVoteResponse,
-    GroupPermissions,
-    PendingCryptocurrencyWithdrawal,
-    WithdrawCryptocurrencyResponse,
-    MakeGroupPrivateResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    CurrentChatState,
-    ThreadPreview,
-    ThreadSyncDetails,
-    RegisterProposalVoteResponse,
-    ListNervousSystemFunctionsResponse,
-    ThreadPreviewsResponse,
-    GroupRules,
-} from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
-import type { BlobReference, DataContent, StorageStatus } from "../domain/data/data";
-import { UnsupportedValueError } from "../utils/error";
-import type {
-    GroupSearchResponse,
-    SearchAllMessagesResponse,
-    SearchDirectChatResponse,
-    SearchGroupChatResponse,
-} from "../domain/search/search";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
-import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
-import type { Cryptocurrency, Tokens } from "../domain/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import type { ServiceRetryInterrupt } from "./candidService";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../utils/chat";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { Logger } from "../utils/logging";
 import type { AgentConfig } from "../config";
-import { MessagesReadFromServer } from "src/events";
+import {
+    AddMembersResponse,
+    AddRemoveReactionResponse,
+    ArchiveChatResponse,
+    BlobReference,
+    BlockUserResponse,
+    CandidateGroupChat,
+    ChallengeAttempt,
+    ChangeRoleResponse,
+    ChatEvent,
+    ChatSummary,
+    CheckUsernameResponse,
+    ConfirmPhoneNumberResponse,
+    CreateChallengeResponse,
+    CreatedUser,
+    CreateGroupResponse,
+    Cryptocurrency,
+    CurrentChatState,
+    CurrentUserResponse,
+    DataContent,
+    DeleteGroupResponse,
+    DeleteMessageResponse,
+    DirectChatEvent,
+    DisableInviteCodeResponse,
+    EditMessageResponse,
+    EnableInviteCodeResponse,
+    EventsResponse,
+    EventWrapper,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
+    GroupChatEvent,
+    GroupChatSummary,
+    GroupInvite,
+    GroupPermissions,
+    GroupRules,
+    GroupSearchResponse,
+    IndexRange,
+    InviteCodeResponse,
+    JoinGroupResponse,
+    LeaveGroupResponse,
+    ListNervousSystemFunctionsResponse,
+    MakeGroupPrivateResponse,
+    MarkReadRequest,
+    MarkReadResponse,
+    MemberRole,
+    MergedUpdatesResponse,
+    Message,
+    MessageContent,
+    MessagesReadFromServer,
+    MigrateUserPrincipalResponse,
+    PartialUserSummary,
+    PendingCryptocurrencyWithdrawal,
+    PhoneNumber,
+    PinChatResponse,
+    PinMessageResponse,
+    PublicProfile,
+    RegisterPollVoteResponse,
+    RegisterProposalVoteResponse,
+    RegisterUserResponse,
+    RemoveMemberResponse,
+    ResendCodeResponse,
+    ResetInviteCodeResponse,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+    SendMessageResponse,
+    ServiceRetryInterrupt,
+    SetBioResponse,
+    SetUsernameResponse,
+    StorageStatus,
+    SubmitPhoneNumberResponse,
+    ThreadPreview,
+    ThreadPreviewsResponse,
+    ThreadSyncDetails,
+    ToggleMuteNotificationResponse,
+    Tokens,
+    UnblockUserResponse,
+    UnpinChatResponse,
+    UnpinMessageResponse,
+    UnsupportedValueError,
+    UpdateArgs,
+    UpdateGroupResponse,
+    UpgradeStorageResponse,
+    User,
+    UserLookup,
+    UsersArgs,
+    UsersResponse,
+    UserSummary,
+    WithdrawCryptocurrencyResponse,
+} from "openchat-shared";
 
 export const apiKey = Symbol();
-
-export type GroupInvite = {
-    chatId: string;
-    code: string;
-};
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: IUserIndexClient;

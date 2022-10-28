@@ -16,7 +16,7 @@ import type {
     UpgradeStorageResponse,
     ChallengeAttempt,
     CreateChallengeResponse,
-} from "../../domain/user/user";
+} from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,

@@ -1,5 +1,6 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import type { ServiceRetryInterrupt } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
     AuthError,
@@ -15,9 +16,6 @@ function debug(msg: string): void {
     console.log(msg);
 }
 
-// This is a fn which will be given the retry iteration number and return a boolean indicating whether to *stop* retrying
-export type ServiceRetryInterrupt = (iterations: number) => boolean;
-
 export abstract class CandidService {
     protected createServiceClient<T>(
         factory: IDL.InterfaceFactory,
@@ -26,7 +24,7 @@ export abstract class CandidService {
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });
-        const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
+        const isMainnet = config.icUrl.includes("ic0.app");
         if (!isMainnet) {
             agent.fetchRootKey();
         }
@@ -80,7 +78,7 @@ export abstract class CandidService {
                     }
 
                     return new Promise((resolve, reject) => {
-                        window.setTimeout(() => {
+                        setTimeout(() => {
                             this.handleQueryResponse(
                                 serviceCall,
                                 mapper,

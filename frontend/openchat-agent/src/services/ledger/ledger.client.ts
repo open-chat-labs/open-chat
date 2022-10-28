@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { idlFactory, LedgerService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ILedgerClient } from "./ledger.client.interface";
-import type { Tokens } from "../../domain/crypto";
+import type { Tokens } from "openchat-shared";
 import { hexStringToBytes, identity } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 

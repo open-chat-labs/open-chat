@@ -1,5 +1,4 @@
-import type { GroupInvite, ServiceRetryInterrupt } from "../services";
-import type { AgentConfig } from "../config";
+import type { AgentConfig } from "./config";
 import type {
     AddMembersResponse,
     AddRemoveReactionResponse,
@@ -84,6 +83,8 @@ import type {
     SearchGroupChatResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
+import type { GroupInvite } from "./inviteCodes";
+import type { ServiceRetryInterrupt } from "../";
 
 /**
  * Worker request types

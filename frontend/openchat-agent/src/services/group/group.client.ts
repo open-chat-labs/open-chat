@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, GroupService } from "./candid/idl";
-import type {
+import {
     AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
@@ -31,9 +31,12 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-} from "../../domain/chat/chat";
-import type { User } from "../../domain/user/user";
-import { CandidService, ServiceRetryInterrupt } from "../candidService";
+    textToCode,
+    SearchGroupChatResponse,
+    ServiceRetryInterrupt,
+    User,
+} from "openchat-shared";
+import { CandidService } from "../candidService";
 import {
     apiRole,
     addMembersResponse,
@@ -73,10 +76,8 @@ import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { textToCode } from "../../domain/inviteCodes";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";

@@ -6,7 +6,7 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -31,8 +31,23 @@ import type {
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
-} from "../../domain/chat/chat";
-import { CandidService, ServiceRetryInterrupt } from "../candidService";
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    GroupInvite,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    ServiceRetryInterrupt,
+    SetBioResponse,
+    textToCode,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    UserLookup,
+} from "openchat-shared";
+import { CandidService } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
@@ -75,28 +90,10 @@ import {
     apiReplyContextArgs,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import type { BlobReference } from "../../domain/data/data";
-import type {
-    ArchiveChatResponse,
-    CreatedUser,
-    MigrateUserPrincipalResponse,
-    PinChatResponse,
-    PublicProfile,
-    SetBioResponse,
-    UnpinChatResponse,
-    UserLookup,
-} from "../../domain/user/user";
-import type {
-    SearchAllMessagesResponse,
-    SearchDirectChatResponse,
-} from "../../domain/search/search";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { textToCode } from "../../domain/inviteCodes";
-import type { GroupInvite } from "../../services/openchatAgent";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";

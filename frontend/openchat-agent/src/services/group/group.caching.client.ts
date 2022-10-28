@@ -31,8 +31,10 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-} from "../../domain/chat/chat";
-import type { User } from "../../domain/user/user";
+    ServiceRetryInterrupt,
+    User,
+    SearchGroupChatResponse,
+} from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import {
@@ -47,11 +49,9 @@ import {
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../constants";
 import type { Logger } from "../../utils/logging";
-import type { ServiceRetryInterrupt } from "../candidService";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to

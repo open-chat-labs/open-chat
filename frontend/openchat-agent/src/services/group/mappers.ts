@@ -32,7 +32,7 @@ import type {
     ApiGroupRules,
     ApiRulesResponse,
 } from "./candid/idl";
-import type {
+import {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
@@ -65,8 +65,10 @@ import type {
     RegisterProposalVoteResponse,
     GroupRules,
     GroupPermissions,
-} from "../../domain/chat/chat";
-import { UnsupportedValueError } from "../../utils/error";
+    SearchGroupChatResponse,
+    codeToText,
+    UnsupportedValueError,
+} from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
@@ -78,9 +80,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { identity, optional } from "../../utils/mapping";
-import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
 

@@ -86,7 +86,8 @@ import {
     DisableInviteCodeResponse,
     CandidateGroupChat,
     CreateGroupResponse,
-} from "openchat-agent";
+    ChangeRoleResponse,
+} from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
@@ -192,7 +193,7 @@ export class OpenChatAgentWorker extends EventTarget {
         }
     }
 
-    private sendRequest<Req extends Omit<WorkerRequest, "correlationId">, Resp = void>(
+    private sendRequest<Req extends Omit<WorkerRequest, "correlationId">, Resp = unknown>(
         req: Req
     ): Promise<Resp> {
         const correlated = {

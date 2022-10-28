@@ -15,7 +15,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-} from "../../domain/user/user";
+} from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
 import type { Logger } from "../../utils/logging";

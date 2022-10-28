@@ -4,7 +4,7 @@ import type {
     GroupChatSummary,
     GroupChatSummaryUpdates,
     UpdatesResponse,
-} from "../domain";
+} from "openchat-shared";
 import { enoughVisibleMessages, mergeChatUpdates, emptyChatMetrics } from "./chat";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

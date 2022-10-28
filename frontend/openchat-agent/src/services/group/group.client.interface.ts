@@ -1,5 +1,5 @@
-import type { User } from "../../domain/user/user";
 import type {
+    User,
     AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
@@ -30,9 +30,9 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-} from "../../domain/chat/chat";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
-import type { ServiceRetryInterrupt } from "../candidService";
+    SearchGroupChatResponse,
+    ServiceRetryInterrupt,
+} from "openchat-shared";
 
 export interface IGroupClient {
     chatEventsByIndex(
