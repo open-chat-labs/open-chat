@@ -68,6 +68,7 @@
         ],
         "moduleNameMapper": {
             "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
+            "openchat-shared": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
         }

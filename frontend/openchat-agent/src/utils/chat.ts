@@ -334,6 +334,7 @@ export function enoughVisibleMessages(
     [minIndex, maxIndex]: IndexRange,
     events: EventWrapper<ChatEvent>[]
 ): boolean {
+    console.log("in the func");
     const filtered = events.filter(eventIsVisible);
     if (filtered.length >= EVENT_PAGE_SIZE) {
         return true;
