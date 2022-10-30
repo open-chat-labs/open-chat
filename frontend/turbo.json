@@ -24,19 +24,19 @@
   "pipeline": {
     "build": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "validate", "lint", "test"]
+      "dependsOn": ["^build", "validate", "lint"]
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod_test", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod_test", "validate", "lint"]
     },
     "build:prod": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod", "validate", "lint"]
     },
     "build:testnet": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:testnet", "validate", "lint", "test"]
+      "dependsOn": ["^build:testnet", "validate", "lint"]
     },
     "dev": {
       "cache": false
