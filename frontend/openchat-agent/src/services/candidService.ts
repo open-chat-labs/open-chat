@@ -1,13 +1,8 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import type { ServiceRetryInterrupt } from "openchat-shared";
+import { ServiceRetryInterrupt, AuthError, SessionExpiryError } from "openchat-shared";
 import type { AgentConfig } from "../config";
-import {
-    AuthError,
-    ReplicaNotUpToDateError,
-    SessionExpiryError,
-    toCanisterResponseError,
-} from "./error";
+import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;

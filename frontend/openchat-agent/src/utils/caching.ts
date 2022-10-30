@@ -17,7 +17,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 
-const CACHE_VERSION = 47;
+const CACHE_VERSION = 48;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -51,11 +51,6 @@ export interface ChatSchema extends DBSchema {
     group_details: {
         key: string;
         value: GroupChatDetails;
-    };
-
-    soft_disabled: {
-        key: string;
-        value: boolean;
     };
 }
 
@@ -94,9 +89,6 @@ export function openCache(principal: string): Database {
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
             db.createObjectStore("group_details");
-            if (!db.objectStoreNames.contains("soft_disabled")) {
-                db.createObjectStore("soft_disabled");
-            }
         },
     });
 }
@@ -474,19 +466,7 @@ export function setCachedMessageFromSendResponse(
     };
 }
 
-export function setCachedMessageFromNotification(
-    chatId: string,
-    threadRootMessageIndex: number | undefined,
-    message: EventWrapper<Message>
-): void {
-    if (db === undefined) {
-        throw new Error("Unable to open indexDB, cannot set message from notification");
-    }
-
-    setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex);
-}
-
-async function setCachedMessageIfNotExists(
+export async function setCachedMessageIfNotExists(
     db: Database,
     chatId: string,
     messageEvent: EventWrapper<Message>,
@@ -528,20 +508,6 @@ export async function setCachedGroupDetails(
     groupDetails: GroupChatDetails
 ): Promise<void> {
     await (await db).put("group_details", groupDetails, chatId);
-}
-
-export async function storeSoftDisabled(value: boolean): Promise<void> {
-    if (db !== undefined) {
-        await (await db).put("soft_disabled", value, "soft_disabled");
-    }
-}
-
-export async function getSoftDisabled(): Promise<boolean> {
-    if (db !== undefined) {
-        const res = await (await db).get("soft_disabled", "soft_disabled");
-        return res ?? false;
-    }
-    return false;
 }
 
 let db: Database | undefined;

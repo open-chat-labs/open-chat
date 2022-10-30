@@ -1,4 +1,4 @@
-import type { PartialUserSummary, UserLookup } from "openchat-agent";
+import type { PartialUserSummary, UserLookup } from "openchat-shared";
 import { init, addMessages, _ } from "svelte-i18n";
 import { buildUsernameList, compareUsername } from "./user";
 import { get } from "svelte/store";

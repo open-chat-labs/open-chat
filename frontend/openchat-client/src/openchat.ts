@@ -273,6 +273,7 @@ import {
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
+    type Logger,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -1264,7 +1265,13 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    setCachedMessageFromNotification = setCachedMessageFromNotification;
+    setCachedMessageFromNotification(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        message: EventWrapper<Message>
+    ): Promise<void> {
+        return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+    }
     createDirectChat = createDirectChat;
     setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
         setSelectedChat(this.api, chat, messageIndex);
@@ -1954,11 +1961,7 @@ export class OpenChat extends EventTarget {
     dataToBlobUrl = dataToBlobUrl;
     groupChatFromCandidate = groupChatFromCandidate;
     askForNotificationPermission = askForNotificationPermission;
-    setSoftDisabled(softDisabled: boolean): void {
-        setSoftDisabled(softDisabled).catch((err) =>
-            this._logger.error("Failed to set soft disabled", err)
-        );
-    }
+    setSoftDisabled = setSoftDisabled;
 
     editMessageWithAttachment(
         chat: ChatSummary,

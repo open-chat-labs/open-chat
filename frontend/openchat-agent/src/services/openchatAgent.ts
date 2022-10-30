@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, initDb } from "../utils/caching";
+import { Database, initDb, setCachedMessageIfNotExists } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -20,9 +20,9 @@ import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../utils/chat";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
-import type { Logger } from "../utils/logging";
 import type { AgentConfig } from "../config";
 import {
+    Logger,
     AddMembersResponse,
     AddRemoveReactionResponse,
     ArchiveChatResponse,
@@ -618,9 +618,7 @@ export class OpenChatAgent extends EventTarget {
                 if (msg) {
                     rehydratedReplyContext = {
                         kind: "rehydrated_reply_context",
-                        content: JSON.parse(
-                            JSON.stringify(this.rehydrateMessageContent(msg.content))
-                        ),
+                        content: structuredClone(this.rehydrateMessageContent(msg.content)),
                         senderId: msg.sender,
                         messageId: msg.messageId,
                         messageIndex: msg.messageIndex,
@@ -1304,5 +1302,13 @@ export class OpenChatAgent extends EventTarget {
             rootMessage,
             latestReplies,
         };
+    }
+
+    setCachedMessageFromNotification(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        message: EventWrapper<Message>
+    ): Promise<void> {
+        return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
     }
 }

@@ -22,6 +22,7 @@ import {
     UpdateArgs,
     UpdatesResponse,
     compareChats,
+    eventIsVisible,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { applyOptionUpdate } from "./mapping";
@@ -343,22 +344,6 @@ export function enoughVisibleMessages(
         // if there are no previous events then we have enough by definition
         return events[0].index <= minIndex;
     }
-}
-
-export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return (
-        ew.event.kind !== "reaction_added" &&
-        ew.event.kind !== "message_deleted" &&
-        ew.event.kind !== "message_edited" &&
-        ew.event.kind !== "reaction_removed" &&
-        ew.event.kind !== "message_pinned" &&
-        ew.event.kind !== "message_unpinned" &&
-        ew.event.kind !== "poll_vote_registered" &&
-        ew.event.kind !== "poll_vote_deleted" &&
-        ew.event.kind !== "poll_ended" &&
-        ew.event.kind !== "thread_updated" &&
-        ew.event.kind !== "proposals_updated"
-    );
 }
 
 export function nextIndex(

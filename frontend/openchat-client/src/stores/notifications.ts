@@ -1,21 +1,21 @@
 import { derived, writable } from "svelte/store";
 
-// FIXME - this is a problem. Since this is not needed in the service worker any more we can just move this to local storage
-import { getSoftDisabled, storeSoftDisabled, NotificationStatus } from "openchat-shared";
+import type { NotificationStatus } from "openchat-shared";
+import { createLsBoolStore } from "./localStorageSetting";
+import { configKeys } from "../utils/config";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
-const softDisabledStore = writable<boolean>(false);
+// FIXME - how do we deal with existing values stored in indexeddb
+export const softDisabledStore = createLsBoolStore(configKeys.softDisabled, false);
+
 const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
 
 export async function initNotificationStores(): Promise<void> {
     if (!notificationsSupported) {
         return;
     }
-
-    const softDisabled = await getSoftDisabled();
-    softDisabledStore.set(softDisabled);
 
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
@@ -28,12 +28,8 @@ export async function initNotificationStores(): Promise<void> {
     }
 }
 
-export function setSoftDisabled(softDisabled: boolean): Promise<void> {
-    // add to indexdb so service worker has access
-    return storeSoftDisabled(softDisabled).finally(() => {
-        // add to svelte store
-        softDisabledStore.set(softDisabled);
-    });
+export function setSoftDisabled(softDisabled: boolean): void {
+    softDisabledStore.set(softDisabled);
 }
 
 function permissionStateToNotificationPermission(perm: PermissionState): NotificationPermission {

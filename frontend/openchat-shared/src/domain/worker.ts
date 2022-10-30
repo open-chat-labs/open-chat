@@ -176,7 +176,16 @@ export type WorkerRequest =
     | EnableInviteCode
     | DisableInviteCode
     | CreateGroupChat
+    | SetCachedMessageFromNotification
     | GetInitialState;
+
+type SetCachedMessageFromNotification = Request<{
+    chatId: string;
+    threadRootMessageIndex: number | undefined;
+    message: EventWrapper<Message>;
+}> & {
+    kind: "setCachedMessageFromNotification";
+};
 
 type CreateGroupChat = Request<{
     candidate: CandidateGroupChat;

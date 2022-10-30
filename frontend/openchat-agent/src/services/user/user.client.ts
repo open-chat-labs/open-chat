@@ -46,6 +46,7 @@ import {
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
     UserLookup,
+    compareChats,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -77,7 +78,7 @@ import {
     archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, mergeChatUpdates } from "../../utils/chat";
+import { mergeChatUpdates } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";

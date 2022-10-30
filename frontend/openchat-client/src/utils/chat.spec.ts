@@ -7,7 +7,7 @@ import {
     UserLookup,
     UserSummary,
     emptyChatMetrics,
-} from "openchat-agent";
+} from "openchat-shared";
 import {
     addVoteToPoll,
     getMembersString,

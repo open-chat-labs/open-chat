@@ -1094,6 +1094,21 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "setCachedMessageFromNotification":
+            agent
+                .setCachedMessageFromNotification(
+                    payload.chatId,
+                    payload.threadRootMessageIndex,
+                    payload.message
+                )
+                .then(() =>
+                    sendResponse(correlationId, {
+                        response: undefined,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.log("WORKER: unknown message kind received: ", kind);
     }

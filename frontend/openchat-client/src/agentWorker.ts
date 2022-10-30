@@ -1138,4 +1138,19 @@ export class OpenChatAgentWorker extends EventTarget {
             },
         });
     }
+
+    setCachedMessageFromNotification(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        message: EventWrapper<Message>
+    ): Promise<void> {
+        return this.sendRequest({
+            kind: "setCachedMessageFromNotification",
+            payload: {
+                chatId,
+                threadRootMessageIndex,
+                message,
+            },
+        });
+    }
 }

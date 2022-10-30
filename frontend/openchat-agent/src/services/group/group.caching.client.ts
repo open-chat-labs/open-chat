@@ -34,6 +34,7 @@ import type {
     ServiceRetryInterrupt,
     User,
     SearchGroupChatResponse,
+    Logger,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -51,7 +52,6 @@ import {
 } from "../../utils/caching";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../constants";
-import type { Logger } from "../../utils/logging";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to

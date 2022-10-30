@@ -15,10 +15,10 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    Logger,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
-import type { Logger } from "../../utils/logging";
 import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
 
 function isUserSummary(user: PartialUserSummary): user is UserSummary {

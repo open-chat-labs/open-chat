@@ -43,6 +43,7 @@ import {
     indexRangeForChat,
     MessagesReadFromServer,
     UsersLoaded,
+    compareChats,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -58,7 +59,6 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
-    compareChats,
     getFirstUnreadMessageIndex,
     threadsReadFromChat,
     updateArgsFromChats,

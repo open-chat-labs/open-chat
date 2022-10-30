@@ -1,4 +1,4 @@
-export * from "openchat-agent";
+export * from "openchat-shared";
 export * from "./stores";
 export { OpenChat } from "./openchat";
 export { OpenChatConfig } from "./config";

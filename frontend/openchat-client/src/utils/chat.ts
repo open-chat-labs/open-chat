@@ -30,8 +30,8 @@ import {
     Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
-} from "openchat-agent";
-import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-agent";
+} from "openchat-shared";
+import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
@@ -592,14 +592,11 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
     }
 }
 
-function updatePollContent(
-    content: PollContent,
-    votes: LocalPollVote[]
-): PollContent {
+function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
     for (const vote of votes) {
         content = {
             ...content,
-            votes: updatePollVotes(vote.userId, content, vote.answerIndex, vote.type)
+            votes: updatePollVotes(vote.userId, content, vote.answerIndex, vote.type),
         };
     }
     return content;
@@ -1056,8 +1053,14 @@ function mergeLocalUpdates(
             if (replyContextLocalUpdates.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
             }
-            if (replyContextLocalUpdates.pollVotes !== undefined && message.repliesTo.content.kind === "poll_content") {
-                message.repliesTo.content = updatePollContent(message.repliesTo.content, replyContextLocalUpdates.pollVotes);
+            if (
+                replyContextLocalUpdates.pollVotes !== undefined &&
+                message.repliesTo.content.kind === "poll_content"
+            ) {
+                message.repliesTo.content = updatePollContent(
+                    message.repliesTo.content,
+                    replyContextLocalUpdates.pollVotes
+                );
             }
         }
     }
