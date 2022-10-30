@@ -6,6 +6,7 @@ use utils::time::MINUTE_IN_MS;
 #[heartbeat]
 fn heartbeat() {
     execute_callbacks::run();
+    cycles_dispenser_client::run();
 }
 
 mod execute_callbacks {

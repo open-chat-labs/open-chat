@@ -15,6 +15,7 @@ candid = { workspace = true }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+cycles_dispenser_client = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
