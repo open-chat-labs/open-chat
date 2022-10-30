@@ -111,6 +111,8 @@ export class OpenChatAgentWorker extends EventTarget {
 
     constructor(private config: OpenChatConfig) {
         super();
+        // FIXME - this somehow needs to be versioned. We can easily create content hashed output from the agent project
+        // but not sure how to correlate the two things
         this._worker = new Worker("worker.js");
         const req: Omit<WorkerRequest, "correlationId"> = {
             kind: "init",
