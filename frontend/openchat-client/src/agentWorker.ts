@@ -92,6 +92,11 @@ import { v4 } from "uuid";
 
 const WORKER_TIMEOUT = 1000 * 10;
 
+type UnresolvedRequest = {
+    kind: string;
+    sentAt: number;
+};
+
 type PromiseResolver<T> = {
     resolve: (val: T | PromiseLike<T>) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,7 +110,8 @@ type PromiseResolver<T> = {
 export class OpenChatAgentWorker extends EventTarget {
     private _worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private _pending: Map<string, PromiseResolver<any>> = new Map();
+    private _pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
+    private _unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     public ready: Promise<boolean>;
 
     constructor(private config: OpenChatConfig) {
@@ -176,13 +182,29 @@ export class OpenChatAgentWorker extends EventTarget {
         };
     }
 
+    private logUnexpected(correlationId: string): void {
+        const unresolved = this._unresolved.get(correlationId);
+        const timedOut =
+            unresolved === undefined
+                ? ""
+                : `Timed-out req of kind: ${unresolved.kind} received after ${
+                      Date.now() - unresolved.sentAt
+                  }ms`;
+        console.error(
+            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`
+        );
+    }
+
     private resolveResponse(data: WorkerResponse): void {
         const promise = this._pending.get(data.correlationId);
         if (promise !== undefined) {
             promise.resolve(data.response);
             window.clearTimeout(promise.timeout);
             this._pending.delete(data.correlationId);
+        } else {
+            this.logUnexpected(data.correlationId);
         }
+        this._unresolved.delete(data.correlationId);
     }
 
     private resolveError(data: WorkerError): void {
@@ -191,7 +213,10 @@ export class OpenChatAgentWorker extends EventTarget {
             promise.reject(data.error);
             window.clearTimeout(promise.timeout);
             this._pending.delete(data.correlationId);
+        } else {
+            this.logUnexpected(data.correlationId);
         }
+        this._unresolved.delete(data.correlationId);
     }
 
     private sendRequest<Req extends Omit<WorkerRequest, "correlationId">, Resp = unknown>(
@@ -203,6 +228,7 @@ export class OpenChatAgentWorker extends EventTarget {
         };
         this._worker.postMessage(correlated);
         const promise = new Promise<Resp>((resolve, reject) => {
+            const sentAt = Date.now();
             this._pending.set(correlated.correlationId, {
                 resolve,
                 reject,
@@ -210,6 +236,10 @@ export class OpenChatAgentWorker extends EventTarget {
                     reject(
                         `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
                     );
+                    this._unresolved.set(correlated.correlationId, {
+                        kind: req.kind,
+                        sentAt,
+                    });
                     this._pending.delete(correlated.correlationId);
                 }, WORKER_TIMEOUT),
             });
