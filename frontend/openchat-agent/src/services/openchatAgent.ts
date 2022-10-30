@@ -88,7 +88,6 @@ import {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
-    ServiceRetryInterrupt,
     SetBioResponse,
     SetUsernameResponse,
     StorageStatus,
@@ -1056,9 +1055,9 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId).getRules();
     }
 
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
         return this.userClient
-            .getRecommendedGroups(interrupt)
+            .getRecommendedGroups()
             .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
 

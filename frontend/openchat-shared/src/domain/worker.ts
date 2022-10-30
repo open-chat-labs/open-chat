@@ -84,7 +84,6 @@ import type {
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
-import type { ServiceRetryInterrupt } from "../";
 
 /**
  * Worker request types
@@ -336,9 +335,7 @@ type GetGroupRules = Request<{
     kind: "getGroupRules";
 };
 
-type GetRecommendedGroups = Request<{
-    interrupt: ServiceRetryInterrupt;
-}> & {
+type GetRecommendedGroups = Request & {
     kind: "getRecommendedGroups";
 };
 

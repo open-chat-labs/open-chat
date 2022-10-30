@@ -31,7 +31,6 @@ import type {
     RegisterProposalVoteResponse,
     GroupRules,
     SearchGroupChatResponse,
-    ServiceRetryInterrupt,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -43,16 +42,14 @@ export interface IGroupClient {
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     addMembers(
         userIds: string[],

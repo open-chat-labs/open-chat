@@ -30,7 +30,6 @@ import type {
     PublicProfile,
     SearchAllMessagesResponse,
     SearchDirectChatResponse,
-    ServiceRetryInterrupt,
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
@@ -53,8 +52,7 @@ export interface IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
@@ -68,8 +66,7 @@ export interface IUserClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     deleteGroup(chatId: string): Promise<DeleteGroupResponse>;
@@ -126,7 +123,7 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]>;
+    getRecommendedGroups(): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     getPublicProfile(): Promise<PublicProfile>;

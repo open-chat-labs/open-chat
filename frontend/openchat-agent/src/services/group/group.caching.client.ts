@@ -31,7 +31,6 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-    ServiceRetryInterrupt,
     User,
     SearchGroupChatResponse,
     Logger,
@@ -115,8 +114,7 @@ export class CachingGroupClient implements IGroupClient {
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
@@ -132,7 +130,7 @@ export class CachingGroupClient implements IGroupClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex, interrupt)
+                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents(
@@ -149,8 +147,7 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
@@ -171,8 +168,7 @@ export class CachingGroupClient implements IGroupClient {
                     startIndex,
                     ascending,
                     threadRootMessageIndex,
-                    latestClientEventIndex,
-                    interrupt
+                    latestClientEventIndex
                 )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {

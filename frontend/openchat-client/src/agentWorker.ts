@@ -61,7 +61,6 @@ import {
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
-    ServiceRetryInterrupt,
     SearchAllMessagesResponse,
     GroupSearchResponse,
     GroupInvite,
@@ -896,14 +895,10 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    // FIXME - this is going to be a problem as we cannot
-    // pass a function to a worker (not serialisable)
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
         return this.sendRequest({
             kind: "getRecommendedGroups",
-            payload: {
-                interrupt,
-            },
+            payload: undefined,
         });
     }
 

@@ -832,7 +832,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
         case "getRecommendedGroups":
             agent
-                .getRecommendedGroups(payload.interrupt)
+                .getRecommendedGroups()
                 .then((response) =>
                     sendResponse(correlationId, {
                         response,

@@ -33,7 +33,6 @@ import {
     GroupRules,
     textToCode,
     SearchGroupChatResponse,
-    ServiceRetryInterrupt,
     User,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -144,8 +143,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -165,8 +163,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                     undefined,
                     latestClientEventIndex
                 ),
-            args,
-            interrupt
+            args
         );
     }
 
@@ -176,8 +173,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -198,8 +194,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                         threadRootMessageIndex,
                         latestClientEventIndex
                     ),
-                args,
-                interrupt
+                args
             );
         };
 

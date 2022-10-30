@@ -13,7 +13,6 @@ import type {
     UserSummary,
     RegisterUserResponse,
     UpgradeStorageResponse,
-    ServiceRetryInterrupt,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -29,11 +28,7 @@ export interface IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
-    getUsers(
-        users: UsersArgs,
-        allowStale: boolean,
-        interrupt?: ServiceRetryInterrupt
-    ): Promise<UsersResponse>;
+    getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
 }

@@ -235,7 +235,6 @@ import {
     type RemoveMemberResponse,
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
-    type ServiceRetryInterrupt,
     type SearchAllMessagesResponse,
     type GroupSearchResponse,
     type GroupInvite,
@@ -2268,8 +2267,8 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
-        return this.api.getRecommendedGroups(interrupt);
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+        return this.api.getRecommendedGroups();
     }
 
     getGroupRules(chatId: string): Promise<GroupRules | undefined> {

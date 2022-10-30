@@ -1,6 +1,6 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import { ServiceRetryInterrupt, AuthError, SessionExpiryError } from "openchat-shared";
+import { AuthError, SessionExpiryError } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
@@ -44,7 +44,6 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
-        interrupt?: ServiceRetryInterrupt,
         retries = 0
     ): Promise<To> {
         return serviceCall()
@@ -57,8 +56,7 @@ export abstract class CandidService {
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof AuthError) &&
-                    retries < MAX_RETRIES &&
-                    !(interrupt && interrupt(retries)) // bail out of the retry if the caller tells us to
+                    retries < MAX_RETRIES
                 ) {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
 
@@ -74,13 +72,7 @@ export abstract class CandidService {
 
                     return new Promise((resolve, reject) => {
                         setTimeout(() => {
-                            this.handleQueryResponse(
-                                serviceCall,
-                                mapper,
-                                args,
-                                interrupt,
-                                retries + 1
-                            )
+                            this.handleQueryResponse(serviceCall, mapper, args, retries + 1)
                                 .then(resolve)
                                 .catch(reject);
                         }, delay);

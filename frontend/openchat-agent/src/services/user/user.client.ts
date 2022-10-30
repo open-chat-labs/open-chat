@@ -40,7 +40,6 @@ import {
     PublicProfile,
     SearchAllMessagesResponse,
     SearchDirectChatResponse,
-    ServiceRetryInterrupt,
     SetBioResponse,
     textToCode,
     ToggleMuteNotificationResponse,
@@ -182,8 +181,7 @@ export class UserClient extends CandidService implements IUserClient {
         _eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -196,8 +194,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
             (resp) => getEventsResponse(userId, resp, userId, latestClientEventIndex),
-            args,
-            interrupt
+            args
         );
     }
 
@@ -584,15 +581,14 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
         const args = {
             count: 20,
         };
         return this.handleQueryResponse(
             () => this.userService.recommended_groups(args),
             recommendedGroupsResponse,
-            args,
-            interrupt
+            args
         );
     }
 

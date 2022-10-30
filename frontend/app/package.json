@@ -93,6 +93,7 @@
         "identicon.js": "^2.3.3",
         "intl-tel-input": "^17.0.16",
         "md5": "^2.3.0",
+        "openchat-client": "*",
         "peerjs": "^1.3.2",
         "rollbar": "^2.24.1",
         "sirv-cli": "^1.0.14",
@@ -103,7 +104,6 @@
         "svelte-qr": "^1.0.0",
         "svelte-spa-router": "^3.2.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
-        "uuid": "^9.0.0",
-        "openchat-client": "*"
+        "uuid": "^9.0.0"
     }
 }
