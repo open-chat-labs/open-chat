@@ -21,4 +21,5 @@ export type OpenChatConfig = {
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };
+    websiteVersion: string;
 };

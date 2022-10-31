@@ -44,6 +44,7 @@
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
             logger: logger,
+            websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
         });
     }
 

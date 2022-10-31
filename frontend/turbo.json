@@ -39,6 +39,7 @@
       "dependsOn": ["^build:testnet", "validate", "lint", "test"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "test": {
