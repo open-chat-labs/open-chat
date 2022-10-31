@@ -90,7 +90,7 @@ import {
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
-const WORKER_TIMEOUT = 1000 * 30;
+const WORKER_TIMEOUT = 1000 * 60;
 
 type UnresolvedRequest = {
     kind: string;
