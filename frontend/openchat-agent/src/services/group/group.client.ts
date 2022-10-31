@@ -85,7 +85,6 @@ export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
 
     constructor(
-        private userId: string,
         identity: Identity,
         private config: AgentConfig,
         private chatId: string,
@@ -96,7 +95,6 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(
-        userId: string,
         chatId: string,
         identity: Identity,
         config: AgentConfig,
@@ -106,7 +104,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return new CachingGroupClient(
             db,
             chatId,
-            new GroupClient(userId, identity, config, chatId, inviteCode),
+            new GroupClient(identity, config, chatId, inviteCode),
             config.logger
         );
     }
@@ -129,7 +127,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.events_by_index(args),
             (resp) =>
                 getEventsResponse(
-                    this.userId,
+                    this.principal,
                     resp,
                     this.chatId,
                     threadRootMessageIndex,
@@ -157,7 +155,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.events_window(args),
             (resp) =>
                 getEventsResponse(
-                    this.userId,
+                    this.principal,
                     resp,
                     this.chatId,
                     undefined,
@@ -188,7 +186,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 () => this.groupService.events(args),
                 (resp) =>
                     getEventsResponse(
-                        this.userId,
+                        this.principal,
                         resp,
                         this.chatId,
                         threadRootMessageIndex,
@@ -487,7 +485,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.messages_by_message_index(args),
             (resp) =>
                 getMessagesByMessageIndexResponse(
-                    this.userId,
+                    this.principal,
                     resp,
                     this.chatId,
                     undefined,

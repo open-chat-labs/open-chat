@@ -100,6 +100,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { ReplicaNotUpToDateError } from "../error";
+import type { Principal } from "@dfinity/principal";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -555,7 +556,7 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 }
 
 export async function getEventsResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiEventsResponse,
     chatId: string,
     latestClientEventIndexPreRequest: number | undefined
@@ -564,7 +565,7 @@ export async function getEventsResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             undefined,
             latestClientEventIndexPreRequest,

@@ -69,6 +69,7 @@ import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { UserIndexClient } from "../userIndex/userIndex.client";
 import type { AgentConfig } from "../../config";
+import type { Principal } from "@dfinity/principal";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -89,8 +90,12 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         super();
     }
 
+    private get principal(): Principal {
+        return this.identity.getPrincipal();
+    }
+
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
-        setCachedChats(this.db, this.userId, resp).catch((err) =>
+        setCachedChats(this.db, this.principal, resp).catch((err) =>
             this.config.logger.error("Error setting cached chats", err)
         );
         return resp;
@@ -276,7 +281,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                             ? this.groupInvite.code
                             : undefined;
                     const groupClient = GroupClient.create(
-                        this.client.userId,
                         chat.chatId,
                         this.identity,
                         this.config,
@@ -362,7 +366,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.userId);
+        const cachedChats = await getCachedChats(this.db, this.principal);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
             return this.client
@@ -396,7 +400,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.userId);
+        const cachedChats = await getCachedChats(this.db, this.principal);
         return this.client
             .getUpdates(currentState, args, userStore, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
@@ -457,7 +461,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        removeCachedChat(this.db, this.userId, chatId).catch((err) =>
+        removeCachedChat(this.db, this.principal, chatId).catch((err) =>
             this.config.logger.error("Failed to remove chat from cache", err)
         );
         return this.client.leaveGroup(chatId);

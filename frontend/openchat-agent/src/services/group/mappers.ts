@@ -536,7 +536,7 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 }
 
 export async function getMessagesByMessageIndexResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
     chatId: string,
     threadRootMessageIndex: number | undefined,
@@ -546,7 +546,7 @@ export async function getMessagesByMessageIndexResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,
@@ -587,7 +587,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 }
 
 export async function getEventsResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiEventsResponse,
     chatId: string,
     threadRootMessageIndex: number | undefined,
@@ -597,7 +597,7 @@ export async function getEventsResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,

@@ -16,6 +16,7 @@ import {
     SendMessageSuccess,
     UnsupportedValueError,
 } from "openchat-shared";
+import type { Principal } from "@dfinity/principal";
 
 const CACHE_VERSION = 48;
 
@@ -28,7 +29,7 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 
 export interface ChatSchema extends DBSchema {
     chats: {
-        key: string;
+        key: string; // the user's principal as a string
         value: MergedUpdatesResponse;
     };
 
@@ -68,7 +69,8 @@ export function createCacheKey(
         : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
-export function openCache(principal: string): Database {
+export function openCache(principal: Principal): Database {
+    console.log("WORKER: opening db with principal: ", principal.toString());
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
         upgrade(db, _oldVersion, _newVersion) {
             if (db.objectStoreNames.contains("chat_events")) {
@@ -95,18 +97,18 @@ export function openCache(principal: string): Database {
 
 export async function removeCachedChat(
     db: Database,
-    userId: string,
+    principal: Principal,
     chatId: string
 ): Promise<void> {
-    const fromCache = await getCachedChats(db, userId);
+    const fromCache = await getCachedChats(db, principal);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(db, userId, fromCache);
+        await setCachedChats(db, principal, fromCache);
     }
 }
 
 export async function openDbAndGetCachedChats(
-    principal: string
+    principal: Principal
 ): Promise<MergedUpdatesResponse | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
@@ -116,9 +118,9 @@ export async function openDbAndGetCachedChats(
 
 export async function getCachedChats(
     db: Database,
-    userId: string
+    principal: Principal
 ): Promise<MergedUpdatesResponse | undefined> {
-    return await (await db).get("chats", userId);
+    return await (await db).get("chats", principal.toString());
 }
 
 function isPreviewing(chat: ChatSummary): boolean {
@@ -127,7 +129,7 @@ function isPreviewing(chat: ChatSummary): boolean {
 
 export async function setCachedChats(
     db: Database,
-    userId: string,
+    principal: Principal,
     data: MergedUpdatesResponse
 ): Promise<void> {
     if (!data.wasUpdated) {
@@ -184,7 +186,7 @@ export async function setCachedChats(
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
             },
-            userId
+            principal.toString()
         ),
         ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
             eventStore.put(message, createCacheKey(chatId, message.index)),
@@ -516,7 +518,7 @@ export function getDb(): Database | undefined {
     return db;
 }
 
-export function initDb(principal: string): Database {
+export function initDb(principal: Principal): Database {
     db = openCache(principal);
     return db;
 }

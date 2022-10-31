@@ -1,5 +1,6 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import type { Principal } from "@dfinity/principal";
 import { AuthError, SessionExpiryError } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
@@ -27,6 +28,10 @@ export abstract class CandidService {
             agent,
             canisterId,
         });
+    }
+
+    protected get principal(): Principal {
+        return this.identity.getPrincipal();
     }
 
     protected handleResponse<From, To>(

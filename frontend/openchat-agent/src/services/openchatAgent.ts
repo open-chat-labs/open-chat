@@ -111,6 +111,7 @@ import {
     UserSummary,
     WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
+import type { Principal } from "@dfinity/principal";
 
 export const apiKey = Symbol();
 
@@ -125,19 +126,11 @@ export class OpenChatAgent extends EventTarget {
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
-    private _userId: string | undefined;
-
-    private get userId(): string {
-        if (this._userId === undefined) {
-            throw new Error("OpenChatAgent attempted to access _userId before it is set");
-        }
-        return this._userId;
-    }
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
-        this.db = initDb(identity.getPrincipal().toString());
+        this.db = initDb(this.principal);
         this._onlineClient = OnlineClient.create(identity, config);
         this._userIndexClient = UserIndexClient.create(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
@@ -148,6 +141,10 @@ export class OpenChatAgent extends EventTarget {
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
+    }
+
+    private get principal(): Principal {
+        return this.identity.getPrincipal();
     }
 
     getAllCachedUsers(): Promise<UserLookup> {
@@ -169,7 +166,6 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createUserClient(userId: string): OpenChatAgent {
-        this._userId = userId;
         this._userClient = UserClient.create(
             userId,
             this.identity,
@@ -184,7 +180,6 @@ export class OpenChatAgent extends EventTarget {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
-                this.userId,
                 chatId,
                 this.identity,
                 this.config,
