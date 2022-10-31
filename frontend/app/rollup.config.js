@@ -116,25 +116,22 @@ function clean() {
                 path.join(__dirname, "build", "worker.js")
             );
             rimraf.sync(path.join(__dirname, "_temp"));
+            if (version) {
+                fs.writeFileSync("build/version", JSON.stringify({ version }));
+            }
+            fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
+            const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
+            if (iiAlternativeOrigins !== undefined) {
+                fs.mkdirSync("build/.well-known");
+                fs.writeFileSync(
+                    "build/.well-known/ii-alternative-origins",
+                    JSON.stringify({
+                        alternativeOrigins: iiAlternativeOrigins.split(","),
+                    })
+                );
+            }
         },
     };
-}
-
-if (version) {
-    fs.writeFileSync("build/version", JSON.stringify({ version }));
-}
-
-fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
-
-const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
-if (iiAlternativeOrigins !== undefined) {
-    fs.mkdirSync("build/.well-known");
-    fs.writeFileSync(
-        "build/.well-known/ii-alternative-origins",
-        JSON.stringify({
-            alternativeOrigins: iiAlternativeOrigins.split(","),
-        })
-    );
 }
 
 export default {
