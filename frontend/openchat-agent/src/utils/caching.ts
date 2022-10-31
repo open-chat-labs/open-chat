@@ -1,5 +1,5 @@
 import { MAX_EVENTS } from "../constants";
-import { openDB, DBSchema, IDBPDatabase, deleteDB } from "idb";
+import { openDB, DBSchema, IDBPDatabase } from "idb";
 import {
     ChatEvent,
     ChatSummary,
@@ -18,7 +18,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 48;
+const CACHE_VERSION = 49;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -70,38 +70,27 @@ export function createCacheKey(
 }
 
 export function openCache(principal: Principal): Database {
-    return indexedDB.databases().then((dbs) => {
-        const deletions: Promise<void>[] = [];
-        dbs.forEach((db) => {
-            if (db.name?.startsWith("openchat_db") && db.name !== `openchat_db_${principal}`) {
-                console.debug("WORKER: deleteing db: ", db.name);
-                deletions.push(deleteDB(db.name));
+    return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
+        upgrade(db, _oldVersion, _newVersion) {
+            if (db.objectStoreNames.contains("chat_events")) {
+                db.deleteObjectStore("chat_events");
             }
-        });
-        return Promise.all(deletions).then((_) => {
-            return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-                upgrade(db, _oldVersion, _newVersion) {
-                    if (db.objectStoreNames.contains("chat_events")) {
-                        db.deleteObjectStore("chat_events");
-                    }
-                    if (db.objectStoreNames.contains("thread_events")) {
-                        db.deleteObjectStore("thread_events");
-                    }
-                    if (db.objectStoreNames.contains("chats")) {
-                        db.deleteObjectStore("chats");
-                    }
-                    if (db.objectStoreNames.contains("group_details")) {
-                        db.deleteObjectStore("group_details");
-                    }
-                    const chatEvents = db.createObjectStore("chat_events");
-                    chatEvents.createIndex("messageIdx", "messageKey");
-                    const threadEvents = db.createObjectStore("thread_events");
-                    threadEvents.createIndex("messageIdx", "messageKey");
-                    db.createObjectStore("chats");
-                    db.createObjectStore("group_details");
-                },
-            });
-        });
+            if (db.objectStoreNames.contains("thread_events")) {
+                db.deleteObjectStore("thread_events");
+            }
+            if (db.objectStoreNames.contains("chats")) {
+                db.deleteObjectStore("chats");
+            }
+            if (db.objectStoreNames.contains("group_details")) {
+                db.deleteObjectStore("group_details");
+            }
+            const chatEvents = db.createObjectStore("chat_events");
+            chatEvents.createIndex("messageIdx", "messageKey");
+            const threadEvents = db.createObjectStore("thread_events");
+            threadEvents.createIndex("messageIdx", "messageKey");
+            db.createObjectStore("chats");
+            db.createObjectStore("group_details");
+        },
     });
 }
 
