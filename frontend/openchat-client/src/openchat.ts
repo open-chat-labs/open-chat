@@ -2612,6 +2612,20 @@ export class OpenChat extends EventTarget {
                     userStore.add(this.rehydrateDataContent(user, "avatar"));
                 }
 
+                // If the latest message in a chat is sent by the current user, then we know they must have read up to
+                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
+                // user sends a message on one device then looks at OpenChat on another.
+                for (const chat of chatsResponse.chatSummaries) {
+                    const latestMessage = chat.latestMessage?.event;
+                    if (latestMessage !== undefined &&
+                        latestMessage.sender === this.user.userId &&
+                        (chat.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+                        !unconfirmed.contains(chat.chatId, latestMessage.messageId))
+                    {
+                        messagesRead.markReadUpTo(chat.chatId, latestMessage.messageIndex);
+                    }
+                }
+
                 chatsInitialised.set(true);
             }
         } catch (err) {
