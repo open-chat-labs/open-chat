@@ -118,12 +118,6 @@
         }
     }
 
-    $: {
-        if (textboxId !== undefined) {
-            inp?.focus();
-        }
-    }
-
     $: placeholder =
         fileToAttach !== undefined
             ? $_("enterCaption")
@@ -323,12 +317,14 @@
         inp.textContent = "";
         dispatch("setTextContent", undefined);
 
+        messageActions.close();
+        dispatch("stopTyping");
+
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
+        tick().then(() => inp.focus());
 
-        messageActions.close();
-        dispatch("stopTyping");
     }
 
     export function saveSelection() {
