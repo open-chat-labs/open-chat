@@ -11,3 +11,8 @@ export * from "./webrtc/webrtc";
 export * from "./search/search";
 export * from "./data/data";
 export * from "./newGroup";
+export * from "./worker";
+export * from "./inviteCodes";
+export * from "./optionUpdate";
+export * from "./error";
+export * from "./events";

@@ -3,12 +3,16 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
-import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { BlobReference, StorageStatus } from "../../domain/data/data";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
-import { StorageUpdated } from "../../events";
+import {
+    StorageStatus,
+    MessageContent,
+    StoredMediaContent,
+    BlobReference,
+    StorageUpdated,
+} from "openchat-shared";
 
 export class DataClient extends EventTarget implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -16,7 +20,7 @@ export class DataClient extends EventTarget implements IDataClient {
     static create(identity: Identity, config: AgentConfig): IDataClient {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity, host });
-        const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
+        const isMainnet = config.icUrl.includes("ic0.app");
         if (!isMainnet) {
             agent.fetchRootKey();
         }

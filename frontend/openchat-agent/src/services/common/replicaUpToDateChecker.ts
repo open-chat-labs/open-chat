@@ -1,14 +1,15 @@
-import { openDbAndGetCachedChats } from "src/utils/caching";
+import type { Principal } from "@dfinity/principal";
+import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
 
 export async function ensureReplicaIsUpToDate(
-    userId: string,
+    principal: Principal,
     chatId: string,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined,
     latestEventIndex: number
 ): Promise<void> {
-    const chats = await openDbAndGetCachedChats(userId);
+    const chats = await openDbAndGetCachedChats(principal);
     const latestSavedEventIndex = chats?.chatSummaries.find(
         (c) => c.chatId === chatId
     )?.latestEventIndex;

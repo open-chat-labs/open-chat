@@ -4,85 +4,6 @@ import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import {
-    ChatEvent,
-    ChatSummary,
-    EventWrapper,
-    Message,
-    MessageContent,
-    ThreadSyncDetails,
-    Notification,
-    GroupChatSummary,
-    MemberRole,
-    GroupRules,
-    GroupPermissions,
-    ThreadSummary,
-    EventsResponse,
-    EnhancedReplyContext,
-    AddMembersResponse,
-    RemoveMemberResponse,
-    ChangeRoleResponse,
-    RegisterProposalVoteResponse,
-    SearchAllMessagesResponse,
-    GroupSearchResponse,
-    SearchDirectChatResponse,
-    SearchGroupChatResponse,
-    Cryptocurrency,
-    Tokens,
-    ThreadPreview,
-    PendingCryptocurrencyWithdrawal,
-    WithdrawCryptocurrencyResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    InviteCodeResponse,
-    UpdateGroupResponse,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    ChallengeAttempt,
-    CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
-    CreateChallengeResponse,
-    CreatedUser,
-    CurrentUserResponse,
-    IdentityState,
-    PartialUserSummary,
-    PhoneNumber,
-    PublicProfile,
-    RegisterUserResponse,
-    SetBioResponse,
-    SetUsernameResponse,
-    SubmitPhoneNumberResponse,
-    User,
-    UsersArgs,
-    UsersResponse,
-    UserSummary,
-    RemoteUserSentMessage,
-    RemoteUserToggledReaction,
-    WebRtcMessage,
-    GroupInvite,
-    OpenChatAgent,
-    Logger,
-    ServiceRetryInterrupt,
-    getTimeUntilSessionExpiryMs,
-    getUserStatus,
-    missingUserIds,
-    userStatus,
-    setCachedMessageFromNotification,
-    EventsSuccessResult,
-    SendMessageSuccess,
-    TransferSuccess,
-    MessagesReadFromServer,
-    StorageUpdated,
-    UsersLoaded,
-} from "openchat-agent";
-import {
-    AuthProvider,
-    indexRangeForChat,
-    userIdsFromEvents,
-    getContentAsText,
-    getDisplayDate,
-} from "openchat-agent";
-import {
     buildUserAvatarUrl,
     canAddMembers,
     canBlockUsers,
@@ -178,7 +99,6 @@ import {
     selectedServerChatStore,
     serverChatSummariesStore,
     setSelectedChat,
-    startChatPoller,
     threadsByChatStore,
     threadsFollowedByMeStore,
     updateSummaryWithConfirmedMessage,
@@ -227,7 +147,6 @@ import {
     OPENCHAT_BOT_USER_ID,
     proposalsBotUser,
     specialUsers,
-    startUserUpdatePoller,
     userStore,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -242,7 +161,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupWhile, toRecord2 } from "./utils/list";
+import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -277,12 +196,95 @@ import { getTypingString } from "./utils/chat";
 import { startTyping } from "./utils/chat";
 import { stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
+import { OpenChatAgentWorker } from "./agentWorker";
+import {
+    type CreatedUser,
+    type IdentityState,
+    AuthProvider,
+    type ThreadSyncDetails,
+    type WebRtcMessage,
+    type ChatSummary,
+    type EventWrapper,
+    type Message,
+    type GroupChatSummary,
+    type MemberRole,
+    type GroupRules,
+    type GroupPermissions,
+    userStatus,
+    getUserStatus,
+    missingUserIds,
+    type EventsResponse,
+    type ChatEvent,
+    type EventsSuccessResult,
+    type ThreadSummary,
+    type DataContent,
+    type SendMessageSuccess,
+    type TransferSuccess,
+    type User,
+    type MessageContent,
+    type EnhancedReplyContext,
+    type RemoteUserToggledReaction,
+    type RemoteUserSentMessage,
+    type CheckUsernameResponse,
+    type UserSummary,
+    type ChallengeAttempt,
+    type RegisterUserResponse,
+    type CreateChallengeResponse,
+    type CurrentUserResponse,
+    type AddMembersResponse,
+    type RemoveMemberResponse,
+    type ChangeRoleResponse,
+    type RegisterProposalVoteResponse,
+    type SearchAllMessagesResponse,
+    type GroupSearchResponse,
+    type GroupInvite,
+    type SearchDirectChatResponse,
+    type SearchGroupChatResponse,
+    type Cryptocurrency,
+    type Tokens,
+    type ConfirmPhoneNumberResponse,
+    type PhoneNumber,
+    type SubmitPhoneNumberResponse,
+    type ThreadPreview,
+    type UsersArgs,
+    type UsersResponse,
+    type PartialUserSummary,
+    type PublicProfile,
+    type SetUsernameResponse,
+    type SetBioResponse,
+    type PendingCryptocurrencyWithdrawal,
+    type WithdrawCryptocurrencyResponse,
+    type InviteCodeResponse,
+    type EnableInviteCodeResponse,
+    type DisableInviteCodeResponse,
+    type ResetInviteCodeResponse,
+    type UpdateGroupResponse,
+    type CandidateGroupChat,
+    type CreateGroupResponse,
+    type UpdateArgs,
+    type CurrentChatState,
+    type Notification,
+    getTimeUntilSessionExpiryMs,
+    userIdsFromEvents,
+    getContentAsText,
+    indexRangeForChat,
+    getDisplayDate,
+    MessagesReadFromServer,
+    StorageUpdated,
+    UsersLoaded,
+    type Logger,
+} from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
+const CHAT_UPDATE_INTERVAL = 5000;
+const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -291,12 +293,13 @@ type PinChatResponse =
 
 export class OpenChat extends EventTarget {
     private _authClient: Promise<AuthClient>;
-    private _api: OpenChatAgent | undefined;
+    private _workerApi: OpenChatAgentWorker | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
+    private _chatUpdatesSince: bigint | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -351,7 +354,7 @@ export class OpenChat extends EventTarget {
         const anon = id.getPrincipal().isAnonymous();
         this.identityState.set(anon ? "requires_login" : "loading_user");
         if (!anon) {
-            this.loadUser(id);
+            this.loadUser();
         }
     }
 
@@ -431,9 +434,10 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    private loadUser(id: Identity) {
-        this._api = new OpenChatAgent(id, this.config);
-        this._api.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
+    private async loadUser() {
+        this._workerApi = new OpenChatAgentWorker(this.config);
+        this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
+        await this._workerApi.ready;
         this.api
             .getCurrentUser()
             .then((user) => {
@@ -485,7 +489,7 @@ export class OpenChat extends EventTarget {
 
         if (user.canisterUpgradeStatus === "in_progress") {
             this.identityState.set("upgrading_user");
-            window.setTimeout(() => this.loadUser(id), UPGRADE_POLL_INTERVAL);
+            window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
         } else {
             currentUserStore.set(user);
             this.api.createUserClient(user.userId);
@@ -493,8 +497,13 @@ export class OpenChat extends EventTarget {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            startChatPoller(this.api);
-            startUserUpdatePoller(this.api);
+            new Poller(
+                () => this.loadChats(),
+                CHAT_UPDATE_INTERVAL,
+                CHAT_UPDATE_IDLE_INTERVAL,
+                true
+            );
+            new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             startPruningLocalUpdates();
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
@@ -523,10 +532,12 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    private get api(): OpenChatAgent {
-        if (this._api === undefined)
-            throw new Error("OpenChat tried to make an api call before the api was available");
-        return this._api;
+    private get api(): OpenChatAgentWorker {
+        if (this._workerApi === undefined)
+            throw new Error(
+                "OpenChat tried to make a worker api call before the api was available"
+            );
+        return this._workerApi;
     }
 
     get hasUser(): boolean {
@@ -1253,7 +1264,13 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    setCachedMessageFromNotification = setCachedMessageFromNotification;
+    setCachedMessageFromNotification(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        message: EventWrapper<Message>
+    ): Promise<void> {
+        return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+    }
     createDirectChat = createDirectChat;
     setSelectedChat(chat: ChatSummary, messageIndex?: number): void {
         setSelectedChat(this.api, chat, messageIndex);
@@ -1404,6 +1421,7 @@ export class OpenChat extends EventTarget {
         }
 
         await this.handleEventsResponse(clientChat, eventsResponse);
+
         this.dispatchEvent(new LoadedPreviousMessages());
         return;
     }
@@ -1551,6 +1569,27 @@ export class OpenChat extends EventTarget {
                 await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
             }
         }
+    }
+
+    private buildBlobUrl(canisterId: string, blobId: bigint, blobType: "blobs" | "avatar"): string {
+        return `${this.config.blobUrlPattern
+            .replace("{canisterId}", canisterId)
+            .replace("{blobType}", blobType)}${blobId}`;
+    }
+
+    // this is unavoidably duplicated from the agent
+    private rehydrateDataContent<T extends DataContent>(
+        dataContent: T,
+        blobType: "blobs" | "avatar" = "blobs"
+    ): T {
+        const ref = dataContent.blobReference;
+        return ref !== undefined
+            ? {
+                  ...dataContent,
+                  blobData: undefined,
+                  blobUrl: this.buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+              }
+            : dataContent;
     }
 
     private refreshAffectedEvents(
@@ -1921,11 +1960,7 @@ export class OpenChat extends EventTarget {
     dataToBlobUrl = dataToBlobUrl;
     groupChatFromCandidate = groupChatFromCandidate;
     askForNotificationPermission = askForNotificationPermission;
-    setSoftDisabled(softDisabled: boolean): void {
-        setSoftDisabled(softDisabled).catch((err) =>
-            this._logger.error("Failed to set soft disabled", err)
-        );
-    }
+    setSoftDisabled = setSoftDisabled;
 
     editMessageWithAttachment(
         chat: ChatSummary,
@@ -2232,8 +2267,8 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
-        return this.api.getRecommendedGroups(interrupt);
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+        return this.api.getRecommendedGroups();
     }
 
     getGroupRules(chatId: string): Promise<GroupRules | undefined> {
@@ -2393,6 +2428,197 @@ export class OpenChat extends EventTarget {
                 userId: this.user.userId,
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+        }
+    }
+
+    private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
+        return {
+            updatesSince: {
+                timestamp,
+                groupChats: chatSummaries
+                    .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
+                    .map((g) => ({
+                        chatId: g.chatId,
+                        lastUpdated: (g as GroupChatSummary).lastUpdated,
+                    })),
+            },
+        };
+    }
+
+    // FIXME - this is duplicated
+    private extractUserIdsFromMentions(text: string): string[] {
+        return [...text.matchAll(/@UserId\(([\d\w-]+)\)/g)].map((m) => m[1]);
+    }
+
+    private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
+        const userIds = new Set<string>();
+        chats.forEach((chat) => {
+            if (chat.kind === "direct_chat") {
+                userIds.add(chat.them);
+            } else if (chat.latestMessage !== undefined) {
+                userIds.add(chat.latestMessage.event.sender);
+                this.extractUserIdsFromMentions(
+                    getContentAsText((k) => k, chat.latestMessage.event.content)
+                ).forEach((id) => userIds.add(id));
+            }
+        });
+        return userIds;
+    }
+
+    private async updateUsers() {
+        try {
+            if (this.user === undefined) {
+                console.log("Current user not set, cannot update users");
+                return;
+            }
+
+            const allUsers = this._liveState.userStore;
+            const usersToUpdate = new Set<string>([this.user.userId]);
+
+            // Update all users we have direct chats with
+            for (const chat of this._liveState.chatSummariesList) {
+                if (chat.kind == "direct_chat") {
+                    usersToUpdate.add(chat.them);
+                }
+            }
+
+            // Also update any users who haven't been updated for at least an hour
+            const now = BigInt(Date.now());
+            for (const user of Object.values(allUsers)) {
+                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                    usersToUpdate.add(user.userId);
+                }
+            }
+
+            console.log(`getting updates for ${usersToUpdate.size} user(s)`);
+            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
+                const userGroups = groupBy<string, bigint>(batch, (u) => {
+                    return allUsers[u]?.updated ?? BigInt(0);
+                });
+
+                const usersResp = await this.api.getUsers({
+                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                        users,
+                        updatedSince,
+                    })),
+                });
+                userStore.addMany(usersResp.users);
+                if (usersResp.serverTimestamp !== undefined) {
+                    userStore.setUpdated(batch, usersResp.serverTimestamp);
+                }
+            }
+        } catch (err) {
+            this._logger.error("Error updating users", err as Error);
+        }
+    }
+
+    private async loadChats() {
+        try {
+            if (this.user === undefined) {
+                console.log("Current user not set, cannot load chats");
+                return;
+            }
+            const init = this._liveState.chatsInitialised;
+            chatsLoading.set(!init);
+
+            const chats = Object.values(this._liveState.serverChatSummaries);
+            const selectedChat = this._liveState.selectedChat;
+            const userLookup = this._liveState.userStore;
+            const currentState: CurrentChatState = {
+                chatSummaries: chats,
+                blockedUsers: this._liveState.blockedUsers,
+                pinnedChats: this._liveState.pinnedChats,
+            };
+            const chatsResponse =
+                this._chatUpdatesSince === undefined
+                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId)
+                    : await this.api.getUpdates(
+                          currentState,
+                          this.updateArgsFromChats(this._chatUpdatesSince, chats),
+                          userLookup,
+                          selectedChat?.chatId
+                      );
+
+            this._chatUpdatesSince = chatsResponse.timestamp;
+
+            if (chatsResponse.wasUpdated) {
+                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                if (!init) {
+                    for (const userId of this.user.referrals) {
+                        userIds.add(userId);
+                    }
+                }
+                userIds.add(this.user.userId);
+                const usersResponse = await this.api.getUsers(
+                    {
+                        userGroups: [
+                            {
+                                users: missingUserIds(this._liveState.userStore, userIds),
+                                updatedSince: BigInt(0),
+                            },
+                        ],
+                    },
+                    true
+                );
+
+                userStore.addMany(usersResponse.users);
+
+                if (chatsResponse.blockedUsers !== undefined) {
+                    blockedUsers.set(chatsResponse.blockedUsers);
+                }
+
+                if (chatsResponse.pinnedChats !== undefined) {
+                    pinnedChatsStore.set(chatsResponse.pinnedChats);
+                }
+
+                const selectedChat = this._liveState.selectedChat;
+                let selectedChatInvalid = true;
+
+                serverChatSummariesStore.set(
+                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
+                        rec[chat.chatId] = chat;
+                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
+                            selectedChatInvalid = false;
+                        }
+                        return rec;
+                    }, {})
+                );
+
+                if (selectedChatInvalid) {
+                    clearSelectedChat();
+                } else if (selectedChat !== undefined) {
+                    chatUpdatedStore.set({
+                        affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
+                    });
+                }
+
+                if (chatsResponse.avatarIdUpdate !== undefined) {
+                    const blobReference =
+                        chatsResponse.avatarIdUpdate === "set_to_none"
+                            ? undefined
+                            : {
+                                  canisterId: this.user.userId,
+                                  blobId: chatsResponse.avatarIdUpdate.value,
+                              };
+                    const dataContent = {
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    const user = {
+                        ...this._liveState.userStore[this.user.userId],
+                        ...dataContent,
+                    };
+                    userStore.add(this.rehydrateDataContent(user, "avatar"));
+                }
+
+                chatsInitialised.set(true);
+            }
+        } catch (err) {
+            this.config.logger.error("Error loading chats", err as Error);
+            throw err;
+        } finally {
+            chatsLoading.set(false);
         }
     }
 

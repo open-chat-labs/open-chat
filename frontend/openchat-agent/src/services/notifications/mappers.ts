@@ -1,8 +1,8 @@
-import type {
+import {
     SubscriptionExistsResponse,
     ToggleMuteNotificationResponse,
-} from "../../domain/notifications";
-import { UnsupportedValueError } from "../../utils/error";
+    UnsupportedValueError,
+} from "openchat-shared";
 import type {
     ApiMuteNotificationsResponse,
     ApiUnmuteNotificationsResponse,

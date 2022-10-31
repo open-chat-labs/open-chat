@@ -1,12 +1,9 @@
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import type { Principal } from "@dfinity/principal";
+import { AuthError, SessionExpiryError } from "openchat-shared";
 import type { AgentConfig } from "../config";
-import {
-    AuthError,
-    ReplicaNotUpToDateError,
-    SessionExpiryError,
-    toCanisterResponseError,
-} from "./error";
+import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -14,9 +11,6 @@ const RETRY_DELAY = 100;
 function debug(msg: string): void {
     console.log(msg);
 }
-
-// This is a fn which will be given the retry iteration number and return a boolean indicating whether to *stop* retrying
-export type ServiceRetryInterrupt = (iterations: number) => boolean;
 
 export abstract class CandidService {
     protected createServiceClient<T>(
@@ -26,7 +20,7 @@ export abstract class CandidService {
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host });
-        const isMainnet = (config.icUrl ?? window.location.origin).includes("ic0.app");
+        const isMainnet = config.icUrl.includes("ic0.app");
         if (!isMainnet) {
             agent.fetchRootKey();
         }
@@ -34,6 +28,10 @@ export abstract class CandidService {
             agent,
             canisterId,
         });
+    }
+
+    protected get principal(): Principal {
+        return this.identity.getPrincipal();
     }
 
     protected handleResponse<From, To>(
@@ -51,7 +49,6 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
-        interrupt?: ServiceRetryInterrupt,
         retries = 0
     ): Promise<To> {
         return serviceCall()
@@ -64,8 +61,7 @@ export abstract class CandidService {
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof AuthError) &&
-                    retries < MAX_RETRIES &&
-                    !(interrupt && interrupt(retries)) // bail out of the retry if the caller tells us to
+                    retries < MAX_RETRIES
                 ) {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
 
@@ -80,14 +76,8 @@ export abstract class CandidService {
                     }
 
                     return new Promise((resolve, reject) => {
-                        window.setTimeout(() => {
-                            this.handleQueryResponse(
-                                serviceCall,
-                                mapper,
-                                args,
-                                interrupt,
-                                retries + 1
-                            )
+                        setTimeout(() => {
+                            this.handleQueryResponse(serviceCall, mapper, args, retries + 1)
                                 .then(resolve)
                                 .catch(reject);
                         }, delay);

@@ -1,4 +1,4 @@
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -24,7 +24,26 @@ import type {
     ChatEvent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
-} from "../../domain/chat/chat";
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    GroupInvite,
+    MigrateUserPrincipalResponse,
+    missingUserIds,
+    PinChatResponse,
+    PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    UserLookup,
+    userIdsFromEvents,
+    indexRangeForChat,
+    MessagesReadFromServer,
+    UsersLoaded,
+    compareChats,
+} from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
     Database,
@@ -39,41 +58,18 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
-    compareChats,
     getFirstUnreadMessageIndex,
-    indexRangeForChat,
     threadsReadFromChat,
     updateArgsFromChats,
-    userIdsFromEvents,
 } from "../../utils/chat";
 import { MAX_MISSING } from "../../constants";
-import type { BlobReference } from "../../domain/data/data";
-import type {
-    ArchiveChatResponse,
-    CreatedUser,
-    MigrateUserPrincipalResponse,
-    PinChatResponse,
-    PublicProfile,
-    SetBioResponse,
-    UnpinChatResponse,
-    UserLookup,
-} from "../../domain/user/user";
-import type {
-    SearchDirectChatResponse,
-    SearchAllMessagesResponse,
-} from "../../domain/search/search";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { missingUserIds } from "../../domain/user/user.utils";
 import { UserIndexClient } from "../userIndex/userIndex.client";
-import type { GroupInvite } from "../../services/openchatAgent";
-import type { ServiceRetryInterrupt } from "../candidService";
-import { configKeys } from "../../utils/config";
 import type { AgentConfig } from "../../config";
-import { MessagesReadFromServer, UsersLoaded } from "src/events";
+import type { Principal } from "@dfinity/principal";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -94,8 +90,12 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         super();
     }
 
+    private get principal(): Principal {
+        return this.identity.getPrincipal();
+    }
+
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
-        setCachedChats(this.db, this.userId, resp).catch((err) =>
+        setCachedChats(this.db, this.principal, resp).catch((err) =>
             this.config.logger.error("Error setting cached chats", err)
         );
         return resp;
@@ -160,8 +160,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
@@ -177,13 +176,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(
-                    eventIndexRange,
-                    userId,
-                    messageIndex,
-                    latestClientEventIndex,
-                    interrupt
-                )
+                .chatEventsWindow(eventIndexRange, userId, messageIndex, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(
@@ -202,8 +195,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
@@ -225,8 +217,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     startIndex,
                     ascending,
                     threadRootMessageIndex,
-                    latestClientEventIndex,
-                    interrupt
+                    latestClientEventIndex
                 )
                 .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
         } else {
@@ -250,8 +241,12 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
 
-        const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
-        const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
+        // FIXME - can't access localstorage in a worker
+        // const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
+        // const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
+
+        const limitTo = 50;
+        const batchSize = 5;
 
         const orderedChats = nextResponse.chatSummaries
             .filter(
@@ -286,7 +281,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                             ? this.groupInvite.code
                             : undefined;
                     const groupClient = GroupClient.create(
-                        this.client.userId,
                         chat.chatId,
                         this.identity,
                         this.config,
@@ -298,16 +292,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                         ? groupClient.chatEventsWindow(
                               range,
                               targetMessageIndex,
-                              chat.latestEventIndex,
-                              () => true
+                              chat.latestEventIndex
                           )
                         : groupClient.chatEvents(
                               range,
                               chat.latestEventIndex,
                               false,
                               undefined,
-                              chat.latestEventIndex,
-                              () => true
+                              chat.latestEventIndex
                           );
                 } else {
                     return targetMessageIndex !== undefined
@@ -315,8 +307,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                               range,
                               chat.chatId,
                               targetMessageIndex,
-                              chat.latestEventIndex,
-                              () => true
+                              chat.latestEventIndex
                           )
                         : this.chatEvents(
                               range,
@@ -324,8 +315,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                               chat.latestEventIndex,
                               false,
                               undefined,
-                              chat.latestEventIndex,
-                              () => true
+                              chat.latestEventIndex
                           );
                 }
             });
@@ -353,8 +343,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                                         },
                                     ],
                                 },
-                                true,
-                                () => true
+                                true
                             )
                             .then((val) => {
                                 // update the in-scope user lookup just so we don't do more lookups than we need to
@@ -377,7 +366,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.userId);
+        const cachedChats = await getCachedChats(this.db, this.principal);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
             return this.client
@@ -411,7 +400,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         userStore: UserLookup,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.userId);
+        const cachedChats = await getCachedChats(this.db, this.principal);
         return this.client
             .getUpdates(currentState, args, userStore, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
@@ -472,7 +461,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        removeCachedChat(this.db, this.userId, chatId).catch((err) =>
+        removeCachedChat(this.db, this.principal, chatId).catch((err) =>
             this.config.logger.error("Failed to remove chat from cache", err)
         );
         return this.client.leaveGroup(chatId);
@@ -542,8 +531,8 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         return this.client.toggleMuteNotifications(chatId, muted);
     }
 
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
-        return this.client.getRecommendedGroups(interrupt);
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+        return this.client.getRecommendedGroups();
     }
 
     dismissRecommendation(chatId: string): Promise<void> {

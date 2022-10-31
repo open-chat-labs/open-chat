@@ -1,6 +1,6 @@
 import { MAX_EVENTS } from "../constants";
-import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type {
+import { openDB, DBSchema, IDBPDatabase, deleteDB } from "idb";
+import {
     ChatEvent,
     ChatSummary,
     EventsResponse,
@@ -14,10 +14,11 @@ import type {
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-} from "../domain/chat/chat";
-import { UnsupportedValueError } from "./error";
+    UnsupportedValueError,
+} from "openchat-shared";
+import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 47;
+const CACHE_VERSION = 48;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -28,7 +29,7 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 
 export interface ChatSchema extends DBSchema {
     chats: {
-        key: string;
+        key: string; // the user's principal as a string
         value: MergedUpdatesResponse;
     };
 
@@ -52,11 +53,6 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: GroupChatDetails;
     };
-
-    soft_disabled: {
-        key: string;
-        value: boolean;
-    };
 }
 
 function padMessageIndex(i: number): string {
@@ -73,48 +69,56 @@ export function createCacheKey(
         : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
-export function openCache(principal: string): Database {
-    return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-        upgrade(db, _oldVersion, _newVersion) {
-            if (db.objectStoreNames.contains("chat_events")) {
-                db.deleteObjectStore("chat_events");
+export function openCache(principal: Principal): Database {
+    return indexedDB.databases().then((dbs) => {
+        const deletions: Promise<void>[] = [];
+        dbs.forEach((db) => {
+            if (db.name?.startsWith("openchat_db") && db.name !== `openchat_db_${principal}`) {
+                console.debug("WORKER: deleteing db: ", db.name);
+                deletions.push(deleteDB(db.name));
             }
-            if (db.objectStoreNames.contains("thread_events")) {
-                db.deleteObjectStore("thread_events");
-            }
-            if (db.objectStoreNames.contains("chats")) {
-                db.deleteObjectStore("chats");
-            }
-            if (db.objectStoreNames.contains("group_details")) {
-                db.deleteObjectStore("group_details");
-            }
-            const chatEvents = db.createObjectStore("chat_events");
-            chatEvents.createIndex("messageIdx", "messageKey");
-            const threadEvents = db.createObjectStore("thread_events");
-            threadEvents.createIndex("messageIdx", "messageKey");
-            db.createObjectStore("chats");
-            db.createObjectStore("group_details");
-            if (!db.objectStoreNames.contains("soft_disabled")) {
-                db.createObjectStore("soft_disabled");
-            }
-        },
+        });
+        return Promise.all(deletions).then((_) => {
+            return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
+                upgrade(db, _oldVersion, _newVersion) {
+                    if (db.objectStoreNames.contains("chat_events")) {
+                        db.deleteObjectStore("chat_events");
+                    }
+                    if (db.objectStoreNames.contains("thread_events")) {
+                        db.deleteObjectStore("thread_events");
+                    }
+                    if (db.objectStoreNames.contains("chats")) {
+                        db.deleteObjectStore("chats");
+                    }
+                    if (db.objectStoreNames.contains("group_details")) {
+                        db.deleteObjectStore("group_details");
+                    }
+                    const chatEvents = db.createObjectStore("chat_events");
+                    chatEvents.createIndex("messageIdx", "messageKey");
+                    const threadEvents = db.createObjectStore("thread_events");
+                    threadEvents.createIndex("messageIdx", "messageKey");
+                    db.createObjectStore("chats");
+                    db.createObjectStore("group_details");
+                },
+            });
+        });
     });
 }
 
 export async function removeCachedChat(
     db: Database,
-    userId: string,
+    principal: Principal,
     chatId: string
 ): Promise<void> {
-    const fromCache = await getCachedChats(db, userId);
+    const fromCache = await getCachedChats(db, principal);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(db, userId, fromCache);
+        await setCachedChats(db, principal, fromCache);
     }
 }
 
 export async function openDbAndGetCachedChats(
-    principal: string
+    principal: Principal
 ): Promise<MergedUpdatesResponse | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
@@ -124,9 +128,9 @@ export async function openDbAndGetCachedChats(
 
 export async function getCachedChats(
     db: Database,
-    userId: string
+    principal: Principal
 ): Promise<MergedUpdatesResponse | undefined> {
-    return await (await db).get("chats", userId);
+    return await (await db).get("chats", principal.toString());
 }
 
 function isPreviewing(chat: ChatSummary): boolean {
@@ -135,7 +139,7 @@ function isPreviewing(chat: ChatSummary): boolean {
 
 export async function setCachedChats(
     db: Database,
-    userId: string,
+    principal: Principal,
     data: MergedUpdatesResponse
 ): Promise<void> {
     if (!data.wasUpdated) {
@@ -192,7 +196,7 @@ export async function setCachedChats(
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
             },
-            userId
+            principal.toString()
         ),
         ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
             eventStore.put(message, createCacheKey(chatId, message.index)),
@@ -474,19 +478,7 @@ export function setCachedMessageFromSendResponse(
     };
 }
 
-export function setCachedMessageFromNotification(
-    chatId: string,
-    threadRootMessageIndex: number | undefined,
-    message: EventWrapper<Message>
-): void {
-    if (db === undefined) {
-        throw new Error("Unable to open indexDB, cannot set message from notification");
-    }
-
-    setCachedMessageIfNotExists(db, chatId, message, threadRootMessageIndex);
-}
-
-async function setCachedMessageIfNotExists(
+export async function setCachedMessageIfNotExists(
     db: Database,
     chatId: string,
     messageEvent: EventWrapper<Message>,
@@ -530,27 +522,13 @@ export async function setCachedGroupDetails(
     await (await db).put("group_details", groupDetails, chatId);
 }
 
-export async function storeSoftDisabled(value: boolean): Promise<void> {
-    if (db !== undefined) {
-        await (await db).put("soft_disabled", value, "soft_disabled");
-    }
-}
-
-export async function getSoftDisabled(): Promise<boolean> {
-    if (db !== undefined) {
-        const res = await (await db).get("soft_disabled", "soft_disabled");
-        return res ?? false;
-    }
-    return false;
-}
-
 let db: Database | undefined;
 
 export function getDb(): Database | undefined {
     return db;
 }
 
-export function initDb(principal: string): Database {
+export function initDb(principal: Principal): Database {
     db = openCache(principal);
     return db;
 }

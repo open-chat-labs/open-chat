@@ -45,7 +45,7 @@ import type {
     ApiArchiveChatResponse,
     ApiIcrc1Account,
 } from "./candid/idl";
-import type {
+import {
     ChatSummary,
     UpdatesResponse,
     EventsResponse,
@@ -77,9 +77,18 @@ import type {
     ThreadSyncDetailsUpdates,
     GroupSubtype,
     GroupSubtypeUpdate,
-} from "../../domain/chat/chat";
+    PublicProfile,
+    ArchiveChatResponse,
+    MessageMatch,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    UnpinChatResponse,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
-import { UnsupportedValueError } from "../../utils/error";
 import {
     completedCryptoTransfer,
     groupPermissions,
@@ -89,21 +98,9 @@ import {
     updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type {
-    MessageMatch,
-    SearchDirectChatResponse,
-    SearchAllMessagesResponse,
-} from "../../domain/search/search";
-import type {
-    ArchiveChatResponse,
-    MigrateUserPrincipalResponse,
-    PinChatResponse,
-    PublicProfile,
-    SetBioResponse,
-    UnpinChatResponse,
-} from "../../domain/user/user";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { ReplicaNotUpToDateError } from "../error";
+import type { Principal } from "@dfinity/principal";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -559,7 +556,7 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
 }
 
 export async function getEventsResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiEventsResponse,
     chatId: string,
     latestClientEventIndexPreRequest: number | undefined
@@ -568,7 +565,7 @@ export async function getEventsResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             undefined,
             latestClientEventIndexPreRequest,

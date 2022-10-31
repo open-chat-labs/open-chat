@@ -44,6 +44,7 @@
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
             logger: logger,
+            websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
         });
     }
 
@@ -87,6 +88,7 @@
     }
 
     function unhandledError(ev: Event) {
+        console.trace("Unhandled error: ", ev);
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
             client.logout();
             ev.preventDefault();

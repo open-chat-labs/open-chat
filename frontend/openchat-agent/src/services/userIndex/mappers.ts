@@ -1,4 +1,4 @@
-import type {
+import {
     CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
@@ -13,7 +13,9 @@ import type {
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
-} from "../../domain/user/user";
+    Version,
+    UnsupportedValueError,
+} from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiConfirmPhoneNumberResponse,
@@ -32,8 +34,6 @@ import type {
     ApiUserSummary,
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
-import { UnsupportedValueError } from "../../utils/error";
-import { Version } from "../../domain/version";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {

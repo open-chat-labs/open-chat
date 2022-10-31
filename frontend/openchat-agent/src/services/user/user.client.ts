@@ -6,7 +6,7 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import type {
+import {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -31,8 +31,23 @@ import type {
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
     CurrentChatState,
-} from "../../domain/chat/chat";
-import { CandidService, ServiceRetryInterrupt } from "../candidService";
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    GroupInvite,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    textToCode,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    UserLookup,
+    compareChats,
+} from "openchat-shared";
+import { CandidService } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
@@ -62,7 +77,7 @@ import {
     archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, mergeChatUpdates } from "../../utils/chat";
+import { mergeChatUpdates } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
@@ -75,28 +90,10 @@ import {
     apiReplyContextArgs,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import type { BlobReference } from "../../domain/data/data";
-import type {
-    ArchiveChatResponse,
-    CreatedUser,
-    MigrateUserPrincipalResponse,
-    PinChatResponse,
-    PublicProfile,
-    SetBioResponse,
-    UnpinChatResponse,
-    UserLookup,
-} from "../../domain/user/user";
-import type {
-    SearchAllMessagesResponse,
-    SearchDirectChatResponse,
-} from "../../domain/search/search";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { textToCode } from "../../domain/inviteCodes";
-import type { GroupInvite } from "../../services/openchatAgent";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
@@ -174,7 +171,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(userId, resp, userId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
             args
         );
     }
@@ -184,8 +181,7 @@ export class UserClient extends CandidService implements IUserClient {
         _eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -197,9 +193,8 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(userId, resp, userId, latestClientEventIndex),
-            args,
-            interrupt
+            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
+            args
         );
     }
 
@@ -224,7 +219,7 @@ export class UserClient extends CandidService implements IUserClient {
 
             return this.handleQueryResponse(
                 () => this.userService.events(args),
-                (resp) => getEventsResponse(userId, resp, userId, latestClientEventIndex),
+                (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
                 args
             );
         };
@@ -237,8 +232,10 @@ export class UserClient extends CandidService implements IUserClient {
         _userStore: UserLookup,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
-        const disableCache =
-            localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        // FIXME - can't access localstorage in a worker
+        // const disableCache =
+        //     localStorage.getItem("openchat_disable_initial_state_cache") === "true";
+        const disableCache = false;
 
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({ disable_cache: [disableCache] }),
@@ -584,15 +581,14 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
         const args = {
             count: 20,
         };
         return this.handleQueryResponse(
             () => this.userService.recommended_groups(args),
             recommendedGroupsResponse,
-            args,
-            interrupt
+            args
         );
     }
 

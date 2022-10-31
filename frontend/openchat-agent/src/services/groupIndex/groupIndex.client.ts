@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { AgentConfig } from "../../config";
-import type { GroupSearchResponse } from "../../domain/search/search";
+import type { GroupSearchResponse } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";

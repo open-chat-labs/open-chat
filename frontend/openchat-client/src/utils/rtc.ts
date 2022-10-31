@@ -1,4 +1,9 @@
-import type { ChatSummary, DirectChatSummary, MessageContent, WebRtcMessage } from "openchat-agent";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    MessageContent,
+    WebRtcMessage,
+} from "openchat-shared";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
 import { blockedUsers } from "../stores/blockedUsers";

@@ -1,4 +1,3 @@
-import type { ServiceRetryInterrupt } from "../candidService";
 import type {
     CreateChallengeResponse,
     ChallengeAttempt,
@@ -14,7 +13,7 @@ import type {
     UserSummary,
     RegisterUserResponse,
     UpgradeStorageResponse,
-} from "../../domain/user/user";
+} from "openchat-shared";
 
 export interface IUserIndexClient {
     getCurrentUser: () => Promise<CurrentUserResponse>;
@@ -29,11 +28,7 @@ export interface IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
-    getUsers(
-        users: UsersArgs,
-        allowStale: boolean,
-        interrupt?: ServiceRetryInterrupt
-    ): Promise<UsersResponse>;
+    getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
 }

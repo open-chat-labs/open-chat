@@ -1,13 +1,5 @@
-import { Poller } from "../utils/poller";
-import type { OpenChatAgent, PartialUserSummary, UserLookup } from "openchat-agent";
-import { derived, get, writable } from "svelte/store";
-import { chunk, groupBy } from "../utils/list";
-import { chatSummariesStore, currentUserStore } from "./chat";
-
-const ONE_MINUTE = 60 * 1000;
-const ONE_HOUR = 60 * ONE_MINUTE;
-const USER_UPDATE_INTERVAL = ONE_MINUTE;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+import type { PartialUserSummary, UserLookup } from "openchat-shared";
+import { derived, writable } from "svelte/store";
 
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
@@ -83,55 +75,3 @@ export const userStore = {
         });
     },
 };
-
-async function updateUsers(api: OpenChatAgent) {
-    try {
-        const currentUser = get(currentUserStore);
-        if (currentUser === undefined) {
-            console.log("Current user not set, cannot update users");
-            return;
-        }
-
-        const allUsers = get(userStore);
-        const usersToUpdate = new Set<string>([currentUser.userId]);
-
-        // Update all users we have direct chats with
-        for (const chat of Object.values(get(chatSummariesStore))) {
-            if (chat.kind == "direct_chat") {
-                usersToUpdate.add(chat.them);
-            }
-        }
-
-        // Also update any users who haven't been updated for at least an hour
-        const now = BigInt(Date.now());
-        for (const user of Object.values(allUsers)) {
-            if (now - user.updated > ONE_HOUR && user.kind === "user") {
-                usersToUpdate.add(user.userId);
-            }
-        }
-
-        console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-        for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-            const userGroups = groupBy<string, bigint>(batch, (u) => {
-                return allUsers[u]?.updated ?? BigInt(0);
-            });
-
-            const usersResp = await api.getUsers({
-                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                    users,
-                    updatedSince,
-                })),
-            });
-            userStore.addMany(usersResp.users);
-            if (usersResp.serverTimestamp !== undefined) {
-                userStore.setUpdated(batch, usersResp.serverTimestamp);
-            }
-        }
-    } catch (err) {
-        api.logError("Error updating users", err as Error);
-    }
-}
-
-export function startUserUpdatePoller(api: OpenChatAgent): Poller {
-    return new Poller(() => updateUsers(api), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
-}

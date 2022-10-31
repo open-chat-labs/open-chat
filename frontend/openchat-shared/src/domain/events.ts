@@ -1,4 +1,6 @@
-import type { PartialUserSummary, StorageStatus, ThreadRead } from "./domain";
+import type { ThreadRead } from "./chat";
+import type { StorageStatus } from "./data/data";
+import type { PartialUserSummary } from "./user";
 
 export class StorageUpdated extends CustomEvent<StorageStatus> {
     constructor(detail: StorageStatus) {

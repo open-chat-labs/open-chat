@@ -1,5 +1,5 @@
-import type { User } from "../../domain/user/user";
 import type {
+    User,
     AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
@@ -30,9 +30,8 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-} from "../../domain/chat/chat";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
-import type { ServiceRetryInterrupt } from "../candidService";
+    SearchGroupChatResponse,
+} from "openchat-shared";
 
 export interface IGroupClient {
     chatEventsByIndex(
@@ -43,16 +42,14 @@ export interface IGroupClient {
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     addMembers(
         userIds: string[],

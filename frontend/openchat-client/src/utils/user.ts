@@ -6,7 +6,7 @@ import {
     UserSummary,
     userStatus,
     PhoneNumber,
-} from "openchat-agent";
+} from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,

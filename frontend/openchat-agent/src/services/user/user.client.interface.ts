@@ -22,24 +22,19 @@ import type {
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
     CurrentChatState,
-} from "../../domain/chat/chat";
-import type { BlobReference } from "../../domain/data/data";
-import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
-import type {
-    SearchDirectChatResponse,
-    SearchAllMessagesResponse,
-} from "../../domain/search/search";
-import type {
     ArchiveChatResponse,
+    BlobReference,
     CreatedUser,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
     SetBioResponse,
+    ToggleMuteNotificationResponse,
     UnpinChatResponse,
     UserLookup,
-} from "../../domain/user/user";
-import type { ServiceRetryInterrupt } from "../candidService";
+} from "openchat-shared";
 
 export interface IUserClient {
     userId: string;
@@ -57,8 +52,7 @@ export interface IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
@@ -72,8 +66,7 @@ export interface IUserClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     deleteGroup(chatId: string): Promise<DeleteGroupResponse>;
@@ -130,7 +123,7 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
-    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]>;
+    getRecommendedGroups(): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     getPublicProfile(): Promise<PublicProfile>;

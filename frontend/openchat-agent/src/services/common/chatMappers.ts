@@ -1,41 +1,4 @@
 import { Principal } from "@dfinity/principal";
-import type {
-    FileContent,
-    ImageContent,
-    AudioContent,
-    VideoContent,
-    MessageContent,
-    DeletedContent,
-    TextContent,
-    Message,
-    ReplyContext,
-    Reaction,
-    StaleMessage,
-    CryptocurrencyContent,
-    CryptocurrencyTransfer,
-    PendingCryptocurrencyTransfer,
-    CompletedCryptocurrencyTransfer,
-    FailedCryptocurrencyTransfer,
-    PollContent,
-    PollVotes,
-    TotalPollVotes,
-    PollConfig,
-    GroupPermissions,
-    PermissionRole,
-    PendingCryptocurrencyWithdrawal,
-    GiphyContent,
-    GiphyImage,
-    ThreadSummary,
-    ProposalContent,
-    Proposal,
-    ListNervousSystemFunctionsResponse,
-    NervousSystemFunction,
-    SnsFunctionType,
-} from "../../domain/chat/chat";
-import { ProposalDecisionStatus, ProposalRewardStatus } from "../../domain/chat/chat";
-import type { BlobReference } from "../../domain/data/data";
-import type { User } from "../../domain/user/user";
-import { UnsupportedValueError } from "../../utils/error";
 import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
@@ -74,12 +37,50 @@ import type {
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
 } from "../user/candid/idl";
-import type { Cryptocurrency } from "../../domain/crypto";
 import type {
     ApiListNervousSystemFunctionsResponse,
     ApiNervousSystemFunction,
     ApiSnsFunctionType,
 } from "../snsGovernance/candid/idl";
+import {
+    type Message,
+    type ThreadSummary,
+    type StaleMessage,
+    type MessageContent,
+    type User,
+    type ProposalContent,
+    type Proposal,
+    ProposalDecisionStatus,
+    ProposalRewardStatus,
+    type GiphyContent,
+    type GiphyImage,
+    type PollContent,
+    type PollConfig,
+    type PollVotes,
+    type TotalPollVotes,
+    type DeletedContent,
+    type CryptocurrencyContent,
+    type Cryptocurrency,
+    type CryptocurrencyTransfer,
+    type PendingCryptocurrencyTransfer,
+    type CompletedCryptocurrencyTransfer,
+    type FailedCryptocurrencyTransfer,
+    type ImageContent,
+    type VideoContent,
+    type AudioContent,
+    type TextContent,
+    type FileContent,
+    type BlobReference,
+    type ReplyContext,
+    type Reaction,
+    type GroupPermissions,
+    type PermissionRole,
+    type PendingCryptocurrencyWithdrawal,
+    type ListNervousSystemFunctionsResponse,
+    type NervousSystemFunction,
+    type SnsFunctionType,
+    UnsupportedValueError,
+} from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 

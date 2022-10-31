@@ -1,24 +1,16 @@
-import type {
+import {
     ChatEvent,
     ChatSpecificState,
     ChatSummary,
-    CurrentChatState,
     EnhancedReplyContext,
     EventWrapper,
     Message,
     MessageContent,
     ThreadSyncDetails,
-    OpenChatAgent,
     CreatedUser,
-} from "openchat-agent";
-import {
     compareChats,
-    getContentAsText,
-    updateArgsFromChats,
-    extractUserIdsFromMentions,
-    missingUserIds,
     emptyChatMetrics,
-} from "openchat-agent";
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
@@ -31,8 +23,6 @@ import {
     getFirstUnreadMessageIndex,
 } from "../utils/chat";
 import { userStore } from "./user";
-import { Poller } from "../utils/poller";
-import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
@@ -42,12 +32,7 @@ import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByC
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
-
-const ONE_MINUTE = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = 5000;
-const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
-
-let chatUpdatesSince: bigint | undefined = undefined;
+import type { OpenChatAgentWorker } from "../agentWorker";
 
 export type ChatState = {
     chatId: string;
@@ -347,7 +332,7 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function setSelectedChat(
-    api: OpenChatAgent,
+    api: OpenChatAgentWorker,
     chat: ChatSummary,
     messageIndex?: number
 ): void {
@@ -419,21 +404,6 @@ export function updateSummaryWithConfirmedMessage(
     });
 }
 
-function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
-    const userIds = new Set<string>();
-    chats.forEach((chat) => {
-        if (chat.kind === "direct_chat") {
-            userIds.add(chat.them);
-        } else if (chat.latestMessage !== undefined) {
-            userIds.add(chat.latestMessage.event.sender);
-            extractUserIdsFromMentions(
-                getContentAsText((k) => k, chat.latestMessage.event.content)
-            ).forEach((id) => userIds.add(id));
-        }
-    });
-    return userIds;
-}
-
 export function clearSelectedChat(newSelectedChatId?: string): void {
     filteredProposalsStore.set(undefined);
     selectedChatId.update((chatId) => {
@@ -442,118 +412,6 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
         }
         return newSelectedChatId;
     });
-}
-
-async function loadChats(api: OpenChatAgent) {
-    try {
-        const currentUser = get(currentUserStore);
-        if (currentUser === undefined) {
-            console.log("Current user not set, cannot load chats");
-            return;
-        }
-
-        const init = get(chatsInitialised);
-
-        chatsLoading.set(!init);
-        const chats = Object.values(get(serverChatSummariesStore));
-        const selectedChat = get(selectedChatStore);
-        const userLookup = get(userStore);
-        const currentState: CurrentChatState = {
-            chatSummaries: chats,
-            blockedUsers: get(blockedUsers),
-            pinnedChats: get(pinnedChatsStore),
-        };
-        const chatsResponse =
-            chatUpdatesSince === undefined
-                ? await api.getInitialState(userLookup, selectedChat?.chatId)
-                : await api.getUpdates(
-                      currentState,
-                      updateArgsFromChats(chatUpdatesSince, chats),
-                      userLookup,
-                      selectedChat?.chatId
-                  );
-
-        chatUpdatesSince = chatsResponse.timestamp;
-
-        if (chatsResponse.wasUpdated) {
-            const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries);
-            if (!init) {
-                for (const userId of currentUser.referrals) {
-                    userIds.add(userId);
-                }
-            }
-            userIds.add(currentUser.userId);
-            const usersResponse = await api.getUsers(
-                {
-                    userGroups: [
-                        {
-                            users: missingUserIds(get(userStore), userIds),
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                },
-                true
-            );
-
-            userStore.addMany(usersResponse.users);
-
-            if (chatsResponse.blockedUsers !== undefined) {
-                blockedUsers.set(chatsResponse.blockedUsers);
-            }
-
-            if (chatsResponse.pinnedChats !== undefined) {
-                pinnedChatsStore.set(chatsResponse.pinnedChats);
-            }
-
-            const selectedChat = get(selectedChatStore);
-            let selectedChatInvalid = true;
-
-            serverChatSummariesStore.set(
-                chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                    rec[chat.chatId] = chat;
-                    if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChatInvalid = false;
-                    }
-                    return rec;
-                }, {})
-            );
-
-            if (selectedChatInvalid) {
-                clearSelectedChat();
-            } else if (selectedChat !== undefined) {
-                chatUpdatedStore.set({
-                    affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
-                });
-            }
-
-            if (chatsResponse.avatarIdUpdate !== undefined) {
-                const blobReference =
-                    chatsResponse.avatarIdUpdate === "set_to_none"
-                        ? undefined
-                        : {
-                              canisterId: currentUser.userId,
-                              blobId: chatsResponse.avatarIdUpdate.value,
-                          };
-                const dataContent = {
-                    blobReference,
-                    blobData: undefined,
-                    blobUrl: undefined,
-                };
-                const user = {
-                    ...get(userStore)[currentUser.userId],
-                    ...dataContent,
-                };
-                userStore.add(api.rehydrateDataContent(user, "avatar"));
-            }
-
-            chatsInitialised.set(true);
-        }
-    } catch (err) {
-        api.logError("Error loading chats", err as Error);
-        throw err;
-    } finally {
-        chatsLoading.set(false);
-    }
 }
 
 export function createDirectChat(chatId: string): void {
@@ -576,10 +434,6 @@ export function createDirectChat(chatId: string): void {
             },
         };
     });
-}
-
-export function startChatPoller(api: OpenChatAgent): Poller {
-    return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
 }
 
 export function removeChat(chatId: string): void {

@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type { UserSummary } from "../domain/user/user";
+import type { UserSummary } from "openchat-shared";
 
 const CACHE_VERSION = 1;
 
@@ -12,10 +12,6 @@ export interface UserSchema extends DBSchema {
         key: string;
         value: UserSummary;
     };
-}
-
-export function cachingLocallyDisabled(): boolean {
-    return !!localStorage.getItem("openchat_nocache");
 }
 
 export function lazyOpenUserCache(): UserDatabase {

@@ -30,7 +30,8 @@
         "svelte-i18n": "^3.4.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
         "uuid": "^9.0.0",
-        "openchat-agent": "*"
+        "openchat-worker": "*",
+        "openchat-shared": "*"
     },
     "devDependencies": {
         "@babel/core": "^7.17.9",
@@ -78,13 +79,16 @@
             "^.+\\.ts$": "ts-jest",
             "^.+\\.js$": "babel-jest"
         },
+        "transformIgnorePatterns": [
+            "../node_modules/(?!openchat-shared)"
+        ],
         "moduleFileExtensions": [
             "js",
             "ts"
         ],
         "moduleNameMapper": {
             "peerjs": "<rootDir>/src/dummyModule.js",
-            "openchat-agent": "<rootDir>/src/dummyModule.js",
+            "openchat-shared": "<rootDir>/src/dummyModule.js",
             "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"

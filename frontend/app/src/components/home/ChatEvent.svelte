@@ -20,7 +20,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
-    import { push } from "svelte-spa-router";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

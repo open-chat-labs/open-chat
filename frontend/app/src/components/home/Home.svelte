@@ -105,7 +105,6 @@
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
-    let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
@@ -173,8 +172,6 @@
     }
 
     async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
-        interruptRecommended = true;
-
         let chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
@@ -698,11 +695,14 @@
             push("/");
         }
         tick().then(() => {
-            interruptRecommended = false;
             hotGroups = { kind: "loading" };
             client
-                .getRecommendedGroups((_n: number) => interruptRecommended)
-                .then((resp) => (hotGroups = { kind: "success", data: resp }))
+                .getRecommendedGroups()
+                .then((resp) => {
+                    if (hotGroups.kind === "loading") {
+                        hotGroups = { kind: "success", data: resp };
+                    }
+                })
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
     }

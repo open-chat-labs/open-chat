@@ -20,10 +20,18 @@ export function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
     });
 }
 
+// function inWorker() {
+//     return self.WorkerGlobalScope;
+// }
+
 export const profile =
     (service: string) =>
     (_target: Object, _propertyKey: string, descriptor: PropertyDescriptor) => {
-        if (!localStorage.getItem("openchat_profile")) return descriptor;
+        return descriptor;
+
+        // FIXME - we can't access local storage in a worker
+        // if (inWorker()) return descriptor;
+        // if (!localStorage.getItem("openchat_profile")) return descriptor;
         const originalMethod = descriptor.value;
 
         descriptor.value = function (...args: any): any {

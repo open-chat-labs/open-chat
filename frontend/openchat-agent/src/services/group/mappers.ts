@@ -32,7 +32,7 @@ import type {
     ApiGroupRules,
     ApiRulesResponse,
 } from "./candid/idl";
-import type {
+import {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
@@ -65,8 +65,10 @@ import type {
     RegisterProposalVoteResponse,
     GroupRules,
     GroupPermissions,
-} from "../../domain/chat/chat";
-import { UnsupportedValueError } from "../../utils/error";
+    SearchGroupChatResponse,
+    codeToText,
+    UnsupportedValueError,
+} from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
@@ -78,9 +80,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { identity, optional } from "../../utils/mapping";
-import { codeToText } from "../../domain/inviteCodes";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
 
@@ -536,7 +536,7 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
 }
 
 export async function getMessagesByMessageIndexResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
     chatId: string,
     threadRootMessageIndex: number | undefined,
@@ -546,7 +546,7 @@ export async function getMessagesByMessageIndexResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,
@@ -587,7 +587,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 }
 
 export async function getEventsResponse(
-    userId: string,
+    principal: Principal,
     candid: ApiEventsResponse,
     chatId: string,
     threadRootMessageIndex: number | undefined,
@@ -597,7 +597,7 @@ export async function getEventsResponse(
         const latestEventIndex = candid.Success.latest_event_index;
 
         await ensureReplicaIsUpToDate(
-            userId,
+            principal,
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,

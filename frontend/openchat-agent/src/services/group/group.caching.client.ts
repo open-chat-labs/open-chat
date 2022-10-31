@@ -31,8 +31,10 @@ import type {
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-} from "../../domain/chat/chat";
-import type { User } from "../../domain/user/user";
+    User,
+    SearchGroupChatResponse,
+    Logger,
+} from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import {
@@ -47,11 +49,8 @@ import {
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../constants";
-import type { Logger } from "../../utils/logging";
-import type { ServiceRetryInterrupt } from "../candidService";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -115,8 +114,7 @@ export class CachingGroupClient implements IGroupClient {
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
@@ -132,7 +130,7 @@ export class CachingGroupClient implements IGroupClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex, interrupt)
+                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents(
@@ -149,8 +147,7 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
-        interrupt?: ServiceRetryInterrupt
+        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
@@ -171,8 +168,7 @@ export class CachingGroupClient implements IGroupClient {
                     startIndex,
                     ascending,
                     threadRootMessageIndex,
-                    latestClientEventIndex,
-                    interrupt
+                    latestClientEventIndex
                 )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {

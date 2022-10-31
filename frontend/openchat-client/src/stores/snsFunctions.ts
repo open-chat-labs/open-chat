@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { NervousSystemFunction } from "openchat-agent";
+import type { NervousSystemFunction } from "openchat-shared";
 
 const storageKeyPrefix = "sns_functions_";
 
