@@ -72,12 +72,12 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
+    // Update this to force a new textbox instance to be created
+    let textboxId = Symbol();
+
     $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
-
-    // Update this to force a new textbox instance to be created
-    $: textboxId = Symbol();
 
     $: {
         if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
