@@ -79,7 +79,6 @@ export function openCache(principal: Principal): Database {
             }
         });
         return Promise.all(deletions).then((_) => {
-            console.log("WORKER: opening db with principal: ", principal.toString());
             return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
                 upgrade(db, _oldVersion, _newVersion) {
                     if (db.objectStoreNames.contains("chat_events")) {
