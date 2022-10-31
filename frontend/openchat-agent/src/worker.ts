@@ -1110,6 +1110,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             break;
 
         default:
-            console.log("WORKER: unknown message kind received: ", kind);
+            console.debug("WORKER: unknown message kind received: ", kind);
     }
 });
