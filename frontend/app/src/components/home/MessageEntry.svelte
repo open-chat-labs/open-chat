@@ -72,6 +72,9 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
+    // Update this to force a new textbox instance to be created
+    let textboxId = Symbol();
+
     $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
@@ -314,9 +317,14 @@
         inp.textContent = "";
         dispatch("setTextContent", undefined);
 
-        inp.focus();
         messageActions.close();
         dispatch("stopTyping");
+
+        // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
+        // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
+        textboxId = Symbol();
+        tick().then(() => inp.focus());
+
     }
 
     export function saveSelection() {
@@ -479,23 +487,25 @@
                 <Progress percent={percentRecorded} />
             </div>
         {/if}
-        <div
-            tabindex={0}
-            bind:this={inp}
-            on:blur={saveSelection}
-            class="textbox"
-            class:recording
-            class:dragging
-            contenteditable={true}
-            on:paste
-            {placeholder}
-            spellcheck={true}
-            on:dragover={() => (dragging = true)}
-            on:dragenter={() => (dragging = true)}
-            on:dragleave={() => (dragging = false)}
-            on:drop={onDrop}
-            on:input={onInput}
-            on:keypress={keyPress} />
+        {#key textboxId}
+            <div
+                tabindex={0}
+                bind:this={inp}
+                on:blur={saveSelection}
+                class="textbox"
+                class:recording
+                class:dragging
+                contenteditable
+                on:paste
+                {placeholder}
+                spellcheck
+                on:dragover={() => (dragging = true)}
+                on:dragenter={() => (dragging = true)}
+                on:dragleave={() => (dragging = false)}
+                on:drop={onDrop}
+                on:input={onInput}
+                on:keypress={keyPress} />
+        {/key}
         {#if editingEvent === undefined}
             {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
                 <div class="record">
