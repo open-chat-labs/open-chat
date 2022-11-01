@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { rollbar } from "../../utils/logging";
+    import { logger } from "../../utils/logging";
     import { themeStore } from "../../theme/themes";
     import { onMount } from "svelte";
 
@@ -28,7 +28,7 @@
                 .then(() => (tweetRendered = true))
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);
-                    rollbar.error("Failed to render tweet", err);
+                    logger.error("Failed to render tweet", err);
                 });
         }
     }

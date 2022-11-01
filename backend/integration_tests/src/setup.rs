@@ -43,6 +43,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     let online_users_aggregator_canister_id = create_canister(env);
     let proposals_bot_canister_id = create_canister(env);
     let user_index_canister_id = create_canister(env);
+    let cycles_dispenser_canister_id = create_canister(env);
     let open_storage_index_canister_id = create_canister(env);
     let ledger_canister_id = create_canister(env);
 
@@ -63,6 +64,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         notifications_canister_ids: vec![notifications_canister_id],
         online_users_aggregator_canister_id,
         callback_canister_id,
+        cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
@@ -77,6 +79,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         notifications_canister_ids: vec![notifications_canister_id],
         user_index_canister_id,
         callback_canister_id,
+        cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -85,6 +88,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: vec![principal],
         user_index_canister_id,
+        cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -97,6 +101,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
 
     let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
         user_index_canister_id,
+        cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -108,6 +113,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     );
 
     let callback_init_args = callback_canister::init::Args {
+        cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -118,6 +124,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         user_index_canister_id,
         group_index_canister_id,
         nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,
+        cycles_dispenser_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };

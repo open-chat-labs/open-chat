@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{CanisterId, CanisterWasm, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, Version};
 
 pub mod operations;
 pub mod utils;
@@ -73,6 +73,7 @@ pub struct CanisterIds {
     pub online_users_aggregator: CanisterId,
     pub callback: CanisterId,
     pub proposals_bot: CanisterId,
+    pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,
     pub ledger: CanisterId,
 }
@@ -92,6 +93,15 @@ impl Display for OpenStorageCanisterName {
 
         f.write_str(name)
     }
+}
+
+#[derive(CandidType, Debug)]
+pub struct CyclesDispenserInitArgs {
+    pub admins: Vec<Principal>,
+    pub canisters: Vec<CanisterId>,
+    pub max_top_up_amount: Cycles,
+    pub min_interval: Milliseconds,
+    pub min_cycles_balance: Cycles,
 }
 
 #[derive(CandidType, Debug)]

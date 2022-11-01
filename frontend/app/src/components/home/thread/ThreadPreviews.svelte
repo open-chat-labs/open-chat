@@ -13,7 +13,7 @@
     import { getContext } from "svelte";
     import type { ThreadPreview, EventWrapper, Message, ThreadSyncDetails } from "openchat-client";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -32,7 +32,7 @@
     }
 
     function updateUserStore(userIdsFromEvents: Set<string>) {
-        client.api
+        client
             .getUsers(
                 {
                     userGroups: [
@@ -56,7 +56,7 @@
         // TODO - this might run a bit more frequently than we need it to. Not 100% sure yet.
         // we definitely cannot get away with *just* doing it onMount though.
         loading = true;
-        client.api
+        client
             .threadPreviews(
                 client.toRecord2(
                     Object.entries($threadsByChatStore),
@@ -78,7 +78,7 @@
             })
             .catch((err) => {
                 toastStore.showFailureToast("thread.previewFailure");
-                rollbar.error("Unable to load thread previews: ", err);
+                logger.error("Unable to load thread previews: ", err);
             })
             .finally(() => (loading = false));
     }

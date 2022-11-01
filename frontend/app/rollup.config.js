@@ -30,9 +30,12 @@ const dfxNetwork = process.env.DFX_NETWORK;
 console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
-    const canisterPath = dfxNetwork.startsWith("ic")
-        ? path.join(__dirname, "../..", "canister_ids.json")
-        : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
+    const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");
+    const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
+    const canisterPath =
+        dfxJson["networks"][dfxNetwork]["type"] === "persistent"
+            ? path.join(__dirname, "../..", "canister_ids.json")
+            : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
@@ -41,12 +44,14 @@ if (dfxNetwork) {
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
+        process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.open_storage_index[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
+        console.log("OpenStorageIndex: ", process.env.OPEN_STORAGE_INDEX_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -78,7 +83,6 @@ console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
 console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
-console.log("PROPOSAL_BOT_CANISTER", process.env.PROPOSALS_BOT_CANISTER);
 
 function serve() {
     return dev({
@@ -94,24 +98,40 @@ function serve() {
     });
 }
 
-rimraf.sync(path.join(__dirname, "build"));
-fs.mkdirSync("build");
-
-if (version) {
-    fs.writeFileSync("build/version", JSON.stringify({ version }));
-}
-
-fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
-
-const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
-if (iiAlternativeOrigins !== undefined) {
-    fs.mkdirSync("build/.well-known");
-    fs.writeFileSync(
-        "build/.well-known/ii-alternative-origins",
-        JSON.stringify({
-            alternativeOrigins: iiAlternativeOrigins.split(","),
-        })
-    );
+// this is a bit ridiculous but there we are ...
+function clean() {
+    return {
+        name: "clean-build",
+        buildStart() {
+            console.log("cleaning up the build directory");
+            fs.mkdirSync("_temp");
+            fs.copyFileSync(
+                path.join(__dirname, "build", "worker.js"),
+                path.join(__dirname, "_temp", "worker.js")
+            );
+            rimraf.sync(path.join(__dirname, "build"));
+            fs.mkdirSync("build");
+            fs.copyFileSync(
+                path.join(__dirname, "_temp", "worker.js"),
+                path.join(__dirname, "build", "worker.js")
+            );
+            rimraf.sync(path.join(__dirname, "_temp"));
+            if (version) {
+                fs.writeFileSync("build/version", JSON.stringify({ version }));
+            }
+            fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
+            const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
+            if (iiAlternativeOrigins !== undefined) {
+                fs.mkdirSync("build/.well-known");
+                fs.writeFileSync(
+                    "build/.well-known/ii-alternative-origins",
+                    JSON.stringify({
+                        alternativeOrigins: iiAlternativeOrigins.split(","),
+                    })
+                );
+            }
+        },
+    };
 }
 
 export default {
@@ -124,6 +144,7 @@ export default {
         entryFileNames: "[name]-[hash].js",
     },
     plugins: [
+        clean(),
         svelte({
             preprocess: sveltePreprocess({
                 sourceMap: !production,
@@ -163,7 +184,6 @@ export default {
             "process.env.NODE_ENV": JSON.stringify(env),
             "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
             "process.env.ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.ROLLBAR_ACCESS_TOKEN),
-            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
             "process.env.IC_URL": maybeStringify(process.env.IC_URL),
             "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
             "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),

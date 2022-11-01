@@ -3,7 +3,7 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { Cryptocurrency, OpenChat } from "openchat-client";
-    import { rollbar } from "../../utils/logging";
+    import { logger } from "../../utils/logging";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -26,14 +26,14 @@
         dispatch("click");
         refreshing = true;
 
-        return client.api
+        return client
             .refreshAccountBalance(token, user.cryptoAccount)
             .then((val) => {
                 dispatch("refreshed", val);
             })
             .catch((err) => {
                 const errorMessage = $_("unableToRefreshAccountBalance", { values: { token } });
-                rollbar.error(`Failed to refresh ${token} account balance`, err);
+                logger.error(`Failed to refresh ${token} account balance`, err);
                 dispatch("error", errorMessage);
             })
             .finally(() => (refreshing = false));

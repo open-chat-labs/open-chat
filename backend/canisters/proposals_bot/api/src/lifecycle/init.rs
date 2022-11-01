@@ -8,6 +8,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

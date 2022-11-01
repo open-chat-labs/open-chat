@@ -29,7 +29,7 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import Rules from "./Rules.svelte";
     import type {
         OpenChat,
@@ -239,7 +239,7 @@
     }
 
     function doUpdateInfo(): Promise<void> {
-        return client.api
+        return client
             .updateGroup(
                 updatedGroup.chatId,
                 nameDirty ? updatedGroup.name : undefined,
@@ -259,39 +259,26 @@
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                     };
-                    dispatch("updateChat", originalGroup);
+                    client.addOrReplaceChat(originalGroup);
                 }
             })
             .catch((err) => {
-                rollbar.error("Update group failed: ", err);
+                logger.error("Update group failed: ", err);
                 toastStore.showFailureToast("groupUpdateFailed");
             });
     }
 
     function doUpdateRules(): Promise<void> {
-        return client.api
-            .updateGroup(
-                updatedGroup.chatId,
-                undefined,
-                undefined,
-                updatedRules,
-                undefined,
-                undefined
-            )
-            .then((resp) => {
-                if (resp === "success") {
-                    dispatch("updateGroupRules", {
-                        chatId: updatedGroup.chatId,
-                        rules: updatedRules,
-                    });
-                } else {
-                    toastStore.showFailureToast("group.rulesUpdateFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Update group rules failed: ", err);
+        return client.updateGroupRules(updatedGroup.chatId, updatedRules).then((success) => {
+            if (success) {
+                dispatch("updateGroupRules", {
+                    chatId: updatedGroup.chatId,
+                    rules: updatedRules,
+                });
+            } else {
                 toastStore.showFailureToast("group.rulesUpdateFailed");
-            });
+            }
+        });
     }
 
     function updatePermissions() {
@@ -305,35 +292,22 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        const optionalPermissions = client.mergeKeepingOnlyChanged(
-            originalGroup.permissions,
-            updatedGroup.permissions
-        );
-        console.log("Changed permissions: ", optionalPermissions);
-
-        return client.api
-            .updateGroup(
+        return client
+            .updateGroupPermissions(
                 updatedGroup.chatId,
-                undefined,
-                undefined,
-                undefined,
-                optionalPermissions,
-                undefined
+                originalGroup.permissions,
+                updatedGroup.permissions
             )
-            .then((resp) => {
-                if (resp === "success") {
+            .then((success) => {
+                if (success) {
                     originalGroup = {
                         ...originalGroup,
                         permissions: updatedGroup.permissions,
                     };
-                    dispatch("updateChat", originalGroup);
+                    client.addOrReplaceChat(originalGroup);
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
                 }
-            })
-            .catch((err) => {
-                rollbar.error("Update permissions failed: ", err);
-                toastStore.showFailureToast("group.permissionsUpdateFailed");
             });
     }
 

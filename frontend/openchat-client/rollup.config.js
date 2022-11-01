@@ -5,18 +5,22 @@ import typescript from "@rollup/plugin-typescript";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
-// import * as fs from "fs";
-// import * as path from "path";
-// import * as rimraf from "rimraf";
+import * as path from "path";
+import * as rimraf from "rimraf";
 
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 console.log("PROD", production);
 
-// if (production) {
-//     rimraf.sync(path.join(__dirname, "lib"));
-//     fs.mkdirSync("lib");
-// }
+function clean() {
+    return {
+        name: "clean-build",
+        buildStart() {
+            console.log("cleaning up the lib directory");
+            rimraf.sync(path.join(__dirname, "lib"));
+        },
+    };
+}
 
 export default {
     input: `./src/index.ts`,
@@ -26,6 +30,7 @@ export default {
     },
     external: ["url"],
     plugins: [
+        clean(),
         resolve({
             preferBuiltins: false,
             browser: true,
@@ -44,7 +49,6 @@ export default {
         replace({
             preventAssignment: true,
             "process.env.NODE_ENV": JSON.stringify(env),
-            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
         }),
     ],
     watch: {

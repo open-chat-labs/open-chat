@@ -8,14 +8,9 @@
         UserStatus,
         E8S_PER_TOKEN,
         cryptoCurrencyList,
-    } from "openchat-client";
-    import type {
         PartialUserSummary,
-        Cryptocurrency,
-        ChatSummary,
-        OpenChat,
-        DirectChatSummary,
     } from "openchat-client";
+    import type { Cryptocurrency, ChatSummary, OpenChat, DirectChatSummary } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
@@ -53,12 +48,10 @@
     let error: string | undefined = undefined;
     let message = "";
     let confirming = false;
-    let receiver: PartialUserSummary | undefined =
-        chat.kind === "direct_chat" ? $userStore[(chat as DirectChatSummary).them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-
+    let receiver: PartialUserSummary | undefined = undefined;
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
@@ -78,6 +71,11 @@
         // default the receiver to the reply sender if we are replying to a specific message
         if ($currentChatReplyingTo !== undefined) {
             receiver = $userStore[$currentChatReplyingTo.senderId];
+        }
+
+        // default the receiver to the other user in a direct chat
+        if (chat.kind === "direct_chat") {
+            receiver = $userStore[chat.them];
         }
     });
 

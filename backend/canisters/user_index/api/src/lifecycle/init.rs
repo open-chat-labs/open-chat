@@ -21,6 +21,8 @@ pub struct Args {
 
     pub callback_canister_id: CanisterId,
 
+    pub cycles_dispenser_canister_id: CanisterId,
+
     pub open_storage_index_canister_id: CanisterId,
 
     pub ledger_canister_id: CanisterId,

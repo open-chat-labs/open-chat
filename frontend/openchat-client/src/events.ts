@@ -1,4 +1,4 @@
-import type { EventWrapper, Message } from "./domain";
+import type { EventWrapper, Message } from "openchat-shared";
 
 export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
     constructor(mode: "explain" | "icp" | "sms") {
@@ -9,6 +9,12 @@ export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
 export class LoadedNewMessages extends CustomEvent<boolean> {
     constructor(newLatestMessage: boolean) {
         super("openchat_event", { detail: newLatestMessage });
+    }
+}
+
+export class SendMessageFailed extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 
@@ -24,19 +30,43 @@ export class SentMessage extends CustomEvent<number | undefined> {
     }
 }
 
+export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
+    constructor(event: EventWrapper<Message>) {
+        super("openchat_event", { detail: event });
+    }
+}
+
 export class LoadedMessageWindow extends CustomEvent<number> {
     constructor(messageIndex: number) {
         super("openchat_event", { detail: messageIndex });
     }
 }
 
-export class MessageSentByOther extends CustomEvent<EventWrapper<Message>> {
-    constructor(messageEvent: EventWrapper<Message>) {
-        super("openchat_event", { detail: messageEvent });
+export class ChatUpdated extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 
-export class ChatUpdated extends Event {
+export class ThreadMessagesLoaded extends CustomEvent<boolean> {
+    constructor(ascending: boolean) {
+        super("openchat_event", { detail: ascending });
+    }
+}
+
+export class ThreadSelected extends CustomEvent<{
+    initiating: boolean;
+    threadRootMessageId: bigint;
+    threadRootMessageIndex: number;
+}> {
+    constructor(threadRootMessageId: bigint, threadRootMessageIndex: number, initiating: boolean) {
+        super("openchat_event", {
+            detail: { threadRootMessageId, initiating, threadRootMessageIndex },
+        });
+    }
+}
+
+export class ThreadClosed extends Event {
     constructor() {
         super("openchat_event");
     }

@@ -1,12 +1,12 @@
-import type { ServiceContainer } from "../services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import type {
     MarkReadRequest,
     MarkReadResponse,
     ThreadRead,
     ThreadSyncDetails,
-} from "../domain/chat/chat";
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
+import type { OpenChatAgentWorker } from "src/agentWorker";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -82,11 +82,11 @@ export class MessageReadTracker {
         };
     }
 
-    private triggerLoop(api: ServiceContainer): void {
+    private triggerLoop(api: OpenChatAgentWorker): void {
         this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
     }
 
-    start(api: ServiceContainer): void {
+    start(api: OpenChatAgentWorker): void {
         if (process.env.NODE_ENV !== "test") {
             this.triggerLoop(api);
         }
@@ -102,7 +102,7 @@ export class MessageReadTracker {
         }
     }
 
-    private sendToServer(api: ServiceContainer): void {
+    private sendToServer(api: OpenChatAgentWorker): void {
         const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, data]) => {
             if (!data.empty()) {
                 req.push({
@@ -306,7 +306,6 @@ export class MessageReadTracker {
 
 export const messagesRead = new MessageReadTracker();
 
-// FIXME - nothing seems to be calling this
-export function startMessagesReadTracker(api: ServiceContainer): void {
+export function startMessagesReadTracker(api: OpenChatAgentWorker): void {
     messagesRead.start(api);
 }

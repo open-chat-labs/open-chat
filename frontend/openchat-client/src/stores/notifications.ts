@@ -1,21 +1,21 @@
-import type { NotificationStatus } from "src/domain";
 import { derived, writable } from "svelte/store";
-import { getSoftDisabled, storeSoftDisabled } from "../utils/caching";
-import { rollbar } from "../utils/logging";
+
+import type { NotificationStatus } from "openchat-shared";
+import { createLsBoolStore } from "./localStorageSetting";
+import { configKeys } from "../utils/config";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
-const softDisabledStore = writable<boolean>(false);
+// FIXME - how do we deal with existing values stored in indexeddb
+export const softDisabledStore = createLsBoolStore(configKeys.softDisabled, false);
+
 const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
 
 export async function initNotificationStores(): Promise<void> {
     if (!notificationsSupported) {
         return;
     }
-
-    const softDisabled = await getSoftDisabled();
-    softDisabledStore.set(softDisabled);
 
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
@@ -29,12 +29,6 @@ export async function initNotificationStores(): Promise<void> {
 }
 
 export function setSoftDisabled(softDisabled: boolean): void {
-    // add to indexdb so service worker has access
-    storeSoftDisabled(softDisabled).catch((err) =>
-        rollbar.error("Failed to set soft disabled", err)
-    );
-
-    // add to svelte store
     softDisabledStore.set(softDisabled);
 }
 

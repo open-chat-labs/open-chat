@@ -34,7 +34,7 @@
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { Cryptocurrency, cryptoCurrencyList } from "openchat-client";
@@ -76,7 +76,7 @@
     $: bioDirty = userbio !== originalBio;
 
     onMount(() => {
-        client.api.getBio().then((bio) => {
+        client.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
     });
@@ -93,7 +93,7 @@
 
         if (bioDirty) {
             promises.push(
-                client.api
+                client
                     .setBio(userbio)
                     .then((resp) => {
                         if (resp === "bio_too_long") {
@@ -104,14 +104,14 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        rollbar.error("Unable to save user bio: ", err);
+                        logger.error("Unable to save user bio: ", err);
                     })
             );
         }
 
         if (validUsername !== undefined) {
             promises.push(
-                client.api
+                client
                     .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
@@ -136,7 +136,7 @@
                     })
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                        rollbar.error("Unable to save username: ", err);
+                        logger.error("Unable to save username: ", err);
                     })
             );
         }

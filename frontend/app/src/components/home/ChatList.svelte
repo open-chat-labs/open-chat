@@ -11,7 +11,6 @@
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
-        CreatedUser,
         UserSummary,
         DataContent,
         OpenChat,
@@ -25,6 +24,7 @@
     import { menuCloser } from "../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
+    const createdUser = client.user;
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -32,7 +32,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let createdUser: CreatedUser;
 
     const dispatch = createEventDispatcher();
 
@@ -46,7 +45,6 @@
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
-    $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
@@ -180,7 +178,6 @@
                     <ChatSummary
                         index={i}
                         {chatSummary}
-                        {userId}
                         selected={$selectedChatId === chatSummary.chatId}
                         visible={searchTerm !== "" || !chatSummary.archived}
                         on:chatSelected={chatSelected}

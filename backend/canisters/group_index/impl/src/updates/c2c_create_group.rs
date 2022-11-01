@@ -1,7 +1,5 @@
 use crate::model::public_groups::GroupCreatedArgs;
-use crate::{
-    mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE,
-};
+use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -9,7 +7,7 @@ use group_index_canister::c2c_create_group::{Response::*, *};
 use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, GroupSubtype, UserId, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::CREATE_CANISTER_CYCLES_FEE;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
 #[update_msgpack]
 #[trace]

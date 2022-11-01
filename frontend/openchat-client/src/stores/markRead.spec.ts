@@ -1,6 +1,6 @@
 import { MessageReadTracker, MessagesRead } from "./markRead";
 import { unconfirmed } from "./unconfirmed";
-import type { EventWrapper, Message } from "../domain/chat/chat";
+import type { EventWrapper, Message } from "openchat-shared";
 
 describe("mark messages read", () => {
     const markRead = new MessageReadTracker();

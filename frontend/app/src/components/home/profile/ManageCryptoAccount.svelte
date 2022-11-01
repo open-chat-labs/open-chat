@@ -9,7 +9,7 @@
     import Send from "svelte-material-icons/Send.svelte";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
@@ -52,7 +52,7 @@
 
         withdrawing = true;
         error = undefined;
-        client.api
+        client
             .withdrawCryptocurrency({
                 kind: "pending",
                 token: token,
@@ -67,13 +67,13 @@
                     toastStore.showSuccessToast("cryptoAccount.withdrawalSucceeded");
                 } else {
                     error = "cryptoAccount.withdrawalFailed";
-                    rollbar.error(`Unable to withdraw ${symbol}`, resp);
+                    logger.error(`Unable to withdraw ${symbol}`, resp);
                     toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
                 }
             })
             .catch((err) => {
                 error = "cryptoAccount.withdrawalFailed";
-                rollbar.error(`Unable to withdraw ${symbol}`, err);
+                logger.error(`Unable to withdraw ${symbol}`, err);
                 toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
             })
             .finally(() => (withdrawing = false));

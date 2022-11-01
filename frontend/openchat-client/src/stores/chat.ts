@@ -1,38 +1,30 @@
-import type {
+import {
     ChatEvent,
     ChatSpecificState,
     ChatSummary,
-    CurrentChatState,
     EnhancedReplyContext,
     EventWrapper,
     Message,
     MessageContent,
     ThreadSyncDetails,
-} from "../domain/chat/chat";
+    CreatedUser,
+    compareChats,
+    emptyChatMetrics,
+} from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
-    compareChats,
-    getContentAsText,
-    getFirstUnreadMessageIndex,
     getNextEventAndMessageIndexes,
     mergeServerEvents,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
-    updateArgsFromChats,
     mergeChatMetrics,
-} from "../domain/chat/chat.utils";
+    getFirstUnreadMessageIndex,
+} from "../utils/chat";
 import { userStore } from "./user";
-import { Poller } from "../services/poller";
-import type { ServiceContainer } from "../services/serviceContainer";
-import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
-import { blockedUsers } from "./blockedUsers";
 import { pinnedChatsStore } from "./pinnedChats";
-import { rollbar } from "../utils/logging";
-import type { CreatedUser } from "../domain/user/user";
 import DRange from "drange";
-import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 import { snsFunctions } from "./snsFunctions";
 import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -40,12 +32,7 @@ import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByC
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
-
-const ONE_MINUTE = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = 5000;
-const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
-
-let chatUpdatesSince: bigint | undefined = undefined;
+import type { OpenChatAgentWorker } from "../agentWorker";
 
 export type ChatState = {
     chatId: string;
@@ -94,7 +81,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
-                        (k) => k, // FIXME -> or maybe this is ok
+                        (k) => k,
                         currentUser.userId,
                         summary,
                         unconfirmed,
@@ -129,6 +116,16 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
 });
 
 export const selectedChatId = writable<string | undefined>(undefined);
+export const selectedThreadRootMessageIndex = writable<number | undefined>(undefined);
+export const selectedThreadKey = derived(
+    [selectedChatId, selectedThreadRootMessageIndex],
+    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
+        if ($selectedChatId !== undefined && $selectedThreadRootMessageIndex !== undefined) {
+            return `${$selectedChatId}_${$selectedThreadRootMessageIndex}`;
+        }
+        return undefined;
+    }
+);
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
 export const chatUpdatedStore: Writable<{ affectedEvents: number[] } | undefined> =
@@ -149,6 +146,22 @@ export const selectedChatStore = derived(
         return $chatSummaries[$selectedChatId];
     }
 );
+
+export function nextEventAndMessageIndexesForThread(
+    events: EventWrapper<ChatEvent>[]
+): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0]
+    );
+}
 
 export function nextEventAndMessageIndexes(): [number, number] {
     const chat = get(selectedServerChatStore);
@@ -246,6 +259,19 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     serverEvents: [],
 }));
 
+export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
+export const threadEvents = derived(
+    [threadServerEventsStore, unconfirmed, localMessageUpdates, selectedThreadKey],
+    ([serverEvents, unconf, localUpdates, threadKey]) => {
+        if (threadKey === undefined) return [];
+        return mergeEventsAndLocalUpdates(
+            serverEvents,
+            unconf[threadKey]?.messages ?? [],
+            localUpdates
+        );
+    }
+);
+
 const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
     chatStateStore,
     "serverEvents",
@@ -263,11 +289,6 @@ export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focu
     "focusMessageIndex",
     () => undefined
 );
-
-export const focusThreadMessageIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "focusThreadMessageIndex"
->(chatStateStore, "focusThreadMessageIndex", () => undefined);
 
 export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
     chatStateStore,
@@ -311,18 +332,22 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>());
 
 export function setSelectedChat(
-    api: ServiceContainer,
+    api: OpenChatAgentWorker,
     chat: ChatSummary,
-    messageIndex?: number,
-    threadMessageIndex?: number // FIXME - this is not being used? Do we need it?
+    messageIndex?: number
 ): void {
     // TODO don't think this should be in here really
     if (
         chat.kind === "group_chat" &&
-        chat.subtype?.kind === "governance_proposals" &&
+        chat.subtype !== undefined &&
+        chat.subtype.kind === "governance_proposals" &&
         !chat.subtype.isNns
     ) {
-        api.listNervousSystemFunctions(chat.subtype.governanceCanisterId);
+        const { governanceCanisterId } = chat.subtype;
+        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+            snsFunctions.set(governanceCanisterId, val.functions);
+            return val;
+        });
     }
 
     if (messageIndex === undefined) {
@@ -343,7 +368,6 @@ export function setSelectedChat(
     // initialise a bunch of stores
     chatStateStore.clear(chat.chatId);
     chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
-    chatStateStore.setProp(chat.chatId, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.setProp(
         chat.chatId,
         "userIds",
@@ -380,21 +404,6 @@ export function updateSummaryWithConfirmedMessage(
     });
 }
 
-function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
-    const userIds = new Set<string>();
-    chats.forEach((chat) => {
-        if (chat.kind === "direct_chat") {
-            userIds.add(chat.them);
-        } else if (chat.latestMessage !== undefined) {
-            userIds.add(chat.latestMessage.event.sender);
-            extractUserIdsFromMentions(
-                getContentAsText((k) => k, chat.latestMessage.event.content)
-            ).forEach((id) => userIds.add(id));
-        }
-    });
-    return userIds;
-}
-
 export function clearSelectedChat(newSelectedChatId?: string): void {
     filteredProposalsStore.set(undefined);
     selectedChatId.update((chatId) => {
@@ -403,116 +412,6 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
         }
         return newSelectedChatId;
     });
-}
-
-async function loadChats(api: ServiceContainer) {
-    try {
-        const currentUser = get(currentUserStore);
-        if (currentUser === undefined) {
-            console.log("Current user not set, cannot load chats");
-            return;
-        }
-
-        const init = get(chatsInitialised);
-
-        chatsLoading.set(!init);
-        const chats = Object.values(get(serverChatSummariesStore));
-        const selectedChat = get(selectedChatStore);
-        const currentState: CurrentChatState = {
-            chatSummaries: chats,
-            blockedUsers: get(blockedUsers),
-            pinnedChats: get(pinnedChatsStore),
-        };
-        const chatsResponse =
-            chatUpdatesSince === undefined
-                ? await api.getInitialState(selectedChat?.chatId)
-                : await api.getUpdates(
-                      currentState,
-                      updateArgsFromChats(chatUpdatesSince, chats),
-                      selectedChat?.chatId
-                  );
-
-        chatUpdatesSince = chatsResponse.timestamp;
-
-        if (chatsResponse.wasUpdated) {
-            const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries);
-            if (!init) {
-                for (const userId of currentUser.referrals) {
-                    userIds.add(userId);
-                }
-            }
-            userIds.add(currentUser.userId);
-            const usersResponse = await api.getUsers(
-                {
-                    userGroups: [
-                        {
-                            users: missingUserIds(get(userStore), userIds),
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                },
-                true
-            );
-
-            userStore.addMany(usersResponse.users);
-
-            if (chatsResponse.blockedUsers !== undefined) {
-                blockedUsers.set(chatsResponse.blockedUsers);
-            }
-
-            if (chatsResponse.pinnedChats !== undefined) {
-                pinnedChatsStore.set(chatsResponse.pinnedChats);
-            }
-
-            const selectedChat = get(selectedChatStore);
-            let selectedChatInvalid = true;
-
-            serverChatSummariesStore.set(
-                chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                    rec[chat.chatId] = chat;
-                    if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChatInvalid = false;
-                    }
-                    return rec;
-                }, {})
-            );
-
-            if (selectedChatInvalid) {
-                clearSelectedChat();
-            } else if (selectedChat !== undefined) {
-                chatUpdatedStore.set({
-                    affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
-                });
-            }
-
-            if (chatsResponse.avatarIdUpdate !== undefined) {
-                const blobReference =
-                    chatsResponse.avatarIdUpdate === "set_to_none"
-                        ? undefined
-                        : {
-                              canisterId: currentUser.userId,
-                              blobId: chatsResponse.avatarIdUpdate.value,
-                          };
-                const dataContent = {
-                    blobReference,
-                    blobData: undefined,
-                    blobUrl: undefined,
-                };
-                const user = {
-                    ...get(userStore)[currentUser.userId],
-                    ...dataContent,
-                };
-                userStore.add(api.rehydrateDataContent(user, "avatar"));
-            }
-
-            chatsInitialised.set(true);
-        }
-    } catch (err) {
-        rollbar.error("Error loading chats", err as Error);
-        throw err;
-    } finally {
-        chatsLoading.set(false);
-    }
 }
 
 export function createDirectChat(chatId: string): void {
@@ -535,10 +434,6 @@ export function createDirectChat(chatId: string): void {
             },
         };
     });
-}
-
-export function startChatPoller(api: ServiceContainer): Poller {
-    return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
 }
 
 export function removeChat(chatId: string): void {
@@ -566,7 +461,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
 
 export function addServerEventsToStores(
     chatId: string,
-    newEvents: EventWrapper<ChatEvent>[]
+    newEvents: EventWrapper<ChatEvent>[],
+    threadRootMessageIndex: number | undefined
 ): void {
     if (newEvents.length === 0) {
         return;
@@ -574,19 +470,35 @@ export function addServerEventsToStores(
 
     for (const event of newEvents) {
         if (event.event.kind === "message") {
-            if (unconfirmed.delete(chatId, event.event.messageId)) {
-                messagesRead.confirmMessage(
-                    chatId,
-                    event.event.messageIndex,
-                    event.event.messageId
-                );
+            const key =
+                threadRootMessageIndex === undefined
+                    ? chatId
+                    : `${chatId}_${threadRootMessageIndex}`;
+            if (unconfirmed.delete(key, event.event.messageId)) {
+                if (threadRootMessageIndex === undefined) {
+                    messagesRead.confirmMessage(
+                        chatId,
+                        event.event.messageIndex,
+                        event.event.messageId
+                    );
+                } else {
+                    messagesRead.markThreadRead(
+                        chatId,
+                        threadRootMessageIndex,
+                        event.event.messageIndex
+                    );
+                }
             }
         }
     }
 
-    chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-        mergeServerEvents(events, newEvents)
-    );
+    if (threadRootMessageIndex === undefined) {
+        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+            mergeServerEvents(events, newEvents)
+        );
+    } else {
+        threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
+    }
 }
 
 export function clearServerEvents(chatId: string): void {

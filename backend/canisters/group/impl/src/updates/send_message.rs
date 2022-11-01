@@ -2,7 +2,7 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs};
+use chat_events::{ChatEventInternal, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
@@ -66,7 +66,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, runtime_state.data.events.main()));
+            .and_then(|r| get_user_being_replied_to(r, args.thread_root_message_index, runtime_state));
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -200,7 +200,13 @@ async fn register_end_poll_callback(
     let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
-fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &ChatEvents) -> Option<UserId> {
+fn get_user_being_replied_to(
+    replies_to: &GroupReplyContext,
+    thread_root_message_index: Option<MessageIndex>,
+    runtime_state: &RuntimeState,
+) -> Option<UserId> {
+    let events = runtime_state.data.events.get(thread_root_message_index)?;
+
     if let Some(ChatEventInternal::Message(message)) = events.get(replies_to.event_index).map(|e| &e.event) {
         Some(message.sender)
     } else {

@@ -11,7 +11,7 @@
     import "intl-tel-input/build/css/intlTelInput.css";
     import "intl-tel-input/build/js/utils";
     import intlTelInput, { Plugin } from "intl-tel-input";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import type { OpenChat, PhoneNumber } from "openchat-client";
 
     const dispatch = createEventDispatcher();
@@ -67,7 +67,7 @@
             phoneNumber = { countryCode, number: phoneNumberStr };
 
             busy = true;
-            client.api
+            client
                 .submitPhoneNumber(phoneNumber)
                 .then((resp) => {
                     if (resp === "already_registered") {
@@ -84,7 +84,7 @@
                     }
                 })
                 .catch((err) => {
-                    rollbar.error("Error submitting phone number: ", err);
+                    logger.error("Error submitting phone number: ", err);
                 })
                 .finally(() => (busy = false));
         }
@@ -92,7 +92,7 @@
 
     function submitCode() {
         busy = true;
-        client.api
+        client
             .confirmPhoneNumber(codeValue)
             .then((resp) => {
                 if (resp.kind === "already_claimed") {
@@ -110,7 +110,7 @@
                 }
             })
             .catch((err) => {
-                rollbar.error("Error submitting sms code: ", err);
+                logger.error("Error submitting sms code: ", err);
             })
             .finally(() => (busy = false));
     }

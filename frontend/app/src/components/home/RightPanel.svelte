@@ -11,7 +11,6 @@
     import type {
         AddMembersResponse,
         ChatEvent,
-        ChatMetrics,
         EventWrapper,
         FullMember,
         GroupChatSummary,
@@ -30,12 +29,11 @@
     import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { rollbar } from "../../utils/logging";
+    import { logger } from "../../utils/logging";
 
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
-    export let thread: Thread | undefined;
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
@@ -44,11 +42,11 @@
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
+    $: selectedServerChatStore = client.selectedServerChatStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatRules = client.currentChatRules;
-    $: focusThreadMessageIndex = client.focusThreadMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
@@ -179,11 +177,10 @@
 
     function transferOwnership(chatId: string, me: string, them: FullMember): Promise<boolean> {
         transferOwnershipLocally(chatId, me, them.userId);
-        return client.api
+        return client
             .changeRole(chatId, them.userId, "owner")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to transfer ownership", resp);
                     undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
                     return false;
                 }
@@ -191,7 +188,7 @@
             })
             .catch((err) => {
                 undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
-                rollbar.error("Unable to transfer ownership", err);
+                logger.error("Unable to transfer ownership", err);
                 return false;
             });
     }
@@ -200,16 +197,15 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
         );
-        return client.api
+        return client
             .changeRole(chatId, userId, "participant")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to dismiss as admin", resp);
                     toastStore.showFailureToast("dismissAsAdminFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to dismiss as admin", err);
+                logger.error("Unable to dismiss as admin", err);
                 toastStore.showFailureToast("dismissAsAdminFailed");
             });
     }
@@ -218,31 +214,29 @@
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
         );
-        return client.api
+        return client
             .changeRole(chatId, userId, "admin")
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to make admin", resp);
                     toastStore.showFailureToast("makeAdminFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to make admin", err);
+                logger.error("Unable to make admin", err);
                 toastStore.showFailureToast("makeAdminFailed");
             });
     }
 
     function removeMember(chatId: string, userId: string): Promise<void> {
-        return client.api
+        return client
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    rollbar.warn("Unable to remove member", resp);
                     toastStore.showFailureToast("removeMemberFailed");
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to remove member", err);
+                logger.error("Unable to remove member", err);
                 toastStore.showFailureToast("removeMemberFailed");
             });
     }
@@ -301,7 +295,7 @@
         users: UserSummary[]
     ): Promise<boolean> {
         addMembersLocally(chatId, viaUnblock, users);
-        return client.api
+        return client
             .addMembers(
                 chatId,
                 users.map((u) => u.userId),
@@ -313,13 +307,12 @@
                     return true;
                 } else {
                     removeMembersLocally(chatId, viaUnblock, users, resp);
-                    rollbar.warn("AddMembersFailed", resp);
                     return false;
                 }
             })
             .catch((err) => {
                 removeMembersLocally(chatId, viaUnblock, users, { kind: "unknown" });
-                rollbar.error("AddMembersFailed", err);
+                logger.error("AddMembersFailed", err);
                 return false;
             });
     }
@@ -330,7 +323,7 @@
 
     $: threadRootEvent =
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
-            ? findMessage($eventsStore, lastState.rootEvent.event.messageId)
+            ? findMessage($eventsStore, lastState.threadRootMessageId)
             : undefined;
 </script>
 
@@ -345,8 +338,7 @@
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
-            on:showMembers
-            on:updateChat />
+            on:showMembers />
     {:else if lastState.kind === "add_members"}
         <AddMembers
             busy={savingMembers}
@@ -385,14 +377,13 @@
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
-    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
+    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
         <Thread
-            bind:this={thread}
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
-            focusMessageIndex={$focusThreadMessageIndex}
             chat={$selectedChatStore}
+            serverChat={$selectedServerChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />

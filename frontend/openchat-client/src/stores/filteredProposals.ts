@@ -1,4 +1,4 @@
-import type { ChatSummary, Proposal } from "../domain/chat/chat";
+import type { ChatSummary, Proposal } from "openchat-shared";
 import { writable } from "svelte/store";
 
 const storageKeyPrefix = "proposal_filters_";

@@ -10,7 +10,7 @@
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { rollbar } from "../../../utils/logging";
+    import { logger } from "../../../utils/logging";
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -32,11 +32,11 @@
 
     onMount(async () => {
         try {
-            const task1 = client.api.getUser(userId);
-            profile = await client.api.getPublicProfile(userId);
+            const task1 = client.getUser(userId);
+            profile = await client.getPublicProfile(userId);
             user = await task1;
         } catch (e: any) {
-            rollbar.error("Failed to load user profile", e);
+            logger.error("Failed to load user profile", e);
             onClose();
         }
     });

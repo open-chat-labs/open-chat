@@ -7,7 +7,7 @@
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN, ONE_GB } from "openchat-client";
-    import { rollbar } from "utils/logging";
+    import { logger } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import type { OpenChat } from "openchat-client";
@@ -42,7 +42,7 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        client.api
+        client
             .refreshAccountBalance(token, client.user.cryptoAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
@@ -50,7 +50,7 @@
             })
             .catch((err) => {
                 error = $_("unableToRefreshAccountBalance", { values: { token } });
-                rollbar.error("Unable to refresh user's ICP account balance", err);
+                logger.error("Unable to refresh user's ICP account balance", err);
             })
             .finally(() => (refreshing = false));
     }
@@ -76,22 +76,16 @@
 
         const newLimitBytes = Math.floor((newLimit * ONE_GB) / 10);
 
-        client.api
+        client
             .upgradeStorage(newLimitBytes)
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "success_no_change") {
+            .then((success) => {
+                if (success) {
                     refreshBalance();
-                    client.updateStorageLimit(newLimitBytes);
                     error = undefined;
                     confirmed = true;
                 } else {
                     error = $_("register.unableToConfirmFee");
-                    rollbar.error("Unable to upgrade storage", resp);
                 }
-            })
-            .catch((err) => {
-                error = $_("register.unableToConfirmFee");
-                rollbar.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
     }

@@ -9,20 +9,22 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
-    import type {
+    import {
         GroupSearchResponse,
         MessageMatch,
         SearchAllMessagesResponse,
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
-        EventWrapper,
         GroupChatSummary,
         GroupRules,
         Message,
         Questions,
-        WebRtcMessage,
         OpenChat,
+        ThreadSelected,
+        ThreadClosed,
+        SendMessageFailed,
+        MessagesReadFromServer,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -48,7 +50,6 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { numberOfColumns } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import type Thread from "./thread/Thread.svelte";
     import type { Share } from "../../utils/share";
 
     export let logout: () => void;
@@ -104,15 +105,12 @@
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
-    let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
-    let threadComponent: Thread | undefined;
     let currentChatMessages: CurrentChatMessages | undefined;
 
     $: userStore = client.userStore;
-    $: unconfirmed = client.unconfirmed;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: chatsLoading = client.chatsLoading;
@@ -152,36 +150,28 @@
         ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
 
     onMount(() => {
-        client.initWebRtc((msg) => routeRtcMessages(msg as WebRtcMessage));
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
+        client.addEventListener("openchat_event", clientEvent);
+
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
     });
 
-    function routeRtcMessages(msg: WebRtcMessage) {
-        const fromChatId = client.filterWebRtcMessage(msg);
-        if (fromChatId === undefined) return;
-        const parsedMsg = client.parseWebRtcMessage(fromChatId, msg);
-
-        if (parsedMsg.threadRootMessageIndex !== undefined) {
-            // do we have the thread window open for this thread
-            threadComponent?.handleWebRtcMessage(fromChatId, parsedMsg);
-        } else {
-            if (client.delegateToChatComponent(parsedMsg)) {
-                currentChatMessages?.handleWebRtcMessage(fromChatId, parsedMsg);
-            } else {
-                if (parsedMsg.kind === "remote_user_sent_message") {
-                    unconfirmed.add(parsedMsg.chatId, parsedMsg.messageEvent);
-                }
-            }
+    function clientEvent(ev: Event): void {
+        if (ev instanceof ThreadSelected) {
+            openThread(ev.detail);
+        }
+        if (ev instanceof ThreadClosed) {
+            closeThread();
+        }
+        if (ev instanceof SendMessageFailed) {
+            // This can occur either for chat messages or thread messages so we'll just handle it here
+            toastStore.showFailureToast("errorSendingMessage");
         }
     }
 
-    async function newChatSelected(
-        chatId: string,
-        messageIndex?: number,
-        threadMessageIndex?: number
-    ): Promise<void> {
-        interruptRecommended = true;
-
+    async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
         let chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
@@ -194,7 +184,7 @@
             } else {
                 const code = qs.get("code");
                 if (code) {
-                    client.api.groupInvite = {
+                    client.groupInvite = {
                         chatId,
                         code,
                     };
@@ -215,7 +205,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        client.setSelectedChat(client.api, chat, messageIndex, threadMessageIndex);
+        client.setSelectedChat(chat, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -250,20 +240,11 @@
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
-                        newChatSelected(
-                            pathParams.chatId,
-                            pathParams.messageIndex,
-                            pathParams.threadMessageIndex
-                        );
+                        newChatSelected(pathParams.chatId, pathParams.messageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            chatStateStore.setProp(
-                                pathParams.chatId,
-                                "focusThreadMessageIndex",
-                                pathParams.threadMessageIndex
-                            );
                             currentChatMessages?.scrollToMessageIndex(
                                 pathParams.messageIndex,
                                 false,
@@ -345,7 +326,7 @@
 
     function dismissRecommendation(ev: CustomEvent<string>) {
         hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
-        client.api.dismissRecommendation(ev.detail);
+        client.dismissRecommendation(ev.detail);
     }
 
     function showFaqQuestion(ev: CustomEvent<Questions>) {
@@ -359,12 +340,12 @@
         if (searchTerm !== "") {
             searching = true;
             const lowercase = searchTerm.toLowerCase();
-            groupSearchResults = client.api.searchGroups(lowercase, 10);
-            userSearchResults = client.api.searchUsers(lowercase, 10).then((resp) => {
+            groupSearchResults = client.searchGroups(lowercase, 10);
+            userSearchResults = client.searchUsers(lowercase, 10).then((resp) => {
                 userStore.addMany(resp);
                 return resp;
             });
-            messageSearchResults = client.api.searchAllMessages(lowercase, 10);
+            messageSearchResults = client.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
                     groupSearchResults,
@@ -608,24 +589,23 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function openThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
+    function openThread(ev: {
+        threadRootMessageIndex: number;
+        threadRootMessageId: bigint;
+        initiating: boolean;
+    }) {
         if ($selectedChatId !== undefined) {
+            if (ev.initiating) {
+                creatingThread = true;
+                replace(`/${$selectedChatId}`);
+            }
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    rootEvent: ev.detail.rootEvent,
+                    threadRootMessageIndex: ev.threadRootMessageIndex,
+                    threadRootMessageId: ev.threadRootMessageId,
                 },
             ];
-        }
-    }
-
-    function initiateThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; focusThreadMessageIndex?: number }>
-    ) {
-        if ($selectedChatId !== undefined) {
-            creatingThread = true;
-            replace(`/${$selectedChatId}`);
-            openThread(ev);
         }
     }
 
@@ -651,10 +631,6 @@
         }
     }
 
-    function updateChat(ev: CustomEvent<ChatSummary>) {
-        client.addOrReplaceChat(ev.detail);
-    }
-
     function showPinned() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
@@ -671,7 +647,7 @@
     ): Promise<void> {
         const { group, select } = ev.detail;
 
-        const rules = await client.api.getGroupRules(group.chatId);
+        const rules = await client.getGroupRules(group.chatId);
 
         if (rules === undefined) {
             toastStore.showFailureToast("group.getRulesFailed");
@@ -719,11 +695,14 @@
             push("/");
         }
         tick().then(() => {
-            interruptRecommended = false;
             hotGroups = { kind: "loading" };
-            client.api
-                .getRecommendedGroups((_n: number) => interruptRecommended)
-                .then((resp) => (hotGroups = { kind: "success", data: resp }))
+            client
+                .getRecommendedGroups()
+                .then((resp) => {
+                    if (hotGroups.kind === "loading") {
+                        hotGroups = { kind: "success", data: resp };
+                    }
+                })
                 .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
     }
@@ -825,7 +804,6 @@
 <main class:fullscreen={$fullScreen}>
     {#if showLeft}
         <LeftPanel
-            {user}
             {groupSearchResults}
             {userSearchResults}
             {messageSearchResults}
@@ -859,7 +837,6 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:initiateThread={initiateThread}
             on:clearSelection={() => push("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
@@ -869,9 +846,7 @@
             on:addMembers={addMembers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:openThread={openThread}
             on:showMembers={showMembers}
-            on:updateChat={updateChat}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:cancelRecommendations={cancelRecommendations}
@@ -880,14 +855,12 @@
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
-            on:closeThread={closeThread}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
     {#if $numberOfColumns === 3}
         <RightPanel
             bind:rightPanelHistory
-            bind:thread={threadComponent}
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -898,7 +871,6 @@
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:makeGroupPrivate={triggerConfirm}
-            on:updateChat={updateChat}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -911,7 +883,6 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 bind:rightPanelHistory
-                bind:thread={threadComponent}
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
@@ -922,7 +893,6 @@
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:makeGroupPrivate={triggerConfirm}
-                on:updateChat={updateChat}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>

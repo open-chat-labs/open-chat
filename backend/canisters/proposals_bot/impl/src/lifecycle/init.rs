@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use proposals_bot_canister::init::Args;
 use tracing::info;
+use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
 #[init]
@@ -23,6 +24,8 @@ fn init(args: Args) {
     );
 
     init_state(env, data, args.wasm_version);
+
+    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 2 * MIN_CYCLES_BALANCE);
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

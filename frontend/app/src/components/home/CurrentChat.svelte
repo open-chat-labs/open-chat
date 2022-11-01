@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onDestroy, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import type {
         ChatEvent,
         ChatSummary,
@@ -23,6 +23,7 @@
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
+    import { toastStore } from "stores/toast";
 
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
@@ -141,12 +142,18 @@
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
-            client.editMessageWithAttachment(
-                chat,
-                text,
-                $currentChatFileToAttach,
-                $currentChatEditingEvent
-            );
+            client
+                .editMessageWithAttachment(
+                    chat,
+                    text,
+                    $currentChatFileToAttach,
+                    $currentChatEditingEvent
+                )
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast("errorEditingMessage");
+                    }
+                });
         } else {
             sendMessageWithAttachment(text, mentioned, $currentChatFileToAttach);
         }
@@ -163,7 +170,9 @@
             events,
             textContent,
             mentioned,
-            fileToAttach
+            fileToAttach,
+            $currentChatReplyingTo,
+            undefined
         );
     }
 
@@ -239,12 +248,9 @@
         bind:this={currentChatMessages}
         on:replyPrivatelyTo
         on:replyTo={replyTo}
-        on:openThread
         on:chatWith
         on:upgrade
         on:forward
-        on:closeThread
-        on:initiateThread
         {chat}
         {serverChat}
         {events}

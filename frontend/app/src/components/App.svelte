@@ -19,6 +19,7 @@
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
     import { isCanisterUrl } from "../utils/urls";
+    import { logger } from "../utils/logging";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -34,7 +35,6 @@
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
-            enableClientCaching: Boolean(process.env.CLIENT_CACHING),
             ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
             ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
@@ -43,6 +43,8 @@
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
+            logger: logger,
+            websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
         });
     }
 
@@ -54,12 +56,14 @@
 
     $: identityState = client.identityState;
 
-    onMount(() => {
-        referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
-        if (referredBy !== undefined) {
-            history.replaceState(null, "", "/#/");
-        }
+    function getReferralCode(): string | undefined {
+        const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
+        const lsParam = localStorage.getItem("openchat_referredby") ?? undefined;
+        return qsParam ?? lsParam;
+    }
 
+    onMount(() => {
+        referredBy = getReferralCode();
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }
@@ -84,6 +88,7 @@
     }
 
     function unhandledError(ev: Event) {
+        console.trace("Unhandled error: ", ev);
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
             client.logout();
             ev.preventDefault();

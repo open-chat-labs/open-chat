@@ -15,7 +15,7 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+    let (data, log_messages, trace_messages, cycles_dispenser_client_state): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     init_logger(data.test_mode);
@@ -24,6 +24,8 @@ fn post_upgrade(args: Args) {
     if !log_messages.is_empty() || !trace_messages.is_empty() {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
+
+    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

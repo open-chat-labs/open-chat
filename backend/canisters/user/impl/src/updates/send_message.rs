@@ -1,4 +1,4 @@
-use crate::crypto::process_transaction;
+use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
 use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
@@ -45,7 +45,9 @@ async fn send_message(mut args: Args) -> Response {
             return InvalidRequest("Transaction is not to the user's account".to_string());
         }
 
-        completed_transfer = match process_transaction(pending_transaction).await {
+        // We have to use `process_transaction_without_caller_check` because we may be within a
+        // reply callback due to calling `c2c_lookup_principal` earlier.
+        completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
             Ok(completed) => {
                 c.transfer = CryptoTransaction::Completed(completed.clone());
                 Some(completed)

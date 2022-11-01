@@ -1,4 +1,4 @@
-import type { Cryptocurrency, Tokens } from "../domain/crypto";
+import type { Cryptocurrency, Tokens } from "openchat-shared";
 import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 

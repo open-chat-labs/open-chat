@@ -52,6 +52,7 @@
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
     import { canShareMessage } from "../../utils/share";
+    import { push } from "svelte-spa-router";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -177,7 +178,11 @@
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
     function initiateThread() {
-        dispatch("initiateThread");
+        if (msg.thread !== undefined) {
+            push(`/${chatId}/${msg.messageIndex}`);
+        } else {
+            client.openThread(msg.messageId, msg.messageIndex, true);
+        }
     }
 
     function forward() {

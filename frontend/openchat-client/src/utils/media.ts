@@ -1,4 +1,4 @@
-import type { Message, MessageContent } from "../domain/chat/chat";
+import type { Message, MessageContent } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);

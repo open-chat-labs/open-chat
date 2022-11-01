@@ -4,7 +4,6 @@
     "INTERNET_IDENTITY",
     "NFID_URL",
     "DFX_NETWORK",
-    "CLIENT_CACHING",
     "IC_URL",
     "II_DERIVATION_ORIGIN",
     "II_ALTERNATIVE_ORIGINS",
@@ -25,20 +24,26 @@
   "pipeline": {
     "build": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["^build", "validate", "lint", "test"]
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod_test", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod_test", "validate", "lint", "test"]
     },
     "build:prod": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod", "typecheck", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod", "validate", "lint", "test"]
+    },
+    "build:testnet": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["^build:testnet", "validate", "lint", "test"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },

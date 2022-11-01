@@ -10,7 +10,6 @@ export type OpenChatConfig = {
     userIndexCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
-    enableClientCaching: boolean;
     ledgerCanisterICP: string;
     ledgerCanisterBTC: string;
     ledgerCanisterCHAT: string;
@@ -19,4 +18,8 @@ export type OpenChatConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     i18nFormatter: MessageFormatter;
+    logger: {
+        error(message?: unknown, ...optionalParams: unknown[]): void;
+    };
+    websiteVersion: string;
 };

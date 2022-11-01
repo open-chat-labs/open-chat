@@ -1,7 +1,26 @@
 import { Database } from "emoji-picker-element";
 
+const emojiSet = new Set<string>();
+let initializing = false;
+
 export const emojiDatabase = new Database();
 
-export async function isSingleEmoji(text: string): Promise<boolean> {
-    return text.length > 0 && (await emojiDatabase.getEmojiByUnicodeOrName(text)) !== null;
+export function isSingleEmoji(text: string): boolean {
+    initEmojiSet();
+    return emojiSet.has(text);
 }
+
+function initEmojiSet() {
+    if (emojiSet.size > 0 || initializing) return;
+    initializing = true;
+
+    emojiDatabase
+        .getAllNativeEmojis()
+        .then((emojis) => emojis.forEach((e) => {
+            emojiSet.add(e.unicode);
+            e.skins?.forEach((s) => emojiSet.add(s.unicode));
+        }))
+        .finally(() => initializing = false);
+}
+
+initEmojiSet();

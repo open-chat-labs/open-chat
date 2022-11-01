@@ -20,7 +20,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
-    import { push } from "svelte-spa-router";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -69,16 +68,6 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
-
-    function initiateThread() {
-        if (event.event.kind === "message") {
-            if (event.event.thread !== undefined) {
-                push(`/${chatId}/${event.event.messageIndex}`);
-            } else {
-                dispatch("initiateThread", { rootEvent: event });
-            }
-        }
-    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -114,7 +103,6 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:initiateThread={initiateThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser

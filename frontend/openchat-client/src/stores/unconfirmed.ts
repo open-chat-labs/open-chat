@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
-import type { EventWrapper, Message } from "../domain/chat/chat";
-import { revokeObjectUrls } from "../domain/chat/chat.utils";
+import type { EventWrapper, Message } from "openchat-shared";
+import { revokeObjectUrls } from "../utils/chat";
 
 export type UnconfirmedMessages = Record<
     string,
@@ -49,15 +49,13 @@ function createUnconfirmedStore() {
                         return {
                             ...state,
                             [key]: {
-                                messages: chatEvents.messages.filter(
-                                    (e) => {
-                                        if (e.event.messageId === messageId) {
-                                            revokeObjectUrls(e);
-                                            return false;
-                                        }
-                                        return true;
+                                messages: chatEvents.messages.filter((e) => {
+                                    if (e.event.messageId === messageId) {
+                                        revokeObjectUrls(e);
+                                        return false;
                                     }
-                                ),
+                                    return true;
+                                }),
                                 messageIds,
                             },
                         };

@@ -15,7 +15,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import { toastStore } from "../../stores/toast";
-    import { rollbar } from "../../utils/logging";
+    import { logger } from "../../utils/logging";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { proposalVotes } from "../../stores/proposalVotes";
@@ -91,7 +91,7 @@
         proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
 
         let success = false;
-        client.api
+        client
             .registerProposalVote(chatId, messageIndex, adopt)
             .then((resp) => {
                 if (resp === "success") {
@@ -105,7 +105,7 @@
                 }
             })
             .catch((err) => {
-                rollbar.error("Unable to vote on proposal", err);
+                logger.error("Unable to vote on proposal", err);
                 toastStore.showFailureToast("proposal.voteFailed");
             })
             .finally(() => {

@@ -1,10 +1,14 @@
-import type { ChatSummary, DirectChatSummary, MessageContent } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    MessageContent,
+    WebRtcMessage,
+} from "openchat-shared";
 import { chatSummariesListStore, chatSummariesStore, selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
-import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { blockedUsers } from "../stores/blockedUsers";
 
-export function delegateToChatComponent(msg: WebRtcMessage): boolean {
+export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
     const selectedChat = get(selectedChatStore);

@@ -1,4 +1,4 @@
-import type { StorageStatus } from "../domain/data/data";
+import type { StorageStatus } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
 export const ONE_MB = 1024 * 1024;

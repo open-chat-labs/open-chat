@@ -1,4 +1,4 @@
-import { AuthProvider } from "../domain/auth";
+import { AuthProvider } from "openchat-shared";
 import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 import { enumFromStringValue } from "../utils/enums";
