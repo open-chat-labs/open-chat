@@ -9,7 +9,7 @@ import {
     ThreadSyncDetails,
     CreatedUser,
     compareChats,
-    emptyChatMetrics,
+    emptyChatMetrics, GroupChatSummary,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -20,7 +20,7 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
-    getFirstUnreadMessageIndex,
+    getFirstUnreadMessageIndex, isPreviewing,
 } from "../utils/chat";
 import { userStore } from "./user";
 import { pinnedChatsStore } from "./pinnedChats";
@@ -65,7 +65,26 @@ type LoadedEventWindow = {
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
-export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
+// Chats which the current user is a member of
+export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
+
+// Groups which the current user is previewing
+const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
+
+export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
+    [
+        myServerChatSummariesStore,
+        groupPreviewsStore
+    ],
+    ([summaries, previews]) => {
+        return Object.entries<ChatSummary>(previews).concat(Object.entries(summaries)).reduce<Record<string, ChatSummary>>(
+            (result, [chatId, summary]) => {
+                result[chatId] = summary;
+                return result;
+            },
+            {}
+        );
+    });
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
     [
@@ -380,7 +399,7 @@ export function updateSummaryWithConfirmedMessage(
     chatId: string,
     message: EventWrapper<Message>
 ): void {
-    serverChatSummariesStore.update((summaries) => {
+    myServerChatSummariesStore.update((summaries) => {
         const summary = summaries[chatId];
         if (summary === undefined) return summaries;
 
@@ -415,7 +434,7 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
 }
 
 export function createDirectChat(chatId: string): void {
-    serverChatSummariesStore.update((chatSummaries) => {
+    myServerChatSummariesStore.update((chatSummaries) => {
         return {
             ...chatSummaries,
             [chatId]: {
@@ -436,8 +455,37 @@ export function createDirectChat(chatId: string): void {
     });
 }
 
+export function addOrReplaceChat(chat: ChatSummary): void {
+    if (isPreviewing(chat) && chat.kind === "group_chat") {
+        groupPreviewsStore.update((summaries) => ({
+            ...summaries,
+            [chat.chatId]: chat
+        }));
+    } else {
+        removeGroupPreview(chat.chatId);
+
+        myServerChatSummariesStore.update((summaries) => ({
+            ...summaries,
+            [chat.chatId]: chat
+        }));
+    }
+}
+
+function removeGroupPreview(chatId: string): void {
+    groupPreviewsStore.update((summaries) => {
+        return Object.entries(summaries).reduce((agg, [k, v]) => {
+            if (k !== chatId) {
+                agg[k] = v;
+            }
+            return agg;
+        }, {} as Record<string, GroupChatSummary>);
+    });
+}
+
 export function removeChat(chatId: string): void {
-    serverChatSummariesStore.update((summaries) => {
+    removeGroupPreview(chatId);
+
+    myServerChatSummariesStore.update((summaries) => {
         return Object.entries(summaries).reduce((agg, [k, v]) => {
             if (k !== chatId) {
                 agg[k] = v;

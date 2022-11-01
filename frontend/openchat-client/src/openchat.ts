@@ -93,10 +93,12 @@ import {
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
     proposalTopicsStore,
+    addOrReplaceChat,
     removeChat,
     selectedChatId,
     selectedChatStore,
     selectedServerChatStore,
+    myServerChatSummariesStore,
     serverChatSummariesStore,
     setSelectedChat,
     threadsByChatStore,
@@ -617,15 +619,6 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    addOrReplaceChat(chat: ChatSummary): void {
-        serverChatSummariesStore.update((summaries) => {
-            return {
-                ...summaries,
-                [chat.chatId]: chat,
-            };
-        });
-    }
-
     private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = this.userIdsFromEvents([message]);
         const missingUsers = this.missingUserIds(this._liveState.userStore, users);
@@ -779,7 +772,7 @@ export class OpenChat extends EventTarget {
             .makeGroupPrivate(chatId)
             .then((resp) => {
                 if (resp === "success") {
-                    serverChatSummariesStore.update((summaries) => {
+                    myServerChatSummariesStore.update((summaries) => {
                         const summary = summaries[chatId];
                         if (summary === undefined || summary.kind !== "group_chat") {
                             return summaries;
@@ -1395,6 +1388,7 @@ export class OpenChat extends EventTarget {
         return undefined;
     }
     clearSelectedChat = clearSelectedChat;
+    addOrReplaceChat = addOrReplaceChat;
     removeChat = removeChat;
     canSendMessages = canSendMessages;
     canChangeRoles = canChangeRoles;
@@ -2574,7 +2568,7 @@ export class OpenChat extends EventTarget {
                 const selectedChat = this._liveState.selectedChat;
                 let selectedChatInvalid = true;
 
-                serverChatSummariesStore.set(
+                myServerChatSummariesStore.set(
                     chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
