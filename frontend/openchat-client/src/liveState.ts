@@ -4,6 +4,7 @@ import type {
     ChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    GroupChatSummary,
     ThreadSyncDetails,
     UserLookup,
 } from "openchat-shared";
@@ -11,6 +12,7 @@ import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
     serverChatSummariesStore,
     chatSummariesStore,
+    groupPreviewsStore,
     selectedChatId,
     eventsStore,
     selectedChatStore,
@@ -48,6 +50,7 @@ export class LiveState {
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: Record<string, ChatSummary>;
     chatSummaries!: Record<string, ChatSummary>;
+    groupPreviews!: Record<string, GroupChatSummary>;
     selectedChatId: string | undefined;
     pinnedChats!: string[];
     chatSummariesList!: ChatSummary[];
@@ -69,6 +72,7 @@ export class LiveState {
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
+        groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
