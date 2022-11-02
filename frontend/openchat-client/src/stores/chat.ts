@@ -4,12 +4,13 @@ import {
     ChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    GroupChatSummary,
     Message,
     MessageContent,
     ThreadSyncDetails,
     CreatedUser,
     compareChats,
-    emptyChatMetrics, GroupChatSummary,
+    emptyChatMetrics,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -20,19 +21,20 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
-    getFirstUnreadMessageIndex, isPreviewing,
+    getFirstUnreadMessageIndex,
+    mergeLocalSummaryUpdates,
 } from "../utils/chat";
 import { userStore } from "./user";
 import { pinnedChatsStore } from "./pinnedChats";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
-import { archivedChatsStore, mutedChatsStore } from "./tempChatsStore";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
+import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 
 export type ChatState = {
     chatId: string;
@@ -89,14 +91,15 @@ export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = d
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
     [
         serverChatSummariesStore,
+        localChatSummaryUpdates,
         unconfirmed,
         currentUserStore,
         localMessageUpdates,
-        archivedChatsStore,
-        mutedChatsStore,
     ],
-    ([summaries, unconfirmed, currentUser, localUpdates, archivedChats, mutedChats]) => {
-        return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
+    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates]) => {
+        const mergedSummaries = mergeLocalSummaryUpdates(summaries, localSummaryUpdates);
+
+        return Object.entries(mergedSummaries).reduce<Record<string, ChatSummary>>(
             (result, [chatId, summary]) => {
                 if (currentUser !== undefined) {
                     result[chatId] = mergeUnconfirmedIntoSummary(
@@ -105,8 +108,6 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         summary,
                         unconfirmed,
                         localUpdates,
-                        archivedChats.get(summary.chatId),
-                        mutedChats.get(chatId)
                     );
                 }
                 return result;
@@ -455,20 +456,11 @@ export function createDirectChat(chatId: string): void {
     });
 }
 
-export function addOrReplaceChat(chat: ChatSummary): void {
-    if (isPreviewing(chat) && chat.kind === "group_chat") {
-        groupPreviewsStore.update((summaries) => ({
-            ...summaries,
-            [chat.chatId]: chat
-        }));
-    } else {
-        removeGroupPreview(chat.chatId);
-
-        myServerChatSummariesStore.update((summaries) => ({
-            ...summaries,
-            [chat.chatId]: chat
-        }));
-    }
+export function addGroupPreview(chat: GroupChatSummary): void {
+    groupPreviewsStore.update((summaries) => ({
+        ...summaries,
+        [chat.chatId]: chat
+    }));
 }
 
 function removeGroupPreview(chatId: string): void {
@@ -484,15 +476,7 @@ function removeGroupPreview(chatId: string): void {
 
 export function removeChat(chatId: string): void {
     removeGroupPreview(chatId);
-
-    myServerChatSummariesStore.update((summaries) => {
-        return Object.entries(summaries).reduce((agg, [k, v]) => {
-            if (k !== chatId) {
-                agg[k] = v;
-            }
-            return agg;
-        }, {} as Record<string, ChatSummary>);
-    });
+    localChatSummaryUpdates.markRemoved(chatId);
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(

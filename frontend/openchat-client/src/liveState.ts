@@ -47,6 +47,7 @@ export class LiveState {
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: Record<string, ChatSummary>;
+    chatSummaries!: Record<string, ChatSummary>;
     selectedChatId: string | undefined;
     pinnedChats!: string[];
     chatSummariesList!: ChatSummary[];
@@ -67,7 +68,7 @@ export class LiveState {
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
-        chatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
+        chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
