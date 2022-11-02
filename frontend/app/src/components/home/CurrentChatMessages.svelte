@@ -104,7 +104,7 @@
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -197,7 +197,7 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
