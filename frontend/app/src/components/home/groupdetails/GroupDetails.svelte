@@ -259,7 +259,6 @@
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                     };
-                    client.addOrReplaceChat(originalGroup);
                 }
             })
             .catch((err) => {
@@ -304,7 +303,6 @@
                         ...originalGroup,
                         permissions: updatedGroup.permissions,
                     };
-                    client.addOrReplaceChat(originalGroup);
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
                 }
