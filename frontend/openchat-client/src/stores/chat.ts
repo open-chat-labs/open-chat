@@ -117,14 +117,6 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
     }
 );
 
-export function getChat(chatId: string): ChatSummary | undefined {
-    return get(chatSummariesStore)[chatId];
-}
-
-export function getServerChat(chatId: string): ChatSummary | undefined {
-    return get(serverChatSummariesStore)[chatId];
-}
-
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived(
     [chatSummariesStore, pinnedChatsStore],

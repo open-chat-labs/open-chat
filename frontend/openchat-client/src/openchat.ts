@@ -113,8 +113,6 @@ import {
     confirmedEventIndexesLoaded,
     addServerEventsToStores,
     addGroupPreview,
-    getServerChat,
-    getChat,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -1085,8 +1083,8 @@ export class OpenChat extends EventTarget {
         chatId: string,
         messageIndex: number
     ): Promise<number | undefined> {
-        const serverChat = getServerChat(chatId);
-        const clientChat = getChat(chatId);
+        const serverChat = this._liveState.serverChatSummaries[chatId];
+        const clientChat = this._liveState.chatSummaries[chatId];
 
         if (serverChat === undefined || clientChat === undefined) {
             return Promise.resolve(undefined);
@@ -1411,8 +1409,8 @@ export class OpenChat extends EventTarget {
     formatFileSize = formatFileSize;
 
     async loadPreviousMessages(chatId: string): Promise<void> {
-        const serverChat = getServerChat(chatId);
-        const clientChat = getChat(chatId);
+        const serverChat = this._liveState.serverChatSummaries[chatId];
+        const clientChat = this._liveState.chatSummaries[chatId];
 
         if (serverChat === undefined || clientChat === undefined) {
             return Promise.resolve();
@@ -1478,8 +1476,8 @@ export class OpenChat extends EventTarget {
     }
 
     async loadNewMessages(chatId: string): Promise<boolean> {
-        const serverChat = getServerChat(chatId);
-        const clientChat = getChat(chatId);
+        const serverChat = this._liveState.serverChatSummaries[chatId];
+        const clientChat = this._liveState.chatSummaries[chatId];
 
         if (serverChat === undefined || clientChat === undefined) {
             return Promise.resolve(false);
@@ -1515,7 +1513,7 @@ export class OpenChat extends EventTarget {
     }
 
     morePreviousMessagesAvailable(chatId: string): boolean {
-        const chat = getChat(chatId);
+        const chat = this._liveState.chatSummaries[chatId];
 
         return (
             chat !== undefined &&
@@ -1526,7 +1524,7 @@ export class OpenChat extends EventTarget {
     }
 
     moreNewMessagesAvailable(chatId: string): boolean {
-        const serverChat = getServerChat(chatId);
+        const serverChat = this._liveState.serverChatSummaries[chatId];
 
         return (
             serverChat !== undefined &&
