@@ -485,7 +485,8 @@ type AddDirectChatReaction = Request<{
 };
 
 type DeleteMessage = Request<{
-    chat: ChatSummary;
+    chatType: "direct_chat" | "group_chat";
+    chatId: string,
     messageId: bigint;
     threadRootMessageIndex?: number;
 }> & {

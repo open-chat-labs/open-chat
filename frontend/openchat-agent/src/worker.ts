@@ -579,7 +579,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
         case "deleteMessage":
             agent
-                .deleteMessage(payload.chat, payload.messageId, payload.threadRootMessageIndex)
+                .deleteMessage(payload.chatType, payload.chatId, payload.messageId, payload.threadRootMessageIndex)
                 .then((response) =>
                     sendResponse(correlationId, {
                         response,

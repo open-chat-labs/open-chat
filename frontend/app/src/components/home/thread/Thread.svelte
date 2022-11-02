@@ -310,7 +310,7 @@
             return;
         }
 
-        client.deleteMessage(chat, threadRootMessageIndex, ev.detail.messageId);
+        client.deleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
