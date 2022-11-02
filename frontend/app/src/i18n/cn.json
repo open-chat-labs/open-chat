@@ -468,8 +468,8 @@
         "withdrawTarget": "输入提款地址",
         "withdrawalSucceeded": "您的提现成功！",
         "withdrawalFailed": "您的提款失败！",
-        "shortRemainingBalanceLabel": "保持平衡",
-        "shortBalanceLabel": "平衡",
+        "shortRemainingBalanceLabel": "保持余额",
+        "shortBalanceLabel": "余额",
         "manageHeader": "管理 {symbol} 帐户",
         "token": "令牌",
         "comingSoon": "（快来了）"
@@ -615,7 +615,7 @@
     "version": "版本",
     "websiteVersion": "网站的",
     "advanced": "先进的",
-    "features": "特征",
-    "architecture": "建筑学",
+    "features": "特点",
+    "architecture": "架构",
     "whitepaper": "白皮书"
 }
