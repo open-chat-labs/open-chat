@@ -2228,7 +2228,7 @@ export class OpenChat extends EventTarget {
         return this.api.subscriptionExists(p256dh_key);
     }
 
-    pushSubscription(subscription: PushSubscription): Promise<void> {
+    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.api.pushSubscription(subscription);
     }
 

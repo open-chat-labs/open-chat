@@ -853,7 +853,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    pushSubscription(subscription: PushSubscription): Promise<void> {
+    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.sendRequest({
             kind: "pushSubscription",
             payload: {

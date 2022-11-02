@@ -98,7 +98,7 @@ async function trySubscribe(client: OpenChat): Promise<boolean> {
 
     // Add the subscription to the user record on the notifications canister
     try {
-        await client.pushSubscription(pushSubscription);
+        await client.pushSubscription(pushSubscription.toJSON());
         return true;
     } catch (e) {
         console.log("Push subscription failed: ", e);

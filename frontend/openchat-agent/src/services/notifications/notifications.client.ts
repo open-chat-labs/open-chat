@@ -33,14 +33,13 @@ export class NotificationsClient extends CandidService implements INotifications
         );
     }
 
-    pushSubscription(subscription: PushSubscription): Promise<void> {
-        const json = subscription.toJSON();
+    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         const request = {
             subscription: {
-                endpoint: json.endpoint!,
+                endpoint: subscription.endpoint!,
                 keys: {
-                    auth: json.keys!["auth"],
-                    p256dh: json.keys!["p256dh"],
+                    auth: subscription.keys!["auth"],
+                    p256dh: subscription.keys!["p256dh"],
                 },
             },
         };
