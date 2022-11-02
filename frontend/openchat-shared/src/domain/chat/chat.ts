@@ -353,6 +353,26 @@ export type LocalPollVote = {
     userId: string;
 };
 
+export type LocalChatSummaryUpdates = {
+    added?: ChatSummary;
+    updated?: {
+        kind?: undefined;
+        notificationsMuted?: boolean;
+        archived?: boolean;
+    } | {
+        kind: "group_chat";
+        name?: string;
+        description?: string;
+        public?: boolean;
+        myRole?: MemberRole;
+        permissions?: Partial<GroupPermissions>;
+        notificationsMuted?: boolean;
+        archived?: boolean;
+    },
+    removedAtTimestamp?: bigint;
+    lastUpdated: number;
+};
+
 export type LocalMessageUpdates = {
     deleted?: {
         deletedBy: string;
@@ -707,7 +727,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
-    subtype: GroupSubtypeUpdate;
+    subtype?: GroupSubtypeUpdate;
 };
 
 export type GroupSubtypeUpdate =

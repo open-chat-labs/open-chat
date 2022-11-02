@@ -54,7 +54,6 @@
     const dispatch = createEventDispatcher();
 
     export let chat: ChatSummary;
-    export let serverChat: ChatSummary;
     export let unreadMessages: number;
     export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
@@ -105,7 +104,7 @@
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -198,7 +197,7 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
@@ -255,7 +254,7 @@
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            client.loadEventWindow(serverChat, chat, index);
+            client.loadEventWindow(chat.chatId, index);
         }
     }
 
@@ -269,7 +268,7 @@
     }
 
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat);
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
         return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
@@ -277,7 +276,7 @@
         return (
             !loadingNew &&
             calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            client.moreNewMessagesAvailable(serverChat)
+            client.moreNewMessagesAvailable(chat.chatId)
         );
     }
 
@@ -323,7 +322,7 @@
 
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client.loadPreviousMessages(serverChat, chat);
+            client.loadPreviousMessages(chat.chatId);
         }
 
         if (shouldLoadNewMessages()) {
@@ -331,7 +330,7 @@
             // it is actually correct because we do want to load our own messages from the server
             // so that any incorrect indexes are corrected and only the right thing goes in the cache
             loadingNew = true;
-            client.loadNewMessages(serverChat, chat);
+            client.loadNewMessages(chat.chatId);
         }
 
         setIfInsideFromBottomThreshold();
@@ -497,7 +496,7 @@
 
     function chatUpdated(): void {
         if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            client.loadNewMessages(serverChat, chat);
+            client.loadNewMessages(chat.chatId);
         }
     }
 
@@ -535,11 +534,11 @@
     function loadMoreIfRequired() {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            client.loadNewMessages(serverChat, chat);
+            client.loadNewMessages(chat.chatId);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            client.loadPreviousMessages(serverChat, chat);
+            client.loadPreviousMessages(chat.chatId);
         }
     }
 

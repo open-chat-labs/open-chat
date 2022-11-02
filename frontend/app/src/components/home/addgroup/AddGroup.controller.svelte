@@ -80,7 +80,7 @@
         busy = true;
 
         client
-            .createGroupChat(candidateGroup)
+            .createGroupChat(currentUser.userId, candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp);
@@ -135,7 +135,8 @@
     function onGroupCreated(canisterId: string) {
         const url = `/${canisterId}`;
         dispatch("groupCreated", {
-            group: client.groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup),
+            chatId: canisterId,
+            isPublic: candidateGroup.isPublic,
             rules: candidateGroup.rules,
         });
         reset();
