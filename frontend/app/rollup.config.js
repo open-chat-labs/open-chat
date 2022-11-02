@@ -104,6 +104,9 @@ function clean() {
         name: "clean-build",
         buildStart() {
             console.log("cleaning up the build directory");
+            if (fs.existsSync("_temp")) {
+                rimraf.sync(path.join(__dirname, "_temp"));
+            }
             fs.mkdirSync("_temp");
             fs.copyFileSync(
                 path.join(__dirname, "build", "worker.js"),

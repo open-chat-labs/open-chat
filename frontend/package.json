@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "build": "turbo run build",
+    "build:ci": "turbo run build:ci",
     "build:prod_test": "turbo run build:prod_test",
     "build:prod": "turbo run build:prod",
     "build:testnet": "turbo run build:testnet",
