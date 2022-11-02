@@ -21,7 +21,6 @@
 
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
-    $: selectedServerChatStore = client.selectedServerChatStore;
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.chatId === undefined;
@@ -47,12 +46,11 @@
                 <NoChatSelected on:recommend on:newchat />
             </div>
         {/if}
-    {:else if $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
+    {:else if $selectedChatStore !== undefined}
         <CurrentChat
             bind:currentChatMessages
             {joining}
             chat={$selectedChatStore}
-            serverChat={$selectedServerChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
             on:unblockUser

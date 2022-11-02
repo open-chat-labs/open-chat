@@ -24,6 +24,7 @@ import {
     PartialUserSummary,
     UserLookup,
     UserSummary,
+    LocalChatSummaryUpdates,
     LocalMessageUpdates,
     LocalReaction,
     emptyChatMetrics,
@@ -310,14 +311,68 @@ export function mergeUnconfirmedThreadsIntoSummary(
     };
 }
 
+export function mergeLocalSummaryUpdates(
+    server: Record<string, ChatSummary>,
+    localUpdates: Record<string, LocalChatSummaryUpdates>
+): Record<string, ChatSummary> {
+    if (Object.keys(localUpdates).length === 0) return server;
+
+    const merged = { ... server };
+
+    for (const [chatId, localUpdate] of Object.entries(localUpdates)) {
+        if (localUpdate.added !== undefined) {
+            const current = merged[chatId];
+            if (current === undefined || isPreviewing(current)) {
+                merged[chatId] = localUpdate.added;
+            }
+        }
+        if (localUpdate.updated !== undefined) {
+            const current = merged[chatId];
+            const updated = localUpdate.updated;
+            if (current !== undefined) {
+                if (updated.kind === undefined) {
+                    merged[chatId] = {
+                        ...current,
+                        notificationsMuted: updated.notificationsMuted ?? current.notificationsMuted,
+                        archived: updated.archived ?? current.archived,
+                    };
+                } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
+                    merged[chatId] = {
+                        ...current,
+                        name: updated.name ?? current.name,
+                        description: updated.description ?? current.description,
+                        public: updated.public ?? current.public,
+                        myRole: updated.myRole ?? current.myRole,
+                        notificationsMuted: updated.notificationsMuted ?? current.notificationsMuted,
+                        archived: updated.archived ?? current.archived,
+                        permissions: {
+                            ...current.permissions,
+                            ...updated.permissions
+                        },
+                    };
+                }
+            }
+        }
+        if (localUpdate.removedAtTimestamp) {
+            const chat = merged[chatId];
+            if (chat !== undefined && (
+                (chat.kind === "direct_chat" && chat.dateCreated < localUpdate.removedAtTimestamp) ||
+                (chat.kind === "group_chat" && chat.joined < localUpdate.removedAtTimestamp))
+            ) {
+                delete merged[chatId];
+            }
+        }
+    }
+
+    return merged;
+}
+
 export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
     localUpdates: Record<string, LocalMessageUpdates>,
-    archivedLocally: boolean | undefined,
-    mutedLocally: boolean | undefined
 ): ChatSummary {
     const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
 
@@ -347,8 +402,6 @@ export function mergeUnconfirmedIntoSummary(
             };
         }
     }
-    const archived = archivedLocally ?? chatSummary.archived;
-    const notificationsMuted = mutedLocally ?? chatSummary.notificationsMuted;
 
     if (chatSummary.kind === "group_chat") {
         if (unconfirmedMessages !== undefined) {
@@ -359,16 +412,12 @@ export function mergeUnconfirmedIntoSummary(
             latestMessage,
             latestEventIndex,
             mentions,
-            archived,
-            notificationsMuted,
         };
     } else {
         return {
             ...chatSummary,
             latestMessage,
             latestEventIndex,
-            archived,
-            notificationsMuted,
         };
     }
 }

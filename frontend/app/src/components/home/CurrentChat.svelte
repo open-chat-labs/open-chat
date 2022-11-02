@@ -27,7 +27,6 @@
 
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
-    export let serverChat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
     export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
@@ -165,7 +164,6 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            serverChat,
             chat,
             events,
             textContent,
@@ -183,7 +181,7 @@
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(serverChat, chat, events, msg);
+        client.forwardMessage(chat, events, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -252,7 +250,6 @@
         on:upgrade
         on:forward
         {chat}
-        {serverChat}
         {events}
         {filteredProposals}
         canPin={client.canPinMessages(chat)}

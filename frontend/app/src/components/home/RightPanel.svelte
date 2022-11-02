@@ -42,7 +42,6 @@
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
-    $: selectedServerChatStore = client.selectedServerChatStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -377,13 +376,12 @@
             on:closeProfile={popHistory} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
-    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined && $selectedServerChatStore !== undefined}
+    {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             on:chatWith
             on:upgrade
             rootEvent={threadRootEvent}
             chat={$selectedChatStore}
-            serverChat={$selectedServerChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />

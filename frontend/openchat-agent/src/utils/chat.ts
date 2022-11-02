@@ -163,8 +163,8 @@ function mergeThreadSyncDetails(
     );
 }
 
-function mergeSubtype(updated: GroupSubtypeUpdate, existing: GroupSubtype): GroupSubtype {
-    if (updated.kind === "no_change") {
+function mergeSubtype(updated: GroupSubtypeUpdate | undefined, existing: GroupSubtype): GroupSubtype {
+    if (updated === undefined || updated.kind === "no_change") {
         return existing;
     } else if (updated.kind === "set_to_none") {
         return undefined;
