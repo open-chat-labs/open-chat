@@ -372,13 +372,13 @@ type AddMembers = Request<{
 };
 
 type RemoveSub = Request<{
-    subscription: PushSubscription;
+    subscription: PushSubscriptionJSON;
 }> & {
     kind: "removeSubscription";
 };
 
 type PushSub = Request<{
-    subscription: PushSubscription;
+    subscription: PushSubscriptionJSON;
 }> & {
     kind: "pushSubscription";
 };
