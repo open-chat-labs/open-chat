@@ -9,10 +9,10 @@ export const localChatSummaryUpdates = {
     markAdded: (summary: ChatSummary): void => {
         applyUpdate(summary.chatId, (_) => ({ added: summary }));
     },
-    markUpdated: (chatId: string, summaryUpdates: LocalChatSummaryUpdates["updated"]) => {
+    markUpdated: (chatId: string, summaryUpdates: LocalChatSummaryUpdates["updated"]): void => {
         applyUpdate(chatId, (_) => ({ updated: summaryUpdates }));
     },
-    markRemoved: (chatId: string) => {
+    markRemoved: (chatId: string): void => {
         applyUpdate(chatId, (_) => ({ removedAtTimestamp: BigInt(Date.now()) }));
     }
 };

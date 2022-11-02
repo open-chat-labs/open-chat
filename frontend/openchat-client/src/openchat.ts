@@ -93,7 +93,6 @@ import {
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
     proposalTopicsStore,
-    removeChat,
     selectedChatId,
     selectedChatStore,
     selectedServerChatStore,
@@ -113,6 +112,7 @@ import {
     confirmedEventIndexesLoaded,
     addServerEventsToStores,
     addGroupPreview,
+    removeGroupPreview,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -1393,8 +1393,17 @@ export class OpenChat extends EventTarget {
         }
         return undefined;
     }
+
+    removeChat(chatId: string): void {
+        if (this._liveState.groupPreviews[chatId] !== undefined) {
+            removeGroupPreview(chatId);
+        }
+        if (this._liveState.chatSummaries[chatId] !== undefined) {
+            localChatSummaryUpdates.markRemoved(chatId);
+        }
+    }
+
     clearSelectedChat = clearSelectedChat;
-    removeChat = removeChat;
     canSendMessages = canSendMessages;
     canChangeRoles = canChangeRoles;
     canUnblockUsers = canUnblockUsers;

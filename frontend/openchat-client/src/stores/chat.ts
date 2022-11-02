@@ -71,7 +71,7 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 // Groups which the current user is previewing
-const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
+export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
 
 export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
     [
@@ -465,7 +465,7 @@ export function addGroupPreview(chat: GroupChatSummary): void {
     }));
 }
 
-function removeGroupPreview(chatId: string): void {
+export function removeGroupPreview(chatId: string): void {
     groupPreviewsStore.update((summaries) => {
         return Object.entries(summaries).reduce((agg, [k, v]) => {
             if (k !== chatId) {
@@ -474,11 +474,6 @@ function removeGroupPreview(chatId: string): void {
             return agg;
         }, {} as Record<string, GroupChatSummary>);
     });
-}
-
-export function removeChat(chatId: string): void {
-    removeGroupPreview(chatId);
-    localChatSummaryUpdates.markRemoved(chatId);
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
