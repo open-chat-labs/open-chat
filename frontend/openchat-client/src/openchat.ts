@@ -2232,7 +2232,7 @@ export class OpenChat extends EventTarget {
         return this.api.pushSubscription(subscription);
     }
 
-    removeSubscription(subscription: PushSubscription): Promise<void> {
+    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.api.removeSubscription(subscription);
     }
 

@@ -136,7 +136,7 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
             if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
-                await client.removeSubscription(pushSubscription);
+                await client.removeSubscription(pushSubscription.toJSON());
             }
         }
     }

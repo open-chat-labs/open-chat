@@ -862,7 +862,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    removeSubscription(subscription: PushSubscription): Promise<void> {
+    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.sendRequest({
             kind: "removeSubscription",
             payload: {

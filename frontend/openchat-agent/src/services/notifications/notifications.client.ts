@@ -46,11 +46,10 @@ export class NotificationsClient extends CandidService implements INotifications
         return this.handleResponse(this.service.push_subscription(request), toVoid);
     }
 
-    removeSubscription(subscription: PushSubscription): Promise<void> {
-        const json = subscription.toJSON();
+    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.handleResponse(
             this.service.remove_subscription({
-                p256dh_key: json.keys!["p256dh"],
+                p256dh_key: subscription.keys!["p256dh"],
             }),
             toVoid
         );
