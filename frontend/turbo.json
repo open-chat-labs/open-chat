@@ -24,7 +24,11 @@
   "pipeline": {
     "build": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "validate", "lint", "test"]
+      "dependsOn": ["^build"]
+    },
+    "build:ci": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["build", "validate", "lint", "test"]
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
@@ -43,17 +47,17 @@
       "cache": false
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build", "^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build", "^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build", "^build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },

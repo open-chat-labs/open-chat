@@ -2649,11 +2649,12 @@ export class OpenChat extends EventTarget {
                 // user sends a message on one device then looks at OpenChat on another.
                 for (const chat of chatsResponse.chatSummaries) {
                     const latestMessage = chat.latestMessage?.event;
-                    if (latestMessage !== undefined &&
+                    if (
+                        latestMessage !== undefined &&
                         latestMessage.sender === this.user.userId &&
                         (chat.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                        !unconfirmed.contains(chat.chatId, latestMessage.messageId))
-                    {
+                        !unconfirmed.contains(chat.chatId, latestMessage.messageId)
+                    ) {
                         messagesRead.markReadUpTo(chat.chatId, latestMessage.messageIndex);
                     }
                 }
