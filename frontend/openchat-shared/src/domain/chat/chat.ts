@@ -200,6 +200,9 @@ export enum NnsProposalTopic {
     KYC,
     NodeProviderRewards,
     SnsDecentralizationSale,
+    SubnetReplicaVersionManagement,
+    ReplicaVersionManagement,
+    SnsAndCommunityFund,
 }
 
 export interface SnsProposal extends ProposalCommon {
