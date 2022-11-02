@@ -24,7 +24,7 @@
   "pipeline": {
     "build": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build", "validate", "lint", "test"]
+      "dependsOn": ["^build"]
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
