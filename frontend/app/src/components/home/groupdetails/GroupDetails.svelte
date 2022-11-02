@@ -301,7 +301,7 @@
                 if (success) {
                     originalGroup = {
                         ...originalGroup,
-                        permissions: updatedGroup.permissions,
+                        permissions: { ...updatedGroup.permissions },
                     };
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
