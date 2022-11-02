@@ -241,7 +241,9 @@ export const proposalTopicsStore = derived(
                     [8, "Network Canister Management"],
                     [9, "KYC"],
                     [10, "Node Provider Rewards"],
-                    [11, "SNS Decentralization Sale"],
+                    [12, "Subnet Replica Version Management"],
+                    [13, "Replica Version Management"],
+                    [14, "SNS & CommunityFund"],
                 ]);
             } else {
                 const snsFunctionsMap = $snsFunctions.get(
