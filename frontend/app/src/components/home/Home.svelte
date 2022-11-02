@@ -750,11 +750,10 @@
         currentChatDraftMessage.setTextContent(chatId, text);
     }
 
-    function groupCreated(ev: CustomEvent<{ group: GroupChatSummary; rules: GroupRules }>) {
-        const { group, rules } = ev.detail;
-        chatStateStore.setProp(group.chatId, "rules", rules);
-        client.addOrReplaceChat(group);
-        if (group.public) {
+    function groupCreated(ev: CustomEvent<{ chatId: string, isPublic: boolean; rules: GroupRules }>) {
+        const { chatId, isPublic, rules } = ev.detail;
+        chatStateStore.setProp(chatId, "rules", rules);
+        if (isPublic) {
             client.trackEvent("public_group_created");
         } else {
             client.trackEvent("private_group_created");

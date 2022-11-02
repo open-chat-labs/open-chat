@@ -33,25 +33,23 @@ export class NotificationsClient extends CandidService implements INotifications
         );
     }
 
-    pushSubscription(subscription: PushSubscription): Promise<void> {
-        const json = subscription.toJSON();
+    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         const request = {
             subscription: {
-                endpoint: json.endpoint!,
+                endpoint: subscription.endpoint!,
                 keys: {
-                    auth: json.keys!["auth"],
-                    p256dh: json.keys!["p256dh"],
+                    auth: subscription.keys!["auth"],
+                    p256dh: subscription.keys!["p256dh"],
                 },
             },
         };
         return this.handleResponse(this.service.push_subscription(request), toVoid);
     }
 
-    removeSubscription(subscription: PushSubscription): Promise<void> {
-        const json = subscription.toJSON();
+    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.handleResponse(
             this.service.remove_subscription({
-                p256dh_key: json.keys!["p256dh"],
+                p256dh_key: subscription.keys!["p256dh"],
             }),
             toVoid
         );

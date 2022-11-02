@@ -8,7 +8,7 @@ import type {
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
 
-const PRUNE_LOCAL_REACTIONS_INTERVAL: number = 30 * 1000;
+const PRUNE_LOCAL_UPDATES_INTERVAL: number = 30 * 1000;
 const store = writable<Record<string, LocalMessageUpdates>>({});
 
 export const localMessageUpdates = {
@@ -73,6 +73,6 @@ function pruneLocalUpdates(): void {
     );
 }
 
-export function startPruningLocalUpdates(): void {
-    window.setInterval(() => pruneLocalUpdates(), PRUNE_LOCAL_REACTIONS_INTERVAL);
+export function startPruningLocalMessageUpdates(): void {
+    window.setInterval(() => pruneLocalUpdates(), PRUNE_LOCAL_UPDATES_INTERVAL);
 }

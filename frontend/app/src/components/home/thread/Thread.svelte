@@ -36,7 +36,6 @@
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
-    export let serverChat: ChatSummary;
 
     let focusMessageIndex: number | undefined = undefined;
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -209,7 +208,6 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            serverChat,
             chat,
             $threadEvents,
             textContent,

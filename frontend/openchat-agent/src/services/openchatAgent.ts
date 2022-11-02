@@ -1016,11 +1016,11 @@ export class OpenChatAgent extends EventTarget {
         return this._notificationClient.subscriptionExists(p256dh_key);
     }
 
-    pushSubscription(subscription: PushSubscription): Promise<void> {
+    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.pushSubscription(subscription);
     }
 
-    removeSubscription(subscription: PushSubscription): Promise<void> {
+    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.removeSubscription(subscription);
     }
 
