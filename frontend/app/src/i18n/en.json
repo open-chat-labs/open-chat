@@ -615,5 +615,6 @@
     "version": "version",
     "websiteVersion": "of the website",
     "advanced": "Advanced",
-    "freezeGroup": "Freeze group"
+    "freezeGroup": "Freeze group",
+    "chatFrozen": "This chat has been frozen"
 }
