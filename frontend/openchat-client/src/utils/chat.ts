@@ -181,7 +181,7 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     return chat.minVisibleMessageIndex;
 }
 
-export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
+export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
     if (chat.kind === "group_chat") return true;
     return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
 }

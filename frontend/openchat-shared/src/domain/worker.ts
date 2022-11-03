@@ -6,7 +6,6 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
-    ChatSummary,
     CreateGroupResponse,
     CurrentChatState,
     DeleteGroupResponse,
@@ -402,7 +401,8 @@ type RegisterUser = Request<{
 };
 
 type EditMessage = Request<{
-    chat: ChatSummary;
+    chatType: "direct_chat" | "group_chat";
+    chatId: string,
     msg: Message;
     threadRootMessageIndex?: number;
 }> & {
@@ -410,7 +410,8 @@ type EditMessage = Request<{
 };
 
 type SendMessage = Request<{
-    chat: ChatSummary;
+    chatType: "direct_chat" | "group_chat";
+    chatId: string,
     user: CreatedUser;
     mentioned: User[];
     msg: Message;
@@ -659,8 +660,8 @@ type GroupChatEventsByEventIndex = Request<{
 };
 
 type RehydrateMessage = Request<{
-    chatType: "direct" | "group";
-    currentChatId: string;
+    chatType: "direct_chat" | "group_chat";
+    chatId: string;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
@@ -707,7 +708,8 @@ type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
 };
 
 type ChatEvents = Request<{
-    chat: ChatSummary;
+    chatType: "direct_chat" | "group_chat";
+    chatId: string,
     eventIndexRange: IndexRange;
     startIndex: number;
     ascending: boolean;

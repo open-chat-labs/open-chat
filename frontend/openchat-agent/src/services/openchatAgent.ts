@@ -32,7 +32,6 @@ import {
     ChallengeAttempt,
     ChangeRoleResponse,
     ChatEvent,
-    ChatSummary,
     CheckUsernameResponse,
     ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
@@ -202,30 +201,32 @@ export class OpenChatAgent extends EventTarget {
     }
 
     editMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
-        if (chat.kind === "group_chat") {
-            return this.editGroupMessage(chat.chatId, msg, threadRootMessageIndex);
+        if (chatType === "group_chat") {
+            return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
         }
-        if (chat.kind === "direct_chat") {
-            return this.editDirectMessage(chat.them, msg, threadRootMessageIndex);
+        if (chatType === "direct_chat") {
+            return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
         }
-        throw new UnsupportedValueError("Unexpect chat type", chat);
+        throw new UnsupportedValueError("Unexpect chat type", chatType);
     }
 
     sendMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         user: CreatedUser,
         mentioned: User[],
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        if (chat.kind === "group_chat") {
+        if (chatType === "group_chat") {
             if (msg.content.kind === "crypto_content") {
                 return this.userClient.sendGroupICPTransfer(
-                    chat.chatId,
+                    chatId,
                     msg.content.transfer.recipient,
                     user,
                     msg,
@@ -233,29 +234,29 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             return this.sendGroupMessage(
-                chat.chatId,
+                chatId,
                 user.username,
                 mentioned,
                 msg,
                 threadRootMessageIndex
             );
         }
-        if (chat.kind === "direct_chat") {
+        if (chatType === "direct_chat") {
             const replyingToChatId =
                 msg.repliesTo &&
                 msg.repliesTo.kind === "rehydrated_reply_context" &&
-                chat.chatId !== msg.repliesTo.chatId
+                chatId !== msg.repliesTo.chatId
                     ? msg.repliesTo.chatId
                     : undefined;
             return this.sendDirectMessage(
-                chat.them,
+                chatId,
                 user,
                 msg,
                 replyingToChatId,
                 threadRootMessageIndex
             );
         }
-        throw new UnsupportedValueError("Unexpect chat type", chat);
+        throw new UnsupportedValueError("Unexpect chat type", chatType);
     }
 
     private sendGroupMessage(
@@ -339,7 +340,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct",
+            "direct_chat",
             theirUserId,
             this.userClient.chatEventsWindow(
                 eventIndexRange,
@@ -353,7 +354,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     chatEvents(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
@@ -361,10 +363,10 @@ export class OpenChatAgent extends EventTarget {
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<ChatEvent>> {
-        return chat.kind === "group_chat"
+        return chatType === "group_chat"
             ? this.groupChatEvents(
                   eventIndexRange,
-                  chat.chatId,
+                  chatId,
                   startIndex,
                   ascending,
                   threadRootMessageIndex,
@@ -372,7 +374,7 @@ export class OpenChatAgent extends EventTarget {
               )
             : this.directChatEvents(
                   eventIndexRange,
-                  chat.them,
+                  chatId,
                   startIndex,
                   ascending,
                   threadRootMessageIndex,
@@ -389,7 +391,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct",
+            "direct_chat",
             theirUserId,
             this.userClient.chatEvents(
                 eventIndexRange,
@@ -412,7 +414,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct",
+            "direct_chat",
             theirUserId,
             this.userClient.chatEventsByIndex(
                 eventIndexes,
@@ -432,7 +434,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group",
+            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsWindow(
                 eventIndexRange,
@@ -453,7 +455,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group",
+            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEvents(
                 eventIndexRange,
@@ -475,7 +477,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group",
+            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsByIndex(
                 eventIndexes,
@@ -550,7 +552,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async resolveMissingIndexes<T extends ChatEvent>(
-        chatType: "direct" | "group",
+        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
@@ -561,7 +563,7 @@ export class OpenChatAgent extends EventTarget {
 
         // this looks horrendous but remember these things will *usually* come straight from the cache
         Object.entries(missing).forEach(([chatId, idxs]) => {
-            if (chatId === currentChatId && chatType === "direct") {
+            if (chatId === currentChatId && chatType === "direct_chat") {
                 missingMessages.push(
                     this.userClient
                         .chatEventsByIndex(
@@ -644,7 +646,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
-        chatType: "direct" | "group",
+        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>,
         threadRootMessageIndex: number | undefined,
@@ -703,20 +705,20 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async rehydrateMessage(
-        chatType: "direct" | "group",
-        currentChatId: string,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatType,
-            currentChatId,
+            chatId,
             [message],
             threadRootMessageIndex,
             latestClientEventIndex
         );
-        return this.rehydrateEvent(message, currentChatId, missing);
+        return this.rehydrateEvent(message, chatId, missing);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -799,9 +801,8 @@ export class OpenChatAgent extends EventTarget {
                 );
 
                 if (chat.latestMessage !== undefined && rehydrateLastMessage) {
-                    const chatType = chat.kind === "direct_chat" ? "direct" : "group";
                     const latestMessage = await this.rehydrateMessage(
-                        chatType,
+                        chat.kind,
                         chat.chatId,
                         chat.latestMessage,
                         undefined,
@@ -1109,7 +1110,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         return this.rehydrateEventResponse(
-            "group",
+            "group_chat",
             chatId,
             this.getGroupClient(chatId).getMessagesByMessageIndex(
                 messageIndexes,
@@ -1272,7 +1273,7 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<ThreadPreview> {
         const threadMissing = await this.resolveMissingIndexes(
-            "group",
+            "group_chat",
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
@@ -1280,7 +1281,7 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const rootMissing = await this.resolveMissingIndexes(
-            "group",
+            "group_chat",
             thread.chatId,
             [thread.rootMessage],
             undefined,

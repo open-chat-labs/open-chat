@@ -8,10 +8,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: threadsByChatStore = client.threadsByChatStore;
     $: messagesRead = client.messagesRead;
     $: selected = $pathParams.chatId === "threads";
-    $: numStaleThreads = client.staleThreadsCount($threadsByChatStore);
+    $: numStaleThreads = client.staleThreadsCount();
 
     function onClick() {
         push("/threads");
@@ -19,7 +18,7 @@
 
     onMount(() => {
         return messagesRead.subscribe(() => {
-            numStaleThreads = client.staleThreadsCount($threadsByChatStore);
+            numStaleThreads = client.staleThreadsCount();
         });
     });
 </script>

@@ -95,7 +95,7 @@
                 loading = true;
                 client
                     .loadThreadMessages(
-                        chat,
+                        chat.chatId,
                         rootEvent,
                         thread,
                         [0, thread.latestEventIndex],
@@ -120,7 +120,7 @@
                 loading = true;
                 client
                     .loadThreadMessages(
-                        chat,
+                        chat.chatId,
                         rootEvent,
                         thread,
                         [0, thread.latestEventIndex],
@@ -147,13 +147,13 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = client.canReplyInThread(chat);
-    $: canReact = client.canReactToMessages(chat);
+    $: canSend = client.canReplyInThread(chat.chatId);
+    $: canReact = client.canReactToMessages(chat.chatId);
     $: messages = client
         .groupEvents([rootEvent, ...$threadEvents])
         .reverse() as EventWrapper<Message>[][][];
-    $: preview = client.isPreviewing(chat);
-    $: pollsAllowed = client.canCreatePolls(chat);
+    $: preview = client.isPreviewing(chat.chatId);
+    $: pollsAllowed = client.canCreatePolls(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
 
     function onSentMessage(event: EventWrapper<Message>) {
@@ -181,7 +181,7 @@
         if ($editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat,
+                    chat.chatId,
                     text,
                     $fileToAttach,
                     $editingEvent,
@@ -208,7 +208,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat,
+            chat.chatId,
             $threadEvents,
             textContent,
             mentioned,
@@ -254,7 +254,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat)) return;
+        if (!client.canCreatePolls(chat.chatId)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -333,7 +333,7 @@
 
         client
             .selectReaction(
-                chat,
+                chat.chatId,
                 client.user.userId,
                 threadRootMessageIndex,
                 message.messageId,
@@ -486,11 +486,11 @@
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={client.canPinMessages(chat)}
-                            canBlockUser={client.canBlockUsers(chat)}
-                            canDelete={client.canDeleteOtherUsersMessages(chat)}
+                            canPin={client.canPinMessages(chat.chatId)}
+                            canBlockUser={client.canBlockUsers(chat.chatId)}
+                            canDelete={client.canDeleteOtherUsersMessages(chat.chatId)}
                             canQuoteReply={canSend}
-                            canReact={client.canReactToMessages(chat)}
+                            canReact={client.canReactToMessages(chat.chatId)}
                             canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}

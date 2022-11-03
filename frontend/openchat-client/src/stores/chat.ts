@@ -355,17 +355,18 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 
 export function setSelectedChat(
     api: OpenChatAgentWorker,
-    chat: ChatSummary,
+    clientChat: ChatSummary,
+    serverChat: ChatSummary | undefined,
     messageIndex?: number
 ): void {
     // TODO don't think this should be in here really
     if (
-        chat.kind === "group_chat" &&
-        chat.subtype !== undefined &&
-        chat.subtype.kind === "governance_proposals" &&
-        !chat.subtype.isNns
+        clientChat.kind === "group_chat" &&
+        clientChat.subtype !== undefined &&
+        clientChat.subtype.kind === "governance_proposals" &&
+        !clientChat.subtype.isNns
     ) {
-        const { governanceCanisterId } = chat.subtype;
+        const { governanceCanisterId } = clientChat.subtype;
         api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
             snsFunctions.set(governanceCanisterId, val.functions);
             return val;
@@ -373,11 +374,10 @@ export function setSelectedChat(
     }
 
     if (messageIndex === undefined) {
-        messageIndex = getFirstUnreadMessageIndex(chat);
+        messageIndex = getFirstUnreadMessageIndex(clientChat);
 
         if (messageIndex !== undefined) {
-            const latestServerMessageIndex =
-                get(serverChatSummariesStore)[chat.chatId]?.latestMessage?.event.messageIndex ?? 0;
+            const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
 
             if (messageIndex > latestServerMessageIndex) {
                 messageIndex = undefined;
@@ -385,17 +385,17 @@ export function setSelectedChat(
         }
     }
 
-    clearSelectedChat(chat.chatId);
+    clearSelectedChat(clientChat.chatId);
 
     // initialise a bunch of stores
-    chatStateStore.clear(chat.chatId);
-    chatStateStore.setProp(chat.chatId, "focusMessageIndex", messageIndex);
+    chatStateStore.clear(clientChat.chatId);
+    chatStateStore.setProp(clientChat.chatId, "focusMessageIndex", messageIndex);
     chatStateStore.setProp(
-        chat.chatId,
+        clientChat.chatId,
         "userIds",
-        new Set<string>(chat.kind === "direct_chat" ? [chat.chatId] : [])
+        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.chatId] : [])
     );
-    resetFilteredProposalsStore(chat);
+    resetFilteredProposalsStore(clientChat);
 }
 
 export function updateSummaryWithConfirmedMessage(
