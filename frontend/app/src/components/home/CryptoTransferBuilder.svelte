@@ -37,11 +37,11 @@
     export let draftAmountE8s: bigint;
     export let token: Cryptocurrency;
     export let chat: ChatSummary;
+    export let defaultReceiver: string | undefined;
 
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: currentChatReplyingTo = client.currentChatReplyingTo;
     $: cryptoBalance = client.cryptoBalance;
     $: userStore = client.userStore;
     let refreshing = false;
@@ -68,14 +68,11 @@
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
 
     onMount(() => {
-        // default the receiver to the reply sender if we are replying to a specific message
-        if ($currentChatReplyingTo !== undefined) {
-            receiver = $userStore[$currentChatReplyingTo.senderId];
-        }
-
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
             receiver = $userStore[chat.them];
+        } else if (defaultReceiver !== undefined) {
+            receiver = $userStore[defaultReceiver];
         }
     });
 
