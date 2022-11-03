@@ -71,7 +71,7 @@
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
             receiver = $userStore[chat.them];
-        } else {
+        } else if (defaultReceiver !== undefined) {
             receiver = $userStore[defaultReceiver];
         }
     });
