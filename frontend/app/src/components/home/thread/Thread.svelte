@@ -405,6 +405,10 @@
     function copyMessageUrl(ev: CustomEvent<Message>) {
         shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
     }
+
+    function defaultCryptoTransferReceiver(): string | undefined {
+        return $replyingTo?.sender?.userId;
+    }
 </script>
 
 <PollBuilder
@@ -422,6 +426,7 @@
         {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
+        defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}

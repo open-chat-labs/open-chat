@@ -191,6 +191,10 @@
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them);
     }
+
+    function defaultCryptoTransferReceiver(): string | undefined {
+        return $currentChatReplyingTo?.sender?.userId;
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -205,6 +209,7 @@
         {chat}
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
+        defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
