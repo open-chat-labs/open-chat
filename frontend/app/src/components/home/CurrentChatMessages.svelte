@@ -399,7 +399,7 @@
     function doDeleteMessage(message: Message) {
         if (!canDelete && user.userId !== message.sender) return;
 
-        client.deleteMessage(chat, undefined, message.messageId);
+        client.deleteMessage(chat.chatId, undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {

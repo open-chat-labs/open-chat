@@ -661,14 +661,16 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     deleteMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse> {
         return this.sendRequest({
             kind: "deleteMessage",
             payload: {
-                chat,
+                chatType,
+                chatId,
                 messageId,
                 threadRootMessageIndex,
             },

@@ -926,6 +926,7 @@ export class OpenChat extends EventTarget {
     startTyping = startTyping;
     stopTyping = stopTyping;
     isPreviewing = isPreviewing;
+
     registerPollVote(
         chatId: string,
         threadRootMessageIndex: number | undefined,
@@ -950,18 +951,24 @@ export class OpenChat extends EventTarget {
                 return false;
             });
     }
+
     deleteMessage(
-        chat: ChatSummary,
+        chatId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint
     ): Promise<boolean> {
+        const chat = this._liveState.chatSummaries[chatId];
+
+        if (chat === undefined) {
+            return Promise.resolve(false);
+        }
+
         const messageIdString = messageId.toString();
 
         localMessageUpdates.markDeleted(messageIdString, this.user.userId);
 
         const recipients = [...chatStateStore.getProp(chat.chatId, "userIds")];
         const chatType = chat.kind;
-        const chatId = chat.chatId;
         const userId = this.user.userId;
 
         rtcConnectionsManager.sendMessage(recipients, {
@@ -986,7 +993,7 @@ export class OpenChat extends EventTarget {
         }
 
         return this.api
-            .deleteMessage(chat, messageId, threadRootMessageIndex)
+            .deleteMessage(chatType, chatId, messageId, threadRootMessageIndex)
             .then((resp) => {
                 const success = resp === "success";
                 if (!success) {

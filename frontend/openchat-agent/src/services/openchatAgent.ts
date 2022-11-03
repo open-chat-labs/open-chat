@@ -983,13 +983,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     deleteMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse> {
-        return chat.kind === "group_chat"
-            ? this.deleteGroupMessage(chat.chatId, messageId, threadRootMessageIndex)
-            : this.deleteDirectMessage(chat.them, messageId, threadRootMessageIndex);
+        return chatType === "group_chat"
+            ? this.deleteGroupMessage(chatId, messageId, threadRootMessageIndex)
+            : this.deleteDirectMessage(chatId, messageId, threadRootMessageIndex);
     }
 
     private deleteGroupMessage(
