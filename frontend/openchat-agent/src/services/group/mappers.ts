@@ -217,6 +217,9 @@ export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGr
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
     throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
 
@@ -235,6 +238,9 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUser
     }
     if ("CannotUnblockSelf" in candid) {
         return "cannot_unblock_self";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
@@ -264,6 +270,9 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     if ("CannotBlockUser" in candid) {
         return "cannot_block_user";
     }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
@@ -276,6 +285,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     }
     if ("MessageNotFound" in candid) {
         return "message_not_found";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
@@ -300,6 +312,9 @@ export function addRemoveReactionResponse(
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddRemoveReactionResponse type received",
@@ -347,6 +362,9 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("RulesTooShort" in candid) {
         return "rules_too_short";
     }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
 
@@ -362,6 +380,9 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     }
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
@@ -396,6 +417,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("ThreadMessageNotFound" in candid) {
         return { kind: "thread_message_not_found" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -415,6 +439,9 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleRes
     }
     if ("Invalid" in candid) {
         return "invalid";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
@@ -437,6 +464,9 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     }
     if ("CannotRemoveUser" in candid) {
         return "cannot_remove_user";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -491,6 +521,9 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
             kind: "add_members_not_in_group",
         };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
     throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
 }
 
@@ -513,6 +546,9 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageRes
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
     throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
 }
 
@@ -531,6 +567,9 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
     }
     if ("MessageNotFound" in candid) {
         return "message_not_found";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
 }
@@ -693,6 +732,9 @@ export function enableInviteCodeResponse(
             kind: "not_authorised",
         };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiEnableInviteCodeResponse type received",
         candid
@@ -707,6 +749,9 @@ export function disableInviteCodeResponse(
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDisableInviteCodeResponse type received",
@@ -775,6 +820,9 @@ export function resetInviteCodeResponse(
             kind: "not_authorised",
         };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
@@ -804,6 +852,9 @@ export function registerPollVoteResponse(
     }
     if ("PollsNotValidForDirectChats" in candid) {
         return "polls_not_valid_for_direct_chats";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
@@ -1087,6 +1138,9 @@ export function registerProposalVoteResponse(
     }
     if ("ProposalMessageNotFound" in candid) {
         return "proposal_message_not_found";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     if ("InternalError" in candid) {
         return "internal_error";

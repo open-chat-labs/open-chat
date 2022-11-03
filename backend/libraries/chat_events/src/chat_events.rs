@@ -18,6 +18,7 @@ pub struct AllChatEvents {
     threads: HashMap<MessageIndex, ChatEvents>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
+    frozen: bool,
 }
 
 impl AllChatEvents {
@@ -74,6 +75,7 @@ impl AllChatEvents {
             threads: HashMap::new(),
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
+            frozen: false,
         }
     }
 
@@ -109,6 +111,7 @@ impl AllChatEvents {
             threads: HashMap::new(),
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
+            frozen: false,
         }
     }
 
@@ -653,6 +656,10 @@ impl AllChatEvents {
         }
     }
 
+    pub fn mark_frozen(&mut self, frozen: bool) {
+        self.frozen = frozen;
+    }
+
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
     fn push_event(
         &mut self,
@@ -661,6 +668,12 @@ impl AllChatEvents {
         correlation_id: u64,
         now: TimestampMillis,
     ) -> EventIndex {
+        if self.frozen {
+            // We should never hit this because if the chat is frozen it should be handled earlier,
+            // this is just here as a safety net.
+            panic!("This chat has been frozen");
+        }
+
         self.add_to_metrics(&event, now);
 
         let event_index = self

@@ -15,6 +15,10 @@ fn disable_invite_code(args: Args) -> Response {
 }
 
 fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.role.can_invite_users(&runtime_state.data.permissions) {

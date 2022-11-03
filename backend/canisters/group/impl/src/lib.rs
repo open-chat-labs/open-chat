@@ -9,8 +9,9 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, GroupRules, GroupSubtype,
-    MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupChatSummaryInternal, GroupPermissions, GroupRules,
+    GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -48,6 +49,10 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
     }
 
     pub fn is_caller_callback_canister(&self) -> bool {
@@ -163,6 +168,7 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
+    pub frozen: Option<FrozenGroupInfo>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -213,6 +219,7 @@ impl Data {
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
+            frozen: None,
         }
     }
 
@@ -239,6 +246,10 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
     }
 }
 

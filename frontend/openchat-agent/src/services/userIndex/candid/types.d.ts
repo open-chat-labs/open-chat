@@ -154,6 +154,7 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'is_super_admin' : boolean,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -845,24 +846,24 @@ export interface _SERVICE {
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'confirm_phone_number' : ActorMethod<
     [ConfirmPhoneNumberArgs],
-    ConfirmPhoneNumberResponse
+    ConfirmPhoneNumberResponse,
   >,
   'create_challenge' : ActorMethod<
     [CreateChallengeArgs],
-    CreateChallengeResponse
+    CreateChallengeResponse,
   >,
   'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_super_admin' : ActorMethod<
     [RemoveSuperAdminArgs],
-    RemoveSuperAdminResponse
+    RemoveSuperAdminResponse,
   >,
   'resend_code' : ActorMethod<[ResendCodeArgs], ResendCodeResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
   'submit_phone_number' : ActorMethod<
     [SubmitPhoneNumberArgs],
-    SubmitPhoneNumberResponse
+    SubmitPhoneNumberResponse,
   >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
   'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,

@@ -26,6 +26,7 @@ async fn leave_group(args: Args) -> Response {
                 }
             }
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
+            c2c_leave_group::Response::ChatFrozen => ChatFrozen,
         },
         Err(error) => InternalError(format!("{error:?}")),
     }

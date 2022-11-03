@@ -1,18 +1,21 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub correlation_id: u64,
+    pub user_principal: Principal,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CallerNotInGroup,
-    OwnerCannotLeave,
-    ChatFrozen,
+    UserNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {}
+pub struct SuccessResult {
+    pub user_id: UserId,
+    pub is_bot: bool,
+    pub is_super_admin: bool,
+}

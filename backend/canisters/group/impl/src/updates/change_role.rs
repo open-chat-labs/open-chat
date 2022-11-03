@@ -17,6 +17,10 @@ fn change_role(args: Args) -> Response {
 }
 
 fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     let event =

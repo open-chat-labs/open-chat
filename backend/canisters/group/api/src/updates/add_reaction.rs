@@ -19,4 +19,5 @@ pub enum Response {
     MessageNotFound,
     CallerNotInGroup,
     NotAuthorized,
+    ChatFrozen,
 }

@@ -728,18 +728,18 @@ export type VoteOperation = { 'RegisterVote' : null } |
 export interface _SERVICE {
   'push_subscription' : ActorMethod<
     [PushSubscriptionArgs],
-    PushSubscriptionResponse
+    PushSubscriptionResponse,
   >,
   'remove_subscription' : ActorMethod<
     [RemoveSubscriptionArgs],
-    RemoveSubscriptionResponse
+    RemoveSubscriptionResponse,
   >,
   'remove_subscriptions_for_user' : ActorMethod<
     [RemoveSubscriptionsForUserArgs],
-    RemoveSubscriptionsForUserResponse
+    RemoveSubscriptionsForUserResponse,
   >,
   'subscription_exists' : ActorMethod<
     [SubscriptionExistsArgs],
-    SubscriptionExistsResponse
+    SubscriptionExistsResponse,
   >,
 }

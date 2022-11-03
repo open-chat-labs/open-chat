@@ -1,10 +1,18 @@
 export const idlFactory = ({ IDL }) => {
+  const CanisterId = IDL.Principal;
+  const ChatId = CanisterId;
+  const FreezeGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const FreezeGroupResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'AlreadyFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const CanisterId = IDL.Principal;
-  const ChatId = CanisterId;
   const GroupMatch = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -19,6 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   return IDL.Service({
+    'freeze_group' : IDL.Func([FreezeGroupArgs], [FreezeGroupResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
   });
 };

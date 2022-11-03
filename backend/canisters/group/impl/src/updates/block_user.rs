@@ -43,6 +43,10 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.is_frozen() {
+        return Err(ChatFrozen);
+    }
+
     let caller = runtime_state.env.caller();
     if !runtime_state.data.is_public {
         Err(GroupNotPublic)

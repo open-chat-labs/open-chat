@@ -109,6 +109,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
@@ -722,6 +723,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
     'Success' : GroupChatSummary,
     'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
@@ -736,6 +738,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotPublic' : IDL.Null,
     'OwnerCannotLeave' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -912,6 +915,8 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
+    'RecipientNotFound' : IDL.Null,
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
@@ -940,6 +945,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
+    'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,

@@ -690,6 +690,10 @@
         });
     }
 
+    function freezeGroup(ev: CustomEvent<string>) {
+        client.freezeGroup(ev.detail);
+    }
+
     function whatsHot(navigate: boolean = true) {
         if (navigate) {
             push("/");
@@ -848,6 +852,7 @@
             on:showMembers={showMembers}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
+            on:freezeGroup={freezeGroup}
             on:cancelRecommendations={cancelRecommendations}
             on:recommend={() => whatsHot(false)}
             on:dismissRecommendation={dismissRecommendation}

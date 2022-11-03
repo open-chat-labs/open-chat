@@ -2,9 +2,9 @@ use canister_client_macros::*;
 use user_index_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_is_super_admin);
 generate_c2c_call!(c2c_lookup_principal);
 generate_c2c_call!(c2c_lookup_user_id);
+generate_c2c_call!(c2c_lookup_user_id_v2);
 generate_c2c_call!(user);
 
 // Updates

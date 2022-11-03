@@ -109,6 +109,7 @@ import {
     UsersResponse,
     UserSummary,
     WithdrawCryptocurrencyResponse,
+    FreezeGroupResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
@@ -1306,5 +1307,9 @@ export class OpenChatAgent extends EventTarget {
         message: EventWrapper<Message>
     ): Promise<void> {
         return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
+    }
+
+    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+        return this._groupIndexClient.freezeGroup(chatId);
     }
 }

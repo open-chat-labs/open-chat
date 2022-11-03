@@ -16,6 +16,10 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = &runtime_state.env.caller();
     if !runtime_state.data.is_public {
         GroupNotPublic

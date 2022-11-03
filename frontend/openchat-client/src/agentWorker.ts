@@ -85,6 +85,7 @@ import {
     CandidateGroupChat,
     CreateGroupResponse,
     ChangeRoleResponse,
+    FreezeGroupResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1184,6 +1185,15 @@ export class OpenChatAgentWorker extends EventTarget {
                 threadRootMessageIndex,
                 message,
             },
+        });
+    }
+
+    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+        return this.sendRequest({
+            kind: "freezeGroup",
+            payload: {
+                chatId
+            }
         });
     }
 }

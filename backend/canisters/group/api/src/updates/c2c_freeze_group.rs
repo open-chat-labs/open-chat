@@ -4,11 +4,12 @@ use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: UserId,
+    pub caller: UserId,
+    pub reason: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Yes,
-    No,
+    Success,
+    AlreadyFrozen,
 }

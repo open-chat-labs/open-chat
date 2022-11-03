@@ -290,6 +290,9 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     if ("OwnerCannotLeave" in candid) {
         return "owner_cannot_leave";
     }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
 
@@ -318,6 +321,9 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     }
     if ("NotSuperAdmin" in candid) {
         return { kind: "not_super_admin" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
@@ -429,6 +435,9 @@ export function transferWithinGroupResponse(
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -485,6 +494,12 @@ export function sendMessageResponse(
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -551,6 +566,9 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }

@@ -195,6 +195,12 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FreezeGroupArgs { 'chat_id' : ChatId }
+export type FreezeGroupResponse = { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'AlreadyFrozen' : null } |
+  { 'InternalError' : string };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -728,5 +734,6 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
 }

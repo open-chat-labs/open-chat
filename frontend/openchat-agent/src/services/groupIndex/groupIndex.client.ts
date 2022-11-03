@@ -1,10 +1,11 @@
 import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
-import type { GroupSearchResponse } from "openchat-shared";
+import type { FreezeGroupResponse, GroupSearchResponse } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
-import { groupSearchResponse } from "./mappers";
+import { freezeGroupResponse, groupSearchResponse } from "./mappers";
 
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
     private groupIndexService: GroupIndexService;
@@ -33,5 +34,11 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
             groupSearchResponse,
             args
         );
+    }
+
+    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+        return this.handleResponse(
+            this.groupIndexService.freeze_group({ chat_id: Principal.fromText(chatId) }),
+            freezeGroupResponse)
     }
 }

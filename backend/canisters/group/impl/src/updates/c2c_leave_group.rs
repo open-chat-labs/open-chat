@@ -16,6 +16,10 @@ fn c2c_leave_group(args: Args) -> Response {
 }
 
 fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 

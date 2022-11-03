@@ -1,6 +1,7 @@
 import { optional } from "../../utils/mapping";
-import type { GroupMatch, GroupSearchResponse } from "openchat-shared";
-import type { ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
+import type { FreezeGroupResponse, GroupMatch, GroupSearchResponse} from "openchat-shared";
+import type { ApiFreezeGroupResponse, ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
+import { UnsupportedValueError } from "openchat-shared";
 
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
     if ("Success" in candid) {
@@ -10,6 +11,25 @@ export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchRespo
         };
     }
     throw new Error(`Unknown GroupIndex.SearchResponse of ${candid}`);
+}
+
+export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyFrozen" in candid) {
+        return "already_frozen";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiFreezeGroupResponse type received", candid);
 }
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {

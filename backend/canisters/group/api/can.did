@@ -26,6 +26,7 @@ type SendMessageResponse =
         CallerNotInGroup;
         InvalidRequest: text;
         ThreadMessageNotFound;
+        ChatFrozen;
     };
 
 type EditMessageArgs =
@@ -41,6 +42,7 @@ type EditMessageResponse =
         Success;
         MessageNotFound;
         CallerNotInGroup;
+        ChatFrozen;
     };
 
 type DeleteMessagesArgs =
@@ -55,6 +57,7 @@ type DeleteMessagesResponse =
         Success;
         CallerNotInGroup;
         MessageNotFound;
+        ChatFrozen;
     };
 
 type RegisterPollVoteArgs =
@@ -73,6 +76,7 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
+        ChatFrozen;
     };
 
 type AddReactionArgs =
@@ -92,6 +96,7 @@ type AddReactionResponse =
         MessageNotFound;
         CallerNotInGroup;
         NotAuthorized;
+        ChatFrozen;
     };
 
 type RemoveReactionArgs =
@@ -109,6 +114,7 @@ type RemoveReactionResponse =
         MessageNotFound;
         CallerNotInGroup;
         NotAuthorized;
+        ChatFrozen;
     };
 
 type BlockUserArgs =
@@ -127,6 +133,7 @@ type BlockUserResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
+        ChatFrozen;
     };
 
 type UnblockUserArgs =
@@ -142,6 +149,7 @@ type UnblockUserResponse =
         CannotUnblockSelf;
         GroupNotPublic;
         NotAuthorized;
+        ChatFrozen;
     };
 
 type AddParticipantsArgs =
@@ -160,6 +168,7 @@ type AddParticipantsResponse =
         CallerNotInGroup;
         ParticipantLimitReached: nat32;
         NotAuthorized;
+        ChatFrozen;
     };
 
 type AddParticipantsPartialSuccessResult =
@@ -195,6 +204,7 @@ type RemoveParticipantResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
+        ChatFrozen;
     };
 
 type ChangeRoleArgs =
@@ -211,6 +221,7 @@ type ChangeRoleResponse =
         NotAuthorized;
         UserNotInGroup;
         Invalid;
+        ChatFrozen;
     };
 
 type InviteCodeArgs =
@@ -236,6 +247,7 @@ type EnableInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
+        ChatFrozen;
     };
 
 type DisableInviteCodeArgs =
@@ -247,6 +259,7 @@ type DisableInviteCodeResponse =
     variant {
         Success;
         NotAuthorized;
+        ChatFrozen;
     };
 
 type ResetInviteCodeArgs =
@@ -260,6 +273,7 @@ type ResetInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
+        ChatFrozen;
     };
 
 type UpdateGroupV2Args =
@@ -286,6 +300,7 @@ type UpdateGroupV2Response =
         InternalError;
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
+        ChatFrozen;
     };
 
 type OptionalGroupPermissions =
@@ -319,6 +334,7 @@ type PinMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         MessageNotFound;
+        ChatFrozen;
     };
 
 type UnpinMessageArgs =
@@ -334,6 +350,7 @@ type UnpinMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         MessageNotFound;
+        ChatFrozen;
     };
 
 type RegisterProposalVoteArgs =
@@ -351,6 +368,7 @@ type RegisterProposalVoteResponse =
         ProposalMessageNotFound;
         ProposalNotFound;
         ProposalNotAcceptingVotes;
+        ChatFrozen;
         InternalError: text;
     };
 
@@ -364,6 +382,7 @@ type MakePrivateResponse =
         Success;
         NotAuthorized;
         AlreadyPrivate;
+        ChatFrozen;
         InternalError;
     };
 

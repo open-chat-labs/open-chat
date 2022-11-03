@@ -1111,6 +1111,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 .catch(sendError(correlationId));
             break;
 
+        case "freezeGroup":
+            agent
+                .freezeGroup(payload.chatId)
+                .then(response =>
+                    sendResponse(correlationId, {
+                        response,
+                    })
+                )
+                .catch(sendError(correlationId));
+            break;
+
         default:
             console.debug("WORKER: unknown message kind received: ", kind);
     }

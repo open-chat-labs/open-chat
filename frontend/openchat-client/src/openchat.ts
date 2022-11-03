@@ -275,6 +275,7 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
+    type FreezeGroupResponse,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -987,6 +988,10 @@ export class OpenChat extends EventTarget {
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
+    }
+
+    isSuperAdmin(): boolean {
+        return this.user.isSuperAdmin
     }
 
     canForward = canForward;
@@ -2595,6 +2600,10 @@ export class OpenChat extends EventTarget {
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
         }
+    }
+
+    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+        return this.api.freezeGroup(chatId);
     }
 
     private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {

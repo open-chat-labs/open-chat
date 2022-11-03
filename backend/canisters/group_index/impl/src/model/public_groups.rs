@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary,
-    TimestampMillis, Version,
+    ChatId, Cycles, CyclesTopUp, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity,
+    PublicGroupSummary, TimestampMillis, Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -83,8 +83,7 @@ impl PublicGroups {
     pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
         let query = Query::parse(search_term);
 
-        self.groups
-            .values()
+        self.iter()
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
@@ -149,15 +148,14 @@ impl PublicGroups {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
-        self.groups.values()
+        self.groups.values().filter(|g| !g.frozen())
     }
 
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
         let mut rng = StdRng::seed_from_u64(now);
         let one_day_ago = now - DAY_IN_MS;
 
-        self.groups
-            .values()
+        self.iter()
             .filter(|g| g.has_been_active_since(one_day_ago))
             .map(|g| (g, rng.next_u32()))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
@@ -179,6 +177,7 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
+    frozen: Option<FrozenGroupInfo>,
 }
 
 pub enum UpdateGroupResult {
@@ -214,6 +213,7 @@ impl PublicGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
+            frozen: None,
         }
     }
 
@@ -278,6 +278,14 @@ impl PublicGroupInfo {
             weighting *= random_multiplier;
         }
         weighting
+    }
+
+    pub fn frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
+    pub fn mark_frozen(&mut self, info: FrozenGroupInfo) {
+        self.frozen = Some(info);
     }
 }
 
