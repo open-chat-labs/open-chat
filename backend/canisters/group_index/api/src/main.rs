@@ -2,6 +2,7 @@ use candid_gen::generate_candid_method;
 
 fn main() {
     generate_candid_method!(group_index, search, query);
+    generate_candid_method!(group_index, freeze_group, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

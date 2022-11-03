@@ -267,6 +267,7 @@ type GroupChatSummary =
         my_metrics: ChatMetrics;
         latest_threads: vec ThreadSyncDetails;
         archived: bool;
+        frozen: opt FrozenGroupInfo;
     };
 
 type GroupChatSummaryUpdates =
@@ -293,6 +294,7 @@ type GroupChatSummaryUpdates =
         is_public: opt bool;
         latest_threads: vec ThreadSyncDetails;
         archived: opt bool;
+        frozen: FrozenGroupUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -352,6 +354,20 @@ type MessageEventWrapper =
         timestamp: TimestampMillis;
         correlation_id: nat64;
         event: Message;
+    };
+
+type FrozenGroupInfo =
+    record {
+        timestamp: TimestampMillis;
+        frozen_by: UserId;
+        reason: opt text;
+    };
+
+type FrozenGroupUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: FrozenGroupInfo;
     };
 
 type GroupMessageNotification =

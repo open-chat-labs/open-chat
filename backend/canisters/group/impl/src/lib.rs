@@ -112,6 +112,7 @@ impl RuntimeState {
                 .cloned()
                 .unwrap_or_default(),
             latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
+            frozen: data.frozen.value.clone(),
         }
     }
 
@@ -168,7 +169,8 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    pub frozen: Option<FrozenGroupInfo>,
+    #[serde(default)]
+    pub frozen: Timestamped<Option<FrozenGroupInfo>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -219,7 +221,7 @@ impl Data {
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
-            frozen: None,
+            frozen: Timestamped::default(),
         }
     }
 

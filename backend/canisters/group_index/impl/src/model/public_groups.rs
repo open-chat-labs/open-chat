@@ -109,6 +109,7 @@ impl PublicGroups {
             wasm_version: group.wasm_version,
             owner_id: summary.owner_id,
             is_public: true,
+            frozen: None,
         })
     }
 
