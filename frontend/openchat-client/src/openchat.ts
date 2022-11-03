@@ -913,93 +913,80 @@ export class OpenChat extends EventTarget {
     getTypingString = getTypingString;
 
     canBlockUsers(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canBlockUsers(chat);
+        return this.chatPredicate(chatId, canBlockUsers);
     }
 
     canCreatePolls(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canCreatePolls(chat);
+        return this.chatPredicate(chatId, canCreatePolls);
     }
 
     canDeleteOtherUsersMessages(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canDeleteOtherUsersMessages(chat);
+        return this.chatPredicate(chatId, canDeleteOtherUsersMessages);
     }
 
     canPinMessages(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canPinMessages(chat);
+        return this.chatPredicate(chatId, canPinMessages);
     }
 
     canReactToMessages(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canReactToMessages(chat);
+        return this.chatPredicate(chatId, canReactToMessages);
     }
 
     canReplyInThread(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canReplyInThread(chat);
+        return this.chatPredicate(chatId, canReplyInThread);
     }
 
     canSendMessages(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canSendMessages(chat, this._liveState.userStore);
+        return this.chatPredicate(chatId, (chat) => canSendMessages(chat, this._liveState.userStore));
     }
 
     canChangeRoles(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat?.kind === "group_chat" && canChangeRoles(chat, currentRole, newRole);
+        return this.chatPredicate(chatId, (chat) => canChangeRoles(chat, currentRole, newRole));
     }
 
     canUnblockUsers(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canUnblockUsers(chat);
+        return this.chatPredicate(chatId, canUnblockUsers);
     }
 
     canRemoveMembers(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canRemoveMembers(chat);
+        return this.chatPredicate(chatId, canRemoveMembers);
     }
 
     canEditGroupDetails(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canEditGroupDetails(chat);
+        return this.chatPredicate(chatId, canEditGroupDetails);
     }
 
     canChangePermissions(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat?.kind === "group_chat" && canChangePermissions(chat);
+        return this.chatPredicate(chatId, canChangePermissions);
     }
 
     canInviteUsers(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canInviteUsers(chat);
+        return this.chatPredicate(chatId, canInviteUsers);
     }
 
     canDeleteGroup(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canDeleteGroup(chat);
+        return this.chatPredicate(chatId, canDeleteGroup);
     }
 
     canMakeGroupPrivate(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canMakeGroupPrivate(chat);
+        return this.chatPredicate(chatId, canMakeGroupPrivate);
     }
 
     canLeaveGroup(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canLeaveGroup(chat);
+        return this.chatPredicate(chatId, canLeaveGroup);
     }
 
     canAddMembers(chatId: string): boolean {
-        const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && canAddMembers(chat);
+        return this.chatPredicate(chatId, canAddMembers);
     }
 
     isPreviewing(chatId: string): boolean {
+        return this.chatPredicate(chatId, isPreviewing);
+    }
+
+    private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
-        return chat !== undefined && isPreviewing(chat);
+        return chat !== undefined && predicate(chat);
     }
 
     canForward = canForward;
