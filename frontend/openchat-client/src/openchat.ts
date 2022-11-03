@@ -2533,12 +2533,13 @@ export class OpenChat extends EventTarget {
     getGroupMessagesByMessageIndex(
         chatId: string,
         messageIndexes: Set<number>,
-        latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
+        const serverChat = this._liveState.serverChatSummaries[chatId];
+
         return this.api.getGroupMessagesByMessageIndex(
             chatId,
             messageIndexes,
-            latestClientEventIndex
+            serverChat?.latestEventIndex
         );
     }
 
