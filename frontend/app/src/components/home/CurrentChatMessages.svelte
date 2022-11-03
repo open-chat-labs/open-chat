@@ -355,7 +355,7 @@
 
         client
             .selectReaction(
-                chat,
+                chat.chatId,
                 user.userId,
                 undefined,
                 message.messageId,
@@ -555,7 +555,7 @@
         evt: EventWrapper<ChatEventType>
     ): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = client.messageIsReadByThem(chat, evt.event);
+            const confirmedRead = client.messageIsReadByThem(chat.chatId, evt.event.messageIndex);
             if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
@@ -594,7 +594,7 @@
 
     function onPinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.pinMessage(chat, ev.detail.messageIndex).then((success) => {
+        client.pinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("pinMessageFailed");
             }
@@ -603,7 +603,7 @@
 
     function onUnpinMessage(ev: CustomEvent<Message>) {
         if (!canPin) return;
-        client.unpinMessage(chat, ev.detail.messageIndex).then((success) => {
+        client.unpinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("unpinMessageFailed");
             }

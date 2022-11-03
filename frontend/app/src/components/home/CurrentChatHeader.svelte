@@ -51,7 +51,7 @@
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary.chatId);
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -256,7 +256,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
-                            {#if client.canLeaveGroup(selectedChatSummary)}
+                            {#if client.canLeaveGroup(selectedChatSummary.chatId)}
                                 <MenuItem on:click={leaveGroup}>
                                     <LocationExit
                                         size={$iconSize}
@@ -272,7 +272,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("members")}</div>
                             </MenuItem>
-                            {#if client.canAddMembers(selectedChatSummary)}
+                            {#if client.canAddMembers(selectedChatSummary.chatId)}
                                 <MenuItem on:click={addMembers}>
                                     <AccountPlusOutline
                                         size={$iconSize}

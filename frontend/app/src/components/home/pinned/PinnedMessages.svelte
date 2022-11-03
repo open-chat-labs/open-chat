@@ -31,7 +31,6 @@
         dispatch("chatWith", ev.detail);
     }
 
-    $: serverChatSummariesStore = client.serverChatSummariesStore;
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
@@ -39,7 +38,6 @@
                 .getGroupMessagesByMessageIndex(
                     chatId,
                     pinned,
-                    $serverChatSummariesStore[chatId]?.latestEventIndex
                 )
                 .then((resp) => {
                     if (resp === "events_failed") {

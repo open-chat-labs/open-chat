@@ -61,8 +61,8 @@
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = client.canSendMessages(chat, $userStore);
-    $: preview = client.isPreviewing(chat);
+    $: canSend = client.canSendMessages(chatId);
+    $: preview = client.isPreviewing(chatId);
     $: {
         if (chatId !== previousChatId) {
             previousChatId = chatId;
@@ -87,7 +87,7 @@
     });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
-        if (client.isPreviewing(chat)) return 0;
+        if (client.isPreviewing(chat.chatId)) return 0;
 
         return messagesRead.unreadMessageCount(chat.chatId, chat.latestMessage?.event.messageIndex);
     }
@@ -101,7 +101,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat)) return;
+        if (!client.canCreatePolls(chatId)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -143,7 +143,7 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chat,
+                    chatId,
                     text,
                     $currentChatFileToAttach,
                     $currentChatEditingEvent
@@ -164,7 +164,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         client.sendMessageWithAttachment(
-            chat,
+            chat.chatId,
             events,
             textContent,
             mentioned,
@@ -181,7 +181,7 @@
     function forwardMessage(msg: Message) {
         if (!canSend || !client.canForward(msg.content)) return;
 
-        client.forwardMessage(chat, events, msg);
+        client.forwardMessage(chat.chatId, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -252,13 +252,13 @@
         {chat}
         {events}
         {filteredProposals}
-        canPin={client.canPinMessages(chat)}
-        canBlockUser={client.canBlockUsers(chat)}
-        canDelete={client.canDeleteOtherUsersMessages(chat)}
-        canReplyInThread={client.canReplyInThread(chat)}
+        canPin={client.canPinMessages(chatId)}
+        canBlockUser={client.canBlockUsers(chatId)}
+        canDelete={client.canDeleteOtherUsersMessages(chatId)}
+        canReplyInThread={client.canReplyInThread(chatId)}
         {canSend}
-        canReact={client.canReactToMessages(chat)}
-        canInvite={client.canInviteUsers(chat)}
+        canReact={client.canReactToMessages(chatId)}
+        canInvite={client.canInviteUsers(chatId)}
         {preview}
         {firstUnreadMention}
         footer={showFooter}

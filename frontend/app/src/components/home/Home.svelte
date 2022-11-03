@@ -205,7 +205,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
-        client.setSelectedChat(chat, messageIndex);
+        client.setSelectedChat(chat.chatId, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -777,7 +777,7 @@
         selectedChatId: string | undefined
     ): ChatSummary[] {
         return chats.filter(
-            (c) => selectedChatId !== c.chatId && client.canSendMessages(c, $userStore)
+            (c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId)
         );
     }
 

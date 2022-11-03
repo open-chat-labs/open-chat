@@ -188,7 +188,7 @@
 
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
-    $: preview = client.isPreviewing(chatSummary);
+    $: preview = client.isPreviewing(chatSummary.chatId);
     $: canDelete =
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
@@ -233,7 +233,7 @@
                 {/if}
             </div>
         </div>
-        <!-- this date formatting is OK for now but we might want to use something like this: 
+        <!-- this date formatting is OK for now but we might want to use something like this:
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
         <div class:rtl={$rtlStore} class="chat-date">
             {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}

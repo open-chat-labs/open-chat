@@ -182,7 +182,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
         case "chatEvents":
             agent
                 .chatEvents(
-                    payload.chat,
+                    payload.chatType,
+                    payload.chatId,
                     payload.eventIndexRange,
                     payload.startIndex,
                     payload.ascending,
@@ -331,7 +332,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             agent
                 .rehydrateMessage(
                     payload.chatType,
-                    payload.currentChatId,
+                    payload.chatId,
                     payload.message,
                     payload.threadRootMessageIndex,
                     payload.latestClientEventIndex
@@ -701,7 +702,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
         case "sendMessage":
             agent
                 .sendMessage(
-                    payload.chat,
+                    payload.chatType,
+                    payload.chatId,
                     payload.user,
                     payload.mentioned,
                     payload.msg,
@@ -717,7 +719,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
         case "editMessage":
             agent
-                .editMessage(payload.chat, payload.msg, payload.threadRootMessageIndex)
+                .editMessage(payload.chatType, payload.chatId, payload.msg, payload.threadRootMessageIndex)
                 .then((response) =>
                     sendResponse(correlationId, {
                         response,

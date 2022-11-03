@@ -85,7 +85,7 @@
             searching = true;
             const lowercase = searchTerm.toLowerCase();
             try {
-                let response = await client.searchChat(chat, lowercase, 50);
+                let response = await client.searchChat(chat.chatId, lowercase, 50);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {

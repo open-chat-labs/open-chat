@@ -42,8 +42,8 @@
     $: userStore = client.userStore;
     $: canSend =
         mode === "thread"
-            ? client.canReplyInThread(chat)
-            : client.canSendMessages(chat, $userStore);
+            ? client.canReplyInThread(chat.chatId)
+            : client.canSendMessages(chat.chatId);
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {

@@ -11,7 +11,6 @@ import {
     FromWorker,
     StorageUpdated,
     UsersLoaded,
-    ChatSummary,
     IndexRange,
     EventsResponse,
     ChatEvent,
@@ -293,7 +292,8 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     chatEvents(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
@@ -304,7 +304,8 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "chatEvents",
             payload: {
-                chat,
+                chatType,
+                chatId,
                 eventIndexRange,
                 startIndex,
                 ascending,
@@ -437,7 +438,7 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     rehydrateMessage(
-        chatType: "direct" | "group",
+        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -791,7 +792,8 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     sendMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         user: CreatedUser,
         mentioned: User[],
         msg: Message,
@@ -800,7 +802,8 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "sendMessage",
             payload: {
-                chat,
+                chatType,
+                chatId,
                 user,
                 mentioned,
                 msg,
@@ -810,14 +813,16 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     editMessage(
-        chat: ChatSummary,
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
         msg: Message,
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse> {
         return this.sendRequest({
             kind: "editMessage",
             payload: {
-                chat,
+                chatType,
+                chatId,
                 msg,
                 threadRootMessageIndex,
             },

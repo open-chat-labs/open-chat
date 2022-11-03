@@ -181,7 +181,7 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     return chat.minVisibleMessageIndex;
 }
 
-export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
+export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
     if (chat.kind === "group_chat") return true;
     return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
 }
@@ -722,16 +722,16 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
     return votes;
 }
 
-export function canChangePermissions(group: GroupChatSummary): boolean {
-    return isPermitted(group.myRole, group.permissions.changePermissions);
+export function canChangePermissions(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && isPermitted(chat.myRole, chat.permissions.changePermissions);
 }
 
 export function canChangeRoles(
-    group: GroupChatSummary,
+    chat: ChatSummary,
     currRole: MemberRole,
     newRole: MemberRole
 ): boolean {
-    if (currRole === newRole) {
+    if (chat.kind !== "group_chat" || currRole === newRole) {
         return false;
     }
 
@@ -739,9 +739,9 @@ export function canChangeRoles(
         case "super_admin":
             return false;
         case "owner":
-            return hasOwnerRights(group.myRole);
+            return hasOwnerRights(chat.myRole);
         default:
-            return isPermitted(group.myRole, group.permissions.changeRoles);
+            return isPermitted(chat.myRole, chat.permissions.changeRoles);
     }
 }
 

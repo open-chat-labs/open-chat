@@ -128,9 +128,9 @@
     );
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: dirty = infoDirty || rulesDirty || permissionsDirty;
-    $: canEdit = client.canEditGroupDetails(originalGroup);
-    $: canEditPermissions = client.canChangePermissions(originalGroup);
-    $: canInvite = client.canInviteUsers(originalGroup);
+    $: canEdit = client.canEditGroupDetails(originalGroup.chatId);
+    $: canEditPermissions = client.canChangePermissions(originalGroup.chatId);
+    $: canInvite = client.canInviteUsers(originalGroup.chatId);
     $: avatarSrc = client.groupAvatarUrl(updatedGroup.avatar);
 
     function openUserProfile() {
@@ -478,7 +478,7 @@
             headerText={$_("stats.groupStats")}>
             <Stats stats={originalGroup.metrics} />
         </CollapsibleCard>
-        {#if client.canDeleteGroup(originalGroup)}
+        {#if client.canDeleteGroup(originalGroup.chatId)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
@@ -487,7 +487,7 @@
                     on:deleteGroup
                     on:makeGroupPrivate
                     group={originalGroup}
-                    canMakeGroupPrivate={client.canMakeGroupPrivate(originalGroup)} />
+                    canMakeGroupPrivate={client.canMakeGroupPrivate(originalGroup.chatId)} />
             </CollapsibleCard>
         {/if}
     </div>

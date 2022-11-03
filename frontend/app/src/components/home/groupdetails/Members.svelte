@@ -112,13 +112,13 @@
     <Member
         me={false}
         member={item}
-        canTransferOwnership={client.canChangeRoles(chat, item.role, "owner")}
-        canMakeAdmin={client.canChangeRoles(chat, item.role, "admin")}
+        canTransferOwnership={client.canChangeRoles(chat.chatId, item.role, "owner")}
+        canMakeAdmin={client.canChangeRoles(chat.chatId, item.role, "admin")}
         canDismissAdmin={item.role === "admin" &&
-            client.canChangeRoles(chat, "admin", "participant")}
-        canBlockUser={client.canBlockUsers(chat)}
-        canUnblockUser={client.canUnblockUsers(chat)}
-        canRemoveMember={client.canRemoveMembers(chat)}
+            client.canChangeRoles(chat.chatId, "admin", "participant")}
+        canBlockUser={client.canBlockUsers(chat.chatId)}
+        canUnblockUser={client.canUnblockUsers(chat.chatId)}
+        canRemoveMember={client.canRemoveMembers(chat.chatId)}
         on:blockUser
         on:unblockUser
         on:chatWith
