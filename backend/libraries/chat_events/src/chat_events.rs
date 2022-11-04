@@ -656,8 +656,27 @@ impl AllChatEvents {
         }
     }
 
-    pub fn mark_frozen(&mut self, frozen: bool) {
-        self.frozen = frozen;
+    pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) {
+        self.push_event(
+            None,
+            ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
+                frozen_by: user_id,
+                reason,
+            })),
+            now,
+            0,
+        );
+        self.frozen = true;
+    }
+
+    pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) {
+        self.frozen = false;
+        self.push_event(
+            None,
+            ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
+            now,
+            0,
+        );
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
@@ -1378,6 +1397,8 @@ impl ChatEvents {
             ChatEventInternal::ProposalsUpdated(p) => ChatEvent::ProposalsUpdated(self.hydrate_proposals_updated(p)),
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
+            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
+            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
         };
 
         EventWrapper {

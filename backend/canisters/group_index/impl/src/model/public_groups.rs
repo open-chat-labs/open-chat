@@ -285,8 +285,8 @@ impl PublicGroupInfo {
         self.frozen.is_some()
     }
 
-    pub fn mark_frozen(&mut self, info: FrozenGroupInfo) {
-        self.frozen = Some(info);
+    pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
+        self.frozen = info;
     }
 }
 

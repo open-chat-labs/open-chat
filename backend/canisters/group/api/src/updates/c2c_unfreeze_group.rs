@@ -1,18 +1,14 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub chat_id: ChatId,
-    pub reason: Option<String>,
+    pub caller: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ChatAlreadyFrozen,
-    ChatNotFound,
-    NotAuthorized,
-    InternalError(String),
+    AlreadyFrozen,
 }

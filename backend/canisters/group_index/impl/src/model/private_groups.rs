@@ -137,7 +137,11 @@ impl PrivateGroupInfo {
         self.upgrade_in_progress = upgrade_in_progress;
     }
 
-    pub fn mark_frozen(&mut self, info: FrozenGroupInfo) {
-        self.frozen = Some(info);
+    pub fn frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
+    pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
+        self.frozen = info;
     }
 }

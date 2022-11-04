@@ -17,6 +17,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     if runtime_state.data.frozen.is_none() {
         let now = runtime_state.env.now();
 
+        runtime_state.data.events.freeze(args.caller, args.reason.clone(), now);
         runtime_state.data.frozen = Timestamped::new(
             Some(FrozenGroupInfo {
                 timestamp: now,
@@ -25,7 +26,6 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             }),
             now,
         );
-        runtime_state.data.events.mark_frozen(true);
 
         Success
     } else {

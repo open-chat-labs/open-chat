@@ -4,12 +4,12 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged, MessageContentInternal, MessageId,
-    MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin,
-    ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded,
-    ParticipantsRemoved, PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated,
+    GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
+    MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
+    ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
+    ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
+    Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -46,6 +46,8 @@ pub enum ChatEventInternal {
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
     ThreadUpdated(Box<ThreadUpdatedInternal>),
     ProposalsUpdated(Box<ProposalsUpdatedInternal>),
+    ChatFrozen(Box<ChatFrozen>),
+    ChatUnfrozen(Box<ChatUnfrozen>),
 }
 
 impl ChatEventInternal {
@@ -99,6 +101,8 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupInviteCodeChanged(_)
                 | ChatEventInternal::ThreadUpdated(_)
                 | ChatEventInternal::ProposalsUpdated(_)
+                | ChatEventInternal::ChatFrozen(_)
+                | ChatEventInternal::ChatUnfrozen(_)
         )
     }
 
@@ -200,6 +204,8 @@ impl ChatEventInternal {
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
+            ChatEventInternal::ChatFrozen(f) => Some(f.frozen_by),
+            ChatEventInternal::ChatUnfrozen(u) => Some(u.unfrozen_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)

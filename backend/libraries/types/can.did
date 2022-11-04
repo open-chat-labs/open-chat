@@ -230,6 +230,8 @@ type ChatEvent =
         ThreadUpdated: ThreadUpdated;
         ProposalsUpdated: ProposalsUpdated;
         GroupRulesChanged: GroupRulesChanged;
+        ChatFrozen: ChatFrozen;
+        ChatUnfrozen: ChatUnfrozen;
     };
 
 type ChatEventWrapper =
@@ -1056,4 +1058,15 @@ type GroupRulesChanged =
         enabled: bool;
         prev_enabled: bool;
         changed_by: UserId;
+    };
+
+type ChatFrozen =
+    record {
+        frozen_by: UserId;
+        reason: opt text;
+    };
+
+type ChatUnfrozen =
+    record {
+        unfrozen_by: UserId;
     };
