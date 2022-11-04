@@ -691,7 +691,7 @@ impl AllChatEvents {
         if self.frozen {
             // We should never hit this because if the chat is frozen it should be handled earlier,
             // this is just here as a safety net.
-            panic!("This chat has been frozen");
+            panic!("This chat is frozen");
         }
 
         self.add_to_metrics(&event, now);

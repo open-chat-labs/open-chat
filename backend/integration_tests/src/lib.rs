@@ -5,6 +5,7 @@ use candid::Principal;
 use types::{CanisterId, UserId};
 
 mod client;
+mod freeze_group_tests;
 mod initial_state_and_updates_tests;
 mod poll_tests;
 mod register_user_tests;

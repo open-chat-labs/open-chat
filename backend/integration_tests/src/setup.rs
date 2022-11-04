@@ -10,29 +10,41 @@ use types::{CanisterId, Version};
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 lazy_static! {
-    static ref ENV: Mutex<Vec<(StateMachine, CanisterIds)>> = Mutex::default();
+    static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
 }
 
-pub fn setup_env() -> (StateMachine, CanisterIds) {
-    if let Some((env, canister_ids)) = try_take_existing_env() {
-        return (env, canister_ids);
+pub struct TestEnv {
+    pub env: StateMachine,
+    pub canister_ids: CanisterIds,
+    pub controller: Principal,
+}
+
+pub fn setup_env() -> TestEnv {
+    if let Some(env) = try_take_existing_env() {
+        return env;
     }
     setup_fresh_env()
 }
 
-pub fn setup_fresh_env() -> (StateMachine, CanisterIds) {
+pub fn setup_fresh_env() -> TestEnv {
     let mut env = StateMachine::new();
-    let canister_ids = install_canisters(&mut env, random_principal());
-    (env, canister_ids)
-}
+    let controller = random_principal();
+    let canister_ids = install_canisters(&mut env, controller);
 
-pub fn return_env(env: StateMachine, canister_ids: CanisterIds) {
-    if let Ok(mut e) = ENV.try_lock() {
-        e.push((env, canister_ids));
+    TestEnv {
+        env,
+        canister_ids,
+        controller,
     }
 }
 
-fn try_take_existing_env() -> Option<(StateMachine, CanisterIds)> {
+pub fn return_env(env: TestEnv) {
+    if let Ok(mut e) = ENV.try_lock() {
+        e.push(env);
+    }
+}
+
+fn try_take_existing_env() -> Option<TestEnv> {
     ENV.try_lock().ok().map(|mut e| e.pop()).flatten()
 }
 

@@ -254,7 +254,7 @@ impl UserMap {
             .principal_to_user_id
             .get(user_id_or_principal)
             .copied()
-            .unwrap_or(UserId::from(*user_id_or_principal));
+            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
 
         self.users.get(&user_id)
     }
