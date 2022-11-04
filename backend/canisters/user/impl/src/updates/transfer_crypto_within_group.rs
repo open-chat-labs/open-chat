@@ -12,7 +12,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
     if let Err(response) = read_state(|state| validate_request(&args, state)) {
-        return response;
+        return *response;
     }
 
     let pending_transaction = match &args.content.transfer {
@@ -64,17 +64,19 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
     }
 }
 
-fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
+fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Box<Response>> {
     if runtime_state.data.blocked_users.contains(&args.recipient) {
-        Err(RecipientBlocked)
+        Err(Box::new(RecipientBlocked))
     } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
-        Err(CallerNotInGroup(None))
+        Err(Box::new(CallerNotInGroup(None)))
     } else if args.content.transfer.is_zero() {
-        Err(TransferCannotBeZero)
+        Err(Box::new(TransferCannotBeZero))
     } else if args.content.transfer.exceeds_transfer_limit() {
-        Err(TransferLimitExceeded(args.content.transfer.token().transfer_limit()))
+        Err(Box::new(TransferLimitExceeded(
+            args.content.transfer.token().transfer_limit(),
+        )))
     } else if args.content.caption.as_ref().map_or(0, |c| c.len()) > MAX_TEXT_LENGTH_USIZE {
-        Err(TextTooLong(MAX_TEXT_LENGTH))
+        Err(Box::new(TextTooLong(MAX_TEXT_LENGTH)))
     } else {
         Ok(())
     }

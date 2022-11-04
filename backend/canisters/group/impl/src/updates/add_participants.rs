@@ -15,7 +15,7 @@ async fn add_participants(args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
 
     let mut users_added = Vec::new();
@@ -98,21 +98,21 @@ struct PrepareResult {
     users_not_authorized_to_add: Vec<UserId>,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
     if runtime_state.data.is_frozen() {
-        return Err(ChatFrozen);
+        return Err(Box::new(ChatFrozen));
     }
 
     let caller = runtime_state.env.caller();
     if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
-        Err(ParticipantLimitReached(limit))
+        Err(Box::new(ParticipantLimitReached(limit)))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let permissions = &runtime_state.data.permissions;
         let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
         let can_unblock_users = args.allow_blocked_users && participant.role.can_block_users(permissions);
 
         if !can_add_participants && !can_unblock_users {
-            return Err(NotAuthorized);
+            return Err(Box::new(NotAuthorized));
         }
 
         let mut users_to_add = Vec::new();
@@ -136,7 +136,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         }
 
         if users_not_authorized_to_add.len() == args.user_ids.len() {
-            return Err(NotAuthorized);
+            return Err(Box::new(NotAuthorized));
         }
 
         Ok(PrepareResult {
@@ -148,7 +148,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             users_not_authorized_to_add,
         })
     } else {
-        Err(CallerNotInGroup)
+        Err(Box::new(CallerNotInGroup))
     }
 }
 
