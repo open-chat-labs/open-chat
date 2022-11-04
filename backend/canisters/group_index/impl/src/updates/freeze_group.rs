@@ -120,10 +120,12 @@ enum ValidateResult {
 }
 
 async fn get_and_validate_user(caller: Principal, user_index_canister_id: CanisterId) -> Result<UserId, ValidateResult> {
-    let args = user_index_canister::c2c_lookup_user_id_v2::Args { user_principal: caller };
+    let args = user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: caller,
+    };
 
-    match user_index_canister_c2c_client::c2c_lookup_user_id_v2(user_index_canister_id, &args).await {
-        Ok(user_index_canister::c2c_lookup_user_id_v2::Response::Success(r)) => {
+    match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &args).await {
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => {
             if r.is_super_admin {
                 Ok(r.user_id)
             } else {
