@@ -733,6 +733,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
     subtype?: GroupSubtypeUpdate;
+    frozen?: OptionUpdate<boolean>;
 };
 
 export type GroupSubtypeUpdate =
@@ -877,6 +878,7 @@ export type GroupChatSummary = DataContent &
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
         previewed: boolean;
+        frozen: boolean;
     };
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;
@@ -1357,7 +1359,14 @@ export type SnsFunctionType =
 
 export type FreezeGroupResponse =
     | "success"
-    | "already_frozen"
+    | "chat_already_frozen"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error"
+
+export type UnfreezeGroupResponse =
+    | "success"
+    | "chat_not_frozen"
     | "chat_not_found"
     | "not_authorized"
     | "internal_error"

@@ -763,6 +763,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
             subtype: updatedSubtype(candid.Group.subtype),
             archived: optional(candid.Group.archived, identity),
+            frozen: optionUpdate(candid.Group.frozen, (_) => true),
         };
     }
     if ("Direct" in candid) {
@@ -892,6 +893,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         subtype: optional(candid.subtype, apiGroupSubtype),
         archived: candid.archived,
         previewed: false,
+        frozen: candid.frozen.length > 0,
     };
 }
 
