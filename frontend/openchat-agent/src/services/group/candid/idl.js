@@ -463,6 +463,10 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const ChatFrozen = IDL.Record({
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   const PollEnded = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -485,6 +489,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'unblocked_by' : UserId,
   });
+  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -540,10 +545,12 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'ChatFrozen' : ChatFrozen,
     'PollEnded' : PollEnded,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'ThreadUpdated' : ThreadUpdated,
     'UsersUnblocked' : UsersUnblocked,
+    'ChatUnfrozen' : ChatUnfrozen,
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,

@@ -691,7 +691,7 @@
     }
 
     function freezeGroup(ev: CustomEvent<string>) {
-        client.freezeGroup(ev.detail);
+        client.freezeGroup(ev.detail, undefined);
     }
 
     function whatsHot(navigate: boolean = true) {

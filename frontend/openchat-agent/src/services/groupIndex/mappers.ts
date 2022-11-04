@@ -17,7 +17,7 @@ export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroup
     if ("Success" in candid) {
         return "success";
     }
-    if ("AlreadyFrozen" in candid) {
+    if ("ChatAlreadyFrozen" in candid) {
         return "already_frozen";
     }
     if ("ChatNotFound" in candid) {

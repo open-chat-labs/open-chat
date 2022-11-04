@@ -6,6 +6,8 @@ import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
 import { freezeGroupResponse, groupSearchResponse } from "./mappers";
+import { apiOptional } from "../common/chatMappers";
+import { identity } from "../../utils/mapping";
 
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
     private groupIndexService: GroupIndexService;
@@ -36,9 +38,9 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         );
     }
 
-    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
         return this.handleResponse(
-            this.groupIndexService.freeze_group({ chat_id: Principal.fromText(chatId) }),
+            this.groupIndexService.freeze_group({ chat_id: Principal.fromText(chatId), reason: apiOptional(identity, reason) }),
             freezeGroupResponse)
     }
 }

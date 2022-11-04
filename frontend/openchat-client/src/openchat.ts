@@ -2602,8 +2602,8 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
-        return this.api.freezeGroup(chatId);
+    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
+        return this.api.freezeGroup(chatId, reason);
     }
 
     private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {

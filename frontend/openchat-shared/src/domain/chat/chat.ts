@@ -435,7 +435,9 @@ export type GroupChatEvent =
     | GroupInviteCodeChanged
     | DirectChatCreated
     | ThreadUpdated
-    | ProposalsUpdated;
+    | ProposalsUpdated
+    | ChatFrozenEvent
+    | ChatUnfrozenEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -1114,6 +1116,17 @@ export type NotAuthorised = {
 
 export type ChatFrozen = {
     kind: "chat_frozen";
+}
+
+export type ChatFrozenEvent = {
+    kind: "chat_frozen";
+    frozen_by: string;
+    reason: string | undefined;
+}
+
+export type ChatUnfrozenEvent = {
+    kind: "chat_unfrozen";
+    unfrozen_by: string;
 }
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";

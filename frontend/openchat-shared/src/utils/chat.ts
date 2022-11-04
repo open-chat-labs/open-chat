@@ -88,6 +88,8 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "thread_updated":
             case "proposals_updated":
             case "aggregate_members_joined_left":
+            case "chat_frozen":
+            case "chat_unfrozen":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);

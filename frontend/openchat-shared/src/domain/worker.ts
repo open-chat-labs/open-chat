@@ -707,6 +707,7 @@ type MarkAsOnline = Request & {
 
 type FreezeGroup = Request<{
     chatId: string;
+    reason: string | undefined;
 }> & {
     kind: "freezeGroup";
 };

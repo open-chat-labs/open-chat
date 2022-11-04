@@ -1309,7 +1309,7 @@ export class OpenChatAgent extends EventTarget {
         return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
     }
 
-    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
-        return this._groupIndexClient.freezeGroup(chatId);
+    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
+        return this._groupIndexClient.freezeGroup(chatId, reason);
     }
 }

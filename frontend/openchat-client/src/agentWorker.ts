@@ -1188,11 +1188,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    freezeGroup(chatId: string): Promise<FreezeGroupResponse> {
+    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
         return this.sendRequest({
             kind: "freezeGroup",
             payload: {
-                chatId
+                chatId,
+                reason,
             }
         });
     }

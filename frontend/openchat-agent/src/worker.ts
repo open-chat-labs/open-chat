@@ -1113,7 +1113,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
         case "freezeGroup":
             agent
-                .freezeGroup(payload.chatId)
+                .freezeGroup(payload.chatId, payload.reason)
                 .then(response =>
                     sendResponse(correlationId, {
                         response,

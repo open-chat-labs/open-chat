@@ -1104,6 +1104,21 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("ChatFrozen" in candid) {
+        return {
+            kind: "chat_frozen",
+            frozen_by: candid.ChatFrozen.frozen_by.toString(),
+            reason: optional(candid.ChatFrozen.reason, identity)
+        };
+    }
+
+    if ("ChatUnfrozen" in candid) {
+        return {
+            kind: "chat_unfrozen",
+            unfrozen_by: candid.ChatUnfrozen.unfrozen_by.toString(),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
