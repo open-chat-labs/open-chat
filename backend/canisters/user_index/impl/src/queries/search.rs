@@ -55,8 +55,8 @@ fn order_usernames(search_term: &str, u1: &str, u1_starts_ci: bool, u2: &str, u2
             Ordering::Equal => {
                 if u1_starts_ci {
                     // Now prioritise case sensitive prefix match
-                    let u1_starts = u1.starts_with(&search_term);
-                    let u2_starts = u2.starts_with(&search_term);
+                    let u1_starts = u1.starts_with(search_term);
+                    let u2_starts = u2.starts_with(search_term);
                     if u1_starts != u2_starts {
                         if u1_starts {
                             return Ordering::Less;
@@ -66,8 +66,8 @@ fn order_usernames(search_term: &str, u1: &str, u1_starts_ci: bool, u2: &str, u2
                     }
                 } else {
                     // Now prioritise case sensitive contains match
-                    let u1_contains = u1.contains(&search_term);
-                    let u2_contains = u2.contains(&search_term);
+                    let u1_contains = u1.contains(search_term);
+                    let u2_contains = u2.contains(search_term);
                     if u1_contains != u2_contains {
                         if u1_contains {
                             return Ordering::Less;

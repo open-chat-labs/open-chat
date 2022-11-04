@@ -192,7 +192,7 @@ fn process_events(
                 if ownership.new_owner == caller || ownership.old_owner == caller {
                     updates.role_changed = true;
                 }
-                if updates.owner_id == None {
+                if updates.owner_id.is_none() {
                     updates.owner_id = Some(ownership.new_owner);
                 }
             }
