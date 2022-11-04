@@ -191,7 +191,7 @@ mod push_proposals {
         let mut hash = Sha256::new();
         hash.update(b"proposals_bot");
         hash.update(governance_canister_id.as_slice());
-        hash.update(&proposal_id.to_ne_bytes());
+        hash.update(proposal_id.to_ne_bytes());
         let array32: [u8; 32] = hash.finalize().try_into().unwrap();
         let array16: [u8; 16] = array32[..16].try_into().unwrap();
         u128::from_ne_bytes(array16).into()
