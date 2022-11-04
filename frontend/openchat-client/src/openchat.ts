@@ -41,6 +41,7 @@ import {
     metricsEqual,
     newMessageId,
     sameUser,
+    isFrozen,
     isPreviewing,
     buildTransactionLink,
     buildCryptoTransferText,
@@ -276,6 +277,7 @@ import {
     UsersLoaded,
     type Logger,
     type FreezeGroupResponse,
+    type UnfreezeGroupResponse,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -983,6 +985,10 @@ export class OpenChat extends EventTarget {
 
     isPreviewing(chatId: string): boolean {
         return this.chatPredicate(chatId, isPreviewing);
+    }
+
+    isFrozen(chatId: string): boolean {
+        return this.chatPredicate(chatId, isFrozen);
     }
 
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
@@ -2604,6 +2610,10 @@ export class OpenChat extends EventTarget {
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
         return this.api.freezeGroup(chatId, reason);
+    }
+
+    unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
+        return this.api.unfreezeGroup(chatId);
     }
 
     private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {

@@ -79,6 +79,7 @@
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: isSuperAdmin = client.isSuperAdmin();
+    $: isFrozen = client.isFrozen(chat.chatId);
 
     $: {
         if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -430,6 +431,10 @@
     function freezeGroup() {
         dispatch("freezeGroup", chat.chatId);
     }
+
+    function unfreezeGroup() {
+        dispatch("unfreezeGroup", chat.chatId);
+    }
 </script>
 
 {#if showMentionPicker}
@@ -461,9 +466,15 @@
     {:else if preview}
         <div class="preview">
             {#if isSuperAdmin}
-                <Button secondary={true} small={true} on:click={freezeGroup}>
-                    {$_("freezeGroup")}
-                </Button>
+                {#if isFrozen}
+                    <Button secondary={true} small={true} on:click={unfreezeGroup}>
+                        {$_("unfreezeGroup")}
+                    </Button>
+                {:else}
+                    <Button secondary={true} small={true} on:click={freezeGroup}>
+                        {$_("freezeGroup")}
+                    </Button>
+                {/if}
             {/if}
             <Button secondary={true} small={true} on:click={cancelPreview}>
                 {$_("leave")}

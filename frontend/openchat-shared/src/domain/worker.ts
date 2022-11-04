@@ -44,6 +44,7 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
     UnblockUserResponse,
+    UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateArgs,
     UpdateGroupResponse,
@@ -177,6 +178,7 @@ export type WorkerRequest =
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
+    | UnfreezeGroup
     | GetInitialState;
 
 type SetCachedMessageFromNotification = Request<{
@@ -712,6 +714,12 @@ type FreezeGroup = Request<{
     kind: "freezeGroup";
 };
 
+type UnfreezeGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "unfreezeGroup";
+};
+
 type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
     kind: "getUsers";
 };
@@ -833,6 +841,7 @@ export type WorkerResponse =
     | Response<MergedUpdatesResponse>
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
+    | Response<UnfreezeGroupResponse>
     | Response<undefined>;
 
 type Response<T> = {

@@ -29,6 +29,6 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
         Success
     } else {
-        AlreadyFrozen
+        ChatAlreadyFrozen
     }
 }

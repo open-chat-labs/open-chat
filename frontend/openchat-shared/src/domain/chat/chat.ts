@@ -1122,13 +1122,13 @@ export type ChatFrozen = {
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
-    frozen_by: string;
+    frozenBy: string;
     reason: string | undefined;
 }
 
 export type ChatUnfrozenEvent = {
     kind: "chat_unfrozen";
-    unfrozen_by: string;
+    unfrozenBy: string;
 }
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";

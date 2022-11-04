@@ -141,6 +141,7 @@ impl RuntimeState {
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
             last_active: chat_metrics.last_active,
+            frozen: self.data.is_frozen(),
         }
     }
 }
@@ -279,6 +280,7 @@ pub struct Metrics {
     pub edits: u64,
     pub reactions: u64,
     pub last_active: TimestampMillis,
+    pub frozen: bool,
 }
 
 fn run_regular_jobs() {

@@ -57,7 +57,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         subtype: optional(candid.subtype, apiGroupSubtype),
         archived: false,
         previewed: true,
-        frozen: false,
+        frozen: candid.frozen.length > 0,
     };
 }
 

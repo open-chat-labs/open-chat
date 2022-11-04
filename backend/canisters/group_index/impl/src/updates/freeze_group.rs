@@ -42,7 +42,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
             });
             Success
         }
-        Ok(group_canister::c2c_freeze_group::Response::AlreadyFrozen) => ChatAlreadyFrozen,
+        Ok(group_canister::c2c_freeze_group::Response::ChatAlreadyFrozen) => ChatAlreadyFrozen,
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
@@ -74,7 +74,7 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
             mutate_state(|state| commit(&args.chat_id, None, state));
             Success
         }
-        Ok(group_canister::c2c_unfreeze_group::Response::AlreadyFrozen) => ChatNotFrozen,
+        Ok(group_canister::c2c_unfreeze_group::Response::ChatNotFrozen) => ChatNotFrozen,
         Err(error) => InternalError(format!("{error:?}")),
     }
 }

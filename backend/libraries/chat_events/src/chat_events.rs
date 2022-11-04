@@ -18,6 +18,7 @@ pub struct AllChatEvents {
     threads: HashMap<MessageIndex, ChatEvents>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
+    #[serde(default)]
     frozen: bool,
 }
 
@@ -663,8 +664,8 @@ impl AllChatEvents {
                 frozen_by: user_id,
                 reason,
             })),
-            now,
             0,
+            now,
         );
         self.frozen = true;
     }
@@ -674,8 +675,8 @@ impl AllChatEvents {
         self.push_event(
             None,
             ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
-            now,
             0,
+            now,
         );
     }
 

@@ -68,6 +68,7 @@ const defaultGroupChat: GroupChatSummary = {
     subtype: undefined,
     archived: false,
     previewed: false,
+    frozen: false,
 };
 
 function createUser(userId: string, username: string, seconds: number): PartialUserSummary {

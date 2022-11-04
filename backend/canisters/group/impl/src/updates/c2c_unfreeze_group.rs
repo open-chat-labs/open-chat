@@ -22,6 +22,6 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
 
         Success
     } else {
-        AlreadyFrozen
+        ChatNotFrozen
     }
 }

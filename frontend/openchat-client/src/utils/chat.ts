@@ -55,6 +55,10 @@ export function isPreviewing(chat: ChatSummary): boolean {
     return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
+export function isFrozen(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && chat.frozen;
+}
+
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
@@ -621,6 +625,7 @@ export function groupChatFromCandidate(
         subtype: undefined,
         archived: false,
         previewed: false,
+        frozen: false,
     };
 }
 
@@ -725,7 +730,7 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
 }
 
 export function canChangePermissions(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && isPermitted(chat.myRole, chat.permissions.changePermissions);
+    return chat.kind === "group_chat" && !chat.frozen && isPermitted(chat.myRole, chat.permissions.changePermissions);
 }
 
 export function canChangeRoles(
@@ -733,7 +738,7 @@ export function canChangeRoles(
     currRole: MemberRole,
     newRole: MemberRole
 ): boolean {
-    if (chat.kind !== "group_chat" || currRole === newRole) {
+    if (chat.kind !== "group_chat" || currRole === newRole || chat.frozen) {
         return false;
     }
 
@@ -749,7 +754,7 @@ export function canChangeRoles(
 
 export function canAddMembers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return !chat.public && isPermitted(chat.myRole, chat.permissions.addMembers);
+        return !chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.addMembers);
     } else {
         return false;
     }
@@ -757,7 +762,7 @@ export function canAddMembers(chat: ChatSummary): boolean {
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return !chat.public && isPermitted(chat.myRole, chat.permissions.removeMembers);
+        return !chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.removeMembers);
     } else {
         return false;
     }
@@ -765,7 +770,7 @@ export function canRemoveMembers(chat: ChatSummary): boolean {
 
 export function canBlockUsers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+        return chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.blockUsers);
     } else {
         return true;
     }
@@ -773,14 +778,14 @@ export function canBlockUsers(chat: ChatSummary): boolean {
 
 export function canUnblockUsers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+        return chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.blockUsers);
     } else {
         return true;
     }
 }
 
 export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
         return false;
@@ -788,7 +793,7 @@ export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
 }
 
 export function canEditGroupDetails(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return isPermitted(chat.myRole, chat.permissions.updateGroup);
     } else {
         return false;
@@ -796,7 +801,7 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
 }
 
 export function canPinMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return isPermitted(chat.myRole, chat.permissions.pinMessages);
     } else {
         return false;
@@ -804,7 +809,7 @@ export function canPinMessages(chat: ChatSummary): boolean {
 }
 
 export function canInviteUsers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers);
     } else {
         return false;
@@ -813,7 +818,7 @@ export function canInviteUsers(chat: ChatSummary): boolean {
 
 export function canCreatePolls(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return isPermitted(chat.myRole, chat.permissions.createPolls);
+        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.createPolls);
     } else {
         return true;
     }
@@ -821,7 +826,7 @@ export function canCreatePolls(chat: ChatSummary): boolean {
 
 export function canSendMessages(chat: ChatSummary, userLookup: UserLookup): boolean {
     if (chat.kind === "group_chat") {
-        return isPermitted(chat.myRole, chat.permissions.sendMessages);
+        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.sendMessages);
     } else if (userLookup[chat.them]?.kind === "bot") {
         return false;
     } else {
@@ -831,30 +836,22 @@ export function canSendMessages(chat: ChatSummary, userLookup: UserLookup): bool
 
 export function canReactToMessages(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
-        return isPermitted(chat.myRole, chat.permissions.reactToMessages);
+        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.reactToMessages);
     } else {
         return true;
     }
 }
 
 export function canReplyInThread(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return isPermitted(chat.myRole, chat.permissions.replyInThread);
     } else {
         return false;
     }
 }
 
-export function canBeRemoved(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return !hasOwnerRights(chat.myRole);
-    } else {
-        return false;
-    }
-}
-
 export function canLeaveGroup(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return chat.myRole !== "owner";
     } else {
         return false;
@@ -862,7 +859,7 @@ export function canLeaveGroup(chat: ChatSummary): boolean {
 }
 
 export function canDeleteGroup(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return hasOwnerRights(chat.myRole);
     } else {
         return false;
@@ -870,7 +867,7 @@ export function canDeleteGroup(chat: ChatSummary): boolean {
 }
 
 export function canMakeGroupPrivate(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
+    if (chat.kind === "group_chat" && !chat.frozen) {
         return chat.public && hasOwnerRights(chat.myRole);
     } else {
         return false;

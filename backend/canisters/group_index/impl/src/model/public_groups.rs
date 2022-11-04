@@ -84,6 +84,7 @@ impl PublicGroups {
         let query = Query::parse(search_term);
 
         self.iter()
+            .filter(|g| !g.frozen())
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
@@ -149,7 +150,7 @@ impl PublicGroups {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
-        self.groups.values().filter(|g| !g.frozen())
+        self.groups.values()
     }
 
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
@@ -157,7 +158,7 @@ impl PublicGroups {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
-            .filter(|g| g.has_been_active_since(one_day_ago))
+            .filter(|g| !g.frozen() && g.has_been_active_since(one_day_ago))
             .map(|g| (g, rng.next_u32()))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
             .map(|(g, _)| g.id)
@@ -178,6 +179,7 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
+    #[serde(default)]
     frozen: Option<FrozenGroupInfo>,
 }
 

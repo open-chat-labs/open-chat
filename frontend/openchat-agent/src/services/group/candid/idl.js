@@ -663,6 +663,11 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const FrozenGroupInfo = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'subtype' : IDL.Opt(GroupSubtype),
@@ -672,6 +677,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
