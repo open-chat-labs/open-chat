@@ -19,7 +19,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let users = &runtime_state.data.users;
 
     // Remove spaces since usernames can't have spaces
-    let mut search_term = args.search_term.replace(" ", "");
+    let mut search_term = args.search_term.replace(' ', "");
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
