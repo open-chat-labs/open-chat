@@ -80,6 +80,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
         user_index_canister_id,
         callback_canister_id,
         cycles_dispenser_canister_id,
+        ledger_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
