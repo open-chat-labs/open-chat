@@ -61,8 +61,15 @@
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = client.canSendMessages(chatId);
-    $: preview = client.isPreviewing(chatId);
+    let canSend = client.canSendMessages(chatId);
+    let preview = client.isPreviewing(chatId);
+    let canPin = client.canPinMessages(chatId);
+    let canBlockUser = client.canBlockUsers(chatId);
+    let canDelete = client.canDeleteOtherUsersMessages(chatId);
+    let canReplyInThread = client.canReplyInThread(chatId);
+    let canReact = client.canReactToMessages(chatId);
+    let canInvite = client.canInviteUsers(chatId);
+
     $: {
         if (chatId !== previousChatId) {
             previousChatId = chatId;
@@ -77,6 +84,15 @@
                 }
             });
         }
+
+        canSend = client.canSendMessages(chatId);
+        preview = client.isPreviewing(chatId);
+        canPin = client.canPinMessages(chatId);
+        canBlockUser = client.canBlockUsers(chatId);
+        canDelete = client.canDeleteOtherUsersMessages(chatId);
+        canReplyInThread = client.canReplyInThread(chatId);
+        canReact = client.canReactToMessages(chatId);
+        canInvite = client.canInviteUsers(chatId);
     }
 
     onMount(() => {
@@ -257,13 +273,13 @@
         {chat}
         {events}
         {filteredProposals}
-        canPin={client.canPinMessages(chatId)}
-        canBlockUser={client.canBlockUsers(chatId)}
-        canDelete={client.canDeleteOtherUsersMessages(chatId)}
-        canReplyInThread={client.canReplyInThread(chatId)}
+        {canPin}
+        {canBlockUser}
+        {canDelete}
+        {canReplyInThread}
         {canSend}
-        canReact={client.canReactToMessages(chatId)}
-        canInvite={client.canInviteUsers(chatId)}
+        {canReact}
+        {canInvite}
         {preview}
         {firstUnreadMention}
         footer={showFooter}
