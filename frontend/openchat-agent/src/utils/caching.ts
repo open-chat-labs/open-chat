@@ -126,6 +126,10 @@ function isPreviewing(chat: ChatSummary): boolean {
     return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
+function isUninitialisedDirectChat(chat: ChatSummary): boolean {
+    return chat.kind === "direct_chat" && chat.latestEventIndex < 0;
+}
+
 export async function setCachedChats(
     db: Database,
     principal: Principal,
@@ -139,7 +143,7 @@ export async function setCachedChats(
 
     // irritating hoop jumping to keep typescript happy here
     const chatSummaries = data.chatSummaries
-        .filter((c) => !isPreviewing(c))
+        .filter((c) => !isPreviewing(c) && !isUninitialisedDirectChat(c))
         .map((c) => {
             const latestMessage = c.latestMessage
                 ? makeSerialisable(c.latestMessage, c.chatId)
