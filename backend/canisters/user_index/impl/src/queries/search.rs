@@ -17,7 +17,9 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     let users = &runtime_state.data.users;
-    let mut search_term = args.search_term;
+
+    // Remove spaces since usernames can't have spaces
+    let mut search_term = args.search_term.replace(' ', "");
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
