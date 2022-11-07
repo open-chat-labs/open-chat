@@ -126,7 +126,7 @@ impl RuntimeState {
 
         if matches!(result, AddParticipantResult::Success(_)) {
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
-                if let Ok(amount) = new_joiner_rewards.try_start_user_reward(args.user_id, args.now) {
+                if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
