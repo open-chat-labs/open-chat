@@ -937,7 +937,7 @@ export class OpenChat extends EventTarget {
     }
 
     canSendMessages(chatId: string): boolean {
-        return this.chatPredicate(chatId, (chat) => canSendMessages(chat, this._liveState.userStore));
+        return this.chatPredicate(chatId, (chat) => canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister));
     }
 
     canChangeRoles(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {

@@ -817,14 +817,22 @@ export function canCreatePolls(chat: ChatSummary): boolean {
     }
 }
 
-export function canSendMessages(chat: ChatSummary, userLookup: UserLookup): boolean {
+export function canSendMessages(chat: ChatSummary, userLookup: UserLookup, proposalsBotUserId: string): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.sendMessages);
-    } else if (userLookup[chat.them]?.kind === "bot") {
+    }
+
+    const user = userLookup[chat.them];
+    if (user === undefined) {
         return false;
-    } else {
+    }
+    if (user.kind === "user") {
         return true;
     }
+    if (user.userId === OPENCHAT_BOT_USER_ID || user.userId === proposalsBotUserId) {
+        return false;
+    }
+    return true;
 }
 
 export function canReactToMessages(chat: ChatSummary): boolean {
