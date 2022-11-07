@@ -1,6 +1,6 @@
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -62,15 +62,15 @@ fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut
             min_visible_message_index = runtime_state.data.events.main().next_message_index();
         };
 
-        match runtime_state.data.participants.add(
+        match runtime_state.add_participant(AddParticipantArgs {
             user_id,
             principal,
             now,
             min_visible_event_index,
             min_visible_message_index,
-            args.as_super_admin,
-            runtime_state.data.is_public,
-        ) {
+            as_super_admin: args.as_super_admin,
+            mute_notifications: runtime_state.data.is_public,
+        }) {
             AddResult::Success(participant) => {
                 let event = ParticipantJoined {
                     user_id,

@@ -1,13 +1,11 @@
 use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
-use candid::Principal;
 use ic_ledger_types::Tokens;
 use types::{MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::format::format_to_decimal_places;
 
-// zzyk3-openc-hatbo-tq7my-cai
-pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 const WELCOME_MESSAGES: &[&str] = &[
