@@ -34,7 +34,6 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
-    $: chatId = chat.chatId;
     let previousChatId: string | undefined = undefined;
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
@@ -61,18 +60,18 @@
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    let canSend = client.canSendMessages(chatId);
-    let preview = client.isPreviewing(chatId);
-    let canPin = client.canPinMessages(chatId);
-    let canBlockUser = client.canBlockUsers(chatId);
-    let canDelete = client.canDeleteOtherUsersMessages(chatId);
-    let canReplyInThread = client.canReplyInThread(chatId);
-    let canReact = client.canReactToMessages(chatId);
-    let canInvite = client.canInviteUsers(chatId);
+    $: canSend = client.canSendMessages(chat.chatId);
+    $: preview = client.isPreviewing(chat.chatId);
+    $: canPin = client.canPinMessages(chat.chatId);
+    $: canBlockUser = client.canBlockUsers(chat.chatId);
+    $: canDelete = client.canDeleteOtherUsersMessages(chat.chatId);
+    $: canReplyInThread = client.canReplyInThread(chat.chatId);
+    $: canReact = client.canReactToMessages(chat.chatId);
+    $: canInvite = client.canInviteUsers(chat.chatId);
 
     $: {
-        if (chatId !== previousChatId) {
-            previousChatId = chatId;
+        if (chat.chatId !== previousChatId) {
+            previousChatId = chat.chatId;
             showSearchHeader = false;
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = client.getFirstUnreadMention(chat);
@@ -84,15 +83,6 @@
                 }
             });
         }
-
-        canSend = client.canSendMessages(chatId);
-        preview = client.isPreviewing(chatId);
-        canPin = client.canPinMessages(chatId);
-        canBlockUser = client.canBlockUsers(chatId);
-        canDelete = client.canDeleteOtherUsersMessages(chatId);
-        canReplyInThread = client.canReplyInThread(chatId);
-        canReact = client.canReactToMessages(chatId);
-        canInvite = client.canInviteUsers(chatId);
     }
 
     onMount(() => {
@@ -109,7 +99,7 @@
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chatId);
+        closeNotificationsForChat(chat.chatId);
     }
 
     function onMarkAllRead() {
@@ -117,7 +107,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chatId)) return;
+        if (!client.canCreatePolls(chat.chatId)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -159,7 +149,7 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chatId,
+                    chat.chatId,
                     text,
                     $currentChatFileToAttach,
                     $currentChatEditingEvent
