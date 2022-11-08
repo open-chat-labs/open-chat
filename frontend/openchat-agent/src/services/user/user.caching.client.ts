@@ -252,6 +252,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
             .filter(
                 ({ chatId, latestEventIndex }) =>
                     chatId !== selectedChatId &&
+                    latestEventIndex >= 0 &&
                     (cachedChats[chatId] === undefined ||
                         latestEventIndex > cachedChats[chatId].latestEventIndex)
             )
