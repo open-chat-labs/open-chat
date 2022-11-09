@@ -36,8 +36,8 @@ fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
     } else {
         (
-            "If you 
-send me the right code there is ICP waiting for you. To claim your reward please send me a text message containing only your reward code (eg. '42R488IT') 🌈",
+            "If you send me the right code there is ICP waiting for you. To claim your reward \
+            please send me a text message containing only your reward code (eg. '42R488IT') 🌈",
             None,
         )
     };
