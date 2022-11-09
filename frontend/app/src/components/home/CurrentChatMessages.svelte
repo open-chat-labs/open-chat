@@ -765,7 +765,7 @@
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
             <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
-        {:else if chat.them === client.OPENCHAT_BOT_USER_ID}
+        {:else if client.isOpenChatBot(chat.them)}
             <Robot />
         {:else}
             <div class="big-avatar">
