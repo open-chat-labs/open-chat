@@ -6,7 +6,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
+use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::memory;
 
@@ -57,6 +57,7 @@ struct Data {
     pub admins: HashSet<Principal>,
     pub reward_codes: RewardCodes,
     pub pending_actions: PendingActions,
+    pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
 }
 
@@ -74,6 +75,7 @@ impl Data {
             admins,
             reward_codes: RewardCodes::new(this_canister_id),
             pending_actions: PendingActions::default(),
+            avatar: Timestamped::default(),
             test_mode,
         }
     }

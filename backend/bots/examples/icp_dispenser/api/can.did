@@ -21,6 +21,30 @@ type RegisterBotResponse =
         InternalError: text;
     };
 
+type Avatar =
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
+type SetAvatarArgs =
+    record {
+        avatar: opt Avatar;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        AvatarTooBig: FieldTooLongResult;
+    };
+
 type AddRewardCodesArgs =
     record {
         reward_amount: Tokens;
@@ -51,5 +75,6 @@ type Version =
 
 service: (InitArgs) -> {
     register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     add_reward_codes: (AddRewardCodesArgs) -> (AddRewardCodesResponse);
 }
