@@ -187,7 +187,7 @@
             onMessageWindowLoaded(ev.detail);
         }
         if (ev instanceof ChatUpdated) {
-            chatUpdated();
+            loadMoreIfRequired();
         }
         if (ev instanceof SentMessage) {
             afterSendMessage(ev.detail);
@@ -496,12 +496,6 @@
             return keys;
         });
         return firstKey;
-    }
-
-    function chatUpdated(): void {
-        if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            client.loadNewMessages(chat.chatId);
-        }
     }
 
     $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
