@@ -19,17 +19,25 @@ fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let (text, action) = if let Some(code) = try_extract_code(args.content) {
         match runtime_state.data.reward_codes.claim(code, caller, now) {
             ClaimRewardCodeResult::Success(transfer_args, transaction_hash) => (
-                "Code claimed successfully! Please wait while your ICP is transferred.",
+                "You successfully claimed your reward! Congratulations! 🎉 Please wait while your ICP is transferred.",
                 Some(PendingAction::IcpTransfer(caller, transfer_args, transaction_hash)),
             ),
-            ClaimRewardCodeResult::UserAlreadyClaimed => ("You have already claimed a reward!", None),
-            ClaimRewardCodeResult::CodeAlreadyClaimed => ("That code has already been claimed!", None),
-            ClaimRewardCodeResult::CodeExpired => ("That code has expired!", None),
-            ClaimRewardCodeResult::CodeNotFound => ("That code is not valid!", None),
+            ClaimRewardCodeResult::UserAlreadyClaimed => (
+                "Oh, it looks like you've already claimed a reward! I want to be fair to everybody ✌️",
+                None,
+            ),
+            ClaimRewardCodeResult::CodeAlreadyClaimed => {
+                ("Your code can't be claimed twice! I hope you had fun seeking me 🌳", None)
+            }
+            ClaimRewardCodeResult::CodeExpired => ("Your code has expired! Sorry! ⏱", None),
+            ClaimRewardCodeResult::CodeNotFound => {
+                ("The code you entered is not valid! Can't give you a reward for that 🐾", None)
+            }
         }
     } else {
         (
-            "Please send a text message containing only your reward code (eg. '1234ABCD')",
+            "If you 
+send me the right code there is ICP waiting for you. To claim your reward please send me a text message containing only your reward code (eg. '42R488IT') 🌈",
             None,
         )
     };
