@@ -82,6 +82,7 @@
     $: chatStateStore = client.chatStateStore;
     $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
+    // Show the avatar if the earliest loaded event is the earliest available event
     $: showAvatar = initialised && (events[0]?.index ?? 0) <= client.earliestAvailableEventIndex(chat.chatId);
 
     let loadingPrev = false;
@@ -508,6 +509,8 @@
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
+
+            // If chat.latestEventIndex < 0, then no events need to be loaded so we set initialized to true
             initialised = chat.latestEventIndex < 0;
         }
     }
