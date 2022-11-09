@@ -2806,6 +2806,10 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    get OPENCHAT_BOT_USER_ID(): string {
+        return OPENCHAT_BOT_USER_ID;
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
