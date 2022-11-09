@@ -1571,7 +1571,7 @@ export class OpenChat extends EventTarget {
             : undefined;
     }
 
-    private earliestAvailableEventIndex(chat: ChatSummary): number {
+    earliestAvailableEventIndex(chat: ChatSummary): number {
         return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
     }
 

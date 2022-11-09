@@ -82,6 +82,7 @@
     $: chatStateStore = client.chatStateStore;
     $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
+    $: showAvatar = initialised && (events[0]?.index ?? 0) <= client.earliestAvailableEventIndex(chat.chatId);
 
     let loadingPrev = false;
     let loadingNew = false;
@@ -507,7 +508,7 @@
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
-            initialised = false;
+            initialised = chat.latestEventIndex < 0;
         }
     }
 
@@ -760,7 +761,7 @@
             {/each}
         </div>
     {/each}
-    {#if initialised && !morePrevAvailable}
+    {#if showAvatar}
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
