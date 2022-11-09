@@ -9,6 +9,7 @@
         onMount,
         tick,
     } from "svelte";
+    import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
@@ -17,6 +18,7 @@
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
+        AvatarSize,
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
@@ -763,8 +765,12 @@
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
             <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
-        {:else if isBot}
+        {:else if client.isOpenChatBot(chat.them)}
             <Robot />
+        {:else}
+            <div class="big-avatar">
+                <Avatar url={client.userAvatarUrl($userStore[chat.them])} size={AvatarSize.ExtraLarge} />
+            </div>
         {/if}
     {/if}
 </div>
@@ -879,5 +885,9 @@
             padding: 10px;
             -webkit-overflow-scrolling: touch;
         }
+    }
+
+    .big-avatar {
+        margin: 16px auto;
     }
 </style>
