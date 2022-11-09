@@ -69,13 +69,13 @@ function handleAgentEvent(ev: Event): void {
 
 type Uncorrelated = Omit<WorkerResponse, "correlationId" | "kind">;
 
-const sendError = (correlationId: string) => (_: unknown) => {
+const sendError = (correlationId: string) => {
     return (error: unknown) => {
         console.debug("WORKER: sending error: ", error);
         postMessage({
             kind: "worker_error",
             correlationId,
-            error,
+            error: JSON.stringify(error),
         });
     };
 };
