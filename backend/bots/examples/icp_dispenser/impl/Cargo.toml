@@ -29,5 +29,6 @@ stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../../libraries/types" }
 user_canister = { path = "../../../../canisters/user/api" }
+user_index_canister_c2c_client = { path = "../../../../canisters/user_index/c2c_client" }
 user_index_canister = { path = "../../../../canisters/user_index/api" }
 utils = { path = "../../../../libraries/utils" }
