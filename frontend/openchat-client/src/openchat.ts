@@ -1359,7 +1359,17 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
     }
-    createDirectChat = createDirectChat;
+    async createDirectChat(chatId: string): Promise<boolean> {
+        if (this._liveState.userStore[chatId] === undefined) {
+            const user = await this.api.getUser(chatId);
+            if (user === undefined) {
+                return false;
+            }
+            this.userStore.add(user);
+        }
+        createDirectChat(chatId);
+        return true;
+    }
     setSelectedChat(chatId: string, messageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -1571,7 +1581,7 @@ export class OpenChat extends EventTarget {
             : undefined;
     }
 
-    private earliestAvailableEventIndex(chat: ChatSummary): number {
+    earliestAvailableEventIndex(chat: ChatSummary): number {
         return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
     }
 
