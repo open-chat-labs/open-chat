@@ -177,8 +177,7 @@
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (qs.get("type") === "direct") {
-                client.createDirectChat(chatId);
-                push(`/${chatId}`);
+                await createDirectChat(chatId);
                 hotGroups = { kind: "idle" };
                 return;
             } else {
@@ -535,8 +534,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            client.createDirectChat(ev.detail);
-            push(`/${ev.detail}`);
+            createDirectChat(ev.detail);
         }
     }
 
@@ -565,9 +563,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            client.createDirectChat(ev.detail.sender!.userId);
-            push(`/${ev.detail.sender!.userId}`);
+            createDirectChat(chatId);
         }
     }
 
@@ -794,6 +790,11 @@
 
     function showLandingPageRoute(route: string) {
         return () => (window.location.href = route);
+    }
+
+    async function createDirectChat(chatId: string): Promise<void> {
+        await client.createDirectChat(chatId);
+        push(`/${chatId}`);
     }
 
     $: bgHeight = $dimensions.height * 0.9;
