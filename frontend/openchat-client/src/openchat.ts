@@ -1359,14 +1359,16 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
     }
-    async createDirectChat(chatId: string): Promise<void> {
+    async createDirectChat(chatId: string): Promise<boolean> {
         if (this._liveState.userStore[chatId] === undefined) {
             const user = await this.api.getUser(chatId);
-            if (user !== undefined) {
-                this.userStore.add(user);
+            if (user === undefined) {
+                return false;
             }
+            this.userStore.add(user);
         }
         createDirectChat(chatId);
+        return true;
     }
     setSelectedChat(chatId: string, messageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];

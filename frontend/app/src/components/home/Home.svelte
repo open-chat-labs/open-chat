@@ -176,8 +176,7 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            if (qs.get("type") === "direct") {
-                await createDirectChat(chatId);
+            if (await createDirectChat(chatId)) {
                 hotGroups = { kind: "idle" };
                 return;
             } else {
@@ -792,9 +791,13 @@
         return () => (window.location.href = route);
     }
 
-    async function createDirectChat(chatId: string): Promise<void> {
-        await client.createDirectChat(chatId);
+    async function createDirectChat(chatId: string): Promise<boolean> {
+        if (!await client.createDirectChat(chatId)) {
+            return false;
+        }
+
         push(`/${chatId}`);
+        return true;
     }
 
     $: bgHeight = $dimensions.height * 0.9;
