@@ -176,10 +176,7 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            if (await createDirectChat(chatId)) {
-                hotGroups = { kind: "idle" };
-                return;
-            } else {
+            if (!await createDirectChat(chatId)) {
                 const code = qs.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -191,9 +188,9 @@
                     replace("/");
                     return;
                 }
-
-                chat = $chatSummariesStore[chatId];
             }
+
+            chat = $chatSummariesStore[chatId];
         }
 
         // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
