@@ -123,8 +123,8 @@ import {
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
-import { localChatSummaryUpdates, startPruningLocalChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localMessageUpdates, startPruningLocalMessageUpdates } from "./stores/localMessageUpdates";
+import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
+import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
 import {
     askForNotificationPermission,
@@ -506,8 +506,6 @@ export class OpenChat extends EventTarget {
                 true
             );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
-            startPruningLocalChatSummaryUpdates();
-            startPruningLocalMessageUpdates();
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
             this.identityState.set("logged_in");
