@@ -2,6 +2,7 @@
     import { onMount, getContext } from "svelte";
     import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import QR from "svelte-qr";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -163,6 +164,9 @@
     {#if group.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
+            <div class="qr">
+                <QR text={link} />
+            </div>
             <div class="message">
                 {$_("group.invite.shareMessage") +
                     (group.public ? "" : $_("group.invite.shareMessageTrust"))}
@@ -205,6 +209,9 @@
 {/if}
 
 <style type="text/scss">
+    .qr {
+        background-color: #fff;
+    }
     .toggle-row {
         display: flex;
         justify-content: space-between;
