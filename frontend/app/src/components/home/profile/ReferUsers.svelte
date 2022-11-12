@@ -3,6 +3,7 @@
     import type { OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import QR from "svelte-qr";
     import { _ } from "svelte-i18n";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -56,6 +57,9 @@
 
 <div class="container">
     <div class="link">{link}</div>
+    <div class="qr">
+        <QR text={link} />
+    </div>
     <div class="message">
         {$_("userReferralMessage")}
     </div>
@@ -104,6 +108,10 @@
 {/if}
 
 <style type="text/scss">
+    .qr {
+        background-color: #fff;
+    }
+
     .link,
     .message {
         @include font(book, normal, fs-80);
