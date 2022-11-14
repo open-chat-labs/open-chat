@@ -5,7 +5,7 @@
 
 ### Register bot
 
-`dfx canister call sns1_airdrop register_bot '(record { username = "SNS1_Airdrop_Bot" })'`
+`dfx canister call sns1_airdrop register_bot '(record { username = "SNS1_Bot" })'`
 
 ### Add reward codes
 
