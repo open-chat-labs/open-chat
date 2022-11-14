@@ -24,8 +24,9 @@ fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         for user_id in runtime_state
             .data
             .users
-            .iter()
+            .iter_eligible_for_sns1_airdrop()
             .filter(|u| u.wasm_version != version && !u.is_bot)
+            .take(2000)
             .sorted_by_key(|u| u.last_online)
             .rev()
             .map(|u| u.user_id)

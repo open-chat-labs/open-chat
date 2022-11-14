@@ -37,6 +37,8 @@ rand = { workspace = true }
 rand_chacha = { workspace = true }
 rand_core = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_json = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

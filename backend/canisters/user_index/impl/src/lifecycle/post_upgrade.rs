@@ -23,6 +23,7 @@ fn post_upgrade(args: Args) {
     ) = deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.users.rehydrate();
+    data.users.take_sns1_snapshot();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
