@@ -21,6 +21,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .data
             .users
             .iter_eligible_for_sns1_airdrop()
+            .take(2000)
             .map(|u| u.user_id)
             .collect();
 
