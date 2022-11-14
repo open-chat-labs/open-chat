@@ -2,8 +2,9 @@ use crate::model::account_billing::AccountCharge;
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
@@ -28,6 +29,8 @@ pub struct UserMap {
     reserved_usernames: HashSet<String>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
+    #[serde(default)]
+    eligible_for_sns1_airdrop: VecDeque<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -41,7 +44,7 @@ pub struct Metrics {
 
 impl UserMap {
     pub fn rehydrate(&mut self) {
-        for (user_id, user) in self.users.iter() {
+        for (user_id, user) in self.users.iter().sorted_by_key(|(_, u)| u.date_created) {
             match &user.phone_status {
                 PhoneStatus::Confirmed(p) => {
                     self.phone_number_to_user_id.insert(p.clone(), *user_id);
@@ -59,6 +62,12 @@ impl UserMap {
 
             self.username_to_user_id.insert(&user.username, *user_id);
             self.principal_to_user_id.insert(user.principal, *user_id);
+
+            // Mark users who have been online in the last 7 days as eligible for the SNS-1 airdrop
+            // (Monday 7th November 00:00:00 UTC).
+            if user.last_online > 1667779200000 {
+                self.eligible_for_sns1_airdrop.push_back(*user_id);
+            }
         }
     }
 
@@ -377,6 +386,10 @@ impl UserMap {
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
+    }
+
+    pub fn count_eligible_for_sns1_airdrop(&self) -> usize {
+        self.eligible_for_sns1_airdrop.len()
     }
 
     #[cfg(test)]

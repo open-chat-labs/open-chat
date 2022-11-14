@@ -109,6 +109,7 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            eligible_for_sns1_airdrop: self.data.users.count_eligible_for_sns1_airdrop(),
         }
     }
 }
@@ -253,4 +254,5 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_events_queue_length: usize,
+    pub eligible_for_sns1_airdrop: usize,
 }
