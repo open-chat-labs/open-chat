@@ -54,6 +54,15 @@ type AddUserIdsResponse =
         Success;
     };
 
+type MarkCompletedArgs =
+    record {
+    };
+
+type MarkCompletedResponse =
+    variant {
+        Success;
+    };
+
 type InitArgs =
     record {
         user_index_canister_id: CanisterId;
@@ -73,4 +82,5 @@ service: (InitArgs) -> {
     register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     add_user_ids: (AddUserIdsArgs) -> (AddUserIdsResponse);
+    mark_completed: (MarkCompletedArgs) -> (MarkCompletedResponse);
 }
