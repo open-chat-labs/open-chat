@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -176,15 +176,15 @@ fn commit(
             unblocked.push(user_id);
         }
 
-        runtime_state.data.participants.add(
+        runtime_state.add_participant(AddParticipantArgs {
             user_id,
             principal,
             now,
             min_visible_event_index,
             min_visible_message_index,
-            false,
-            runtime_state.data.is_public,
-        );
+            as_super_admin: false,
+            mute_notifications: runtime_state.data.is_public,
+        });
     }
 
     let user_ids: Vec<_> = users.iter().map(|(u, _)| u).copied().collect();

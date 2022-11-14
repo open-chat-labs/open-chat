@@ -123,8 +123,8 @@ import {
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
-import { localChatSummaryUpdates, startPruningLocalChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localMessageUpdates, startPruningLocalMessageUpdates } from "./stores/localMessageUpdates";
+import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
+import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
 import {
     askForNotificationPermission,
@@ -506,8 +506,6 @@ export class OpenChat extends EventTarget {
                 true
             );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
-            startPruningLocalChatSummaryUpdates();
-            startPruningLocalMessageUpdates();
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
             this.identityState.set("logged_in");
@@ -937,7 +935,10 @@ export class OpenChat extends EventTarget {
     }
 
     canSendMessages(chatId: string): boolean {
-        return this.chatPredicate(chatId, (chat) => canSendMessages(chat, this._liveState.userStore));
+        return this.chatPredicate(chatId, (chat) => canSendMessages(
+            chat,
+            this._liveState.userStore,
+            this.config.proposalBotCanister));
     }
 
     canChangeRoles(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
@@ -1356,7 +1357,17 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
     }
-    createDirectChat = createDirectChat;
+    async createDirectChat(chatId: string): Promise<boolean> {
+        if (this._liveState.userStore[chatId] === undefined) {
+            const user = await this.api.getUser(chatId);
+            if (user === undefined) {
+                return false;
+            }
+            this.userStore.add(user);
+        }
+        createDirectChat(chatId);
+        return true;
+    }
     setSelectedChat(chatId: string, messageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -1568,7 +1579,7 @@ export class OpenChat extends EventTarget {
             : undefined;
     }
 
-    private earliestAvailableEventIndex(chat: ChatSummary): number {
+    earliestAvailableEventIndex(chat: ChatSummary): number {
         return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
     }
 
@@ -2801,6 +2812,10 @@ export class OpenChat extends EventTarget {
         } finally {
             chatsLoading.set(false);
         }
+    }
+
+    isOpenChatBot(userId: string): boolean {
+        return userId === OPENCHAT_BOT_USER_ID;
     }
 
     /**

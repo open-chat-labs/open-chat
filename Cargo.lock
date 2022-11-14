@@ -2452,8 +2452,10 @@ dependencies = [
  "http_request",
  "ic-cdk 0.6.1",
  "ic-cdk-macros",
+ "ic-ledger-types",
  "itertools",
  "lazy_static",
+ "ledger_utils",
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
@@ -4547,6 +4549,7 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils 0.1.0",
 ]
 

@@ -22,7 +22,7 @@ fn add_reward_codes_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         runtime_state
             .data
             .reward_codes
-            .add(code, args.reward_amount, caller, args.expiry, now);
+            .add(code.to_ascii_uppercase(), args.reward_amount, caller, args.expiry, now);
     }
     Success
 }

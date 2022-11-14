@@ -18,6 +18,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
+    pub ledger_canister_id: CanisterId,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

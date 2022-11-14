@@ -231,7 +231,7 @@ type DeleteGroupResponse =
 
 type SetAvatarArgs =
     record {
-        avatar: opt Avatar
+        avatar: opt Avatar;
     };
 
 type SetAvatarResponse =

@@ -1,4 +1,3 @@
-import { writable } from "svelte/store";
 import type {
     LocalMessageUpdates,
     LocalPollVote,
@@ -7,34 +6,31 @@ import type {
     ThreadSummary,
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
+import { LocalUpdatesStore } from "./localUpdatesStore";
 
-const PRUNE_LOCAL_UPDATES_INTERVAL: number = 30 * 1000;
-const store = writable<Record<string, LocalMessageUpdates>>({});
-
-export const localMessageUpdates = {
-    subscribe: store.subscribe,
-    markDeleted: (messageId: string, deletedBy: string): void => {
-        applyUpdate(messageId, (_) => ({ deleted: { deletedBy, timestamp: BigInt(Date.now()) } }));
-    },
-    markUndeleted: (messageId: string): void => {
-        applyUpdate(messageId, (_) => ({ deleted: undefined }));
-    },
-    markContentEdited: (messageId: string, content: MessageContent): void => {
-        applyUpdate(messageId, (_) => ({ editedContent: content }));
-    },
-    revertEditedContent: (messageId: string): void => {
-        applyUpdate(messageId, (_) => ({ editedContent: undefined }));
-    },
-    markReaction: (messageId: string, reaction: LocalReaction): void => {
-        applyUpdate(messageId, (updates) => ({
+class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
+    markDeleted(messageId: string, deletedBy: string): void {
+        this.applyUpdate(messageId, (_) => ({ deleted: { deletedBy, timestamp: BigInt(Date.now()) } }));
+    }
+    markUndeleted(messageId: string): void {
+        this.applyUpdate(messageId, (_) => ({ deleted: undefined }));
+    }
+    markContentEdited(messageId: string, content: MessageContent): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: content }));
+    }
+    revertEditedContent(messageId: string): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: undefined }));
+    }
+    markReaction(messageId: string, reaction: LocalReaction): void {
+        this.applyUpdate(messageId, (updates) => ({
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
-    },
-    markPollVote: (messageId: string, vote: LocalPollVote): void => {
-        applyUpdate(messageId, (updates) => ({ pollVotes: [...(updates?.pollVotes ?? []), vote] }));
-    },
-    markThreadSummaryUpdated: (threadRootMessageId: string, summary: ThreadSummary): void => {
-        applyUpdate(threadRootMessageId, (updates) => {
+    }
+    markPollVote(messageId: string, vote: LocalPollVote): void {
+        this.applyUpdate(messageId, (updates) => ({ pollVotes: [...(updates?.pollVotes ?? []), vote] }));
+    }
+    markThreadSummaryUpdated(threadRootMessageId: string, summary: ThreadSummary): void {
+        this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:
                     updates?.threadSummary === undefined
@@ -42,37 +38,7 @@ export const localMessageUpdates = {
                         : mergeThreadSummaries(updates.threadSummary, summary),
             };
         });
-    },
-};
-
-function applyUpdate(
-    messageId: string,
-    updateFn: (current: LocalMessageUpdates) => Partial<LocalMessageUpdates>
-): void {
-    store.update((state) => {
-        const updates = state[messageId];
-        state[messageId] = {
-            ...updates,
-            ...updateFn(updates),
-            lastUpdated: Date.now(),
-        };
-        return state;
-    });
+    }
 }
 
-function pruneLocalUpdates(): void {
-    const now = Date.now();
-    store.update((state) =>
-        Object.entries(state).reduce((result, [messageId, updates]) => {
-            // Only keep updates which are < 30 seconds old
-            if (now - updates.lastUpdated < 30 * 1000) {
-                result[messageId] = updates;
-            }
-            return result;
-        }, {} as Record<string, LocalMessageUpdates>)
-    );
-}
-
-export function startPruningLocalMessageUpdates(): void {
-    window.setInterval(() => pruneLocalUpdates(), PRUNE_LOCAL_UPDATES_INTERVAL);
-}
+export const localMessageUpdates = new LocalMessageUpdatesStore();
