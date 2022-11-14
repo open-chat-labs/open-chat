@@ -44,7 +44,7 @@ pub struct Metrics {
 
 impl UserMap {
     pub fn rehydrate(&mut self) {
-        for (user_id, user) in self.users.iter().sorted_by_key(|(_, u)| u.date_created) {
+        for (user_id, user) in self.users.iter() {
             match &user.phone_status {
                 PhoneStatus::Confirmed(p) => {
                     self.phone_number_to_user_id.insert(p.clone(), *user_id);
@@ -62,13 +62,19 @@ impl UserMap {
 
             self.username_to_user_id.insert(&user.username, *user_id);
             self.principal_to_user_id.insert(user.principal, *user_id);
-
-            // Mark users who have been online in the last 7 days as eligible for the SNS-1 airdrop
-            // (Monday 7th November 00:00:00 UTC).
-            if user.last_online > 1667779200000 {
-                self.eligible_for_sns1_airdrop.push_back(*user_id);
-            }
         }
+    }
+
+    pub fn take_sns1_snapshot(&mut self) {
+        // Mark users who have been online in the last 7 days as eligible for the SNS-1 airdrop
+        // (Monday 7th November 00:00:00 UTC). Priority is determined by date created.
+        self.eligible_for_sns1_airdrop = self
+            .users
+            .values()
+            .filter(|u| u.last_online > 1667779200000)
+            .sorted_by_key(|u| u.date_created)
+            .map(|u| u.user_id)
+            .collect();
     }
 
     pub fn does_username_exist(&self, username: &str) -> bool {
@@ -376,6 +382,7 @@ impl UserMap {
         self.cached_metrics = Timestamped::new(metrics, now);
     }
 
+    #[allow(dead_code)]
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
     }
@@ -386,6 +393,10 @@ impl UserMap {
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
+    }
+
+    pub fn iter_eligible_for_sns1_airdrop(&self) -> impl Iterator<Item = &User> {
+        self.eligible_for_sns1_airdrop.iter().filter_map(|u| self.users.get(u))
     }
 
     pub fn count_eligible_for_sns1_airdrop(&self) -> usize {

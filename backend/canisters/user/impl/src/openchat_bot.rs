@@ -41,7 +41,7 @@ pub(crate) fn send_group_deleted_message(
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_removed_from_group_message(
@@ -55,7 +55,7 @@ pub(crate) fn send_removed_from_group_message(
     let action = if blocked { "blocked" } else { "removed" };
     let text = format!("You were {action} from the {visibility} group \"{group_name}\" by @UserId({removed_by})");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, runtime_state: &mut RuntimeState) {
@@ -64,7 +64,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
     let text = format!("Thank you for [verifying ownership of your phone number](/#/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_state: &mut RuntimeState) {
@@ -81,7 +81,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
         format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
     };
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, runtime_state: &mut RuntimeState) {
@@ -89,7 +89,18 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
+}
+
+pub(crate) fn send_sns1_airdrop_message(runtime_state: &mut RuntimeState) {
+    let text = format!(
+        "You are eligible for the upcoming SNS-1 airdrop!
+To take part you must send your NNS Dapp principal to the [SNS1_Airdrop_Bot](/#/wxns6-qiaaa-aaaaa-aaaqa-cai).
+To find your principal, go to https://nns.ic0.app, then click on the 'Neurons' tab and your \
+principal will be displayed."
+    );
+
+    send_text_message(text, true, runtime_state);
 }
 
 fn to_gb(bytes: u64) -> String {
@@ -102,9 +113,9 @@ fn to_tokens(tokens: Tokens) -> String {
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
 }
 
-fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
+fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
     let content = MessageContent::Text(TextContent { text });
-    send_message(content, false, runtime_state);
+    send_message(content, mute_notification, runtime_state);
 }
 
 fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
