@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BackgroundLogo from "../BackgroundLogo.svelte";
     import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
@@ -385,13 +384,5 @@
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />
-    {/if}
-    {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
-        <BackgroundLogo
-            width={"700px"}
-            bottom={"-16px"}
-            right={"-16px"}
-            opacity={"0.35"}
-            viewBox={"0 0 361 280"} />
     {/if}
 </Panel>

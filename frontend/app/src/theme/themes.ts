@@ -72,19 +72,12 @@ export interface Theme {
     };
 
     members: {
-        bg: string;
-        txt: string;
         hv: string;
-        bd: string;
-        bdb: string;
-        panel: {
-            bg: string;
-        };
     };
 
     entry: {
-        bg: string;
         bd: string;
+        bg: string;
         input: {
             txt: string;
             bg: string;
@@ -93,6 +86,7 @@ export interface Theme {
 
     panel: {
         bg: string;
+        bd: string;
         left: {
             bg: string;
             xs: string;
@@ -103,8 +97,6 @@ export interface Theme {
     };
 
     currentUser: {
-        bd: string;
-        bg: string;
         txt: string;
         ic: string;
     };
@@ -126,12 +118,10 @@ export interface Theme {
     };
 
     chatSummary: {
-        bg: string;
         "bg-selected": string;
         hv: string;
         txt1: string;
         txt2: string;
-        bd: string;
         del: string;
     };
 
@@ -190,7 +180,6 @@ export interface Theme {
 
     currentChat: {
         header: {
-            bg: string;
             txt: string;
             bd: string;
         };
@@ -205,22 +194,17 @@ export interface Theme {
             bg: string;
             txt: string;
             hv: string;
-            bd: string;
             muted: string;
             "reply-accent": string;
 
             me: {
-                bg: string;
-                txt: string;
                 hv: string;
-                bd: string;
                 muted: string;
             };
         };
     };
 
     icon: {
-        color: string;
         hv: string;
         txt: string;
         inverted: {

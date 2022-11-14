@@ -314,7 +314,6 @@
         body {
             transition: background ease-in-out 300ms, color ease-in-out 150ms,
                 padding ease-in-out 150ms;
-            padding: $sp4;
             background: var(--bg);
             color: var(--txt);
             margin: 0;

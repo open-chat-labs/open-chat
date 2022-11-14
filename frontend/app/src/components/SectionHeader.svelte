@@ -18,14 +18,14 @@
         top: 0;
         align-items: center;
         width: 100%;
-        padding: $sp3;
-        height: toRem(60);
+        padding: $sp4 $sp5;
+        height: toRem(80);
         margin-bottom: $sp3;
         background-color: var(--section-bg);
-        border: 1px solid var(--section-bd);
+        border-bottom: 1px solid var(--section-bd);
         color: var(--section-txt);
         @include z-index("section-header");
-        flex: 0 0 toRem(60);
+        flex: 0 0 toRem(80);
 
         &.entry {
             background-color: var(--entry-bg);
@@ -33,16 +33,16 @@
 
         &.flush {
             margin-bottom: 0;
-            border-left: 1px solid var(--section-bd-start);
+            // border-left: 1px solid var(--section-bd-start);
         }
 
         &.flush.rtl {
             border-left: inherit;
-            border-right: 1px solid var(--section-bd-start);
+            // border-right: 1px solid var(--section-bd-start);
         }
 
         &.shadow {
-            box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
+            // box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
         }
 
         &.gap {

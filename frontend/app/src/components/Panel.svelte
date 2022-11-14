@@ -55,6 +55,7 @@
         &.left {
             position: relative;
             background: var(--panel-left-bg);
+            border-right: 1px solid var(--panel-bd);
 
             @include mobile() {
                 width: 100%;
@@ -68,6 +69,7 @@
         &.right {
             background: var(--panel-right-bg);
             padding: 0px;
+            border-left: 1px solid var(--panel-bd);
 
             @include size-above(xl) {
                 background: var(--panel-left-bg);

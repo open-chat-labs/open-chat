@@ -105,7 +105,7 @@
     on:mouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
-            statusBorder={hovering && !me ? "var(--members-hv)" : "var(--members-bg)"}
+            statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
             blocked={member.memberKind === "blocked_member"}
             url={client.userAvatarUrl(member)}
             status={client.getUserStatus($now, $userStore, member.userId)}
@@ -202,10 +202,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border-bottom: var(--members-bd);
-        background-color: var(--members-bg);
-        color: var(--members-txt);
-        padding: $sp3;
+        color: var(--txt);
+        padding: $sp4 $sp5;
         margin: 0 $sp3 0 $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 

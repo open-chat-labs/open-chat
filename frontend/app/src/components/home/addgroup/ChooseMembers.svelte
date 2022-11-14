@@ -74,7 +74,6 @@
 
     .members {
         flex: 1;
-        background-color: var(--members-panel-bg);
         color: var(--section-txt);
         display: flex;
         flex-direction: column;

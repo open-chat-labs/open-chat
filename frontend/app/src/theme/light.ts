@@ -1,5 +1,6 @@
 import type { Theme } from "./themes";
 
+const lightBorder = "#ededed";
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
@@ -63,14 +64,7 @@ export function lightTheme(): Theme {
         },
 
         members: {
-            bg: "#ffffff",
-            txt: "#191919",
             hv: "#eeeeee",
-            bd: "1px solid #efefef",
-            bdb: "transparent",
-            panel: {
-                bg: "transparent",
-            },
         },
 
         entry: {
@@ -84,6 +78,7 @@ export function lightTheme(): Theme {
 
         panel: {
             bg: "linear-gradient(#22A7F2, #5f2583)",
+            bd: lightBorder,
             left: {
                 bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
                 xs: "transparent",
@@ -94,8 +89,6 @@ export function lightTheme(): Theme {
         },
 
         currentUser: {
-            bd: "transparent",
-            bg: "white",
             txt: "#191919",
             ic: "#aaa",
         },
@@ -117,12 +110,10 @@ export function lightTheme(): Theme {
         },
 
         chatSummary: {
-            bg: "white",
             "bg-selected": "#e7e7e7",
             hv: "#eeeeee",
             txt1: "#191919",
             txt2: "rgba(0, 0, 0, 0.6)",
-            bd: "1px solid #ddd",
             del: pinkAccent,
         },
 
@@ -183,7 +174,6 @@ export function lightTheme(): Theme {
         currentChat: {
             header: {
                 // bg: "#efefef",
-                bg: "rgba(255,255,255,0.35)",
                 txt: "#191919",
                 bd: "transparent",
             },
@@ -201,14 +191,10 @@ export function lightTheme(): Theme {
                 bg: "#ffffff",
                 txt: "#191919",
                 hv: "#efefef",
-                bd: "transparent",
                 muted: "#999999",
                 "reply-accent": blueAccent,
 
                 me: {
-                    txt: "#ffffff",
-                    bg: "#d62c7d",
-                    bd: "#d62c7d",
                     hv: "#EA4091",
                     muted: "#cccccc",
                 },
@@ -216,7 +202,6 @@ export function lightTheme(): Theme {
         },
 
         icon: {
-            color: "#cccccc",
             // hv: "#dddddd",
             hv: "rgba(0,0,0,0.1)",
             txt: "#888",

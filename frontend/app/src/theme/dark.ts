@@ -1,6 +1,17 @@
 import type { Theme } from "./themes";
 
-const darkBase = "#121212";
+const darkBase = "#1B1C21";
+
+const dark30pc = `${darkBase}4d`;
+const dark50pc = `${darkBase}80`;
+const dark60pc = `${darkBase}99`;
+const darkBorder = "#32353F";
+
+const selectedChat = "#32353F80";
+const hoveredChat = "#32353F40";
+
+const textBox = "#242834";
+
 const dark05 = "#191919";
 const dark10 = "#2b2b2b";
 const dark15 = "#383838";
@@ -13,8 +24,8 @@ const dark60 = "#ababab";
 
 const cardBg = dark10;
 
-const txtHigh = "rgba(255,255,255,0.8)";
-const txtMed = "rgba(255,255,255,0.6)";
+const txtHigh = "#ffffff";
+const txtMed = "#b1b1b1";
 const txtLow = "rgba(255,255,255,0.38)";
 
 const blueAccent = "#085d8c";
@@ -57,9 +68,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         section: {
-            bg: cardBg,
+            bg: "transparent",
             txt: txtHigh,
-            bd: cardBg,
+            bd: darkBorder,
             "bd-start": cardBg,
         },
 
@@ -71,25 +82,19 @@ export function darkTheme(defaultTheme: Theme): Theme {
             // bg: "#555555",
             bg: cardBg,
             txt: txtHigh,
-            bd: dark25,
+            bd: darkBorder,
         },
 
         members: {
             ...defaultTheme.members,
-            bg: cardBg,
-            txt: txtHigh,
-            hv: dark15,
-            bd: `1px solid #3d3d3d`,
-            panel: {
-                bg: dark10,
-            },
+            hv: hoveredChat,
         },
 
         entry: {
-            bg: cardBg,
-            bd: dark15,
+            bg: dark60pc,
+            bd: darkBorder,
             input: {
-                bg: dark20,
+                bg: textBox,
                 txt: txtHigh,
             },
         },
@@ -97,33 +102,33 @@ export function darkTheme(defaultTheme: Theme): Theme {
         panel: {
             ...defaultTheme.panel,
             bg: dark05,
+            bd: darkBorder,
             left: {
-                bg: "rgba(0,0,0,0.1)",
-                xs: "rgba(0,0,0,0.1)",
+                bg: dark30pc,
+                // bg: "rgba(0,0,0,0.1)",
+                xs: dark30pc,
             },
             right: {
-                bg: dark10,
+                bg: dark30pc,
             },
         },
 
         currentUser: {
-            bd: `1px solid ${cardBg}`,
-            bg: cardBg,
             txt: txtHigh,
             ic: dark60,
         },
 
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
-            bd: dark25,
+            bd: darkBorder,
             sh: "none",
         },
 
         chatSearch: {
             ...defaultTheme.chatSearch,
-            bg: cardBg,
+            bg: textBox,
             txt: txtHigh,
-            bd: dark20,
+            bd: darkBorder,
 
             section: {
                 ...defaultTheme.chatSearch.section,
@@ -133,12 +138,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         chatSummary: {
             ...defaultTheme.chatSummary,
-            bg: cardBg,
-            "bg-selected": dark15,
-            hv: dark15,
+            "bg-selected": selectedChat,
+            hv: hoveredChat,
             txt1: txtHigh,
             txt2: txtMed,
-            bd: "1px solid #3d3d3d",
             del: "#085d8c",
         },
 
@@ -146,7 +149,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark15,
             txt: txtMed,
             "disabled-txt": txtLow,
-            bd: dark20,
+            bd: darkBorder,
             hv: "#424242",
             sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
@@ -171,12 +174,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
             header: {
                 bg: dark15,
                 txt: txtHigh,
-                bd: dark15,
+                bd: darkBorder,
             },
             footer: {
-                bg: dark15,
+                bg: dark60pc,
                 txt: txtHigh,
-                bd: dark15,
+                bd: darkBorder,
             },
         },
 
@@ -192,9 +195,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         currentChat: {
             ...defaultTheme.currentChat,
             header: {
-                bg: dark20,
                 txt: txtHigh,
-                bd: dark15,
+                bd: darkBorder,
             },
             msgs: {
                 bg: "transparent",
@@ -206,26 +208,20 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
 
             msg: {
-                bg: cardBg,
-                txt: txtMed,
+                bg: textBox,
+                txt: txtHigh,
                 hv: dark15,
-                bd: dark15,
                 muted: txtLow,
                 "reply-accent": blueAccent,
 
                 me: {
-                    bg: "#820041",
-                    txt: dark60,
                     hv: "#680034",
-                    bd: "#820041",
                     muted: dark50,
                 },
             },
         },
 
         icon: {
-            color: dark25,
-            // hv: dark25,
             hv: "rgba(255,255,255,0.2)",
             txt: txtMed,
             inverted: {
@@ -256,10 +252,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.profile,
             section: {
                 ...defaultTheme.profile.section,
-                bg: cardBg,
+                bg: "transparent",
                 xs: {
                     ...defaultTheme.profile.section.xs,
-                    bd: `1px solid ${cardBg}`,
+                    bd: `1px solid ${darkBorder}`,
                 },
             },
         },
@@ -267,7 +263,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         collapsible: {
             header: {
                 bg: dark15,
-                bd: `1px solid ${dark15}`,
+                bd: `1px solid ${darkBorder}`,
             },
             bg: cardBg,
         },

@@ -151,7 +151,6 @@
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
         padding: 6px $sp3 6px $sp3;
-        border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
@@ -172,7 +171,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
         }
 
         &.crypto {

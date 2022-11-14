@@ -702,7 +702,7 @@
 <style type="text/scss">
     $size: 10px;
 
-    $avatar-width: 53px;
+    $avatar-width: 56px;
     $avatar-width-mob: 43px;
 
     :global(.message .loading) {
@@ -859,13 +859,12 @@
     }
 
     .message-bubble {
-        $radius: $sp4;
+        $radius: $sp3;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: toRem(6) toRem(8) toRem(6) toRem(8);
-        border: 1px solid var(--currentChat-msg-bd);
+        padding: toRem(8) toRem(12) toRem(8) toRem(12);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
@@ -920,9 +919,11 @@
         }
 
         &.me {
-            background-color: var(--currentChat-msg-me-bg);
-            color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
+            background-color: #23a2ee;
+            color: #ffffff;
+
+            // background-color: var(--currentChat-msg-me-bg);
+            // color: var(--currentChat-msg-me-txt);
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;

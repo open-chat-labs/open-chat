@@ -324,7 +324,6 @@
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
         tick().then(() => inp.focus());
-
     }
 
     export function saveSelection() {
@@ -541,12 +540,12 @@
 <style type="text/scss">
     .message-entry {
         position: relative;
-        flex: 0 0 toRem(40);
         display: flex;
         justify-content: space-between;
         align-items: center;
         background-color: var(--entry-bg);
         padding: $sp3;
+        border-top: 1px solid var(--entry-bd);
 
         &.editing {
             background-color: var(--button-bg);

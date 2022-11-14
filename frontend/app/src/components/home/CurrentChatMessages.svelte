@@ -697,7 +697,10 @@
         }
     }
 
-    function shouldShowAvatar(chat: ChatSummary, earliestLoadedEventIndex: number | undefined): boolean {
+    function shouldShowAvatar(
+        chat: ChatSummary,
+        earliestLoadedEventIndex: number | undefined
+    ): boolean {
         // If this is an empty chat, show the avatar
         const isEmptyChat = chat.latestEventIndex < 0;
         if (isEmptyChat) {
@@ -787,7 +790,9 @@
             <Robot />
         {:else}
             <div class="big-avatar">
-                <Avatar url={client.userAvatarUrl($userStore[chat.them])} size={AvatarSize.ExtraLarge} />
+                <Avatar
+                    url={client.userAvatarUrl($userStore[chat.them])}
+                    size={AvatarSize.ExtraLarge} />
             </div>
         {/if}
     {/if}
@@ -890,7 +895,7 @@
     .chat-messages {
         flex: auto;
         background-color: var(--currentChat-msgs-bg);
-        padding: $sp3 $sp3;
+        padding: $sp3 $sp5;
         overflow-x: hidden;
         overscroll-behavior-y: contain;
         position: relative;

@@ -126,9 +126,6 @@
 
     .current-user-box {
         padding: $sp4;
-        background-color: var(--currentUser-bg);
-        border-bottom: var(--currentUser-bd);
-        border-right: var(--currentUser-bd);
         margin-bottom: $sp3;
         position: relative;
 
@@ -140,7 +137,6 @@
 
         &.rtl {
             border-right: none;
-            border-left: var(--currentUser-bd);
 
             &.small {
                 border-left: none;

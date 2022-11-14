@@ -77,7 +77,7 @@
 <style type="text/scss">
     .message-reaction {
         @include pop();
-        border-radius: $sp4;
+        border-radius: $sp3;
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         cursor: pointer;

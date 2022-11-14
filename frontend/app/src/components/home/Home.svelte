@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BackgroundLogo from "../BackgroundLogo.svelte";
     import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
@@ -24,17 +23,11 @@
         ThreadSelected,
         ThreadClosed,
         SendMessageFailed,
-        MessagesReadFromServer,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import {
-        dimensions,
-        mobileWidth,
-        screenWidth,
-        ScreenWidth,
-    } from "../../stores/screenDimensions";
+    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { pathParams } from "../../stores/routing";
     import type { RouteParams } from "../../stores/routing";
@@ -176,7 +169,7 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            if (!await createDirectChat(chatId)) {
+            if (!(await createDirectChat(chatId))) {
                 const code = qs.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -742,7 +735,9 @@
         currentChatDraftMessage.setTextContent(chatId, text);
     }
 
-    function groupCreated(ev: CustomEvent<{ chatId: string, isPublic: boolean; rules: GroupRules }>) {
+    function groupCreated(
+        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: GroupRules }>
+    ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
         if (isPublic) {
@@ -768,9 +763,7 @@
         chats: ChatSummary[],
         selectedChatId: string | undefined
     ): ChatSummary[] {
-        return chats.filter(
-            (c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId)
-        );
+        return chats.filter((c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId));
     }
 
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
@@ -789,16 +782,13 @@
     }
 
     async function createDirectChat(chatId: string): Promise<boolean> {
-        if (!await client.createDirectChat(chatId)) {
+        if (!(await client.createDirectChat(chatId))) {
             return false;
         }
 
         push(`/${chatId}`);
         return true;
     }
-
-    $: bgHeight = $dimensions.height * 0.9;
-    $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
 <main class:fullscreen={$fullScreen}>
@@ -935,14 +925,6 @@
     </Overlay>
 {/if}
 
-<BackgroundLogo
-    width={`${bgHeight}px`}
-    bottom={"unset"}
-    left={"0"}
-    opacity={"0.1"}
-    skew={"5deg"}
-    viewBox={`0 0 361 ${bgClip}`} />
-
 <style type="text/scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
@@ -953,7 +935,6 @@
         position: relative;
         width: 100%;
         display: flex;
-        gap: $sp3;
         margin: 0 auto;
 
         &:not(.fullscreen) {
