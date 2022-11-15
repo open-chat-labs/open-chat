@@ -94,9 +94,11 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 
 pub(crate) fn send_sns1_airdrop_message(runtime_state: &mut RuntimeState) {
     let text = "You are eligible for the upcoming SNS-1 airdrop!
-To take part you must send your NNS Dapp principal to the [SNS1_Bot](/#/pa5wn-hqaaa-aaaaf-az7rq-cai).
-To find your principal, go to https://nns.ic0.app, then click on the 'Neurons' tab and your \
-principal will be displayed."
+Here's how to take part -
+1. Sign in to https://nns.ic0.app/
+2. Click on 'Neurons'
+3. Copy your principal id
+4. Send your principal id to the [SNS1_Bot](/#/pa5wn-hqaaa-aaaaf-az7rq-cai)"
         .to_string();
 
     send_text_message(text, true, runtime_state);
