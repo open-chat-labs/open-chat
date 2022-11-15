@@ -27,6 +27,10 @@
         @include z-index("section-header");
         flex: 0 0 toRem(80);
 
+        @include mobile() {
+            padding: $sp3;
+        }
+
         &.entry {
             background-color: var(--entry-bg);
         }

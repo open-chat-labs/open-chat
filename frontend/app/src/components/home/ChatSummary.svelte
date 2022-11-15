@@ -396,6 +396,10 @@
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         user-select: none;
 
+        @include mobile() {
+            padding: $sp3;
+        }
+
         &:hover {
             background-color: var(--chatSummary-hv);
 

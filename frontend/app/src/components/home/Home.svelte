@@ -33,7 +33,6 @@
     import type { RouteParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import { fullScreen } from "../../stores/settings";
     import { closeNotificationsForChat, subscribeToNotifications } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "./rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -791,7 +790,7 @@
     }
 </script>
 
-<main class:fullscreen={$fullScreen}>
+<main>
     {#if showLeft}
         <LeftPanel
             {groupSearchResults}
@@ -936,13 +935,6 @@
         width: 100%;
         display: flex;
         margin: 0 auto;
-
-        &:not(.fullscreen) {
-            max-width: 1400px;
-            @include size-above(xl) {
-                max-width: 1792px;
-            }
-        }
     }
 
     .right-wrapper {

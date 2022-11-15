@@ -84,18 +84,6 @@ export interface Theme {
 
     panel: {
         bg: string;
-        left: {
-            bg: string;
-            xs: string;
-        };
-        right: {
-            bg: string;
-        };
-    };
-
-    currentUser: {
-        txt: string;
-        ic: string;
     };
 
     avatar: {

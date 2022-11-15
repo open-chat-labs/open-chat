@@ -2,8 +2,6 @@ import type { Theme } from "./themes";
 
 const darkBase = "#1B1C21";
 
-const dark30pc = `${darkBase}4d`;
-const dark50pc = `${darkBase}80`;
 const dark60pc = `${darkBase}99`;
 const darkBorder = "#32353F";
 
@@ -12,17 +10,12 @@ const hoveredChat = "#32353F40";
 
 const textBox = "#242834";
 
-const dark05 = "#191919";
-const dark10 = "#2b2b2b";
 const dark15 = "#383838";
-const dark20 = "#454545";
 const dark25 = "#525252";
 const dark45 = "#666666";
 const dark50 = "#777777";
 const dark55 = "#888888";
 const dark60 = "#ababab";
-
-const cardBg = dark10;
 
 const txtHigh = "#ffffff";
 const txtMed = "#b1b1b1";
@@ -81,7 +74,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         input: {
             // bg: "#555555",
-            bg: cardBg,
+            bg: textBox,
             txt: txtHigh,
         },
 
@@ -100,20 +93,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         panel: {
             ...defaultTheme.panel,
-            bg: dark05,
-            left: {
-                bg: dark30pc,
-                // bg: "rgba(0,0,0,0.1)",
-                xs: dark30pc,
-            },
-            right: {
-                bg: dark30pc,
-            },
-        },
-
-        currentUser: {
-            txt: txtHigh,
-            ic: dark60,
+            bg: darkBase,
         },
 
         avatar: {
@@ -154,7 +134,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: blueAccent,
             hv: "#053d5c",
             txt: txtHigh,
-            disabled: dark20,
+            disabled: textBox,
             spinner: dark60,
             "disabled-txt": "#999999",
             "disabled-bd": "#999999",

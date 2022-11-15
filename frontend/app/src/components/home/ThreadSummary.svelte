@@ -162,7 +162,7 @@
         .thread-legend {
             @include font(light, normal, fs-80);
             @include font(book, normal, fs-80);
-            color: var(--timeline-txt);
+            color: var(--txt);
             margin-left: $sp2;
         }
 
@@ -173,7 +173,7 @@
             border-radius: 50%;
             width: toRem(25);
             height: toRem(25);
-            color: var(--timeline-txt);
+            color: var(--txt);
             @include font-size(fs-60);
             background-color: rgba(0, 0, 0, 0.15);
         }

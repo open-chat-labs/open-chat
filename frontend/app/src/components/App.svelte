@@ -14,7 +14,7 @@
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import "../theme/themes";
+    import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
@@ -96,7 +96,17 @@
     }
 
     const allRoutes = routes(() => client.logout());
+
+    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    $: burstPath = $themeStore.name === "light" ? "../assets/burst_light" : "../assets/burst_dark";
+    $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
 </script>
+
+<div
+    class="burst-wrapper"
+    class:dark={$themeStore.name === "dark"}
+    class:light={$themeStore.name === "light"}
+    style={`background-image: url(${burstUrl})`} />
 
 <svelte:head>
     <meta name="viewport" content={viewPortContent} />
@@ -355,6 +365,25 @@
             .iti__flag {
                 background-image: url("assets/flags@2x.png") !important;
             }
+        }
+    }
+
+    .burst-wrapper {
+        overflow: hidden;
+        max-width: 100%;
+        width: 100%;
+        position: absolute;
+        height: 100vh;
+        min-height: 100%;
+
+        background-repeat: no-repeat;
+        background-size: 1400px;
+        background-origin: 50% 50%;
+        background-position: right 20% top toRem(150);
+
+        @include mobile() {
+            background-size: 800px;
+            background-position: left 0 top 0;
         }
     }
 </style>

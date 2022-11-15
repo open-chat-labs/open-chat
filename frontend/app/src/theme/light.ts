@@ -77,18 +77,6 @@ export function lightTheme(): Theme {
 
         panel: {
             bg: "linear-gradient(#22A7F2, #5f2583)",
-            left: {
-                bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
-                xs: "transparent",
-            },
-            right: {
-                bg: "linear-gradient(#22A7F2, #5f2583)",
-            },
-        },
-
-        currentUser: {
-            txt: "#191919",
-            ic: "#aaa",
         },
 
         avatar: {

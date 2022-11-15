@@ -15,11 +15,11 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { mobileWidth, ScreenHeight, screenHeight } from "../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat, PartialUserSummary } from "openchat-client";
+    import SectionHeader from "../SectionHeader.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -33,19 +33,17 @@
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         dispatch("userAvatarSelected", ev.detail);
     }
-
-    $: small = $mobileWidth || $screenHeight === ScreenHeight.Small;
 </script>
 
-<div class="current-user-box" class:small class:rtl={$rtlStore}>
-    <div class="current-user" class:rtl={$rtlStore} class:small>
+<SectionHeader>
+    <div class="current-user" class:rtl={$rtlStore}>
         <EditableAvatar
-            {small}
+            small
             image={client.userAvatarUrl(user)}
             on:imageSelected={userAvatarSelected} />
-        <h4 class="name" class:small>{user.username}</h4>
+        <h4 class="name">{user.username}</h4>
     </div>
-    <span class="menu" class:small>
+    <span class="menu">
         <MenuIcon>
             <span slot="icon">
                 <HoverIcon>
@@ -107,15 +105,15 @@
             </span>
         </MenuIcon>
     </span>
-</div>
+</SectionHeader>
 
 <style type="text/scss">
-    :global(.current-user.small .photo-section) {
+    :global(.current-user .photo-section) {
         flex: 0 0 45px;
         margin-right: $sp4;
     }
 
-    :global(.current-user.small.rtl .photo-section) {
+    :global(.current-user.rtl .photo-section) {
         margin-left: $sp4;
         margin-right: 0;
     }
@@ -124,63 +122,21 @@
         @include font(bold, normal, fs-110);
     }
 
-    .current-user-box {
-        padding: $sp4;
-        margin-bottom: $sp3;
-        position: relative;
-
-        &.small {
-            padding: $sp3 $sp3;
-            height: 60px;
-            border-right: none;
-        }
-
-        &.rtl {
-            border-right: none;
-
-            &.small {
-                border-left: none;
-            }
-        }
-    }
-
     .current-user {
         display: flex;
         flex: 1;
-        flex-direction: column;
-        justify-content: center;
         align-items: center;
 
-        &.small {
-            flex-direction: row;
-            justify-content: unset;
+        @include mobile() {
+            padding: 0 $sp3;
         }
     }
 
     .name {
         @include font(mediumBold, normal, fs-120);
-        color: var(--currentUser-txt);
-        margin-top: $sp4;
-        &.small {
-            margin: 0;
-        }
     }
 
     .menu {
-        position: absolute;
-        top: 0;
-        right: 1px;
-        margin-top: 2px;
-        flex: 0 0 40px;
         cursor: pointer;
-        padding: $sp3;
-        &.small {
-            padding: $sp3;
-        }
-    }
-
-    .current-user-box.rtl .menu {
-        right: unset;
-        left: 0;
     }
 </style>

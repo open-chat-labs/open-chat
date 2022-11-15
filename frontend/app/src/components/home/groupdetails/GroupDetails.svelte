@@ -547,14 +547,7 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3;
-        @include size-above(xl) {
-            padding: $sp3 0 0 0;
-        }
-
-        @include mobile() {
-            padding: 0 $sp3;
-        }
+        padding: $sp3 0 0 0;
     }
 
     h4,
