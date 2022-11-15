@@ -57,8 +57,12 @@ fn build_text(args: Args, runtime_state: &mut RuntimeState) -> String {
 You can update this by sending a message containing a new principal"
                         )
                     } else {
-                        "To participant in the SNS-1 airdrop you must send me a text message containing your NNS Dapp principal.
-You can find this by signing in to https://nns.ic0.app then clicking on the 'Neurons' tab.
+                        "To participate in the SNS-1 airdrop you must send me a message containing your NNS principal id.
+1. Sign in to https://nns.ic0.app/
+2. Click on 'Neurons'
+3. Copy your principal id
+4. Send it to me in a message
+
 For example '6hsbt-vqaaa-aaaaf-aaafq-cai'"
                             .to_string()
                     }
