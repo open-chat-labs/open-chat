@@ -53,7 +53,7 @@
 <TooltipWrapper {alignRight} bottomOffset={-4} centreChevron={true}>
     <div slot="target" on:click class:selected class="message-reaction">
         {reaction}
-        <span class="reaction-count">
+        <span class="reaction-count body_tiny">
             {userIds.size > 999 ? "999+" : userIds.size}
         </span>
     </div>
@@ -96,7 +96,6 @@
         }
 
         .reaction-count {
-            @include font(book, normal, fs-60);
             margin-left: $sp2;
         }
     }

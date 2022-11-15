@@ -44,7 +44,7 @@
     <div class="balance">
         <div class="amount" class:bold>{client.formatTokens(value, minDecimals)}</div>
         {#if label !== undefined}
-            <div class="label">{label}</div>
+            <div class="label body_small">{label}</div>
         {/if}
     </div>
     <div class="refresh" class:refreshing class:disabled on:click={refresh}>
@@ -93,9 +93,6 @@
             &.bold {
                 font-weight: 700;
             }
-        }
-        .label {
-            @include font(light, normal, fs-70);
         }
     }
 </style>

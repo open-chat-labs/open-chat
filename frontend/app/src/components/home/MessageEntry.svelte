@@ -123,7 +123,7 @@
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
-            : $_("enterMessage");
+            : $_("whatsOnYourMind");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -560,7 +560,7 @@
         padding: 6px $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
-        border-radius: 20px;
+        border-radius: $sp3;
         outline: none;
         border: 0;
         max-height: 100px;
@@ -571,7 +571,6 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         border: 1px solid transparent;
-        @include font(book, normal, fs-100);
 
         &:empty:before {
             content: attr(placeholder);
@@ -593,7 +592,7 @@
     .disabled,
     .preview {
         height: 42px;
-        color: var(--entry-input-txt);
+        color: var(--txt);
         @include font(book, normal, fs-100);
         display: flex;
         justify-content: center;

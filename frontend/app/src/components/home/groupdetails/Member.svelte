@@ -112,10 +112,10 @@
             size={AvatarSize.Small} />
     </span>
     <div class="details">
-        <h4 class:blocked={member.memberKind === "blocked_member"}>
+        <h4 class="label_one" class:blocked={member.memberKind === "blocked_member"}>
             {me ? $_("you") : member.username ?? $_("unknownUser")}
         </h4>
-        <span class="role">
+        <span class="role body_tiny">
             {#if member.role === "owner"}
                 ({$_("owner")})
             {:else if member.role === "admin"}
@@ -204,7 +204,6 @@
         align-items: center;
         color: var(--txt);
         padding: $sp4 $sp5;
-        margin: 0 $sp3 0 $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {
@@ -214,10 +213,6 @@
         &:not(.me):hover {
             background-color: var(--members-hv);
         }
-
-        @include size-above(xl) {
-            margin: 0;
-        }
     }
     .avatar {
         flex: 0 0 50px;
@@ -226,7 +221,6 @@
 
     .role {
         margin: 0 $sp3;
-        @include font(light, normal, fs-70);
     }
 
     .details {

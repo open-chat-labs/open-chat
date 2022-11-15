@@ -1,4 +1,4 @@
-@function toRem($value) {
+@function toRem($value: 16) {
     $remValue: math.div($value, 16) + rem;
     @return $remValue;
 }
@@ -410,4 +410,21 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     min-width: $sp5;
     padding: 0 $sp2;
     height: $sp5;
+}
+
+/** Use these directly for anything that doesn't match the standard typography types */
+@mixin roboto($font-weight: 400, $font-size: 16, $line-height: 28) {
+    font-family: "Roboto", sans-serif;
+    @include font($font-weight, $font-size, $line-height);
+}
+
+@mixin manrope($font-weight: 700, $font-size: 28, $line-height: 32) {
+    font-family: "Manrope", sans-serif;
+    @include font($font-weight, $font-size, $line-height);
+}
+
+@mixin font($font-weight, $font-size, $line-height) {
+    font-weight: $font-weight;
+    font-size: toRem($font-size);
+    line-height: toRem($line-height);
 }

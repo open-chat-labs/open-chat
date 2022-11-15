@@ -32,6 +32,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         bg: darkBase,
         txt: txtHigh,
+        "txt-light": txtMed,
         bd: darkBorder,
         error: "#CF6679",
         accent: "#e87fb4",
@@ -94,6 +95,15 @@ export function darkTheme(defaultTheme: Theme): Theme {
         panel: {
             ...defaultTheme.panel,
             bg: darkBase,
+
+            left: {
+                bg: "transparent",
+            },
+
+            right: {
+                bg: "transparent",
+                modal: darkBase,
+            },
         },
 
         avatar: {
@@ -126,7 +136,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             txt: txtMed,
             "disabled-txt": txtLow,
             hv: hoveredChat,
-            sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
+            sh: "none",
             "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
         },
 
@@ -169,9 +179,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
             msg: {
                 bg: textBox,
-                txt: txtHigh,
                 hv: dark15,
                 muted: txtLow,
+                txt: txtHigh,
 
                 me: {
                     bg: primary,

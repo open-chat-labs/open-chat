@@ -47,6 +47,7 @@
         &.left {
             position: relative;
             border-right: 1px solid var(--bd);
+            background: var(--panel-left-bg);
 
             @include mobile() {
                 width: 100%;
@@ -60,16 +61,17 @@
             // background: var(--panel-right-bg);
             padding: 0px;
             border-left: 1px solid var(--bd);
+            background: var(--panel-right-bg);
 
             &.modal.right {
-                background: var(--panel-bg);
+                background: var(--panel-right-modal);
                 @include fullHeight();
                 max-width: 500px;
                 min-width: 500px;
             }
 
             @include mobile() {
-                background: var(--panel-bg);
+                background: var(--panel-right-modal);
                 width: 100%;
                 height: 100%;
                 min-width: 0;

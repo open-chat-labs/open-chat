@@ -221,9 +221,9 @@
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
-                <h4 class="chat-name">{chat.name}</h4>
+                <h4 class="chat-name label_one">{chat.name}</h4>
             </div>
-            <div class="chat-msg">
+            <div class="chat-msg body_small">
                 {#if chat.typing !== undefined}
                     {chat.typing} <Typing />
                 {:else}
@@ -233,7 +233,7 @@
         </div>
         <!-- this date formatting is OK for now but we might want to use something like this:
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-        <div class:rtl={$rtlStore} class="chat-date">
+        <div class:rtl={$rtlStore} class="chat-date body_tiny">
             {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
         {#if !preview}
@@ -477,8 +477,8 @@
             margin-bottom: $sp1;
 
             .chat-name {
-                @include font(book, normal, fs-100);
                 color: var(--chatSummary-txt1);
+
                 @include ellipsis();
                 flex: auto;
             }
@@ -486,13 +486,11 @@
 
         .chat-msg {
             color: var(--chatSummary-txt2);
-            @include font(book, normal, fs-80);
         }
     }
 
     .chat-date {
         position: absolute;
-        @include font(book, normal, fs-60);
         color: var(--chatSummary-txt2);
         top: $sp3;
         &:not(.rtl) {

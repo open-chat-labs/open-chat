@@ -441,7 +441,7 @@
             {#if first && !me && groupChat && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                        <h4 class="username label_one" class:fill class:crypto>{username}</h4>
                     </Link>
                     {#if senderTyping}
                         <span class="typing">
@@ -867,7 +867,6 @@
         padding: toRem(8) toRem(12) toRem(8) toRem(12);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        @include font(book, normal, fs-100);
         border-radius: $radius;
         max-width: 80%;
         min-width: 90px;
@@ -1013,7 +1012,6 @@
 
     .username {
         margin: 0;
-        @include font(bold, normal, fs-100);
         color: #fff;
     }
 

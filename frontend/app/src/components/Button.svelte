@@ -69,7 +69,6 @@
         &.secondary {
             background: var(--button-txt);
             color: var(--button-bg);
-            border: 1px solid var(--button-bg);
         }
 
         &.fill {

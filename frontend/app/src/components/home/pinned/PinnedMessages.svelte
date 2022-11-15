@@ -35,10 +35,7 @@
         if (pinned.size > 0) {
             messages = { kind: "loading" };
             client
-                .getGroupMessagesByMessageIndex(
-                    chatId,
-                    pinned,
-                )
+                .getGroupMessagesByMessageIndex(chatId, pinned)
                 .then((resp) => {
                     if (resp === "events_failed") {
                         messages = { kind: "error", error: "Unable to load pinned messages" };

@@ -61,7 +61,7 @@
                 </div>
             {/if}
         </div>
-        <div class="thread-legend">
+        <div class="thread-legend body_small">
             <span
                 >{$_("thread.nreplies", {
                     values: {
@@ -144,7 +144,7 @@
         border-radius: $sp3;
         cursor: pointer;
         transition: background 200ms ease-in-out;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--bd);
 
         &:not(.selected):hover {
             background: rgba(255, 255, 255, 0.1);
@@ -160,8 +160,6 @@
         }
 
         .thread-legend {
-            @include font(light, normal, fs-80);
-            @include font(book, normal, fs-80);
             color: var(--txt);
             margin-left: $sp2;
         }

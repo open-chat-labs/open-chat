@@ -152,7 +152,7 @@
         position: relative;
         padding: 6px $sp3 6px $sp3;
         background-color: var(--currentChat-msg-bg);
-        color: var(--currentChat-msg-txt);
+        color: var(--txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
         overflow: hidden;

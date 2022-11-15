@@ -15,9 +15,9 @@
 </script>
 
 <div class="container">
-    <div>{$_("group.welcome")}<span class="name">{group.name}</span></div>
+    <h4 class="welcome">{$_("group.welcome")}{group.name}</h4>
     {#if group.description.length > 0}
-        <div>
+        <div class="body_small">
             {group.description}
         </div>
     {/if}
@@ -27,13 +27,13 @@
             status={UserStatus.None}
             size={AvatarSize.ExtraLarge} />
     </div>
-    <div>
+    <div class="body_small">
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
             values: { number: group.memberCount },
         })}
     </div>
     {#if noVisibleEvents}
-        <div>{$_("group.historyPrivateMessage")}</div>
+        <div class="body_small">{$_("group.historyPrivateMessage")}</div>
     {/if}
 </div>
 
@@ -50,11 +50,11 @@
         max-width: 480px;
     }
 
-    .pop {
-        @include pop(400ms);
+    .welcome {
+        color: var(--txt);
     }
 
-    .name {
-        font-weight: bold;
+    .pop {
+        @include pop(400ms);
     }
 </style>

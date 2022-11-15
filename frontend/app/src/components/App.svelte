@@ -330,6 +330,11 @@
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
                 Cantarell, "Helvetica Neue", sans-serif;
+            font-family: "Roboto", sans-serif;
+            font-weight: 400;
+            font-size: toRem(16);
+            line-height: toRem(25);
+
             display: flex;
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
@@ -346,6 +351,50 @@
                 transition: none;
                 padding: 0;
             }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .label_one {
+            font-family: "Manrope", sans-serif;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: toRem(50);
+            line-height: toRem(68);
+        }
+
+        h2 {
+            font-size: toRem(37);
+            line-height: toRem(51);
+        }
+
+        h3 {
+            font-size: toRem(28);
+            line-height: toRem(38);
+        }
+
+        h4 {
+            font-size: toRem(21);
+            line-height: toRem(29);
+        }
+
+        .label_one {
+            font-size: toRem(16);
+            line-height: toRem(22);
+        }
+
+        .body_small {
+            font-size: toRem(14);
+            line-height: toRem(20);
+        }
+
+        .body_tiny {
+            font-size: toRem(12);
+            line-height: toRem(14);
         }
 
         textarea {

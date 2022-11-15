@@ -127,7 +127,6 @@
         flex: 1;
 
         .title {
-            @include font(book, normal, fs-120);
             @include ellipsis();
             margin-bottom: $sp1;
         }

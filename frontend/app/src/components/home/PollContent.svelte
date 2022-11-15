@@ -16,7 +16,7 @@
     export let preview: boolean;
     export let senderId: string;
 
-    $: txtColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
+    $: txtColor = me ? "#ffffff" : "var(--txt)";
 
     $: date = content.config.endDate ? new Date(Number(content.config.endDate)) : undefined;
 

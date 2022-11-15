@@ -9,8 +9,6 @@
     const dispatch = createEventDispatcher();
     export let headerText: string;
     export let open = true;
-    export let bordered = false;
-    export let transparent = false;
 
     function toggle() {
         open = !open;
@@ -19,10 +17,10 @@
     }
 </script>
 
-<div class="card" class:bordered class:transparent>
-    <div class="header" class:open on:click={toggle}>
+<div class="card">
+    <div class="header label_one" class:open on:click={toggle}>
         <slot name="titleSlot">
-            <h4>{headerText}</h4>
+            <div class="label_one">{headerText}</div>
         </slot>
 
         <div class="arrow" class:rtl={$rtlStore}>
@@ -50,7 +48,6 @@
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
-        @include font(mediumBold, normal, fs-100);
 
         @include mobile() {
             padding: $sp3;

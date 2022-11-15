@@ -87,21 +87,16 @@
 </script>
 
 <div class="wrapper">
-    <CollapsibleCard
-        transparent={true}
-        bordered={$mobileWidth}
-        on:toggle={() => (open = !open)}
-        {open}
-        headerText={$_("userInfoHeader")}>
+    <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
         <div slot="titleSlot" class="header">
             <div class="avatar">
                 <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
             </div>
             <div class="details">
-                <h4 class="title">
+                <h4 class="title label_one">
                     {chat.kind === "group_chat" && chat.name}
                 </h4>
-                <div class="root-msg">
+                <div class="root-msg body_small">
                     <Markdown
                         text={client.getContentAsText($_, thread.rootMessage.event.content)}
                         oneLine={true}
@@ -254,14 +249,12 @@
         overflow: hidden;
 
         .title {
-            @include font(book, normal, fs-100);
             color: var(--chatSummary-txt1);
             @include ellipsis();
         }
 
         .root-msg {
             color: var(--chatSummary-txt2);
-            @include font(book, normal, fs-80);
         }
     }
     .unread {

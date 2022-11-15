@@ -36,7 +36,7 @@
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
-    <h4 class="username">
+    <h4 class="username label_one">
         {username}
     </h4>
     <ChatMessageContent
@@ -85,7 +85,8 @@
         }
 
         &.me {
-            color: var(--currentChat-msg-me-txt);
+            background-color: var(--currentChat-msg-me-bg);
+            color: #ffffff;
         }
 
         &.crypto {
@@ -102,6 +103,5 @@
     .username {
         margin: 0;
         margin-bottom: $sp2;
-        @include font(bold, normal, fs-100);
     }
 </style>

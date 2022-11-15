@@ -61,7 +61,7 @@
         {value}
         class={`textbox ${fontSize} ${align}`} />
     {#if countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
-        <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
+        <div class:near-max={remaining <= 5} class="countdown body_tiny">{remaining}</div>
     {/if}
     <slot />
 </div>
@@ -80,7 +80,6 @@
         position: absolute;
         right: 10px;
         top: 11px;
-        @include font(light, normal, fs-80);
 
         &.near-max {
             color: darkred;

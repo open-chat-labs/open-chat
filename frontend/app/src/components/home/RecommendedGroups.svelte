@@ -64,13 +64,13 @@
                     </HoverIcon>
                 </div>
                 <div>
-                    <h1 class="title">{$_("hotGroups")}</h1>
-                    <p class="subtitle">{$_("selectAGroup")}</p>
+                    <h2 class="title">{$_("hotGroups")}</h2>
+                    <p class="subtitle label_one">{$_("selectAGroup")}</p>
                 </div>
             </SectionHeader>
         {:else}
-            <h1 class="title">{$_("hotGroups")}</h1>
-            <p class="subtitle">{$_("selectAGroup")}</p>
+            <h2 class="title">{$_("hotGroups")}</h2>
+            <p class="subtitle label_one">{$_("selectAGroup")}</p>
         {/if}
 
         {#each groups as group, i (group.chatId)}
@@ -133,8 +133,8 @@
             </div>
         {/each}
     {:else}
-        <h1 class="title">{$_("noHotGroups")}</h1>
-        <p class="subtitle">{$_("checkBackLater")}</p>
+        <h2 class="title">{$_("noHotGroups")}</h2>
+        <p class="subtitle label_one">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
             <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
@@ -151,18 +151,15 @@
         margin-bottom: $sp6;
         @include mobile() {
             margin-bottom: 0;
-            @include font(book, normal, fs-80);
             @include ellipsis();
         }
     }
 
     .title {
-        @include font(bold, normal, fs-180);
         margin-bottom: $sp3;
 
         @include mobile() {
             margin-bottom: 0;
-            @include font(book, normal, fs-120);
             @include ellipsis();
         }
     }
@@ -192,7 +189,6 @@
 
             .title {
                 @include mobile() {
-                    @include font(book, normal, fs-160);
                     @include ellipsis();
                 }
             }

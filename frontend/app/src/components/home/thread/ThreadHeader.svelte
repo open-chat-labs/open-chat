@@ -99,10 +99,10 @@
             size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
-        <div class="chat-name" title={chat.title}>
+        <div class="chat-name label_one" title={chat.title}>
             {chat.title}
         </div>
-        <div class="chat-subtext" title={chat.subtext}>
+        <div class="chat-subtext body_small" title={chat.subtext}>
             {#if chat.typing}
                 {chat.subtext} <Typing />
             {:else}
@@ -133,13 +133,11 @@
 
 <style type="text/scss">
     .chat-name {
-        @include font(book, normal, fs-120);
         @include ellipsis();
         margin-bottom: $sp1;
     }
 
     .chat-subtext {
-        @include font(book, normal, fs-80);
         @include ellipsis();
         color: var(--link-underline);
     }

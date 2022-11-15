@@ -26,7 +26,7 @@
 <div role="button" class="threads" class:selected on:click={onClick}>
     <div class="icon">🧵</div>
     <div class="details">
-        <h4 class="title" class:unread={numStaleThreads > 0}>
+        <h4 class="title label_one" class:unread={numStaleThreads > 0}>
             {$_("thread.previewTitle")}
         </h4>
     </div>
@@ -50,13 +50,17 @@
         align-items: center;
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
-        padding: $sp3;
+        padding: $sp4 $sp5;
         margin-bottom: 0;
         gap: 12px;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         border-bottom: var(--chatSummary-bd);
         user-select: none;
+
+        @include mobile() {
+            padding: $sp3;
+        }
 
         &:hover {
             background-color: var(--chatSummary-hv);
@@ -82,13 +86,8 @@
         overflow: hidden;
 
         .title {
-            @include font(book, normal, fs-100);
             color: var(--chatSummary-txt1);
             @include ellipsis();
-
-            &.unread {
-                @include font(bold, normal, fs-100);
-            }
         }
     }
 

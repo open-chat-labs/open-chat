@@ -440,13 +440,13 @@
                 top: 0;
                 bottom: 0;
                 width: 1px;
-                background-color: var(--currentChat-msg-txt);
+                background-color: var(--txt);
             }
 
             .icon {
                 position: absolute;
                 top: toRem(-16);
-                color: var(--currentChat-msg-txt);
+                color: var(--txt);
 
                 &.solid {
                     width: 1em;

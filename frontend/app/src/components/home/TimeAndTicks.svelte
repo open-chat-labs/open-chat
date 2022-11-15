@@ -22,10 +22,10 @@
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
 
     let iconColor = "#ffffff";
-    let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--currentChat-msg-txt)";
+    let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
-<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks body_tiny" class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -55,7 +55,6 @@
     }
 
     .time-and-ticks {
-        @include font(light, normal, fs-50);
         display: flex;
         align-items: center;
         float: right;

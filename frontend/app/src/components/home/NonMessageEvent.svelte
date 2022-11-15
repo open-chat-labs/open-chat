@@ -12,7 +12,7 @@
     $: date = new Date(Number(timestamp));
 </script>
 
-<div class="timeline-event">
+<div class="timeline-event body_small">
     <p>{text}</p>
     <p class="timestamp">
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
@@ -26,7 +26,6 @@
         margin: $sp4 auto;
         text-align: center;
         color: var(--timeline-txt);
-        @include font(book, normal, fs-70);
     }
     .timestamp {
         @include font(light, normal, fs-70);

@@ -26,12 +26,11 @@
     }
 </script>
 
-<ModalContent {fadeDuration} {fadeDelay} large on:close>
+<ModalContent fill {fadeDuration} {fadeDelay} large on:close>
     <div slot="header">{$_("faq.header")}</div>
     <div class="faq-body" slot="body">
         {#each allQuestions as q}
             <CollapsibleCard
-                bordered={true}
                 open={question === q}
                 on:opened={() => (question = q)}
                 headerText={$_(`faq.${q}_q`)}>
@@ -39,7 +38,7 @@
                     <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
                         <ContentCopy size={"1em"} />
                     </div>
-                    <h4>{$_(`faq.${q}_q`)}</h4>
+                    <h4 class="label_one">{$_(`faq.${q}_q`)}</h4>
                 </div>
                 <Markdown text={$_(`faq.${q}_a`)} />
             </CollapsibleCard>
@@ -60,7 +59,6 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        @include font(mediumBold, normal, fs-100);
     }
 
     .copy {

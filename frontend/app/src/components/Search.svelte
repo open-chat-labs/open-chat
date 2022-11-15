@@ -61,6 +61,7 @@
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
+        border-radius: $sp2;
 
         @include mobile() {
             margin: 0 $sp3;

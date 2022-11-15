@@ -70,9 +70,9 @@
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
-            <h3>
+            <h4>
                 <slot name="header" />
-            </h3>
+            </h4>
         </div>
     {/if}
     <div class="body" class:fill>
@@ -120,7 +120,6 @@
         }
     }
     .header {
-        @include font(bold, normal, fs-140);
         padding: $sp4;
         border-bottom: 1px solid var(--bd);
         @include mobile() {

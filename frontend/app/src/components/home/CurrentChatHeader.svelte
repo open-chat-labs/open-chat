@@ -170,7 +170,7 @@
             size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
-        <div class="chat-name" title={chat.name}>
+        <div class="chat-name label_one" title={chat.name}>
             {#if isGroup && !preview}
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
@@ -183,7 +183,7 @@
                 {chat.name}
             {/if}
         </div>
-        <div class="chat-subtext" title={chat.subtext}>
+        <div class="chat-subtext body_small" title={chat.subtext}>
             {#if blocked}
                 {$_("blocked")}
             {:else if preview}
@@ -339,13 +339,11 @@
 
 <style type="text/scss">
     .chat-name {
-        @include font(book, normal, fs-120);
         @include ellipsis();
         margin-bottom: $sp1;
     }
 
     .chat-subtext {
-        @include font(book, normal, fs-80);
         @include ellipsis();
         color: var(--chatSummary-txt2);
     }

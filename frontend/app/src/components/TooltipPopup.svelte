@@ -36,8 +36,7 @@
     .tooltip-popup {
         background-color: var(--menu-bg);
         border: 1px solid var(--bd);
-        box-shadow: var(--menu-sh);
-        color: var(--menu-txt);
+        color: var(--txt);
 
         display: flex;
         flex-direction: column;

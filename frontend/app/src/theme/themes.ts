@@ -19,6 +19,7 @@ export interface Theme {
 
     bg: string;
     txt: string;
+    "txt-light": string;
     bd: string;
 
     error: string;
@@ -84,6 +85,16 @@ export interface Theme {
 
     panel: {
         bg: string;
+
+        left: {
+            bg: string;
+        };
+
+        right: {
+            bg: string;
+
+            modal: string;
+        };
     };
 
     avatar: {
@@ -158,9 +169,9 @@ export interface Theme {
         };
         msg: {
             bg: string;
-            txt: string;
             hv: string;
             muted: string;
+            txt: string;
 
             me: {
                 bg: string;

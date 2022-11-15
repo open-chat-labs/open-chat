@@ -105,6 +105,6 @@
     }
 
     .tooltip-body {
-        color: black;
+        color: var(--txt);
     }
 </style>

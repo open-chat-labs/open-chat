@@ -31,7 +31,7 @@
         border-radius: $sp4;
         padding: $sp4;
         background-color: var(--currentChat-msg-bg);
-        color: var(--currentChat-msg-txt);
+        color: var(--txt);
         cursor: pointer;
         box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
         border: 2px solid var(--currentChat-msg-reply-accent);

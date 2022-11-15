@@ -49,7 +49,7 @@
         class:me
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
-        <h4 class="username" class:text-content={isTextContent}>
+        <h4 class="username label_one" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
@@ -84,16 +84,18 @@
     }
 
     .reply-wrapper {
-        border-radius: $sp4;
+        border-radius: $sp2;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
+        border: 1px solid var(--bd);
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
 
         &.me {
-            color: var(--currentChat-msg-me-txt);
+            background-color: var(--currentChat-msg-me-bg);
+            color: #ffffff;
         }
 
         &.crypto {
@@ -111,7 +113,6 @@
         margin: 0;
         margin-bottom: $sp2;
         display: inline;
-        @include font(bold, normal, fs-100);
 
         &.text-content {
             display: block;
