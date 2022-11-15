@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const package = require("./package.json");
 
 module.exports = {
     entry: {
