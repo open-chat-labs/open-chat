@@ -388,7 +388,7 @@
                     fill
                     disabled={!canEdit || !infoDirty || saving}
                     loading={saving}>{$_("update")}</Button>
-            {:else if originalGroup.description !== ""}
+            {:else if originalGroup.description?.length > 0}
                 <fieldset>
                     <legend>
                         <Legend>{$_("groupDesc")}</Legend>
