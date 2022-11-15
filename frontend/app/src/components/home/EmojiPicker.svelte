@@ -31,6 +31,12 @@
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
 
+        --border-size: 0;
+        --border-color: var(--bd);
+        --input-font-color: var(--txt);
+        --input-border-color: var(--bd);
+        --input-padding: 8px 16px;
+
         &.fullscreen {
             --num-columns: 24;
         }

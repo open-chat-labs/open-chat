@@ -12,7 +12,6 @@
         position: absolute;
         background-color: var(--menu-bg);
         @include z-index("popup-menu");
-        border: 1px solid var(--menu-bd);
-        box-shadow: var(--menu-sh);
+        // box-shadow: var(--menu-sh);
     }
 </style>

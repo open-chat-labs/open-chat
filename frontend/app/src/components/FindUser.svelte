@@ -115,7 +115,7 @@
         display: flex;
         align-items: center;
         position: relative;
-        border: 1px solid var(--chatSearch-bd);
+        border: 1px solid var(--bd);
 
         &.add {
             margin: 0 0 $sp3 0;

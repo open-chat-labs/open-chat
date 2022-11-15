@@ -89,20 +89,10 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         cursor: pointer;
-        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-        border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
-        margin-left: 7px;
         overflow: hidden;
 
-        &.rtl {
-            box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-            margin-left: 0;
-            margin-right: 7px;
-        }
-
         &.me {
-            background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
         }
 

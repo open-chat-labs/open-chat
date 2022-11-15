@@ -5,6 +5,7 @@ const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
 const disabledTxt = "#999999";
+const primary = "#23a2ee";
 
 export function lightTheme(): Theme {
     return {
@@ -13,11 +14,13 @@ export function lightTheme(): Theme {
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         txt: "#191919",
+        bd: "#dddddd",
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
         disabledTxt: disabledTxt,
         placeholder: "#aaaaaa",
+        primary,
 
         notificationBar: {
             bg: orangeAccent,
@@ -49,8 +52,6 @@ export function lightTheme(): Theme {
         section: {
             bg: "white",
             txt: "#191919",
-            bd: "transparent",
-            "bd-start": "transparent",
         },
 
         "sub-section": {
@@ -60,7 +61,6 @@ export function lightTheme(): Theme {
         input: {
             bg: "#ffffff",
             txt: "#191919",
-            bd: "#dddddd",
         },
 
         members: {
@@ -69,7 +69,6 @@ export function lightTheme(): Theme {
 
         entry: {
             bg: "#efefef",
-            bd: "#dddddd",
             input: {
                 bg: "#ffffff",
                 txt: "#191919",
@@ -78,7 +77,6 @@ export function lightTheme(): Theme {
 
         panel: {
             bg: "linear-gradient(#22A7F2, #5f2583)",
-            bd: lightBorder,
             left: {
                 bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
                 xs: "transparent",
@@ -95,14 +93,12 @@ export function lightTheme(): Theme {
 
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
-            bd: "#cccccc",
             sh: "2px 2px 4px #e2e2e2",
         },
 
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            bd: "transparent",
 
             section: {
                 txt: "#ffffff",
@@ -124,17 +120,15 @@ export function lightTheme(): Theme {
             txt: "#191919",
             "disabled-txt": disabledTxt,
             // bd: "#cccccc",
-            bd: "rgba(0,0,0,0.05)",
             hv: "#efefef",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
         },
 
         button: {
-            bg: blueAccent,
+            bg: primary,
             hv: "#52baf5",
             txt: "#ffffff",
-            bd: "transparent",
             disabled: "#cccccc",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
@@ -146,20 +140,7 @@ export function lightTheme(): Theme {
         },
 
         modal: {
-            bg: "#ffffff",
-            txt: "#191919",
-            sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
             filter: "blur(5px)",
-            header: {
-                bg: "#ffffff",
-                txt: "#191919",
-                bd: "#dfdfdf",
-            },
-            footer: {
-                bg: "#efefef",
-                txt: "#191919",
-                bd: "#dddddd",
-            },
         },
 
         modalPage: {
@@ -167,7 +148,6 @@ export function lightTheme(): Theme {
             txt: "#191919",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
             filter: "blur(10px)",
-            bd: "1px inset rgba(255, 255, 255, 0.3)",
             "txt-sh": "1px 1px rgba(255, 255, 255, 0.2)",
         },
 
@@ -175,7 +155,6 @@ export function lightTheme(): Theme {
             header: {
                 // bg: "#efefef",
                 txt: "#191919",
-                bd: "transparent",
             },
 
             date: {
@@ -192,10 +171,9 @@ export function lightTheme(): Theme {
                 txt: "#191919",
                 hv: "#efefef",
                 muted: "#999999",
-                "reply-accent": blueAccent,
 
                 me: {
-                    hv: "#EA4091",
+                    bg: primary,
                     muted: "#cccccc",
                 },
             },
@@ -232,24 +210,6 @@ export function lightTheme(): Theme {
 
         recommended: {
             bg: "#ffffff",
-        },
-
-        profile: {
-            section: {
-                bd: "none",
-                bg: "#fff",
-                xs: {
-                    bd: "1px solid #eaeaea",
-                },
-            },
-        },
-
-        collapsible: {
-            header: {
-                bg: "#f6f6f6",
-                bd: "1px solid #eaeaea",
-            },
-            bg: "#fff",
         },
 
         toggle: {

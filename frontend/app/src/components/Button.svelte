@@ -30,7 +30,7 @@
         color: var(--button-txt);
         padding: $sp3 $sp6;
         cursor: pointer;
-        border: 1px solid var(--button-bd);
+        border: none;
         min-height: 45px;
         min-width: 150px;
         @include font(book, normal, fs-100);
@@ -64,7 +64,6 @@
             background: var(--button-disabled);
             color: var(--button-disabled-txt);
             cursor: not-allowed;
-            border: 1px solid var(--button-disabled-bd);
         }
 
         &.secondary {

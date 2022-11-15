@@ -1,11 +1,10 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
-    import { iconSize } from "../stores/iconSize";
     import { slide } from "svelte/transition";
     import { expoInOut } from "svelte/easing";
 
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { createEventDispatcher } from "svelte";
+    import Arrow from "./Arrow.svelte";
 
     const dispatch = createEventDispatcher();
     export let headerText: string;
@@ -26,8 +25,11 @@
             <h4>{headerText}</h4>
         </slot>
 
-        <div class="arrow" class:rtl={$rtlStore} class:open>
-            <ChevronDown viewBox="0 -3 24 24" size={$iconSize} color={"var(--icon-txt)"} />
+        <div class="arrow" class:rtl={$rtlStore}>
+            <Arrow
+                size={16}
+                rotate={open ? -45 : 45}
+                color={open ? "var(--primary)" : "var(--txt)"} />
         </div>
     </div>
     {#if open}
@@ -39,15 +41,7 @@
 
 <style type="text/scss">
     .card {
-        background-color: var(--collapsible-bg);
-
-        &.transparent {
-            background-color: inherit;
-        }
-
-        &.bordered {
-            border: var(--collapsible-header-bd);
-        }
+        border-bottom: 1px solid var(--bd);
     }
 
     .header {
@@ -57,12 +51,6 @@
         justify-content: space-between;
         align-items: center;
         @include font(mediumBold, normal, fs-100);
-        background-color: var(--collapsible-header-bg);
-
-        &.open {
-            // border-bottom: 1px solid #ddd;
-            border-bottom: var(--collapsible-header-bd);
-        }
 
         @include mobile() {
             padding: $sp3;
@@ -71,12 +59,8 @@
 
     .arrow {
         flex: 0 0 20px;
-        transition: transform 200ms ease-in-out;
-
-        &.open {
-            transform: rotate(180deg);
-            transform-origin: 50%;
-        }
+        justify-self: flex-end;
+        text-align: right;
     }
 
     .body {

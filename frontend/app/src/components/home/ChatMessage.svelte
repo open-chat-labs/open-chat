@@ -919,11 +919,8 @@
         }
 
         &.me {
-            background-color: #23a2ee;
+            background-color: var(--currentChat-msg-me-bg);
             color: #ffffff;
-
-            // background-color: var(--currentChat-msg-me-bg);
-            // color: var(--currentChat-msg-me-txt);
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;

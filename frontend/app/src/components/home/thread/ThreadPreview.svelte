@@ -215,7 +215,7 @@
 
     :global(.threads .card.bordered) {
         border: none;
-        border-top: var(--collapsible-header-bd);
+        border-top: 1px solid var(--bd);
     }
 
     .wrapper {

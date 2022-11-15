@@ -195,7 +195,7 @@
     .sub-section {
         padding: $sp4;
         background-color: var(--sub-section-bg);
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         border-radius: $sp2;
         margin-bottom: $sp3;
         &:last-child {

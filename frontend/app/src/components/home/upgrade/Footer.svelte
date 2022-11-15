@@ -13,8 +13,8 @@
 <style type="text/scss">
     .footer {
         padding: $sp3;
-        background-color: var(--modal-footer-bg);
-        border-top: 1px solid var(--modal-footer-bd);
+        background-color: var(--bg);
+        border-top: 1px solid var(--bd);
         position: relative;
     }
 </style>

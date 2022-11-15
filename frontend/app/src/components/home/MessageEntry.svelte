@@ -545,7 +545,7 @@
         align-items: center;
         background-color: var(--entry-bg);
         padding: $sp3;
-        border-top: 1px solid var(--entry-bd);
+        border-top: 1px solid var(--bd);
 
         &.editing {
             background-color: var(--button-bg);

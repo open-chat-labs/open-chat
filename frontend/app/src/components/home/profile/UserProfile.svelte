@@ -513,7 +513,7 @@
     .storage,
     .advanced {
         margin-bottom: $sp3;
-        border-bottom: var(--profile-section-bd);
+        border-bottom: var(--bd);
         color: var(--section-txt);
     }
 

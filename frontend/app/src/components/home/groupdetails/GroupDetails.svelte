@@ -528,7 +528,7 @@
     }
 
     fieldset {
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         border-radius: $sp2;
         padding: $sp3;
         @include font(light, normal, fs-100);
@@ -587,7 +587,7 @@
         padding: $sp4;
         // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         border-radius: $sp2;
     }
 

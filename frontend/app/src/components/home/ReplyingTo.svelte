@@ -64,14 +64,11 @@
     .replying {
         @include font(book, normal, fs-100);
         margin-top: $sp4;
-        margin-left: 7px;
         min-width: 120px;
         border-radius: $sp4;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-        border: 2px solid var(--currentChat-msg-reply-accent);
         position: relative;
 
         .close-icon {
@@ -81,10 +78,6 @@
         }
 
         &.rtl {
-            box-shadow: 7px 0px 0px 0px var(--button-bg);
-            margin-left: 0;
-            margin-right: 7px;
-
             .close-icon {
                 right: unset;
                 left: $sp2;
@@ -92,7 +85,6 @@
         }
 
         &.me {
-            background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
         }
 

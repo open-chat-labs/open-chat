@@ -172,7 +172,7 @@
 
         hr {
             flex: auto;
-            border-top: 1px solid var(--modal-header-bd);
+            border-top: 1px solid var(--bd);
         }
     }
 

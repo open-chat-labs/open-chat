@@ -22,7 +22,7 @@
         height: toRem(80);
         margin-bottom: $sp3;
         background-color: var(--section-bg);
-        border-bottom: 1px solid var(--section-bd);
+        border-bottom: 1px solid var(--bd);
         color: var(--section-txt);
         @include z-index("section-header");
         flex: 0 0 toRem(80);
@@ -33,16 +33,10 @@
 
         &.flush {
             margin-bottom: 0;
-            // border-left: 1px solid var(--section-bd-start);
         }
 
         &.flush.rtl {
             border-left: inherit;
-            // border-right: 1px solid var(--section-bd-start);
-        }
-
-        &.shadow {
-            // box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
         }
 
         &.gap {

@@ -59,7 +59,7 @@
     }
     .proposal-filters {
         color: var(--section-txt);
-        background-color: var(--collapsible-bg);
+        background-color: var(--bg);
         padding: $sp4;
         padding-bottom: 0;
 
