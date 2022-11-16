@@ -2480,8 +2480,9 @@ export class OpenChat extends EventTarget {
             .upgradeStorage(newLimitBytes)
             .then((resp) => {
                 const success = resp.kind === "success" || resp.kind === "success_no_change";
-                if (!success) {
+                if (success) {
                     this.updateStorageLimit(newLimitBytes);
+                } else {
                     this._logger.error("Unable to upgrade storage", resp);
                 }
                 return success;
