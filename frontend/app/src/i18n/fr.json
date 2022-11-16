@@ -453,7 +453,7 @@
         "transfer": "Transfert {token}",
         "makeDeposit": "Veuillez effectuer un dépôt sur le compte ci-dessus et actualiser votre solde.",
         "zeroBalance": "Vous n'avez pas d'{token} 😭.",
-        "confirmedSent": "{sender} a envoyé {amount} {token} à {receiver}",
+        "confirmedSent": "{sender} avez envoyé {amount} {token} à {receiver}",
         "pendingSent": "{sender} envoie {amount} {token} à {receiver}",
         "pendingSentByYou": "vous envoyez {amount} {token} à {receiver}",
         "receiver": "Receveur",
@@ -615,6 +615,11 @@
     "advanced": "Avancé",
     "features": "Fonctionnalités",
     "architecture": "Architecture",
+<<<<<<< HEAD
     "whitepaper": "Papier blanc",
     "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?"
 }
+=======
+    "whitepaper": "Papier blanc"
+}
+>>>>>>> master

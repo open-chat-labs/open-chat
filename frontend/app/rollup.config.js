@@ -167,6 +167,10 @@ export default {
                 dev: !production,
                 // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
             },
+            onwarn: (warning, handler) => {
+                if (warning.code.startsWith("a11y-")) return;
+                handler(warning);
+            },
         }),
 
         postcss({ extract: true }),

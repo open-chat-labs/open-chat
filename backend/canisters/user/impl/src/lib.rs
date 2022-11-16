@@ -115,6 +115,7 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
+            created: self.data.user_created,
             last_active: chat_metrics.last_active,
         }
     }
@@ -258,6 +259,7 @@ pub struct Metrics {
     pub replies: u64,
     pub edits: u64,
     pub reactions: u64,
+    pub created: TimestampMillis,
     pub last_active: TimestampMillis,
 }
 
