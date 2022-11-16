@@ -580,7 +580,7 @@
         padding: $sp4;
         // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-        border: 1px solid var(--bd);
+        // border: 1px solid var(--bd);
         border-radius: $sp2;
     }
 

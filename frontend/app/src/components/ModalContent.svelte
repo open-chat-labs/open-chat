@@ -95,7 +95,7 @@
         justify-content: space-between;
         background: var(--modal-bg);
         color: var(--modal-txt);
-        border: 1px solid var(--bd);
+        border: var(--modal-bd);
         @include mobile() {
             &:not(.fit_to_content) {
                 width: 100%;

@@ -191,9 +191,9 @@
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isGroup}
-                <Link on:click={showMembers}>
+                <div class="members" on:click={showMembers}>
                     {chat.subtext}
-                </Link>
+                </div>
             {:else}
                 {chat.subtext}
             {/if}
@@ -358,6 +358,10 @@
     .chat-subtext {
         @include ellipsis();
         color: var(--chatSummary-txt2);
+
+        .members {
+            cursor: pointer;
+        }
     }
 
     .avatar {

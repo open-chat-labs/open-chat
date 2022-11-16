@@ -13,9 +13,6 @@
 
 <style type="text/scss">
     .wrapper {
-        background-color: var(--panel-right-bg);
-        color: var(--currentChat-header-txt);
-
         display: flex;
         flex-direction: column;
         justify-content: center;

@@ -191,8 +191,8 @@
 
     .sub-section {
         padding: $sp4;
-        border: 1px solid var(--bd);
-        border-radius: $sp2;
+        // border: 1px solid var(--bd);
+        // border-radius: $sp2;
         margin-bottom: $sp3;
         &:last-child {
             margin-bottom: 0;

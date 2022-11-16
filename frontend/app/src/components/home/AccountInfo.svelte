@@ -40,7 +40,7 @@
             {accountSummary}
         </div>
         <div class="copy" title={$_("copyToClipboard")} on:click={copyToClipboard}>
-            <ContentCopy size={$iconSize} color={"#555"} />
+            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
         </div>
     </div>
 </div>

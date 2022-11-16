@@ -390,7 +390,7 @@
         justify-content: space-between;
         align-items: center;
         color: var(--chatSummary-txt1);
-        padding: $sp4 $sp5;
+        padding: $sp4 $sp4;
         margin-bottom: 0;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;

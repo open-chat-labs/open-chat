@@ -152,8 +152,10 @@ export function lightTheme(): Theme {
 
         modal: {
             filter: "blur(5px)",
-            bg: "#ffffff",
-            txt: txtDark,
+            // bg: "linear-gradient(#22A7F2C8, #5f2583C8)",
+            bg: "linear-gradient(#419ed3d8, #5c3375d8)",
+            txt: txt,
+            bd: "none",
         },
 
         modalPage: {
@@ -165,11 +167,6 @@ export function lightTheme(): Theme {
         },
 
         currentChat: {
-            header: {
-                // bg: "#efefef",
-                txt: "#191919",
-            },
-
             date: {
                 bg: "rgba(0,0,0,0.1)",
                 txt: "inherit",
@@ -223,7 +220,8 @@ export function lightTheme(): Theme {
         },
 
         recommended: {
-            bg: "#ffffff",
+            // bg: "#ffffff",
+            bg: "rgba(0,0,0,0.08)",
         },
 
         toggle: {

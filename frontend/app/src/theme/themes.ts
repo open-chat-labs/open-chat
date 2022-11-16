@@ -152,6 +152,7 @@ export interface Theme {
         filter: string;
         bg: string;
         txt: string;
+        bd: string;
     };
 
     modalPage: {
@@ -163,9 +164,6 @@ export interface Theme {
     };
 
     currentChat: {
-        header: {
-            txt: string;
-        };
         msgs: {
             bg: string;
         };

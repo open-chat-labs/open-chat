@@ -158,6 +158,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             filter: "blur(5px)",
             bg: darkBase,
             txt: txtHigh,
+            bd: `1px solid ${darkBorder}`,
         },
 
         modalPage: {
@@ -170,9 +171,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         currentChat: {
             ...defaultTheme.currentChat,
-            header: {
-                txt: txtHigh,
-            },
             msgs: {
                 bg: "transparent",
             },
@@ -220,7 +218,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         recommended: {
             ...defaultTheme.recommended,
-            bg: dark15,
+            // bg: dark15,
+            // bg: "rgba(0,0,0,0.3)",
+            bg: hoveredChat,
+            // bg: textBox,
         },
 
         toggle: {
