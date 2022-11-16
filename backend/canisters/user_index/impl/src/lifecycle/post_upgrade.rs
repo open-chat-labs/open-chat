@@ -6,6 +6,7 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
+use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -32,6 +33,7 @@ fn post_upgrade(args: Args) {
     }
 
     cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
+    cycles_dispenser_client::set_min_cycles_balance(3 * MIN_CYCLES_BALANCE / 2);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

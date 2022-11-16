@@ -71,7 +71,7 @@ candid = "0.8.3"
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 clap = "3.0.14"
-cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99" }
+cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "4cae7b26bb812c69875fc6524ee4ec99018064fd" }
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.24"
