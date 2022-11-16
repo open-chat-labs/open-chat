@@ -48,7 +48,7 @@ export class ChatUpdated extends Event {
     }
 }
 
-export class ChatsLoaded extends Event {
+export class ChatsUpdated extends Event {
     constructor() {
         super("openchat_event");
     }

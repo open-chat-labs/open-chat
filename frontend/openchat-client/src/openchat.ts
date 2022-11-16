@@ -181,7 +181,7 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
-    ChatsLoaded,
+    ChatsUpdated,
     ChatUpdated,
     LoadedMessageWindow,
     LoadedNewMessages,
@@ -2819,7 +2819,7 @@ export class OpenChat extends EventTarget {
 
                 chatsInitialised.set(true);
 
-                this.dispatchEvent(new ChatsLoaded());
+                this.dispatchEvent(new ChatsUpdated());
             }
         } catch (err) {
             this.config.logger.error("Error loading chats", err as Error);

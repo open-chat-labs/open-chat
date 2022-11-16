@@ -24,7 +24,7 @@
         ThreadSelected,
         ThreadClosed,
         SendMessageFailed,
-        ChatsLoaded,
+        ChatsUpdated,
         Notification,
         MessagesReadFromServer,
     } from "openchat-client";
@@ -175,7 +175,7 @@
             // This can occur either for chat messages or thread messages so we'll just handle it here
             toastStore.showFailureToast("errorSendingMessage");
         }
-        if (ev instanceof ChatsLoaded) {
+        if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (
                     notification.kind === "direct_notification" ||
