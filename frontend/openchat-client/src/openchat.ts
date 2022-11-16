@@ -181,6 +181,7 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
+    ChatsUpdated,
     ChatUpdated,
     LoadedMessageWindow,
     LoadedNewMessages,
@@ -773,7 +774,7 @@ export class OpenChat extends EventTarget {
                 if (resp === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
                         kind: "group_chat",
-                        public: false
+                        public: false,
                     });
                     return true;
                 } else {
@@ -878,7 +879,7 @@ export class OpenChat extends EventTarget {
                 }
                 localChatSummaryUpdates.markUpdated(chatId, {
                     kind: "group_chat",
-                    permissions: optionalPermissions
+                    permissions: optionalPermissions,
                 });
                 return true;
             })
@@ -935,10 +936,9 @@ export class OpenChat extends EventTarget {
     }
 
     canSendMessages(chatId: string): boolean {
-        return this.chatPredicate(chatId, (chat) => canSendMessages(
-            chat,
-            this._liveState.userStore,
-            this.config.proposalBotCanister));
+        return this.chatPredicate(chatId, (chat) =>
+            canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister)
+        );
     }
 
     canChangeRoles(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
@@ -1165,10 +1165,7 @@ export class OpenChat extends EventTarget {
         return result;
     }
 
-    async loadEventWindow(
-        chatId: string,
-        messageIndex: number
-    ): Promise<number | undefined> {
+    async loadEventWindow(chatId: string, messageIndex: number): Promise<number | undefined> {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -1381,11 +1378,9 @@ export class OpenChat extends EventTarget {
         const { selectedChat, focusMessageIndex, events } = this._liveState;
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
-                this.loadEventWindow(chatId, focusMessageIndex).then(
-                    () => {
-                        this.loadDetails(selectedChat, events);
-                    }
-                );
+                this.loadEventWindow(chatId, focusMessageIndex).then(() => {
+                    this.loadDetails(selectedChat, events);
+                });
             } else {
                 this.loadPreviousMessages(chatId).then(() => {
                     this.loadDetails(selectedChat, events);
@@ -1856,9 +1851,7 @@ export class OpenChat extends EventTarget {
             });
         }
         const key =
-            threadRootMessageIndex === undefined
-                ? chatId
-                : `${chatId}_${threadRootMessageIndex}`;
+            threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
         unconfirmed.delete(key, messageId);
         if (threadRootMessageIndex === undefined) {
             messagesRead.removeUnconfirmedMessage(chatId, messageId);
@@ -1868,10 +1861,7 @@ export class OpenChat extends EventTarget {
     groupWhile = groupWhile;
     sameUser = sameUser;
 
-    forwardMessage(
-        chatId: string,
-        msg: Message
-    ): void {
+    forwardMessage(chatId: string, msg: Message): void {
         const chat = this._liveState.chatSummaries[chatId];
 
         if (chat === undefined) {
@@ -1910,12 +1900,24 @@ export class OpenChat extends EventTarget {
                     this.onSendMessageSuccess(chatId, resp, msg, undefined);
                     trackEvent("forward_message");
                 } else {
-                    this.removeMessage(chat.kind, chatId, msg.messageId, this.user.userId, undefined);
+                    this.removeMessage(
+                        chat.kind,
+                        chatId,
+                        msg.messageId,
+                        this.user.userId,
+                        undefined
+                    );
                     this.dispatchEvent(new SendMessageFailed());
                 }
             })
             .catch((err) => {
-                this.removeMessage(chat.kind, chatId, event.event.messageId, this.user.userId, undefined);
+                this.removeMessage(
+                    chat.kind,
+                    chatId,
+                    event.event.messageId,
+                    this.user.userId,
+                    undefined
+                );
                 this.dispatchEvent(new SendMessageFailed());
                 this._logger.error("Exception forwarding message", err);
             });
@@ -2026,15 +2028,17 @@ export class OpenChat extends EventTarget {
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             this.api
-                .sendMessage(chat.kind, chatId, this.user, mentioned, event.event, threadRootMessageIndex)
+                .sendMessage(
+                    chat.kind,
+                    chatId,
+                    this.user,
+                    mentioned,
+                    event.event,
+                    threadRootMessageIndex
+                )
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        this.onSendMessageSuccess(
-                            chatId,
-                            resp,
-                            msg,
-                            threadRootMessageIndex
-                        );
+                        this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             this.refreshAccountBalance(
                                 msg.content.transfer.token,
@@ -2081,12 +2085,7 @@ export class OpenChat extends EventTarget {
                     this.dispatchEvent(new SendMessageFailed());
                 });
 
-            this.sendMessage(
-                chat,
-                currentEvents,
-                event,
-                threadRootMessageIndex
-            ).then((jumpTo) => {
+            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then((jumpTo) => {
                 if (threadRootMessageIndex !== undefined) {
                     this.dispatchEvent(new SentThreadMessage(event));
                 } else {
@@ -2197,7 +2196,13 @@ export class OpenChat extends EventTarget {
         this.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
 
         Promise.all([
-            this.api.rehydrateMessage(serverChat.kind, chatId, message, undefined, serverChat.latestEventIndex),
+            this.api.rehydrateMessage(
+                serverChat.kind,
+                chatId,
+                message,
+                undefined,
+                serverChat.latestEventIndex
+            ),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -2304,7 +2309,13 @@ export class OpenChat extends EventTarget {
                 localMessageUpdates.markDeleted(msg.messageId.toString(), msg.userId);
                 break;
             case "remote_user_removed_message":
-                this.removeMessage(chat.kind, fromChatId, msg.messageId, msg.userId, threadRootMessageIndex);
+                this.removeMessage(
+                    chat.kind,
+                    fromChatId,
+                    msg.messageId,
+                    msg.userId,
+                    threadRootMessageIndex
+                );
                 break;
             case "remote_user_undeleted_message":
                 localMessageUpdates.markUndeleted(msg.messageId.toString());
@@ -2480,8 +2491,9 @@ export class OpenChat extends EventTarget {
             .upgradeStorage(newLimitBytes)
             .then((resp) => {
                 const success = resp.kind === "success" || resp.kind === "success_no_change";
-                if (!success) {
+                if (success) {
                     this.updateStorageLimit(newLimitBytes);
+                } else {
                     this._logger.error("Unable to upgrade storage", resp);
                 }
                 return success;
@@ -2530,7 +2542,7 @@ export class OpenChat extends EventTarget {
 
     getGroupMessagesByMessageIndex(
         chatId: string,
-        messageIndexes: Set<number>,
+        messageIndexes: Set<number>
     ): Promise<EventsResponse<Message>> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -2565,7 +2577,8 @@ export class OpenChat extends EventTarget {
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.api.updateGroup(chatId, name, description, rules, permissions, avatar)
+        return this.api
+            .updateGroup(chatId, name, description, rules, permissions, avatar)
             .then((resp) => {
                 if (resp === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
@@ -2579,16 +2592,17 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    createGroupChat(currentUser: string, candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.api
-            .createGroupChat(candidate)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    const group = groupChatFromCandidate(currentUser, resp.canisterId, candidate);
-                    localChatSummaryUpdates.markAdded(group);
-                }
-                return resp;
-            });
+    createGroupChat(
+        currentUser: string,
+        candidate: CandidateGroupChat
+    ): Promise<CreateGroupResponse> {
+        return this.api.createGroupChat(candidate).then((resp) => {
+            if (resp.kind === "success") {
+                const group = groupChatFromCandidate(currentUser, resp.canisterId, candidate);
+                localChatSummaryUpdates.markAdded(group);
+            }
+            return resp;
+        });
     }
 
     markThreadSummaryUpdated(threadRootMessageId: string, summary: ThreadSummary): void {
@@ -2805,6 +2819,8 @@ export class OpenChat extends EventTarget {
                 }
 
                 chatsInitialised.set(true);
+
+                this.dispatchEvent(new ChatsUpdated());
             }
         } catch (err) {
             this.config.logger.error("Error loading chats", err as Error);
