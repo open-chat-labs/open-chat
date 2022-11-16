@@ -486,12 +486,14 @@
 
         .chat-msg {
             color: var(--chatSummary-txt2);
+            @include font(book, normal, fs-80);
         }
     }
 
     .chat-date {
         position: absolute;
         color: var(--chatSummary-txt2);
+        @include font(book, normal, fs-60);
         top: $sp3;
         &:not(.rtl) {
             right: $sp5;

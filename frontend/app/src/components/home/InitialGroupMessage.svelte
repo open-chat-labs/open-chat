@@ -51,6 +51,7 @@
     }
 
     .welcome {
+        @include font(bold, normal, fs-120);
         color: var(--txt);
     }
 

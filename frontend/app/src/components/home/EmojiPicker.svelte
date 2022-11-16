@@ -28,6 +28,7 @@
         --num-columns: 24;
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
+        --background: transparent;
 
         --border-size: 0;
         --border-color: var(--bd);

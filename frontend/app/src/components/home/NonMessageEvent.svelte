@@ -26,6 +26,7 @@
         margin: $sp4 auto;
         text-align: center;
         color: var(--timeline-txt);
+        @include font(book, normal, fs-70);
     }
     .timestamp {
         @include font(light, normal, fs-70);

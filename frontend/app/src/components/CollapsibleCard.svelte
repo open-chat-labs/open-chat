@@ -48,6 +48,7 @@
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
+        @include font(bold, normal, fs-100);
 
         @include mobile() {
             padding: $sp3;

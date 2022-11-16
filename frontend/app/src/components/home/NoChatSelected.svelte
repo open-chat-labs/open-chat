@@ -26,6 +26,7 @@
     }
 
     .title {
+        @include font(bold, normal, fs-180);
         margin-bottom: $sp3;
     }
 </style>
