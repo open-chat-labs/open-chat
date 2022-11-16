@@ -32,22 +32,26 @@
     }
 
     .notification-bar {
-        padding: $sp4;
+        padding: $sp3;
         background-color: var(--notificationBar-bg);
         color: var(--notificationBar-txt);
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
+        height: toRem(60);
 
         @include mobile() {
             margin-bottom: 0;
+            text-align: center;
         }
     }
 
     .txt {
         @include font(bold, normal, fs-90);
-        margin-bottom: $sp3;
+        @include mobile() {
+            margin-bottom: $sp2;
+        }
     }
 
     .links {

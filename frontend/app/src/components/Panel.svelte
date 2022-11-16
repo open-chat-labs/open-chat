@@ -55,6 +55,7 @@
                 max-width: none;
                 padding: 0;
                 flex: auto;
+                border-right: none;
             }
         }
 
@@ -77,6 +78,7 @@
                 height: 100%;
                 min-width: 0;
                 max-width: none;
+                border-left: none;
             }
 
             &.empty {
