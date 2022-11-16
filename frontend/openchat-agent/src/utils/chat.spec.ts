@@ -111,7 +111,7 @@ function groupChatId(id: number): GroupChatSummary {
 describe.skip("enough visible messages", () => {
     test("returns false when there are no messages", () => {
         console.log("hello there");
-        expect(enoughVisibleMessages(true, [0, 1000], [])).toBe(false);
+        expect(enoughVisibleMessages(true, [0, 1000], [], "me")).toBe(false);
     });
 });
 

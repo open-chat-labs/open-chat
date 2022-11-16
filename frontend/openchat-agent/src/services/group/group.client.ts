@@ -88,14 +88,17 @@ export class GroupClient extends CandidService implements IGroupClient {
         identity: Identity,
         private config: AgentConfig,
         private chatId: string,
+        private userId: string,
         private inviteCode: string | undefined
     ) {
         super(identity);
+        this.userId = userId;
         this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId, config);
     }
 
     static create(
         chatId: string,
+        userId: string,
         identity: Identity,
         config: AgentConfig,
         db: Database,
@@ -104,7 +107,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return new CachingGroupClient(
             db,
             chatId,
-            new GroupClient(identity, config, chatId, inviteCode),
+            new GroupClient(identity, config, chatId, userId, inviteCode),
             config.logger
         );
     }
@@ -196,7 +199,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             );
         };
 
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId);
     }
 
     @profile("groupClient")
