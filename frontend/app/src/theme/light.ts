@@ -3,16 +3,13 @@ import type { Theme } from "./themes";
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
-const disabledTxt = "#999999";
 const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
-
-// const txt = "#242834";
-// const txtLight = "#5C5C5C";
 const txt = "#ffffff";
 const txtLight = "#ffffffaa";
 const txtDark = "#242834";
 const txtDark75pc = `${txtDark}bf`;
+const disabledTxt = txtLight;
 
 export function lightTheme(): Theme {
     return {
@@ -94,7 +91,8 @@ export function lightTheme(): Theme {
             bg: "linear-gradient(#22A7F2, #5f2583)",
 
             left: {
-                bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
+                // bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
+                bg: "linear-gradient(rgba(255,255,255,0.05), transparent)",
             },
 
             right: {
@@ -140,7 +138,7 @@ export function lightTheme(): Theme {
             bg: primary,
             hv: "#52baf5",
             txt: "#ffffff",
-            disabled: "#cccccc",
+            disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
             "disabled-bd": "transparent",

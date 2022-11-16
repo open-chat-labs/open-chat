@@ -365,12 +365,12 @@
         background-color: var(--chatSummary-del);
         padding: $sp3;
         position: absolute;
-        right: -50px;
+        right: -60px;
         height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 50px;
+        width: 60px;
         cursor: pointer;
 
         @include size-above(sm) {
@@ -380,7 +380,7 @@
 
         &.rtl {
             right: unset;
-            left: -50px;
+            left: -60px;
         }
     }
 
