@@ -920,7 +920,7 @@ dependencies = [
 [[package]]
 name = "candid_gen"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "quote 1.0.21",
  "syn 1.0.103",
@@ -929,7 +929,7 @@ dependencies = [
 [[package]]
 name = "candid_gen"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99#7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99"
+source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
  "quote 1.0.21",
  "syn 1.0.103",
@@ -1638,18 +1638,18 @@ dependencies = [
 [[package]]
 name = "cycles_dispenser"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99#7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "candid 0.8.3",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99)",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
  "serde",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
 ]
 
 [[package]]
 name = "cycles_dispenser_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99#7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071)",
  "cycles_dispenser",
@@ -1657,8 +1657,8 @@ dependencies = [
  "rmp-serde",
  "serde",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99)",
- "utils 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
+ "utils 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
 ]
 
 [[package]]
@@ -7901,10 +7901,9 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "candid 0.8.3",
- "hex",
  "serde",
  "serde_bytes",
 ]
@@ -7912,9 +7911,10 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99#7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99"
+source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
  "candid 0.8.3",
+ "hex",
  "serde",
  "serde_bytes",
 ]
@@ -8177,13 +8177,13 @@ dependencies = [
 [[package]]
 name = "utils"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99#7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "candid 0.8.3",
  "getrandom 0.2.8",
  "ic-cdk 0.6.1",
  "rand",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=7f1b49fc2b0b86beeeb32df88e9e8b14b3f60b99)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
 ]
 
 [[package]]

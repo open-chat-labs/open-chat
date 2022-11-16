@@ -24,6 +24,8 @@
         ThreadSelected,
         ThreadClosed,
         SendMessageFailed,
+        ChatsUpdated,
+        Notification,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -34,7 +36,11 @@
     import type { RouteParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import { closeNotificationsForChat, subscribeToNotifications } from "../../utils/notifications";
+    import {
+        closeNotificationsForChat,
+        closeNotifications,
+        subscribeToNotifications,
+    } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "./rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -162,6 +168,24 @@
         if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
             toastStore.showFailureToast("errorSendingMessage");
+        }
+        if (ev instanceof ChatsUpdated) {
+            closeNotifications((notification: Notification) => {
+                if (
+                    notification.kind === "direct_notification" ||
+                    notification.kind === "group_notification"
+                ) {
+                    return client.isMessageRead(
+                        notification.kind === "direct_notification"
+                            ? notification.sender
+                            : notification.chatId,
+                        notification.message.event.messageIndex,
+                        notification.message.event.messageId
+                    );
+                }
+
+                return false;
+            });
         }
     }
 

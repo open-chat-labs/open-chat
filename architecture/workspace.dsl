@@ -53,6 +53,7 @@ workspace "OpenChat" "High-level system architecture diagrams for OpenChat." {
         website -> appAssets "Loads"
         website -> landingPageAssets "Loads"
         website -> ledgers "Gets balance"
+        website -> notifications "Subscribes" "" "Update"
         userIndex -> openStorageIndex "Manages user access" "" "Update"
         userIndex -> users "Creates and updates" "" "Update"
         groupIndex -> userIndex "Looks-up user"
