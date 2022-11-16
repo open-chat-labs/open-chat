@@ -213,6 +213,10 @@
         &:not(.me):hover {
             background-color: var(--members-hv);
         }
+
+        @include mobile() {
+            padding: $sp3;
+        }
     }
     .avatar {
         flex: 0 0 50px;

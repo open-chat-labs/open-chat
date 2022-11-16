@@ -35,7 +35,7 @@
     }
 </script>
 
-<SectionHeader>
+<SectionHeader border={false}>
     <div class="current-user" class:rtl={$rtlStore}>
         <EditableAvatar
             small

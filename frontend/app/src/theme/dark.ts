@@ -184,11 +184,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
             msg: {
                 bg: textBox,
                 muted: txtLow,
-                txt: txtHigh,
+                txt: "rgba(255,255,255,0.8)",
 
                 me: {
                     bg: primary,
                     muted: dark50,
+                    txt: "rgba(255,255,255,0.8)",
                 },
             },
         },

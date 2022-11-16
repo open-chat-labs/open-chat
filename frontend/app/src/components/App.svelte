@@ -333,7 +333,7 @@
             font-family: "Roboto", sans-serif;
             font-weight: 400;
             font-size: toRem(16);
-            line-height: toRem(25);
+            line-height: 150%;
 
             display: flex;
             height: 100vh;

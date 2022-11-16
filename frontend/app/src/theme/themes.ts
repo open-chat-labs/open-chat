@@ -179,6 +179,7 @@ export interface Theme {
             me: {
                 bg: string;
                 muted: string;
+                txt: string;
             };
         };
     };

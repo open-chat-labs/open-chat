@@ -47,7 +47,7 @@
       "cache": false
     },
     "test": {
-      "dependsOn": ["build", "^build"],
+      "dependsOn": [],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },
@@ -57,7 +57,7 @@
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "dependsOn": ["build", "^build"],
+      "dependsOn": [],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },

@@ -915,7 +915,7 @@
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);
-            color: #ffffff;
+            color: var(--currentChat-msg-me-txt);
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;
