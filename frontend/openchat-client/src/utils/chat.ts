@@ -1026,21 +1026,34 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
-        let anyAdded = false;
-        for (const message of unconfirmed) {
-            // Only include unconfirmed events that are contiguous with the loaded confirmed events
-            if (
-                merged.length === 0 ||
-                eventIndexes.has(message.index - 1) ||
-                eventIndexes.has(message.index) ||
-                eventIndexes.has(message.index + 1)
-            ) {
-                merged.push(processEvent(message));
-                anyAdded = true;
+        unconfirmed.sort(sortByIndex);
+
+        const firstUnconfirmedIndex = unconfirmed[0].index;
+
+        // Only add unconfirmed messages if they are contiguous with the server events.
+        // That is, if either the events list contains the event preceding the first unconfirmed message, or the events
+        // list is empty and the unconfirmed messages are the first events in the chat.
+        const isContiguous =
+            eventIndexes.has(firstUnconfirmedIndex- 1) ||
+            (eventIndexes.size === 0 && firstUnconfirmedIndex <= 1);
+
+        if (isContiguous) {
+            let anyAdded = false;
+            for (const message of unconfirmed) {
+                // Only include unconfirmed events that are contiguous with the loaded confirmed events
+                if (
+                    merged.length === 0 ||
+                    eventIndexes.has(message.index - 1) ||
+                    eventIndexes.has(message.index) ||
+                    eventIndexes.has(message.index + 1)
+                ) {
+                    merged.push(processEvent(message));
+                    anyAdded = true;
+                }
             }
-        }
-        if (anyAdded) {
-            merged.sort(sortByIndex);
+            if (anyAdded) {
+                merged.sort(sortByIndex);
+            }
         }
     }
 
