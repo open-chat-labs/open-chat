@@ -2,7 +2,6 @@ use crate::model::account_billing::AccountCharge;
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
@@ -63,18 +62,6 @@ impl UserMap {
             self.username_to_user_id.insert(&user.username, *user_id);
             self.principal_to_user_id.insert(user.principal, *user_id);
         }
-    }
-
-    pub fn take_sns1_snapshot(&mut self) {
-        // Mark users who have been online in the last 7 days as eligible for the SNS-1 airdrop
-        // (Monday 7th November 00:00:00 UTC). Priority is determined by date created.
-        self.eligible_for_sns1_airdrop = self
-            .users
-            .values()
-            .filter(|u| u.last_online > 1667779200000)
-            .sorted_by_key(|u| u.date_created)
-            .map(|u| u.user_id)
-            .collect();
     }
 
     pub fn does_username_exist(&self, username: &str) -> bool {
