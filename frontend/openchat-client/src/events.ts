@@ -48,6 +48,12 @@ export class ChatUpdated extends Event {
     }
 }
 
+export class ChatsUpdated extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
 export class ThreadMessagesLoaded extends CustomEvent<boolean> {
     constructor(ascending: boolean) {
         super("openchat_event", { detail: ascending });
