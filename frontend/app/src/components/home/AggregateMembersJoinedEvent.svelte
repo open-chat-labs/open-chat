@@ -9,11 +9,9 @@
 
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
-    export let left: Set<string>;
 
     $: userStore = client.userStore;
     $: joinedText = buildText($userStore, joined, "userJoined");
-    $: leftText = buildText($userStore, left, "userLeft");
 
     function buildText(
         userStore: UserLookup,
@@ -42,14 +40,9 @@
     }
 </script>
 
-{#if joinedText !== undefined || leftText !== undefined}
+{#if joinedText !== undefined}
     <div class="timeline-event">
-        {#if joinedText !== undefined}
-            <p>{joinedText}</p>
-        {/if}
-        {#if leftText !== undefined}
-            <p>{leftText}</p>
-        {/if}
+        <p>{joinedText}</p>
     </div>
 {/if}
 

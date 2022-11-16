@@ -23,7 +23,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 50_000;
+pub const USER_LIMIT: usize = 60_000;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
@@ -109,6 +109,7 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            eligible_for_sns1_airdrop: self.data.users.count_eligible_for_sns1_airdrop(),
         }
     }
 }
@@ -253,4 +254,5 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_events_queue_length: usize,
+    pub eligible_for_sns1_airdrop: usize,
 }

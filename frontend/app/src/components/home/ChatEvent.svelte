@@ -5,7 +5,7 @@
     import MembersChangedEvent from "./MembersChangedEvent.svelte";
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
-    import AggregateMembersJoinedOrLeftEvent from "./AggregateMembersJoinedOrLeftEvent.svelte";
+    import AggregateMembersJoinedEvent from "./AggregateMembersJoinedEvent.svelte";
     import type {
         CreatedUser,
         UserSummary,
@@ -138,10 +138,7 @@
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_members_joined_left"}
-    <AggregateMembersJoinedOrLeftEvent
-        user={userSummary}
-        joined={event.event.users_joined}
-        left={event.event.users_left} />
+    <AggregateMembersJoinedEvent user={userSummary} joined={event.event.users_joined} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
