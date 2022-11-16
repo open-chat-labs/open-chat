@@ -125,11 +125,6 @@
                 <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
                     <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>
-                {#if withCaption}
-                    <div class="caption">
-                        {content.caption}
-                    </div>
-                {/if}
             </span>
         </ModalContent>
     </Overlay>
