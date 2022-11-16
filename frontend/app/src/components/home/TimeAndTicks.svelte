@@ -25,7 +25,7 @@
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
-<div class="time-and-ticks body_tiny" class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>

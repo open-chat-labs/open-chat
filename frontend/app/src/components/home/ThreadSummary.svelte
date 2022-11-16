@@ -61,7 +61,7 @@
                 </div>
             {/if}
         </div>
-        <div class="thread-legend body_small">
+        <div class="thread-legend">
             <span
                 >{$_("thread.nreplies", {
                     values: {

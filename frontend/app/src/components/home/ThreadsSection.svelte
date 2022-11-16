@@ -26,7 +26,7 @@
 <div role="button" class="threads" class:selected on:click={onClick}>
     <div class="icon">🧵</div>
     <div class="details">
-        <h4 class="title label_one" class:unread={numStaleThreads > 0}>
+        <h4 class="title" class:unread={numStaleThreads > 0}>
             {$_("thread.previewTitle")}
         </h4>
     </div>
@@ -50,7 +50,7 @@
         align-items: center;
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
-        padding: $sp4 $sp5;
+        padding: $sp4 $sp4;
         margin-bottom: 0;
         gap: 12px;
         cursor: pointer;

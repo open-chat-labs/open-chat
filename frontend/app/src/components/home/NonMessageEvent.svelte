@@ -12,7 +12,7 @@
     $: date = new Date(Number(timestamp));
 </script>
 
-<div class="timeline-event body_small">
+<div class="timeline-event">
     <p>{text}</p>
     <p class="timestamp">
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}

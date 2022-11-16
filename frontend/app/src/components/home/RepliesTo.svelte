@@ -49,7 +49,7 @@
         class:me
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
-        <h4 class="username label_one" class:text-content={isTextContent}>
+        <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}

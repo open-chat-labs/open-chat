@@ -65,12 +65,12 @@
                 </div>
                 <div>
                     <h3 class="title">{$_("hotGroups")}</h3>
-                    <p class="subtitle label_one">{$_("selectAGroup")}</p>
+                    <p class="subtitle">{$_("selectAGroup")}</p>
                 </div>
             </SectionHeader>
         {:else}
             <h3 class="title">{$_("hotGroups")}</h3>
-            <p class="subtitle label_one">{$_("selectAGroup")}</p>
+            <p class="subtitle">{$_("selectAGroup")}</p>
         {/if}
 
         {#each groups as group, i (group.chatId)}
@@ -134,7 +134,7 @@
         {/each}
     {:else}
         <h3 class="title">{$_("noHotGroups")}</h3>
-        <p class="subtitle label_one">{$_("checkBackLater")}</p>
+        <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
             <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>

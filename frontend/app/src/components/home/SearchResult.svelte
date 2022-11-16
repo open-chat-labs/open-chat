@@ -28,7 +28,7 @@
         align-items: center;
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
-        padding: $sp3;
+        padding: $sp4 $sp4;
         margin-bottom: 0;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
@@ -40,6 +40,10 @@
 
         &:hover {
             background-color: var(--chatSummary-hv);
+        }
+
+        @include mobile() {
+            padding: $sp3;
         }
     }
     .avatar {

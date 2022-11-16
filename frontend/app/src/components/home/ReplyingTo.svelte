@@ -36,7 +36,7 @@
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
-    <h4 class="username label_one">
+    <h4 class="username">
         {username}
     </h4>
     <ChatMessageContent

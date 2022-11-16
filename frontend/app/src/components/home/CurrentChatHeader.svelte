@@ -170,7 +170,7 @@
             size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
-        <div class="chat-name label_one" title={chat.name}>
+        <div class="chat-name" title={chat.name}>
             {#if isGroup && !preview}
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
@@ -183,7 +183,7 @@
                 {chat.name}
             {/if}
         </div>
-        <div class="chat-subtext body_small" title={chat.subtext}>
+        <div class="chat-subtext" title={chat.subtext}>
             {#if blocked}
                 {$_("blocked")}
             {:else if preview}

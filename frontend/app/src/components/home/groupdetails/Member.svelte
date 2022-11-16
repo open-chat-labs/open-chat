@@ -112,10 +112,10 @@
             size={AvatarSize.Small} />
     </span>
     <div class="details">
-        <h4 class="label_one" class:blocked={member.memberKind === "blocked_member"}>
+        <h4 class:blocked={member.memberKind === "blocked_member"}>
             {me ? $_("you") : member.username ?? $_("unknownUser")}
         </h4>
-        <span class="role body_tiny">
+        <span class="role">
             {#if member.role === "owner"}
                 ({$_("owner")})
             {:else if member.role === "admin"}

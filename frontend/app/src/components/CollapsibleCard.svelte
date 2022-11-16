@@ -18,9 +18,9 @@
 </script>
 
 <div class="card">
-    <div class="header label_one" class:open on:click={toggle}>
+    <div class="header" class:open on:click={toggle}>
         <slot name="titleSlot">
-            <div class="label_one">{headerText}</div>
+            <div>{headerText}</div>
         </slot>
 
         <div class="arrow" class:rtl={$rtlStore}>

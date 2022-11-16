@@ -41,7 +41,7 @@
             small
             image={client.userAvatarUrl(user)}
             on:imageSelected={userAvatarSelected} />
-        <h4 class="name label_one">{user.username}</h4>
+        <h4 class="name">{user.username}</h4>
     </div>
     <span class="menu">
         <MenuIcon>

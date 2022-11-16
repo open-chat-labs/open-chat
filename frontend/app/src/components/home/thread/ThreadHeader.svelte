@@ -99,10 +99,10 @@
             size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
-        <div class="chat-name label_one" title={chat.title}>
+        <div class="chat-name" title={chat.title}>
             {chat.title}
         </div>
-        <div class="chat-subtext body_small" title={chat.subtext}>
+        <div class="chat-subtext" title={chat.subtext}>
             {#if chat.typing}
                 {chat.subtext} <Typing />
             {:else}

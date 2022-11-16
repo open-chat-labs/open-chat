@@ -38,7 +38,7 @@
                     <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
                         <ContentCopy size={"1em"} />
                     </div>
-                    <h4 class="label_one">{$_(`faq.${q}_q`)}</h4>
+                    <h4>{$_(`faq.${q}_q`)}</h4>
                 </div>
                 <Markdown text={$_(`faq.${q}_a`)} />
             </CollapsibleCard>

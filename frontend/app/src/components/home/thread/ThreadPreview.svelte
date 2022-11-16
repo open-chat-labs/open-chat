@@ -93,10 +93,10 @@
                 <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
             </div>
             <div class="details">
-                <h4 class="title label_one">
+                <h4 class="title">
                     {chat.kind === "group_chat" && chat.name}
                 </h4>
-                <div class="root-msg body_small">
+                <div class="root-msg">
                     <Markdown
                         text={client.getContentAsText($_, thread.rootMessage.event.content)}
                         oneLine={true}

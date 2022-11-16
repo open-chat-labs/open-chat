@@ -282,6 +282,11 @@
         margin-bottom: $sp3;
         margin-left: 0;
         color: var(--chatSearch-section-txt);
+        padding: 0 $sp4;
+
+        @include mobile() {
+            padding: 0 $sp3;
+        }
     }
 
     .search-matches {
