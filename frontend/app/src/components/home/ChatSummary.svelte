@@ -280,7 +280,7 @@
                                 <MenuItem on:click={pinChat}>
                                     <PinIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("pinChat.menuItem")}</div>
                                 </MenuItem>
@@ -288,7 +288,7 @@
                                 <MenuItem on:click={unpinChat}>
                                     <PinOffIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                 </MenuItem>
@@ -298,7 +298,7 @@
                                     <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                         <BellIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("unmuteNotifications")}</div>
                                     </MenuItem>
@@ -306,7 +306,7 @@
                                     <MenuItem on:click={() => toggleMuteNotifications(true)}>
                                         <MutedIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("muteNotifications")}</div>
                                     </MenuItem>
@@ -316,7 +316,7 @@
                                 <MenuItem on:click={selectChat}>
                                     <ArchiveOffIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("unarchiveChat")}</div>
                                 </MenuItem>
@@ -324,7 +324,7 @@
                                 <MenuItem on:click={archiveChat}>
                                     <ArchiveIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("archiveChat")}</div>
                                 </MenuItem>
@@ -334,7 +334,7 @@
                                 on:click={() => client.markAllRead(chatSummary)}>
                                 <CheckboxMultipleMarked
                                     size={$iconSize}
-                                    color={"var(--icon-txt)"}
+                                    color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("markAllRead")}</div>
                             </MenuItem>

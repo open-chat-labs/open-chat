@@ -30,6 +30,10 @@ export interface Theme {
 
     placeholder: string;
 
+    collapsible: {
+        open: string;
+    };
+
     notificationBar: {
         bg: string;
         txt: string;
@@ -146,6 +150,8 @@ export interface Theme {
 
     modal: {
         filter: string;
+        bg: string;
+        txt: string;
     };
 
     modalPage: {
@@ -169,7 +175,6 @@ export interface Theme {
         };
         msg: {
             bg: string;
-            hv: string;
             muted: string;
             txt: string;
 
@@ -185,6 +190,7 @@ export interface Theme {
         txt: string;
         inverted: {
             hv: string;
+            txt: string;
         };
         msg: {
             hv: string;

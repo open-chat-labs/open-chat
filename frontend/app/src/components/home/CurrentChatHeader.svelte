@@ -235,7 +235,7 @@
                                 <MenuItem on:click={unblockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("unblockUser")}</div>
                                 </MenuItem>
@@ -243,7 +243,7 @@
                                 <MenuItem on:click={blockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("blockUser")}</div>
                                 </MenuItem>
@@ -252,7 +252,7 @@
                             <MenuItem on:click={showGroupDetails}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
-                                    color={"var(--icon-txt)"}
+                                    color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
@@ -260,7 +260,7 @@
                                 <MenuItem on:click={leaveGroup}>
                                     <LocationExit
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("leaveGroup")}</div>
                                 </MenuItem>
@@ -268,7 +268,7 @@
                             <MenuItem on:click={showMembers}>
                                 <AccountMultiple
                                     size={$iconSize}
-                                    color={"var(--icon-txt)"}
+                                    color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("members")}</div>
                             </MenuItem>
@@ -276,7 +276,7 @@
                                 <MenuItem on:click={addMembers}>
                                     <AccountPlusOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("addMembers")}</div>
                                 </MenuItem>
@@ -285,33 +285,42 @@
                                 <MenuItem on:click={showProposalFilters}>
                                     <FilterOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("proposal.filter")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}
                         <MenuItem on:click={searchChat}>
-                            <Magnify size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <Magnify
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
                             <div slot="text">{$_("searchChat")}</div>
                         </MenuItem>
                         {#if hasPinned}
                             <MenuItem on:click={showPinned}>
-                                <Pin size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <Pin
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"}
+                                    slot="icon" />
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
                         {#if notificationsSupported}
                             {#if selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                    <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                    <Bell
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
                                     <div slot="text">{$_("unmuteNotifications")}</div>
                                 </MenuItem>
                             {:else}
                                 <MenuItem on:click={() => toggleMuteNotifications(true)}>
                                     <BellOff
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("muteNotifications")}</div>
                                 </MenuItem>
@@ -319,14 +328,17 @@
                         {/if}
                         {#if pollsAllowed}
                             <MenuItem on:click={createPoll}>
-                                <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <Poll
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"}
+                                    slot="icon" />
                                 <div slot="text">{$_("poll.create")}</div>
                             </MenuItem>
                         {/if}
                         <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
                             <CheckboxMultipleMarked
                                 size={$iconSize}
-                                color={"var(--icon-txt)"}
+                                color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
                             <div slot="text">{$_("markAllRead")}</div>
                         </MenuItem>

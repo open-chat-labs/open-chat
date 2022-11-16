@@ -78,7 +78,7 @@
         @include loading-spinner(1em, 0.5em, var(--button-spinner));
     }
     input {
-        background-color: var(--chatSearch-bg);
+        background-color: transparent;
         color: var(--chatSearch-txt);
         outline: none;
         flex: 1;

@@ -159,13 +159,8 @@
 
         .username {
             color: inherit;
-            color: var(--accent);
+            color: var(--txt);
             display: inline;
-
-            &.fill,
-            &.crypto {
-                color: #fff;
-            }
         }
 
         &.me {

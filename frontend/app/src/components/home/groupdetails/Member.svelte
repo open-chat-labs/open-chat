@@ -138,7 +138,7 @@
                                 <MenuItem on:click={unblockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("unblockUser")}</div>
                                 </MenuItem>
@@ -148,7 +148,7 @@
                                 <MenuItem on:click={dismissAsAdmin}>
                                     <AccountRemoveOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
                                 </MenuItem>
@@ -157,7 +157,7 @@
                                 <MenuItem on:click={makeAdmin}>
                                     <AccountPlusOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("makeAdmin")}</div>
                                 </MenuItem>
@@ -166,7 +166,7 @@
                                 <MenuItem on:click={blockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("blockUser")}</div>
                                 </MenuItem>
@@ -175,7 +175,7 @@
                                 <MenuItem on:click={removeUser}>
                                     <MinusCircleOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("remove")}</div>
                                 </MenuItem>
@@ -184,7 +184,7 @@
                                 <MenuItem on:click={transferOwnership}>
                                     <AccountArrowLeftOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("transferOwnership")}</div>
                                 </MenuItem>

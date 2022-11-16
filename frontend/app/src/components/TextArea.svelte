@@ -78,5 +78,9 @@
             border: 1px solid var(--error);
             box-shadow: 0 0 5px 1px var(--error);
         }
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 </style>

@@ -440,7 +440,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"hover"} on:click={openUserProfile}>
+                    <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username label_one" class:fill class:crypto>{username}</h4>
                     </Link>
                     {#if senderTyping}
@@ -533,7 +533,7 @@
                                     <MenuItem on:click={collapseMessage}>
                                         <EyeOff
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("proposal.collapse")}</div>
                                     </MenuItem>
@@ -543,7 +543,7 @@
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("share")}</div>
                                         </MenuItem>
@@ -551,7 +551,7 @@
                                     <MenuItem on:click={copyMessageUrl}>
                                         <ContentCopy
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("copyMessageUrl")}</div>
                                     </MenuItem>
@@ -561,7 +561,7 @@
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("unpinMessage")}</div>
                                         </MenuItem>
@@ -569,7 +569,7 @@
                                         <MenuItem on:click={pinMessage}>
                                             <Pin
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("pinMessage")}</div>
                                         </MenuItem>
@@ -580,7 +580,7 @@
                                         <MenuItem on:click={reply}>
                                             <Reply
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
@@ -596,7 +596,7 @@
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
@@ -605,7 +605,7 @@
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
@@ -613,7 +613,7 @@
                                         <MenuItem on:click={blockUser}>
                                             <Cancel
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("blockUser")}</div>
                                         </MenuItem>
@@ -623,7 +623,7 @@
                                     <MenuItem on:click={editMessage}>
                                         <PencilOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem>
@@ -632,7 +632,7 @@
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
@@ -642,7 +642,7 @@
                                         <MenuItem on:click={untranslateMessage}>
                                             <TranslateOff
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("untranslateMessage")}</div>
                                         </MenuItem>
@@ -650,7 +650,7 @@
                                         <MenuItem on:click={translateMessage}>
                                             <TranslateIcon
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("translateMessage")}</div>
                                         </MenuItem>
@@ -752,10 +752,6 @@
 
     :global(.actions .reaction .wrapper) {
         padding: 6px;
-    }
-
-    .thread {
-        @include font(bold, normal, fs-110);
     }
 
     .message-wrapper {
@@ -888,7 +884,7 @@
 
         .username {
             color: inherit;
-            color: var(--accent);
+            color: var(--txt);
             display: inline;
 
             &.fill,

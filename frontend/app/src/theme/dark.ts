@@ -39,6 +39,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         disabledTxt: txtLow,
         primary,
 
+        collapsible: {
+            open: primary,
+        },
+
         notificationBar: {
             bg: "#df783f",
             txt: "#ffffff",
@@ -152,6 +156,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         modal: {
             filter: "blur(5px)",
+            bg: darkBase,
+            txt: txtHigh,
         },
 
         modalPage: {
@@ -179,7 +185,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
             msg: {
                 bg: textBox,
-                hv: dark15,
                 muted: txtLow,
                 txt: txtHigh,
 
@@ -191,13 +196,14 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         icon: {
-            hv: "rgba(255,255,255,0.2)",
+            hv: "rgba(255,255,255,0.1)",
             txt: txtMed,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
+                txt: txtMed,
             },
             msg: {
-                hv: "rgba(255,255,255,0.2)",
+                hv: "rgba(255,255,255,0.1)",
             },
         },
         spinner: dark25,

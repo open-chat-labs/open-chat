@@ -121,7 +121,7 @@
                 <div slot="menu">
                     <Menu>
                         <MenuItem on:click={createPoll}>
-                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <Poll size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">{$_("poll.create")}</div>
                         </MenuItem>
                     </Menu>

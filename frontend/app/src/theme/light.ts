@@ -5,13 +5,14 @@ const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
 const disabledTxt = "#999999";
 const primary = "#23a2ee";
-const textBox = "#F9F9F9";
+const textBox = "rgba(0,0,0,0.1)";
 
 // const txt = "#242834";
 // const txtLight = "#5C5C5C";
 const txt = "#ffffff";
 const txtLight = "#ffffffaa";
 const txtDark = "#242834";
+const txtDark75pc = `${txtDark}bf`;
 
 export function lightTheme(): Theme {
     return {
@@ -27,9 +28,13 @@ export function lightTheme(): Theme {
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
-        disabledTxt: disabledTxt,
-        placeholder: "#aaaaaa",
+        disabledTxt: txtLight,
+        placeholder: txtLight,
         primary,
+
+        collapsible: {
+            open: pinkAccent,
+        },
 
         notificationBar: {
             bg: orangeAccent,
@@ -59,7 +64,8 @@ export function lightTheme(): Theme {
         },
 
         section: {
-            bg: "#ffffff10",
+            // bg: "#ffffff10",
+            bg: "transparent",
             txt,
         },
 
@@ -79,8 +85,8 @@ export function lightTheme(): Theme {
         entry: {
             bg: "rgba(226,226,226,0.1)",
             input: {
-                bg: "#ffffff",
-                txt: txtDark,
+                bg: textBox,
+                txt,
             },
         },
 
@@ -93,7 +99,7 @@ export function lightTheme(): Theme {
 
             right: {
                 bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
-                modal: "linear-gradient(rgba(255,255,255,0.1), transparent)",
+                modal: "linear-gradient(#22A7F2, #5f2583)",
             },
         },
 
@@ -104,7 +110,7 @@ export function lightTheme(): Theme {
 
         chatSearch: {
             bg: textBox,
-            txt: txtLight,
+            txt,
 
             section: {
                 txt: "#ffffff",
@@ -112,8 +118,8 @@ export function lightTheme(): Theme {
         },
 
         chatSummary: {
-            "bg-selected": "rgba(226,226,226,0.2)",
-            hv: "rgba(226,226,226,0.2)",
+            "bg-selected": "rgba(0,0,0,0.05)",
+            hv: "rgba(226,226,226,0.1)",
             txt1: txt,
             txt2: txtLight,
             del: pinkAccent,
@@ -123,9 +129,8 @@ export function lightTheme(): Theme {
 
         menu: {
             bg: "white",
-            txt,
+            txt: txtDark75pc,
             "disabled-txt": disabledTxt,
-            // bd: "#cccccc",
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
@@ -147,6 +152,8 @@ export function lightTheme(): Theme {
 
         modal: {
             filter: "blur(5px)",
+            bg: "#ffffff",
+            txt: txtDark,
         },
 
         modalPage: {
@@ -164,7 +171,7 @@ export function lightTheme(): Theme {
             },
 
             date: {
-                bg: "rgba(255,255,255,0.7)",
+                bg: "rgba(0,0,0,0.1)",
                 txt: "inherit",
             },
 
@@ -173,14 +180,13 @@ export function lightTheme(): Theme {
             },
 
             msg: {
-                bg: "#ffffff",
-                hv: "#efefef",
-                muted: "#999999",
-                txt: txtDark,
+                bg: "rgba(0,0,0,0.08)",
+                muted: "rgba(255,255,255,0.6)",
+                txt: "#ffffff",
 
                 me: {
-                    bg: primary,
-                    muted: "#cccccc",
+                    bg: `${primary}80`,
+                    muted: "rgba(255,255,255,0.6)",
                 },
             },
         },
@@ -190,10 +196,12 @@ export function lightTheme(): Theme {
             hv: "rgba(0,0,0,0.1)",
             txt,
             inverted: {
-                hv: "rgba(214,44,125,0.5)",
+                // hv: "rgba(214,44,125,0.5)",
+                hv: "rgba(0,0,0,0.1)",
+                txt: txtDark75pc,
             },
             msg: {
-                hv: "rgba(255,255,255,0.8)",
+                hv: "rgba(255,255,255,0.3)",
             },
         },
 
@@ -224,7 +232,7 @@ export function lightTheme(): Theme {
 
         thread: {
             preview: {
-                bg: "rgba(255, 255, 255, 0.05)",
+                bg: "transparent",
             },
         },
 

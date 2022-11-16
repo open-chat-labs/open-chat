@@ -27,7 +27,7 @@
             <Arrow
                 size={16}
                 rotate={open ? -45 : 45}
-                color={open ? "var(--primary)" : "var(--txt)"} />
+                color={open ? "var(--collapsible-open)" : "var(--txt)"} />
         </div>
     </div>
     {#if open}

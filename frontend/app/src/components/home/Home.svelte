@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BackgroundLogo from "../BackgroundLogo.svelte";
     import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
@@ -41,6 +42,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { numberOfColumns } from "../../stores/layout";
+    import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
 
@@ -788,6 +790,9 @@
         push(`/${chatId}`);
         return true;
     }
+
+    $: bgHeight = $dimensions.height * 0.9;
+    $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
 <main>
@@ -923,6 +928,14 @@
         {/if}
     </Overlay>
 {/if}
+
+<BackgroundLogo
+    width={`${bgHeight}px`}
+    bottom={"unset"}
+    left={"0"}
+    opacity={"0.1"}
+    skew={"5deg"}
+    viewBox={`0 0 361 ${bgClip}`} />
 
 <style type="text/scss">
     :global(.edited-msg) {

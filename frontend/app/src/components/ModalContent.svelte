@@ -93,8 +93,8 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        background-color: var(--bg);
-        color: var(--txt);
+        background: var(--modal-bg);
+        color: var(--modal-txt);
         border: 1px solid var(--bd);
         @include mobile() {
             &:not(.fit_to_content) {

@@ -6,11 +6,12 @@
     export let middle: boolean = false;
     export let right: boolean = false;
     export let forceModal: boolean = false;
+    export let empty: boolean = false;
 
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
 </script>
 
-<section class:left class:right class:middle class:modal>
+<section class:left class:right class:middle class:modal class:empty>
     <slot />
 </section>
 
@@ -76,6 +77,10 @@
                 height: 100%;
                 min-width: 0;
                 max-width: none;
+            }
+
+            &.empty {
+                background: transparent;
             }
         }
     }

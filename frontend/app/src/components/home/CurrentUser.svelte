@@ -55,7 +55,7 @@
                     <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus
                             size={$iconSize}
-                            color={"var(--icon-txt)"}
+                            color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
@@ -64,41 +64,44 @@
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("profile")}>
-                        <Cogs size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFaq")}>
-                        <HelpCircleOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <HelpCircleOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <span slot="text">{$_("faq.menu")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFeatures")}>
-                        <Rocket size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <Rocket size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("features")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showRoadmap")}>
-                        <Map size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <Map size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("roadmap")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showWhitepaper")}>
                         <FileDocumentOutline
                             size={$iconSize}
-                            color={"var(--icon-txt)"}
+                            color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <span slot="text">{$_("whitepaper")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showArchitecture")}>
-                        <Domain size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <Domain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("architecture")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showAbout")}>
                         <InformationOutline
                             size={$iconSize}
-                            color={"var(--icon-txt)"}
+                            color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("logout")}>
-                        <Logout size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("logout")}</span>
                     </MenuItem>
                 </Menu>
