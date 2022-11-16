@@ -68,27 +68,32 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
         return UsernameValidationResult::TooShort(MIN_USERNAME_LENGTH);
     }
 
-    if username.starts_with('_') || username.ends_with('_') || username.contains("__") {
+    if username.starts_with('_')
+        || username.ends_with('_')
+        || username.contains("__")
+        || !username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        || is_username_reserved(username)
+    {
         return UsernameValidationResult::Invalid;
     }
 
-    if !username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-        return UsernameValidationResult::Invalid;
-    }
+    UsernameValidationResult::Ok
+}
 
+fn is_username_reserved(username: &str) -> bool {
     let normalised = username.replace('_', "").to_uppercase();
     let is_bot_like = normalised.ends_with("BOT") || normalised.ends_with("B0T");
 
     if is_bot_like {
         if normalised == "OPENCHATBOT" {
-            return UsernameValidationResult::Invalid;
+            return true;
         }
         if normalised.starts_with("SNS") {
-            return UsernameValidationResult::Invalid;
+            return true;
         }
     }
 
-    UsernameValidationResult::Ok
+    false
 }
 
 #[cfg(test)]
