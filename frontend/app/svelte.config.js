@@ -16,6 +16,10 @@ const preprocessOptions = {
         // prependData: `@import 'v2/frontend/src/styles/mixins.scss';`,
         prependData: `@use 'sass:math'; @import '${mixins}';`,
     },
+    onwarn: (warning, handler) => {
+        if (warning.code.startsWith("a11y-")) return;
+        handler(warning);
+    },
 };
 module.exports = {
     preprocess: sveltePreprocess(preprocessOptions),
