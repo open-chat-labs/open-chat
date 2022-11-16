@@ -1,5 +1,6 @@
 import { push } from "svelte-spa-router";
 import type { Notification, OpenChat } from "openchat-client";
+
 import { isCanisterUrl } from "../utils/urls";
 
 function toUint8Array(base64String: string): Uint8Array {
@@ -69,6 +70,21 @@ export async function closeNotificationsForChat(chatId: string): Promise<void> {
         const notifications = await registration.getNotifications();
         for (const notification of notifications) {
             if (notification.data?.path.startsWith(chatId)) {
+                notification.close();
+            }
+        }
+    }
+}
+
+export async function closeNotifications(
+    shouldClose: (notification: Notification) => boolean
+): Promise<void> {
+    const registration = await getRegistration();
+    if (registration !== undefined) {
+        const notifications = await registration.getNotifications();
+        for (const notification of notifications) {
+            const raw = notification?.data?.notification as Notification;
+            if (raw !== undefined && shouldClose(raw)) {
                 notification.close();
             }
         }
