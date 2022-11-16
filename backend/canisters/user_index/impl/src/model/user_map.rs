@@ -2,7 +2,6 @@ use crate::model::account_billing::AccountCharge;
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
