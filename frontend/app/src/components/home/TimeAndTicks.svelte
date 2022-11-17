@@ -55,6 +55,7 @@
     }
 
     .time-and-ticks {
+        @include font(light, normal, fs-50);
         display: flex;
         align-items: center;
         float: right;

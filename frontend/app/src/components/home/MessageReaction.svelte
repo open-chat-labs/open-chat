@@ -96,6 +96,7 @@
         }
 
         .reaction-count {
+            @include font(book, normal, fs-60);
             margin-left: $sp2;
         }
     }
