@@ -497,10 +497,19 @@
         @include font(book, normal, fs-60);
         top: $sp3;
         &:not(.rtl) {
-            right: $sp5;
+            right: $sp4;
         }
         &.rtl {
-            left: $sp5;
+            left: $sp4;
+        }
+
+        @include mobile() {
+            &:not(.rtl) {
+                right: $sp3;
+            }
+            &.rtl {
+                left: $sp3;
+            }
         }
     }
 
