@@ -224,7 +224,7 @@ export class UserClient extends CandidService implements IUserClient {
             );
         };
 
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId);
     }
 
     @profile("userClient")

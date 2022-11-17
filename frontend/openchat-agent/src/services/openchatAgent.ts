@@ -125,6 +125,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
+    private _userId?: string;
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
@@ -165,6 +166,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createUserClient(userId: string): OpenChatAgent {
+        this._userId = userId;
         this._userClient = UserClient.create(
             userId,
             this.identity,
@@ -180,6 +182,7 @@ export class OpenChatAgent extends EventTarget {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
                 chatId,
+                this.userId,
                 this.identity,
                 this.config,
                 this.db,
@@ -194,6 +197,13 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    private get userId(): string {
+        if (this._userId) {
+            return this._userId;
+        }
+        throw new Error("Attempted to access the user id before it has been initialised");
     }
 
     private getProvidedInviteCode(chatId: string): string | undefined {
