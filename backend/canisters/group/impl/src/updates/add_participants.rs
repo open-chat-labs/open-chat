@@ -20,6 +20,7 @@ async fn add_participants(args: Args) -> Response {
 
     let mut users_added = Vec::new();
     let mut users_who_blocked_request = Vec::new();
+    let mut users_frozen = Vec::new();
     let mut errors = Vec::new();
     if !prepare_result.users_to_add.is_empty() {
         let c2c_args = c2c_try_add_to_group::Args {
@@ -41,6 +42,7 @@ async fn add_participants(args: Args) -> Response {
                 Ok(result) => match result {
                     c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
                     c2c_try_add_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
+                    c2c_try_add_to_group::Response::UserFrozen => users_frozen.push(user_id),
                 },
                 Err(_) => {
                     errors.push(user_id);
@@ -65,15 +67,12 @@ async fn add_participants(args: Args) -> Response {
     if users_added.len() == args.user_ids.len() {
         Success
     } else {
-        let mut failed_users = Vec::new();
-        failed_users.extend(users_who_blocked_request.iter().cloned());
-        failed_users.extend(errors.iter().cloned());
-
         if users_added.is_empty() {
             Failed(FailedResult {
                 users_already_in_group: prepare_result.users_already_in_group,
                 users_blocked_from_group: prepare_result.users_blocked_from_group,
                 users_who_blocked_request,
+                users_frozen,
                 errors,
             })
         } else {
@@ -83,6 +82,7 @@ async fn add_participants(args: Args) -> Response {
                 users_blocked_from_group: prepare_result.users_blocked_from_group,
                 users_who_blocked_request,
                 users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
+                users_frozen,
                 errors,
             })
         }

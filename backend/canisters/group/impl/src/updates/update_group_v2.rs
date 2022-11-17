@@ -118,6 +118,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.frozen.value {
+            return Err(UserFrozen);
+        }
+
         let permissions = &runtime_state.data.permissions;
         if !participant.role.can_update_group(permissions)
             || (args.permissions.is_some() && !participant.role.can_change_permissions(permissions))

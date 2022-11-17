@@ -9,6 +9,7 @@ pub struct UserSummary {
     pub seconds_since_last_online: u32,
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
+    pub frozen: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -18,4 +19,5 @@ pub struct PartialUserSummary {
     pub seconds_since_last_online: u32,
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
+    pub frozen: bool,
 }

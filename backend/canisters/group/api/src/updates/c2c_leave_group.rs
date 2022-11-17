@@ -11,6 +11,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     OwnerCannotLeave,
+    UserFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{FrozenUntil, PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -297,6 +297,24 @@ impl UserMap {
     pub fn set_storage_limit(&mut self, user_id: &UserId, bytes: u64) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
             user.open_storage_limit_bytes = bytes;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn freeze_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.frozen_until = Some(until.map_or(FrozenUntil::Indefinitely, FrozenUntil::Timestamp));
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn unfreeze_user(&mut self, user_id: &UserId) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.frozen_until = None;
             true
         } else {
             false

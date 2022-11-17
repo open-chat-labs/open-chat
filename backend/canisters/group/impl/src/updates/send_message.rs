@@ -22,6 +22,10 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
+        if participant.frozen.value {
+            return UserFrozen;
+        }
+
         let now = runtime_state.env.now();
 
         if let Err(error) = args.content.validate_for_new_message(false, args.forwarding, now) {

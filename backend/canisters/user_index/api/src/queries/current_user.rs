@@ -24,6 +24,7 @@ pub struct SuccessResult {
     pub phone_status: PhoneStatus,
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
+    pub frozen: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

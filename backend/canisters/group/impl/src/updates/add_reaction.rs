@@ -21,6 +21,9 @@ fn add_reaction(args: Args) -> Response {
 fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.frozen.value {
+            return UserFrozen;
+        }
         if !participant.role.can_react_to_messages(&runtime_state.data.permissions) {
             return NotAuthorized;
         }

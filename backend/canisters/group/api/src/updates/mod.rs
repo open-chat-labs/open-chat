@@ -8,6 +8,7 @@ pub mod c2c_end_poll;
 pub mod c2c_join_group_v2;
 pub mod c2c_leave_group;
 pub mod c2c_relinquish_super_admin;
+pub mod c2c_set_user_frozen;
 pub mod c2c_toggle_mute_notifications;
 pub mod c2c_update_proposals;
 pub mod c2c_update_user_principal;

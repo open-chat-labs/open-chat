@@ -15,5 +15,6 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     UserNotInGroup,
+    UserFrozen,
     Invalid,
 }

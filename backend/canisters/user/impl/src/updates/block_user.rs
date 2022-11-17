@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use user_canister::block_user::*;
+use user_canister::block_user::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -13,8 +13,12 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.frozen.value {
+        return UserFrozen;
+    }
+
     let now = runtime_state.env.now();
     runtime_state.data.block_user(args.user_id, now);
     runtime_state.data.unpin_chat(&args.user_id.into(), now);
-    Response::Success
+    Success
 }

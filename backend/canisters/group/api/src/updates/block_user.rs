@@ -18,4 +18,5 @@ pub enum Response {
     InternalError(String),
     NotAuthorized,
     UserNotInGroup,
+    UserFrozen,
 }

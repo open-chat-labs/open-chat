@@ -13,20 +13,36 @@ generate_query_call!(users);
 // Updates
 generate_update_call!(add_super_admin);
 generate_update_call!(confirm_phone_number);
+generate_update_call!(freeze_user);
 generate_update_call!(remove_sms_messages);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
 generate_update_call!(resend_code);
 generate_update_call!(set_username);
 generate_update_call!(submit_phone_number);
+generate_update_call!(unfreeze_user);
 generate_update_call!(upgrade_user_canister_wasm);
 
 pub mod happy_path {
     use crate::rng::random_principal;
     use crate::utils::principal_to_username;
     use crate::User;
+    use candid::Principal;
     use ic_state_machine_tests::StateMachine;
     use types::{CanisterId, ChallengeAttempt};
+
+    pub fn current_user(
+        env: &StateMachine,
+        sender: Principal,
+        canister_id: CanisterId,
+    ) -> user_index_canister::current_user::SuccessResult {
+        let response = super::current_user(env, sender, canister_id, &user_index_canister::current_user::Args {});
+
+        match response {
+            user_index_canister::current_user::Response::Success(result) => result,
+            response => panic!("'current_user' error: {:?}", response),
+        }
+    }
 
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
         let principal = random_principal();

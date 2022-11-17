@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::FieldTooLongResult;
-use user_canister::set_bio::*;
+use user_canister::set_bio::{Response::*, *};
 
 const MAX_BIO_LEN: u32 = 2000;
 
@@ -16,14 +16,18 @@ fn set_bio(args: Args) -> Response {
 }
 
 fn set_bio_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.frozen.value {
+        return UserFrozen;
+    }
+
     let length_provided = args.text.len() as u32;
     if length_provided > MAX_BIO_LEN {
-        return Response::TooLong(FieldTooLongResult {
+        return TooLong(FieldTooLongResult {
             length_provided,
             max_length: MAX_BIO_LEN,
         });
     }
 
     runtime_state.data.bio = args.text;
-    Response::Success
+    Success
 }

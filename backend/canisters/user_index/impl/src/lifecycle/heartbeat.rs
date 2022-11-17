@@ -7,6 +7,7 @@ use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
 use utils::cycles::can_spend_cycles;
+use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
 fn heartbeat() {
@@ -19,6 +20,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
+    set_users_frozen::run();
     cycles_dispenser_client::run();
 }
 
@@ -384,5 +386,66 @@ mod prune_unconfirmed_phone_numbers {
     fn prune_unconfirmed_phone_numbers_impl(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.users.prune_unconfirmed_phone_numbers_if_required(now);
+    }
+}
+
+mod set_users_frozen {
+    use super::*;
+    use crate::model::set_user_frozen_queue::{SetUserFrozen, SetUserFrozenInGroup};
+    use crate::updates::unfreeze_user::unfreeze_user_impl;
+
+    const MAX_BATCH_SIZE: usize = 10;
+
+    pub fn run() {
+        let batch = mutate_state(next_batch);
+        if !batch.is_empty() {
+            ic_cdk::spawn(process_batch(batch));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserFrozen> {
+        let now = runtime_state.env.now();
+
+        (0..MAX_BATCH_SIZE)
+            .map_while(|_| runtime_state.data.set_user_frozen_queue.take_next_due(now))
+            .collect()
+    }
+
+    async fn process_batch(batch: Vec<SetUserFrozen>) {
+        let futures: Vec<_> = batch.into_iter().map(process_single).collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn process_single(value: SetUserFrozen) {
+        match value {
+            SetUserFrozen::Unfreeze(user_id) => {
+                unfreeze_user_impl(user_id).await;
+            }
+            SetUserFrozen::Group(SetUserFrozenInGroup {
+                user_id,
+                group,
+                frozen,
+                attempt,
+            }) => {
+                let args = group_canister::c2c_set_user_frozen::Args { user_id, frozen };
+                if let Err(_) = group_canister_c2c_client::c2c_set_user_frozen(group.into(), &args).await {
+                    if attempt < 10 {
+                        mutate_state(|state| {
+                            let now = state.env.now();
+                            state.data.set_user_frozen_queue.schedule(
+                                vec![SetUserFrozen::Group(SetUserFrozenInGroup {
+                                    user_id,
+                                    group,
+                                    frozen,
+                                    attempt: attempt + 1,
+                                })],
+                                now + (10 * SECOND_IN_MS), // Try again in 10 seconds
+                            );
+                        });
+                    }
+                }
+            }
+        }
     }
 }

@@ -16,6 +16,10 @@ fn delete_messages(args: Args) -> Response {
 }
 
 fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.frozen.value {
+        return UserFrozen;
+    }
+
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();

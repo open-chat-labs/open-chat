@@ -16,6 +16,10 @@ fn edit_message(args: Args) -> Response {
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.frozen.value {
+            return UserFrozen;
+        }
+
         let now = runtime_state.env.now();
         let sender = participant.user_id;
 

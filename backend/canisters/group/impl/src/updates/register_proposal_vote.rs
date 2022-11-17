@@ -57,6 +57,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         None => return Err(CallerNotInGroup),
     };
 
+    if participant.frozen.value {
+        return Err(UserFrozen);
+    }
+
     if let Some(proposal) = runtime_state
         .data
         .events
