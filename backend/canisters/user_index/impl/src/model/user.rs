@@ -21,6 +21,8 @@ pub struct User {
     pub phone_status: PhoneStatus,
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
+    #[serde(default)]
+    pub suspended_until: Option<SuspendedUntil>,
 }
 
 impl User {
@@ -91,6 +93,7 @@ impl User {
             phone_status: PhoneStatus::None,
             referred_by,
             is_bot,
+            suspended_until: None,
         }
     }
 
@@ -104,6 +107,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
+            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
         }
     }
 
@@ -117,6 +121,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
+            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
         }
     }
 }
@@ -127,6 +132,21 @@ pub struct UnconfirmedPhoneNumber {
     pub confirmation_code: String,
     pub valid_until: TimestampMillis,
     pub sms_messages_sent: u16,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum SuspendedUntil {
+    Timestamp(TimestampMillis),
+    Indefinitely,
+}
+
+impl SuspendedUntil {
+    pub fn is_suspended(&self, now: TimestampMillis) -> bool {
+        match self {
+            SuspendedUntil::Timestamp(ts) => *ts > now,
+            SuspendedUntil::Indefinitely => true,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -149,6 +169,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
+            suspended_until: None,
         }
     }
 }

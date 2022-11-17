@@ -11,8 +11,11 @@ mod register_user_tests;
 mod rng;
 mod send_message_tests;
 mod setup;
+mod suspend_user_tests;
 mod utils;
 mod wasms;
+
+const SERVICE_PRINCIPAL: Principal = Principal::from_slice(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
 #[derive(Debug)]
 pub struct User {
