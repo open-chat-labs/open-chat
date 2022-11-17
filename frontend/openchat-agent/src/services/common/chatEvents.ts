@@ -9,6 +9,7 @@ export async function getChatEventsInLoop<T extends ChatEvent>(
     startIndex: number,
     ascending: boolean,
     myUserId: string,
+    hideDeleted: boolean,
     previouslyLoadedEvents: EventWrapper<T>[] = [],
     iterations = 0
 ): Promise<EventsResponse<T>> {
@@ -23,7 +24,7 @@ export async function getChatEventsInLoop<T extends ChatEvent>(
         : [...response.events, ...previouslyLoadedEvents];
 
     // check whether we have accumulated enough messages to display
-    if (enoughVisibleMessages(ascending, eventIndexRange, merged, myUserId)) {
+    if (enoughVisibleMessages(ascending, eventIndexRange, merged, myUserId, hideDeleted)) {
         console.log("we got enough visible messages to display now");
         return { ...response, events: merged };
     } else if (iterations < MAX_RECURSION) {
@@ -46,6 +47,7 @@ export async function getChatEventsInLoop<T extends ChatEvent>(
                             idx,
                             ascending,
                             myUserId,
+                            hideDeleted,
                             merged,
                             iterations + 1
                         )
@@ -61,6 +63,7 @@ export async function getChatEventsInLoop<T extends ChatEvent>(
             idx,
             ascending,
             myUserId,
+            hideDeleted,
             merged,
             iterations + 1
         );

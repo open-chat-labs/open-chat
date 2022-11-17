@@ -204,6 +204,7 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
+        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
@@ -224,7 +225,7 @@ export class UserClient extends CandidService implements IUserClient {
             );
         };
 
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId);
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId, hideDeleted);
     }
 
     @profile("userClient")

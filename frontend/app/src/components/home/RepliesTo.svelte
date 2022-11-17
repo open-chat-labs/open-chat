@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import type { RehydratedReplyContext, OpenChat } from "openchat-client";
+    import { messageIsVisible } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -22,10 +23,22 @@
     let debug = false;
 
     $: userStore = client.userStore;
+    $: hideDeletedStore = client.hideDeletedStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: replyIsVisible = messageIsVisible(
+        $hideDeletedStore,
+        repliesTo.content,
+        repliesTo.senderId,
+        repliesTo.threadRoot,
+        currentUser.userId
+    );
 
     function zoomToMessage() {
+        if (!replyIsVisible) {
+            return;
+        }
+
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
@@ -48,6 +61,7 @@
         class="reply-wrapper"
         class:me
         class:rtl={$rtlStore}
+        class:unclickable={!replyIsVisible}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
@@ -88,12 +102,15 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        cursor: pointer;
         box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
         border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
         margin-left: 7px;
         overflow: hidden;
+
+        &.unclickable {
+            cursor: default;
+        }
 
         &.rtl {
             box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);

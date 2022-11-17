@@ -83,6 +83,7 @@
     $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
+    $: hideDeletedStore = client.hideDeletedStore;
 
     let loadingPrev = false;
     let loadingNew = false;
@@ -497,7 +498,7 @@
         return firstKey;
     }
 
-    $: groupedEvents = client.groupEvents(events, user.userId, groupInner(filteredProposals)).reverse();
+    $: groupedEvents = client.groupEvents(events, user.userId, $hideDeletedStore, groupInner(filteredProposals)).reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
