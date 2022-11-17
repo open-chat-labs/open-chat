@@ -223,15 +223,17 @@
         position: relative;
     }
 
-    .role {
-        margin: 0 $sp3;
-    }
-
     .details {
         flex: 1;
         padding: 0 5px;
         display: flex;
         align-items: center;
         @include ellipsis();
+        @include font(medium, normal, fs-100);
+    }
+
+    .role {
+        margin: 0 $sp3;
+        @include font(light, normal, fs-70);
     }
 </style>

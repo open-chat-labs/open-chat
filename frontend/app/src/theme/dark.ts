@@ -190,6 +190,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                     bg: primary,
                     muted: dark50,
                     txt: "rgba(255,255,255,0.8)",
+                    bd: "rgba(255,255,255,0.3)",
                 },
             },
         },

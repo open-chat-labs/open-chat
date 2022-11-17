@@ -145,6 +145,7 @@
         cursor: pointer;
         transition: background 200ms ease-in-out;
         border: 1px solid var(--bd);
+        color: var(--currentChat-msg-txt);
 
         &:not(.selected):hover {
             background: rgba(255, 255, 255, 0.1);
@@ -160,7 +161,7 @@
         }
 
         .thread-legend {
-            color: var(--txt);
+            @include font(book, normal, fs-80);
             margin-left: $sp2;
         }
 

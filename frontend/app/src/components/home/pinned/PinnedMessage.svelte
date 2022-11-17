@@ -145,7 +145,7 @@
     }
 
     .message-bubble {
-        $radius: $sp4;
+        $radius: $sp3;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;

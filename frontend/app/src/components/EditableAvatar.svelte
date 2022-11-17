@@ -144,16 +144,16 @@
 
     .photo-icon {
         border-radius: 50%;
-        width: 150px;
-        height: 150px;
+        width: toRem(150);
+        height: toRem(150);
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
 
         &.small {
-            width: 45px;
-            height: 45px;
+            width: toRem(48);
+            height: toRem(48);
         }
 
         .avatar {

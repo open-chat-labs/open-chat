@@ -477,6 +477,7 @@
             margin-bottom: $sp1;
 
             .chat-name {
+                @include font(medium, normal, fs-100);
                 color: var(--chatSummary-txt1);
 
                 @include ellipsis();

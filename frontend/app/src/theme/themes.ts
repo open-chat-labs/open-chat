@@ -180,6 +180,7 @@ export interface Theme {
                 bg: string;
                 muted: string;
                 txt: string;
+                bd: string;
             };
         };
     };

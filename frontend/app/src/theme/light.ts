@@ -183,6 +183,7 @@ export function lightTheme(): Theme {
                     bg: `${primary}80`,
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
+                    bd: "rgba(255,255,255,0.3)",
                 },
             },
         },

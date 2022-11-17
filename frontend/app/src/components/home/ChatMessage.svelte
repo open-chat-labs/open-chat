@@ -767,8 +767,9 @@
             position: absolute;
             background-color: rgba(0, 0, 0, 0.3);
             color: #fff;
-            padding: $sp2 $sp4;
+            padding: $sp4 $sp4;
             border-radius: 0 0 $sp4 0;
+            z-index: 1;
 
             &.rtl {
                 right: 0;

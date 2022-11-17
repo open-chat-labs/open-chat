@@ -133,13 +133,15 @@
 
 <style type="text/scss">
     .chat-name {
+        @include font(book, normal, fs-120);
         @include ellipsis();
         margin-bottom: $sp1;
     }
 
     .chat-subtext {
+        @include font(book, normal, fs-80);
         @include ellipsis();
-        color: var(--link-underline);
+        color: var(--chatSummary-txt2);
     }
 
     .chat-details {

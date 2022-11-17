@@ -27,7 +27,6 @@
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
-    import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
