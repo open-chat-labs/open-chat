@@ -429,21 +429,23 @@ mod set_users_frozen {
                 attempt,
             }) => {
                 let args = group_canister::c2c_set_user_frozen::Args { user_id, frozen };
-                if let Err(_) = group_canister_c2c_client::c2c_set_user_frozen(group.into(), &args).await {
-                    if attempt < 10 {
-                        mutate_state(|state| {
-                            let now = state.env.now();
-                            state.data.set_user_frozen_queue.schedule(
-                                vec![SetUserFrozen::Group(SetUserFrozenInGroup {
-                                    user_id,
-                                    group,
-                                    frozen,
-                                    attempt: attempt + 1,
-                                })],
-                                now + (10 * SECOND_IN_MS), // Try again in 10 seconds
-                            );
-                        });
-                    }
+                if group_canister_c2c_client::c2c_set_user_frozen(group.into(), &args)
+                    .await
+                    .is_err()
+                    && attempt < 10
+                {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.set_user_frozen_queue.schedule(
+                            vec![SetUserFrozen::Group(SetUserFrozenInGroup {
+                                user_id,
+                                group,
+                                frozen,
+                                attempt: attempt + 1,
+                            })],
+                            now + (10 * SECOND_IN_MS), // Try again in 10 seconds
+                        );
+                    });
                 }
             }
         }

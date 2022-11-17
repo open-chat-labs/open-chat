@@ -66,26 +66,24 @@ async fn add_participants(args: Args) -> Response {
 
     if users_added.len() == args.user_ids.len() {
         Success
+    } else if users_added.is_empty() {
+        Failed(FailedResult {
+            users_already_in_group: prepare_result.users_already_in_group,
+            users_blocked_from_group: prepare_result.users_blocked_from_group,
+            users_who_blocked_request,
+            users_frozen,
+            errors,
+        })
     } else {
-        if users_added.is_empty() {
-            Failed(FailedResult {
-                users_already_in_group: prepare_result.users_already_in_group,
-                users_blocked_from_group: prepare_result.users_blocked_from_group,
-                users_who_blocked_request,
-                users_frozen,
-                errors,
-            })
-        } else {
-            PartialSuccess(PartialSuccessResult {
-                users_added: users_added.into_iter().map(|(u, _)| u).collect(),
-                users_already_in_group: prepare_result.users_already_in_group,
-                users_blocked_from_group: prepare_result.users_blocked_from_group,
-                users_who_blocked_request,
-                users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
-                users_frozen,
-                errors,
-            })
-        }
+        PartialSuccess(PartialSuccessResult {
+            users_added: users_added.into_iter().map(|(u, _)| u).collect(),
+            users_already_in_group: prepare_result.users_already_in_group,
+            users_blocked_from_group: prepare_result.users_blocked_from_group,
+            users_who_blocked_request,
+            users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
+            users_frozen,
+            errors,
+        })
     }
 }
 

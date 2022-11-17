@@ -229,6 +229,7 @@ impl Default for Data {
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
+            set_user_frozen_queue: SetUserFrozenQueue::default(),
         }
     }
 }
