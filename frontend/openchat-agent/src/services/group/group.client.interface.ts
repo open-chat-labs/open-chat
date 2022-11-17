@@ -48,6 +48,7 @@ export interface IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;

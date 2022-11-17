@@ -9,6 +9,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
+    import { messageIsVisible } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
@@ -22,10 +23,22 @@
     let debug = false;
 
     $: userStore = client.userStore;
+    $: hideDeletedStore = client.hideDeletedStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: replyIsVisible = messageIsVisible(
+        $hideDeletedStore,
+        repliesTo.content,
+        repliesTo.senderId,
+        repliesTo.threadRoot,
+        currentUser.userId
+    );
 
     function zoomToMessage() {
+        if (!replyIsVisible) {
+            return;
+        }
+
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
@@ -48,6 +61,7 @@
         class="reply-wrapper"
         class:me
         class:rtl={$rtlStore}
+        class:unclickable={!replyIsVisible}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
@@ -92,6 +106,10 @@
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
+
+        &.unclickable {
+            cursor: default;
+        }
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);

@@ -616,5 +616,6 @@
     "features": "Функции",
     "architecture": "Архитектура",
     "whitepaper": "Белая бумага",
-    "whatsOnYourMind": "Что у тебя на уме?"
+    "whatsOnYourMind": "Что у тебя на уме?",
+    "hideDeletedMessages": "Скрыть удаленные сообщения"
 }
