@@ -36,6 +36,7 @@ type SendMessageResponse =
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
+        UserFrozen;
         InternalError: text;
     };
 
@@ -54,6 +55,7 @@ type EditMessageResponse =
         MessageNotFound;
         ChatNotFound;
         UserBlocked;
+        UserFrozen;
     };
 
 type DeleteMessagesArgs =
@@ -68,6 +70,7 @@ type DeleteMessagesResponse =
     variant {
         Success;
         ChatNotFound;
+        UserFrozen;
     };
 
 type AddReactionArgs =
@@ -87,6 +90,7 @@ type AddReactionResponse =
         InvalidReaction;
         MessageNotFound;
         ChatNotFound;
+        UserFrozen;
     };
 
 type RemoveReactionArgs =
@@ -104,6 +108,7 @@ type RemoveReactionResponse =
         NoChange;
         MessageNotFound;
         ChatNotFound;
+        UserFrozen;
     };
 
 type MarkReadArgs =
@@ -137,6 +142,7 @@ type BlockUserArgs =
 type BlockUserResponse =
     variant {
         Success;
+        UserFrozen;
     };
 
 type UnblockUserArgs =
@@ -147,6 +153,7 @@ type UnblockUserArgs =
 type UnblockUserResponse =
     variant {
         Success;
+        UserFrozen;
     };
 
 type CreateGroupArgs =
@@ -179,6 +186,7 @@ type CreateGroupResponse =
         InternalError;
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
+        UserFrozen;
     };
 
 type JoinGroupArgs =
@@ -199,6 +207,7 @@ type JoinGroupResponse =
         ParticipantLimitReached: nat32;
         InternalError: text;
         NotSuperAdmin;
+        UserFrozen;
     };
 
 type LeaveGroupArgs =
@@ -215,6 +224,7 @@ type LeaveGroupResponse =
         InternalError: text;
         CallerNotInGroup;
         OwnerCannotLeave;
+        UserFrozen;
     };
 
 type DeleteGroupArgs =
@@ -226,6 +236,7 @@ type DeleteGroupResponse =
     variant {
         Success;
         NotAuthorized;
+        UserFrozen;
         InternalError: text;
     };
 
@@ -238,6 +249,7 @@ type SetAvatarResponse =
     variant {
         Success;
         AvatarTooBig: FieldTooLongResult;
+        UserFrozen;
     };
 
 type MuteNotificationsArgs =
@@ -314,6 +326,7 @@ type SetBioResponse =
     variant {
         Success;
         TooLong: FieldTooLongResult;
+        UserFrozen;
     };
 
 type TransferCryptoWithinGroupArgs =
@@ -345,6 +358,7 @@ type TransferCryptoWithinGroupResponse =
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
+        UserFrozen;
         InternalError: record { text; CompletedCryptoTransaction; };
     };
 

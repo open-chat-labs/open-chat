@@ -18,6 +18,7 @@ pub enum Response {
     CallerNotInGroup,
     ParticipantLimitReached(u32),
     NotAuthorized,
+    UserFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

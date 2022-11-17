@@ -103,6 +103,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
     if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(Box::new(ParticipantLimitReached(limit)))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.frozen.value {
+            return Err(Box::new(UserFrozen));
+        }
+
         let permissions = &runtime_state.data.permissions;
         let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
         let can_unblock_users = args.allow_blocked_users && participant.role.can_block_users(permissions);

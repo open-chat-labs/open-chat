@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use user_canister::block_user::{Response::*, *};
+use user_canister::unblock_user::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
