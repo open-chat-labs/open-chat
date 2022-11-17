@@ -10,6 +10,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-npm run --prefix frontend build:prod
+npm run --prefix frontend deploy:prod
 
 dfx --identity $IDENTITY deploy --network web_test --no-wallet website
