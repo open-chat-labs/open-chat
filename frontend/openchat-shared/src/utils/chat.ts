@@ -7,7 +7,6 @@ import {
     EventWrapper,
     extractUserIdsFromMentions,
     IndexRange,
-    Message,
     MessageContent,
     UnsupportedValueError,
 } from "../domain";
@@ -197,14 +196,25 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>, myUserId: string, hi
         ew.event.kind !== "poll_ended" &&
         ew.event.kind !== "thread_updated" &&
         ew.event.kind !== "proposals_updated" &&
-        (ew.event.kind === "message" && messageIsVisible(ew.event, myUserId, hideDeleted))
+        (ew.event.kind === "message" && messageIsVisible(
+            hideDeleted, 
+            ew.event.content, 
+            ew.event.sender,             
+            ew.event.thread !== undefined,
+            myUserId))
     );
 }
 
-function messageIsVisible(message: Message, myUserId: string, hideDeleted: boolean): boolean {
+export function messageIsVisible(
+    hideDeleted: boolean, 
+    content: MessageContent, 
+    sender: string, 
+    isThreadRoot: boolean,
+    myUserId: string)
+: boolean {
     return !hideDeleted || 
-        message.content.kind !== "deleted_content" || 
-        message.thread !== undefined || 
-        message.sender === myUserId || 
-        message.content.deletedBy == myUserId;
+        content.kind !== "deleted_content" || 
+        isThreadRoot || 
+        sender === myUserId || 
+        content.deletedBy == myUserId;
 }

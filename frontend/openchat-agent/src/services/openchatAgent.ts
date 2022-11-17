@@ -638,6 +638,7 @@ export class OpenChatAgent extends EventTarget {
                         eventIndex: idx,
                         chatId,
                         edited: msg.edited,
+                        threadRoot: msg.thread !== undefined
                     };
                 } else {
                     this._logger.error(

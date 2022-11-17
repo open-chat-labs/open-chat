@@ -277,6 +277,7 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
+    RehydratedReplyContext
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
