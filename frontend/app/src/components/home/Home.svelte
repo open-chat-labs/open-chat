@@ -957,7 +957,7 @@
     width={`${bgHeight}px`}
     bottom={"unset"}
     left={"0"}
-    opacity={"0.1"}
+    opacity={"0.05"}
     skew={"5deg"}
     viewBox={`0 0 361 ${bgClip}`} />
 

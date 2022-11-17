@@ -92,7 +92,8 @@ export function lightTheme(): Theme {
 
             left: {
                 // bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
-                bg: "linear-gradient(rgba(255,255,255,0.05), transparent)",
+                // bg: "linear-gradient(rgba(255,255,255,0.05), transparent)",
+                bg: "linear-gradient(#22A7F250, #5f258350)",
             },
 
             right: {
@@ -116,7 +117,7 @@ export function lightTheme(): Theme {
         },
 
         chatSummary: {
-            "bg-selected": "rgba(0,0,0,0.05)",
+            "bg-selected": "rgba(0,0,0,0.1)",
             hv: "rgba(226,226,226,0.1)",
             txt1: txt,
             txt2: txtLight,
@@ -176,6 +177,8 @@ export function lightTheme(): Theme {
 
             msg: {
                 bg: "rgba(0,0,0,0.08)",
+                // bg: "rgba(255,255,255,0.1)",
+                // bg: "#4c6fc0cc",
                 muted: "rgba(255,255,255,0.6)",
                 txt: "#ffffff",
 
