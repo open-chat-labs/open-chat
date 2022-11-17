@@ -254,13 +254,15 @@ export class OpenChatAgentWorker extends EventTarget {
 
     getInitialState(
         userStore: UserLookup,
-        selectedChatId: string | undefined
+        selectedChatId: string | undefined,
+        hideDeleted: boolean
     ): Promise<MergedUpdatesResponse> {
         return this.sendRequest({
             kind: "getInitialState",
             payload: {
                 userStore,
                 selectedChatId,
+                hideDeleted,
             },
         });
     }
@@ -269,7 +271,8 @@ export class OpenChatAgentWorker extends EventTarget {
         currentState: CurrentChatState,
         args: UpdateArgs,
         userStore: UserLookup,
-        selectedChatId: string | undefined
+        selectedChatId: string | undefined,
+        hideDeleted: boolean
     ): Promise<MergedUpdatesResponse> {
         return this.sendRequest({
             kind: "getUpdates",
@@ -278,6 +281,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 args,
                 userStore,
                 selectedChatId,
+                hideDeleted,
             },
         });
     }
@@ -297,6 +301,7 @@ export class OpenChatAgentWorker extends EventTarget {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestClientEventIndex: number | undefined
@@ -309,6 +314,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 eventIndexRange,
                 startIndex,
                 ascending,
+                hideDeleted,
                 threadRootMessageIndex,
                 latestClientEventIndex,
             },

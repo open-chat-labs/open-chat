@@ -148,7 +148,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getInitialState":
                 agent
-                    .getInitialState(payload.userStore, payload.selectedChatId)
+                    .getInitialState(payload.userStore, payload.selectedChatId, payload.hideDeleted)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -163,7 +163,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.currentState,
                         payload.args,
                         payload.userStore,
-                        payload.selectedChatId
+                        payload.selectedChatId,
+                        payload.hideDeleted
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -188,6 +189,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.eventIndexRange,
                         payload.startIndex,
                         payload.ascending,
+                        payload.hideDeleted,
                         payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
                     )

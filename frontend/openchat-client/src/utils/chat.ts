@@ -448,9 +448,10 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
+    hideDeleted: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId)))
+    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId, hideDeleted)))
         .map(reduceJoinedOrLeft)
         .map(groupInner ?? groupBySender);
 }
@@ -504,8 +505,8 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     }, []);
 }
 
-export function groupMessagesByDate(events: EventWrapper<Message>[], myUserId: string): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId)));
+export function groupMessagesByDate(events: EventWrapper<Message>[], myUserId: string, hideDeleted: boolean): EventWrapper<Message>[][] {
+    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId, hideDeleted)));
 }
 
 export function getNextEventAndMessageIndexes(

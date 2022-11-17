@@ -617,5 +617,6 @@
     "advanced": "先进的",
     "features": "特点",
     "architecture": "架构",
-    "whitepaper": "白皮书"
+    "whitepaper": "白皮书",
+    "hideDeletedMessages": "隐藏已删除的消息"
 }

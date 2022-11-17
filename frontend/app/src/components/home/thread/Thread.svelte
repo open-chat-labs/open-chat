@@ -62,6 +62,7 @@
     $: unconfirmed = client.unconfirmed;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
+    $: hideDeletedStore = client.hideDeletedStore;
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
@@ -150,7 +151,7 @@
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: messages = client
-        .groupEvents([rootEvent, ...$threadEvents], client.user.userId)
+        .groupEvents([rootEvent, ...$threadEvents], client.user.userId, $hideDeletedStore)
         .reverse() as EventWrapper<Message>[][][];
     $: preview = client.isPreviewing(chat.chatId);
     $: pollsAllowed = client.canCreatePolls(chat.chatId);

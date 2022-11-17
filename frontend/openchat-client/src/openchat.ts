@@ -152,6 +152,7 @@ import {
     userStore,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
+import { hideDeletedStore } from "./stores/hideDeleted";
 import { dataToBlobUrl } from "./utils/blob";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
@@ -1434,6 +1435,7 @@ export class OpenChat extends EventTarget {
             range,
             startIndex,
             ascending,
+            this._liveState.hideDeleted,
             threadRootMessageIndex,
             thread.latestEventIndex
         );
@@ -1554,6 +1556,7 @@ export class OpenChat extends EventTarget {
             indexRangeForChat(serverChat),
             startIndex,
             ascending,
+            this._liveState.hideDeleted,
             undefined,
             serverChat.latestEventIndex
         );
@@ -2728,12 +2731,13 @@ export class OpenChat extends EventTarget {
             };
             const chatsResponse =
                 this._chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId)
+                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId, this._liveState.hideDeleted)
                     : await this.api.getUpdates(
                           currentState,
                           this.updateArgsFromChats(this._chatUpdatesSince, chats),
                           userLookup,
-                          selectedChat?.chatId
+                          selectedChat?.chatId,
+                          this._liveState.hideDeleted
                       );
 
             this._chatUpdatesSince = chatsResponse.timestamp;
@@ -2840,6 +2844,10 @@ export class OpenChat extends EventTarget {
         return userId === OPENCHAT_BOT_USER_ID;
     }
 
+    toggleHideDeleted() {
+        hideDeletedStore.toggle();
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -2850,6 +2858,7 @@ export class OpenChat extends EventTarget {
     storageInGb = storageInGb;
     userStore = userStore;
     userCreatedStore = userCreatedStore;
+    hideDeletedStore = hideDeletedStore;
     selectedAuthProviderStore = selectedAuthProviderStore;
     messagesRead = messagesRead;
     threadsFollowedByMeStore = threadsFollowedByMeStore;
