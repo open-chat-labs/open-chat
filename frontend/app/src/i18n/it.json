@@ -616,5 +616,6 @@
     "advanced": "Avanzate",
     "features": "Caratteristiche",
     "architecture": "Architettura",
-    "whitepaper": "Carta bianca"
+    "whitepaper": "Carta bianca",
+    "hideDeletedMessages": "Nascondi i messaggi eliminati"
 }
