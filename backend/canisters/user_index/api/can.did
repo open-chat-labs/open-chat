@@ -270,25 +270,25 @@ type SuperAdminsResponse =
         };
     };
 
-type FreezeUserArgs =
+type SuspendUserArgs =
     record {
         user_id: UserId;
         duration: opt Milliseconds;
     };
 
-type FreezeUserResponse =
+type SuspendUserResponse =
     variant {
         Success;
         InternalError: text;
     };
 
 
-type UnfreezeUserArgs =
+type UnsuspendUserArgs =
     record {
         user_id: UserId;
     };
 
-type UnfreezeUserResponse =
+type UnsuspendUserResponse =
     variant {
         Success;
         InternalError: text;
@@ -336,6 +336,6 @@ service: {
     add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
     remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
     super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
-    freeze_user: (FreezeUserArgs) -> (FreezeUserResponse);
-    unfreeze_user: (UnfreezeUserArgs) -> (UnfreezeUserResponse);
+    suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
+    unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
 }
