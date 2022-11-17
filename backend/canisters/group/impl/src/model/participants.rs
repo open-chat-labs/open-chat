@@ -32,7 +32,7 @@ impl Participants {
             mentions_v2: Mentions::default(),
             threads: HashSet::new(),
             proposal_votes: BTreeMap::default(),
-            frozen: Timestamped::default(),
+            suspended: Timestamped::default(),
         };
 
         Participants {
@@ -68,7 +68,7 @@ impl Participants {
                         mentions_v2: Mentions::default(),
                         threads: HashSet::new(),
                         proposal_votes: BTreeMap::default(),
-                        frozen: Timestamped::default(),
+                        suspended: Timestamped::default(),
                     };
                     e.insert(participant.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
@@ -203,8 +203,8 @@ impl Participants {
         // Is the caller authorized to change the user to this role
         let caller_id = match self.get_by_principal(&caller) {
             Some(p) => {
-                if p.frozen.value {
-                    return ChangeRoleResult::UserFrozen;
+                if p.suspended.value {
+                    return ChangeRoleResult::UserSuspended;
                 }
                 if !p.role.can_change_roles(new_role, permissions) {
                     return ChangeRoleResult::NotAuthorized;
@@ -349,7 +349,7 @@ pub enum ChangeRoleResult {
     UserNotInGroup,
     Unchanged,
     Invalid,
-    UserFrozen,
+    UserSuspended,
 }
 
 pub struct ChangeRoleSuccessResult {
@@ -381,7 +381,7 @@ pub struct ParticipantInternal {
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(default)]
-    pub frozen: Timestamped<bool>,
+    pub suspended: Timestamped<bool>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,

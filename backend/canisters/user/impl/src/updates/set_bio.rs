@@ -16,8 +16,8 @@ fn set_bio(args: Args) -> Response {
 }
 
 fn set_bio_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        return UserFrozen;
+    if runtime_state.data.suspended.value {
+        return UserSuspended;
     }
 
     let length_provided = args.text.len() as u32;

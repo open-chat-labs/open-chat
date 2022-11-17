@@ -15,6 +15,6 @@ pub enum Response {
     GroupNotPublic,
     CallerNotInGroup,
     OwnerCannotLeave,
-    UserFrozen,
+    UserSuspended,
     InternalError(String),
 }

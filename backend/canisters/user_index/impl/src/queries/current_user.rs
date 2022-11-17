@@ -40,7 +40,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             phone_status,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
-            frozen: u.frozen_until.is_some(),
+            suspended: u.suspended_until.is_some(),
         })
     } else {
         UserNotFound

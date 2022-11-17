@@ -10,7 +10,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
-    UserFrozen,
+    UserSuspended,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

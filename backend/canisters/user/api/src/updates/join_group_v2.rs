@@ -20,6 +20,6 @@ pub enum Response {
     ParticipantLimitReached(u32),
     Blocked,
     NotSuperAdmin,
-    UserFrozen,
+    UserSuspended,
     InternalError(String),
 }

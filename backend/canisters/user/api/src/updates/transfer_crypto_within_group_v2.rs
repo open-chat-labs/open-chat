@@ -29,7 +29,7 @@ pub enum Response {
     TransferFailed(String),
     TransferCannotBeZero,
     TransferLimitExceeded(u128),
-    UserFrozen,
+    UserSuspended,
     InternalError(String, CompletedCryptoTransaction),
 }
 

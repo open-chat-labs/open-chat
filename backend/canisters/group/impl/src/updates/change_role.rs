@@ -48,7 +48,7 @@ fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             ChangeRoleResult::UserNotInGroup => return UserNotInGroup,
             ChangeRoleResult::Unchanged => return Success,
             ChangeRoleResult::CallerNotInGroup => return CallerNotInGroup,
-            ChangeRoleResult::UserFrozen => return UserFrozen,
+            ChangeRoleResult::UserSuspended => return UserSuspended,
         };
 
     runtime_state.data.events.push_main_event(event, args.correlation_id, now);

@@ -15,8 +15,8 @@ fn set_avatar(args: Args) -> Response {
 }
 
 fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        return UserFrozen;
+    if runtime_state.data.suspended.value {
+        return UserSuspended;
     }
 
     let avatar_size = args.avatar.as_ref().map_or(0, |a| a.data.len() as u32);

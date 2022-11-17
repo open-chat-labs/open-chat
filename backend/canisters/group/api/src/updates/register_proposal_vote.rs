@@ -17,6 +17,6 @@ pub enum Response {
     ProposalMessageNotFound,
     ProposalNotFound,
     ProposalNotAcceptingVotes,
-    UserFrozen,
+    UserSuspended,
     InternalError(String),
 }

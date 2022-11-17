@@ -12,8 +12,8 @@ fn c2c_try_add_to_group(args: Args) -> Response {
 }
 
 fn c2c_try_add_to_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        UserFrozen
+    if runtime_state.data.suspended.value {
+        UserSuspended
     } else if runtime_state.data.blocked_users.contains(&args.added_by) {
         Blocked
     } else {

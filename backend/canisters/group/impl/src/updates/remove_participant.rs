@@ -42,8 +42,8 @@ struct PrepareResult {
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.frozen.value {
-            Err(UserFrozen)
+        if participant.suspended.value {
+            Err(UserSuspended)
         } else if participant.user_id == args.user_id {
             Err(CannotRemoveSelf)
         } else if participant.role.can_remove_members(&runtime_state.data.permissions) {

@@ -16,8 +16,8 @@ fn edit_message(args: Args) -> Response {
 }
 
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        return UserFrozen;
+    if runtime_state.data.suspended.value {
+        return UserSuspended;
     }
 
     if runtime_state.data.blocked_users.contains(&args.user_id) {

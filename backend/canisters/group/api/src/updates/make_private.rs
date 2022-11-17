@@ -11,6 +11,6 @@ pub enum Response {
     Success,
     NotAuthorized,
     AlreadyPrivate,
-    UserFrozen,
+    UserSuspended,
     InternalError,
 }

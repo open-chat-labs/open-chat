@@ -20,7 +20,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
-    set_users_frozen::run();
+    set_users_suspended::run();
     cycles_dispenser_client::run();
 }
 
@@ -389,10 +389,10 @@ mod prune_unconfirmed_phone_numbers {
     }
 }
 
-mod set_users_frozen {
+mod set_users_suspended {
     use super::*;
-    use crate::model::set_user_frozen_queue::{SetUserFrozen, SetUserFrozenInGroup};
-    use crate::updates::unfreeze_user::unfreeze_user_impl;
+    use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
+    use crate::updates::unsuspend_user::unsuspend_user_impl;
 
     const MAX_BATCH_SIZE: usize = 10;
 
@@ -403,44 +403,44 @@ mod set_users_frozen {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserFrozen> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspended> {
         let now = runtime_state.env.now();
 
         (0..MAX_BATCH_SIZE)
-            .map_while(|_| runtime_state.data.set_user_frozen_queue.take_next_due(now))
+            .map_while(|_| runtime_state.data.set_user_suspended_queue.take_next_due(now))
             .collect()
     }
 
-    async fn process_batch(batch: Vec<SetUserFrozen>) {
+    async fn process_batch(batch: Vec<SetUserSuspended>) {
         let futures: Vec<_> = batch.into_iter().map(process_single).collect();
 
         futures::future::join_all(futures).await;
     }
 
-    async fn process_single(value: SetUserFrozen) {
+    async fn process_single(value: SetUserSuspended) {
         match value {
-            SetUserFrozen::Unfreeze(user_id) => {
-                unfreeze_user_impl(user_id).await;
+            SetUserSuspended::Unsuspend(user_id) => {
+                unsuspend_user_impl(user_id).await;
             }
-            SetUserFrozen::Group(SetUserFrozenInGroup {
+            SetUserSuspended::Group(SetUserSuspendedInGroup {
                 user_id,
                 group,
-                frozen,
+                suspended,
                 attempt,
             }) => {
-                let args = group_canister::c2c_set_user_frozen::Args { user_id, frozen };
-                if group_canister_c2c_client::c2c_set_user_frozen(group.into(), &args)
+                let args = group_canister::c2c_set_user_suspended::Args { user_id, suspended };
+                if group_canister_c2c_client::c2c_set_user_suspended(group.into(), &args)
                     .await
                     .is_err()
                     && attempt < 10
                 {
                     mutate_state(|state| {
                         let now = state.env.now();
-                        state.data.set_user_frozen_queue.schedule(
-                            vec![SetUserFrozen::Group(SetUserFrozenInGroup {
+                        state.data.set_user_suspended_queue.schedule(
+                            vec![SetUserSuspended::Group(SetUserSuspendedInGroup {
                                 user_id,
                                 group,
-                                frozen,
+                                suspended,
                                 attempt: attempt + 1,
                             })],
                             now + (10 * SECOND_IN_MS), // Try again in 10 seconds

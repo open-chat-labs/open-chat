@@ -11,8 +11,8 @@ use user_canister::delete_group::{Response::*, *};
 async fn delete_group(args: Args) -> Response {
     run_regular_jobs();
 
-    if read_state(|state| state.data.frozen.value) {
-        return UserFrozen;
+    if read_state(|state| state.data.suspended.value) {
+        return UserSuspended;
     }
 
     let c2c_args = c2c_delete_group::Args {};

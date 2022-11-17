@@ -175,7 +175,7 @@ type CurrentUserResponse =
             phone_status: PhoneStatus;
             icp_account: AccountIdentifier;
             referrals: vec UserId;
-            frozen: bool;
+            suspended: bool;
         };
         UserNotFound;
     };

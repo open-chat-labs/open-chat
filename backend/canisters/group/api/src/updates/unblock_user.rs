@@ -15,5 +15,5 @@ pub enum Response {
     CannotUnblockSelf,
     GroupNotPublic,
     NotAuthorized,
-    UserFrozen,
+    UserSuspended,
 }

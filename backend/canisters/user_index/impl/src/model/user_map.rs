@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{FrozenUntil, PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, SuspendedUntil, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -303,18 +303,18 @@ impl UserMap {
         }
     }
 
-    pub fn freeze_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
+    pub fn suspend_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.frozen_until = Some(until.map_or(FrozenUntil::Indefinitely, FrozenUntil::Timestamp));
+            user.suspended_until = Some(until.map_or(SuspendedUntil::Indefinitely, SuspendedUntil::Timestamp));
             true
         } else {
             false
         }
     }
 
-    pub fn unfreeze_user(&mut self, user_id: &UserId) -> bool {
+    pub fn unsuspend_user(&mut self, user_id: &UserId) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.frozen_until = None;
+            user.suspended_until = None;
             true
         } else {
             false

@@ -20,8 +20,8 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if !runtime_state.data.is_public {
         GroupNotPublic
     } else if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
-        if caller_participant.frozen.value {
-            return UserFrozen;
+        if caller_participant.suspended.value {
+            return UserSuspended;
         }
 
         let unblocked_by = caller_participant.user_id;

@@ -16,8 +16,8 @@ async fn register_poll_vote(args: Args) -> Response {
 fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.frozen.value {
-            return UserFrozen;
+        if participant.suspended.value {
+            return UserSuspended;
         }
 
         let now = runtime_state.env.now();

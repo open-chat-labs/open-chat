@@ -5,18 +5,18 @@ use std::time::Duration;
 use types::{MessageContent, TextContent};
 
 #[test]
-fn freeze_user() {
+fn suspend_user() {
     let (mut env, canister_ids) = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(&mut env, &user1, "FREEZE_USER_TEST", false, false);
+    let group = client::user::happy_path::create_group(&mut env, &user1, "SUSPEND_USER_TEST", false, false);
 
-    client::user_index::freeze_user(
+    client::user_index::suspend_user(
         &mut env,
         SERVICE_PRINCIPAL,
         canister_ids.user_index,
-        &user_index_canister::freeze_user::Args {
+        &user_index_canister::suspend_user::Args {
             user_id: user1.user_id,
             duration: None,
         },
@@ -25,7 +25,7 @@ fn freeze_user() {
     env.tick();
 
     let user_response1 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
-    assert!(user_response1.frozen);
+    assert!(user_response1.suspended);
 
     let direct_message_response1 = client::user::send_message(
         &mut env,
@@ -44,7 +44,7 @@ fn freeze_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message::Response::UserFrozen
+        user_canister::send_message::Response::UserSuspended
     ));
 
     let group_message_response1 = client::group::send_message(
@@ -64,20 +64,20 @@ fn freeze_user() {
     );
     assert!(matches!(
         group_message_response1,
-        group_canister::send_message::Response::UserFrozen
+        group_canister::send_message::Response::UserSuspended
     ));
 
-    client::user_index::unfreeze_user(
+    client::user_index::unsuspend_user(
         &mut env,
         SERVICE_PRINCIPAL,
         canister_ids.user_index,
-        &user_index_canister::unfreeze_user::Args { user_id: user1.user_id },
+        &user_index_canister::unsuspend_user::Args { user_id: user1.user_id },
     );
 
     env.tick();
 
     let user_response2 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
-    assert!(!user_response2.frozen);
+    assert!(!user_response2.suspended);
 
     let direct_message_response2 = client::user::send_message(
         &mut env,
@@ -123,16 +123,16 @@ fn freeze_user() {
 }
 
 #[test]
-fn freeze_user_for_duration() {
+fn suspend_user_for_duration() {
     let (mut env, canister_ids) = setup_env();
 
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
 
-    client::user_index::freeze_user(
+    client::user_index::suspend_user(
         &mut env,
         SERVICE_PRINCIPAL,
         canister_ids.user_index,
-        &user_index_canister::freeze_user::Args {
+        &user_index_canister::suspend_user::Args {
             user_id: user.user_id,
             duration: Some(1000),
         },
@@ -142,13 +142,13 @@ fn freeze_user_for_duration() {
     env.tick();
 
     let user_response1 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
-    assert!(user_response1.frozen);
+    assert!(user_response1.suspended);
 
     env.advance_time(Duration::from_millis(1));
     env.tick();
 
     let user_response2 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
-    assert!(!user_response2.frozen);
+    assert!(!user_response2.suspended);
 
     return_env(env, canister_ids);
 }

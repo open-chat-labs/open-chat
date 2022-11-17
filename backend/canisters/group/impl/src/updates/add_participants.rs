@@ -20,7 +20,7 @@ async fn add_participants(args: Args) -> Response {
 
     let mut users_added = Vec::new();
     let mut users_who_blocked_request = Vec::new();
-    let mut users_frozen = Vec::new();
+    let mut users_suspended = Vec::new();
     let mut errors = Vec::new();
     if !prepare_result.users_to_add.is_empty() {
         let c2c_args = c2c_try_add_to_group::Args {
@@ -42,7 +42,7 @@ async fn add_participants(args: Args) -> Response {
                 Ok(result) => match result {
                     c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
                     c2c_try_add_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
-                    c2c_try_add_to_group::Response::UserFrozen => users_frozen.push(user_id),
+                    c2c_try_add_to_group::Response::UserSuspended => users_suspended.push(user_id),
                 },
                 Err(_) => {
                     errors.push(user_id);
@@ -71,7 +71,7 @@ async fn add_participants(args: Args) -> Response {
             users_already_in_group: prepare_result.users_already_in_group,
             users_blocked_from_group: prepare_result.users_blocked_from_group,
             users_who_blocked_request,
-            users_frozen,
+            users_suspended,
             errors,
         })
     } else {
@@ -81,7 +81,7 @@ async fn add_participants(args: Args) -> Response {
             users_blocked_from_group: prepare_result.users_blocked_from_group,
             users_who_blocked_request,
             users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
-            users_frozen,
+            users_suspended,
             errors,
         })
     }
@@ -101,8 +101,8 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
     if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(Box::new(ParticipantLimitReached(limit)))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.frozen.value {
-            return Err(Box::new(UserFrozen));
+        if participant.suspended.value {
+            return Err(Box::new(UserSuspended));
         }
 
         let permissions = &runtime_state.data.permissions;

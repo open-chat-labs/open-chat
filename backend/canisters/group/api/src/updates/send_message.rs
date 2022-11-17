@@ -23,7 +23,7 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     NotAuthorized,
     CallerNotInGroup,
-    UserFrozen,
+    UserSuspended,
     InvalidRequest(String),
 }
 

@@ -15,5 +15,5 @@ pub enum Response {
     Success,
     MessageNotFound,
     CallerNotInGroup,
-    UserFrozen,
+    UserSuspended,
 }

@@ -1,7 +1,7 @@
 use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
-use crate::model::set_user_frozen_queue::SetUserFrozenQueue;
+use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::{CandidType, Principal};
@@ -141,7 +141,7 @@ struct Data {
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     #[serde(default)]
-    pub set_user_frozen_queue: SetUserFrozenQueue,
+    pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 
 impl Data {
@@ -197,7 +197,7 @@ impl Data {
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
-            set_user_frozen_queue: SetUserFrozenQueue::default(),
+            set_user_suspended_queue: SetUserSuspendedQueue::default(),
         }
     }
 }
@@ -229,7 +229,7 @@ impl Default for Data {
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
-            set_user_frozen_queue: SetUserFrozenQueue::default(),
+            set_user_suspended_queue: SetUserSuspendedQueue::default(),
         }
     }
 }

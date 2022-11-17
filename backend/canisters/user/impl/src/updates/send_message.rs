@@ -67,8 +67,8 @@ enum ValidateRequestResult {
 }
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateRequestResult {
-    if runtime_state.data.frozen.value {
-        return ValidateRequestResult::Invalid(UserFrozen);
+    if runtime_state.data.suspended.value {
+        return ValidateRequestResult::Invalid(UserSuspended);
     }
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         return ValidateRequestResult::Invalid(RecipientBlocked);

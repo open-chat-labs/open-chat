@@ -22,7 +22,7 @@ pub struct User {
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
     #[serde(default)]
-    pub frozen_until: Option<FrozenUntil>,
+    pub suspended_until: Option<SuspendedUntil>,
 }
 
 impl User {
@@ -93,7 +93,7 @@ impl User {
             phone_status: PhoneStatus::None,
             referred_by,
             is_bot,
-            frozen_until: None,
+            suspended_until: None,
         }
     }
 
@@ -107,7 +107,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            frozen: self.frozen_until.as_ref().map_or(false, |f| f.is_frozen(now)),
+            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
         }
     }
 
@@ -121,7 +121,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            frozen: self.frozen_until.as_ref().map_or(false, |f| f.is_frozen(now)),
+            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
         }
     }
 }
@@ -135,16 +135,16 @@ pub struct UnconfirmedPhoneNumber {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum FrozenUntil {
+pub enum SuspendedUntil {
     Timestamp(TimestampMillis),
     Indefinitely,
 }
 
-impl FrozenUntil {
-    pub fn is_frozen(&self, now: TimestampMillis) -> bool {
+impl SuspendedUntil {
+    pub fn is_suspended(&self, now: TimestampMillis) -> bool {
         match self {
-            FrozenUntil::Timestamp(ts) => *ts > now,
-            FrozenUntil::Indefinitely => true,
+            SuspendedUntil::Timestamp(ts) => *ts > now,
+            SuspendedUntil::Indefinitely => true,
         }
     }
 }
@@ -169,7 +169,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
-            frozen_until: None,
+            suspended_until: None,
         }
     }
 }

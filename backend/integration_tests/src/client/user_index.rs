@@ -13,14 +13,14 @@ generate_query_call!(users);
 // Updates
 generate_update_call!(add_super_admin);
 generate_update_call!(confirm_phone_number);
-generate_update_call!(freeze_user);
 generate_update_call!(remove_sms_messages);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
 generate_update_call!(resend_code);
 generate_update_call!(set_username);
 generate_update_call!(submit_phone_number);
-generate_update_call!(unfreeze_user);
+generate_update_call!(suspend_user);
+generate_update_call!(unsuspend_user);
 generate_update_call!(upgrade_user_canister_wasm);
 
 pub mod happy_path {

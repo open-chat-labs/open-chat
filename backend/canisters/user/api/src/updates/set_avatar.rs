@@ -12,5 +12,5 @@ pub struct Args {
 pub enum Response {
     Success,
     AvatarTooBig(FieldTooLongResult),
-    UserFrozen,
+    UserSuspended,
 }

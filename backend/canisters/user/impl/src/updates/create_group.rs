@@ -56,8 +56,8 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         false
     }
 
-    if runtime_state.data.frozen.value {
-        Err(UserFrozen)
+    if runtime_state.data.suspended.value {
+        Err(UserSuspended)
     } else if let Some(max) = runtime_state.data.max_groups_created() {
         Err(MaxGroupsCreated(max))
     } else if is_throttled() {

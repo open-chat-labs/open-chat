@@ -27,7 +27,7 @@ pub enum Response {
     MaxGroupsCreated(u32),
     NameTaken,
     Throttled,
-    UserFrozen,
+    UserSuspended,
     InternalError,
 }
 

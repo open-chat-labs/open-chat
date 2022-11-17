@@ -11,8 +11,8 @@ use user_canister::leave_group::{Response::*, *};
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    if read_state(|state| state.data.frozen.value) {
-        return UserFrozen;
+    if read_state(|state| state.data.suspended.value) {
+        return UserSuspended;
     }
 
     let c2c_args = c2c_leave_group::Args {
@@ -30,7 +30,7 @@ async fn leave_group(args: Args) -> Response {
                 }
             }
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
-            c2c_leave_group::Response::UserFrozen => UserFrozen,
+            c2c_leave_group::Response::UserSuspended => UserSuspended,
         },
         Err(error) => InternalError(format!("{error:?}")),
     }

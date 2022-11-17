@@ -22,8 +22,8 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
-        if participant.frozen.value {
-            return UserFrozen;
+        if participant.suspended.value {
+            return UserSuspended;
         }
 
         let now = runtime_state.env.now();

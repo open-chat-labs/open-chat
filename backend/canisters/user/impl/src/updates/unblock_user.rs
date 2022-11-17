@@ -13,8 +13,8 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        return UserFrozen;
+    if runtime_state.data.suspended.value {
+        return UserSuspended;
     }
 
     let now = runtime_state.env.now();

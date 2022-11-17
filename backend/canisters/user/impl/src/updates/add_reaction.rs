@@ -20,8 +20,8 @@ fn add_reaction(args: Args) -> Response {
 }
 
 fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.value {
-        return UserFrozen;
+    if runtime_state.data.suspended.value {
+        return UserSuspended;
     }
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
