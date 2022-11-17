@@ -26,7 +26,7 @@ type SendMessageResponse =
         CallerNotInGroup;
         InvalidRequest: text;
         ThreadMessageNotFound;
-        UserFrozen;
+        UserSuspended;
     };
 
 type EditMessageArgs =
@@ -42,7 +42,7 @@ type EditMessageResponse =
         Success;
         MessageNotFound;
         CallerNotInGroup;
-        UserFrozen;
+        UserSuspended;
     };
 
 type DeleteMessagesArgs =
@@ -57,7 +57,7 @@ type DeleteMessagesResponse =
         Success;
         CallerNotInGroup;
         MessageNotFound;
-        UserFrozen;
+        UserSuspended;
     };
 
 type RegisterPollVoteArgs =
@@ -76,7 +76,7 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
-        UserFrozen;
+        UserSuspended;
     };
 
 type AddReactionArgs =
@@ -96,7 +96,7 @@ type AddReactionResponse =
         MessageNotFound;
         CallerNotInGroup;
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type RemoveReactionArgs =
@@ -114,7 +114,7 @@ type RemoveReactionResponse =
         MessageNotFound;
         CallerNotInGroup;
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type BlockUserArgs =
@@ -133,7 +133,7 @@ type BlockUserResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
-        UserFrozen;
+        UserSuspended;
     };
 
 type UnblockUserArgs =
@@ -149,7 +149,7 @@ type UnblockUserResponse =
         CannotUnblockSelf;
         GroupNotPublic;
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type AddParticipantsArgs =
@@ -168,7 +168,7 @@ type AddParticipantsResponse =
         CallerNotInGroup;
         ParticipantLimitReached: nat32;
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type AddParticipantsPartialSuccessResult =
@@ -178,7 +178,7 @@ type AddParticipantsPartialSuccessResult =
         users_blocked_from_group: vec UserId;
         users_who_blocked_request: vec UserId;
         users_not_authorized_to_add: vec UserId;
-        users_frozen: vec UserId;
+        users_suspended: vec UserId;
         errors: vec UserId;
     };
 
@@ -187,7 +187,7 @@ type AddParticipantsFailedResult =
         users_already_in_group: vec UserId;
         users_blocked_from_group: vec UserId;
         users_who_blocked_request: vec UserId;
-        users_frozen: vec UserId;
+        users_suspended: vec UserId;
         errors: vec UserId;
     };
 
@@ -206,7 +206,7 @@ type RemoveParticipantResponse =
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
-        UserFrozen;
+        UserSuspended;
     };
 
 type ChangeRoleArgs =
@@ -223,7 +223,7 @@ type ChangeRoleResponse =
         NotAuthorized;
         UserNotInGroup;
         Invalid;
-        UserFrozen;
+        UserSuspended;
     };
 
 type InviteCodeArgs =
@@ -249,7 +249,7 @@ type EnableInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type DisableInviteCodeArgs =
@@ -261,7 +261,7 @@ type DisableInviteCodeResponse =
     variant {
         Success;
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type ResetInviteCodeArgs =
@@ -275,7 +275,7 @@ type ResetInviteCodeResponse =
             code: nat64;
         };
         NotAuthorized;
-        UserFrozen;
+        UserSuspended;
     };
 
 type UpdateGroupV2Args =
@@ -302,7 +302,7 @@ type UpdateGroupV2Response =
         InternalError;
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
-        UserFrozen;
+        UserSuspended;
     };
 
 type OptionalGroupPermissions =
@@ -336,7 +336,7 @@ type PinMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         MessageNotFound;
-        UserFrozen;
+        UserSuspended;
     };
 
 type UnpinMessageArgs =
@@ -352,7 +352,7 @@ type UnpinMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         MessageNotFound;
-        UserFrozen;
+        UserSuspended;
     };
 
 type RegisterProposalVoteArgs =
@@ -370,7 +370,7 @@ type RegisterProposalVoteResponse =
         ProposalMessageNotFound;
         ProposalNotFound;
         ProposalNotAcceptingVotes;
-        UserFrozen;
+        UserSuspended;
         InternalError: text;
     };
 
@@ -384,7 +384,7 @@ type MakePrivateResponse =
         Success;
         NotAuthorized;
         AlreadyPrivate;
-        UserFrozen;
+        UserSuspended;
         InternalError;
     };
 
