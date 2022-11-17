@@ -2523,7 +2523,13 @@ export class OpenChat extends EventTarget {
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.api.setUsername(userId, username);
+        return this.api.setUsername(userId, username)
+            .then((resp) => {
+                if (resp === "success" && this._user !== undefined) {
+                    this._user.username = username;
+                }
+                return resp;
+            });
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
