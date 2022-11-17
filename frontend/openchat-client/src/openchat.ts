@@ -277,7 +277,6 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
-    RehydratedReplyContext
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -2527,13 +2526,12 @@ export class OpenChat extends EventTarget {
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.api.setUsername(userId, username)
-            .then((resp) => {
-                if (resp === "success" && this._user !== undefined) {
-                    this._user.username = username;
-                }
-                return resp;
-            });
+        return this.api.setUsername(userId, username).then((resp) => {
+            if (resp === "success" && this._user !== undefined) {
+                this._user.username = username;
+            }
+            return resp;
+        });
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
@@ -2732,7 +2730,11 @@ export class OpenChat extends EventTarget {
             };
             const chatsResponse =
                 this._chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId, this._liveState.hideDeleted)
+                    ? await this.api.getInitialState(
+                          userLookup,
+                          selectedChat?.chatId,
+                          this._liveState.hideDeleted
+                      )
                     : await this.api.getUpdates(
                           currentState,
                           this.updateArgsFromChats(this._chatUpdatesSince, chats),
