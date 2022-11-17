@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import type { RehydratedReplyContext, OpenChat } from "openchat-client";
+    import { messageIsVisible } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -9,7 +10,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
-    import { messageIsVisible } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
