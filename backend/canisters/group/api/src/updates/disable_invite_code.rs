@@ -10,4 +10,5 @@ pub struct Args {
 pub enum Response {
     Success,
     NotAuthorized,
+    UserSuspended,
 }

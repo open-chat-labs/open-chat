@@ -16,7 +16,8 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
-        Err(_) => return reset_invite_code::Response::NotAuthorized,
+        Err(PrepareError::NotAuthorized) => return reset_invite_code::Response::NotAuthorized,
+        Err(PrepareError::UserSuspended) => return reset_invite_code::Response::UserSuspended,
         Ok(c) => c,
     };
 
@@ -42,7 +43,8 @@ async fn enable_invite_code(args: enable_invite_code::Args) -> enable_invite_cod
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
-        Err(_) => return enable_invite_code::Response::NotAuthorized,
+        Err(PrepareError::NotAuthorized) => return enable_invite_code::Response::NotAuthorized,
+        Err(PrepareError::UserSuspended) => return enable_invite_code::Response::UserSuspended,
         Ok(c) => c,
     };
 
@@ -96,9 +98,18 @@ struct PrepareResult {
     enabled: bool,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
+enum PrepareError {
+    NotAuthorized,
+    UserSuspended,
+}
+
+fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, PrepareError> {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return Err(PrepareError::UserSuspended);
+        }
+
         if participant.role.can_invite_users(&runtime_state.data.permissions) {
             return Ok(PrepareResult {
                 caller,
@@ -108,5 +119,5 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
         }
     }
 
-    Err(())
+    Err(PrepareError::NotAuthorized)
 }

@@ -146,6 +146,8 @@ struct Data {
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
+    #[serde(default)]
+    pub suspended: Timestamped<bool>,
 }
 
 impl Data {
@@ -185,6 +187,7 @@ impl Data {
             user_created: now,
             pinned_chats: Timestamped::default(),
             pending_user_principal_migration: None,
+            suspended: Timestamped::default(),
         }
     }
 

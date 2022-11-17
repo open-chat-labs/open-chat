@@ -13,7 +13,8 @@ pub enum Response {
     Success,
     GroupNotFound,
     GroupNotPublic,
-    InternalError(String),
     CallerNotInGroup,
     OwnerCannotLeave,
+    UserSuspended,
+    InternalError(String),
 }

@@ -24,6 +24,9 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         None => return CallerNotInGroup,
     };
 
+    if participant.suspended.value {
+        return UserSuspended;
+    }
     if participant.role.is_owner() {
         return OwnerCannotLeave;
     }

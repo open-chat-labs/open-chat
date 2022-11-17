@@ -17,6 +17,9 @@ async fn unpin_message(args: Args) -> Response {
 fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return UserSuspended;
+        }
         if !participant.role.can_pin_messages(&runtime_state.data.permissions) {
             return NotAuthorized;
         }

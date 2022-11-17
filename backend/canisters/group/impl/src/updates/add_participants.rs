@@ -20,6 +20,7 @@ async fn add_participants(args: Args) -> Response {
 
     let mut users_added = Vec::new();
     let mut users_who_blocked_request = Vec::new();
+    let mut users_suspended = Vec::new();
     let mut errors = Vec::new();
     if !prepare_result.users_to_add.is_empty() {
         let c2c_args = c2c_try_add_to_group::Args {
@@ -41,6 +42,7 @@ async fn add_participants(args: Args) -> Response {
                 Ok(result) => match result {
                     c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
                     c2c_try_add_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
+                    c2c_try_add_to_group::Response::UserSuspended => users_suspended.push(user_id),
                 },
                 Err(_) => {
                     errors.push(user_id);
@@ -64,28 +66,24 @@ async fn add_participants(args: Args) -> Response {
 
     if users_added.len() == args.user_ids.len() {
         Success
+    } else if users_added.is_empty() {
+        Failed(FailedResult {
+            users_already_in_group: prepare_result.users_already_in_group,
+            users_blocked_from_group: prepare_result.users_blocked_from_group,
+            users_who_blocked_request,
+            users_suspended,
+            errors,
+        })
     } else {
-        let mut failed_users = Vec::new();
-        failed_users.extend(users_who_blocked_request.iter().cloned());
-        failed_users.extend(errors.iter().cloned());
-
-        if users_added.is_empty() {
-            Failed(FailedResult {
-                users_already_in_group: prepare_result.users_already_in_group,
-                users_blocked_from_group: prepare_result.users_blocked_from_group,
-                users_who_blocked_request,
-                errors,
-            })
-        } else {
-            PartialSuccess(PartialSuccessResult {
-                users_added: users_added.into_iter().map(|(u, _)| u).collect(),
-                users_already_in_group: prepare_result.users_already_in_group,
-                users_blocked_from_group: prepare_result.users_blocked_from_group,
-                users_who_blocked_request,
-                users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
-                errors,
-            })
-        }
+        PartialSuccess(PartialSuccessResult {
+            users_added: users_added.into_iter().map(|(u, _)| u).collect(),
+            users_already_in_group: prepare_result.users_already_in_group,
+            users_blocked_from_group: prepare_result.users_blocked_from_group,
+            users_who_blocked_request,
+            users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
+            users_suspended,
+            errors,
+        })
     }
 }
 
@@ -103,6 +101,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
     if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(Box::new(ParticipantLimitReached(limit)))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return Err(Box::new(UserSuspended));
+        }
+
         let permissions = &runtime_state.data.permissions;
         let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
         let can_unblock_users = args.allow_blocked_users && participant.role.can_block_users(permissions);

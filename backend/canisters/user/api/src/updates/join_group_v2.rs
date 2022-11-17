@@ -19,6 +19,7 @@ pub enum Response {
     GroupNotPublic,
     ParticipantLimitReached(u32),
     Blocked,
-    InternalError(String),
     NotSuperAdmin,
+    UserSuspended,
+    InternalError(String),
 }
