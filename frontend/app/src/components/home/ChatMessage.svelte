@@ -159,7 +159,6 @@
             messageId: msg.messageId,
             messageIndex: msg.messageIndex,
             edited: msg.edited,
-            threadRoot: msg.thread !== undefined,
         };
     }
 
