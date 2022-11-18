@@ -71,6 +71,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let isSuperAdmin = client.isSuperAdmin();
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -78,7 +79,6 @@
     $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
-    $: isSuperAdmin = client.isSuperAdmin();
     $: isFrozen = client.isFrozen(chat.chatId);
 
     $: {
