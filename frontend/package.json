@@ -3,15 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "turbo run build",
     "build:ci": "turbo run build:ci",
-    "build:prod_test": "turbo run build:prod_test",
-    "build:prod": "turbo run build:prod",
-    "build:testnet": "turbo run build:testnet",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "validate": "turbo run validate",
+    "deploy:prod_test": "turbo run deploy:prod_test",
+    "deploy:prod": "turbo run deploy:prod",
+    "deploy:testnet": "turbo run deploy:testnet",
     "dev": "turbo run dev"
   },
   "author": "julian.jelfs@gmail.com",

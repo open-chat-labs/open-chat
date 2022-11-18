@@ -6,7 +6,6 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_assume_super_admin::{Response::*, *};
 use types::{CanisterId, ParticipantAssumesSuperAdmin, UserId};
-use user_index_canister::c2c_is_super_admin;
 
 #[update_msgpack]
 #[trace]
@@ -17,13 +16,13 @@ async fn c2c_assume_super_admin(args: Args) -> Response {
     let user_id = prepare_result.user_id;
 
     let canister_id = prepare_result.user_index_canister_id;
-    let is_super_admin_args = c2c_is_super_admin::Args { user_id };
-    match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
-        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => {
+    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
+    match user_index_canister_c2c_client::c2c_lookup_principal(canister_id, &c2c_args).await {
+        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) if r.is_super_admin => {
             mutate_state(|state| commit(user_id, args.correlation_id, state))
         }
-        Ok(user_index_canister::c2c_is_super_admin::Response::No) => NotSuperAdmin,
-        Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {error:?}")),
+        Ok(_) => NotSuperAdmin,
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

@@ -18,4 +18,6 @@ pub enum Response {
     PollEnded,
     OptionIndexOutOfRange,
     CallerNotInGroup,
+    UserSuspended,
+    ChatFrozen,
 }

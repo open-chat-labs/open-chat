@@ -17,7 +17,10 @@ async fn c2c_join_group_v2(args: Args) -> Response {
     let PrepareResult {
         user_id,
         user_index_canister_id,
-    } = read_state(prepare);
+    } = match read_state(prepare) {
+        Ok(ok) => ok,
+        Err(response) => return *response,
+    };
 
     let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
     match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
@@ -38,10 +41,14 @@ struct PrepareResult {
     pub user_index_canister_id: CanisterId,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> PrepareResult {
-    PrepareResult {
-        user_id: runtime_state.env.caller().into(),
-        user_index_canister_id: runtime_state.data.user_index_canister_id,
+fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
+    if runtime_state.data.is_frozen() {
+        Err(Box::new(ChatFrozen))
+    } else {
+        Ok(PrepareResult {
+            user_id: runtime_state.env.caller().into(),
+            user_index_canister_id: runtime_state.data.user_index_canister_id,
+        })
     }
 }
 

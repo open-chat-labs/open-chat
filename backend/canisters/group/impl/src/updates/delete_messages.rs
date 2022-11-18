@@ -15,8 +15,16 @@ fn delete_messages(args: Args) -> Response {
 }
 
 fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return UserSuspended;
+        }
+
         let now = runtime_state.env.now();
         let user_id = participant.user_id;
 

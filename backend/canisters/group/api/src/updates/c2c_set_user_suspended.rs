@@ -5,10 +5,11 @@ use types::UserId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub suspended: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Yes,
-    No,
+    Success,
+    UserNotInGroup,
 }

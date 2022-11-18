@@ -10,33 +10,45 @@ use types::{CanisterId, Version};
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 lazy_static! {
-    static ref ENV: Mutex<Vec<(StateMachine, CanisterIds)>> = Mutex::default();
+    static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
 }
 
-pub fn setup_env() -> (StateMachine, CanisterIds) {
-    if let Some((env, canister_ids)) = try_take_existing_env() {
-        return (env, canister_ids);
+pub struct TestEnv {
+    pub env: StateMachine,
+    pub canister_ids: CanisterIds,
+    pub controller: Principal,
+}
+
+pub fn setup_env() -> TestEnv {
+    if let Some(env) = try_take_existing_env() {
+        return env;
     }
     setup_fresh_env()
 }
 
-pub fn setup_fresh_env() -> (StateMachine, CanisterIds) {
+pub fn setup_fresh_env() -> TestEnv {
     let mut env = StateMachine::new();
-    let canister_ids = install_canisters(&mut env, random_principal());
-    (env, canister_ids)
-}
+    let controller = random_principal();
+    let canister_ids = install_canisters(&mut env, controller);
 
-pub fn return_env(env: StateMachine, canister_ids: CanisterIds) {
-    if let Ok(mut e) = ENV.try_lock() {
-        e.push((env, canister_ids));
+    TestEnv {
+        env,
+        canister_ids,
+        controller,
     }
 }
 
-fn try_take_existing_env() -> Option<(StateMachine, CanisterIds)> {
+pub fn return_env(env: TestEnv) {
+    if let Ok(mut e) = ENV.try_lock() {
+        e.push(env);
+    }
+}
+
+fn try_take_existing_env() -> Option<TestEnv> {
     ENV.try_lock().ok().map(|mut e| e.pop()).flatten()
 }
 
-fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterIds {
+fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
     let callback_canister_id = create_canister(env);
     let group_index_canister_id = create_canister(env);
     let notifications_canister_id = create_canister(env);
@@ -57,8 +69,8 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
 
     let user_index_init_args = user_index_canister::init::Args {
-        service_principals: vec![principal],
-        sms_service_principals: vec![principal],
+        service_principals: vec![controller],
+        sms_service_principals: vec![controller],
         user_canister_wasm,
         group_index_canister_id,
         notifications_canister_ids: vec![notifications_canister_id],
@@ -74,7 +86,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     install_canister(env, user_index_canister_id, user_index_canister_wasm, user_index_init_args);
 
     let group_index_init_args = group_index_canister::init::Args {
-        service_principals: vec![principal],
+        service_principals: vec![controller],
         group_canister_wasm,
         notifications_canister_ids: vec![notifications_canister_id],
         user_index_canister_id,
@@ -87,7 +99,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     install_canister(env, group_index_canister_id, group_index_canister_wasm, group_index_init_args);
 
     let notifications_init_args = notifications_canister::init::Args {
-        push_service_principals: vec![principal],
+        push_service_principals: vec![controller],
         user_index_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: Version::min(),
@@ -121,7 +133,7 @@ fn install_canisters(env: &mut StateMachine, principal: Principal) -> CanisterId
     install_canister(env, callback_canister_id, callback_canister_wasm, callback_init_args);
 
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
-        service_owner_principals: vec![principal],
+        service_owner_principals: vec![controller],
         user_index_canister_id,
         group_index_canister_id,
         nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,

@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, SuspendedUntil, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -251,6 +251,16 @@ impl UserMap {
         }
     }
 
+    pub fn get(&self, user_id_or_principal: &Principal) -> Option<&User> {
+        let user_id = self
+            .principal_to_user_id
+            .get(user_id_or_principal)
+            .copied()
+            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
+
+        self.users.get(&user_id)
+    }
+
     pub fn get_by_principal(&self, principal: &Principal) -> Option<&User> {
         self.principal_to_user_id.get(principal).and_then(|u| self.users.get(u))
     }
@@ -297,6 +307,24 @@ impl UserMap {
     pub fn set_storage_limit(&mut self, user_id: &UserId, bytes: u64) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
             user.open_storage_limit_bytes = bytes;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn suspend_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.suspended_until = Some(until.map_or(SuspendedUntil::Indefinitely, SuspendedUntil::Timestamp));
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn unsuspend_user(&mut self, user_id: &UserId) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.suspended_until = None;
             true
         } else {
             false
@@ -369,7 +397,6 @@ impl UserMap {
         self.cached_metrics = Timestamped::new(metrics, now);
     }
 
-    #[allow(dead_code)]
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
     }

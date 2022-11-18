@@ -72,6 +72,10 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.is_frozen() {
+        return Err(ChatFrozen);
+    }
+
     let caller = runtime_state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let avatar_update_size = avatar_update.flatten().map_or(0, |a| a.data.len() as u32);
@@ -118,6 +122,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return Err(UserSuspended);
+        }
+
         let permissions = &runtime_state.data.permissions;
         if !participant.role.can_update_group(permissions)
             || (args.permissions.is_some() && !participant.role.can_change_permissions(permissions))

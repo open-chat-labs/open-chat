@@ -14,5 +14,7 @@ pub mod resend_code;
 pub mod set_max_concurrent_canister_upgrades;
 pub mod set_username;
 pub mod submit_phone_number;
+pub mod suspend_user;
+pub mod unsuspend_user;
 pub mod upgrade_storage;
 pub mod upgrade_user_canister_wasm;

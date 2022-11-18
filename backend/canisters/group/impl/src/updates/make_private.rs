@@ -42,9 +42,15 @@ struct PrepareResult {
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.is_frozen() {
+        return Err(ChatFrozen);
+    }
+
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if !participant.role.can_change_group_visibility() {
+        if participant.suspended.value {
+            Err(UserSuspended)
+        } else if !participant.role.can_change_group_visibility() {
             Err(NotAuthorized)
         } else if !runtime_state.data.is_public {
             Err(AlreadyPrivate)

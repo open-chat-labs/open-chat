@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, Role,
-    TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
+    OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -80,6 +80,7 @@ pub struct GroupChatSummary {
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: bool,
+    pub frozen: Option<FrozenGroupInfo>,
 }
 
 impl GroupChatSummary {
@@ -143,6 +144,7 @@ pub struct GroupChatSummaryUpdates {
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: Option<bool>,
+    pub frozen: OptionUpdate<FrozenGroupInfo>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -159,6 +161,7 @@ pub struct PublicGroupSummary {
     pub wasm_version: Version,
     pub owner_id: UserId,
     pub is_public: bool,
+    pub frozen: Option<FrozenGroupInfo>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -186,6 +189,7 @@ pub struct GroupChatSummaryInternal {
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub frozen: Option<FrozenGroupInfo>,
 }
 
 impl GroupChatSummaryInternal {
@@ -241,6 +245,7 @@ impl GroupChatSummaryInternal {
             metrics: updates.metrics.unwrap_or(self.metrics),
             my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
             latest_threads,
+            frozen: updates.frozen.apply_to(self.frozen),
         }
     }
 }
@@ -273,6 +278,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             my_metrics: s.my_metrics,
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: false,
+            frozen: s.frozen,
         }
     }
 }
@@ -300,6 +306,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub is_public: Option<bool>,
     pub latest_threads: Vec<ThreadSyncDetailsInternal>,
     pub notifications_muted: Option<bool>,
+    pub frozen: OptionUpdate<FrozenGroupInfo>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -327,6 +334,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             is_public: s.is_public,
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: None,
+            frozen: s.frozen,
         }
     }
 }

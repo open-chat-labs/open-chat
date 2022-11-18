@@ -18,6 +18,8 @@ pub enum Response {
     CallerNotInGroup,
     ParticipantLimitReached(u32),
     NotAuthorized,
+    UserSuspended,
+    ChatFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -27,6 +29,7 @@ pub struct PartialSuccessResult {
     pub users_blocked_from_group: Vec<UserId>,
     pub users_who_blocked_request: Vec<UserId>,
     pub users_not_authorized_to_add: Vec<UserId>,
+    pub users_suspended: Vec<UserId>,
     pub errors: Vec<UserId>,
 }
 
@@ -35,5 +38,6 @@ pub struct FailedResult {
     pub users_already_in_group: Vec<UserId>,
     pub users_blocked_from_group: Vec<UserId>,
     pub users_who_blocked_request: Vec<UserId>,
+    pub users_suspended: Vec<UserId>,
     pub errors: Vec<UserId>,
 }

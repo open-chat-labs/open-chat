@@ -19,5 +19,6 @@ pub enum Response {
     ParticipantLimitReached(u32),
     NotSuperAdmin,
     UserNotFound,
+    ChatFrozen,
     InternalError(String),
 }

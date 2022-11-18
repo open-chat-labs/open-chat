@@ -14,4 +14,5 @@ pub struct Args {
 pub enum Response {
     Success,
     ChatNotFound,
+    UserSuspended,
 }

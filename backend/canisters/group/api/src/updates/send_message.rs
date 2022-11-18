@@ -23,7 +23,9 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     NotAuthorized,
     CallerNotInGroup,
+    UserSuspended,
     InvalidRequest(String),
+    ChatFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

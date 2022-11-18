@@ -17,6 +17,10 @@ fn change_role(args: Args) -> Response {
 }
 
 fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_frozen() {
+        return ChatFrozen;
+    }
+
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     let event =
@@ -48,6 +52,7 @@ fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             ChangeRoleResult::UserNotInGroup => return UserNotInGroup,
             ChangeRoleResult::Unchanged => return Success,
             ChangeRoleResult::CallerNotInGroup => return CallerNotInGroup,
+            ChangeRoleResult::UserSuspended => return UserSuspended,
         };
 
     runtime_state.data.events.push_main_event(event, args.correlation_id, now);
