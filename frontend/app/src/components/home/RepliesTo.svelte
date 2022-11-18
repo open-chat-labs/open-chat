@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import type { RehydratedReplyContext, OpenChat } from "openchat-client";
-    import { messageIsVisible } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
