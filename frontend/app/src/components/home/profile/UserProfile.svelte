@@ -115,10 +115,6 @@
                     .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
-                            userStore.add({
-                                ...user,
-                                username: validUsername,
-                            });
                             validUsername = undefined;
                         } else {
                             if (resp === "username_taken") {
