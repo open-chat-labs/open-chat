@@ -24,6 +24,8 @@
         ThreadSelected,
         ThreadClosed,
         SendMessageFailed,
+        ChatsUpdated,
+        Notification,
         MessagesReadFromServer,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
@@ -41,7 +43,11 @@
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import { fullScreen } from "../../stores/settings";
-    import { closeNotificationsForChat, subscribeToNotifications } from "../../utils/notifications";
+    import {
+        closeNotificationsForChat,
+        closeNotifications,
+        subscribeToNotifications,
+    } from "../../utils/notifications";
     import { filterByChatType, RightPanelState } from "./rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -169,6 +175,24 @@
             // This can occur either for chat messages or thread messages so we'll just handle it here
             toastStore.showFailureToast("errorSendingMessage");
         }
+        if (ev instanceof ChatsUpdated) {
+            closeNotifications((notification: Notification) => {
+                if (
+                    notification.kind === "direct_notification" ||
+                    notification.kind === "group_notification"
+                ) {
+                    return client.isMessageRead(
+                        notification.kind === "direct_notification"
+                            ? notification.sender
+                            : notification.chatId,
+                        notification.message.event.messageIndex,
+                        notification.message.event.messageId
+                    );
+                }
+
+                return false;
+            });
+        }
     }
 
     async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
@@ -176,12 +200,7 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            if (qs.get("type") === "direct") {
-                client.createDirectChat(chatId);
-                push(`/${chatId}`);
-                hotGroups = { kind: "idle" };
-                return;
-            } else {
+            if (!(await createDirectChat(chatId))) {
                 const code = qs.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -193,9 +212,9 @@
                     replace("/");
                     return;
                 }
-
-                chat = $chatSummariesStore[chatId];
             }
+
+            chat = $chatSummariesStore[chatId];
         }
 
         // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
@@ -341,10 +360,7 @@
             searching = true;
             const lowercase = searchTerm.toLowerCase();
             groupSearchResults = client.searchGroups(lowercase, 10);
-            userSearchResults = client.searchUsers(lowercase, 10).then((resp) => {
-                userStore.addMany(resp);
-                return resp;
-            });
+            userSearchResults = client.searchUsers(lowercase, 10);
             messageSearchResults = client.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
@@ -535,8 +551,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            client.createDirectChat(ev.detail);
-            push(`/${ev.detail}`);
+            createDirectChat(ev.detail);
         }
     }
 
@@ -565,9 +580,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            client.createDirectChat(ev.detail.sender!.userId);
-            push(`/${ev.detail.sender!.userId}`);
+            createDirectChat(chatId);
         }
     }
 
@@ -758,7 +771,9 @@
         currentChatDraftMessage.setTextContent(chatId, text);
     }
 
-    function groupCreated(ev: CustomEvent<{ chatId: string, isPublic: boolean; rules: GroupRules }>) {
+    function groupCreated(
+        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: GroupRules }>
+    ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
         if (isPublic) {
@@ -784,9 +799,7 @@
         chats: ChatSummary[],
         selectedChatId: string | undefined
     ): ChatSummary[] {
-        return chats.filter(
-            (c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId)
-        );
+        return chats.filter((c) => selectedChatId !== c.chatId && client.canSendMessages(c.chatId));
     }
 
     function toggleMuteNotifications(ev: CustomEvent<{ chatId: string; mute: boolean }>) {
@@ -802,6 +815,15 @@
 
     function showLandingPageRoute(route: string) {
         return () => (window.location.href = route);
+    }
+
+    async function createDirectChat(chatId: string): Promise<boolean> {
+        if (!(await client.createDirectChat(chatId))) {
+            return false;
+        }
+
+        push(`/${chatId}`);
+        return true;
     }
 
     $: bgHeight = $dimensions.height * 0.9;

@@ -29,7 +29,7 @@ fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
     } else {
         (
-            "Please send a text message containing only your reward code (eg. '123456')",
+            "Please send a text message containing only your reward code (eg. '1234ABCD')",
             None,
         )
     };
@@ -48,7 +48,7 @@ fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 fn try_extract_code(content: MessageContent) -> Option<String> {
     if let MessageContent::Text(TextContent { text }) = content {
-        RewardCodes::validate(&text).then_some(text)
+        RewardCodes::validate(&text).then_some(text.to_ascii_uppercase())
     } else {
         None
     }

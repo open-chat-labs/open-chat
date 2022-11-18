@@ -1,6 +1,7 @@
 use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
+use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::{CandidType, Principal};
@@ -23,7 +24,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 45_000;
+pub const USER_LIMIT: usize = 60_000;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
@@ -109,6 +110,7 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            eligible_for_sns1_airdrop: self.data.users.count_eligible_for_sns1_airdrop(),
         }
     }
 }
@@ -138,6 +140,8 @@ struct Data {
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
+    #[serde(default)]
+    pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 
 impl Data {
@@ -193,6 +197,7 @@ impl Data {
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
+            set_user_suspended_queue: SetUserSuspendedQueue::default(),
         }
     }
 }
@@ -224,6 +229,7 @@ impl Default for Data {
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
+            set_user_suspended_queue: SetUserSuspendedQueue::default(),
         }
     }
 }
@@ -253,4 +259,5 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_events_queue_length: usize,
+    pub eligible_for_sns1_airdrop: usize,
 }

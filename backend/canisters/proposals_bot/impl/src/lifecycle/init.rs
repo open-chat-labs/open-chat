@@ -25,7 +25,7 @@ fn init(args: Args) {
 
     init_state(env, data, args.wasm_version);
 
-    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 2 * MIN_CYCLES_BALANCE);
+    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 3 * MIN_CYCLES_BALANCE / 2);
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

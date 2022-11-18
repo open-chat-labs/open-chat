@@ -15,7 +15,6 @@ export const openChatBotUser: PartialUserSummary = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-export const PROPOSALS_BOT_USER_ID = process.env.PROPOSALS_BOT_CANISTER!;
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
 export const PROPOSALS_BOT_AVATAR_URL = "assets/proposal-robot.svg";
 

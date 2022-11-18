@@ -11,6 +11,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     OwnerCannotLeave,
+    UserSuspended,
     ChatFrozen,
 }
 

@@ -61,6 +61,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         None => return Err(CallerNotInGroup),
     };
 
+    if participant.suspended.value {
+        return Err(UserSuspended);
+    }
+
     if let Some(proposal) = runtime_state
         .data
         .events

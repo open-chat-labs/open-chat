@@ -563,6 +563,7 @@ type PartialUserSummary =
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
+        suspended: bool;
     };
 
 type Participant =
@@ -839,6 +840,7 @@ type UserSummary =
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
+        suspended: bool;
     };
 
 type Version =

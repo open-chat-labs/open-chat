@@ -80,7 +80,7 @@ impl RewardCodes {
     }
 
     pub fn validate(text: &str) -> bool {
-        text.chars().all(|c| c.is_ascii_digit())
+        text.len() == 8 && text.chars().all(|c| c.is_ascii_alphanumeric())
     }
 }
 

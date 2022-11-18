@@ -40,6 +40,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             phone_status,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
+            suspended: u.suspended_until.is_some(),
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
         })
     } else {

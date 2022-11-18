@@ -15,7 +15,7 @@ then
   cargo install icx-asset
 fi
 
-npm run --prefix frontend build:prod_test
+npm run --prefix frontend deploy:prod_test
 
 dfx --identity $IDENTITY deploy --network ic_test --no-wallet website
 icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload pfs7b-iqaaa-aaaaf-abs7q-cai /.well-known/ii-alternative-origins=frontend/app/build/.well-known/ii-alternative-origins

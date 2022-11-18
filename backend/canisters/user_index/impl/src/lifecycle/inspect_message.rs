@@ -27,9 +27,12 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
-        "add_super_admin" | "remove_super_admin" | "set_max_concurrent_canister_upgrades" | "upgrade_user_canister_wasm" => {
-            runtime_state.is_caller_service_principal()
-        }
+        "add_super_admin"
+        | "remove_super_admin"
+        | "set_max_concurrent_canister_upgrades"
+        | "suspend_user"
+        | "unsuspend_user"
+        | "upgrade_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "create_challenge"
         | "generate_registration_fee"

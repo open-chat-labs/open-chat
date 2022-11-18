@@ -43,8 +43,8 @@ async fn enable_invite_code(args: Args) -> Response {
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
-        Err(_) => return NotAuthorized,
         Ok(c) => c,
+        Err(response) => return response,
     };
 
     let code = match initial_state.code {
@@ -104,6 +104,10 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.suspended.value {
+            return Err(UserSuspended);
+        }
+
         if participant.role.can_invite_users(&runtime_state.data.permissions) {
             return Ok(PrepareResult {
                 caller,

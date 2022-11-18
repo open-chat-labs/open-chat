@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
 use ic_cdk_macros::update;
@@ -10,6 +10,10 @@ use user_canister::leave_group::{Response::*, *};
 #[trace]
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
+
+    if read_state(|state| state.data.suspended.value) {
+        return UserSuspended;
+    }
 
     let c2c_args = c2c_leave_group::Args {
         correlation_id: args.correlation_id,
@@ -26,6 +30,7 @@ async fn leave_group(args: Args) -> Response {
                 }
             }
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
+            c2c_leave_group::Response::UserSuspended => UserSuspended,
             c2c_leave_group::Response::ChatFrozen => ChatFrozen,
         },
         Err(error) => InternalError(format!("{error:?}")),

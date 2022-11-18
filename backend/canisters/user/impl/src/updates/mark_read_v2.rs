@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::{ChatId, MessageIndex};
 use user_canister::c2c_mark_read_v2;
 use user_canister::mark_read_v2::{Response::*, *};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]

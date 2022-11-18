@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="background:#fff" viewBox="0 0 3305 2860">
+  <defs>
+    <path id="a" fill="#ddd" stroke="#c7c7c7" stroke-width="2" d="M0 30a225 30 0 0 0 450 0A225 30 0 0 0 0 30v240a225 30 0 0 0 450 0V30" pointer-events="visiblePainted"/>
+    <path id="b" fill="none" d="M0 30h450v270H0z" pointer-events="visiblePainted"/>
+  </defs>
+  <g transform="translate(985 845)">
+    <rect width="2120" height="1338" fill="#fff" stroke="#5d35a5" stroke-dasharray="20 20" stroke-width="2" pointer-events="none" rx="0" ry="0"/>
+    <text xml:space="preserve" x="10" y="1299" fill="#5d35a5" font-family="Open Sans" font-size="24" pointer-events="visible" transform="translate(15)"><tspan x="0" dy="0em">Web app</tspan></text>
+    <text xml:space="preserve" x="10" y="1323" fill="#5d35a5" font-family="Open Sans" font-size="19" pointer-events="visible" transform="translate(15)"><tspan x="0" dy="0em">[Container]</tspan></text>
+    <image pointer-events="visible"/>
+  </g>
+  <g transform="translate(1180 2360)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">OpenChat Canisters</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">All OpenChat canister APIs</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1995 320)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">UserGeek</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">IC based user analytics system</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(200 1790)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Assets canister</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Static assets for the chat app</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2635 320)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">WebRTC</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">STUN + Signalling</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(200 865)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Landing page assets</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: AWS s3]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Static assets for the landing pages</tspan><tspan x="0" dy="1.2em">hosted on AWS with CDN</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(645 320)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Authentication providers</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Internet Identity and NFID</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1395 200)">
+    <rect width="400" height="240" y="160" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted" rx="70"/>
+    <circle cx="200" cy="88.889" r="88.889" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted"/>
+    <path stroke="#e60053" stroke-width="2" d="M80 266.667V400m240-133.333V400"/>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(200 220)"><tspan x="0" dy="0em">User</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(200 262.5)"><tspan x="0" dy="0em">[Person]</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(200 310)"><tspan x="0" dy="0em">An OpenChat user</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2635 1790)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">HTTP Cache</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Component]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Caches website assets and</tspan><tspan x="0" dy="1.2em">OpenStorage files</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1005 1790)">
+    <rect width="800" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(400 75)"><tspan x="0" dy="0em">Service worker</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(400 117.5)"><tspan x="0" dy="0em">[Component: Typescript]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(400 165)"><tspan x="0" dy="0em">Validates API calls to IC, handles web push notifications, handles</tspan><tspan x="0" dy="1.2em">caching of website assets</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1005 865)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Landing pages</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Component: Typescript, Svelte]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Static landing page content</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1590 865)">
+    <rect width="800" height="600" fill="#673bb7" stroke="#5d35a5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(400 240)"><tspan x="0" dy="0em">Chat app</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(400 282.5)"><tspan x="0" dy="0em">[Component: Typescript, Svelte]</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(400 330)"><tspan x="0" dy="0em">Single page progressive web app</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2060 1790)">
+    <use xlink:href="#a" stroke-width="2" pointer-events="visiblePainted"/>
+    <use xlink:href="#b" pointer-events="visiblePainted"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 105)"><tspan x="0" dy="0em">IndexDB</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 147.5)"><tspan x="0" dy="0em">[Component]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 195)"><tspan x="0" dy="0em">Large shared async store</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2635 1025)">
+    <use xlink:href="#a" stroke-width="2" pointer-events="visiblePainted"/>
+    <use xlink:href="#b" pointer-events="visiblePainted"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Local storage</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Component]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Small but fast synchronous store for</tspan><tspan x="0" dy="1.2em">app</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2635 2360)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">OpenStorage Buckets</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Data buckets for scalable file storage</tspan><tspan x="0" dy="1.2em">system</tspan></text>
+    <image/>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1005 1015H670"/>
+  <path fill="#707070" stroke="#707070" d="m670 1005-20 10 20 10z"/>
+  <path fill="none" d="M1005 1015H670"/>
+  <g cursor="move" pointer-events="none" transform="translate(837.5 1015)">
+    <rect width="174.516" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-87.3 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Loads service</tspan><tspan x="0" dy="1.2em">worker + assets</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1233 1165 7 280s0 10 3 19l105 307"/>
+  <path fill="#707070" stroke="#707070" d="M1338.09 1774.288 1354 1790l3.024-22.155z"/>
+  <path fill="none" d="m1233 1165 7 280s0 10 3 19l105 307"/>
+  <g cursor="move" pointer-events="none" transform="translate(1247.056 1475.86)">
+    <rect width="78.258" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-39.1 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Installs</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2860 2090v250"/>
+  <path fill="#707070" stroke="#707070" d="m2850 2340 10 20 10-20z"/>
+  <path fill="none" d="M2860 2090v250"/>
+  <g cursor="move" pointer-events="none" transform="translate(2860 2265)">
+    <rect width="166.977" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-83.5 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Reads raw files</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2089 865 75-226"/>
+  <path fill="#707070" stroke="#707070" d="M2173.217 642.128 2170 620l-15.772 15.85z"/>
+  <path fill="none" d="m2089 865 75-226"/>
+  <g cursor="move" pointer-events="none" transform="translate(2134 729.4)">
+    <rect width="123.082" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-61.5 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Sends user</tspan><tspan x="0" dy="1.2em">metrics</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1789 1465-64 96-12 16-168 198"/>
+  <path fill="#707070" stroke="#707070" d="M1537.285 1768.273 1532 1790l20.553-8.808z"/>
+  <path fill="none" d="m1789 1465-64 96-12 16-168 198"/>
+  <g cursor="move" pointer-events="none" transform="translate(1672.793 1624.387)">
+    <rect width="150.67" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-75.3 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Calls Canister</tspan><tspan x="0" dy="1.2em">APIs</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1005 1940H670"/>
+  <path fill="#707070" stroke="#707070" d="m670 1930-20 10 20 10z"/>
+  <path fill="none" d="M1005 1940H670"/>
+  <g cursor="move" pointer-events="none" transform="translate(837.5 1940)">
+    <rect width="142.257" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-71.1 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Loads assets</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1590 1458-117 86s-8 6-10 16l-32 210"/>
+  <path fill="#707070" stroke="#707070" d="M1421.164 1768.71 1428 1790l12.93-18.243z"/>
+  <path fill="none" d="m1590 1458-117 86s-8 6-10 16l-32 210"/>
+  <g cursor="move" pointer-events="none" transform="translate(1469.059 1547.88)">
+    <rect width="142.257" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-71.1 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Loads assets</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2104 1465 117 306"/>
+  <path fill="#707070" stroke="#707070" d="M2211.528 1774.879 2228 1790l2.214-22.25z"/>
+  <path fill="none" d="m2104 1465 117 306"/>
+  <g cursor="move" pointer-events="none" transform="translate(2162.5 1618)">
+    <rect width="122.071" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-61 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Caches API</tspan><tspan x="0" dy="1.2em">responses</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1131 865 980 637"/>
+  <path fill="#707070" stroke="#707070" d="M988.372 631.167 969 620l2.69 22.198z"/>
+  <path fill="none" d="M1131 865 980 637"/>
+  <g cursor="move" pointer-events="none" transform="translate(1055.5 751)">
+    <rect width="154.194" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-77.1 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Authenticates</tspan><tspan x="0" dy="1.2em">with</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2327 1465 350 312"/>
+  <path fill="#707070" stroke="#707070" d="M2670.413 1784.168 2692 1790l-8.287-20.768z"/>
+  <path fill="none" d="m2327 1465 350 312"/>
+  <g cursor="move" pointer-events="none" transform="translate(2502 1621)">
+    <rect width="166.977" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-83.5 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Reads raw files</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1805 1940h235"/>
+  <path fill="#707070" stroke="#707070" d="m2040 1950 20-10-20-10z"/>
+  <path fill="none" d="M1805 1940h235"/>
+  <g cursor="move" pointer-events="none" transform="translate(1922.5 1940)">
+    <rect width="155.423" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-77.7 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Caches assets</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1476 600-147 248"/>
+  <path fill="#707070" stroke="#707070" d="M1320.59 842.696 1319 865l18.798-12.11z"/>
+  <path fill="none" d="m1476 600-147 248"/>
+  <g cursor="move" pointer-events="none" transform="translate(1402.5 724)">
+    <rect width="63.863" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-31.9 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Views</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1698 600 128 247"/>
+  <path fill="#707070" stroke="#707070" d="M1816.932 851.826 1835 865l-.302-22.359z"/>
+  <path fill="none" d="m1698 600 128 247"/>
+  <g cursor="move" pointer-events="none" transform="translate(1762 723.5)">
+    <rect width="53.838" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-26.9 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Uses</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2366 865 290-232"/>
+  <path fill="#707070" stroke="#707070" d="M2662.638 640.306 2672 620l-21.862 4.694z"/>
+  <path fill="none" d="m2366 865 290-232"/>
+  <g cursor="move" pointer-events="none" transform="translate(2540 725.8)">
+    <rect width="105.136" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-52.6 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Signals IP</tspan><tspan x="0" dy="1.2em">address</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2390 1170 225 3"/>
+  <path fill="#707070" stroke="#707070" d="M2614.879 1182.754 2635 1173l-19.876-10.244z"/>
+  <path fill="none" d="m2390 1170 225 3"/>
+  <g cursor="move" pointer-events="none" transform="translate(2502.5 1171.5)">
+    <rect width="135.182" height="62.015" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-67.6 -31)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24)"><tspan x="0" dy="0em">Caches user</tspan><tspan x="0" dy="1.2em">settings</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="M1405 2090v250"/>
+  <path fill="#707070" stroke="#707070" d="m1395 2340 10 20 10-20z"/>
+  <path fill="none" d="M1405 2090v250"/>
+  <g cursor="move" pointer-events="none" transform="translate(1405 2265)">
+    <rect width="105.955" height="33.215" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-53 -16.6)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.6)"><tspan x="0" dy="0em">Calls APIs</tspan></text>
+  </g>
+</svg>

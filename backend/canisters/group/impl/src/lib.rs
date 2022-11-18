@@ -1,6 +1,8 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::participants::{ParticipantInternal, Participants};
-use candid::{CandidType, Principal};
+use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
+use crate::model::participants::{AddResult as AddParticipantResult, ParticipantInternal, Participants};
+use crate::new_joiner_rewards::process_new_joiner_reward;
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::AllChatEvents;
@@ -21,6 +23,7 @@ use utils::regular_jobs::RegularJobs;
 mod guards;
 mod lifecycle;
 mod model;
+mod new_joiner_rewards;
 mod queries;
 mod regular_jobs;
 mod updates;
@@ -116,8 +119,37 @@ impl RuntimeState {
         }
     }
 
+    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddParticipantResult {
+        let result = self.data.participants.add(
+            args.user_id,
+            args.principal,
+            args.now,
+            args.min_visible_event_index,
+            args.min_visible_message_index,
+            args.as_super_admin,
+            args.mute_notifications,
+        );
+
+        if matches!(result, AddParticipantResult::Success(_)) {
+            if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
+                if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
+                    ic_cdk::spawn(process_new_joiner_reward(
+                        self.env.canister_id(),
+                        args.user_id,
+                        self.data.ledger_canister_id,
+                        amount,
+                        args.now,
+                    ));
+                }
+            }
+        }
+
+        result
+    }
+
     pub fn metrics(&self) -> Metrics {
         let chat_metrics = self.data.events.metrics();
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
@@ -141,6 +173,7 @@ impl RuntimeState {
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
             last_active: chat_metrics.last_active,
+            new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
         }
     }
@@ -163,6 +196,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
+    #[serde(default = "ledger_canister_id")]
+    pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
@@ -171,7 +206,13 @@ struct Data {
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     #[serde(default)]
+    pub new_joiner_rewards: Option<NewJoinerRewards>,
+    #[serde(default)]
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
+}
+
+fn ledger_canister_id() -> CanisterId {
+    Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -193,6 +234,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
+        ledger_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
     ) -> Data {
@@ -215,6 +257,7 @@ impl Data {
             user_index_canister_id,
             notifications_canister_ids,
             callback_canister_id,
+            ledger_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
@@ -222,6 +265,7 @@ impl Data {
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
+            new_joiner_rewards: None,
             frozen: Timestamped::default(),
         }
     }
@@ -256,7 +300,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -280,9 +324,20 @@ pub struct Metrics {
     pub edits: u64,
     pub reactions: u64,
     pub last_active: TimestampMillis,
+    pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
 }
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+struct AddParticipantArgs {
+    user_id: UserId,
+    principal: Principal,
+    now: TimestampMillis,
+    min_visible_event_index: EventIndex,
+    min_visible_message_index: MessageIndex,
+    as_super_admin: bool,
+    mute_notifications: bool,
 }

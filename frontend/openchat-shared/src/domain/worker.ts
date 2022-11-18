@@ -406,7 +406,7 @@ type RegisterUser = Request<{
 
 type EditMessage = Request<{
     chatType: "direct_chat" | "group_chat";
-    chatId: string,
+    chatId: string;
     msg: Message;
     threadRootMessageIndex?: number;
 }> & {
@@ -415,7 +415,7 @@ type EditMessage = Request<{
 
 type SendMessage = Request<{
     chatType: "direct_chat" | "group_chat";
-    chatId: string,
+    chatId: string;
     user: CreatedUser;
     mentioned: User[];
     msg: Message;
@@ -491,7 +491,7 @@ type AddDirectChatReaction = Request<{
 
 type DeleteMessage = Request<{
     chatType: "direct_chat" | "group_chat";
-    chatId: string,
+    chatId: string;
     messageId: bigint;
     threadRootMessageIndex?: number;
 }> & {
@@ -726,7 +726,7 @@ type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
 
 type ChatEvents = Request<{
     chatType: "direct_chat" | "group_chat";
-    chatId: string,
+    chatId: string;
     eventIndexRange: IndexRange;
     startIndex: number;
     ascending: boolean;
@@ -762,7 +762,7 @@ type GetInitialState = Request<{
 export type WorkerError = {
     kind: "worker_error";
     correlationId: string;
-    error: unknown;
+    error: string;
 };
 
 /**

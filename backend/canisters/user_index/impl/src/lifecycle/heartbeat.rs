@@ -7,6 +7,7 @@ use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
 use utils::cycles::can_spend_cycles;
+use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
 fn heartbeat() {
@@ -19,6 +20,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
+    set_users_suspended::run();
     cycles_dispenser_client::run();
 }
 
@@ -72,6 +74,7 @@ mod upgrade_canisters {
                 new_wasm: user_canister_wasm.clone(),
                 cycles_to_deposit_if_needed,
                 args: user_canister::post_upgrade::Args {
+                    eligible_for_sns1_airdrop: true,
                     wasm_version: user_canister_wasm.version,
                 },
             }),
@@ -383,5 +386,68 @@ mod prune_unconfirmed_phone_numbers {
     fn prune_unconfirmed_phone_numbers_impl(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.users.prune_unconfirmed_phone_numbers_if_required(now);
+    }
+}
+
+mod set_users_suspended {
+    use super::*;
+    use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
+    use crate::updates::unsuspend_user::unsuspend_user_impl;
+
+    const MAX_BATCH_SIZE: usize = 10;
+
+    pub fn run() {
+        let batch = mutate_state(next_batch);
+        if !batch.is_empty() {
+            ic_cdk::spawn(process_batch(batch));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspended> {
+        let now = runtime_state.env.now();
+
+        (0..MAX_BATCH_SIZE)
+            .map_while(|_| runtime_state.data.set_user_suspended_queue.take_next_due(now))
+            .collect()
+    }
+
+    async fn process_batch(batch: Vec<SetUserSuspended>) {
+        let futures: Vec<_> = batch.into_iter().map(process_single).collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn process_single(value: SetUserSuspended) {
+        match value {
+            SetUserSuspended::Unsuspend(user_id) => {
+                unsuspend_user_impl(user_id).await;
+            }
+            SetUserSuspended::Group(SetUserSuspendedInGroup {
+                user_id,
+                group,
+                suspended,
+                attempt,
+            }) => {
+                let args = group_canister::c2c_set_user_suspended::Args { user_id, suspended };
+                if group_canister_c2c_client::c2c_set_user_suspended(group.into(), &args)
+                    .await
+                    .is_err()
+                    && attempt < 10
+                {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.set_user_suspended_queue.schedule(
+                            vec![SetUserSuspended::Group(SetUserSuspendedInGroup {
+                                user_id,
+                                group,
+                                suspended,
+                                attempt: attempt + 1,
+                            })],
+                            now + (10 * SECOND_IN_MS), // Try again in 10 seconds
+                        );
+                    });
+                }
+            }
+        }
     }
 }

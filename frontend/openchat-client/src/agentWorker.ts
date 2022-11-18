@@ -210,7 +210,7 @@ export class OpenChatAgentWorker extends EventTarget {
     private resolveError(data: WorkerError): void {
         const promise = this._pending.get(data.correlationId);
         if (promise !== undefined) {
-            promise.reject(data.error);
+            promise.reject(JSON.parse(data.error));
             window.clearTimeout(promise.timeout);
             this._pending.delete(data.correlationId);
         } else {

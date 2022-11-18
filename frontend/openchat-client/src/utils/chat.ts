@@ -824,14 +824,22 @@ export function canCreatePolls(chat: ChatSummary): boolean {
     }
 }
 
-export function canSendMessages(chat: ChatSummary, userLookup: UserLookup): boolean {
+export function canSendMessages(chat: ChatSummary, userLookup: UserLookup, proposalsBotUserId: string): boolean {
     if (chat.kind === "group_chat") {
         return !chat.frozen && isPermitted(chat.myRole, chat.permissions.sendMessages);
-    } else if (userLookup[chat.them]?.kind === "bot") {
+    }
+
+    const user = userLookup[chat.them];
+    if (user === undefined) {
         return false;
-    } else {
+    }
+    if (user.kind === "user") {
         return true;
     }
+    if (user.userId === OPENCHAT_BOT_USER_ID || user.userId === proposalsBotUserId) {
+        return false;
+    }
+    return true;
 }
 
 export function canReactToMessages(chat: ChatSummary): boolean {
@@ -1017,11 +1025,14 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
+        unconfirmed.sort(sortByIndex);
+
         let anyAdded = false;
         for (const message of unconfirmed) {
-            // Only include unconfirmed events that are contiguous with the loaded confirmed events
+            // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
+            // first events in a new chat
             if (
-                merged.length === 0 ||
+                (eventIndexes.size === 0 && message.index <= 1) ||
                 eventIndexes.has(message.index - 1) ||
                 eventIndexes.has(message.index) ||
                 eventIndexes.has(message.index + 1)

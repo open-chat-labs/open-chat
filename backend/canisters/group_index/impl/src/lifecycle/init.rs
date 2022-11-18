@@ -24,13 +24,14 @@ fn init(args: Args) {
         args.notifications_canister_ids,
         args.user_index_canister_id,
         args.callback_canister_id,
+        args.ledger_canister_id,
         canister_pool_target_size,
         args.test_mode,
     );
 
     init_state(env, data, args.wasm_version);
 
-    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 2 * MIN_CYCLES_BALANCE);
+    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 3 * MIN_CYCLES_BALANCE / 2);
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

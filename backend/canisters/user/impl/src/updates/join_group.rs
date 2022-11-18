@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::c2c_join_group_v2 as c2c_join_group;
 use ic_cdk_macros::update;
@@ -10,6 +10,10 @@ use user_canister::join_group_v2::{Response::*, *};
 #[trace]
 async fn join_group_v2(args: Args) -> Response {
     run_regular_jobs();
+
+    if read_state(|state| state.data.suspended.value) {
+        return UserSuspended;
+    }
 
     let c2c_args = c2c_join_group::Args {
         as_super_admin: args.as_super_admin,

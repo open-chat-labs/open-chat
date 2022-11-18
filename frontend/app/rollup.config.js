@@ -102,7 +102,7 @@ function serve() {
 function clean() {
     return {
         name: "clean-build",
-        buildStart() {
+        renderStart() {
             console.log("cleaning up the build directory");
             if (fs.existsSync("_temp")) {
                 rimraf.sync(path.join(__dirname, "_temp"));
@@ -112,11 +112,19 @@ function clean() {
                 path.join(__dirname, "build", "worker.js"),
                 path.join(__dirname, "_temp", "worker.js")
             );
+            fs.copyFileSync(
+                path.join(__dirname, "build", "worker.js.map"),
+                path.join(__dirname, "_temp", "worker.js.map")
+            );
             rimraf.sync(path.join(__dirname, "build"));
             fs.mkdirSync("build");
             fs.copyFileSync(
                 path.join(__dirname, "_temp", "worker.js"),
                 path.join(__dirname, "build", "worker.js")
+            );
+            fs.copyFileSync(
+                path.join(__dirname, "_temp", "worker.js.map"),
+                path.join(__dirname, "build", "worker.js.map")
             );
             rimraf.sync(path.join(__dirname, "_temp"));
             if (version) {
@@ -158,6 +166,10 @@ export default {
             compilerOptions: {
                 dev: !production,
                 // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
+            },
+            onwarn: (warning, handler) => {
+                if (warning.code.startsWith("a11y-")) return;
+                handler(warning);
             },
         }),
 

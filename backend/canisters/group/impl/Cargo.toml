@@ -26,8 +26,10 @@ group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }

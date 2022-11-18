@@ -1,13 +1,11 @@
 use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
-use candid::Principal;
 use ic_ledger_types::Tokens;
 use types::{MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::format::format_to_decimal_places;
 
-// zzyk3-openc-hatbo-tq7my-cai
-pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 const WELCOME_MESSAGES: &[&str] = &[
@@ -43,7 +41,7 @@ pub(crate) fn send_group_deleted_message(
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_removed_from_group_message(
@@ -57,7 +55,7 @@ pub(crate) fn send_removed_from_group_message(
     let action = if blocked { "blocked" } else { "removed" };
     let text = format!("You were {action} from the {visibility} group \"{group_name}\" by @UserId({removed_by})");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, runtime_state: &mut RuntimeState) {
@@ -66,7 +64,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
     let text = format!("Thank you for [verifying ownership of your phone number](/#/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_state: &mut RuntimeState) {
@@ -83,7 +81,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
         format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
     };
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
 }
 
 pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, runtime_state: &mut RuntimeState) {
@@ -91,7 +89,19 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
-    send_text_message(text, runtime_state);
+    send_text_message(text, false, runtime_state);
+}
+
+pub(crate) fn send_sns1_airdrop_message(runtime_state: &mut RuntimeState) {
+    let text = "You are eligible for the upcoming SNS-1 airdrop!
+Here's how to take part -
+1. Sign in to https://nns.ic0.app/
+2. Click on 'Neurons'
+3. Copy your principal id
+4. Send your principal id to the [SNS1_Bot](/#/pa5wn-hqaaa-aaaaf-az7rq-cai)"
+        .to_string();
+
+    send_text_message(text, true, runtime_state);
 }
 
 fn to_gb(bytes: u64) -> String {
@@ -104,9 +114,9 @@ fn to_tokens(tokens: Tokens) -> String {
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
 }
 
-fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
+fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
     let content = MessageContent::Text(TextContent { text });
-    send_message(content, false, runtime_state);
+    send_message(content, mute_notification, runtime_state);
 }
 
 fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {

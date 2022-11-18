@@ -52,6 +52,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
                 transfer: completed_transaction,
             }),
             group_canister::send_message::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
+            group_canister::send_message::Response::UserSuspended => UserSuspended,
             group_canister::send_message::Response::ChatFrozen => ChatFrozen,
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
@@ -65,7 +66,9 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
 }
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Box<Response>> {
-    if runtime_state.data.blocked_users.contains(&args.recipient) {
+    if runtime_state.data.suspended.value {
+        Err(Box::new(UserSuspended))
+    } else if runtime_state.data.blocked_users.contains(&args.recipient) {
         Err(Box::new(RecipientBlocked))
     } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
         Err(Box::new(CallerNotInGroup(None)))

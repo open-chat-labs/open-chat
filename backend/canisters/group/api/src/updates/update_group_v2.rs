@@ -25,6 +25,7 @@ pub enum Response {
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
     NameTaken,
+    UserSuspended,
     ChatFrozen,
     InternalError,
 }

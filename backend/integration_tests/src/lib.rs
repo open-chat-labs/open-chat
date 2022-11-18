@@ -12,6 +12,7 @@ mod register_user_tests;
 mod rng;
 mod send_message_tests;
 mod setup;
+mod suspend_user_tests;
 mod utils;
 mod wasms;
 

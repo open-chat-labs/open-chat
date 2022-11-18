@@ -1,6 +1,5 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
@@ -12,6 +11,7 @@ use types::{
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -67,6 +67,9 @@ enum ValidateRequestResult {
 }
 
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateRequestResult {
+    if runtime_state.data.suspended.value {
+        return ValidateRequestResult::Invalid(UserSuspended);
+    }
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         return ValidateRequestResult::Invalid(RecipientBlocked);
     }

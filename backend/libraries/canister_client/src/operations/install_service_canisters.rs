@@ -124,6 +124,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         callback_canister_id: canister_ids.callback,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        ledger_canister_id: canister_ids.ledger,
         wasm_version: version,
         test_mode,
     };

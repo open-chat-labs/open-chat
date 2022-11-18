@@ -34,7 +34,6 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
-    $: chatId = chat.chatId;
     let previousChatId: string | undefined = undefined;
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
@@ -61,11 +60,18 @@
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
-    $: canSend = client.canSendMessages(chatId);
-    $: preview = client.isPreviewing(chatId);
+    $: canSend = client.canSendMessages(chat.chatId);
+    $: preview = client.isPreviewing(chat.chatId);
+    $: canPin = client.canPinMessages(chat.chatId);
+    $: canBlockUser = client.canBlockUsers(chat.chatId);
+    $: canDelete = client.canDeleteOtherUsersMessages(chat.chatId);
+    $: canReplyInThread = client.canReplyInThread(chat.chatId);
+    $: canReact = client.canReactToMessages(chat.chatId);
+    $: canInvite = client.canInviteUsers(chat.chatId);
+
     $: {
-        if (chatId !== previousChatId) {
-            previousChatId = chatId;
+        if (chat.chatId !== previousChatId) {
+            previousChatId = chat.chatId;
             showSearchHeader = false;
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = client.getFirstUnreadMention(chat);
@@ -93,7 +99,7 @@
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chatId);
+        closeNotificationsForChat(chat.chatId);
     }
 
     function onMarkAllRead() {
@@ -101,7 +107,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chatId)) return;
+        if (!client.canCreatePolls(chat.chatId)) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -143,7 +149,7 @@
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
-                    chatId,
+                    chat.chatId,
                     text,
                     $currentChatFileToAttach,
                     $currentChatEditingEvent
@@ -257,13 +263,13 @@
         {chat}
         {events}
         {filteredProposals}
-        canPin={client.canPinMessages(chatId)}
-        canBlockUser={client.canBlockUsers(chatId)}
-        canDelete={client.canDeleteOtherUsersMessages(chatId)}
-        canReplyInThread={client.canReplyInThread(chatId)}
+        {canPin}
+        {canBlockUser}
+        {canDelete}
+        {canReplyInThread}
         {canSend}
-        canReact={client.canReactToMessages(chatId)}
-        canInvite={client.canInviteUsers(chatId)}
+        {canReact}
+        {canInvite}
         {preview}
         {firstUnreadMention}
         footer={showFooter}

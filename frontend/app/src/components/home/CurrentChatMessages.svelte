@@ -9,6 +9,7 @@
         onMount,
         tick,
     } from "svelte";
+    import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
@@ -17,6 +18,7 @@
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
+        AvatarSize,
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
@@ -80,6 +82,7 @@
     $: chatStateStore = client.chatStateStore;
     $: userStore = client.userStore;
     $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
+    $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
 
     let loadingPrev = false;
     let loadingNew = false;
@@ -183,7 +186,7 @@
             onMessageWindowLoaded(ev.detail);
         }
         if (ev instanceof ChatUpdated) {
-            chatUpdated();
+            loadMoreIfRequired();
         }
         if (ev instanceof SentMessage) {
             afterSendMessage(ev.detail);
@@ -494,18 +497,18 @@
         return firstKey;
     }
 
-    function chatUpdated(): void {
-        if (insideFromBottomThreshold && shouldLoadNewMessages()) {
-            client.loadNewMessages(chat.chatId);
-        }
-    }
-
     $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
+
+            // If the chat is empty, there is nothing to initialise, so we can set initialised to true
+            const isEmptyChat = chat.latestEventIndex < 0;
+            if (isEmptyChat) {
+                initialised = true;
+            }
         }
     }
 
@@ -693,6 +696,23 @@
             tick().then(() => scrollBottom("smooth"));
         }
     }
+
+    function shouldShowAvatar(chat: ChatSummary, earliestLoadedEventIndex: number | undefined): boolean {
+        // If this is an empty chat, show the avatar
+        const isEmptyChat = chat.latestEventIndex < 0;
+        if (isEmptyChat) {
+            return true;
+        }
+        // Otherwise, only show the avatar if we have loaded right back to the earliest available events
+        if (earliestLoadedEventIndex === undefined) {
+            return false;
+        }
+        // For new direct chats the first event is the 'DirectChatCreated' event which we only load a short while after
+        // sending the first message, so to prevent a short flicker with no avatar, we still show the avatar if the
+        // earliest loaded event index is 1, even though event 0 is available
+        const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
+        return earliestLoadedEventIndex <= indexRequired;
+    }
 </script>
 
 <div
@@ -758,13 +778,17 @@
             {/each}
         </div>
     {/each}
-    {#if initialised && !morePrevAvailable}
+    {#if showAvatar}
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
             <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
-        {:else if isBot}
+        {:else if client.isOpenChatBot(chat.them)}
             <Robot />
+        {:else}
+            <div class="big-avatar">
+                <Avatar url={client.userAvatarUrl($userStore[chat.them])} size={AvatarSize.ExtraLarge} />
+            </div>
         {/if}
     {/if}
 </div>
@@ -879,5 +903,9 @@
             padding: 10px;
             -webkit-overflow-scrolling: touch;
         }
+    }
+
+    .big-avatar {
+        margin: 16px auto;
     }
 </style>

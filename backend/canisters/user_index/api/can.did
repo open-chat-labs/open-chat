@@ -175,6 +175,7 @@ type CurrentUserResponse =
             phone_status: PhoneStatus;
             icp_account: AccountIdentifier;
             referrals: vec UserId;
+            suspended: bool;
             is_super_admin: bool;
         };
         UserNotFound;
@@ -270,6 +271,30 @@ type SuperAdminsResponse =
         };
     };
 
+type SuspendUserArgs =
+    record {
+        user_id: UserId;
+        duration: opt Milliseconds;
+    };
+
+type SuspendUserResponse =
+    variant {
+        Success;
+        InternalError: text;
+    };
+
+
+type UnsuspendUserArgs =
+    record {
+        user_id: UserId;
+    };
+
+type UnsuspendUserResponse =
+    variant {
+        Success;
+        InternalError: text;
+    };
+
 service: {
     create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
 
@@ -312,4 +337,6 @@ service: {
     add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
     remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
     super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
+    suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
+    unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
 }

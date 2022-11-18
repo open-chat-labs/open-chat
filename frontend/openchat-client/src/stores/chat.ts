@@ -497,12 +497,12 @@ export function addServerEventsToStores(
         return;
     }
 
+    const key = threadRootMessageIndex === undefined
+        ? chatId
+        : `${chatId}_${threadRootMessageIndex}`;
+
     for (const event of newEvents) {
         if (event.event.kind === "message") {
-            const key =
-                threadRootMessageIndex === undefined
-                    ? chatId
-                    : `${chatId}_${threadRootMessageIndex}`;
             if (unconfirmed.delete(key, event.event.messageId)) {
                 if (threadRootMessageIndex === undefined) {
                     messagesRead.confirmMessage(
@@ -525,7 +525,7 @@ export function addServerEventsToStores(
         chatStateStore.updateProp(chatId, "serverEvents", (events) =>
             mergeServerEvents(events, newEvents)
         );
-    } else {
+    } else if (key === get(selectedThreadKey)) {
         threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
     }
 }

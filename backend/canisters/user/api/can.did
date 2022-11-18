@@ -36,6 +36,7 @@ type SendMessageResponse =
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
+        UserSuspended;
         InternalError: text;
     };
 
@@ -54,6 +55,7 @@ type EditMessageResponse =
         MessageNotFound;
         ChatNotFound;
         UserBlocked;
+        UserSuspended;
     };
 
 type DeleteMessagesArgs =
@@ -68,6 +70,7 @@ type DeleteMessagesResponse =
     variant {
         Success;
         ChatNotFound;
+        UserSuspended;
     };
 
 type AddReactionArgs =
@@ -87,6 +90,7 @@ type AddReactionResponse =
         InvalidReaction;
         MessageNotFound;
         ChatNotFound;
+        UserSuspended;
     };
 
 type RemoveReactionArgs =
@@ -104,6 +108,7 @@ type RemoveReactionResponse =
         NoChange;
         MessageNotFound;
         ChatNotFound;
+        UserSuspended;
     };
 
 type MarkReadArgs =
@@ -137,6 +142,7 @@ type BlockUserArgs =
 type BlockUserResponse =
     variant {
         Success;
+        UserSuspended;
     };
 
 type UnblockUserArgs =
@@ -147,6 +153,7 @@ type UnblockUserArgs =
 type UnblockUserResponse =
     variant {
         Success;
+        UserSuspended;
     };
 
 type CreateGroupArgs =
@@ -179,6 +186,7 @@ type CreateGroupResponse =
         InternalError;
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
+        UserSuspended;
     };
 
 type JoinGroupArgs =
@@ -199,6 +207,7 @@ type JoinGroupResponse =
         ParticipantLimitReached: nat32;
         InternalError: text;
         NotSuperAdmin;
+        UserSuspended;
         ChatFrozen;
     };
 
@@ -216,6 +225,7 @@ type LeaveGroupResponse =
         InternalError: text;
         CallerNotInGroup;
         OwnerCannotLeave;
+        UserSuspended;
         ChatFrozen;
     };
 
@@ -228,19 +238,21 @@ type DeleteGroupResponse =
     variant {
         Success;
         NotAuthorized;
+        UserSuspended;
         ChatFrozen;
         InternalError: text;
     };
 
 type SetAvatarArgs =
     record {
-        avatar: opt Avatar
+        avatar: opt Avatar;
     };
 
 type SetAvatarResponse =
     variant {
         Success;
         AvatarTooBig: FieldTooLongResult;
+        UserSuspended;
     };
 
 type MuteNotificationsArgs =
@@ -317,6 +329,7 @@ type SetBioResponse =
     variant {
         Success;
         TooLong: FieldTooLongResult;
+        UserSuspended;
     };
 
 type TransferCryptoWithinGroupArgs =
@@ -348,6 +361,7 @@ type TransferCryptoWithinGroupResponse =
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
+        UserSuspended;
         ChatFrozen;
         InternalError: record { text; CompletedCryptoTransaction; };
     };

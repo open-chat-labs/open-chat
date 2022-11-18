@@ -87,6 +87,8 @@ struct Data {
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
     pub callback_canister_id: CanisterId,
+    #[serde(default = "ledger_canister_id")]
+    pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
@@ -96,13 +98,19 @@ struct Data {
     pub max_concurrent_canister_upgrades: usize,
 }
 
+fn ledger_canister_id() -> CanisterId {
+    Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
+}
+
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         notifications_canister_ids: Vec<CanisterId>,
         user_index_canister_id: CanisterId,
         callback_canister_id: CanisterId,
+        ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Data {
@@ -115,6 +123,7 @@ impl Data {
             notifications_canister_ids,
             user_index_canister_id,
             callback_canister_id,
+            ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
@@ -173,6 +182,7 @@ impl Default for Data {
             notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
             callback_canister_id: Principal::anonymous(),
+            ledger_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(0),
             test_mode: true,
