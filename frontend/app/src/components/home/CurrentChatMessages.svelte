@@ -497,7 +497,7 @@
         return firstKey;
     }
 
-    $: groupedEvents = client.groupEvents(events, user.userId, groupInner(filteredProposals)).reverse();
+    $: groupedEvents = client.groupEvents(events, groupInner(filteredProposals)).reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {

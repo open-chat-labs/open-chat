@@ -332,11 +332,10 @@ export function emptyChatMetrics(): ChatMetrics {
 export function enoughVisibleMessages(
     ascending: boolean,
     [minIndex, maxIndex]: IndexRange,
-    events: EventWrapper<ChatEvent>[],
-    myUserId: string
+    events: EventWrapper<ChatEvent>[]
 ): boolean {
     console.log("in the func");
-    const filtered = events.filter((e) => eventIsVisible(e, myUserId));
+    const filtered = events.filter(eventIsVisible);
     if (filtered.length >= EVENT_PAGE_SIZE) {
         return true;
     } else if (ascending) {

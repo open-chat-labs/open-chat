@@ -46,7 +46,7 @@
                         messages = {
                             kind: "success",
                             data: client
-                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index), user.userId)
+                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index))
                                 .reverse(),
                         };
                     }
