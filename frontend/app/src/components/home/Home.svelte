@@ -354,10 +354,7 @@
             searching = true;
             const lowercase = searchTerm.toLowerCase();
             groupSearchResults = client.searchGroups(lowercase, 10);
-            userSearchResults = client.searchUsers(lowercase, 10).then((resp) => {
-                userStore.addMany(resp);
-                return resp;
-            });
+            userSearchResults = client.searchUsers(lowercase, 10);
             messageSearchResults = client.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
