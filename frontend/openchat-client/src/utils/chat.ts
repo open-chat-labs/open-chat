@@ -469,7 +469,7 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
             if (agg === undefined) {
                 agg = {
                     kind: "aggregate_members_joined_left",
-                    users_joined: new Set(),
+                    usersJoined: new Set(),
                     users_left: new Set(),
                 };
             } else {
@@ -480,11 +480,11 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                 if (agg.users_left.has(e.event.userId)) {
                     agg.users_left.delete(e.event.userId);
                 } else {
-                    agg.users_joined.add(e.event.userId);
+                    agg.usersJoined.add(e.event.userId);
                 }
             } else {
-                if (agg.users_joined.has(e.event.userId)) {
-                    agg.users_joined.delete(e.event.userId);
+                if (agg.usersJoined.has(e.event.userId)) {
+                    agg.usersJoined.delete(e.event.userId);
                 } else {
                     agg.users_left.add(e.event.userId);
                 }

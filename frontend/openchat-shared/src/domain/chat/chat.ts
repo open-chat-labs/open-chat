@@ -447,7 +447,7 @@ export type MembersAdded = {
 
 export type AggregateMembersJoinedOrLeft = {
     kind: "aggregate_members_joined_left";
-    users_joined: Set<string>;
+    usersJoined: Set<string>;
     users_left: Set<string>;
 };
 
