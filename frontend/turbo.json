@@ -28,39 +28,114 @@
     },
     "build:ci": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["build", "validate", "lint", "test"]
+      "dependsOn": ["build", "typecheck", "validate", "lint", "test"]
+    },
+
+    "deploy:prod_test": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": [
+        "typecheck:prod_test",
+        "validate:prod_test",
+        "lint",
+        "test:prod_test"
+      ]
     },
     "build:prod_test": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod_test", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod_test"]
     },
+    "test:prod_test": {
+      "dependsOn": ["build:prod_test"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts"]
+    },
+    "typecheck:prod_test": {
+      "dependsOn": ["build:prod_test"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+    "validate:prod_test": {
+      "dependsOn": ["build:prod_test"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+
+    "deploy:prod": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": ["typecheck:prod", "validate:prod", "lint", "test:prod"]
+    },
+
     "build:prod": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:prod", "validate", "lint", "test"]
+      "dependsOn": ["^build:prod"]
     },
+    "test:prod": {
+      "dependsOn": ["build:prod"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts"]
+    },
+    "typecheck:prod": {
+      "dependsOn": ["build:prod"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+    "validate:prod": {
+      "dependsOn": ["build:prod"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+
+    "deploy:testnet": {
+      "outputs": ["lib/**", "build/**"],
+      "dependsOn": [
+        "typecheck:testnet",
+        "validate:testnet",
+        "lint",
+        "test:testnet"
+      ]
+    },
+
     "build:testnet": {
       "outputs": ["lib/**", "build/**"],
-      "dependsOn": ["^build:testnet", "validate", "lint", "test"]
+      "dependsOn": ["^build:testnet"]
     },
+    "test:testnet": {
+      "dependsOn": ["build:testnet"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts"]
+    },
+    "typecheck:testnet": {
+      "dependsOn": ["build:testnet"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+    "validate:testnet": {
+      "dependsOn": ["build:testnet"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.svelte"]
+    },
+
     "dev": {
       "dependsOn": ["^build"],
       "cache": false
     },
+
     "test": {
-      "dependsOn": [],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": ["src/**/*.ts"]
     },
     "typecheck": {
-      "dependsOn": ["build", "^build"],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
     "validate": {
-      "dependsOn": [],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
+
     "lint": {
       "outputs": [],
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]

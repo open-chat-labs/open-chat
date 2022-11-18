@@ -11,6 +11,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-npm run --prefix frontend build:testnet
+npm run --prefix frontend deploy:testnet
 
 dfx --identity $IDENTITY deploy --network $DFX_NETWORK --no-wallet --with-cycles 100000000000000 website

@@ -1,12 +1,26 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import type { RawReplyContext } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+    import { push } from "svelte-spa-router";
+
+    export let repliesTo: RawReplyContext;
+
+    function zoomToMessage() {
+        if (repliesTo.chatIdIfOther === undefined) {
+            dispatch("goToMessage", repliesTo.eventIndex);
+        } else {
+            push(`/${repliesTo.chatIdIfOther}/${repliesTo.eventIndex}`);
+        }
+    }
 </script>
 
-<Link>
+<Link on:click={zoomToMessage}>
     <div class="reply-wrapper" class:rtl={$rtlStore}>
         {$_("unresolvedReply")}
     </div>

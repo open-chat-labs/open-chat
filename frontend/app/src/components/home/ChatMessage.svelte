@@ -473,7 +473,7 @@
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
-                    <UnresolvedReply />
+                    <UnresolvedReply on:goToMessage repliesTo={msg.repliesTo} />
                 {/if}
             {/if}
 

@@ -31,7 +31,6 @@ import {
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
-import { hideDeletedStore } from "./stores/hideDeleted";
 import { userStore } from "./stores/user";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -47,7 +46,6 @@ export class LiveState {
     selectedAuthProvider!: AuthProvider;
     userCreated!: boolean;
     userStore!: UserLookup;
-    hideDeleted!: boolean;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: Record<string, ChatSummary>;
@@ -71,7 +69,6 @@ export class LiveState {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
-        hideDeletedStore.subscribe((data) => (this.hideDeleted = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));

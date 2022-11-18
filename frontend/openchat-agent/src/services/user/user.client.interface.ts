@@ -42,13 +42,11 @@ export interface IUserClient {
         currentState: CurrentChatState,
         args: UpdateArgs,
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean,
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     getInitialState(
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean,
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
@@ -67,7 +65,6 @@ export interface IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>>;
