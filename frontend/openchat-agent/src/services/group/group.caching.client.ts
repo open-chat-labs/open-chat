@@ -146,7 +146,6 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
@@ -168,7 +167,6 @@ export class CachingGroupClient implements IGroupClient {
                     eventIndexRange,
                     startIndex,
                     ascending,
-                    hideDeleted,
                     threadRootMessageIndex,
                     latestClientEventIndex
                 )

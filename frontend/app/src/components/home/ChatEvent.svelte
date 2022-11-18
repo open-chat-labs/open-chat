@@ -138,7 +138,7 @@
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_members_joined_left"}
-    <AggregateMembersJoinedEvent user={userSummary} joined={event.event.usersJoined} />
+    <AggregateMembersJoinedEvent user={userSummary} joined={event.event.users_joined} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}

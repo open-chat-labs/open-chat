@@ -447,11 +447,9 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
-    myUserId: string,
-    hideDeleted: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId, hideDeleted)))
+    return groupWhile(sameDate, events.filter(eventIsVisible))
         .map(reduceJoinedOrLeft)
         .map(groupInner ?? groupBySender);
 }
@@ -471,24 +469,24 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
             if (agg === undefined) {
                 agg = {
                     kind: "aggregate_members_joined_left",
-                    usersJoined: new Set(),
-                    usersLeft: new Set(),
+                    users_joined: new Set(),
+                    users_left: new Set(),
                 };
             } else {
                 previous.pop();
             }
 
             if (e.event.kind === "member_joined") {
-                if (agg.usersLeft.has(e.event.userId)) {
-                    agg.usersLeft.delete(e.event.userId);
+                if (agg.users_left.has(e.event.userId)) {
+                    agg.users_left.delete(e.event.userId);
                 } else {
-                    agg.usersJoined.add(e.event.userId);
+                    agg.users_joined.add(e.event.userId);
                 }
             } else {
-                if (agg.usersJoined.has(e.event.userId)) {
-                    agg.usersJoined.delete(e.event.userId);
+                if (agg.users_joined.has(e.event.userId)) {
+                    agg.users_joined.delete(e.event.userId);
                 } else {
-                    agg.usersLeft.add(e.event.userId);
+                    agg.users_left.add(e.event.userId);
                 }
             }
 
@@ -505,8 +503,8 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     }, []);
 }
 
-export function groupMessagesByDate(events: EventWrapper<Message>[], myUserId: string, hideDeleted: boolean): EventWrapper<Message>[][] {
-    return groupWhile(sameDate, events.filter((e) => eventIsVisible(e, myUserId, hideDeleted)));
+export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
+    return groupWhile(sameDate, events.filter(eventIsVisible));
 }
 
 export function getNextEventAndMessageIndexes(

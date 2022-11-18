@@ -614,6 +614,5 @@
     "alsoCanisterId": "also your canister id",
     "version": "version",
     "websiteVersion": "of the website",
-    "advanced": "Advanced",
-    "hideDeletedMessages": "Hide deleted messages"
+    "advanced": "Advanced"
 }
