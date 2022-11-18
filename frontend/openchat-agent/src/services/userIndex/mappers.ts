@@ -245,7 +245,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             wasmVersion: new Version(version.major, version.minor, version.patch),
             openStorageLimitBytes: Number(r.open_storage_limit_bytes),
             referrals: r.referrals.map((p) => p.toString()),
-            isSuperAdmin: r.is_super_admin,
         };
     }
 

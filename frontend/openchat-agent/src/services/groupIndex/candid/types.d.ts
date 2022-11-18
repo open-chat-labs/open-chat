@@ -57,12 +57,10 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
-  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
-  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
@@ -83,7 +81,6 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
-export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -107,7 +104,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -199,23 +195,6 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface FreezeGroupArgs {
-  'chat_id' : ChatId,
-  'reason' : [] | [string],
-}
-export type FreezeGroupResponse = { 'ChatAlreadyFrozen' : null } |
-  { 'ChatNotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string };
-export interface FrozenGroupInfo {
-  'timestamp' : TimestampMillis,
-  'frozen_by' : UserId,
-  'reason' : [] | [string],
-}
-export type FrozenGroupUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -253,7 +232,6 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
-  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -280,7 +258,6 @@ export interface GroupChatSummaryUpdates {
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
-  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -603,7 +580,6 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
-  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -713,12 +689,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array;
-export interface UnfreezeGroupArgs { 'chat_id' : ChatId }
-export type UnfreezeGroupResponse = { 'ChatNotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'ChatNotFrozen' : null } |
-  { 'InternalError' : string };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -758,7 +728,5 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
-  'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }

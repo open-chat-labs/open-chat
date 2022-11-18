@@ -1,13 +1,10 @@
 import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
-import type { FreezeGroupResponse, GroupSearchResponse, UnfreezeGroupResponse } from "openchat-shared";
+import type { GroupSearchResponse } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
-import { freezeGroupResponse, groupSearchResponse, unfreezeGroupResponse } from "./mappers";
-import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
+import { groupSearchResponse } from "./mappers";
 
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
     private groupIndexService: GroupIndexService;
@@ -36,17 +33,5 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
             groupSearchResponse,
             args
         );
-    }
-
-    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
-        return this.handleResponse(
-            this.groupIndexService.freeze_group({ chat_id: Principal.fromText(chatId), reason: apiOptional(identity, reason) }),
-            freezeGroupResponse)
-    }
-
-    unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
-        return this.handleResponse(
-            this.groupIndexService.unfreeze_group({ chat_id: Principal.fromText(chatId) }),
-            unfreezeGroupResponse)
     }
 }

@@ -69,7 +69,6 @@ export const idlFactory = ({ IDL }) => {
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'is_super_admin' : IDL.Bool,
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,

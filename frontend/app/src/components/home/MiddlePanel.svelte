@@ -66,8 +66,6 @@
             on:joinGroup
             on:upgrade
             on:cancelPreview
-            on:freezeGroup
-            on:unfreezeGroup
             on:showPinned
             on:toggleMuteNotifications
             on:goToMessageIndex

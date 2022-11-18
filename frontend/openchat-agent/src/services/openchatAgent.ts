@@ -109,8 +109,6 @@ import {
     UsersResponse,
     UserSummary,
     WithdrawCryptocurrencyResponse,
-    FreezeGroupResponse,
-    UnfreezeGroupResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
@@ -1308,13 +1306,5 @@ export class OpenChatAgent extends EventTarget {
         message: EventWrapper<Message>
     ): Promise<void> {
         return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
-    }
-
-    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
-        return this._groupIndexClient.freezeGroup(chatId, reason);
-    }
-
-    unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
-        return this._groupIndexClient.unfreezeGroup(chatId);
     }
 }

@@ -614,10 +614,5 @@
     "alsoCanisterId": "also your canister id",
     "version": "version",
     "websiteVersion": "of the website",
-    "advanced": "Advanced",
-    "freezeGroup": "Freeze group",
-    "unfreezeGroup": "Unfreeze group",
-    "chatFrozen": "This chat has been frozen",
-    "chatFrozenBy": "Chat frozen by {frozenBy}",
-    "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}"
+    "advanced": "Advanced"
 }

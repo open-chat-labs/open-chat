@@ -146,9 +146,7 @@
         on:fileSelected
         on:audioCaptured
         on:joinGroup
-        on:cancelPreview
-        on:freezeGroup
-        on:unfreezeGroup />
+        on:cancelPreview />
 </div>
 
 <style type="text/scss">

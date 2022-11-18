@@ -91,7 +91,6 @@ const defaultGroupChat: GroupChatSummary = {
     subtype: undefined,
     archived: false,
     previewed: false,
-    frozen: false,
 };
 
 function directChatId(id: number): DirectChatSummary {

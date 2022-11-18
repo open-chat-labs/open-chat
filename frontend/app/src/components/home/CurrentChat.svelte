@@ -290,8 +290,6 @@
             {blocked}
             on:joinGroup
             on:cancelPreview
-            on:freezeGroup
-            on:unfreezeGroup
             on:upgrade
             on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.chatId, undefined)}
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.chatId, undefined)}
