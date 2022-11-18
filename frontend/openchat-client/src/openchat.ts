@@ -621,21 +621,7 @@ export class OpenChat extends EventTarget {
 
     private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = this.userIdsFromEvents([message]);
-        const missingUsers = this.missingUserIds(this._liveState.userStore, users);
-        if (missingUsers.length > 0) {
-            const usersResp = await this.api.getUsers(
-                {
-                    userGroups: [
-                        {
-                            users: missingUsers,
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                },
-                true
-            );
-            userStore.addMany(usersResp.users);
-        }
+        await this.getMissingUsers(users);
     }
 
     toggleMuteNotifications(chatId: string, mute: boolean): Promise<boolean> {
@@ -1270,22 +1256,7 @@ export class OpenChat extends EventTarget {
             return userIds;
         });
 
-        const resp = await this.api.getUsers(
-            {
-                userGroups: [
-                    {
-                        users: missingUserIds(
-                            this._liveState.userStore,
-                            new Set<string>(allUserIds)
-                        ),
-                        updatedSince: BigInt(0),
-                    },
-                ],
-            },
-            true
-        );
-
-        userStore.addMany(resp.users);
+        await this.getMissingUsers(allUserIds);
     }
     isTyping = isTyping;
     trackEvent = trackEvent;
@@ -1356,11 +1327,10 @@ export class OpenChat extends EventTarget {
     }
     async createDirectChat(chatId: string): Promise<boolean> {
         if (this._liveState.userStore[chatId] === undefined) {
-            const user = await this.api.getUser(chatId);
+            const user = await this.getUser(chatId);
             if (user === undefined) {
                 return false;
             }
-            this.userStore.add(user);
         }
         createDirectChat(chatId);
         return true;
@@ -1385,6 +1355,13 @@ export class OpenChat extends EventTarget {
                 this.loadPreviousMessages(chatId).then(() => {
                     this.loadDetails(selectedChat, events);
                 });
+            }
+            if (selectedChat.kind === "direct_chat") {
+                const them = this._liveState.userStore[selectedChat.them];
+                // Refresh user details if they are more than 5 minutes out of date
+                if (them === undefined || BigInt(Date.now()) - them.updated > 5 * 60 * 1000) {
+                    this.getUser(selectedChat.them);
+                }
             }
         }
     }
@@ -2369,7 +2346,11 @@ export class OpenChat extends EventTarget {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.api.searchUsers(searchTerm, maxResults);
+        return this.api.searchUsers(searchTerm, maxResults)
+            .then((resp) => {
+                userStore.addMany(resp);
+                return resp;
+            });
     }
 
     registerUser(
@@ -2510,12 +2491,42 @@ export class OpenChat extends EventTarget {
         return this.api.threadPreviews(threadsByChat);
     }
 
+    getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {
+        const userIdsSet = Array.isArray(userIds) ? new Set<string>(userIds) : userIds;
+        return this.getUsers(
+            {
+                userGroups: [
+                    {
+                        users: this.missingUserIds(this._liveState.userStore, userIdsSet),
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            },
+            true
+        )
+    }
+
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale);
+        return this.api.getUsers(users, allowStale)
+            .then((resp) => {
+                userStore.addMany(resp.users);
+                if (resp.serverTimestamp !== undefined) {
+                    // If we went to the server, all users not returned are still up to date, so we mark them as such
+                    const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
+                    const allOtherUsers = users.userGroups.flatMap((g) => g.users.filter((u) => !usersReturned.has(u)));
+                    userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+                }
+                return resp;
+            });
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
-        return this.api.getUser(userId, allowStale);
+        return this.api.getUser(userId, allowStale).then((resp) => {
+            if (resp !== undefined) {
+                userStore.add(resp);
+            }
+            return resp;
+        });
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
@@ -2526,6 +2537,13 @@ export class OpenChat extends EventTarget {
         return this.api.setUsername(userId, username).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
                 this._user.username = username;
+                const user = this._liveState.userStore[userId];
+                if (user !== undefined) {
+                    userStore.add({
+                        ...user,
+                        username
+                    });
+                }
             }
             return resp;
         });
@@ -2692,16 +2710,12 @@ export class OpenChat extends EventTarget {
                     return allUsers[u]?.updated ?? BigInt(0);
                 });
 
-                const usersResp = await this.api.getUsers({
+                await this.getUsers({
                     userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
                         users,
                         updatedSince,
                     })),
                 });
-                userStore.addMany(usersResp.users);
-                if (usersResp.serverTimestamp !== undefined) {
-                    userStore.setUpdated(batch, usersResp.serverTimestamp);
-                }
             }
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
@@ -2745,19 +2759,7 @@ export class OpenChat extends EventTarget {
                     }
                 }
                 userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers(
-                    {
-                        userGroups: [
-                            {
-                                users: missingUserIds(this._liveState.userStore, userIds),
-                                updatedSince: BigInt(0),
-                            },
-                        ],
-                    },
-                    true
-                );
-
-                userStore.addMany(usersResponse.users);
+                await this.getMissingUsers(userIds);
 
                 if (chatsResponse.blockedUsers !== undefined) {
                     blockedUsers.set(chatsResponse.blockedUsers);

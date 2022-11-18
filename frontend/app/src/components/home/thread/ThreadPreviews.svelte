@@ -32,24 +32,7 @@
     }
 
     function updateUserStore(userIdsFromEvents: Set<string>) {
-        client
-            .getUsers(
-                {
-                    userGroups: [
-                        {
-                            users: client.missingUserIds(
-                                $userStore,
-                                new Set<string>(userIdsFromEvents)
-                            ),
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                },
-                true
-            )
-            .then((resp) => {
-                userStore.addMany(resp.users);
-            });
+        client.getMissingUsers(userIdsFromEvents);
     }
 
     $: {
