@@ -1359,7 +1359,7 @@ export class OpenChat extends EventTarget {
             if (selectedChat.kind === "direct_chat") {
                 const them = this._liveState.userStore[selectedChat.them];
                 // Refresh user details if they are more than 5 minutes out of date
-                if (them === undefined || BigInt(Date.now()) - them.updated > 5 * 60 * 1000) {
+                if (them === undefined || Date.now() - Number(them.updated) > 5 * ONE_MINUTE_MILLIS) {
                     this.getUser(selectedChat.them);
                 }
             }
