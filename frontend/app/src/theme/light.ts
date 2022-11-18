@@ -1,7 +1,8 @@
 import type { Theme } from "./themes";
 
 const orangeAccent = "#ff9505";
-const pinkAccent = "hotpink";
+// const pinkAccent = "hotpink";
+const pinkAccent = "#ff005c";
 const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
@@ -51,11 +52,11 @@ export function lightTheme(): Theme {
 
         toast: {
             failure: {
-                bg: "#c71f1f",
+                bg: "#ff005c",
                 txt: "#ffffff",
             },
             success: {
-                bg: orangeAccent,
+                bg: "#05b09f",
                 txt: "#ffffff",
             },
         },
@@ -129,7 +130,7 @@ export function lightTheme(): Theme {
         menu: {
             bg: "white",
             txt: txtDark75pc,
-            "disabled-txt": disabledTxt,
+            "disabled-txt": `${txtDark}80`,
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",

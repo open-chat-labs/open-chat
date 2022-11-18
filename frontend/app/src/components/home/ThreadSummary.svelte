@@ -153,6 +153,7 @@
 
         &.selected {
             background: var(--notificationBar-bg);
+            color: var(--notificationBar-txt);
         }
 
         .thread-avatars {
@@ -172,7 +173,6 @@
             border-radius: 50%;
             width: toRem(25);
             height: toRem(25);
-            color: var(--txt);
             @include font-size(fs-60);
             background-color: rgba(0, 0, 0, 0.15);
         }

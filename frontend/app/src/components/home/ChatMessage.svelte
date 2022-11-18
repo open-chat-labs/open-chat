@@ -159,7 +159,7 @@
             messageId: msg.messageId,
             messageIndex: msg.messageIndex,
             edited: msg.edited,
-            threadRoot: msg.thread !== undefined
+            threadRoot: msg.thread !== undefined,
         };
     }
 
@@ -903,7 +903,7 @@
         }
 
         &:not(.readByMe) {
-            box-shadow: 0 0 0 5px var(--toast-success-bg);
+            box-shadow: 0 0 0 5px var(--notificationBar-bg);
         }
 
         &.last:not(.first) {
@@ -967,11 +967,11 @@
         }
 
         &.focused {
-            box-shadow: 0 0 0 4px var(--toast-success-bg);
+            box-shadow: 0 0 0 4px var(--notificationBar-bg);
         }
 
         &.editing {
-            box-shadow: 0 0 0 4px var(--toast-success-bg);
+            box-shadow: 0 0 0 4px var(--notificationBar-bg);
         }
 
         &.inert {

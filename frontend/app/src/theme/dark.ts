@@ -7,6 +7,7 @@ const darkBorder = "#32353F";
 
 const selectedChat = "#32353F80";
 const hoveredChat = "#32353F40";
+const orangeAccent = "#ff8541";
 
 const textBox = "#242834";
 
@@ -35,7 +36,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         "txt-light": txtMed,
         bd: darkBorder,
         error: "#CF6679",
-        accent: "#e87fb4",
+        // accent: "#e87fb4",
+        accent: "#ff005c",
         disabledTxt: txtLow,
         primary,
 
@@ -44,7 +46,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         notificationBar: {
-            bg: "#df783f",
+            bg: orangeAccent,
             txt: "#ffffff",
         },
 
@@ -63,7 +65,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
         toast: {
             ...defaultTheme.toast,
             failure: {
-                bg: "darkred",
+                bg: "#ff005c",
+                txt: "#ffffff",
+            },
+            success: {
+                bg: "#05b09f",
                 txt: "#ffffff",
             },
         },
