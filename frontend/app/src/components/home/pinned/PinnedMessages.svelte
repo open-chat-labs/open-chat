@@ -31,8 +31,6 @@
         dispatch("chatWith", ev.detail);
     }
 
-    $: hideDeletedStore = client.hideDeletedStore;
-
     $: {
         if (pinned.size > 0) {
             messages = { kind: "loading" };
@@ -48,7 +46,7 @@
                         messages = {
                             kind: "success",
                             data: client
-                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index), user.userId, $hideDeletedStore)
+                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index))
                                 .reverse(),
                         };
                     }

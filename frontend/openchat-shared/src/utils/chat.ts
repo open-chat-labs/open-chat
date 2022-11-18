@@ -183,7 +183,7 @@ export function emptyChatMetrics(): ChatMetrics {
     };
 }
 
-export function eventIsVisible(ew: EventWrapper<ChatEvent>, myUserId: string, hideDeleted: boolean): boolean {
+export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
     return (
         ew.event.kind !== "reaction_added" &&
         ew.event.kind !== "message_deleted" &&
@@ -195,26 +195,6 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>, myUserId: string, hi
         ew.event.kind !== "poll_vote_deleted" &&
         ew.event.kind !== "poll_ended" &&
         ew.event.kind !== "thread_updated" &&
-        ew.event.kind !== "proposals_updated" &&
-        (ew.event.kind === "message" && messageIsVisible(
-            hideDeleted, 
-            ew.event.content, 
-            ew.event.sender,             
-            ew.event.thread !== undefined,
-            myUserId))
+        ew.event.kind !== "proposals_updated"
     );
-}
-
-export function messageIsVisible(
-    hideDeleted: boolean, 
-    content: MessageContent, 
-    sender: string, 
-    isThreadRoot: boolean,
-    myUserId: string)
-: boolean {
-    return !hideDeleted || 
-        content.kind !== "deleted_content" || 
-        isThreadRoot || 
-        sender === myUserId || 
-        content.deletedBy == myUserId;
 }

@@ -125,7 +125,6 @@ export class OpenChatAgent extends EventTarget {
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
-    private _userId?: string;
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
@@ -166,7 +165,6 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createUserClient(userId: string): OpenChatAgent {
-        this._userId = userId;
         this._userClient = UserClient.create(
             userId,
             this.identity,
@@ -182,7 +180,6 @@ export class OpenChatAgent extends EventTarget {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
                 chatId,
-                this.userId,
                 this.identity,
                 this.config,
                 this.db,
@@ -197,13 +194,6 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
-    }
-
-    private get userId(): string {
-        if (this._userId) {
-            return this._userId;
-        }
-        throw new Error("Attempted to access the user id before it has been initialised");
     }
 
     private getProvidedInviteCode(chatId: string): string | undefined {
@@ -369,7 +359,6 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestClientEventIndex: number | undefined
@@ -380,7 +369,6 @@ export class OpenChatAgent extends EventTarget {
                   chatId,
                   startIndex,
                   ascending,
-                  hideDeleted,
                   threadRootMessageIndex,
                   latestClientEventIndex
               )
@@ -389,7 +377,6 @@ export class OpenChatAgent extends EventTarget {
                   chatId,
                   startIndex,
                   ascending,
-                  hideDeleted,
                   threadRootMessageIndex,
                   latestClientEventIndex
               );
@@ -400,7 +387,6 @@ export class OpenChatAgent extends EventTarget {
         theirUserId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
@@ -412,7 +398,6 @@ export class OpenChatAgent extends EventTarget {
                 theirUserId,
                 startIndex,
                 ascending,
-                hideDeleted,
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
@@ -466,7 +451,6 @@ export class OpenChatAgent extends EventTarget {
         chatId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
@@ -477,7 +461,6 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexRange,
                 startIndex,
                 ascending,
-                hideDeleted,
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
@@ -638,7 +621,6 @@ export class OpenChatAgent extends EventTarget {
                         eventIndex: idx,
                         chatId,
                         edited: msg.edited,
-                        threadRoot: msg.thread !== undefined
                     };
                 } else {
                     this._logger.error(
@@ -846,10 +828,9 @@ export class OpenChatAgent extends EventTarget {
 
     getInitialState(
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(userStore, selectedChatId, hideDeleted).then((resp) => {
+        return this.userClient.getInitialState(userStore, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(resp, false);
         });
     }
@@ -858,11 +839,10 @@ export class OpenChatAgent extends EventTarget {
         currentState: CurrentChatState,
         args: UpdateArgs,
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient
-            .getUpdates(currentState, args, userStore, selectedChatId, hideDeleted)
+            .getUpdates(currentState, args, userStore, selectedChatId)
             .then((resp) => {
                 return this.handleMergedUpdatesResponse(resp);
             });
