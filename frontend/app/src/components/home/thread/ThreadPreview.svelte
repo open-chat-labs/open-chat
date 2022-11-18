@@ -249,12 +249,14 @@
         overflow: hidden;
 
         .title {
+            @include font(book, normal, fs-100);
             color: var(--chatSummary-txt1);
             @include ellipsis();
         }
 
         .root-msg {
             color: var(--chatSummary-txt2);
+            @include font(book, normal, fs-80);
         }
     }
     .unread {
