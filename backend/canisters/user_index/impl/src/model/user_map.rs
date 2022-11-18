@@ -387,7 +387,6 @@ impl UserMap {
         self.cached_metrics = Timestamped::new(metrics, now);
     }
 
-    #[allow(dead_code)]
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
     }
