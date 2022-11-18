@@ -369,7 +369,6 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestClientEventIndex: number | undefined
@@ -380,7 +379,6 @@ export class OpenChatAgent extends EventTarget {
                   chatId,
                   startIndex,
                   ascending,
-                  hideDeleted,
                   threadRootMessageIndex,
                   latestClientEventIndex
               )
@@ -389,7 +387,6 @@ export class OpenChatAgent extends EventTarget {
                   chatId,
                   startIndex,
                   ascending,
-                  hideDeleted,
                   threadRootMessageIndex,
                   latestClientEventIndex
               );
@@ -400,7 +397,6 @@ export class OpenChatAgent extends EventTarget {
         theirUserId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
@@ -412,7 +408,6 @@ export class OpenChatAgent extends EventTarget {
                 theirUserId,
                 startIndex,
                 ascending,
-                hideDeleted,
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
@@ -466,7 +461,6 @@ export class OpenChatAgent extends EventTarget {
         chatId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
@@ -477,7 +471,6 @@ export class OpenChatAgent extends EventTarget {
                 eventIndexRange,
                 startIndex,
                 ascending,
-                hideDeleted,
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
@@ -638,7 +631,6 @@ export class OpenChatAgent extends EventTarget {
                         eventIndex: idx,
                         chatId,
                         edited: msg.edited,
-                        threadRoot: msg.thread !== undefined
                     };
                 } else {
                     this._logger.error(
@@ -846,10 +838,9 @@ export class OpenChatAgent extends EventTarget {
 
     getInitialState(
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(userStore, selectedChatId, hideDeleted).then((resp) => {
+        return this.userClient.getInitialState(userStore, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(resp, false);
         });
     }
@@ -858,11 +849,10 @@ export class OpenChatAgent extends EventTarget {
         currentState: CurrentChatState,
         args: UpdateArgs,
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient
-            .getUpdates(currentState, args, userStore, selectedChatId, hideDeleted)
+            .getUpdates(currentState, args, userStore, selectedChatId)
             .then((resp) => {
                 return this.handleMergedUpdatesResponse(resp);
             });

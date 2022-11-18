@@ -713,7 +713,6 @@ type ChatEvents = Request<{
     eventIndexRange: IndexRange;
     startIndex: number;
     ascending: boolean;
-    hideDeleted: boolean;
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
 }> & {
@@ -729,7 +728,6 @@ type GetUpdates = Request<{
     args: UpdateArgs;
     userStore: UserLookup;
     selectedChatId: string | undefined;
-    hideDeleted: boolean;
 }> & {
     kind: "getUpdates";
 };
@@ -737,7 +735,6 @@ type GetUpdates = Request<{
 type GetInitialState = Request<{
     userStore: UserLookup;
     selectedChatId: string | undefined;
-    hideDeleted: boolean;
 }> & {
     kind: "getInitialState";
 };

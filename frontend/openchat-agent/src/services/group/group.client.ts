@@ -173,7 +173,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
@@ -200,7 +199,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             );
         };
 
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId, hideDeleted);
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending, this.userId);
     }
 
     @profile("groupClient")

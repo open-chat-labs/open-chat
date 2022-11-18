@@ -333,11 +333,10 @@ export function enoughVisibleMessages(
     ascending: boolean,
     [minIndex, maxIndex]: IndexRange,
     events: EventWrapper<ChatEvent>[],
-    myUserId: string,
-    hideDeleted: boolean
+    myUserId: string
 ): boolean {
     console.log("in the func");
-    const filtered = events.filter((e) => eventIsVisible(e, myUserId, hideDeleted));
+    const filtered = events.filter((e) => eventIsVisible(e, myUserId));
     if (filtered.length >= EVENT_PAGE_SIZE) {
         return true;
     } else if (ascending) {

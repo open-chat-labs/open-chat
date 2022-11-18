@@ -69,7 +69,6 @@
     $: storageStore = client.storageStore;
     $: cryptoBalance = client.cryptoBalance;
     $: userStore = client.userStore;
-    $: hideDeleted = client.hideDeletedStore;
     $: {
         setLocale(selectedLocale);
     }
@@ -320,11 +319,6 @@
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
-            <Toggle
-                id={"hide-deleted"}
-                on:change={() => client.toggleHideDeleted()}
-                label={$_("hideDeletedMessages")}
-                checked={$hideDeleted} />
         </CollapsibleCard>
     </div>
     <div class="accounts">

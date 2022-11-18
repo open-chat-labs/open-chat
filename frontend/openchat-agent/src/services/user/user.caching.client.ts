@@ -194,7 +194,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        hideDeleted: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
@@ -217,7 +216,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     userId,
                     startIndex,
                     ascending,
-                    hideDeleted,
                     threadRootMessageIndex,
                     latestClientEventIndex
                 )
@@ -236,8 +234,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
         selectedChatId: string | undefined,
-        userStore: UserLookup,
-        hideDeleted: boolean,
+        userStore: UserLookup
     ): Promise<void> {
         const cachedChats =
             cachedResponse === undefined
@@ -303,7 +300,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                               range,
                               chat.latestEventIndex,
                               false,
-                              hideDeleted,
                               undefined,
                               chat.latestEventIndex
                           );
@@ -320,7 +316,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                               chat.chatId,
                               chat.latestEventIndex,
                               false,
-                              hideDeleted,
                               undefined,
                               chat.latestEventIndex
                           );
@@ -371,8 +366,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     @profile("userCachingClient")
     async getInitialState(
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.principal);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
@@ -382,20 +376,19 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     cachedChats,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
                     userStore,
-                    selectedChatId, // WARNING: This was left undefined previously - is this correct now
-                    hideDeleted,
+                    selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
-                    this.primeCaches(cachedChats, resp, selectedChatId, userStore, hideDeleted);
+                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
-                .getInitialState(userStore, selectedChatId, hideDeleted)
+                .getInitialState(userStore, selectedChatId)
                 .then((resp) => {
-                    this.primeCaches(cachedChats, resp, selectedChatId, userStore, hideDeleted);
+                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
@@ -407,14 +400,13 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         currentState: CurrentChatState,
         args: UpdateArgs,
         userStore: UserLookup,
-        selectedChatId: string | undefined,
-        hideDeleted: boolean
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.principal);
         return this.client
-            .getUpdates(currentState, args, userStore, selectedChatId, hideDeleted) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(currentState, args, userStore, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
-                this.primeCaches(cachedChats, resp, selectedChatId, userStore, hideDeleted);
+                this.primeCaches(cachedChats, resp, selectedChatId, userStore);
                 return resp;
             })
             .then((resp) => this.setCachedChats(resp));

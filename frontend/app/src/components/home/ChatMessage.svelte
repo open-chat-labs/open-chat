@@ -159,7 +159,6 @@
             messageId: msg.messageId,
             messageIndex: msg.messageIndex,
             edited: msg.edited,
-            threadRoot: msg.thread !== undefined
         };
     }
 
@@ -473,7 +472,7 @@
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
-                    <UnresolvedReply />
+                    <UnresolvedReply on:goToMessage repliesTo={msg.repliesTo} />
                 {/if}
             {/if}
 

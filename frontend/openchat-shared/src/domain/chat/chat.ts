@@ -312,7 +312,6 @@ export type RehydratedReplyContext = {
     eventIndex: number;
     chatId: string;
     edited: boolean;
-    threadRoot: boolean;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {
