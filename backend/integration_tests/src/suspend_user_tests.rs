@@ -1,12 +1,16 @@
+use crate::client;
 use crate::rng::random_message_id;
-use crate::setup::{return_env, setup_env};
-use crate::{client, SERVICE_PRINCIPAL};
+use crate::setup::{return_env, setup_env, TestEnv};
 use std::time::Duration;
 use types::{MessageContent, TextContent};
 
 #[test]
 fn suspend_user() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -14,7 +18,7 @@ fn suspend_user() {
 
     client::user_index::suspend_user(
         &mut env,
-        SERVICE_PRINCIPAL,
+        controller,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
             user_id: user1.user_id,
@@ -69,7 +73,7 @@ fn suspend_user() {
 
     client::user_index::unsuspend_user(
         &mut env,
-        SERVICE_PRINCIPAL,
+        controller,
         canister_ids.user_index,
         &user_index_canister::unsuspend_user::Args { user_id: user1.user_id },
     );
@@ -119,18 +123,26 @@ fn suspend_user() {
         group_canister::send_message::Response::Success(_)
     ));
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test]
 fn suspend_user_for_duration() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
 
     client::user_index::suspend_user(
         &mut env,
-        SERVICE_PRINCIPAL,
+        controller,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
             user_id: user.user_id,
@@ -150,5 +162,9 @@ fn suspend_user_for_duration() {
     let user_response2 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
     assert!(!user_response2.suspended);
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }

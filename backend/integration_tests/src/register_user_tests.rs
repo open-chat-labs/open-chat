@@ -1,9 +1,13 @@
 use crate::client;
-use crate::setup::{return_env, setup_env};
+use crate::setup::{return_env, setup_env, TestEnv};
 
 #[test]
 fn register_users() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user_count = 5usize;
 
@@ -26,5 +30,9 @@ fn register_users() {
     let user_index_canister::users::Response::Success(result) = response;
     assert_eq!(result.users.len(), user_count);
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }

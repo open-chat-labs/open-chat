@@ -21,5 +21,6 @@ pub enum Response {
     Blocked,
     NotSuperAdmin,
     UserSuspended,
+    ChatFrozen,
     InternalError(String),
 }

@@ -12,6 +12,7 @@ pub enum Response {
     CallerNotInGroup,
     OwnerCannotLeave,
     UserSuspended,
+    ChatFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

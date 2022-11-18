@@ -27,6 +27,37 @@ type GroupMatch =
         avatar_id: opt nat;
     };
 
+type FreezeGroupArgs =
+    record {
+        chat_id: ChatId;
+        reason: opt text;
+    };
+
+type FreezeGroupResponse =
+    variant {
+        Success;
+        ChatAlreadyFrozen;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
+type UnfreezeGroupArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type UnfreezeGroupResponse =
+    variant {
+        Success;
+        ChatNotFrozen;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 service: {
     search: (SearchArgs) -> (SearchResponse) query;
+    freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
+    unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
 }

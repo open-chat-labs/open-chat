@@ -1,5 +1,5 @@
 use crate::rng::random_message_id;
-use crate::setup::{return_env, setup_env};
+use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
 use ic_state_machine_tests::StateMachine;
 use itertools::Itertools;
@@ -9,7 +9,11 @@ use types::{CanisterId, ChatEvent, ChatId, MessageContent, PollConfig, PollConte
 
 #[test]
 fn allow_multiple_votes_per_user() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let poll_config = PollConfig {
         text: None,
@@ -35,12 +39,20 @@ fn allow_multiple_votes_per_user() {
         assert_eq!(register_vote_result2.user.into_iter().sorted().collect_vec(), vec![0, 1]);
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test]
 fn single_vote_per_user() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let poll_config = PollConfig {
         text: None,
@@ -66,12 +78,20 @@ fn single_vote_per_user() {
         assert_eq!(register_vote_result2.user.into_iter().sorted().collect_vec(), vec![1]);
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test]
 fn poll_ended_correctly() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let current_time = env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 
@@ -134,7 +154,11 @@ fn poll_ended_correctly() {
         }
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId, poll_config: PollConfig) -> TestData {
