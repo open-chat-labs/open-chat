@@ -110,7 +110,7 @@
 
     function deleteDirectChat() {
         dispatch("deleteDirectChat", chatSummary.chatId);
-        delOffset = -50;
+        delOffset = -60;
     }
 
     $: chat = normaliseChatSummary($now, chatSummary, $typingByChat);
@@ -125,7 +125,7 @@
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
     });
 
-    let maxDelOffset = -50;
+    let maxDelOffset = -60;
     let delOffset = maxDelOffset;
     let swiped = false;
 
