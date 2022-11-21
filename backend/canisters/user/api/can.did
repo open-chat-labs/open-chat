@@ -208,6 +208,7 @@ type JoinGroupResponse =
         InternalError: text;
         NotSuperAdmin;
         UserSuspended;
+        ChatFrozen;
     };
 
 type LeaveGroupArgs =
@@ -225,6 +226,7 @@ type LeaveGroupResponse =
         CallerNotInGroup;
         OwnerCannotLeave;
         UserSuspended;
+        ChatFrozen;
     };
 
 type DeleteGroupArgs =
@@ -237,6 +239,7 @@ type DeleteGroupResponse =
         Success;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
         InternalError: text;
     };
 
@@ -359,6 +362,7 @@ type TransferCryptoWithinGroupResponse =
         TransferCannotBeZero;
         TransferLimitExceeded: nat;
         UserSuspended;
+        ChatFrozen;
         InternalError: record { text; CompletedCryptoTransaction; };
     };
 

@@ -1,11 +1,15 @@
 use crate::client;
 use crate::rng::random_message_id;
-use crate::setup::{return_env, setup_env};
+use crate::setup::{return_env, setup_env, TestEnv};
 use types::{ChatEvent, MessageContent, TextContent};
 
 #[test]
 fn send_message_succeeds() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -18,12 +22,20 @@ fn send_message_succeeds() {
     assert_eq!(events_response.events.len(), 1);
     assert!(matches!(events_response.events[0].event, ChatEvent::Message(_)));
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test]
 fn empty_message_fails() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -43,12 +55,20 @@ fn empty_message_fails() {
         panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test]
 fn text_too_long_fails() {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
@@ -70,5 +90,9 @@ fn text_too_long_fails() {
         panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }

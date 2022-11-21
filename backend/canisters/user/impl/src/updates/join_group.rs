@@ -37,6 +37,7 @@ async fn join_group_v2(args: Args) -> Response {
             c2c_join_group::Response::Blocked => Blocked,
             c2c_join_group::Response::ParticipantLimitReached(limit) => ParticipantLimitReached(limit),
             c2c_join_group::Response::NotSuperAdmin => NotSuperAdmin,
+            c2c_join_group::Response::ChatFrozen => ChatFrozen,
             c2c_join_group::Response::UserNotFound => unreachable!(),
             c2c_join_group::Response::InternalError(error) => {
                 InternalError(format!("Failed to call 'group::c2c_join_group': {error:?}"))

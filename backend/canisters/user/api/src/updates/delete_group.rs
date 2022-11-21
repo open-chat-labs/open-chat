@@ -12,5 +12,6 @@ pub enum Response {
     Success,
     NotAuthorized,
     UserSuspended,
+    ChatFrozen,
     InternalError(String),
 }

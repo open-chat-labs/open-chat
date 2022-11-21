@@ -25,6 +25,7 @@ pub struct SuccessResult {
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
     pub suspended: bool,
+    pub is_super_admin: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
