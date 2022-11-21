@@ -20,11 +20,12 @@
     import NotificationsBar from "./NotificationsBar.svelte";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { menuCloser } from "../../actions/closeMenu";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import Button from "../Button.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
-    import ThreadsSection from "./ThreadsSection.svelte";
+    import ThreadsButton from "./ThreadsButton.svelte";
+    import ChatsButton from "./ChatsButton.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -173,26 +174,20 @@
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 
+    {#if $numberOfThreadsStore > 0}
+        <div class="section-selector">
+            <ButtonGroup align={$mobileWidth ? "fill" : "start"}>
+                <ChatsButton on:click={() => (view = "chats")} selected={view === "chats"} />
+                <ThreadsButton on:click={() => (view = "threads")} selected={view === "threads"} />
+            </ButtonGroup>
+        </div>
+    {/if}
+
     <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#if $numberOfThreadsStore > 0}
-                    <div class="section-selector">
-                        <ButtonGroup align="start">
-                            <Button
-                                hollow={view === "threads"}
-                                small={true}
-                                on:click={() => (view = "chats")}>
-                                {$_("chats")}
-                            </Button>
-                            <ThreadsSection
-                                on:click={() => (view = "threads")}
-                                selected={view === "threads"} />
-                        </ButtonGroup>
-                    </div>
-                {/if}
                 {#if view === "threads"}
                     <ThreadPreviews />
                 {:else}
@@ -292,15 +287,10 @@
 
 <style type="text/scss">
     .body {
-        height: 100%;
         overflow: auto;
         @include nice-scrollbar();
-        @include mobile() {
-            padding: 0 $sp3;
-        }
     }
     .chat-summaries {
-        height: 100%;
         overflow: auto;
         overflow-x: hidden;
     }

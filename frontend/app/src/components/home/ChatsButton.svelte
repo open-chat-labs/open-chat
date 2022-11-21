@@ -8,31 +8,38 @@
     export let selected = false;
 
     const client = getContext<OpenChat>("client");
+    let chatsWithUnreadMsgs: number;
 
     $: messagesRead = client.messagesRead;
-    $: numStaleThreads = client.staleThreadsCount();
+    $: chatSummariesListStore = client.chatSummariesListStore;
 
     onMount(() => {
-        return messagesRead.subscribe(() => {
-            numStaleThreads = client.staleThreadsCount();
+        return messagesRead.subscribe((_val) => {
+            chatsWithUnreadMsgs = $chatSummariesListStore.reduce(
+                (num, chat) =>
+                    client.unreadMessageCount(chat.chatId, chat.latestMessage?.event.messageIndex) >
+                    0
+                        ? num + 1
+                        : num,
+                0
+            );
         });
     });
 </script>
 
 <Button hollow={!selected} small={true} on:click>
     <div class="wrapper">
-        <div class="icon">🧵</div>
-        <h4 class="title" class:unread={numStaleThreads > 0}>
-            {$_("thread.previewTitle")}
+        <h4 class="title" class:unread={chatsWithUnreadMsgs > 0}>
+            {$_("chats")}
         </h4>
-        {#if numStaleThreads > 0}
+        {#if chatsWithUnreadMsgs > 0}
             <div
                 in:pop={{ duration: 1500 }}
-                title={$_("thread.unread", {
-                    values: { count: numStaleThreads.toString() },
+                title={$_("chats.unread", {
+                    values: { count: chatsWithUnreadMsgs.toString() },
                 })}
                 class="unread-count">
-                {numStaleThreads > 999 ? "999+" : numStaleThreads}
+                {chatsWithUnreadMsgs > 999 ? "999+" : chatsWithUnreadMsgs}
             </div>
         {/if}
     </div>
@@ -41,14 +48,9 @@
 <style type="text/scss">
     .wrapper {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        gap: $sp3;
-    }
-
-    .icon {
-        @include font-size(fs-120);
-        text-align: center;
+        gap: $sp4;
     }
 
     .unread-count {

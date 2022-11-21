@@ -31,6 +31,7 @@
         background: var(--button-bg);
         color: var(--button-txt);
         padding: $sp3 $sp6;
+        border-radius: $sp2;
         cursor: pointer;
         border: none;
         min-height: 45px;

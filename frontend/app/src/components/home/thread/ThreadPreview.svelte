@@ -204,10 +204,6 @@
         text-align: right;
     }
 
-    :global(.threads .card > .header) {
-        padding: $sp3;
-    }
-
     :global(.threads .card.bordered) {
         border: none;
         border-top: 1px solid var(--bd);
@@ -215,11 +211,6 @@
 
     .wrapper {
         background-color: var(--thread-preview-bg);
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            margin-bottom: 0;
-        }
     }
     .separator {
         padding: $sp2;

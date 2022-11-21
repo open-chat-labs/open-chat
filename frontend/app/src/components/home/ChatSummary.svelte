@@ -390,14 +390,14 @@
         justify-content: space-between;
         align-items: center;
         color: var(--chatSummary-txt1);
-        padding: $sp4 $sp4;
+        padding: $sp4;
         margin-bottom: 0;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         user-select: none;
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
 
         &:hover {

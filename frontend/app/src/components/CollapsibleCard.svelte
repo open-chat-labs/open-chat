@@ -43,7 +43,7 @@
     }
 
     .header {
-        padding: $sp3 $sp4;
+        padding: $sp4;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
@@ -51,7 +51,7 @@
         @include font(bold, normal, fs-100);
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
     }
 

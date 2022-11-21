@@ -77,23 +77,7 @@
 </div>
 
 <style type="text/scss">
-    .icon {
-        @include font-size(fs-180);
-        // text-align: center;
-    }
-
-    .details {
-        flex: 1;
-
-        .title {
-            @include ellipsis();
-            margin-bottom: $sp1;
-        }
-    }
-
     .threads {
-        height: 100%;
-        padding: $sp3 0 $sp3 0;
         flex: auto;
         overflow-x: hidden;
         @include nice-scrollbar();
