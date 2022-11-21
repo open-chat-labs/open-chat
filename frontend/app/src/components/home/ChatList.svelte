@@ -3,7 +3,6 @@
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import ThreadsSection from "./ThreadsSection.svelte";
     import { _ } from "svelte-i18n";
     import type {
         ChatSummary as ChatSummaryType,
@@ -22,6 +21,10 @@
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
     import { menuCloser } from "../../actions/closeMenu";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import Button from "../Button.svelte";
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
+    import ThreadsSection from "./ThreadsSection.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -36,6 +39,7 @@
     const dispatch = createEventDispatcher();
 
     let chatsWithUnreadMsgs: number;
+    let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
@@ -145,6 +149,11 @@
             chatListScroll.set(chatScrollTop);
         };
     });
+
+    function onSearchEntered(ev: CustomEvent<unknown>) {
+        view = "chats";
+        dispatch("searchEntered", ev.detail);
+    }
 </script>
 
 {#if user}
@@ -162,102 +171,118 @@
         on:profile
         on:newGroup />
 
-    <Search {searching} {searchTerm} on:searchEntered />
+    <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 
     <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#if searchResultsAvailable && chats.length > 0}
-                    <h3 class="search-subtitle">{$_("yourChats")}</h3>
-                {/if}
                 {#if $numberOfThreadsStore > 0}
-                    <ThreadsSection />
+                    <div class="section-selector">
+                        <ButtonGroup align="start">
+                            <Button
+                                hollow={view === "threads"}
+                                small={true}
+                                on:click={() => (view = "chats")}>
+                                {$_("chats")}
+                            </Button>
+                            <ThreadsSection
+                                on:click={() => (view = "threads")}
+                                selected={view === "threads"} />
+                        </ButtonGroup>
+                    </div>
                 {/if}
-                {#each chats as chatSummary, i (chatSummary.chatId)}
-                    <ChatSummary
-                        index={i}
-                        {chatSummary}
-                        selected={$selectedChatId === chatSummary.chatId}
-                        visible={searchTerm !== "" || !chatSummary.archived}
-                        on:chatSelected={chatSelected}
-                        on:pinChat
-                        on:unpinChat
-                        on:archiveChat
-                        on:unarchiveChat
-                        on:toggleMuteNotifications
-                        on:deleteDirectChat />
-                {/each}
+                {#if view === "threads"}
+                    <ThreadPreviews />
+                {:else}
+                    {#if searchResultsAvailable && chats.length > 0}
+                        <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                    {/if}
+                    {#each chats as chatSummary, i (chatSummary.chatId)}
+                        <ChatSummary
+                            index={i}
+                            {chatSummary}
+                            selected={$selectedChatId === chatSummary.chatId}
+                            visible={searchTerm !== "" || !chatSummary.archived}
+                            on:chatSelected={chatSelected}
+                            on:pinChat
+                            on:unpinChat
+                            on:archiveChat
+                            on:unarchiveChat
+                            on:toggleMuteNotifications
+                            on:deleteDirectChat />
+                    {/each}
 
-                {#if groupSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await groupSearchResults then resp}
-                            {#if resp.kind === "success" && resp.matches.length > 0}
-                                <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                {#each resp.matches as group, i (group.chatId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.groupAvatarUrl(group)}
-                                        on:click={() => selectGroup(group)}>
-                                        <h4 class="search-item-title">
-                                            {group.name}
-                                        </h4>
-                                        <p title={group.description} class="search-item-desc">
-                                            {group.description}
-                                        </p>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
-                {#if userSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await userSearchResults then resp}
-                            {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("users")}</h3>
-                                {#each resp as user, i (user.userId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.userAvatarUrl(user)}
-                                        on:click={() => chatWith(user.userId)}>
-                                        <h4 class="search-item-title">
-                                            @{user.username}
-                                        </h4>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
-                {#if messageSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await messageSearchResults then resp}
-                            {#if resp.kind == "success" && resp.matches.length > 0}
-                                <h3 class="search-subtitle">{$_("messages")}</h3>
-                                {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.groupAvatarUrl(
-                                            messageMatchDataContent(msg)
-                                        )}
-                                        showSpinner={false}
-                                        on:click={() => loadMessage(msg)}>
-                                        <h4 class="search-item-title">
-                                            {messageMatchTitle(msg)}
-                                        </h4>
-                                        <div class="search-item-desc">
-                                            <Markdown
-                                                text={client.getContentAsText($_, msg.content)}
-                                                oneLine={true}
-                                                suppressLinks={true} />
-                                        </div>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
+                    {#if groupSearchResults !== undefined}
+                        <div class="search-matches">
+                            {#await groupSearchResults then resp}
+                                {#if resp.kind === "success" && resp.matches.length > 0}
+                                    <h3 class="search-subtitle">{$_("publicGroups")}</h3>
+                                    {#each resp.matches as group, i (group.chatId)}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={client.groupAvatarUrl(group)}
+                                            on:click={() => selectGroup(group)}>
+                                            <h4 class="search-item-title">
+                                                {group.name}
+                                            </h4>
+                                            <p title={group.description} class="search-item-desc">
+                                                {group.description}
+                                            </p>
+                                        </SearchResult>
+                                    {/each}
+                                {/if}
+                            {/await}
+                        </div>
+                    {/if}
+                    {#if userSearchResults !== undefined}
+                        <div class="search-matches">
+                            {#await userSearchResults then resp}
+                                {#if resp.length > 0}
+                                    <h3 class="search-subtitle">{$_("users")}</h3>
+                                    {#each resp as user, i (user.userId)}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={client.userAvatarUrl(user)}
+                                            on:click={() => chatWith(user.userId)}>
+                                            <h4 class="search-item-title">
+                                                @{user.username}
+                                            </h4>
+                                        </SearchResult>
+                                    {/each}
+                                {/if}
+                            {/await}
+                        </div>
+                    {/if}
+                    {#if messageSearchResults !== undefined}
+                        <div class="search-matches">
+                            {#await messageSearchResults then resp}
+                                {#if resp.kind == "success" && resp.matches.length > 0}
+                                    <h3 class="search-subtitle">{$_("messages")}</h3>
+                                    {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={client.groupAvatarUrl(
+                                                messageMatchDataContent(msg)
+                                            )}
+                                            showSpinner={false}
+                                            on:click={() => loadMessage(msg)}>
+                                            <h4 class="search-item-title">
+                                                {messageMatchTitle(msg)}
+                                            </h4>
+                                            <div class="search-item-desc">
+                                                <Markdown
+                                                    text={client.getContentAsText($_, msg.content)}
+                                                    oneLine={true}
+                                                    suppressLinks={true} />
+                                            </div>
+                                        </SearchResult>
+                                    {/each}
+                                {/if}
+                            {/await}
+                        </div>
+                    {/if}
                 {/if}
             </div>
         {/if}
@@ -267,6 +292,7 @@
 
 <style type="text/scss">
     .body {
+        height: 100%;
         overflow: auto;
         @include nice-scrollbar();
         @include mobile() {
@@ -274,8 +300,16 @@
         }
     }
     .chat-summaries {
+        height: 100%;
         overflow: auto;
         overflow-x: hidden;
+    }
+
+    .section-selector {
+        margin: 0 $sp5 $sp4 $sp5;
+        @include mobile() {
+            margin: 0 $sp3 $sp3 $sp3;
+        }
     }
 
     .search-subtitle {

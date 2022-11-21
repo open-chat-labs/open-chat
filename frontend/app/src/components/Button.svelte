@@ -6,6 +6,7 @@
     export let small: boolean = false;
     export let tiny: boolean = false;
     export let fill: boolean = false;
+    export let hollow: boolean = false;
 </script>
 
 <button
@@ -15,6 +16,7 @@
     class:disabled
     class:small
     class:tiny
+    class:hollow
     {disabled}
     class:secondary
     class:fill>
@@ -58,6 +60,12 @@
                 var(--button-spinner),
                 "../assets/plain-spinner.svg"
             );
+        }
+
+        &.hollow {
+            background-color: transparent;
+            color: var(--txt);
+            border: 1px solid var(--bd);
         }
 
         &.disabled {

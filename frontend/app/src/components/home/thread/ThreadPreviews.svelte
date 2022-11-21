@@ -20,7 +20,6 @@
 
     $: serverChatSummariesStore = client.serverChatSummariesStore;
     $: threadsByChatStore = client.threadsByChatStore;
-    $: userStore = client.userStore;
 
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -67,37 +66,14 @@
     }
 </script>
 
-<div class="wrapper">
-    <SectionHeader shadow flush gap>
-        {#if $mobileWidth}
-            <div class="back" class:rtl={$rtlStore} on:click={() => push("/")}>
-                <HoverIcon>
-                    {#if $rtlStore}
-                        <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                    {:else}
-                        <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                    {/if}
-                </HoverIcon>
-            </div>
-        {/if}
-
-        <div class="icon">🧵</div>
-        <div class="details" class:rtl={$rtlStore}>
-            <h4 class="title">
-                {$_("thread.previewTitle")}
-            </h4>
-        </div>
-    </SectionHeader>
-
-    <div class="threads">
-        {#if loading && !initialised}
-            <Loading />
-        {:else}
-            {#each threads as thread, _i (thread.rootMessage.event.messageId)}
-                <ThreadPreviewComponent {observer} {thread} />
-            {/each}
-        {/if}
-    </div>
+<div class="threads">
+    {#if loading && !initialised}
+        <Loading />
+    {:else}
+        {#each threads as thread, _i (thread.rootMessage.event.messageId)}
+            <ThreadPreviewComponent {observer} {thread} />
+        {/each}
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -116,6 +92,7 @@
     }
 
     .threads {
+        height: 100%;
         padding: $sp3 0 $sp3 0;
         flex: auto;
         overflow-x: hidden;
@@ -123,13 +100,5 @@
         @include mobile() {
             padding: 0;
         }
-    }
-
-    .wrapper {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        position: relative;
     }
 </style>
