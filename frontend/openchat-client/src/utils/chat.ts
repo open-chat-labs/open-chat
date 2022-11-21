@@ -512,7 +512,7 @@ function isHiddenMessage(event: ChatEvent, myUserId: string) {
         messageIsHidden(
             event.content, 
             event.sender, 
-            event.thread === undefined, 
+            event.thread !== undefined, 
             myUserId);
 }
 
