@@ -32,6 +32,7 @@ import {
     getStorageRequiredForMessage,
     groupBySender,
     groupChatFromCandidate,
+    groupMessages,
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
@@ -47,7 +48,6 @@ import {
     mergeSendMessageResponse,
     upToDate,
     serialiseMessageForRtc,
-    messageIsHidden,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -590,11 +590,11 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
-    markMessageRead(chatId: string, messageIndex: number, messageId: bigint): void {
+    markMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): void {
         return this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
     }
 
-    isMessageRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
+    isMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): boolean {
         return this.messagesRead.isRead(chatId, messageIndex, messageId);
     }
 
@@ -984,6 +984,7 @@ export class OpenChat extends EventTarget {
     getMessageContent = getMessageContent;
     getStorageRequiredForMessage = getStorageRequiredForMessage;
     groupEvents = groupEvents;
+    groupMessages = groupMessages;
     startTyping = startTyping;
     stopTyping = stopTyping;
 
@@ -1317,7 +1318,6 @@ export class OpenChat extends EventTarget {
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUsernameList = buildUsernameList;
     groupMessagesByDate = groupMessagesByDate;
-    messageIsHidden = messageIsHidden;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
     setCachedMessageFromNotification(

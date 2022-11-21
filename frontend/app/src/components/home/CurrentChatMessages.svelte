@@ -111,11 +111,11 @@
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
-                const idxAttr = entry.target.attributes.getNamedItem("data-index");
+                const idxAttrs = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
-                const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
+                const idx = idxAttrs ? idxAttrs.value.split(" ").map(v => parseInt(v, 10)).pop() : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
-                if (idx !== undefined && id !== undefined) {
+                if (idx !== undefined) {
                     const intersectionRatioRequired =
                         0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
                             ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
@@ -127,7 +127,9 @@
                         const timer = window.setTimeout(() => {
                             if (chatId === chat.chatId) {
                                 client.markMessageRead(chat.chatId, idx, id);
-                                client.broadcastMessageRead(chat, id);
+                                if (id !== undefined) {
+                                    client.broadcastMessageRead(chat, id);
+                                }
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -239,7 +241,7 @@
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
         client.setFocusMessageIndex(chat.chatId, index);
-        const element = document.querySelector(`[data-index='${index}']`);
+        const element = document.querySelector(`[data-index~='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
@@ -570,14 +572,16 @@
     function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
         if (preview) return true;
 
-        if (evt.event.kind === "message") {
-            const isRead = client.isMessageRead(
-                chat.chatId,
-                evt.event.messageIndex,
-                evt.event.messageId
-            );
-            if (!isRead && evt.event.sender === user.userId) {
-                client.markMessageRead(chat.chatId, evt.event.messageIndex, evt.event.messageId);
+        if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
+            let messageIndex = evt.event.kind === "message" 
+                ? evt.event.messageIndex 
+                : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
+            let messageId = 
+                evt.event.kind === "message" ? evt.event.messageId 
+                : undefined;
+            const isRead = client.isMessageRead(chat.chatId, messageIndex, messageId);
+            if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
+                client.markMessageRead(chat.chatId, messageIndex, messageId);
                 return true;
             }
             return isRead;

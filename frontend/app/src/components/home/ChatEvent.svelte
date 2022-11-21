@@ -138,7 +138,12 @@
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
-    <AggregateCommonEvents user={userSummary} joined={event.event.usersJoined} messagesDeleted={event.event.messagesDeleted} />
+    <AggregateCommonEvents 
+        {observer} 
+        {readByMe}
+        user={userSummary} 
+        joined={event.event.usersJoined} 
+        messagesDeleted={event.event.messagesDeleted} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
