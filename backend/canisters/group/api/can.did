@@ -27,6 +27,7 @@ type SendMessageResponse =
         InvalidRequest: text;
         ThreadMessageNotFound;
         UserSuspended;
+        ChatFrozen;
     };
 
 type EditMessageArgs =
@@ -43,6 +44,7 @@ type EditMessageResponse =
         MessageNotFound;
         CallerNotInGroup;
         UserSuspended;
+        ChatFrozen;
     };
 
 type DeleteMessagesArgs =
@@ -58,6 +60,7 @@ type DeleteMessagesResponse =
         CallerNotInGroup;
         MessageNotFound;
         UserSuspended;
+        ChatFrozen;
     };
 
 type RegisterPollVoteArgs =
@@ -77,6 +80,7 @@ type RegisterPollVoteResponse =
         OptionIndexOutOfRange;
         CallerNotInGroup;
         UserSuspended;
+        ChatFrozen;
     };
 
 type AddReactionArgs =
@@ -97,6 +101,7 @@ type AddReactionResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type RemoveReactionArgs =
@@ -115,6 +120,7 @@ type RemoveReactionResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type BlockUserArgs =
@@ -134,6 +140,7 @@ type BlockUserResponse =
         NotAuthorized;
         UserNotInGroup;
         UserSuspended;
+        ChatFrozen;
     };
 
 type UnblockUserArgs =
@@ -150,6 +157,7 @@ type UnblockUserResponse =
         GroupNotPublic;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type AddParticipantsArgs =
@@ -169,6 +177,7 @@ type AddParticipantsResponse =
         ParticipantLimitReached: nat32;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type AddParticipantsPartialSuccessResult =
@@ -207,6 +216,7 @@ type RemoveParticipantResponse =
         NotAuthorized;
         UserNotInGroup;
         UserSuspended;
+        ChatFrozen;
     };
 
 type ChangeRoleArgs =
@@ -224,6 +234,7 @@ type ChangeRoleResponse =
         UserNotInGroup;
         Invalid;
         UserSuspended;
+        ChatFrozen;
     };
 
 type InviteCodeArgs =
@@ -250,6 +261,7 @@ type EnableInviteCodeResponse =
         };
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type DisableInviteCodeArgs =
@@ -262,6 +274,7 @@ type DisableInviteCodeResponse =
         Success;
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type ResetInviteCodeArgs =
@@ -276,6 +289,7 @@ type ResetInviteCodeResponse =
         };
         NotAuthorized;
         UserSuspended;
+        ChatFrozen;
     };
 
 type UpdateGroupV2Args =
@@ -303,6 +317,7 @@ type UpdateGroupV2Response =
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
+        ChatFrozen;
     };
 
 type OptionalGroupPermissions =
@@ -337,6 +352,7 @@ type PinMessageResponse =
         CallerNotInGroup;
         MessageNotFound;
         UserSuspended;
+        ChatFrozen;
     };
 
 type UnpinMessageArgs =
@@ -353,6 +369,7 @@ type UnpinMessageResponse =
         CallerNotInGroup;
         MessageNotFound;
         UserSuspended;
+        ChatFrozen;
     };
 
 type RegisterProposalVoteArgs =
@@ -371,6 +388,7 @@ type RegisterProposalVoteResponse =
         ProposalNotFound;
         ProposalNotAcceptingVotes;
         UserSuspended;
+        ChatFrozen;
         InternalError: text;
     };
 
@@ -385,6 +403,7 @@ type MakePrivateResponse =
         NotAuthorized;
         AlreadyPrivate;
         UserSuspended;
+        ChatFrozen;
         InternalError;
     };
 

@@ -3,7 +3,8 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::{enable_invite_code, reset_invite_code};
+use group_canister::enable_invite_code::{Response::*, *};
+use group_canister::reset_invite_code;
 use ic_cdk_macros::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -16,9 +17,8 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
-        Err(PrepareError::NotAuthorized) => return reset_invite_code::Response::NotAuthorized,
-        Err(PrepareError::UserSuspended) => return reset_invite_code::Response::UserSuspended,
         Ok(c) => c,
+        Err(response) => return response,
     };
 
     let code = generate_code().await;
@@ -34,18 +34,17 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
         );
     });
 
-    reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
+    Success(SuccessResult { code })
 }
 
 #[update]
 #[trace]
-async fn enable_invite_code(args: enable_invite_code::Args) -> enable_invite_code::Response {
+async fn enable_invite_code(args: Args) -> Response {
     run_regular_jobs();
 
     let initial_state = match read_state(prepare) {
-        Err(PrepareError::NotAuthorized) => return enable_invite_code::Response::NotAuthorized,
-        Err(PrepareError::UserSuspended) => return enable_invite_code::Response::UserSuspended,
         Ok(c) => c,
+        Err(response) => return response,
     };
 
     let code = match initial_state.code {
@@ -66,7 +65,7 @@ async fn enable_invite_code(args: enable_invite_code::Args) -> enable_invite_cod
         });
     }
 
-    enable_invite_code::Response::Success(enable_invite_code::SuccessResult { code })
+    Success(SuccessResult { code })
 }
 
 async fn generate_code() -> u64 {
@@ -98,16 +97,15 @@ struct PrepareResult {
     enabled: bool,
 }
 
-enum PrepareError {
-    NotAuthorized,
-    UserSuspended,
-}
+fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.is_frozen() {
+        return Err(ChatFrozen);
+    }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, PrepareError> {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.suspended.value {
-            return Err(PrepareError::UserSuspended);
+            return Err(UserSuspended);
         }
 
         if participant.role.can_invite_users(&runtime_state.data.permissions) {
@@ -119,5 +117,5 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, PrepareError> 
         }
     }
 
-    Err(PrepareError::NotAuthorized)
+    Err(NotAuthorized)
 }

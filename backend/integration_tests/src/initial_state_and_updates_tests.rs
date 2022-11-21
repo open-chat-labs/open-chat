@@ -1,4 +1,4 @@
-use crate::setup::{return_env, setup_env};
+use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
@@ -14,7 +14,11 @@ const ONE_DAY: Duration = Duration::from_secs(24 * 60 * 60);
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn initial_state(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -38,13 +42,21 @@ fn initial_state(delay: bool) {
 
     assert_eq!(actual_chat_ids, expected_chat_ids);
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn updates_all_updated(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -84,13 +96,21 @@ fn updates_all_updated(delay: bool) {
         panic!("Updates returned an error: {updates_response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn updates_some_updated(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -130,13 +150,21 @@ fn updates_some_updated(delay: bool) {
         panic!("Updates returned an error: {updates_response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn updates_none_updated(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -173,13 +201,21 @@ fn updates_none_updated(delay: bool) {
         panic!("Updates returned an error: {updates_response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn updates_all_chats_added(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -210,13 +246,21 @@ fn updates_all_chats_added(delay: bool) {
         panic!("Updates returned an error: {updates_response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn updates_some_chats_added(delay: bool) {
-    let (mut env, canister_ids) = setup_env();
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
 
     let TestData {
         user,
@@ -250,7 +294,11 @@ fn updates_some_chats_added(delay: bool) {
         panic!("Updates returned an error: {updates_response:?}");
     }
 
-    return_env(env, canister_ids);
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {

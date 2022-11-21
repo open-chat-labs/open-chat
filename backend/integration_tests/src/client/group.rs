@@ -5,6 +5,7 @@ use group_canister::*;
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(events_range);
+generate_query_call!(public_summary);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates);
 

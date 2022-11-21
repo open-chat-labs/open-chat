@@ -36,6 +36,8 @@ pub enum ChatEvent {
     GroupInviteCodeChanged(GroupInviteCodeChanged),
     ThreadUpdated(ThreadUpdated),
     ProposalsUpdated(ProposalsUpdated),
+    ChatFrozen(ChatFrozen),
+    ChatUnfrozen(ChatUnfrozen),
 }
 
 impl ChatEvent {
@@ -230,6 +232,17 @@ pub struct ProposalsUpdated {
 pub struct ProposalUpdated {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChatFrozen {
+    pub frozen_by: UserId,
+    pub reason: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChatUnfrozen {
+    pub unfrozen_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

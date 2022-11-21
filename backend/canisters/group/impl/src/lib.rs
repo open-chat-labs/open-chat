@@ -11,8 +11,9 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, GroupRules, GroupSubtype,
-    MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupChatSummaryInternal, GroupPermissions, GroupRules,
+    GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -51,6 +52,10 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
     }
 
     pub fn is_caller_callback_canister(&self) -> bool {
@@ -110,6 +115,7 @@ impl RuntimeState {
                 .cloned()
                 .unwrap_or_default(),
             latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
+            frozen: data.frozen.value.clone(),
         }
     }
 
@@ -168,6 +174,7 @@ impl RuntimeState {
             reactions: chat_metrics.reactions,
             last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
+            frozen: self.data.is_frozen(),
         }
     }
 }
@@ -200,6 +207,8 @@ struct Data {
     pub invite_code_enabled: bool,
     #[serde(default)]
     pub new_joiner_rewards: Option<NewJoinerRewards>,
+    #[serde(default)]
+    pub frozen: Timestamped<Option<FrozenGroupInfo>>,
 }
 
 fn ledger_canister_id() -> CanisterId {
@@ -257,6 +266,7 @@ impl Data {
             invite_code: None,
             invite_code_enabled: false,
             new_joiner_rewards: None,
+            frozen: Timestamped::default(),
         }
     }
 
@@ -283,6 +293,10 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
     }
 }
 
@@ -311,6 +325,7 @@ pub struct Metrics {
     pub reactions: u64,
     pub last_active: TimestampMillis,
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
+    pub frozen: bool,
 }
 
 fn run_regular_jobs() {

@@ -251,6 +251,16 @@ impl UserMap {
         }
     }
 
+    pub fn get(&self, user_id_or_principal: &Principal) -> Option<&User> {
+        let user_id = self
+            .principal_to_user_id
+            .get(user_id_or_principal)
+            .copied()
+            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
+
+        self.users.get(&user_id)
+    }
+
     pub fn get_by_principal(&self, principal: &Principal) -> Option<&User> {
         self.principal_to_user_id.get(principal).and_then(|u| self.users.get(u))
     }
