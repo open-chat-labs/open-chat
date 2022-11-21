@@ -617,5 +617,6 @@
     "advanced": "Avanzado",
     "features": "Características",
     "architecture": "Arquitectura",
-    "whitepaper": "Papel blanco"
+    "whitepaper": "Papel blanco",
+    "nMessagesDeleted": "{number} mensaje(s) eliminado(s)"
 }

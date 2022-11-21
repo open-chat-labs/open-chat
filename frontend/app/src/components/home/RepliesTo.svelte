@@ -24,8 +24,17 @@
     $: userStore = client.userStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: replyIsHidden = client.messageIsHidden(
+        repliesTo.content, 
+        repliesTo.senderId, 
+        repliesTo.isThreadRoot, 
+        currentUser.userId);
 
     function zoomToMessage() {
+        if (replyIsHidden) {
+            return;   
+        }
+
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
@@ -47,6 +56,7 @@
     <div
         class="reply-wrapper"
         class:me
+        class:unclickable={replyIsHidden}
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
@@ -88,7 +98,6 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        cursor: pointer;
         box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
         border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
@@ -99,6 +108,10 @@
             box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);
             margin-left: 0;
             margin-right: 7px;
+        }
+
+        &.unclickable {
+            cursor: default;
         }
 
         &.me {

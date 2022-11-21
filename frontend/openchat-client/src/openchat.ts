@@ -47,6 +47,7 @@ import {
     mergeSendMessageResponse,
     upToDate,
     serialiseMessageForRtc,
+    messageIsHidden,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1316,6 +1317,7 @@ export class OpenChat extends EventTarget {
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUsernameList = buildUsernameList;
     groupMessagesByDate = groupMessagesByDate;
+    messageIsHidden = messageIsHidden;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
     setCachedMessageFromNotification(
