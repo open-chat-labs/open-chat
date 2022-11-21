@@ -4,6 +4,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import {
         ChatSummary,
+        ChatEvent as ChatEventType,
         EnhancedReplyContext,
         EventWrapper,
         Message,
@@ -20,7 +21,6 @@
     import Fab from "../../Fab.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
-    import ChatMessage from "../ChatMessage.svelte";
     import { derived, Readable, readable, writable, Writable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
@@ -29,10 +29,12 @@
     import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
+    import ChatEvent from "../ChatEvent.svelte";
 
     const FROM_BOTTOM_THRESHOLD = 600;
 
     const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -57,7 +59,6 @@
     $: currentChatMembers = client.currentChatMembers;
     $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: typing = client.typing;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
@@ -150,7 +151,7 @@
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: messages = client
-        .groupMessages([rootEvent, ...$threadEvents])
+        .groupEvents([rootEvent, ...$threadEvents], user.userId)
         .reverse() as EventWrapper<Message>[][][];
     $: preview = client.isPreviewing(chat.chatId);
     $: pollsAllowed = client.canCreatePolls(chat.chatId);
@@ -158,7 +159,7 @@
 
     function onSentMessage(event: EventWrapper<Message>) {
         const summary: ThreadSummary = {
-            participantIds: new Set<string>([client.user.userId]),
+            participantIds: new Set<string>([user.userId]),
             numberOfReplies: event.event.messageIndex + 1,
             latestEventIndex: event.index,
             latestEventTimestamp: event.timestamp,
@@ -235,11 +236,11 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, client.user.userId, threadRootMessageIndex);
+        client.startTyping(chat, user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        client.stopTyping(chat, client.user.userId, threadRootMessageIndex);
+        client.stopTyping(chat, user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -327,18 +328,18 @@
 
         const { message, reaction } = ev.detail;
 
-        const kind = client.containsReaction(client.user.userId, reaction, message.reactions)
+        const kind = client.containsReaction(user.userId, reaction, message.reactions)
             ? "remove"
             : "add";
 
         client
             .selectReaction(
                 chat.chatId,
-                client.user.userId,
+                user.userId,
                 threadRootMessageIndex,
                 message.messageId,
                 reaction,
-                client.user.username,
+                user.username,
                 kind
             )
             .then((success) => {
@@ -396,8 +397,8 @@
     function shareMessage(ev: CustomEvent<Message>) {
         shareFunctions.shareMessage(
             $_,
-            client.user.userId,
-            ev.detail.sender === client.user.userId,
+            user.userId,
+            ev.detail.sender === user.userId,
             ev.detail
         );
     }
@@ -408,6 +409,14 @@
 
     function defaultCryptoTransferReceiver(): string | undefined {
         return $replyingTo?.sender?.userId;
+    }
+
+    function eventKey(e: EventWrapper<ChatEventType>): string {
+        if (e.event.kind === "message") {
+            return e.event.messageId.toString();
+        } else {
+            return e.index.toString();
+        }
     }
 </script>
 
@@ -463,29 +472,23 @@
                     )}
                 </div>
                 {#each dayGroup as userGroup}
-                    {#each userGroup as evt, i (evt.event.messageId.toString())}
-                        <ChatMessage
-                            senderId={evt.event.sender}
-                            focused={evt.event.messageIndex === focusMessageIndex}
-                            {observer}
+                    {#each userGroup as evt, i (eventKey(evt))}
+                        <ChatEvent
+                            chatId={chat.chatId}
+                            chatType={chat.kind}
+                            {user}
+                            event={evt} 
+                            first={i === 0}
+                            last={i + 1 === userGroup.length}
+                            me={evt.event.sender === user.userId}
                             confirmed={!unconfirmed.contains(
                                 $selectedThreadKey ?? "",
                                 evt.event.messageId
                             )}
-                            senderTyping={client.isTyping(
-                                $typing,
-                                evt.event.sender,
-                                chat.chatId,
-                                threadRootMessageIndex
-                            )}
-                            readByMe={true}
-                            readByThem={true}
-                            chatId={chat.chatId}
-                            chatType={chat.kind}
-                            user={client.user}
-                            me={evt.event.sender === client.user.userId}
-                            first={i === 0}
-                            last={i + 1 === userGroup.length}
+                            readByThem
+                            readByMe
+                            {observer}
+                            focused={evt.event.kind === "message" && focusMessageIndex === evt.event.messageIndex}
                             {preview}
                             inThread={true}
                             pinned={false}
@@ -494,11 +497,13 @@
                             canPin={client.canPinMessages(chat.chatId)}
                             canBlockUser={client.canBlockUsers(chat.chatId)}
                             canDelete={client.canDeleteOtherUsersMessages(chat.chatId)}
-                            canQuoteReply={canSend}
-                            canReact={client.canReactToMessages(chat.chatId)}
-                            canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}
+                            {canSend}
+                            {canReact}                    
+                            canInvite={false}
+                            canReplyInThread={false}
+                            collapsed={false}
                             on:chatWith
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
@@ -507,14 +512,15 @@
                             on:deleteMessage={onDeleteMessage}
                             on:blockUser
                             on:registerVote={registerVote}
-                            on:editMessage={() => editEvent(evt)}
+                            on:editEvent={() => editEvent(evt)}
                             on:shareMessage={shareMessage}
                             on:copyMessageUrl={copyMessageUrl}
+                            on:chatWith
+                            on:replyTo={replyTo}
+                            on:replyPrivatelyTo
+                            on:deleteMessage={onDeleteMessage}
                             on:upgrade
-                            on:forward
-                            eventIndex={evt.index}
-                            timestamp={evt.timestamp}
-                            msg={evt.event} />
+                            on:forward />
                     {/each}
                 {/each}
             </div>
@@ -531,7 +537,7 @@
         textContent={$textContent}
         members={$currentChatMembers}
         blockedUsers={$currentChatBlockedUsers}
-        user={client.user}
+        user={user}
         joining={undefined}
         {preview}
         mode={"thread"}
