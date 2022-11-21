@@ -1,6 +1,7 @@
 mod macros;
 
 pub mod group;
+pub mod group_index;
 pub mod user;
 pub mod user_index;
 

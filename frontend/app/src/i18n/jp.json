@@ -617,5 +617,6 @@
     "features": "特徴",
     "architecture": "建築",
     "whitepaper": "白書",
-    "whatsOnYourMind": "何を考えているの？"
+    "whatsOnYourMind": "何を考えているの？",
+    "nMessagesDeleted": "{number} 件のメッセージが削除されました"
 }

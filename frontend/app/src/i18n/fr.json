@@ -616,5 +616,6 @@
     "features": "Fonctionnalités",
     "architecture": "Architecture",
     "whitepaper": "Papier blanc",
-    "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?"
+    "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?",
+    "nMessagesDeleted": "{number} message(s) supprimé(s)"
 }

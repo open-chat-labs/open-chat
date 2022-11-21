@@ -2,11 +2,11 @@ import "../../../libraries/types/can.did";
 
 type ChallengeKey = nat32;
 
-type CreateChallengeArgs = 
+type CreateChallengeArgs =
     record {
     };
 
-type CreateChallengeResponse = 
+type CreateChallengeResponse =
     variant {
         Success: Challenge;
         Throttled;
@@ -17,7 +17,7 @@ type Challenge = record {
     png_base64: text;
 };
 
-type RegisterUserArgs = 
+type RegisterUserArgs =
     record {
         username: text;
         challenge_attempt: ChallengeAttempt;
@@ -29,7 +29,7 @@ type ChallengeAttempt = record {
     chars : text;
 };
 
-type RegisterUserResponse = 
+type RegisterUserResponse =
     variant {
         Success: UserId;
         AlreadyRegistered;
@@ -43,18 +43,18 @@ type RegisterUserResponse =
         ChallengeFailed;
     };
 
-type PhoneNumber = 
+type PhoneNumber =
     record {
         country_code: nat16;
         number: text;
     };
 
-type SubmitPhoneNumberArgs = 
+type SubmitPhoneNumberArgs =
     record {
         phone_number: PhoneNumber;
     };
 
-type SubmitPhoneNumberResponse = 
+type SubmitPhoneNumberResponse =
     variant {
         Success;
         AlreadyRegistered;
@@ -63,12 +63,12 @@ type SubmitPhoneNumberResponse =
         UserNotFound;
     };
 
-type ConfirmPhoneNumberArgs = 
+type ConfirmPhoneNumberArgs =
     record {
         confirmation_code: text;
     };
 
-type ConfirmPhoneNumberResponse = 
+type ConfirmPhoneNumberResponse =
     variant {
         Success: SuccessResult;
         ConfirmationCodeIncorrect;
@@ -82,11 +82,11 @@ type SuccessResult =
         open_storage_limit_bytes: nat64;
     };
 
-type ResendCodeArgs = 
-    record {        
+type ResendCodeArgs =
+    record {
     };
 
-type ResendCodeResponse = 
+type ResendCodeResponse =
     variant {
         Success;
         PhoneNumberNotSubmitted;
@@ -142,14 +142,14 @@ type CheckUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type TransferCyclesArgs = 
+type TransferCyclesArgs =
     record {
         sender: UserId;
         recipient: UserId;
         amount: nat;
     };
 
-type TransferCyclesResponse = 
+type TransferCyclesResponse =
     variant {
         Success: record {
             new_balance: nat;
@@ -159,7 +159,7 @@ type TransferCyclesResponse =
         BalanceExceeded;
     };
 
-type CurrentUserArgs = 
+type CurrentUserArgs =
     record {
     };
 
@@ -176,6 +176,7 @@ type CurrentUserResponse =
             icp_account: AccountIdentifier;
             referrals: vec UserId;
             suspended: bool;
+            is_super_admin: bool;
         };
         UserNotFound;
     };
@@ -193,7 +194,7 @@ type UnconfirmedPhoneNumberState =
         valid_until: TimestampMillis;
     };
 
-type UserArgs = 
+type UserArgs =
     record {
         user_id: opt UserId;
         username: opt text;
@@ -295,11 +296,11 @@ type UnsuspendUserResponse =
     };
 
 service: {
-    create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);    
+    create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
 
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
 
-    // If the current user does not exist, the phone number is valid, and not already in use 
+    // If the current user does not exist, the phone number is valid, and not already in use
     // then send an SMS with a confirmation code to this phone number
     submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
 

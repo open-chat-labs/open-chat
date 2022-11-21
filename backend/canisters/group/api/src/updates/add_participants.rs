@@ -19,6 +19,7 @@ pub enum Response {
     ParticipantLimitReached(u32),
     NotAuthorized,
     UserSuspended,
+    ChatFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

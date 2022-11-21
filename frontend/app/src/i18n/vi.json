@@ -617,5 +617,6 @@
     "features": "Đặc trưng",
     "architecture": "Ngành kiến trúc",
     "whitepaper": "Giấy trắng",
-    "whatsOnYourMind": "Bạn đang nghĩ gì vậy?"
+    "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
+    "nMessagesDeleted": "{number} tin nhắn đã bị xóa"
 }

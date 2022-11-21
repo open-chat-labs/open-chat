@@ -11,4 +11,5 @@ pub enum Response {
     Success,
     NotAuthorized,
     UserSuspended,
+    ChatFrozen,
 }

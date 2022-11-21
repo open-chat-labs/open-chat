@@ -53,6 +53,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
             }),
             group_canister::send_message::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             group_canister::send_message::Response::UserSuspended => UserSuspended,
+            group_canister::send_message::Response::ChatFrozen => ChatFrozen,
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
             | group_canister::send_message::Response::NotAuthorized

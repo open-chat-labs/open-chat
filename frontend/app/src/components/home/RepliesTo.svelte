@@ -20,7 +20,6 @@
     export let groupChat: boolean;
 
     let debug = false;
-
     $: userStore = client.userStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";

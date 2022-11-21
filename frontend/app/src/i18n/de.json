@@ -616,5 +616,6 @@
     "features": "Merkmale",
     "architecture": "Die Architektur",
     "whitepaper": "Weißes Papier",
-    "whatsOnYourMind": "Was haben Sie auf dem Herzen?"
+    "whatsOnYourMind": "Was haben Sie auf dem Herzen?",
+    "nMessagesDeleted": "{number} Nachricht(en) gelöscht"
 }

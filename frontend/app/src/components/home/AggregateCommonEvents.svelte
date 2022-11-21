@@ -2,16 +2,40 @@
 
 <script lang="ts">
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { getContext } from "svelte";
+    import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
+    export let messagesDeleted: number[];
+    export let observer: IntersectionObserver;
+    export let readByMe: boolean;
+
+    let deletedMessagesElement: HTMLElement;
 
     $: userStore = client.userStore;
     $: joinedText = buildText($userStore, joined, "userJoined");
+    $: deletedText = messagesDeleted.length > 0 ? $_("nMessagesDeleted", { values: { number: messagesDeleted.length } }) : undefined;
+
+    afterUpdate(() => {
+        if (readByMe && observer && deletedMessagesElement) {
+            observer.unobserve(deletedMessagesElement);
+        }
+    });
+
+    onMount(() => {
+        if (!readByMe && deletedMessagesElement) {
+            observer?.observe(deletedMessagesElement);
+        }
+    });
+
+    onDestroy(() => {
+        if (deletedMessagesElement) {
+            observer?.unobserve(deletedMessagesElement);
+        }
+    });
 
     function buildText(
         userStore: UserLookup,
@@ -40,9 +64,14 @@
     }
 </script>
 
-{#if joinedText !== undefined}
+{#if joinedText !== undefined || deletedText !== undefined}
     <div class="timeline-event">
-        <p>{joinedText}</p>
+        {#if joinedText !== undefined}
+            <p>{joinedText}</p>
+        {/if}
+        {#if deletedText !== undefined}
+            <p bind:this={deletedMessagesElement} data-index={messagesDeleted.join(" ")}>{deletedText}</p>
+        {/if}
     </div>
 {/if}
 

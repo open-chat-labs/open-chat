@@ -150,7 +150,7 @@
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: messages = client
-        .groupEvents([rootEvent, ...$threadEvents])
+        .groupMessages([rootEvent, ...$threadEvents])
         .reverse() as EventWrapper<Message>[][][];
     $: preview = client.isPreviewing(chat.chatId);
     $: pollsAllowed = client.canCreatePolls(chat.chatId);

@@ -97,6 +97,10 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
+    if runtime_state.data.is_frozen() {
+        return Err(Box::new(ChatFrozen));
+    }
+
     let caller = runtime_state.env.caller();
     if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(Box::new(ParticipantLimitReached(limit)))

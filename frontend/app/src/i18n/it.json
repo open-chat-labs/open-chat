@@ -616,5 +616,6 @@
     "features": "Caratteristiche",
     "architecture": "Architettura",
     "whitepaper": "Carta bianca",
-    "whatsOnYourMind": "Cos'hai in mente?"
+    "whatsOnYourMind": "Cos'hai in mente?",
+    "nMessagesDeleted": "{number} messaggi eliminati"
 }

@@ -142,11 +142,11 @@ export class MessageReadTracker {
         this.publish();
     }
 
-    markMessageRead(chatId: string, messageIndex: number, messageId: bigint): void {
+    markMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): void {
         if (!this.state[chatId]) {
             this.state[chatId] = new MessagesRead();
         }
-        if (unconfirmed.contains(chatId, messageId)) {
+        if (messageId !== undefined && unconfirmed.contains(chatId, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
             if (this.waiting[chatId] === undefined) {
                 this.waiting[chatId] = new Map<bigint, number>();
@@ -289,8 +289,8 @@ export class MessageReadTracker {
         this.publish();
     }
 
-    isRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
-        if (unconfirmed.contains(chatId, messageId)) {
+    isRead(chatId: string, messageIndex: number, messageId: bigint | undefined): boolean {
+        if (messageId !== undefined && unconfirmed.contains(chatId, messageId)) {
             return this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId);
         } else {
             const serverState = this.serverState[chatId];

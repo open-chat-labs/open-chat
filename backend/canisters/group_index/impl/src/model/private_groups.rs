@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, TimestampMillis, Version};
+use types::{ChatId, Cycles, CyclesTopUp, FrozenGroupInfo, TimestampMillis, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PrivateGroups {
@@ -67,6 +67,8 @@ pub struct PrivateGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
+    #[serde(default)]
+    frozen: Option<FrozenGroupInfo>,
 }
 
 impl PrivateGroupInfo {
@@ -81,6 +83,7 @@ impl PrivateGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
+            frozen: None,
         }
     }
 
@@ -99,6 +102,7 @@ impl PrivateGroupInfo {
             wasm_version,
             cycle_top_ups,
             upgrade_in_progress,
+            frozen: None,
         }
     }
 
@@ -132,5 +136,13 @@ impl PrivateGroupInfo {
 
     pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
         self.upgrade_in_progress = upgrade_in_progress;
+    }
+
+    pub fn frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
+    pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
+        self.frozen = info;
     }
 }
