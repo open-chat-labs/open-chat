@@ -20,21 +20,11 @@
     export let groupChat: boolean;
 
     let debug = false;
-
     $: userStore = client.userStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
-    $: replyIsHidden = client.messageIsHidden(
-        repliesTo.content, 
-        repliesTo.senderId, 
-        repliesTo.isThreadRoot, 
-        currentUser.userId);
 
     function zoomToMessage() {
-        if (replyIsHidden) {
-            return;   
-        }
-
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
@@ -56,7 +46,6 @@
     <div
         class="reply-wrapper"
         class:me
-        class:unclickable={replyIsHidden}
         class:rtl={$rtlStore}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
@@ -108,10 +97,6 @@
             box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);
             margin-left: 0;
             margin-right: 7px;
-        }
-
-        &.unclickable {
-            cursor: default;
         }
 
         &.me {

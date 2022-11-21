@@ -445,6 +445,11 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
     return groupWhile(sameUser, events);
 }
 
+export function groupMessages(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
+    return groupWhile(sameDate, events.filter(eventIsVisible))
+        .map(groupBySender);
+}
+
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
@@ -465,14 +470,16 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
-        if (e.event.kind === "member_joined" || e.event.kind === "member_left" || isHiddenMessage(e.event, myUserId)) {
+        if (e.event.kind === "member_joined" || 
+            e.event.kind === "member_left" || 
+            (e.event.kind === "message" && messageIsHidden(e.event, myUserId))) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
                 agg = {
                     kind: "aggregate_common_events",
                     usersJoined: new Set(),
                     usersLeft: new Set(),
-                    messagesDeleted: 0,
+                    messagesDeleted: [],
                 };
             } else {
                 previous.pop();
@@ -491,7 +498,7 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
                     agg.usersLeft.add(e.event.userId);
                 }
             } else {
-                agg.messagesDeleted++;
+                agg.messagesDeleted.push(e.event.messageIndex);
             }
 
             previous.push({
@@ -507,20 +514,11 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
     }, []);
 }
 
-function isHiddenMessage(event: ChatEvent, myUserId: string) {
-    return event.kind === "message" && 
-        messageIsHidden(
-            event.content, 
-            event.sender, 
-            event.thread !== undefined, 
-            myUserId);
-}
-
-export function messageIsHidden(content: MessageContent, sender: string, isThreadRoot: boolean, myUserId: string): boolean {
-    return content.kind === "deleted_content" &&
-        content.deletedBy !== myUserId &&
-        sender !== myUserId &&
-        !isThreadRoot;
+function messageIsHidden(message: Message, myUserId: string) {
+    return message.content.kind === "deleted_content" &&
+        message.content.deletedBy !== myUserId &&
+        message.sender !== myUserId &&
+        message.thread === undefined;
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
