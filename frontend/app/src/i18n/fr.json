@@ -616,5 +616,6 @@
     "advanced": "Avancé",
     "features": "Fonctionnalités",
     "architecture": "Architecture",
-    "whitepaper": "Papier blanc"
+    "whitepaper": "Papier blanc",
+    "nMessagesDeleted": "{number} message(s) supprimé(s)"
 }
