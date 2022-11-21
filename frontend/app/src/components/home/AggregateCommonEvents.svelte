@@ -9,9 +9,11 @@
 
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
+    export let messagesDeleted: number;
 
     $: userStore = client.userStore;
     $: joinedText = buildText($userStore, joined, "userJoined");
+    $: deletedText = messagesDeleted > 0 ? $_("nMessagesDeleted", { values: { number: messagesDeleted } }) : undefined;
 
     function buildText(
         userStore: UserLookup,
@@ -40,9 +42,14 @@
     }
 </script>
 
-{#if joinedText !== undefined}
+{#if joinedText !== undefined || deletedText !== undefined}
     <div class="timeline-event">
-        <p>{joinedText}</p>
+        {#if joinedText !== undefined}
+            <p>{joinedText}</p>
+        {/if}
+        {#if deletedText !== undefined}
+            <p>{deletedText}</p>
+        {/if}
     </div>
 {/if}
 

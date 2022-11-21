@@ -616,5 +616,6 @@
     "advanced": "Fortschrittlich",
     "features": "Merkmale",
     "architecture": "Die Architektur",
-    "whitepaper": "Weißes Papier"
+    "whitepaper": "Weißes Papier",
+    "nMessagesDeleted": "{number} Nachricht(en) gelöscht"
 }
