@@ -63,6 +63,22 @@ type DeleteMessagesResponse =
         ChatFrozen;
     };
 
+type UndeleteMessagesArgs =
+    record {
+        thread_root_message_index: opt MessageIndex;
+        message_ids: vec MessageId;
+        correlation_id: nat64;
+    };
+
+type UndeleteMessagesResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        MessageNotFound;
+        UserSuspended;
+        ChatFrozen;
+    };
+
 type RegisterPollVoteArgs =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -619,6 +635,7 @@ service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
