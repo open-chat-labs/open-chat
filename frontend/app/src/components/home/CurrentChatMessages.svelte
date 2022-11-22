@@ -113,7 +113,12 @@
             entries.forEach((entry) => {
                 const idxAttrs = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
-                const idx = idxAttrs ? idxAttrs.value.split(" ").map(v => parseInt(v, 10)).pop() : undefined;
+                const idx = idxAttrs
+                    ? idxAttrs.value
+                          .split(" ")
+                          .map((v) => parseInt(v, 10))
+                          .pop()
+                    : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined) {
                     const intersectionRatioRequired =
@@ -499,7 +504,9 @@
         return firstKey;
     }
 
-    $: groupedEvents = client.groupEvents(events, user.userId, groupInner(filteredProposals)).reverse();
+    $: groupedEvents = client
+        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
@@ -573,12 +580,11 @@
         if (preview) return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
-            let messageIndex = evt.event.kind === "message" 
-                ? evt.event.messageIndex 
-                : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
-            let messageId = 
-                evt.event.kind === "message" ? evt.event.messageId 
-                : undefined;
+            let messageIndex =
+                evt.event.kind === "message"
+                    ? evt.event.messageIndex
+                    : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
+            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             const isRead = client.isMessageRead(chat.chatId, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
                 client.markMessageRead(chat.chatId, messageIndex, messageId);
