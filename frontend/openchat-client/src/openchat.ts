@@ -32,7 +32,6 @@ import {
     getStorageRequiredForMessage,
     groupBySender,
     groupChatFromCandidate,
-    groupMessages,
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
@@ -984,7 +983,6 @@ export class OpenChat extends EventTarget {
     getMessageContent = getMessageContent;
     getStorageRequiredForMessage = getStorageRequiredForMessage;
     groupEvents = groupEvents;
-    groupMessages = groupMessages;
     startTyping = startTyping;
     stopTyping = stopTyping;
 

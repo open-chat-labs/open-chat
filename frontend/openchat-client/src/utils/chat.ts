@@ -445,11 +445,6 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
     return groupWhile(sameUser, events);
 }
 
-export function groupMessages(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible))
-        .map(groupBySender);
-}
-
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
