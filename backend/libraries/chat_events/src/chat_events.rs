@@ -23,6 +23,25 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
+    pub fn recalculate_messages_deleted(&mut self) {
+        let mut overall = 0;
+        let mut per_user = HashMap::new();
+
+        for event in self.main.iter().chain(self.threads.values().flat_map(|t| t.iter())) {
+            if let ChatEventInternal::MessageDeleted(m) = &event.event {
+                overall += 1;
+                *per_user.entry(m.updated_by).or_default() += 1;
+            }
+        }
+
+        self.metrics.deleted_messages = overall;
+        for (user_id, count) in per_user {
+            if let Some(metrics) = self.per_user_metrics.get_mut(&user_id) {
+                metrics.deleted_messages = count;
+            }
+        }
+    }
+
     pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
         let mut overdue_polls = Vec::new();
         let messages_iter: Vec<_> = self
@@ -220,6 +239,40 @@ impl AllChatEvents {
                 (
                     message_id,
                     self.delete_message(caller, is_admin, thread_root_message_index, message_id, correlation_id, now),
+                )
+            })
+            .collect();
+
+        if let Some(root_message_index) = thread_root_message_index {
+            if let Some(thread_events) = self.threads.get(&root_message_index) {
+                self.main.update_thread_summary(
+                    root_message_index,
+                    caller,
+                    None,
+                    thread_events.last().index,
+                    correlation_id,
+                    now,
+                );
+            }
+        }
+
+        results
+    }
+
+    pub fn undelete_messages(
+        &mut self,
+        caller: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: Vec<MessageId>,
+        correlation_id: u64,
+        now: TimestampMillis,
+    ) -> Vec<(MessageId, UndeleteMessageResult)> {
+        let results = message_ids
+            .into_iter()
+            .map(|message_id| {
+                (
+                    message_id,
+                    self.undelete_message(caller, thread_root_message_index, message_id, correlation_id, now),
                 )
             })
             .collect();
@@ -729,9 +782,6 @@ impl AllChatEvents {
                         });
 
                         let message_content = message.content.hydrate(Some(caller));
-                        let message_clone = message.clone();
-
-                        self.remove_from_metrics(&message_clone);
 
                         self.push_event(
                             thread_root_message_index,
@@ -754,6 +804,49 @@ impl AllChatEvents {
         }
     }
 
+    fn undelete_message(
+        &mut self,
+        caller: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        correlation_id: u64,
+        now: TimestampMillis,
+    ) -> UndeleteMessageResult {
+        if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
+            if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
+                if deleted_by == caller {
+                    match message.content {
+                        MessageContentInternal::Deleted(_) | MessageContentInternal::Crypto(_) => {
+                            UndeleteMessageResult::InvalidMessageType
+                        }
+                        _ => {
+                            message.last_updated = Some(now);
+                            message.deleted_by = None;
+
+                            self.push_event(
+                                thread_root_message_index,
+                                ChatEventInternal::MessageUndeleted(Box::new(UpdatedMessageInternal {
+                                    updated_by: caller,
+                                    message_id,
+                                })),
+                                correlation_id,
+                                now,
+                            );
+
+                            UndeleteMessageResult::Success
+                        }
+                    }
+                } else {
+                    UndeleteMessageResult::NotAuthorized
+                }
+            } else {
+                UndeleteMessageResult::NotDeleted
+            }
+        } else {
+            UndeleteMessageResult::NotFound
+        }
+    }
+
     fn get_mut(&mut self, thread_root_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
         if let Some(root_message_index) = thread_root_message_index {
             self.threads.get_mut(&root_message_index)
@@ -764,10 +857,6 @@ impl AllChatEvents {
 
     fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
-    }
-
-    fn remove_from_metrics(&mut self, message: &MessageInternal) {
-        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
     }
 
     fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
@@ -843,6 +932,14 @@ pub enum DeleteMessageResult {
     Success(MessageContent),
     AlreadyDeleted,
     MessageTypeCannotBeDeleted,
+    NotAuthorized,
+    NotFound,
+}
+
+pub enum UndeleteMessageResult {
+    Success,
+    NotDeleted,
+    InvalidMessageType,
     NotAuthorized,
     NotFound,
 }
@@ -1249,6 +1346,7 @@ impl ChatEvents {
         match event {
             ChatEventInternal::MessageEdited(m) => option_to_vec(self.message_id_map.get(&m.message_id).copied()),
             ChatEventInternal::MessageDeleted(m) => option_to_vec(self.message_id_map.get(&m.message_id).copied()),
+            ChatEventInternal::MessageUndeleted(m) => option_to_vec(self.message_id_map.get(&m.message_id).copied()),
             ChatEventInternal::MessageReactionAdded(r) => option_to_vec(self.message_id_map.get(&r.message_id).copied()),
             ChatEventInternal::MessageReactionRemoved(r) => option_to_vec(self.message_id_map.get(&r.message_id).copied()),
             ChatEventInternal::PollVoteRegistered(v) => option_to_vec(self.message_id_map.get(&v.message_id).copied()),
@@ -1368,6 +1466,7 @@ impl ChatEvents {
             ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(self.hydrate_message(m, my_user_id))),
             ChatEventInternal::MessageEdited(m) => ChatEvent::MessageEdited(self.hydrate_updated_message(m)),
             ChatEventInternal::MessageDeleted(m) => ChatEvent::MessageDeleted(self.hydrate_updated_message(m)),
+            ChatEventInternal::MessageUndeleted(m) => ChatEvent::MessageUndeleted(self.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => ChatEvent::MessageReactionAdded(self.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionRemoved(m) => ChatEvent::MessageReactionRemoved(self.hydrate_updated_message(m)),
             ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
