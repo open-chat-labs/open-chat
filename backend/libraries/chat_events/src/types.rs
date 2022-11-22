@@ -17,6 +17,7 @@ pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
     MessageEdited(Box<UpdatedMessageInternal>),
     MessageDeleted(Box<UpdatedMessageInternal>),
+    MessageUndeleted(Box<UpdatedMessageInternal>),
     MessageReactionAdded(Box<UpdatedMessageInternal>),
     MessageReactionRemoved(Box<UpdatedMessageInternal>),
     DirectChatCreated(DirectChatCreated),
@@ -57,6 +58,7 @@ impl ChatEventInternal {
             ChatEventInternal::Message(_)
                 | ChatEventInternal::MessageEdited(_)
                 | ChatEventInternal::MessageDeleted(_)
+                | ChatEventInternal::MessageUndeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::DirectChatCreated(_)
@@ -73,6 +75,7 @@ impl ChatEventInternal {
             ChatEventInternal::Message(_)
                 | ChatEventInternal::MessageEdited(_)
                 | ChatEventInternal::MessageDeleted(_)
+                | ChatEventInternal::MessageUndeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::GroupChatCreated(_)
@@ -112,6 +115,7 @@ impl ChatEventInternal {
             ChatEventInternal::Message(_)
                 | ChatEventInternal::MessageEdited(_)
                 | ChatEventInternal::MessageDeleted(_)
+                | ChatEventInternal::MessageUndeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::PollVoteRegistered(_)
@@ -151,6 +155,10 @@ impl ChatEventInternal {
             ChatEventInternal::MessageDeleted(m) => {
                 incr(&mut metrics.deleted_messages);
                 incr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
+            }
+            ChatEventInternal::MessageUndeleted(m) => {
+                decr(&mut metrics.deleted_messages);
+                decr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
             }
             ChatEventInternal::MessageReactionAdded(m) => {
                 incr(&mut metrics.reactions);
@@ -208,6 +216,7 @@ impl ChatEventInternal {
             ChatEventInternal::ChatUnfrozen(u) => Some(u.unfrozen_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
+            | ChatEventInternal::MessageUndeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),

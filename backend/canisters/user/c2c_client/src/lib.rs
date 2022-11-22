@@ -16,4 +16,5 @@ generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_toggle_reaction);
 generate_c2c_call!(c2c_try_add_to_group);
+generate_c2c_call!(c2c_undelete_messages);
 generate_c2c_call!(c2c_vote_on_proposal);

@@ -33,6 +33,7 @@ mod remove_participant;
 mod remove_reaction;
 mod send_message;
 mod unblock_user;
+mod undelete_messages;
 mod unpin_message;
 mod update_group_v2;
 mod wallet_receive;
