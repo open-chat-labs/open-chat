@@ -63,8 +63,8 @@
         }
 
         &.small {
-            width: toRem(45);
-            height: toRem(45);
+            width: toRem(48);
+            height: toRem(48);
         }
 
         &.medium {

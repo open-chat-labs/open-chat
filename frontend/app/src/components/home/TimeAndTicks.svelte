@@ -21,14 +21,8 @@
     export let crypto: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
 
-    let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
-    let pinnedColor = crypto
-        ? "#fff"
-        : me
-        ? "var(--currentChat-msg-me-txt)"
-        : fill
-        ? "#fff"
-        : "var(--currentChat-msg-txt)";
+    let iconColor = "#ffffff";
+    let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
 <div class="time-and-ticks" class:fill class:rtl={$rtlStore}>

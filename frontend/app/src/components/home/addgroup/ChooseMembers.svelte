@@ -38,7 +38,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader border={false} flush={true}>
     <h4>{$_("chooseMembers")}</h4>
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
@@ -74,7 +74,6 @@
 
     .members {
         flex: 1;
-        background-color: var(--members-panel-bg);
         color: var(--section-txt);
         display: flex;
         flex-direction: column;

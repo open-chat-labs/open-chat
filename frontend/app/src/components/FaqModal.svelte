@@ -26,12 +26,11 @@
     }
 </script>
 
-<ModalContent {fadeDuration} {fadeDelay} large on:close>
+<ModalContent fill {fadeDuration} {fadeDelay} large on:close>
     <div slot="header">{$_("faq.header")}</div>
     <div class="faq-body" slot="body">
         {#each allQuestions as q}
             <CollapsibleCard
-                bordered={true}
                 open={question === q}
                 on:opened={() => (question = q)}
                 headerText={$_(`faq.${q}_q`)}>
@@ -60,7 +59,6 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        @include font(mediumBold, normal, fs-100);
     }
 
     .copy {

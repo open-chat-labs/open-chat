@@ -19,13 +19,20 @@ export interface Theme {
 
     bg: string;
     txt: string;
+    "txt-light": string;
+    bd: string;
 
     error: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
+    primary: string;
 
     placeholder: string;
+
+    collapsible: {
+        open: string;
+    };
 
     notificationBar: {
         bg: string;
@@ -46,8 +53,6 @@ export interface Theme {
     section: {
         bg: string;
         txt: string;
-        bd: string;
-        "bd-start": string;
     };
 
     "sub-section": {
@@ -68,23 +73,14 @@ export interface Theme {
     input: {
         bg: string;
         txt: string;
-        bd: string;
     };
 
     members: {
-        bg: string;
-        txt: string;
         hv: string;
-        bd: string;
-        bdb: string;
-        panel: {
-            bg: string;
-        };
     };
 
     entry: {
         bg: string;
-        bd: string;
         input: {
             txt: string;
             bg: string;
@@ -93,32 +89,26 @@ export interface Theme {
 
     panel: {
         bg: string;
+
         left: {
             bg: string;
-            xs: string;
         };
+
         right: {
             bg: string;
-        };
-    };
 
-    currentUser: {
-        bd: string;
-        bg: string;
-        txt: string;
-        ic: string;
+            modal: string;
+        };
     };
 
     avatar: {
         bg: string;
-        bd: string;
         sh: string;
     };
 
     chatSearch: {
         bg: string;
         txt: string;
-        bd: string;
 
         section: {
             txt: string;
@@ -126,12 +116,10 @@ export interface Theme {
     };
 
     chatSummary: {
-        bg: string;
         "bg-selected": string;
         hv: string;
         txt1: string;
         txt2: string;
-        bd: string;
         del: string;
     };
 
@@ -141,7 +129,6 @@ export interface Theme {
         bg: string;
         txt: string;
         "disabled-txt": string;
-        bd: string;
         hv: string;
         sh: string;
         "inverted-sh": string;
@@ -151,7 +138,6 @@ export interface Theme {
         bg: string;
         hv: string;
         txt: string;
-        bd: string;
         disabled: string;
         spinner: string;
         "disabled-txt": string;
@@ -163,20 +149,10 @@ export interface Theme {
     };
 
     modal: {
-        txt: string;
-        bg: string;
-        sh: string;
         filter: string;
-        header: {
-            txt: string;
-            bg: string;
-            bd: string;
-        };
-        footer: {
-            txt: string;
-            bg: string;
-            bd: string;
-        };
+        bg: string;
+        txt: string;
+        bd: string;
     };
 
     modalPage: {
@@ -184,16 +160,10 @@ export interface Theme {
         txt: string;
         sh: string;
         filter: string;
-        bd: string;
         "txt-sh": string;
     };
 
     currentChat: {
-        header: {
-            bg: string;
-            txt: string;
-            bd: string;
-        };
         msgs: {
             bg: string;
         };
@@ -203,28 +173,24 @@ export interface Theme {
         };
         msg: {
             bg: string;
-            txt: string;
-            hv: string;
-            bd: string;
             muted: string;
-            "reply-accent": string;
+            txt: string;
 
             me: {
                 bg: string;
-                txt: string;
-                hv: string;
-                bd: string;
                 muted: string;
+                txt: string;
+                bd: string;
             };
         };
     };
 
     icon: {
-        color: string;
         hv: string;
         txt: string;
         inverted: {
             hv: string;
+            txt: string;
         };
         msg: {
             hv: string;
@@ -249,25 +215,6 @@ export interface Theme {
     };
 
     recommended: {
-        bg: string;
-    };
-
-    profile: {
-        section: {
-            bd: string;
-            bg: string;
-
-            xs: {
-                bd: string;
-            };
-        };
-    };
-
-    collapsible: {
-        header: {
-            bg: string;
-            bd: string;
-        };
         bg: string;
     };
 

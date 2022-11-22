@@ -127,7 +127,7 @@
         box-shadow: var(--modalPage-sh);
         backdrop-filter: var(--modalPage-filter);
         -webkit-backdrop-filter: var(--modalPage-filter);
-        border: var(--modalPage-bd);
+        border: 1px inset var(--bd);
         @include z-index(login);
         @include size-below(md) {
             width: 100%;

@@ -15,7 +15,7 @@
 </script>
 
 <div class="container">
-    <div>{$_("group.welcome")}<span class="name">{group.name}</span></div>
+    <h4 class="welcome">{$_("group.welcome")}{group.name}</h4>
     {#if group.description.length > 0}
         <div>
             {group.description}
@@ -50,11 +50,12 @@
         max-width: 480px;
     }
 
-    .pop {
-        @include pop(400ms);
+    .welcome {
+        @include font(bold, normal, fs-120);
+        color: var(--txt);
     }
 
-    .name {
-        font-weight: bold;
+    .pop {
+        @include pop(400ms);
     }
 </style>

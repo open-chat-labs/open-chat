@@ -94,8 +94,5 @@
                 font-weight: 700;
             }
         }
-        .label {
-            @include font(light, normal, fs-70);
-        }
     }
 </style>

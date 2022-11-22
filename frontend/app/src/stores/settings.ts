@@ -3,7 +3,6 @@ import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "openchat-client";
 
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
-export const fullScreen = createLsBoolStore(configKeys.fullScreen, false);
 
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
 export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);

@@ -33,6 +33,9 @@
 </div>
 
 <style type="text/scss">
+    .selected {
+        padding: 0 $sp4;
+    }
     .pill {
         display: inline-block;
     }

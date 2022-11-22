@@ -3,7 +3,6 @@
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import ThreadsSection from "./ThreadsSection.svelte";
     import { _ } from "svelte-i18n";
     import type {
         ChatSummary as ChatSummaryType,
@@ -21,7 +20,12 @@
     import NotificationsBar from "./NotificationsBar.svelte";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { menuCloser } from "../../actions/closeMenu";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
+    import ThreadsButton from "./ThreadsButton.svelte";
+    import ChatsButton from "./ChatsButton.svelte";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -36,6 +40,7 @@
     const dispatch = createEventDispatcher();
 
     let chatsWithUnreadMsgs: number;
+    let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
@@ -145,11 +150,21 @@
             chatListScroll.set(chatScrollTop);
         };
     });
+
+    function onSearchEntered(ev: CustomEvent<unknown>) {
+        setView("chats");
+        dispatch("searchEntered", ev.detail);
+    }
+
+    function setView(v: "chats" | "threads"): void {
+        view = v;
+        chatListElement.scrollTop = 0;
+        chatListScroll.set(0);
+    }
 </script>
 
 {#if user}
     <CurrentUser
-        on:userAvatarSelected
         on:logout
         on:whatsHot
         on:showAbout
@@ -161,18 +176,25 @@
         {user}
         on:profile
         on:newGroup />
-    <Search {searching} {searchTerm} on:searchEntered />
+
+    <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
+
+    {#if $numberOfThreadsStore > 0}
+        <div class="section-selector">
+            <ChatsButton on:click={() => setView("chats")} selected={view === "chats"} />
+            <ThreadsButton on:click={() => setView("threads")} selected={view === "threads"} />
+        </div>
+    {/if}
 
     <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
+        {:else if view === "threads"}
+            <ThreadPreviews />
         {:else}
             <div class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
-                {/if}
-                {#if $numberOfThreadsStore > 0}
-                    <ThreadsSection />
                 {/if}
                 {#each chats as chatSummary, i (chatSummary.chatId)}
                     <ChatSummary
@@ -267,20 +289,34 @@
 <style type="text/scss">
     .body {
         overflow: auto;
+        flex: auto;
         @include nice-scrollbar();
-        @include mobile() {
-            padding: 0 $sp3;
-        }
     }
     .chat-summaries {
         overflow: auto;
         overflow-x: hidden;
     }
 
+    .section-selector {
+        display: flex;
+        justify-content: flex-start;
+        margin: 0 $sp4 $sp4 $sp4;
+        gap: $sp3;
+        @include mobile() {
+            justify-content: space-evenly;
+            margin: 0 $sp3 $sp3 $sp3;
+        }
+    }
+
     .search-subtitle {
         margin-bottom: $sp3;
         margin-left: 0;
         color: var(--chatSearch-section-txt);
+        padding: 0 $sp4;
+
+        @include mobile() {
+            padding: 0 $sp3;
+        }
     }
 
     .search-matches {

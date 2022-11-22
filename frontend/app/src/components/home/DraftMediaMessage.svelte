@@ -44,7 +44,6 @@
     .file-preview {
         border-radius: $sp4;
         padding: $sp3;
-        border: 1px solid var(--currentChat-msg-me-bd);
         color: var(--currentChat-msg-me-txt);
         background-color: var(--currentChat-msg-me-bg);
     }

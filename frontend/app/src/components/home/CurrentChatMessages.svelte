@@ -113,7 +113,12 @@
             entries.forEach((entry) => {
                 const idxAttrs = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
-                const idx = idxAttrs ? idxAttrs.value.split(" ").map(v => parseInt(v, 10)).pop() : undefined;
+                const idx = idxAttrs
+                    ? idxAttrs.value
+                          .split(" ")
+                          .map((v) => parseInt(v, 10))
+                          .pop()
+                    : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined) {
                     const intersectionRatioRequired =
@@ -241,7 +246,7 @@
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
         client.setFocusMessageIndex(chat.chatId, index);
-        const element = document.querySelector(`[data-index~='${index}']`);
+        const element = document.querySelector(`.chat-messages [data-index~='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
@@ -499,7 +504,9 @@
         return firstKey;
     }
 
-    $: groupedEvents = client.groupEvents(events, user.userId, groupInner(filteredProposals)).reverse();
+    $: groupedEvents = client
+        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
@@ -573,12 +580,11 @@
         if (preview) return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
-            let messageIndex = evt.event.kind === "message" 
-                ? evt.event.messageIndex 
-                : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
-            let messageId = 
-                evt.event.kind === "message" ? evt.event.messageId 
-                : undefined;
+            let messageIndex =
+                evt.event.kind === "message"
+                    ? evt.event.messageIndex
+                    : evt.event.messagesDeleted[evt.event.messagesDeleted.length - 1];
+            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             const isRead = client.isMessageRead(chat.chatId, messageIndex, messageId);
             if (!isRead && evt.event.kind === "message" && evt.event.sender === user.userId) {
                 client.markMessageRead(chat.chatId, messageIndex, messageId);
@@ -701,7 +707,10 @@
         }
     }
 
-    function shouldShowAvatar(chat: ChatSummary, earliestLoadedEventIndex: number | undefined): boolean {
+    function shouldShowAvatar(
+        chat: ChatSummary,
+        earliestLoadedEventIndex: number | undefined
+    ): boolean {
         // If this is an empty chat, show the avatar
         const isEmptyChat = chat.latestEventIndex < 0;
         if (isEmptyChat) {
@@ -791,7 +800,9 @@
             <Robot />
         {:else}
             <div class="big-avatar">
-                <Avatar url={client.userAvatarUrl($userStore[chat.them])} size={AvatarSize.ExtraLarge} />
+                <Avatar
+                    url={client.userAvatarUrl($userStore[chat.them])}
+                    size={AvatarSize.ExtraLarge} />
             </div>
         {/if}
     {/if}
@@ -892,21 +903,8 @@
     }
 
     .chat-messages {
-        flex: auto;
+        @include message-list();
         background-color: var(--currentChat-msgs-bg);
-        padding: $sp3 $sp3;
-        overflow-x: hidden;
-        overscroll-behavior-y: contain;
-        position: relative;
-        display: flex;
-        flex-direction: column-reverse;
-
-        @include nice-scrollbar();
-
-        @include mobile() {
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
     }
 
     .big-avatar {

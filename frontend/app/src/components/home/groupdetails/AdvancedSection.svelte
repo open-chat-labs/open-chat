@@ -26,7 +26,7 @@
     }
 </script>
 
-<ButtonGroup align="left">
+<ButtonGroup align="start">
     <Button on:click={deleteGroup}>{$_("deleteGroup")}</Button>
     {#if canMakeGroupPrivate}
         <Button on:click={makeGroupPrivate}>{$_("makeGroupPrivate")}</Button>

@@ -592,7 +592,6 @@
     "groupNameTooShort": "Il nome del gruppo è troppo breve",
     "groupNameReserved": "Il nome del gruppo è riservato",
     "loadingTweetPreview": "Caricamento anteprima tweet in corso...",
-    "fullScreen": "Visualizza a tutta larghezza sul desktop",
     "displayWidth": "Larghezza di visualizzazione",
     "apply": "Applicare",
     "archiveChat": "Archivia chat",
@@ -617,6 +616,7 @@
     "features": "Caratteristiche",
     "architecture": "Architettura",
     "whitepaper": "Carta bianca",
+    "whatsOnYourMind": "Cos'hai in mente?",
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
     "nMessagesDeleted": "{number} messaggi eliminati"

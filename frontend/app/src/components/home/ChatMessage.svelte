@@ -441,7 +441,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"hover"} on:click={openUserProfile}>
+                    <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
                     </Link>
                     {#if senderTyping}
@@ -534,7 +534,7 @@
                                     <MenuItem on:click={collapseMessage}>
                                         <EyeOff
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("proposal.collapse")}</div>
                                     </MenuItem>
@@ -544,7 +544,7 @@
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("share")}</div>
                                         </MenuItem>
@@ -552,7 +552,7 @@
                                     <MenuItem on:click={copyMessageUrl}>
                                         <ContentCopy
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("copyMessageUrl")}</div>
                                     </MenuItem>
@@ -562,7 +562,7 @@
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("unpinMessage")}</div>
                                         </MenuItem>
@@ -570,7 +570,7 @@
                                         <MenuItem on:click={pinMessage}>
                                             <Pin
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("pinMessage")}</div>
                                         </MenuItem>
@@ -581,7 +581,7 @@
                                         <MenuItem on:click={reply}>
                                             <Reply
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
@@ -597,7 +597,7 @@
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
@@ -606,7 +606,7 @@
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
@@ -614,7 +614,7 @@
                                         <MenuItem on:click={blockUser}>
                                             <Cancel
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("blockUser")}</div>
                                         </MenuItem>
@@ -624,7 +624,7 @@
                                     <MenuItem on:click={editMessage}>
                                         <PencilOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem>
@@ -633,7 +633,7 @@
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
@@ -643,7 +643,7 @@
                                         <MenuItem on:click={untranslateMessage}>
                                             <TranslateOff
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("untranslateMessage")}</div>
                                         </MenuItem>
@@ -651,7 +651,7 @@
                                         <MenuItem on:click={translateMessage}>
                                             <TranslateIcon
                                                 size={$iconSize}
-                                                color={"var(--icon-txt)"}
+                                                color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("translateMessage")}</div>
                                         </MenuItem>
@@ -703,7 +703,7 @@
 <style type="text/scss">
     $size: 10px;
 
-    $avatar-width: 53px;
+    $avatar-width: 56px;
     $avatar-width-mob: 43px;
 
     :global(.message .loading) {
@@ -723,7 +723,7 @@
         margin: 0 $sp4;
     }
 
-    :global(.message-bubble.me a) {
+    :global(.message-bubble a) {
         color: inherit;
     }
 
@@ -755,10 +755,6 @@
         padding: 6px;
     }
 
-    .thread {
-        @include font(bold, normal, fs-110);
-    }
-
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;
@@ -772,8 +768,9 @@
             position: absolute;
             background-color: rgba(0, 0, 0, 0.3);
             color: #fff;
-            padding: $sp2 $sp4;
+            padding: $sp4 $sp4;
             border-radius: 0 0 $sp4 0;
+            z-index: 1;
 
             &.rtl {
                 right: 0;
@@ -860,13 +857,12 @@
     }
 
     .message-bubble {
-        $radius: $sp4;
+        $radius: $sp3;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: toRem(6) toRem(8) toRem(6) toRem(8);
-        border: 1px solid var(--currentChat-msg-bd);
+        padding: toRem(8) toRem(12) toRem(8) toRem(12);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
@@ -891,7 +887,7 @@
 
         .username {
             color: inherit;
-            color: var(--accent);
+            color: var(--txt);
             display: inline;
 
             &.fill,
@@ -907,7 +903,7 @@
         }
 
         &:not(.readByMe) {
-            box-shadow: 0 0 0 5px var(--toast-success-bg);
+            box-shadow: 0 0 0 5px var(--notificationBar-bg);
         }
 
         &.last:not(.first) {
@@ -923,7 +919,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;
@@ -972,11 +967,11 @@
         }
 
         &.focused {
-            box-shadow: 0 0 0 4px var(--toast-success-bg);
+            box-shadow: 0 0 0 4px var(--notificationBar-bg);
         }
 
         &.editing {
-            box-shadow: 0 0 0 4px var(--toast-success-bg);
+            box-shadow: 0 0 0 4px var(--notificationBar-bg);
         }
 
         &.inert {
@@ -1016,7 +1011,6 @@
 
     .username {
         margin: 0;
-        @include font(bold, normal, fs-100);
         color: #fff;
     }
 

@@ -528,7 +528,7 @@
     }
 
     fieldset {
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         border-radius: $sp2;
         padding: $sp3;
         @include font(light, normal, fs-100);
@@ -547,14 +547,7 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3;
-        @include size-above(xl) {
-            padding: $sp3 0 0 0;
-        }
-
-        @include mobile() {
-            padding: 0 $sp3;
-        }
+        padding: $sp3 0 0 0;
     }
 
     h4,
@@ -587,7 +580,7 @@
         padding: $sp4;
         // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-        border: 1px solid var(--input-bd);
+        // border: 1px solid var(--bd);
         border-radius: $sp2;
     }
 

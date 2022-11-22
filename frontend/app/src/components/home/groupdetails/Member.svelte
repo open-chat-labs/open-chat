@@ -105,7 +105,7 @@
     on:mouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
-            statusBorder={hovering && !me ? "var(--members-hv)" : "var(--members-bg)"}
+            statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
             blocked={member.memberKind === "blocked_member"}
             url={client.userAvatarUrl(member)}
             status={client.getUserStatus($now, $userStore, member.userId)}
@@ -138,7 +138,7 @@
                                 <MenuItem on:click={unblockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("unblockUser")}</div>
                                 </MenuItem>
@@ -148,7 +148,7 @@
                                 <MenuItem on:click={dismissAsAdmin}>
                                     <AccountRemoveOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
                                 </MenuItem>
@@ -157,7 +157,7 @@
                                 <MenuItem on:click={makeAdmin}>
                                     <AccountPlusOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("makeAdmin")}</div>
                                 </MenuItem>
@@ -166,7 +166,7 @@
                                 <MenuItem on:click={blockUser}>
                                     <Cancel
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("blockUser")}</div>
                                 </MenuItem>
@@ -175,7 +175,7 @@
                                 <MenuItem on:click={removeUser}>
                                     <MinusCircleOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("remove")}</div>
                                 </MenuItem>
@@ -184,7 +184,7 @@
                                 <MenuItem on:click={transferOwnership}>
                                     <AccountArrowLeftOutline
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("transferOwnership")}</div>
                                 </MenuItem>
@@ -202,11 +202,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border-bottom: var(--members-bd);
-        background-color: var(--members-bg);
-        color: var(--members-txt);
-        padding: $sp3;
-        margin: 0 $sp3 0 $sp3;
+        color: var(--txt);
+        padding: $sp4;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {
@@ -217,18 +214,13 @@
             background-color: var(--members-hv);
         }
 
-        @include size-above(xl) {
-            margin: 0;
+        @include mobile() {
+            padding: $sp3 $sp4;
         }
     }
     .avatar {
         flex: 0 0 50px;
         position: relative;
-    }
-
-    .role {
-        margin: 0 $sp3;
-        @include font(light, normal, fs-70);
     }
 
     .details {
@@ -237,5 +229,11 @@
         display: flex;
         align-items: center;
         @include ellipsis();
+        @include font(medium, normal, fs-100);
+    }
+
+    .role {
+        margin: 0 $sp3;
+        @include font(light, normal, fs-70);
     }
 </style>

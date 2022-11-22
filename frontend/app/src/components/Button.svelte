@@ -6,6 +6,7 @@
     export let small: boolean = false;
     export let tiny: boolean = false;
     export let fill: boolean = false;
+    export let hollow: boolean = false;
 </script>
 
 <button
@@ -15,6 +16,7 @@
     class:disabled
     class:small
     class:tiny
+    class:hollow
     {disabled}
     class:secondary
     class:fill>
@@ -29,8 +31,9 @@
         background: var(--button-bg);
         color: var(--button-txt);
         padding: $sp3 $sp6;
+        border-radius: $sp2;
         cursor: pointer;
-        border: 1px solid var(--button-bd);
+        border: none;
         min-height: 45px;
         min-width: 150px;
         @include font(book, normal, fs-100);
@@ -60,17 +63,21 @@
             );
         }
 
+        &.hollow {
+            background-color: transparent;
+            color: var(--txt);
+            border: 1px solid var(--bd);
+        }
+
         &.disabled {
             background: var(--button-disabled);
             color: var(--button-disabled-txt);
             cursor: not-allowed;
-            border: 1px solid var(--button-disabled-bd);
         }
 
         &.secondary {
             background: var(--button-txt);
             color: var(--button-bg);
-            border: 1px solid var(--button-bg);
         }
 
         &.fill {

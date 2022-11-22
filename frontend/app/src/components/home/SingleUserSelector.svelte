@@ -94,7 +94,7 @@
         @include font(book, normal, fs-100);
         color: var(--input-txt);
         background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         outline: none;
         white-space: nowrap;
         overflow: hidden;
@@ -110,7 +110,6 @@
     .user-pill {
         background: var(--button-bg);
         color: var(--button-txt);
-        border: 1px solid var(--button-bd);
         display: inline-flex;
         padding: 0 $sp2;
         align-items: center;

@@ -353,7 +353,7 @@
         border-radius: $sp2;
         margin-bottom: $sp3;
         position: relative;
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
     }
 
     .delete {

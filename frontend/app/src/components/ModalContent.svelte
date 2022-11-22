@@ -70,9 +70,9 @@
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
-            <h3>
+            <h4>
                 <slot name="header" />
-            </h3>
+            </h4>
         </div>
     {/if}
     <div class="body" class:fill>
@@ -93,9 +93,9 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        background-color: var(--modal-bg);
+        background: var(--modal-bg);
         color: var(--modal-txt);
-        box-shadow: var(--modal-sh);
+        border: var(--modal-bd);
         @include mobile() {
             &:not(.fit_to_content) {
                 width: 100%;
@@ -120,11 +120,8 @@
         }
     }
     .header {
-        @include font(bold, normal, fs-140);
         padding: $sp4;
-        background-color: var(--modal-header-bg);
-        color: var(--modal-header-txt);
-        border-bottom: 1px solid var(--modal-header-bd);
+        border-bottom: 1px solid var(--bd);
         @include mobile() {
             border-radius: $sp4 $sp4 0 0;
         }
@@ -149,9 +146,7 @@
         &.compact {
             padding: $sp3 $sp4;
         }
-        background-color: var(--modal-footer-bg);
-        color: var(--modal-footer-txt);
-        border-top: 1px solid var(--modal-footer-bd);
+        border-top: 1px solid var(--bd);
         text-align: right;
         @include mobile() {
             border-radius: 0;

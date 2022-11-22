@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BackgroundLogo from "../BackgroundLogo.svelte";
     import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
@@ -22,7 +21,6 @@
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { Readable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
@@ -53,6 +51,7 @@
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
+    $: empty = rightPanelHistory.length === 0;
 
     function onDismissAsAdmin(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
@@ -326,7 +325,7 @@
             : undefined;
 </script>
 
-<Panel right>
+<Panel right {empty}>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined}
         <GroupDetails
             chat={$groupChat}
@@ -385,13 +384,5 @@
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popHistory} />
-    {/if}
-    {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
-        <BackgroundLogo
-            width={"700px"}
-            bottom={"-16px"}
-            right={"-16px"}
-            opacity={"0.35"}
-            viewBox={"0 0 361 280"} />
     {/if}
 </Panel>

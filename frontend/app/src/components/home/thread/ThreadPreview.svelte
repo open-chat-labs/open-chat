@@ -87,12 +87,7 @@
 </script>
 
 <div class="wrapper">
-    <CollapsibleCard
-        transparent={true}
-        bordered={$mobileWidth}
-        on:toggle={() => (open = !open)}
-        {open}
-        headerText={$_("userInfoHeader")}>
+    <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
         <div slot="titleSlot" class="header">
             <div class="avatar">
                 <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
@@ -209,22 +204,13 @@
         text-align: right;
     }
 
-    :global(.threads .card > .header) {
-        padding: $sp3;
-    }
-
     :global(.threads .card.bordered) {
         border: none;
-        border-top: var(--collapsible-header-bd);
+        border-top: 1px solid var(--bd);
     }
 
     .wrapper {
         background-color: var(--thread-preview-bg);
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            margin-bottom: 0;
-        }
     }
     .separator {
         padding: $sp2;

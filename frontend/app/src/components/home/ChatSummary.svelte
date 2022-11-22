@@ -110,7 +110,7 @@
 
     function deleteDirectChat() {
         dispatch("deleteDirectChat", chatSummary.chatId);
-        delOffset = -50;
+        delOffset = -60;
     }
 
     $: chat = normaliseChatSummary($now, chatSummary, $typingByChat);
@@ -125,7 +125,7 @@
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
     });
 
-    let maxDelOffset = -50;
+    let maxDelOffset = -60;
     let delOffset = maxDelOffset;
     let swiped = false;
 
@@ -213,9 +213,7 @@
         on:click={selectChat}>
         <div class="avatar">
             <Avatar
-                statusBorder={selected || hovering
-                    ? "var(--chatSummary-hv)"
-                    : "var(--chatSummary-bg)"}
+                statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
                 url={chat.avatarUrl}
                 status={chat.userStatus}
@@ -282,7 +280,7 @@
                                 <MenuItem on:click={pinChat}>
                                     <PinIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("pinChat.menuItem")}</div>
                                 </MenuItem>
@@ -290,7 +288,7 @@
                                 <MenuItem on:click={unpinChat}>
                                     <PinOffIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                 </MenuItem>
@@ -300,7 +298,7 @@
                                     <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                         <BellIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("unmuteNotifications")}</div>
                                     </MenuItem>
@@ -308,7 +306,7 @@
                                     <MenuItem on:click={() => toggleMuteNotifications(true)}>
                                         <MutedIcon
                                             size={$iconSize}
-                                            color={"var(--icon-txt)"}
+                                            color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("muteNotifications")}</div>
                                     </MenuItem>
@@ -318,7 +316,7 @@
                                 <MenuItem on:click={selectChat}>
                                     <ArchiveOffIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("unarchiveChat")}</div>
                                 </MenuItem>
@@ -326,7 +324,7 @@
                                 <MenuItem on:click={archiveChat}>
                                     <ArchiveIcon
                                         size={$iconSize}
-                                        color={"var(--icon-txt)"}
+                                        color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("archiveChat")}</div>
                                 </MenuItem>
@@ -336,7 +334,7 @@
                                 on:click={() => client.markAllRead(chatSummary)}>
                                 <CheckboxMultipleMarked
                                     size={$iconSize}
-                                    color={"var(--icon-txt)"}
+                                    color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("markAllRead")}</div>
                             </MenuItem>
@@ -367,12 +365,12 @@
         background-color: var(--chatSummary-del);
         padding: $sp3;
         position: absolute;
-        right: -50px;
+        right: -60px;
         height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 50px;
+        width: 60px;
         cursor: pointer;
 
         @include size-above(sm) {
@@ -382,7 +380,7 @@
 
         &.rtl {
             right: unset;
-            left: -50px;
+            left: -60px;
         }
     }
 
@@ -391,14 +389,16 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
-        padding: $sp3;
+        padding: $sp4;
         margin-bottom: 0;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
-        border-bottom: var(--chatSummary-bd);
         user-select: none;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
 
         &:hover {
             background-color: var(--chatSummary-hv);
@@ -477,8 +477,9 @@
             margin-bottom: $sp1;
 
             .chat-name {
-                @include font(book, normal, fs-100);
+                @include font(medium, normal, fs-100);
                 color: var(--chatSummary-txt1);
+
                 @include ellipsis();
                 flex: auto;
             }
@@ -492,14 +493,23 @@
 
     .chat-date {
         position: absolute;
-        @include font(book, normal, fs-60);
         color: var(--chatSummary-txt2);
+        @include font(book, normal, fs-60);
         top: $sp3;
         &:not(.rtl) {
-            right: $sp3;
+            right: $sp4;
         }
         &.rtl {
-            left: $sp3;
+            left: $sp4;
+        }
+
+        @include mobile() {
+            &:not(.rtl) {
+                right: $sp3;
+            }
+            &.rtl {
+                left: $sp3;
+            }
         }
     }
 

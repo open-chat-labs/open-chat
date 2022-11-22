@@ -1,6 +1,6 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, ChatMetrics, OpenChat, ONE_GB } from "openchat-client";
+    import { PartialUserSummary, OpenChat, ONE_GB } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -23,7 +23,6 @@
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
-        fullScreen,
         referralOpen,
         statsSectionOpen,
         storageSectionOpen,
@@ -276,15 +275,6 @@
                 <Legend>{$_("fontSize")}</Legend>
                 <FontSize />
             </div>
-
-            <div class="para">
-                <Legend>{$_("displayWidth")}</Legend>
-                <Toggle
-                    id={"full-screen"}
-                    on:change={() => fullScreen.toggle()}
-                    label={$_("fullScreen")}
-                    checked={$fullScreen} />
-            </div>
         </CollapsibleCard>
     </div>
     <div class="invite">
@@ -509,7 +499,7 @@
     .storage,
     .advanced {
         margin-bottom: $sp3;
-        border-bottom: var(--profile-section-bd);
+        border-bottom: var(--bd);
         color: var(--section-txt);
     }
 

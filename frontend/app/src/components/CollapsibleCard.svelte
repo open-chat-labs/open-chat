@@ -1,17 +1,14 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
-    import { iconSize } from "../stores/iconSize";
     import { slide } from "svelte/transition";
     import { expoInOut } from "svelte/easing";
 
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { createEventDispatcher } from "svelte";
+    import Arrow from "./Arrow.svelte";
 
     const dispatch = createEventDispatcher();
     export let headerText: string;
     export let open = true;
-    export let bordered = false;
-    export let transparent = false;
 
     function toggle() {
         open = !open;
@@ -20,14 +17,17 @@
     }
 </script>
 
-<div class="card" class:bordered class:transparent>
+<div class="card">
     <div class="header" class:open on:click={toggle}>
         <slot name="titleSlot">
-            <h4>{headerText}</h4>
+            <div>{headerText}</div>
         </slot>
 
-        <div class="arrow" class:rtl={$rtlStore} class:open>
-            <ChevronDown viewBox="0 -3 24 24" size={$iconSize} color={"var(--icon-txt)"} />
+        <div class="arrow" class:rtl={$rtlStore}>
+            <Arrow
+                size={16}
+                rotate={open ? -45 : 45}
+                color={open ? "var(--collapsible-open)" : "var(--txt)"} />
         </div>
     </div>
     {#if open}
@@ -39,44 +39,26 @@
 
 <style type="text/scss">
     .card {
-        background-color: var(--collapsible-bg);
-
-        &.transparent {
-            background-color: inherit;
-        }
-
-        &.bordered {
-            border: var(--collapsible-header-bd);
-        }
+        border-bottom: 1px solid var(--bd);
     }
 
     .header {
-        padding: $sp3 $sp4;
+        padding: $sp4;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
-        @include font(mediumBold, normal, fs-100);
-        background-color: var(--collapsible-header-bg);
-
-        &.open {
-            // border-bottom: 1px solid #ddd;
-            border-bottom: var(--collapsible-header-bd);
-        }
+        @include font(bold, normal, fs-100);
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
     }
 
     .arrow {
         flex: 0 0 20px;
-        transition: transform 200ms ease-in-out;
-
-        &.open {
-            transform: rotate(180deg);
-            transform-origin: 50%;
-        }
+        justify-self: flex-end;
+        text-align: right;
     }
 
     .body {

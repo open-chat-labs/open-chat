@@ -591,7 +591,6 @@
     "groupNameTooShort": "组名太短",
     "groupNameReserved": "保留组名",
     "loadingTweetPreview": "正在加载推文预览...",
-    "fullScreen": "在桌面上显示全宽",
     "displayWidth": "显示宽度",
     "apply": "申请",
     "archiveChat": "存档聊天",
@@ -618,7 +617,8 @@
     "features": "特点",
     "architecture": "架构",
     "whitepaper": "白皮书",
+    "whatsOnYourMind": "你在想什么？",
+    "nMessagesDeleted": "{number} 条消息已删除",
     "joined": "已加入",
-    "oneMessageDeleted": "已删除 1 条消息",
-    "nMessagesDeleted": "{number} 封邮件已删除"
+    "oneMessageDeleted": "已删除 1 条消息"
 }

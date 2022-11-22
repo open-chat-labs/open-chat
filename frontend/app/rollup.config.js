@@ -266,6 +266,12 @@ export default {
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
                                 <link rel="stylesheet" href="/${cssFile}" />
+                                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+                                <link
+                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Roboto:wght@200;300;400&display=swap"
+                                    rel="stylesheet"
+                                />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}

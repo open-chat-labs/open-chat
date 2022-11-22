@@ -40,7 +40,7 @@
     }
 
     fieldset {
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         border-radius: $sp2;
         padding: $sp3;
     }

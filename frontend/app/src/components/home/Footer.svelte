@@ -152,6 +152,7 @@
 <style type="text/scss">
     .footer {
         position: relative;
+        flex: 0 0 toRem(60);
     }
 
     .footer-overlay {

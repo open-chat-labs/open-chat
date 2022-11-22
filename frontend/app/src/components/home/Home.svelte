@@ -26,23 +26,16 @@
         SendMessageFailed,
         ChatsUpdated,
         Notification,
-        MessagesReadFromServer,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import {
-        dimensions,
-        mobileWidth,
-        screenWidth,
-        ScreenWidth,
-    } from "../../stores/screenDimensions";
+    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { pathParams } from "../../stores/routing";
     import type { RouteParams } from "../../stores/routing";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import { fullScreen } from "../../stores/settings";
     import {
         closeNotificationsForChat,
         closeNotifications,
@@ -55,6 +48,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { numberOfColumns } from "../../stores/layout";
+    import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
 
@@ -822,7 +816,7 @@
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
-<main class:fullscreen={$fullScreen}>
+<main>
     {#if showLeft}
         <LeftPanel
             {groupSearchResults}
@@ -838,7 +832,6 @@
             on:showFeatures={showLandingPageRoute("/features")}
             on:showWhitepaper={showLandingPageRoute("whitepaper")}
             on:searchEntered={performSearch}
-            on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}
             on:whatsHot={() => whatsHot(true)}
             on:newGroup={newGroup}
@@ -960,7 +953,7 @@
     width={`${bgHeight}px`}
     bottom={"unset"}
     left={"0"}
-    opacity={"0.1"}
+    opacity={"0.05"}
     skew={"5deg"}
     viewBox={`0 0 361 ${bgClip}`} />
 
@@ -974,15 +967,7 @@
         position: relative;
         width: 100%;
         display: flex;
-        gap: $sp3;
         margin: 0 auto;
-
-        &:not(.fullscreen) {
-            max-width: 1400px;
-            @include size-above(xl) {
-                max-width: 1792px;
-            }
-        }
     }
 
     .right-wrapper {

@@ -590,7 +590,6 @@
     "groupNameTooShort": "שם הקבוצה קצר מדי",
     "groupNameReserved": "שם הקבוצה שמור",
     "loadingTweetPreview": "טוען תצוגה מקדימה של ציוץ...",
-    "fullScreen": "הצגת רוחב מלא על שולחן העבודה",
     "displayWidth": "רוחב תצוגה",
     "apply": "להגיש מועמדות",
     "archiveChat": "ארכיון צ'אט",
@@ -615,6 +614,7 @@
     "features": "תכונות",
     "architecture": "ארכיטקטורה",
     "whitepaper": "נייר לבן",
+    "whatsOnYourMind": "על מה אתה חושב?",
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו"

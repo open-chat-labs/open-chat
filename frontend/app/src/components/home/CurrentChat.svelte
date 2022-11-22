@@ -55,7 +55,6 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: lastCryptoSent = client.lastCryptoSent;
     $: messagesRead = client.messagesRead;
-    $: userStore = client.userStore;
     $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);

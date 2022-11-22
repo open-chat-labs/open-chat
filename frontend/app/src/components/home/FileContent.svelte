@@ -16,7 +16,7 @@
     export let draft: boolean = false;
     export let edited: boolean;
 
-    let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
+    let color = me ? "#ffffff" : "var(--txt)";
 </script>
 
 {#if content.blobUrl}

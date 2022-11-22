@@ -144,7 +144,8 @@
         border-radius: $sp3;
         cursor: pointer;
         transition: background 200ms ease-in-out;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--bd);
+        color: var(--currentChat-msg-txt);
 
         &:not(.selected):hover {
             background: rgba(255, 255, 255, 0.1);
@@ -152,6 +153,7 @@
 
         &.selected {
             background: var(--notificationBar-bg);
+            color: var(--notificationBar-txt);
         }
 
         .thread-avatars {
@@ -160,9 +162,7 @@
         }
 
         .thread-legend {
-            @include font(light, normal, fs-80);
             @include font(book, normal, fs-80);
-            color: var(--timeline-txt);
             margin-left: $sp2;
         }
 
@@ -173,7 +173,6 @@
             border-radius: 50%;
             width: toRem(25);
             height: toRem(25);
-            color: var(--timeline-txt);
             @include font-size(fs-60);
             background-color: rgba(0, 0, 0, 0.15);
         }

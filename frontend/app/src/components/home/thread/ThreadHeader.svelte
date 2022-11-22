@@ -77,7 +77,7 @@
     }
 </script>
 
-<SectionHeader flush={true} shadow={true}>
+<SectionHeader gap={true} flush={true} shadow={true}>
     <div class="close" on:click={close}>
         <HoverIcon>
             {#if $mobileWidth}
@@ -121,7 +121,7 @@
                 <div slot="menu">
                     <Menu>
                         <MenuItem on:click={createPoll}>
-                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <Poll size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">{$_("poll.create")}</div>
                         </MenuItem>
                     </Menu>
@@ -141,7 +141,7 @@
     .chat-subtext {
         @include font(book, normal, fs-80);
         @include ellipsis();
-        color: var(--link-underline);
+        color: var(--chatSummary-txt2);
     }
 
     .chat-details {

@@ -64,12 +64,12 @@
                     </HoverIcon>
                 </div>
                 <div>
-                    <h1 class="title">{$_("hotGroups")}</h1>
+                    <h3 class="title">{$_("hotGroups")}</h3>
                     <p class="subtitle">{$_("selectAGroup")}</p>
                 </div>
             </SectionHeader>
         {:else}
-            <h1 class="title">{$_("hotGroups")}</h1>
+            <h3 class="title">{$_("hotGroups")}</h3>
             <p class="subtitle">{$_("selectAGroup")}</p>
         {/if}
 
@@ -121,23 +121,23 @@
                     </a>
                     <Button
                         disabled={joining === group}
-                        tiny={true}
+                        small={true}
                         on:click={() => previewGroup(group)}>{$_("preview")}</Button>
                     <Button
                         disabled={joining === group}
                         loading={joining === group}
-                        tiny={true}
+                        small={true}
                         on:click={() => joinGroup(group)}
                         secondary={true}>{$_("join")}</Button>
                 </Footer>
             </div>
         {/each}
     {:else}
-        <h1 class="title">{$_("noHotGroups")}</h1>
+        <h3 class="title">{$_("noHotGroups")}</h3>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
-            <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
-            <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
+            <Button tiny={true} on:click={cancelRecommendations}>{$_("close")}</Button>
+            <Button secondary={true} tiny={true} on:click={refresh}>{$_("refresh")}</Button>
         </ButtonGroup>
     {/if}
 </div>
@@ -161,16 +161,13 @@
         margin-bottom: $sp3;
 
         @include mobile() {
-            margin-bottom: 0;
+            margin-bottom: $sp1;
             @include font(book, normal, fs-120);
             @include ellipsis();
         }
     }
 
     .wrapper {
-        background-color: var(--panel-right-bg);
-        color: var(--currentChat-header-txt);
-
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -221,12 +218,13 @@
         flex-direction: column;
         transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out,
             opacity 200ms ease-in-out, border-left 200ms ease-in-out;
-        @include box-shadow(2);
+        @include box-shadow(1);
         width: 80%;
         border-radius: $sp2;
-        opacity: 0.95;
         background-color: var(--recommended-bg);
         margin-bottom: $sp5;
+        border-left: 7px solid transparent;
+        backdrop-filter: blur(10px);
 
         @include mobile() {
             width: calc(100% - #{$sp4});
@@ -243,10 +241,9 @@
 
         @include size-above(sm) {
             &.selected {
-                @include box-shadow(3);
+                @include box-shadow(2);
                 border-left: 7px solid var(--accent);
-                transform: scale(1.03);
-                opacity: 1;
+                transform: scale(1.01);
 
                 &.rtl {
                     border-left: none;
@@ -259,6 +256,7 @@
             display: flex;
             align-items: flex-start;
             padding: $sp4;
+            gap: $sp3;
 
             @include mobile() {
                 padding: $sp3;
@@ -293,7 +291,7 @@
         }
 
         .user-count {
-            @include font(light, italic, fs-80);
+            @include font(light, normal, fs-80);
             margin-bottom: $sp3;
 
             @include size-below(md) {

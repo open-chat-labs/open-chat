@@ -139,7 +139,7 @@
         }
 
         &.border {
-            border: 1px solid var(--input-bd);
+            border: 1px solid var(--bd);
             border-top: none;
         }
     }

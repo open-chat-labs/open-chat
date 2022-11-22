@@ -593,7 +593,6 @@
     "groupNameTooShort": "Tên nhóm quá ngắn",
     "groupNameReserved": "Tên nhóm đã được bảo lưu",
     "loadingTweetPreview": "Đang tải bản xem trước tweet ...",
-    "fullScreen": "Hiển thị toàn bộ chiều rộng trên máy tính để bàn",
     "displayWidth": "Chiều rộng màn hình",
     "apply": "Ứng dụng",
     "archiveChat": "Lưu trữ trò chuyện",
@@ -618,6 +617,7 @@
     "features": "Đặc trưng",
     "architecture": "Ngành kiến trúc",
     "whitepaper": "Giấy trắng",
+    "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
     "joined": "đã tham gia",
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa"

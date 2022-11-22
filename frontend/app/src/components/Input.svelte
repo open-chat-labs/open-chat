@@ -80,7 +80,6 @@
         position: absolute;
         right: 10px;
         top: 11px;
-        @include font(light, normal, fs-80);
 
         &.near-max {
             color: darkred;
@@ -97,7 +96,7 @@
         @include font(book, normal, fs-100);
         color: var(--input-txt);
         background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
+        border: 1px solid var(--bd);
         outline: none;
         white-space: nowrap;
         overflow: hidden;
@@ -131,6 +130,10 @@
         &.invalid {
             border: 1px solid var(--error);
             box-shadow: 0 0 5px 1px var(--error);
+        }
+
+        &::placeholder {
+            color: var(--placeholder);
         }
     }
 </style>

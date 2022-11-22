@@ -55,12 +55,13 @@
 
 <style type="text/scss">
     .wrapper {
-        margin-bottom: $sp3;
+        margin: 0 $sp4 $sp4 $sp4;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
+        border-radius: $sp2;
 
         @include mobile() {
             margin: 0 $sp3;
@@ -77,7 +78,7 @@
         @include loading-spinner(1em, 0.5em, var(--button-spinner));
     }
     input {
-        background-color: var(--chatSearch-bg);
+        background-color: transparent;
         color: var(--chatSearch-txt);
         outline: none;
         flex: 1;

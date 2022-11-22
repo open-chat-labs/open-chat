@@ -215,7 +215,6 @@
     $giphy-colour: hsl(calc(360 / 8 * 8), $saturation, $lightness);
 
     .stat {
-        @include font(book, italic, fs-100);
         @include mobile() {
             @include font-size(fs-90);
         }

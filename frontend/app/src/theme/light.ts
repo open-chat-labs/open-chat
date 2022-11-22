@@ -1,9 +1,16 @@
 import type { Theme } from "./themes";
 
 const orangeAccent = "#ff9505";
-const pinkAccent = "hotpink";
+// const pinkAccent = "hotpink";
+const pinkAccent = "#ff005c";
 const blueAccent = "#22A7F2";
-const disabledTxt = "#999999";
+const primary = "#23a2ee";
+const textBox = "rgba(0,0,0,0.1)";
+const txt = "#ffffff";
+const txtLight = "#ffffffaa";
+const txtDark = "#242834";
+const txtDark75pc = `${txtDark}bf`;
+const disabledTxt = txtLight;
 
 export function lightTheme(): Theme {
     return {
@@ -11,12 +18,21 @@ export function lightTheme(): Theme {
         label: "Light",
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
-        txt: "#191919",
+        // bg: "#ffffff",
+        txt,
+        "txt-light": txtLight,
+        // bd: "#ededed",
+        bd: "rgba(255,255,255,0.1)",
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
-        disabledTxt: disabledTxt,
-        placeholder: "#aaaaaa",
+        disabledTxt: txtLight,
+        placeholder: txtLight,
+        primary,
+
+        collapsible: {
+            open: pinkAccent,
+        },
 
         notificationBar: {
             bg: orangeAccent,
@@ -25,31 +41,30 @@ export function lightTheme(): Theme {
 
         reaction: {
             bg: "#efefef",
-            txt: "#191919",
+            txt: txtDark,
             me: pinkAccent,
         },
 
         timeline: {
-            txt: "rgba(255,255,255,0.9)",
+            txt: txtLight,
             bg: "transparent",
         },
 
         toast: {
             failure: {
-                bg: "#c71f1f",
+                bg: "#ff005c",
                 txt: "#ffffff",
             },
             success: {
-                bg: orangeAccent,
+                bg: "#05b09f",
                 txt: "#ffffff",
             },
         },
 
         section: {
-            bg: "white",
-            txt: "#191919",
-            bd: "transparent",
-            "bd-start": "transparent",
+            // bg: "#ffffff10",
+            bg: "transparent",
+            txt,
         },
 
         "sub-section": {
@@ -57,59 +72,45 @@ export function lightTheme(): Theme {
         },
 
         input: {
-            bg: "#ffffff",
-            txt: "#191919",
-            bd: "#dddddd",
+            bg: textBox,
+            txt,
         },
 
         members: {
-            bg: "#ffffff",
-            txt: "#191919",
-            hv: "#eeeeee",
-            bd: "1px solid #efefef",
-            bdb: "transparent",
-            panel: {
-                bg: "transparent",
-            },
+            hv: "rgba(226,226,226,0.2)",
         },
 
         entry: {
-            bg: "#efefef",
-            bd: "#dddddd",
+            bg: "rgba(226,226,226,0.1)",
             input: {
-                bg: "#ffffff",
-                txt: "#191919",
+                bg: textBox,
+                txt,
             },
         },
 
         panel: {
             bg: "linear-gradient(#22A7F2, #5f2583)",
-            left: {
-                bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
-                xs: "transparent",
-            },
-            right: {
-                bg: "linear-gradient(#22A7F2, #5f2583)",
-            },
-        },
 
-        currentUser: {
-            bd: "transparent",
-            bg: "white",
-            txt: "#191919",
-            ic: "#aaa",
+            left: {
+                // bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
+                // bg: "linear-gradient(rgba(255,255,255,0.05), transparent)",
+                bg: "linear-gradient(#22A7F250, #5f258350)",
+            },
+
+            right: {
+                bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
+                modal: "linear-gradient(#22A7F2, #5f2583)",
+            },
         },
 
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
-            bd: "#cccccc",
             sh: "2px 2px 4px #e2e2e2",
         },
 
         chatSearch: {
-            bg: "#ffffff",
-            txt: "#555555",
-            bd: "transparent",
+            bg: textBox,
+            txt,
 
             section: {
                 txt: "#ffffff",
@@ -117,12 +118,10 @@ export function lightTheme(): Theme {
         },
 
         chatSummary: {
-            bg: "white",
-            "bg-selected": "#e7e7e7",
-            hv: "#eeeeee",
-            txt1: "#191919",
-            txt2: "rgba(0, 0, 0, 0.6)",
-            bd: "1px solid #ddd",
+            "bg-selected": "rgba(0,0,0,0.1)",
+            hv: "rgba(226,226,226,0.1)",
+            txt1: txt,
+            txt2: txtLight,
             del: pinkAccent,
         },
 
@@ -130,21 +129,18 @@ export function lightTheme(): Theme {
 
         menu: {
             bg: "white",
-            txt: "#191919",
-            "disabled-txt": disabledTxt,
-            // bd: "#cccccc",
-            bd: "rgba(0,0,0,0.05)",
-            hv: "#efefef",
+            txt: txtDark75pc,
+            "disabled-txt": `${txtDark}80`,
+            hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
         },
 
         button: {
-            bg: blueAccent,
+            bg: primary,
             hv: "#52baf5",
             txt: "#ffffff",
-            bd: "transparent",
-            disabled: "#cccccc",
+            disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
             "disabled-bd": "transparent",
@@ -155,20 +151,12 @@ export function lightTheme(): Theme {
         },
 
         modal: {
-            bg: "#ffffff",
-            txt: "#191919",
-            sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
             filter: "blur(5px)",
-            header: {
-                bg: "#ffffff",
-                txt: "#191919",
-                bd: "#dfdfdf",
-            },
-            footer: {
-                bg: "#efefef",
-                txt: "#191919",
-                bd: "#dddddd",
-            },
+            // bg: "linear-gradient(#22A7F2C8, #5f2583C8)",
+            // bg: "linear-gradient(#419ed3d8, #5c3375d8)",
+            bg: "#085d8cee",
+            txt: txt,
+            bd: "none",
         },
 
         modalPage: {
@@ -176,20 +164,12 @@ export function lightTheme(): Theme {
             txt: "#191919",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
             filter: "blur(10px)",
-            bd: "1px inset rgba(255, 255, 255, 0.3)",
             "txt-sh": "1px 1px rgba(255, 255, 255, 0.2)",
         },
 
         currentChat: {
-            header: {
-                // bg: "#efefef",
-                bg: "rgba(255,255,255,0.35)",
-                txt: "#191919",
-                bd: "transparent",
-            },
-
             date: {
-                bg: "rgba(255,255,255,0.7)",
+                bg: "rgba(0,0,0,0.1)",
                 txt: "inherit",
             },
 
@@ -198,33 +178,32 @@ export function lightTheme(): Theme {
             },
 
             msg: {
-                bg: "#ffffff",
-                txt: "#191919",
-                hv: "#efefef",
-                bd: "transparent",
-                muted: "#999999",
-                "reply-accent": blueAccent,
+                bg: "rgba(0,0,0,0.08)",
+                // bg: "rgba(255,255,255,0.1)",
+                // bg: "#4c6fc0cc",
+                muted: "rgba(255,255,255,0.6)",
+                txt: "#ffffff",
 
                 me: {
+                    bg: `${primary}80`,
+                    muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
-                    bg: "#d62c7d",
-                    bd: "#d62c7d",
-                    hv: "#EA4091",
-                    muted: "#cccccc",
+                    bd: "rgba(255,255,255,0.3)",
                 },
             },
         },
 
         icon: {
-            color: "#cccccc",
             // hv: "#dddddd",
             hv: "rgba(0,0,0,0.1)",
-            txt: "#888",
+            txt,
             inverted: {
-                hv: "rgba(214,44,125,0.5)",
+                // hv: "rgba(214,44,125,0.5)",
+                hv: "rgba(0,0,0,0.1)",
+                txt: txtDark75pc,
             },
             msg: {
-                hv: "rgba(255,255,255,0.8)",
+                hv: "rgba(255,255,255,0.3)",
             },
         },
 
@@ -246,25 +225,8 @@ export function lightTheme(): Theme {
         },
 
         recommended: {
-            bg: "#ffffff",
-        },
-
-        profile: {
-            section: {
-                bd: "none",
-                bg: "#fff",
-                xs: {
-                    bd: "1px solid #eaeaea",
-                },
-            },
-        },
-
-        collapsible: {
-            header: {
-                bg: "#f6f6f6",
-                bd: "1px solid #eaeaea",
-            },
-            bg: "#fff",
+            // bg: "#ffffff",
+            bg: "rgba(0,0,0,0.08)",
         },
 
         toggle: {
@@ -273,7 +235,7 @@ export function lightTheme(): Theme {
 
         thread: {
             preview: {
-                bg: "rgba(255, 255, 255, 0.05)",
+                bg: "transparent",
             },
         },
 

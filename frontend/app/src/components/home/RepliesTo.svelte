@@ -83,25 +83,19 @@
     }
 
     .reply-wrapper {
-        border-radius: $sp4;
+        border-radius: $sp2;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-        border: 2px solid var(--currentChat-msg-reply-accent);
+        border: 2px solid var(--bd);
+        cursor: pointer;
         margin-bottom: $sp3;
-        margin-left: 7px;
         overflow: hidden;
 
-        &.rtl {
-            box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-            margin-left: 0;
-            margin-right: 7px;
-        }
-
         &.me {
-            background-color: var(--currentChat-msg-me-hv);
-            color: var(--currentChat-msg-me-txt);
+            background-color: var(--currentChat-msg-me-bg);
+            border: 2px solid var(--currentChat-msg-me-bd);
+            color: #ffffff;
         }
 
         &.crypto {
@@ -119,7 +113,6 @@
         margin: 0;
         margin-bottom: $sp2;
         display: inline;
-        @include font(bold, normal, fs-100);
 
         &.text-content {
             display: block;

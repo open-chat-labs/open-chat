@@ -78,9 +78,7 @@
             textLength={usernames === undefined ? 10 : usernames.length + 16}
             longestWord={30}
             {alignRight}>
-            <div class="tooltip-body">
-                {buildTooltipText()}
-            </div>
+            {buildTooltipText()}
         </TooltipPopup>
     </div>
 </TooltipWrapper>
@@ -102,9 +100,5 @@
         &.preview {
             cursor: default;
         }
-    }
-
-    .tooltip-body {
-        color: black;
     }
 </style>

@@ -6,16 +6,13 @@
 </script>
 
 <div class="wrapper">
-    <h1 class="title">{$_("noChatSelected")}</h1>
+    <h2 class="title">{$_("noChatSelected")}</h2>
     <p class="subtitle">{$_("selectAChat")}</p>
     <Button on:click={() => dispatch("recommend")}>{$_("showHotGroups")}</Button>
 </div>
 
 <style type="text/scss">
     .wrapper {
-        background-color: var(--panel-right-bg);
-        color: var(--currentChat-header-txt);
-
         display: flex;
         flex-direction: column;
         justify-content: center;

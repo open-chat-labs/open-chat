@@ -21,7 +21,7 @@
     $progress-bar-x-large: 40px;
 
     .bar {
-        border: 1px solid #ccc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         width: 100%;
         height: $progress-bar-x-large;
         position: relative;

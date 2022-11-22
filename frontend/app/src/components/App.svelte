@@ -14,7 +14,7 @@
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import "../theme/themes";
+    import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
@@ -96,7 +96,15 @@
     }
 
     const allRoutes = routes(() => client.logout());
+
+    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    $: burstPath = "../assets/burst_dark";
+    $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
 </script>
+
+{#if $themeStore.name === "dark"}
+    <div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{/if}
 
 <svelte:head>
     <meta name="viewport" content={viewPortContent} />
@@ -314,13 +322,17 @@
         body {
             transition: background ease-in-out 300ms, color ease-in-out 150ms,
                 padding ease-in-out 150ms;
-            padding: $sp4;
             background: var(--bg);
             color: var(--txt);
             margin: 0;
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
                 Cantarell, "Helvetica Neue", sans-serif;
+            font-family: "Roboto", sans-serif;
+            font-weight: 400;
+            font-size: toRem(16);
+            line-height: 135%;
+
             display: flex;
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
@@ -337,6 +349,14 @@
                 transition: none;
                 padding: 0;
             }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: "Manrope", sans-serif;
+            font-weight: 700;
         }
 
         textarea {
@@ -356,6 +376,25 @@
             .iti__flag {
                 background-image: url("assets/flags@2x.png") !important;
             }
+        }
+    }
+
+    .burst-wrapper {
+        overflow: hidden;
+        max-width: 100%;
+        width: 100%;
+        position: absolute;
+        height: 100vh;
+        min-height: 100%;
+
+        background-repeat: no-repeat;
+        background-size: 1400px;
+        background-origin: 50% 50%;
+        background-position: right 20% top toRem(150);
+
+        @include mobile() {
+            background-size: 800px;
+            background-position: left 0 top 0;
         }
     }
 </style>
