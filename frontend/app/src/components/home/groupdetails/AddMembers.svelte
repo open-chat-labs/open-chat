@@ -34,7 +34,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader border={false} flush={true}>
     <h4>{$_("addMembers")}</h4>
     <span title={$_("close")} class="close" on:click={cancelAddMember}>
         <HoverIcon>
@@ -81,10 +81,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: $sp3;
 
         @include size-above(xl) {
-            padding: $sp3 0 0 0;
+            padding: 0;
         }
     }
     .cta {
