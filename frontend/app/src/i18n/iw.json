@@ -616,5 +616,6 @@
     "architecture": "ארכיטקטורה",
     "whitepaper": "נייר לבן",
     "nMessagesDeleted": "{number} הודעות נמחקו",
-    "joined": "הצטרף"
+    "joined": "הצטרף",
+    "oneMessageDeleted": "הודעה אחת נמחקה"
 }

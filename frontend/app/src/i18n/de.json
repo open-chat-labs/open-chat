@@ -618,5 +618,6 @@
     "architecture": "Die Architektur",
     "whitepaper": "Weißes Papier",
     "nMessagesDeleted": "{number} Nachricht(en) gelöscht",
-    "joined": "Trat bei"
+    "joined": "Trat bei",
+    "oneMessageDeleted": "1 Nachricht gelöscht"
 }

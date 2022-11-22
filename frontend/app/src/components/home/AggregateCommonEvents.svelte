@@ -17,7 +17,11 @@
 
     $: userStore = client.userStore;
     $: joinedText = buildText($userStore, joined, "userJoined");
-    $: deletedText = messagesDeleted.length > 0 ? $_("nMessagesDeleted", { values: { number: messagesDeleted.length } }) : undefined;
+    $: deletedText = messagesDeleted.length > 0 
+        ? messagesDeleted.length == 1
+        ? $_("oneMessageDeleted") 
+        : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } }) 
+        : undefined;
 
     afterUpdate(() => {
         if (readByMe && observer && deletedMessagesElement) {

@@ -619,5 +619,6 @@
     "architecture": "建築",
     "whitepaper": "白書",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
-    "joined": "参加しました"
+    "joined": "参加しました",
+    "oneMessageDeleted": "1 件のメッセージを削除しました"
 }

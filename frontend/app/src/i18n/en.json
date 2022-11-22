@@ -616,5 +616,6 @@
     "websiteVersion": "of the website",
     "advanced": "Advanced",
     "nMessagesDeleted": "{number} message(s) deleted",
-    "joined": "Joined"
+    "joined": "Joined",
+    "oneMessageDeleted": "1 message deleted"
 }

@@ -618,5 +618,6 @@
     "architecture": "Architettura",
     "whitepaper": "Carta bianca",
     "nMessagesDeleted": "{number} messaggi eliminati",
-    "joined": "Partecipato"
+    "joined": "Partecipato",
+    "oneMessageDeleted": "1 messaggio eliminato"
 }
