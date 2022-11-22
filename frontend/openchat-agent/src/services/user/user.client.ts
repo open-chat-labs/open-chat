@@ -92,7 +92,6 @@ import {
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
-import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
@@ -200,31 +199,27 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     chatEvents(
-        eventIndexRange: IndexRange,
+        _eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const getChatEventsFunc = (index: number, asc: boolean) => {
-            const args = {
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                user_id: Principal.fromText(userId),
-                max_events: MAX_EVENTS,
-                start_index: index,
-                ascending: asc,
-                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
-            };
-
-            return this.handleQueryResponse(
-                () => this.userService.events(args),
-                (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
-                args
-            );
+        const args = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            user_id: Principal.fromText(userId),
+            max_events: MAX_EVENTS,
+            start_index: startIndex,
+            ascending: ascending,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
 
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
+        return this.handleQueryResponse(
+            () => this.userService.events(args),
+            (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
+            args
+        );
     }
 
     @profile("userClient")

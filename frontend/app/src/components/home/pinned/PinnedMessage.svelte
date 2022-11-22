@@ -86,7 +86,7 @@
                     groupChat={true}
                     repliesTo={msg.repliesTo} />
             {:else}
-                <UnresolvedReply repliesTo={msg.repliesTo} />
+                <UnresolvedReply />
             {/if}
         {/if}
 

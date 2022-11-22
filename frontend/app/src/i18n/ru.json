@@ -616,5 +616,6 @@
     "advanced": "Передовой",
     "features": "Функции",
     "architecture": "Архитектура",
-    "whitepaper": "Белая бумага"
+    "whitepaper": "Белая бумага",
+    "nMessagesDeleted": "{number} сообщений удалено"
 }

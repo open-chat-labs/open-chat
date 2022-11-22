@@ -589,11 +589,11 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
-    markMessageRead(chatId: string, messageIndex: number, messageId: bigint): void {
+    markMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): void {
         return this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
     }
 
-    isMessageRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
+    isMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): boolean {
         return this.messagesRead.isRead(chatId, messageIndex, messageId);
     }
 

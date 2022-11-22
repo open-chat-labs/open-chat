@@ -20,7 +20,6 @@
     export let groupChat: boolean;
 
     let debug = false;
-
     $: userStore = client.userStore;
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
@@ -88,7 +87,6 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        cursor: pointer;
         box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
         border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;

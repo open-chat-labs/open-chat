@@ -312,6 +312,7 @@ export type RehydratedReplyContext = {
     eventIndex: number;
     chatId: string;
     edited: boolean;
+    isThreadRoot: boolean;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {
@@ -407,7 +408,7 @@ export type GroupChatEvent =
     | GroupChatCreated
     | MembersAdded
     | MemberJoined
-    | AggregateMembersJoinedOrLeft
+    | AggregateCommonEvents
     | MembersRemoved
     | MemberLeft
     | GroupNameChanged
@@ -445,10 +446,11 @@ export type MembersAdded = {
     addedBy: string;
 };
 
-export type AggregateMembersJoinedOrLeft = {
-    kind: "aggregate_members_joined_left";
-    users_joined: Set<string>;
-    users_left: Set<string>;
+export type AggregateCommonEvents = {
+    kind: "aggregate_common_events";
+    usersJoined: Set<string>;
+    usersLeft: Set<string>;
+    messagesDeleted: number[];
 };
 
 export type MemberJoined = {

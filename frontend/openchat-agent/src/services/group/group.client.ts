@@ -75,7 +75,6 @@ import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
-import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { generateUint64 } from "../../utils/rng";
@@ -167,36 +166,32 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     chatEvents(
-        eventIndexRange: IndexRange,
+        _eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const getChatEventsFunc = (index: number, asc: boolean) => {
-            const args = {
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                max_events: MAX_EVENTS,
-                ascending: asc,
-                start_index: index,
-                invite_code: apiOptional(textToCode, this.inviteCode),
-                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
-            };
-            return this.handleQueryResponse(
-                () => this.groupService.events(args),
-                (resp) =>
-                    getEventsResponse(
-                        this.principal,
-                        resp,
-                        this.chatId,
-                        threadRootMessageIndex,
-                        latestClientEventIndex
-                    ),
-                args
-            );
+        const args = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            max_events: MAX_EVENTS,
+            ascending,
+            start_index: startIndex,
+            invite_code: apiOptional(textToCode, this.inviteCode),
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
-
-        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
+        return this.handleQueryResponse(
+            () => this.groupService.events(args),
+            (resp) =>
+                getEventsResponse(
+                    this.principal,
+                    resp,
+                    this.chatId,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                ),
+            args
+        );
     }
 
     @profile("groupClient")
