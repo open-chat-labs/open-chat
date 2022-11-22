@@ -77,7 +77,7 @@
     }
 </script>
 
-<SectionHeader flush={true} shadow={true}>
+<SectionHeader gap={true} flush={true} shadow={true}>
     <div class="close" on:click={close}>
         <HoverIcon>
             {#if $mobileWidth}

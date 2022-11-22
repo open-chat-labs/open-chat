@@ -165,7 +165,6 @@
 
 {#if user}
     <CurrentUser
-        on:userAvatarSelected
         on:logout
         on:whatsHot
         on:showAbout

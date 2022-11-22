@@ -832,7 +832,6 @@
             on:showFeatures={showLandingPageRoute("/features")}
             on:showWhitepaper={showLandingPageRoute("whitepaper")}
             on:searchEntered={performSearch}
-            on:userAvatarSelected={userAvatarSelected}
             on:chatWith={chatWith}
             on:whatsHot={() => whatsHot(true)}
             on:newGroup={newGroup}

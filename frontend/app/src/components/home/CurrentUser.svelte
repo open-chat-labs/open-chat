@@ -4,7 +4,7 @@
     import Domain from "svelte-material-icons/Domain.svelte";
     import FileDocumentOutline from "svelte-material-icons/FileDocumentOutline.svelte";
     import Rocket from "svelte-material-icons/Rocket.svelte";
-    import EditableAvatar from "../EditableAvatar.svelte";
+    import Avatar from "../Avatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -18,7 +18,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
-    import type { OpenChat, PartialUserSummary } from "openchat-client";
+    import { AvatarSize, OpenChat, PartialUserSummary } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -29,18 +29,13 @@
     function newGroup() {
         dispatch("newGroup");
     }
-
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        dispatch("userAvatarSelected", ev.detail);
-    }
 </script>
 
 <SectionHeader border={false}>
-    <div class="current-user" class:rtl={$rtlStore}>
-        <EditableAvatar
-            small
-            image={client.userAvatarUrl(user)}
-            on:imageSelected={userAvatarSelected} />
+    <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
+        <div class="avatar">
+            <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.Small} />
+        </div>
         <h4 class="name">{user.username}</h4>
     </div>
     <span class="menu">
@@ -129,6 +124,8 @@
         display: flex;
         flex: 1;
         align-items: center;
+        gap: $sp4;
+        cursor: pointer;
 
         @include mobile() {
             padding: 0 $sp3;

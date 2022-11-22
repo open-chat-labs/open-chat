@@ -4,7 +4,6 @@
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
-        CreatedUser,
         UserSummary,
     } from "openchat-client";
 
@@ -29,7 +28,6 @@
             on:showWhitepaper
             on:showFaq
             on:showAbout
-            on:userAvatarSelected
             on:whatsHot
             on:newGroup
             on:profile
