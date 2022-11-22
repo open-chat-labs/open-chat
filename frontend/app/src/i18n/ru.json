@@ -617,5 +617,6 @@
     "features": "Функции",
     "architecture": "Архитектура",
     "whitepaper": "Белая бумага",
-    "nMessagesDeleted": "{number} сообщений удалено"
+    "nMessagesDeleted": "{number} сообщений удалено",
+    "joined": "Присоединился"
 }

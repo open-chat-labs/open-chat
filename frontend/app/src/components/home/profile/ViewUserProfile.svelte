@@ -29,7 +29,7 @@
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
             : "../assets/unknownUserAvatar.svg";
-    $: joined = profile !== undefined ? formatDate(profile.created) : undefined;
+    $: joined = profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
 
     onMount(async () => {
         try {
@@ -80,7 +80,7 @@
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
                 <p>{status === "" ? "..." : status}</p>
-                <p>Joined {joined}</p>
+                <p>{joined}</p>
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}

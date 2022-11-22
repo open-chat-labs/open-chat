@@ -618,5 +618,6 @@
     "features": "特点",
     "architecture": "架构",
     "whitepaper": "白皮书",
-    "nMessagesDeleted": "{number} 条消息已删除"
+    "nMessagesDeleted": "{number} 条消息已删除",
+    "joined": "已加入"
 }
