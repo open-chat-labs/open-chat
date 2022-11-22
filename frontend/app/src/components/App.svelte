@@ -98,15 +98,13 @@
     const allRoutes = routes(() => client.logout());
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $themeStore.name === "light" ? "../assets/burst_light" : "../assets/burst_dark";
+    $: burstPath = "../assets/burst_dark";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
 </script>
 
-<div
-    class="burst-wrapper"
-    class:dark={$themeStore.name === "dark"}
-    class:light={$themeStore.name === "light"}
-    style={`background-image: url(${burstUrl})`} />
+{#if $themeStore.name === "dark"}
+    <div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{/if}
 
 <svelte:head>
     <meta name="viewport" content={viewPortContent} />
