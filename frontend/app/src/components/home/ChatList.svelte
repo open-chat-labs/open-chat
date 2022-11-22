@@ -301,7 +301,7 @@
     }
 
     .section-selector {
-        margin: 0 $sp5 $sp4 $sp5;
+        margin: 0 $sp4 $sp4 $sp4;
         @include mobile() {
             margin: 0 $sp3 $sp3 $sp3;
         }

@@ -203,7 +203,7 @@
         justify-content: center;
         align-items: center;
         color: var(--txt);
-        padding: $sp4 $sp5;
+        padding: $sp4;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {
@@ -215,7 +215,7 @@
         }
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
     }
     .avatar {

@@ -111,18 +111,25 @@
 
 <style type="text/scss">
     .search-form {
+        margin: 0 $sp4 $sp4 $sp4;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
-        border: 1px solid var(--bd);
+        padding: $sp2 $sp4;
+        border-radius: $sp2;
 
-        &.add {
-            margin: 0 0 $sp3 0;
-        }
+        // &.add {
+        //     margin: 0 0 $sp3 0;
+        // }
 
-        &.edit {
-            margin: 0 0 $sp3 0;
+        // &.edit {
+        //     margin: 0 0 $sp3 0;
+        // }
+
+        @include mobile() {
+            margin: 0 $sp3;
+            margin-bottom: $sp3;
         }
     }
     .icon {
@@ -132,7 +139,7 @@
         cursor: pointer;
     }
     input {
-        background-color: var(--chatSearch-bg);
+        background-color: transparent;
         color: var(--chatSearch-txt);
         outline: none;
         flex: 1;
@@ -152,10 +159,14 @@
         justify-content: center;
         align-items: center;
         color: var(--txt);
-        padding: $sp3;
+        padding: $sp4;
         margin: 0 0 $sp3 0;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
 
         &:hover {
             background-color: var(--members-hv);

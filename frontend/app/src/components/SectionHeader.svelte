@@ -28,7 +28,7 @@
         width: 100%;
         padding: $sp4 $sp4;
         height: toRem(80);
-        margin-bottom: $sp3;
+        // margin-bottom: $sp3;
         background-color: var(--section-bg);
         color: var(--section-txt);
         @include z-index("section-header");

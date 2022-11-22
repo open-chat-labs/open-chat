@@ -26,7 +26,7 @@
     }
 </script>
 
-<SectionHeader border={!$mobileWidth}>
+<SectionHeader border={false}>
     {#if canAdd}
         <span title={$_("addMembers")} class="add" on:click={addMembers}>
             <HoverIcon>
