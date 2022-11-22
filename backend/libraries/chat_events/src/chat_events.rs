@@ -763,9 +763,6 @@ impl AllChatEvents {
                         });
 
                         let message_content = message.content.hydrate(Some(caller));
-                        let message_clone = message.clone();
-
-                        self.remove_from_metrics(&message_clone);
 
                         self.push_event(
                             thread_root_message_index,
@@ -807,10 +804,6 @@ impl AllChatEvents {
                             message.last_updated = Some(now);
                             message.deleted_by = None;
 
-                            let message_clone = message.clone();
-
-                            self.add_message_to_metrics(&message_clone);
-
                             self.push_event(
                                 thread_root_message_index,
                                 ChatEventInternal::MessageUndeleted(Box::new(UpdatedMessageInternal {
@@ -845,14 +838,6 @@ impl AllChatEvents {
 
     fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
-    }
-
-    fn add_message_to_metrics(&mut self, message: &MessageInternal) {
-        message.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics);
-    }
-
-    fn remove_from_metrics(&mut self, message: &MessageInternal) {
-        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
     }
 
     fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {

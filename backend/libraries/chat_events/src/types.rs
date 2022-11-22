@@ -245,83 +245,70 @@ pub struct MessageInternal {
 
 impl MessageInternal {
     pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
-        self.adjust_metrics(metrics, per_user_metrics, incr);
-    }
-
-    pub fn remove_from_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
-        self.adjust_metrics(metrics, per_user_metrics, decr);
-    }
-
-    fn adjust_metrics(
-        &self,
-        metrics: &mut ChatMetrics,
-        per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
-        adjust: fn(&mut u64),
-    ) {
         let sender_metrics = per_user_metrics.entry(self.sender).or_default();
 
         if self.deleted_by.is_some() {
-            adjust(&mut metrics.deleted_messages);
-            adjust(&mut sender_metrics.deleted_messages);
+            incr(&mut metrics.deleted_messages);
+            incr(&mut sender_metrics.deleted_messages);
         } else {
             if self.replies_to.is_some() {
-                adjust(&mut metrics.replies);
-                adjust(&mut sender_metrics.replies);
+                incr(&mut metrics.replies);
+                incr(&mut sender_metrics.replies);
             }
 
             match &self.content {
                 MessageContentInternal::Text(_) => {
-                    adjust(&mut metrics.text_messages);
-                    adjust(&mut sender_metrics.text_messages);
+                    incr(&mut metrics.text_messages);
+                    incr(&mut sender_metrics.text_messages);
                 }
                 MessageContentInternal::Image(_) => {
-                    adjust(&mut metrics.image_messages);
-                    adjust(&mut sender_metrics.image_messages);
+                    incr(&mut metrics.image_messages);
+                    incr(&mut sender_metrics.image_messages);
                 }
                 MessageContentInternal::Video(_) => {
-                    adjust(&mut metrics.video_messages);
-                    adjust(&mut sender_metrics.video_messages);
+                    incr(&mut metrics.video_messages);
+                    incr(&mut sender_metrics.video_messages);
                 }
                 MessageContentInternal::Audio(_) => {
-                    adjust(&mut metrics.audio_messages);
-                    adjust(&mut sender_metrics.audio_messages);
+                    incr(&mut metrics.audio_messages);
+                    incr(&mut sender_metrics.audio_messages);
                 }
                 MessageContentInternal::File(_) => {
-                    adjust(&mut metrics.file_messages);
-                    adjust(&mut sender_metrics.file_messages);
+                    incr(&mut metrics.file_messages);
+                    incr(&mut sender_metrics.file_messages);
                 }
                 MessageContentInternal::Poll(p) => {
-                    adjust(&mut metrics.polls);
-                    adjust(&mut sender_metrics.polls);
+                    incr(&mut metrics.polls);
+                    incr(&mut sender_metrics.polls);
 
                     for user_id in p.votes.iter().flat_map(|(_, u)| u.iter()) {
-                        adjust(&mut metrics.poll_votes);
+                        incr(&mut metrics.poll_votes);
                         if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
-                            adjust(&mut user_metrics.poll_votes);
+                            incr(&mut user_metrics.poll_votes);
                         }
                     }
                 }
                 MessageContentInternal::Crypto(c) => match c.transfer.token() {
                     Cryptocurrency::InternetComputer => {
-                        adjust(&mut metrics.icp_messages);
-                        adjust(&mut sender_metrics.icp_messages);
+                        incr(&mut metrics.icp_messages);
+                        incr(&mut sender_metrics.icp_messages);
                     }
                 },
                 MessageContentInternal::Deleted(_) => {}
                 MessageContentInternal::Giphy(_) => {
-                    adjust(&mut metrics.giphy_messages);
-                    adjust(&mut sender_metrics.giphy_messages);
+                    incr(&mut metrics.giphy_messages);
+                    incr(&mut sender_metrics.giphy_messages);
                 }
                 MessageContentInternal::GovernanceProposal(_) => {
-                    adjust(&mut metrics.proposals);
-                    adjust(&mut sender_metrics.proposals);
+                    incr(&mut metrics.proposals);
+                    incr(&mut sender_metrics.proposals);
                 }
             }
 
             for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {
-                adjust(&mut metrics.reactions);
+                incr(&mut metrics.reactions);
                 if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
-                    adjust(&mut user_metrics.reactions);
+                    incr(&mut user_metrics.reactions);
                 }
             }
         }
