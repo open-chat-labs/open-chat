@@ -20,13 +20,14 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let is_bot = match read_state(|state| validate_request(&args, state)) {
-        ValidateRequestResult::Valid(b) => b,
+    let user_type = match read_state(|state| validate_request(&args, state)) {
+        ValidateRequestResult::Valid(t) => t,
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(user_index_canister_id) => {
             let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id: args.recipient };
             match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) => result.is_bot,
+                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) if result.is_bot => UserType::Bot,
+                Ok(user_index_canister::c2c_lookup_principal::Response::Success(_)) => UserType::User,
                 Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => return RecipientNotFound,
                 Err(error) => return InternalError(format!("{:?}", error)),
             }
@@ -37,6 +38,9 @@ async fn send_message(mut args: Args) -> Response {
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
     if let MessageContent::Crypto(c) = &mut args.content {
+        if user_type.is_self() {
+            return InvalidRequest("Cannot send crypto to yourself".to_string());
+        }
         let pending_transaction = match &c.transfer {
             CryptoTransaction::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
@@ -56,12 +60,28 @@ async fn send_message(mut args: Args) -> Response {
         };
     }
 
-    mutate_state(|state| send_message_impl(args, completed_transfer, is_bot, state))
+    mutate_state(|state| send_message_impl(args, completed_transfer, user_type, state))
+}
+
+enum UserType {
+    _Self,
+    User,
+    Bot,
+}
+
+impl UserType {
+    fn is_self(&self) -> bool {
+        matches!(self, UserType::_Self)
+    }
+
+    fn is_bot(&self) -> bool {
+        matches!(self, UserType::Bot)
+    }
 }
 
 #[allow(clippy::large_enum_variant)]
 enum ValidateRequestResult {
-    Valid(bool), // Value is `is_bot`
+    Valid(UserType),
     Invalid(Response),
     RecipientUnknown(CanisterId), // Value is the user_index canisterId
 }
@@ -92,8 +112,11 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
         })
+    } else if args.recipient == runtime_state.env.canister_id().into() {
+        ValidateRequestResult::Valid(UserType::_Self)
     } else if let Some(chat) = runtime_state.data.direct_chats.get(&args.recipient.into()) {
-        ValidateRequestResult::Valid(chat.is_bot)
+        let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
+        ValidateRequestResult::Valid(user_type)
     } else {
         ValidateRequestResult::RecipientUnknown(runtime_state.data.user_index_canister_id)
     }
@@ -102,7 +125,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
 fn send_message_impl(
     args: Args,
     completed_transfer: Option<CompletedCryptoTransaction>,
-    is_bot: bool,
+    user_type: UserType,
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let now = runtime_state.env.now();
@@ -120,41 +143,44 @@ fn send_message_impl(
         now,
     };
 
-    let message_event = runtime_state
-        .data
-        .direct_chats
-        .push_message(true, recipient, None, push_message_args, is_bot);
+    let message_event =
+        runtime_state
+            .data
+            .direct_chats
+            .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
-    let c2c_args = c2c_send_message::Args {
-        message_id: args.message_id,
-        sender_name: args.sender_name,
-        sender_message_index: message_event.event.message_index,
-        content: args.content,
-        replies_to: args.replies_to.and_then(|r| {
-            if let Some(chat_id) = r.chat_id_if_other {
-                Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
-            } else {
-                runtime_state
-                    .data
-                    .direct_chats
-                    .get(&args.recipient.into())
-                    .and_then(|chat| {
-                        chat.events
-                            .main()
-                            .message_internal_by_event_index(r.event_index)
-                            .map(|m| m.message_id)
-                    })
-                    .map(C2CReplyContext::ThisChat)
-            }
-        }),
-        forwarding: args.forwarding,
-        correlation_id: args.correlation_id,
-    };
+    if !user_type.is_self() {
+        let c2c_args = c2c_send_message::Args {
+            message_id: args.message_id,
+            sender_name: args.sender_name,
+            sender_message_index: message_event.event.message_index,
+            content: args.content,
+            replies_to: args.replies_to.and_then(|r| {
+                if let Some(chat_id) = r.chat_id_if_other {
+                    Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
+                } else {
+                    runtime_state
+                        .data
+                        .direct_chats
+                        .get(&args.recipient.into())
+                        .and_then(|chat| {
+                            chat.events
+                                .main()
+                                .message_internal_by_event_index(r.event_index)
+                                .map(|m| m.message_id)
+                        })
+                        .map(C2CReplyContext::ThisChat)
+                }
+            }),
+            forwarding: args.forwarding,
+            correlation_id: args.correlation_id,
+        };
 
-    if is_bot {
-        ic_cdk::spawn(send_to_bot_canister(recipient, message_event.event.message_index, c2c_args));
-    } else {
-        ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
+        if user_type.is_bot() {
+            ic_cdk::spawn(send_to_bot_canister(recipient, message_event.event.message_index, c2c_args));
+        } else {
+            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
+        }
     }
 
     if let Some(transfer) = completed_transfer {
