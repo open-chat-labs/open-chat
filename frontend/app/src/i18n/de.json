@@ -617,7 +617,7 @@
     "features": "Merkmale",
     "architecture": "Die Architektur",
     "whitepaper": "Weißes Papier",
-    "nMessagesDeleted": "{number} Nachricht(en) gelöscht",
     "joined": "Trat bei",
-    "oneMessageDeleted": "1 Nachricht gelöscht"
+    "oneMessageDeleted": "1 Nachricht gelöscht",
+    "nMessagesDeleted": "{number} Nachrichten gelöscht"
 }

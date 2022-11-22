@@ -617,7 +617,7 @@
     "features": "Fonctionnalités",
     "architecture": "Architecture",
     "whitepaper": "Papier blanc",
-    "nMessagesDeleted": "{number} message(s) supprimé(s)",
     "joined": "Rejoint",
-    "oneMessageDeleted": "1 message supprimé"
+    "oneMessageDeleted": "1 message supprimé",
+    "nMessagesDeleted": "{number} messages supprimés"
 }

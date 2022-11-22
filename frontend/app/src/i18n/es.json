@@ -618,7 +618,7 @@
     "features": "Características",
     "architecture": "Arquitectura",
     "whitepaper": "Papel blanco",
-    "nMessagesDeleted": "{number} mensaje(s) eliminado(s)",
     "joined": "Unido",
-    "oneMessageDeleted": "1 mensaje eliminado"
+    "oneMessageDeleted": "1 mensaje eliminado",
+    "nMessagesDeleted": "{number} mensajes eliminados"
 }
