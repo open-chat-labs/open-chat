@@ -846,7 +846,7 @@ impl AllChatEvents {
     fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
     }
-    
+
     fn add_message_to_metrics(&mut self, message: &MessageInternal) {
         message.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics);
     }
