@@ -723,7 +723,7 @@
         margin: 0 $sp4;
     }
 
-    :global(.message-bubble.me a) {
+    :global(.message-bubble a) {
         color: inherit;
     }
 

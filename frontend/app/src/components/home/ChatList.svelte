@@ -182,10 +182,8 @@
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
-            <ButtonGroup align={$mobileWidth ? "fill" : "start"}>
-                <ChatsButton on:click={() => setView("chats")} selected={view === "chats"} />
-                <ThreadsButton on:click={() => setView("threads")} selected={view === "threads"} />
-            </ButtonGroup>
+            <ChatsButton on:click={() => setView("chats")} selected={view === "chats"} />
+            <ThreadsButton on:click={() => setView("threads")} selected={view === "threads"} />
         </div>
     {/if}
 
@@ -301,8 +299,12 @@
     }
 
     .section-selector {
+        display: flex;
+        justify-content: flex-start;
         margin: 0 $sp4 $sp4 $sp4;
+        gap: $sp3;
         @include mobile() {
+            justify-content: space-evenly;
             margin: 0 $sp3 $sp3 $sp3;
         }
     }
