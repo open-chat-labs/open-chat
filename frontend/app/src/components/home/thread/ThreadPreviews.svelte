@@ -78,7 +78,7 @@
 
 <style type="text/scss">
     .threads {
-        flex: auto;
+        height: 100%;
         overflow-x: hidden;
         @include nice-scrollbar();
         @include mobile() {

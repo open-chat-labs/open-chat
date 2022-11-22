@@ -152,8 +152,14 @@
     });
 
     function onSearchEntered(ev: CustomEvent<unknown>) {
-        view = "chats";
+        setView("chats");
         dispatch("searchEntered", ev.detail);
+    }
+
+    function setView(v: "chats" | "threads"): void {
+        view = v;
+        chatListElement.scrollTop = 0;
+        chatListScroll.set(0);
     }
 </script>
 
@@ -177,8 +183,8 @@
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
             <ButtonGroup align={$mobileWidth ? "fill" : "start"}>
-                <ChatsButton on:click={() => (view = "chats")} selected={view === "chats"} />
-                <ThreadsButton on:click={() => (view = "threads")} selected={view === "threads"} />
+                <ChatsButton on:click={() => setView("chats")} selected={view === "chats"} />
+                <ThreadsButton on:click={() => setView("threads")} selected={view === "threads"} />
             </ButtonGroup>
         </div>
     {/if}
@@ -186,98 +192,96 @@
     <div use:menuCloser bind:this={chatListElement} class="body">
         {#if $chatsLoading}
             <Loading />
+        {:else if view === "threads"}
+            <ThreadPreviews />
         {:else}
             <div class="chat-summaries">
-                {#if view === "threads"}
-                    <ThreadPreviews />
-                {:else}
-                    {#if searchResultsAvailable && chats.length > 0}
-                        <h3 class="search-subtitle">{$_("yourChats")}</h3>
-                    {/if}
-                    {#each chats as chatSummary, i (chatSummary.chatId)}
-                        <ChatSummary
-                            index={i}
-                            {chatSummary}
-                            selected={$selectedChatId === chatSummary.chatId}
-                            visible={searchTerm !== "" || !chatSummary.archived}
-                            on:chatSelected={chatSelected}
-                            on:pinChat
-                            on:unpinChat
-                            on:archiveChat
-                            on:unarchiveChat
-                            on:toggleMuteNotifications
-                            on:deleteDirectChat />
-                    {/each}
+                {#if searchResultsAvailable && chats.length > 0}
+                    <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                {/if}
+                {#each chats as chatSummary, i (chatSummary.chatId)}
+                    <ChatSummary
+                        index={i}
+                        {chatSummary}
+                        selected={$selectedChatId === chatSummary.chatId}
+                        visible={searchTerm !== "" || !chatSummary.archived}
+                        on:chatSelected={chatSelected}
+                        on:pinChat
+                        on:unpinChat
+                        on:archiveChat
+                        on:unarchiveChat
+                        on:toggleMuteNotifications
+                        on:deleteDirectChat />
+                {/each}
 
-                    {#if groupSearchResults !== undefined}
-                        <div class="search-matches">
-                            {#await groupSearchResults then resp}
-                                {#if resp.kind === "success" && resp.matches.length > 0}
-                                    <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                    {#each resp.matches as group, i (group.chatId)}
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={client.groupAvatarUrl(group)}
-                                            on:click={() => selectGroup(group)}>
-                                            <h4 class="search-item-title">
-                                                {group.name}
-                                            </h4>
-                                            <p title={group.description} class="search-item-desc">
-                                                {group.description}
-                                            </p>
-                                        </SearchResult>
-                                    {/each}
-                                {/if}
-                            {/await}
-                        </div>
-                    {/if}
-                    {#if userSearchResults !== undefined}
-                        <div class="search-matches">
-                            {#await userSearchResults then resp}
-                                {#if resp.length > 0}
-                                    <h3 class="search-subtitle">{$_("users")}</h3>
-                                    {#each resp as user, i (user.userId)}
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={client.userAvatarUrl(user)}
-                                            on:click={() => chatWith(user.userId)}>
-                                            <h4 class="search-item-title">
-                                                @{user.username}
-                                            </h4>
-                                        </SearchResult>
-                                    {/each}
-                                {/if}
-                            {/await}
-                        </div>
-                    {/if}
-                    {#if messageSearchResults !== undefined}
-                        <div class="search-matches">
-                            {#await messageSearchResults then resp}
-                                {#if resp.kind == "success" && resp.matches.length > 0}
-                                    <h3 class="search-subtitle">{$_("messages")}</h3>
-                                    {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={client.groupAvatarUrl(
-                                                messageMatchDataContent(msg)
-                                            )}
-                                            showSpinner={false}
-                                            on:click={() => loadMessage(msg)}>
-                                            <h4 class="search-item-title">
-                                                {messageMatchTitle(msg)}
-                                            </h4>
-                                            <div class="search-item-desc">
-                                                <Markdown
-                                                    text={client.getContentAsText($_, msg.content)}
-                                                    oneLine={true}
-                                                    suppressLinks={true} />
-                                            </div>
-                                        </SearchResult>
-                                    {/each}
-                                {/if}
-                            {/await}
-                        </div>
-                    {/if}
+                {#if groupSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await groupSearchResults then resp}
+                            {#if resp.kind === "success" && resp.matches.length > 0}
+                                <h3 class="search-subtitle">{$_("publicGroups")}</h3>
+                                {#each resp.matches as group, i (group.chatId)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.groupAvatarUrl(group)}
+                                        on:click={() => selectGroup(group)}>
+                                        <h4 class="search-item-title">
+                                            {group.name}
+                                        </h4>
+                                        <p title={group.description} class="search-item-desc">
+                                            {group.description}
+                                        </p>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
+                {/if}
+                {#if userSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await userSearchResults then resp}
+                            {#if resp.length > 0}
+                                <h3 class="search-subtitle">{$_("users")}</h3>
+                                {#each resp as user, i (user.userId)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.userAvatarUrl(user)}
+                                        on:click={() => chatWith(user.userId)}>
+                                        <h4 class="search-item-title">
+                                            @{user.username}
+                                        </h4>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
+                {/if}
+                {#if messageSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await messageSearchResults then resp}
+                            {#if resp.kind == "success" && resp.matches.length > 0}
+                                <h3 class="search-subtitle">{$_("messages")}</h3>
+                                {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.groupAvatarUrl(
+                                            messageMatchDataContent(msg)
+                                        )}
+                                        showSpinner={false}
+                                        on:click={() => loadMessage(msg)}>
+                                        <h4 class="search-item-title">
+                                            {messageMatchTitle(msg)}
+                                        </h4>
+                                        <div class="search-item-desc">
+                                            <Markdown
+                                                text={client.getContentAsText($_, msg.content)}
+                                                oneLine={true}
+                                                suppressLinks={true} />
+                                        </div>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
                 {/if}
             </div>
         {/if}
@@ -288,6 +292,7 @@
 <style type="text/scss">
     .body {
         overflow: auto;
+        flex: auto;
         @include nice-scrollbar();
     }
     .chat-summaries {

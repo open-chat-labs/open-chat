@@ -246,7 +246,7 @@
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
         client.setFocusMessageIndex(chat.chatId, index);
-        const element = document.querySelector(`[data-index~='${index}']`);
+        const element = document.querySelector(`.chat-messages [data-index~='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
