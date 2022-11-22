@@ -615,7 +615,7 @@
     "features": "תכונות",
     "architecture": "ארכיטקטורה",
     "whitepaper": "נייר לבן",
-    "nMessagesDeleted": "{number} הודעות נמחקו",
     "joined": "הצטרף",
-    "oneMessageDeleted": "הודעה אחת נמחקה"
+    "oneMessageDeleted": "הודעה אחת נמחקה",
+    "nMessagesDeleted": "{number} הודעות נמחקו"
 }

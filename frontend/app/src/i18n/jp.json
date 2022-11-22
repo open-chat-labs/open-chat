@@ -618,7 +618,7 @@
     "features": "特徴",
     "architecture": "建築",
     "whitepaper": "白書",
-    "nMessagesDeleted": "{number} 件のメッセージが削除されました",
     "joined": "参加しました",
-    "oneMessageDeleted": "1 件のメッセージを削除しました"
+    "oneMessageDeleted": "1 件のメッセージを削除しました",
+    "nMessagesDeleted": "{number} 件のメッセージが削除されました"
 }
