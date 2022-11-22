@@ -31,6 +31,7 @@ fn main() {
     generate_candid_method!(group, reset_invite_code, update);
     generate_candid_method!(group, send_message, update);
     generate_candid_method!(group, unblock_user, update);
+    generate_candid_method!(group, undelete_messages, update);
     generate_candid_method!(group, unpin_message, update);
     generate_candid_method!(group, update_group_v2, update);
 

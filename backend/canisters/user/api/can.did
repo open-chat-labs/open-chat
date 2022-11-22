@@ -73,6 +73,21 @@ type DeleteMessagesResponse =
         UserSuspended;
     };
 
+type UndeleteMessagesArgs =
+    record {
+        user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
+        message_ids: vec MessageId;
+        correlation_id: nat64;
+    };
+
+type UndeleteMessagesResponse =
+    variant {
+        Success;
+        ChatNotFound;
+        UserSuspended;
+    };
+
 type AddReactionArgs =
     record {
         user_id: UserId;
@@ -644,6 +659,7 @@ service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     mark_read_v2: (MarkReadArgs) -> (MarkReadResponse);

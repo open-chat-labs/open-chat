@@ -24,6 +24,7 @@ pub enum ChatEvent {
     UsersUnblocked(UsersUnblocked),
     MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
+    MessageUndeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
     MessagePinned(MessagePinned),
@@ -45,6 +46,7 @@ impl ChatEvent {
         match self {
             ChatEvent::MessageEdited(m) => vec![m.event_index],
             ChatEvent::MessageDeleted(m) => vec![m.event_index],
+            ChatEvent::MessageUndeleted(m) => vec![m.event_index],
             ChatEvent::MessageReactionAdded(r) => vec![r.event_index],
             ChatEvent::MessageReactionRemoved(r) => vec![r.event_index],
             ChatEvent::PollVoteRegistered(v) => vec![v.event_index],

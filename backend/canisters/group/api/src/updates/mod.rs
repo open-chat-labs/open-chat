@@ -28,5 +28,6 @@ pub mod remove_reaction;
 pub mod reset_invite_code;
 pub mod send_message;
 pub mod unblock_user;
+pub mod undelete_messages;
 pub mod unpin_message;
 pub mod update_group_v2;

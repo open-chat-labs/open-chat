@@ -215,6 +215,7 @@ type ChatEvent =
         RoleChanged: RoleChanged;
         MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
+        MessageUndeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
         UsersBlocked: UsersBlocked;
