@@ -618,5 +618,7 @@
     "architecture": "Ngành kiến trúc",
     "whitepaper": "Giấy trắng",
     "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
+    "joined": "đã tham gia",
+    "oneMessageDeleted": "Đã xóa 1 tin nhắn",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa"
 }

@@ -29,6 +29,7 @@
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
             : "../assets/unknownUserAvatar.svg";
+    $: joined = profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
 
     onMount(async () => {
         try {
@@ -54,6 +55,14 @@
             onClose();
         }
     }
+
+    function formatDate(timestamp: bigint): string {
+        const date = new Date(Number(timestamp));
+        return date.toLocaleDateString(undefined, { 
+            month: "short", 
+            year: "numeric" 
+        });
+    }
 </script>
 
 <svelte:window on:resize={onWindowResize} />
@@ -71,6 +80,7 @@
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
                 <p>{status === "" ? "..." : status}</p>
+                <p>{joined}</p>
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}

@@ -618,5 +618,7 @@
     "architecture": "Arquitectura",
     "whitepaper": "Papel blanco",
     "whatsOnYourMind": "¿Qué tienes en mente?",
-    "nMessagesDeleted": "{number} mensaje(s) eliminado(s)"
+    "joined": "Unido",
+    "oneMessageDeleted": "1 mensaje eliminado",
+    "nMessagesDeleted": "{number} mensajes eliminados"
 }

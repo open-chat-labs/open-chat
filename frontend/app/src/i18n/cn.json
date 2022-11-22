@@ -618,5 +618,7 @@
     "architecture": "架构",
     "whitepaper": "白皮书",
     "whatsOnYourMind": "你在想什么？",
-    "nMessagesDeleted": "{number} 条消息已删除"
+    "nMessagesDeleted": "{number} 条消息已删除",
+    "joined": "已加入",
+    "oneMessageDeleted": "已删除 1 条消息"
 }

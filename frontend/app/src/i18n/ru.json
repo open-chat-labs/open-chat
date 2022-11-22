@@ -617,5 +617,7 @@
     "architecture": "Архитектура",
     "whitepaper": "Белая бумага",
     "whatsOnYourMind": "Что у тебя на уме?",
+    "joined": "Присоединился",
+    "oneMessageDeleted": "1 сообщение удалено",
     "nMessagesDeleted": "{number} сообщений удалено"
 }

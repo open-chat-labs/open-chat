@@ -617,5 +617,7 @@
     "architecture": "Architecture",
     "whitepaper": "Papier blanc",
     "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?",
-    "nMessagesDeleted": "{number} message(s) supprimé(s)"
+    "joined": "Rejoint",
+    "oneMessageDeleted": "1 message supprimé",
+    "nMessagesDeleted": "{number} messages supprimés"
 }
