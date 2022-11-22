@@ -105,21 +105,7 @@
         flex: 0 0 30px;
     }
     .pinned-messages {
-        flex: auto;
-        background-color: var(--panel-bg);
-        padding: $sp3 $sp3;
-        overflow-x: hidden;
-        overscroll-behavior-y: contain;
-        position: relative;
-        display: flex;
-        flex-direction: column-reverse;
-
-        @include nice-scrollbar();
-
-        @include mobile() {
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
+        @include message-list();
     }
 
     .day-group {

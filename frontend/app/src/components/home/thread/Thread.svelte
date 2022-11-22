@@ -395,12 +395,7 @@
     }
 
     function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage(
-            $_,
-            user.userId,
-            ev.detail.sender === user.userId,
-            ev.detail
-        );
+        shareFunctions.shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
     }
 
     function copyMessageUrl(ev: CustomEvent<Message>) {
@@ -477,7 +472,7 @@
                             chatId={chat.chatId}
                             chatType={chat.kind}
                             {user}
-                            event={evt} 
+                            event={evt}
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             me={evt.event.sender === user.userId}
@@ -488,7 +483,8 @@
                             readByThem
                             readByMe
                             {observer}
-                            focused={evt.event.kind === "message" && focusMessageIndex === evt.event.messageIndex}
+                            focused={evt.event.kind === "message" &&
+                                focusMessageIndex === evt.event.messageIndex}
                             {preview}
                             inThread={true}
                             pinned={false}
@@ -500,7 +496,7 @@
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={$editingEvent === evt}
                             {canSend}
-                            {canReact}                    
+                            {canReact}
                             canInvite={false}
                             canReplyInThread={false}
                             collapsed={false}
@@ -537,7 +533,7 @@
         textContent={$textContent}
         members={$currentChatMembers}
         blockedUsers={$currentChatBlockedUsers}
-        user={user}
+        {user}
         joining={undefined}
         {preview}
         mode={"thread"}
@@ -561,21 +557,7 @@
 
 <style type="text/scss">
     .thread-messages {
-        flex: auto;
-        background-color: var(--panel-bg);
-        padding: $sp3 $sp3;
-        overflow-x: hidden;
-        overscroll-behavior-y: contain;
-        position: relative;
-        display: flex;
-        flex-direction: column-reverse;
-
-        @include nice-scrollbar();
-
-        @include mobile() {
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
+        @include message-list();
     }
 
     .day-group {

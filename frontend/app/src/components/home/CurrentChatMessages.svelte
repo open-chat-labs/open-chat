@@ -903,21 +903,8 @@
     }
 
     .chat-messages {
-        flex: auto;
+        @include message-list();
         background-color: var(--currentChat-msgs-bg);
-        padding: $sp3 $sp5;
-        overflow-x: hidden;
-        overscroll-behavior-y: contain;
-        position: relative;
-        display: flex;
-        flex-direction: column-reverse;
-
-        @include nice-scrollbar();
-
-        @include mobile() {
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
     }
 
     .big-avatar {
