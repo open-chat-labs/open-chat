@@ -92,10 +92,12 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
@@ -116,6 +118,7 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
+export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
   'threads' : Array<ThreadRead>,
@@ -144,6 +147,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -190,7 +194,8 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
-export type DeleteGroupResponse = { 'NotAuthorized' : null } |
+export type DeleteGroupResponse = { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface DeleteMessagesArgs {
@@ -316,6 +321,14 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FrozenGroupInfo {
+  'timestamp' : TimestampMillis,
+  'frozen_by' : UserId,
+  'reason' : [] | [string],
+}
+export type FrozenGroupUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -353,6 +366,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -379,6 +393,7 @@ export interface GroupChatSummaryUpdates {
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -514,6 +529,7 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'Success' : GroupChatSummary } |
   { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
@@ -526,6 +542,7 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'OwnerCannotLeave' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
@@ -769,6 +786,7 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -880,7 +898,9 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : string } |
-  { 'TransferFailed' : string };
+  { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
+  { 'RecipientNotFound' : null };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null };
@@ -987,6 +1007,7 @@ export interface TransferCryptoWithinGroupArgs {
 export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
+  { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
@@ -1078,12 +1099,12 @@ export interface _SERVICE {
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'add_recommended_group_exclusions' : ActorMethod<
     [AddRecommendedGroupExclusionsArgs],
-    AddRecommendedGroupExclusionsResponse
+    AddRecommendedGroupExclusionsResponse,
   >,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'assume_group_super_admin' : ActorMethod<
     [AssumeGroupSuperAdminArgs],
-    AssumeGroupSuperAdminResponse
+    AssumeGroupSuperAdminResponse,
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
@@ -1097,7 +1118,7 @@ export interface _SERVICE {
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'init_user_principal_migration' : ActorMethod<
     [InitUserPrincipalMigrationArgs],
-    InitUserPrincipalMigrationResponse
+    InitUserPrincipalMigrationResponse,
   >,
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
@@ -1105,30 +1126,30 @@ export interface _SERVICE {
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
-    MessagesByMessageIndexResponse
+    MessagesByMessageIndexResponse,
   >,
   'migrate_user_principal' : ActorMethod<
     [MigrateUserPrincipalArgs],
-    MigrateUserPrincipalResponse
+    MigrateUserPrincipalResponse,
   >,
   'mute_notifications' : ActorMethod<
     [MuteNotificationsArgs],
-    MuteNotificationsResponse
+    MuteNotificationsResponse,
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
-    RecommendedGroupsResponse
+    RecommendedGroupsResponse,
   >,
   'relinquish_group_super_admin' : ActorMethod<
     [RelinquishGroupSuperAdminArgs],
-    RelinquishGroupSuperAdminResponse
+    RelinquishGroupSuperAdminResponse,
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_all_messages' : ActorMethod<
     [SearchAllMessagesArgs],
-    SearchAllMessagesResponse
+    SearchAllMessagesResponse,
   >,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
@@ -1136,18 +1157,18 @@ export interface _SERVICE {
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
-    TransferCryptoWithinGroupResponse
+    TransferCryptoWithinGroupResponse,
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'unmute_notifications' : ActorMethod<
     [UnmuteNotificationsArgs],
-    UnmuteNotificationsResponse
+    UnmuteNotificationsResponse,
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],
-    WithdrawCryptoResponse
+    WithdrawCryptoResponse,
   >,
 }

@@ -617,5 +617,10 @@
     "advanced": "Advanced",
     "joined": "Joined",
     "oneMessageDeleted": "1 message deleted",
-    "nMessagesDeleted": "{number} messages deleted"
+    "nMessagesDeleted": "{number} messages deleted",
+    "freezeGroup": "Freeze group",
+    "unfreezeGroup": "Unfreeze group",
+    "chatFrozen": "This chat has been frozen",
+    "chatFrozenBy": "Chat frozen by {frozenBy}",
+    "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}"
 }

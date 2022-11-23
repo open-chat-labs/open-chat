@@ -617,5 +617,10 @@
     "whatsOnYourMind": "על מה אתה חושב?",
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
-    "nMessagesDeleted": "{number} הודעות נמחקו"
+    "nMessagesDeleted": "{number} הודעות נמחקו",
+    "freezeGroup": "הקפאת קבוצה",
+    "unfreezeGroup": "בטל את הקפאת הקבוצה",
+    "chatFrozen": "הצ'אט הזה הוקפא",
+    "chatFrozenBy": "הצ'אט הוקפא על ידי {frozenBy}",
+    "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}"
 }

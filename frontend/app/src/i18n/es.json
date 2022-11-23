@@ -620,5 +620,10 @@
     "whatsOnYourMind": "¿Qué tienes en mente?",
     "joined": "Unido",
     "oneMessageDeleted": "1 mensaje eliminado",
-    "nMessagesDeleted": "{number} mensajes eliminados"
+    "nMessagesDeleted": "{number} mensajes eliminados",
+    "freezeGroup": "Congelar grupo",
+    "unfreezeGroup": "Descongelar grupo",
+    "chatFrozen": "Este chat ha sido congelado.",
+    "chatFrozenBy": "Chat bloqueado por {frozenBy}",
+    "chatUnfrozenBy": "Chat descongelado por {unfrozenBy}"
 }

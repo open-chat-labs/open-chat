@@ -27,6 +27,7 @@ export type AddParticipantsResponse = {
   } |
   { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'ParticipantLimitReached' : number };
@@ -40,6 +41,7 @@ export interface AddReactionArgs {
 export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex } |
   { 'InvalidReaction' : null };
@@ -80,6 +82,7 @@ export interface BlockUserArgs { 'user_id' : UserId, 'correlation_id' : bigint }
 export type BlockUserResponse = { 'GroupNotPublic' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
@@ -101,6 +104,7 @@ export interface ChangeRoleArgs {
 export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
@@ -117,10 +121,12 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
@@ -141,6 +147,7 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
+export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -164,6 +171,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -194,6 +202,7 @@ export interface DeleteMessagesArgs {
 }
 export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'Success' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
@@ -244,7 +253,8 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
-export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
+export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
@@ -254,9 +264,11 @@ export interface EditMessageArgs {
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'Success' : null };
 export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
-export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
+export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } };
 export type EventIndex = number;
 export interface EventsArgs {
@@ -315,6 +327,14 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FrozenGroupInfo {
+  'timestamp' : TimestampMillis,
+  'frozen_by' : UserId,
+  'reason' : [] | [string],
+}
+export type FrozenGroupUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -352,6 +372,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -378,6 +399,7 @@ export interface GroupChatSummaryUpdates {
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -488,7 +510,8 @@ export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
 export interface MakePrivateArgs { 'correlation_id' : bigint }
-export type MakePrivateResponse = { 'NotAuthorized' : null } |
+export type MakePrivateResponse = { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'AlreadyPrivate' : null } |
   { 'InternalError' : null };
@@ -689,6 +712,7 @@ export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
   { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
@@ -744,6 +768,7 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -761,6 +786,7 @@ export interface RegisterPollVoteArgs {
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |
   { 'OptionIndexOutOfRange' : null } |
@@ -774,6 +800,7 @@ export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'ProposalMessageNotFound' : null } |
   { 'NoEligibleNeurons' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'Success' : null } |
   { 'ProposalNotAcceptingVotes' : null } |
   { 'InternalError' : string };
@@ -785,6 +812,7 @@ export interface RemoveParticipantArgs {
 }
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'CannotRemoveSelf' : null } |
@@ -799,6 +827,7 @@ export interface RemoveReactionArgs {
 export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };
 export interface ReplyContext {
@@ -806,7 +835,8 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
-export type ResetInviteCodeResponse = { 'NotAuthorized' : null } |
+export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } };
 export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
@@ -869,6 +899,7 @@ export interface SendMessageArgs {
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   {
     'Success' : {
@@ -988,6 +1019,7 @@ export interface UnblockUserArgs {
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface UnpinMessageArgs {
@@ -997,6 +1029,7 @@ export interface UnpinMessageArgs {
 export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };
 export interface UpdateGroupV2Args {
@@ -1012,6 +1045,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null } |
@@ -1060,7 +1094,7 @@ export type VoteOperation = { 'RegisterVote' : null } |
 export interface _SERVICE {
   'add_participants' : ActorMethod<
     [AddParticipantsArgs],
-    AddParticipantsResponse
+    AddParticipantsResponse,
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
@@ -1068,12 +1102,12 @@ export interface _SERVICE {
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'disable_invite_code' : ActorMethod<
     [DisableInviteCodeArgs],
-    DisableInviteCodeResponse
+    DisableInviteCodeResponse,
   >,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
   'enable_invite_code' : ActorMethod<
     [EnableInviteCodeArgs],
-    EnableInviteCodeResponse
+    EnableInviteCodeResponse,
   >,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
@@ -1083,36 +1117,36 @@ export interface _SERVICE {
   'make_private' : ActorMethod<[MakePrivateArgs], MakePrivateResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
-    MessagesByMessageIndexResponse
+    MessagesByMessageIndexResponse,
   >,
   'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<
     [RegisterPollVoteArgs],
-    RegisterPollVoteResponse
+    RegisterPollVoteResponse,
   >,
   'register_proposal_vote' : ActorMethod<
     [RegisterProposalVoteArgs],
-    RegisterProposalVoteResponse
+    RegisterProposalVoteResponse,
   >,
   'remove_participant' : ActorMethod<
     [RemoveParticipantArgs],
-    RemoveParticipantResponse
+    RemoveParticipantResponse,
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'reset_invite_code' : ActorMethod<
     [ResetInviteCodeArgs],
-    ResetInviteCodeResponse
+    ResetInviteCodeResponse,
   >,
   'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
-    SelectedInitialResponse
+    SelectedInitialResponse,
   >,
   'selected_updates' : ActorMethod<
     [SelectedUpdatesArgs],
-    SelectedUpdatesResponse
+    SelectedUpdatesResponse,
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,

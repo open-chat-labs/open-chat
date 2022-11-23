@@ -620,5 +620,10 @@
     "whatsOnYourMind": "何を考えているの？",
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
-    "nMessagesDeleted": "{number} 件のメッセージが削除されました"
+    "nMessagesDeleted": "{number} 件のメッセージが削除されました",
+    "freezeGroup": "グループを凍結",
+    "unfreezeGroup": "グループを解凍",
+    "chatFrozen": "このチャットは凍結されました",
+    "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
+    "chatUnfrozenBy": "{unfrozenBy} によってフリーズ解除されたチャット"
 }

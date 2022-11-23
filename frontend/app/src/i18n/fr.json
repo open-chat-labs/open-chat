@@ -619,5 +619,10 @@
     "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?",
     "joined": "Rejoint",
     "oneMessageDeleted": "1 message supprimé",
-    "nMessagesDeleted": "{number} messages supprimés"
+    "nMessagesDeleted": "{number} messages supprimés",
+    "freezeGroup": "Groupe Geler",
+    "unfreezeGroup": "Dégeler le groupe",
+    "chatFrozen": "Ce chat a été gelé",
+    "chatFrozenBy": "Chat gelé par {frozenBy}",
+    "chatUnfrozenBy": "Chat débloqué par {unfrozenBy}"
 }

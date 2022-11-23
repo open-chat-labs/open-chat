@@ -619,5 +619,10 @@
     "whatsOnYourMind": "Was haben Sie auf dem Herzen?",
     "joined": "Trat bei",
     "oneMessageDeleted": "1 Nachricht gelöscht",
-    "nMessagesDeleted": "{number} Nachrichten gelöscht"
+    "nMessagesDeleted": "{number} Nachrichten gelöscht",
+    "freezeGroup": "Gruppe einfrieren",
+    "unfreezeGroup": "Gruppe entsperren",
+    "chatFrozen": "Dieser Chat wurde eingefroren",
+    "chatFrozenBy": "Chat eingefroren von {frozenBy}",
+    "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben"
 }

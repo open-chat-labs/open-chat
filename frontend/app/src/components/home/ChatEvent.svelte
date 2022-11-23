@@ -20,6 +20,8 @@
     import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
+    import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -203,6 +205,10 @@
     {/if}
 {:else if event.event.kind === "permissions_changed"}
     <PermissionsChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
+{:else if event.event.kind === "chat_frozen"}
+    <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
+{:else if event.event.kind === "chat_unfrozen"}
+    <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left"}
     <div>Unexpected event type</div>
 {/if}

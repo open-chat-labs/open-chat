@@ -71,6 +71,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let isSuperAdmin = client.isSuperAdmin();
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -78,6 +79,7 @@
     $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
+    $: isFrozen = client.isFrozen(chat.chatId);
 
     $: {
         if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -424,6 +426,14 @@
     function cancelPreview() {
         dispatch("cancelPreview", chat.chatId);
     }
+
+    function freezeGroup() {
+        dispatch("freezeGroup", chat.chatId);
+    }
+
+    function unfreezeGroup() {
+        dispatch("unfreezeGroup", chat.chatId);
+    }
 </script>
 
 {#if showMentionPicker}
@@ -454,6 +464,17 @@
         </div>
     {:else if preview}
         <div class="preview">
+            {#if isSuperAdmin}
+                {#if isFrozen}
+                    <Button secondary={true} small={true} on:click={unfreezeGroup}>
+                        {$_("unfreezeGroup")}
+                    </Button>
+                {:else}
+                    <Button secondary={true} small={true} on:click={freezeGroup}>
+                        {$_("freezeGroup")}
+                    </Button>
+                {/if}
+            {/if}
             <Button secondary={true} small={true} on:click={cancelPreview}>
                 {$_("leave")}
             </Button>

@@ -620,5 +620,10 @@
     "whatsOnYourMind": "你在想什么？",
     "nMessagesDeleted": "{number} 条消息已删除",
     "joined": "已加入",
-    "oneMessageDeleted": "已删除 1 条消息"
+    "oneMessageDeleted": "已删除 1 条消息",
+    "freezeGroup": "冻结组",
+    "unfreezeGroup": "解冻组",
+    "chatFrozen": "此聊天已被冻结",
+    "chatFrozenBy": "聊天被 {frozenBy} 冻结",
+    "chatUnfrozenBy": "{unfrozenBy} 解冻聊天"
 }

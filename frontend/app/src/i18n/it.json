@@ -619,5 +619,10 @@
     "whatsOnYourMind": "Cos'hai in mente?",
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
-    "nMessagesDeleted": "{number} messaggi eliminati"
+    "nMessagesDeleted": "{number} messaggi eliminati",
+    "freezeGroup": "Congelare il gruppo",
+    "unfreezeGroup": "Sblocca gruppo",
+    "chatFrozen": "Questa chat è stata bloccata",
+    "chatFrozenBy": "Chat bloccata da {frozenBy}",
+    "chatUnfrozenBy": "Chat sbloccata da {unfrozenBy}"
 }
