@@ -33,6 +33,17 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             .filter_map(|(message_id, result)| matches!(result, UndeleteMessageResult::Success).then_some(message_id))
             .collect();
 
+        let chat_events = chat.events.get(args.thread_root_message_index).unwrap();
+
+        let messages: Vec<_> = deleted
+            .iter()
+            .filter_map(|message_id| {
+                chat_events
+                    .message_event_by_message_id(*message_id, Some(my_user_id))
+                    .map(|e| e.event)
+            })
+            .collect();
+
         if !deleted.is_empty() {
             ic_cdk::spawn(undelete_on_recipients_canister(
                 args.user_id.into(),
@@ -41,7 +52,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             ));
         }
 
-        Success
+        Success(SuccessResult { messages })
     } else {
         ChatNotFound
     }
