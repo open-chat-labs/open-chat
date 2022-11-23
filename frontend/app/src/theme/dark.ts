@@ -105,7 +105,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             // bg: "#555555",
             bg: textBlack,
             txt: txtHigh,
-            sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
+            sh: "none",
         },
 
         members: {
