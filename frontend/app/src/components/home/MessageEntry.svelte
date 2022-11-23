@@ -428,11 +428,11 @@
     }
 
     function freezeGroup() {
-        dispatch("freezeGroup", chat.chatId);
+        client.freezeGroup(chat.chatId, undefined);
     }
 
     function unfreezeGroup() {
-        dispatch("unfreezeGroup", chat.chatId);
+        client.unfreezeChat(chat.chatId);
     }
 </script>
 
