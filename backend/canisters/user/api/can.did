@@ -83,7 +83,9 @@ type UndeleteMessagesArgs =
 
 type UndeleteMessagesResponse =
     variant {
-        Success;
+        Success: record {
+            messages: vec Message;
+        };
         ChatNotFound;
         UserSuspended;
     };
