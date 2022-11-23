@@ -36,11 +36,6 @@
 </script>
 
 <form on:submit|preventDefault={performSearch} class="wrapper">
-    <span class="icon" class:searching>
-        {#if !searching}
-            <Magnify size={$iconSize} color={"#ccc"} />
-        {/if}
-    </span>
     <input
         on:keydown={keydown}
         spellcheck="false"
@@ -50,6 +45,12 @@
     {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"
             ><Close size={$iconSize} color={"#ccc"} /></span>
+    {:else}
+        <span class="icon" class:searching>
+            {#if !searching}
+                <Magnify size={$iconSize} color={"#ccc"} />
+            {/if}
+        </span>
     {/if}
 </form>
 
@@ -62,6 +63,7 @@
         position: relative;
         padding: $sp2 $sp4;
         border-radius: $sp2;
+        box-shadow: var(--chatSearch-sh);
 
         @include mobile() {
             margin: 0 $sp3;
@@ -69,6 +71,7 @@
         }
     }
     .icon {
+        margin-top: $sp3;
         flex: 0 0 25px;
     }
     .close {

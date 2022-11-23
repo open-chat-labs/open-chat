@@ -558,7 +558,7 @@
     .textbox {
         flex: 1;
         margin: 0 $sp3;
-        padding: 6px $sp4;
+        padding: $sp3 $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
         border-radius: $sp3;
@@ -572,6 +572,7 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         border: 1px solid transparent;
+        box-shadow: var(--entry-input-sh);
 
         &:empty:before {
             content: attr(placeholder);

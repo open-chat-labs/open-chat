@@ -31,7 +31,17 @@ export interface Theme {
     placeholder: string;
 
     collapsible: {
-        open: string;
+        closed: {
+            header: {
+                txt: string;
+            };
+        };
+        open: {
+            header: {
+                txt: string;
+                arrow: string;
+            };
+        };
     };
 
     notificationBar: {
@@ -73,6 +83,7 @@ export interface Theme {
     input: {
         bg: string;
         txt: string;
+        sh: string;
     };
 
     members: {
@@ -84,6 +95,7 @@ export interface Theme {
         input: {
             txt: string;
             bg: string;
+            sh: string;
         };
     };
 
@@ -109,6 +121,7 @@ export interface Theme {
     chatSearch: {
         bg: string;
         txt: string;
+        sh: string;
 
         section: {
             txt: string;
@@ -132,6 +145,7 @@ export interface Theme {
         hv: string;
         sh: string;
         "inverted-sh": string;
+        bd: string;
     };
 
     button: {

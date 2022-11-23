@@ -1,15 +1,24 @@
 import type { Theme } from "./themes";
 
-const darkBase = "#1B1C21";
+const backgroundBlack = "#1B1C21";
 
-const dark60pc = `${darkBase}99`;
-const darkBorder = "#32353F";
+const dark60pc = `${backgroundBlack}99`;
 
-const selectedChat = "#32353F80";
-const hoveredChat = "#32353F40";
+const borderDark = "#32353F";
+const borderLight = "#ededed";
+const textBlack = "#242834";
+const textBodyLight = "#5C5C5C";
+const textBodyDark = "#b1b1b1";
+
+function hexPercent(hx: string, pc: number) {
+    const n = (pc / 100) * 255;
+    return `${hx}${Math.round(n).toString(16)}`;
+}
+
+const selectedChat = hexPercent(borderDark, 50);
+const hoveredChat = hexPercent(borderDark, 70);
+const chatPanelDark = hexPercent(backgroundBlack, 30);
 const orangeAccent = "#ff8541";
-
-const textBox = "#242834";
 
 const dark15 = "#383838";
 const dark25 = "#525252";
@@ -19,7 +28,6 @@ const dark55 = "#888888";
 const dark60 = "#ababab";
 
 const txtHigh = "#ffffff";
-const txtMed = "#b1b1b1";
 const txtLow = "rgba(255,255,255,0.38)";
 
 const primary = "#23a2ee";
@@ -31,10 +39,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         name: "dark",
         label: "Dark",
 
-        bg: darkBase,
+        bg: backgroundBlack,
         txt: txtHigh,
-        "txt-light": txtMed,
-        bd: darkBorder,
+        "txt-light": textBodyDark,
+        bd: borderDark,
         error: "#CF6679",
         // accent: "#e87fb4",
         accent: "#ff005c",
@@ -42,7 +50,17 @@ export function darkTheme(defaultTheme: Theme): Theme {
         primary,
 
         collapsible: {
-            open: primary,
+            closed: {
+                header: {
+                    txt: textBodyDark,
+                },
+            },
+            open: {
+                header: {
+                    txt: txtHigh,
+                    arrow: primary,
+                },
+            },
         },
 
         notificationBar: {
@@ -52,13 +70,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         reaction: {
             ...defaultTheme.reaction,
-            bg: dark25,
+            bg: textBlack,
             txt: txtHigh,
             me: "#085d8c",
         },
 
         timeline: {
-            txt: txtMed,
+            txt: textBodyDark,
             bg: "transparent",
         },
 
@@ -85,8 +103,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         input: {
             // bg: "#555555",
-            bg: textBox,
+            bg: textBlack,
             txt: txtHigh,
+            sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
         },
 
         members: {
@@ -97,22 +116,23 @@ export function darkTheme(defaultTheme: Theme): Theme {
         entry: {
             bg: dark60pc,
             input: {
-                bg: textBox,
+                bg: textBlack,
                 txt: txtHigh,
+                sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
             },
         },
 
         panel: {
             ...defaultTheme.panel,
-            bg: darkBase,
+            bg: chatPanelDark,
 
             left: {
-                bg: "transparent",
+                bg: chatPanelDark,
             },
 
             right: {
-                bg: "transparent",
-                modal: darkBase,
+                bg: chatPanelDark,
+                modal: backgroundBlack,
             },
         },
 
@@ -123,8 +143,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         chatSearch: {
             ...defaultTheme.chatSearch,
-            bg: textBox,
+            bg: textBlack,
             txt: txtHigh,
+            sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
 
             section: {
                 ...defaultTheme.chatSearch.section,
@@ -137,24 +158,25 @@ export function darkTheme(defaultTheme: Theme): Theme {
             "bg-selected": selectedChat,
             hv: hoveredChat,
             txt1: txtHigh,
-            txt2: txtMed,
+            txt2: textBodyDark,
             del: "#085d8c",
         },
 
         menu: {
-            bg: textBox,
-            txt: txtMed,
+            bg: backgroundBlack,
+            txt: textBodyDark,
             "disabled-txt": txtLow,
             hv: hoveredChat,
             sh: "none",
             "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
+            bd: textBodyLight,
         },
 
         button: {
             bg: blueAccent,
             hv: "#053d5c",
             txt: txtHigh,
-            disabled: textBox,
+            disabled: textBlack,
             spinner: dark60,
             "disabled-txt": "#999999",
             "disabled-bd": "#999999",
@@ -162,9 +184,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         modal: {
             filter: "blur(5px)",
-            bg: darkBase,
+            bg: backgroundBlack,
             txt: txtHigh,
-            bd: `1px solid ${darkBorder}`,
+            bd: `1px solid ${borderDark}`,
         },
 
         modalPage: {
@@ -183,12 +205,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
             date: {
                 // bg: "rgba(100,100,100,0.7)",
-                bg: textBox,
+                bg: textBlack,
                 txt: "inherit",
             },
 
             msg: {
-                bg: textBox,
+                bg: textBlack,
                 muted: txtLow,
                 txt: "rgba(255,255,255,0.8)",
 
@@ -203,10 +225,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         icon: {
             hv: "rgba(255,255,255,0.1)",
-            txt: txtMed,
+            txt: textBodyDark,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
-                txt: txtMed,
+                txt: textBodyDark,
             },
             msg: {
                 hv: "rgba(255,255,255,0.1)",

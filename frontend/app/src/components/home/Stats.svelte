@@ -128,16 +128,23 @@
 
 <div class="message-stats">
     <svg class:rendered class="pie" viewBox="0 0 320 320">
-        <circle class="background" cx={160} cy={160} r={150} />
+        <clipPath id="hollow">
+            <path
+                d="M 160 160 m -160 0 a 160 160 0 1 0 320 0 a 160 160 0 1 0 -320 0 Z M 160 160 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z"
+                style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" />
+        </clipPath>
+
+        <circle class="background" cx={160} cy={160} r={150} clip-path="url(#hollow)" />
 
         {#each data as slice, i}
             <circle
                 on:mouseenter={(_) => (hoveredIndex = i)}
                 on:mouseleave={(_) => (hoveredIndex = undefined)}
-                class={slice.cls}
+                class={`slice ${slice.cls}`}
                 cx={160}
                 cy={160}
                 r={75}
+                clip-path="url(#hollow)"
                 stroke-dasharray={`${(slice.perc * circum) / 100} ${circum}`}
                 transform={`rotate(${-90 + slice.rotate}) ${
                     i === hoveredIndex ? "scale(1.05)" : ""
@@ -148,55 +155,85 @@
     </svg>
     <div class="numbers">
         <div class="text legend">
-            <span class="stat">{stats.textMessages}</span>
-            {$_("stats.textMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.textMessages.toLocaleString()}</span>{$_(
+                    "stats.textMessages"
+                )}
+            </div>
         </div>
         <div class="image legend">
-            <span class="stat">{stats.imageMessages}</span>
-            {$_("stats.imageMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.imageMessages.toLocaleString()}</span>{$_(
+                    "stats.imageMessages"
+                )}
+            </div>
         </div>
         <div class="video legend">
-            <span class="stat">{stats.videoMessages}</span>
-            {$_("stats.videoMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.videoMessages.toLocaleString()}</span>{$_(
+                    "stats.videoMessages"
+                )}
+            </div>
         </div>
         <div class="audio legend">
-            <span class="stat">{stats.audioMessages}</span>
-            {$_("stats.audioMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.audioMessages.toLocaleString()}</span>{$_(
+                    "stats.audioMessages"
+                )}
+            </div>
         </div>
         <div class="file legend">
-            <span class="stat">{stats.fileMessages}</span>
-            {$_("stats.fileMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.fileMessages.toLocaleString()}</span>{$_(
+                    "stats.fileMessages"
+                )}
+            </div>
         </div>
         <div class="poll legend">
-            <span class="stat">{stats.polls}</span>
-            {$_("stats.pollMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.fileMessages")}
+            </div>
         </div>
         <div class="icp legend">
-            <span class="stat">{stats.icpMessages}</span>
-            {$_("stats.icpTransfers")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.icpMessages.toLocaleString()}</span>{$_(
+                    "stats.icpTransfers"
+                )}
+            </div>
         </div>
         <div class="giphy legend">
-            <span class="stat">{stats.giphyMessages}</span>
-            {$_("stats.giphyMessages")}
+            <div class="key" />
+            <div class="label">
+                <span class="stat">{stats.giphyMessages.toLocaleString()}</span>{$_(
+                    "stats.giphyMessages"
+                )}
+            </div>
         </div>
     </div>
 </div>
 
 <div class="other-stats">
     <div class="poll-votes">
-        <span class="stat">📊 {stats.pollVotes}</span>
+        <span class="stat">{stats.pollVotes}</span>
         {$_("stats.pollVotes")}
     </div>
     <div class="replies">
-        <span class="stat">↩️ {stats.replies}</span>
+        <span class="stat">{stats.replies}</span>
         {$_("stats.replies")}
     </div>
     <div class="reactions">
-        <span class="stat">🍿 {stats.reactions}</span>
+        <span class="stat">{stats.reactions}</span>
         {$_("stats.reactions")}
     </div>
     <div class="deleted-messages">
-        <span class="stat">🗑️ {stats.deletedMessages}</span>
+        <span class="stat">{stats.deletedMessages}</span>
         {$_("stats.deletedMessages")}
     </div>
 </div>
@@ -205,16 +242,19 @@
     $saturation: 80%;
     $lightness: 65%;
 
-    $video-colour: hsl(calc(360 / 8), $saturation, $lightness);
-    $audio-colour: hsl(calc(360 / 8 * 2), $saturation, $lightness);
-    $image-colour: hsl(calc(360 / 8 * 3), $saturation, $lightness);
-    $file-colour: hsl(calc(360 / 8 * 4), $saturation, $lightness);
-    $text-colour: hsl(calc(360 / 8 * 5), $saturation, $lightness);
-    $poll-colour: hsl(calc(360 / 8 * 6), $saturation, $lightness);
-    $icp-colour: hsl(calc(360 / 8 * 7), $saturation, $lightness);
-    $giphy-colour: hsl(calc(360 / 8 * 8), $saturation, $lightness);
+    $video-colour: #ed5ec9;
+    $audio-colour: #a65eed;
+    $image-colour: #5eeded;
+    $file-colour: #edc95e;
+    $text-colour: #5e82ed;
+    $poll-colour: #5eed82;
+    $icp-colour: #a6ed5e;
+    $giphy-colour: #ed5e5e;
 
     .stat {
+        color: var(--txt);
+        @include font-size(fs-120);
+
         @include mobile() {
             @include font-size(fs-90);
         }
@@ -225,29 +265,21 @@
         gap: $sp4;
         margin-bottom: $sp4;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: space-between;
 
-        @include font(book, normal, fs-110);
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
 
         @include mobile() {
-            @include font-size(fs-100);
-        }
-
-        .stat {
-            @include font-size(fs-120);
+            gap: 6px;
         }
     }
 
     .message-stats {
-        display: flex;
-        gap: $sp5;
-        align-items: center;
-        justify-content: space-between;
-        min-width: 80%;
-        margin-bottom: $sp4;
+        text-align: center;
     }
 
-    circle {
+    .slice {
         fill: transparent;
         transform-origin: 50% 50%;
         stroke-width: 150px;
@@ -255,9 +287,8 @@
     }
 
     .pie {
-        flex: auto;
-        width: 50%;
-
+        width: min(250px, 100%);
+        margin-bottom: $sp5;
         &.rendered circle {
             transition: transform 200ms ease-in-out;
         }
@@ -265,8 +296,10 @@
 
     .numbers {
         text-align: left;
-        flex: 0 0 50%;
-        width: 50%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-bottom: $sp5;
+        row-gap: $sp3;
     }
 
     .background {
@@ -274,54 +307,91 @@
     }
 
     .legend {
-        padding: 0 $sp3;
-        margin-bottom: $sp2;
-        border-left-width: 6px;
-        border-left-style: solid;
-        @include font-size(fs-80);
+        color: var(--txt-light);
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: $sp3;
 
-        @include mobile() {
-            margin-bottom: $sp2;
+        .stat {
+            margin-right: $sp3;
+        }
+        .key {
+            width: $sp5;
+            height: $sp5;
+            flex: 0 0 $sp5;
+
+            @include mobile() {
+                width: $sp6;
+                height: $sp6;
+                flex: 0 0 $sp6;
+            }
+        }
+        .label {
+            flex: auto;
+
+            @include mobile() {
+                @include font-size(fs-90);
+
+                display: flex;
+                flex-direction: column;
+            }
         }
     }
 
     .text {
         stroke: $text-colour;
-        border-left-color: $text-colour;
+        .key {
+            background-color: $text-colour;
+        }
     }
 
     .image {
         stroke: $image-colour;
-        border-left-color: $image-colour;
+        .key {
+            background-color: $image-colour;
+        }
     }
 
     .video {
         stroke: $video-colour;
-        border-left-color: $video-colour;
+        .key {
+            background-color: $video-colour;
+        }
     }
 
     .audio {
         stroke: $audio-colour;
-        border-left-color: $audio-colour;
+        .key {
+            background-color: $audio-colour;
+        }
     }
 
     .file {
         stroke: $file-colour;
-        border-left-color: $file-colour;
+        .key {
+            background-color: $file-colour;
+        }
     }
 
     .poll {
         stroke: $poll-colour;
-        border-left-color: $poll-colour;
+        .key {
+            background-color: $poll-colour;
+        }
     }
 
     .icp {
         stroke: $icp-colour;
-        border-left-color: $icp-colour;
+        .key {
+            background-color: $icp-colour;
+        }
     }
 
     .giphy {
         stroke: $giphy-colour;
-        border-left-color: $giphy-colour;
+        .key {
+            background-color: $giphy-colour;
+        }
     }
 </style>

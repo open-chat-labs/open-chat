@@ -5,12 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type {
-        MessageMatch,
-        SearchDirectChatResponse,
-        SearchGroupChatResponse,
-        ChatSummary,
-    } from "openchat-client";
+    import type { MessageMatch, ChatSummary } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
@@ -179,8 +174,9 @@
 <style type="text/scss">
     .wrapper {
         border-radius: 18px;
-        padding: 5px 12px 5px 12px;
+        padding: $sp3 $sp4;
         background-color: var(--chatSearch-bg);
+        box-shadow: var(--chatSearch-sh);
         width: 100%;
         margin: 0 5px;
         flex: 1;

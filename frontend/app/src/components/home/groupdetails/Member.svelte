@@ -205,6 +205,7 @@
         color: var(--txt);
         padding: $sp4;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        gap: 12px;
 
         &:not(.me) {
             cursor: pointer;
@@ -225,7 +226,6 @@
 
     .details {
         flex: 1;
-        padding: 0 5px;
         display: flex;
         align-items: center;
         @include ellipsis();

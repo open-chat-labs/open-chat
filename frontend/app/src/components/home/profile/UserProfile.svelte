@@ -516,10 +516,9 @@
 
     .user-form {
         @include nice-scrollbar();
-
-        padding: $sp3;
-        @include size-above(xl) {
-            padding: $sp3 0 0 0;
+        padding: $sp3 $sp5 0 $sp5;
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
         }
     }
 
@@ -549,6 +548,7 @@
     .title {
         flex: 1;
         padding: 0 $sp4;
+        @include font-size(fs-120);
     }
 
     .close {

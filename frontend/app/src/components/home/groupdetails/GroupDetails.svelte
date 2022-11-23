@@ -547,7 +547,11 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3 0 0 0;
+        padding: $sp3 $sp5 0 $sp5;
+
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
+        }
     }
 
     h4,

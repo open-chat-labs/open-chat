@@ -102,6 +102,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
+        box-shadow: var(--input-sh);
 
         &.small {
             @include font(book, normal, fs-80);
