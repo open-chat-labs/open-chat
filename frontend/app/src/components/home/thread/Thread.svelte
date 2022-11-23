@@ -314,6 +314,15 @@
         client.deleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
     }
 
+    function onUndeleteMessage(ev: CustomEvent<Message>): void {
+        if (ev.detail.messageId === rootEvent.event.messageId) {
+            relayPublish({ kind: "relayed_undelete_message", message: ev.detail });
+            return;
+        }
+
+        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
+    }
+
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
@@ -506,6 +515,7 @@
                             on:replyTo={replyTo}
                             on:selectReaction={onSelectReaction}
                             on:deleteMessage={onDeleteMessage}
+                            on:undeleteMessage={onUndeleteMessage}
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editEvent={() => editEvent(evt)}
@@ -514,7 +524,7 @@
                             on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
-                            on:deleteMessage={onDeleteMessage}
+                            on:undeleteMessage={onUndeleteMessage}
                             on:upgrade
                             on:forward />
                     {/each}

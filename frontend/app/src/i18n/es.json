@@ -620,5 +620,7 @@
     "whatsOnYourMind": "¿Qué tienes en mente?",
     "joined": "Unido",
     "oneMessageDeleted": "1 mensaje eliminado",
-    "nMessagesDeleted": "{number} mensajes eliminados"
+    "nMessagesDeleted": "{number} mensajes eliminados",
+    "undeleteMessage": "recuperar",
+    "undeleting": "Recuperando..."
 }

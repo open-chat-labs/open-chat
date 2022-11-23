@@ -595,6 +595,22 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "undeleteMessage":
+                agent
+                    .undeleteMessage(
+                        payload.chatType,
+                        payload.chatId,
+                        payload.messageId,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+    
             case "addDirectChatReaction":
                 agent
                     .addDirectChatReaction(

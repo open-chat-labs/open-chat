@@ -383,6 +383,7 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    undeletedContent?: MessageContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
@@ -394,6 +395,7 @@ export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSucces
 export type DirectChatEvent =
     | Message
     | MessageDeleted
+    | MessageUndeleted
     | MessageEdited
     | ReactionAdded
     | ReactionRemoved
@@ -414,6 +416,7 @@ export type GroupChatEvent =
     | GroupNameChanged
     | AvatarChanged
     | MessageDeleted
+    | MessageUndeleted
     | MessageEdited
     | ReactionAdded
     | ReactionRemoved
@@ -487,6 +490,11 @@ export type AvatarChanged = {
 
 export type MessageDeleted = {
     kind: "message_deleted";
+    message: StaleMessage;
+};
+
+export type MessageUndeleted = {
+    kind: "message_undeleted";
     message: StaleMessage;
 };
 
@@ -1216,6 +1224,16 @@ export type DeleteMessageResponse =
     | "chat_not_found"
     | "success"
     | "message_not_found";
+
+export type UndeleteMessageResponse =
+    | { 
+        kind: "success",
+        message: Message,
+    }
+    | { kind: "not_in_group" }
+    | { kind: "chat_not_found" }
+    | { kind: "internal_error" }
+    | { kind: "message_not_found" };
 
 export type UnpinMessageResponse =
     | "no_change"

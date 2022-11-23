@@ -8,6 +8,7 @@
     const client = getContext<OpenChat>("client");
 
     export let content: DeletedContent;
+    export let undeleting: boolean;
 
     $: userStore = client.userStore;
     $: date = new Date(Number(content.timestamp));
@@ -16,9 +17,14 @@
 </script>
 
 <div class="deleted">
-    {$_("messageDeleted", {
-        values: { username, timestamp: timestampStr },
-    })}
+    <p>
+        {$_("messageDeleted", {
+            values: { username, timestamp: timestampStr },
+        })}    
+    </p>
+    {#if undeleting}
+        <p>{$_("undeleting")}</p>
+    {/if}
 </div>
 
 <style type="text/scss">

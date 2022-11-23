@@ -81,7 +81,6 @@
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: userStore = client.userStore;
-    $: isBot = chat.kind === "direct_chat" && $userStore[chat.them]?.kind === "bot";
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
 
     let loadingPrev = false;
@@ -152,6 +151,10 @@
         relaySubscribe((event: RelayedEvent) => {
             if (event.kind === "relayed_delete_message") {
                 doDeleteMessage(event.message);
+            }
+
+            if (event.kind === "relayed_undelete_message") {
+                doUndeleteMessage(event.message);
             }
 
             if (event.kind === "relayed_goto_message") {
@@ -410,6 +413,19 @@
         if (!canDelete && user.userId !== message.sender) return;
 
         client.deleteMessage(chat.chatId, undefined, message.messageId);
+    }
+
+    function onUndeleteMessage(ev: CustomEvent<Message>) {
+        doUndeleteMessage(ev.detail);
+    }
+
+    function doUndeleteMessage(message: Message) {
+        if (message.content.kind !== "deleted_content" || 
+            message.content.deletedBy !== user.userId) {
+            return
+        };
+
+        client.undeleteMessage(chat.chatId, undefined, message.messageId);
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -773,6 +789,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
                         on:deleteMessage={onDeleteMessage}
+                        on:undeleteMessage={onUndeleteMessage}
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={onSelectReactionEv}

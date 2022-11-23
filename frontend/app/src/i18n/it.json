@@ -619,5 +619,7 @@
     "whatsOnYourMind": "Cos'hai in mente?",
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
-    "nMessagesDeleted": "{number} messaggi eliminati"
+    "nMessagesDeleted": "{number} messaggi eliminati",
+    "undeleteMessage": "Annulla cancellazione",
+    "undeleting": "Annullamento eliminazione..."
 }

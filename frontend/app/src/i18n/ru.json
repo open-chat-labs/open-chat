@@ -619,5 +619,7 @@
     "whatsOnYourMind": "Что у тебя на уме?",
     "joined": "Присоединился",
     "oneMessageDeleted": "1 сообщение удалено",
-    "nMessagesDeleted": "{number} сообщений удалено"
+    "nMessagesDeleted": "{number} сообщений удалено",
+    "undeleteMessage": "Восстановить",
+    "undeleting": "Восстановление..."
 }

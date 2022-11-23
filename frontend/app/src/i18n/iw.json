@@ -617,5 +617,7 @@
     "whatsOnYourMind": "על מה אתה חושב?",
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
-    "nMessagesDeleted": "{number} הודעות נמחקו"
+    "nMessagesDeleted": "{number} הודעות נמחקו",
+    "undeleteMessage": "בטל מחיקה",
+    "undeleting": "מבטל מחיקה..."
 }

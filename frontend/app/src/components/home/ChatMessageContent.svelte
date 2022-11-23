@@ -33,6 +33,7 @@
     export let chatId: string;
     export let messageIndex: number;
     export let collapsed = false;
+    export let undeleting: boolean = false;
 </script>
 
 {#if content.kind === "text_content"}
@@ -48,7 +49,7 @@
 {:else if content.kind === "file_content"}
     <FileContent {edited} {me} {content} {reply} />
 {:else if content.kind === "deleted_content"}
-    <DeletedContent {content} />
+    <DeletedContent {content} {undeleting} />
 {:else if content.kind === "crypto_content"}
     <CryptoContent {senderId} {content} {me} {first} {groupChat} />
 {:else if content.kind === "placeholder_content"}

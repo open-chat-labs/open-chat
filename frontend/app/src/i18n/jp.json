@@ -620,5 +620,7 @@
     "whatsOnYourMind": "何を考えているの？",
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
-    "nMessagesDeleted": "{number} 件のメッセージが削除されました"
+    "nMessagesDeleted": "{number} 件のメッセージが削除されました",
+    "undeleteMessage": "削除を取り消す",
+    "undeleting": "削除を取り消しています..."
 }
