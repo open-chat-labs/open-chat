@@ -221,19 +221,19 @@
 
 <div class="other-stats">
     <div class="poll-votes">
-        <span class="stat">{stats.pollVotes}</span>
+        <span class="stat">{stats.pollVotes.toLocaleString()}</span>
         {$_("stats.pollVotes")}
     </div>
     <div class="replies">
-        <span class="stat">{stats.replies}</span>
+        <span class="stat">{stats.replies.toLocaleString()}</span>
         {$_("stats.replies")}
     </div>
     <div class="reactions">
-        <span class="stat">{stats.reactions}</span>
+        <span class="stat">{stats.reactions.toLocaleString()}</span>
         {$_("stats.reactions")}
     </div>
     <div class="deleted-messages">
-        <span class="stat">{stats.deletedMessages}</span>
+        <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         {$_("stats.deletedMessages")}
     </div>
 </div>
