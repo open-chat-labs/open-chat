@@ -21,13 +21,13 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         runtime_state.data.frozen = Timestamped::new(None, now);
 
         Success(EventWrapper {
-                index: event_index,
-                timestamp: now,
-                correlation_id: 0,
-                event: ChatUnfrozen {
-                    unfrozen_by: args.caller,
-                }
-            })
+            index: event_index,
+            timestamp: now,
+            correlation_id: 0,
+            event: ChatUnfrozen {
+                unfrozen_by: args.caller,
+            },
+        })
     } else {
         ChatNotFrozen
     }
