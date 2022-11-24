@@ -710,7 +710,8 @@ impl AllChatEvents {
         }
     }
 
-    pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) {
+    pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> EventIndex {
+        self.frozen = true;
         self.push_event(
             None,
             ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
@@ -719,18 +720,17 @@ impl AllChatEvents {
             })),
             0,
             now,
-        );
-        self.frozen = true;
+        )
     }
 
-    pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) {
+    pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) -> EventIndex {
         self.frozen = false;
         self.push_event(
             None,
             ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
             0,
             now,
-        );
+        )
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
