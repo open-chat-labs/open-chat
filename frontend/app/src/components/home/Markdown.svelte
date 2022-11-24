@@ -139,13 +139,12 @@
 
             pre {
                 padding: toRem(12);
-                background-color: var(--markdown-bg-dark);
                 overflow-x: auto;
             }
 
             blockquote {
                 padding: 0 toRem(16);
-                border-left: toRem(4) solid var(--markdown-fg-muted);
+                border-left: toRem(4) solid var(--bd);
                 color: var(--markdown-fg-muted);
             }
 

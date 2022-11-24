@@ -266,12 +266,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         markdown: {
             fg: {
-                color: dark60,
-                bright: "#cacaca",
-                muted: dark55,
-            },
-            bg: {
-                dark: dark15,
+                color: txtHigh,
+                bright: txtHigh,
+                muted: textBodyLight,
             },
         },
     };

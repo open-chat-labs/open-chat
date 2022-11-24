@@ -436,7 +436,7 @@
             class:last
             class:readByMe
             class:crypto
-            class:full-width={isProposal && !inert}
+            class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !isProposal}
@@ -880,8 +880,8 @@
             max-width: 90%;
         }
 
-        &.full-width {
-            max-width: none;
+        &.proposal {
+            max-width: 800px;
             width: 100%;
         }
 

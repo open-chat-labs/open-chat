@@ -477,9 +477,9 @@
         "done": "refresh and continue"
     },
     "cryptoAccount": {
-        "shortBalanceLabel": "balance",
+        "shortBalanceLabel": "Balance",
         "shortRemainingBalanceLabel": "remaining balance",
-        "manage": "manage",
+        "manage": "Manage",
         "manageHeader": "Manage {symbol} account",
         "topUp": "Top up",
         "topUpBlurb": "To top up, simply transfer some {token} into the account above.",
@@ -487,7 +487,7 @@
         "withdrawTarget": "enter an address to withdraw to",
         "withdrawalSucceeded": "Your withdrawal succeeded!",
         "withdrawalFailed": "Your withdrawal failed!",
-        "token": "token",
+        "token": "Token",
         "comingSoon": "(coming soon)"
     },
     "searchChat": "Search",

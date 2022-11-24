@@ -262,9 +262,6 @@ export interface Theme {
             bright: string;
             muted: string;
         };
-        bg: {
-            dark: string;
-        };
     };
 }
 

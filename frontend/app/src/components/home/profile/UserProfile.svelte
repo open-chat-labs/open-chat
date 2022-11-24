@@ -375,7 +375,7 @@
             cursor: pointer;
 
             .theme-txt {
-                border-bottom: $sp2 solid hotpink;
+                border-bottom: $sp2 solid var(--accent);
                 padding-bottom: $sp2;
             }
 
@@ -436,13 +436,13 @@
     .title {
         flex: 1;
         @include font-size(fs-120);
+
+        @include mobile() {
+            padding: 0 $sp3;
+        }
     }
 
     .close {
         flex: 0 0 30px;
-    }
-
-    .coming-soon {
-        @include font(light, normal, fs-90);
     }
 </style>

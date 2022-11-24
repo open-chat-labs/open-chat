@@ -273,12 +273,9 @@ export function lightTheme(): Theme {
 
         markdown: {
             fg: {
-                color: "#3a3a3a",
-                bright: "#000",
-                muted: "#777",
-            },
-            bg: {
-                dark: "#eeeeee",
+                color: txt,
+                bright: txt,
+                muted: txtLight,
             },
         },
     };

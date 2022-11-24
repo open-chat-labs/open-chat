@@ -253,7 +253,7 @@
 
     .stat {
         color: var(--txt);
-        @include font-size(fs-120);
+        @include font-size(fs-110);
 
         @include mobile() {
             @include font-size(fs-90);
@@ -268,7 +268,7 @@
         justify-content: space-between;
 
         color: var(--txt-light);
-        @include font(book, normal, fs-90);
+        @include font(book, normal, fs-80);
 
         @include mobile() {
             gap: 6px;

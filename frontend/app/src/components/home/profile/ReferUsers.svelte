@@ -129,6 +129,10 @@
         @include font(book, normal, fs-80);
     }
 
+    .message {
+        color: var(--txt-light);
+    }
+
     .link {
         color: var(--link-underline);
     }

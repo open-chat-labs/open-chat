@@ -162,7 +162,7 @@
         <EyeOff viewBox="0 -5 24 24" />
     </div>
 {:else}
-    <div>
+    <div class="wrapper">
         <div class="header">
             <div class="title-block">
                 <div class="title">
@@ -309,7 +309,7 @@
                 }
             }
             .status {
-                border-radius: $sp3;
+                border-radius: $sp2;
                 padding: toRem(1) toRem(6);
                 height: fit-content;
                 color: white;
@@ -328,7 +328,6 @@
         .subtitle {
             @include font-size(fs-70);
             padding: toRem(2) toRem(4);
-            background-color: var(--chatSummary-hv);
         }
     }
 

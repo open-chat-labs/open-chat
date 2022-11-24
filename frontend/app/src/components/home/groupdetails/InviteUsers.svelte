@@ -151,6 +151,7 @@
     <div class="toggle-row">
         <Toggle
             id="enable-invite-link"
+            small
             on:change={toggleLink}
             disabled={loading}
             waiting={loading}
@@ -164,8 +165,10 @@
     {#if group.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>
-            <div class="qr">
-                <QR text={link} />
+            <div class="qr-wrapper">
+                <div class="qr">
+                    <QR text={link} />
+                </div>
             </div>
             <div class="message">
                 {$_("group.invite.shareMessage") +
@@ -209,8 +212,18 @@
 {/if}
 
 <style type="text/scss">
-    .qr {
-        background-color: #fff;
+    .qr-wrapper {
+        border: 1px solid var(--bd);
+        .qr {
+            background-color: #fff;
+            margin: $sp5 auto;
+            width: 200px;
+
+            @include mobile() {
+                width: 100%;
+                margin: 0;
+            }
+        }
     }
     .toggle-row {
         display: flex;
@@ -226,6 +239,10 @@
     .link,
     .message {
         @include font(book, normal, fs-80);
+    }
+
+    .message {
+        color: var(--txt-light);
     }
 
     .link {
