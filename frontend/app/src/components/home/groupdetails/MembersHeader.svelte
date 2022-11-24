@@ -50,7 +50,6 @@
     h4 {
         flex: 1;
         margin: 0;
-        text-align: center;
         @include font-size(fs-120);
     }
     .close,

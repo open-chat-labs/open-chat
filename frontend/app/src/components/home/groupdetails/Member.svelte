@@ -19,6 +19,7 @@
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import type { OpenChat, BlockedMember, FullMember } from "openchat-client";
     import { AvatarSize } from "openchat-client";
+    import FilteredUsername from "./FilteredUsername.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -31,6 +32,9 @@
     export let canRemoveMember: boolean = false;
     export let canBlockUser: boolean = false;
     export let canUnblockUser: boolean = false;
+    export let searchTerm: string = "";
+
+    // if search term is !== "", split the username into three parts [prefix, match, postfix]
 
     let hovering = false;
     let viewProfile = false;
@@ -113,7 +117,7 @@
     </span>
     <div class="details">
         <h4 class:blocked={member.memberKind === "blocked_member"}>
-            {me ? $_("you") : member.username ?? $_("unknownUser")}
+            <FilteredUsername {searchTerm} username={member.username} {me} />
         </h4>
         <span class="role">
             {#if member.role === "owner"}
