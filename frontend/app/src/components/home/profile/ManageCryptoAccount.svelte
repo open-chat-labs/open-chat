@@ -119,7 +119,7 @@
 
                 <h4 class="title">{$_("cryptoAccount.withdraw")}</h4>
 
-                <Legend>{$_("tokenTransfer.amount", { values: { token: symbol } })}</Legend>
+                <Legend label={$_("tokenTransfer.amount", { values: { token: symbol } })} />
                 <div class="token-input">
                     <TokenInput
                         maxAmountE8s={$cryptoBalance[token] - transferFees}

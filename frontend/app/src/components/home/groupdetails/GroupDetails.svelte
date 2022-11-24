@@ -391,7 +391,7 @@
             {:else if originalGroup.description?.length > 0}
                 <fieldset>
                     <legend>
-                        <Legend>{$_("groupDesc")}</Legend>
+                        <Legend label={$_("groupDesc")} />
                     </legend>
                     <Markdown text={description()} />
                 </fieldset>

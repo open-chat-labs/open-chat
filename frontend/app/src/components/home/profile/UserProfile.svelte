@@ -34,12 +34,10 @@
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import { logger } from "../../../utils/logging";
-    import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { Cryptocurrency, cryptoCurrencyList } from "openchat-client";
     import LinkButton from "../../LinkButton.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ReferUsers from "./ReferUsers.svelte";
+    import Accounts from "./Accounts.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,9 +54,6 @@
     let saving = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
-    let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
-    let showManageCryptoAccount = false;
-    let balanceError: string | undefined;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -66,8 +61,6 @@
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: storageStore = client.storageStore;
-    $: cryptoBalance = client.cryptoBalance;
-    $: userStore = client.userStore;
     $: {
         setLocale(selectedLocale);
     }
@@ -162,24 +155,7 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
-
-    function showManageCrypto(crypto: Cryptocurrency) {
-        selectedCryptoAccount = crypto;
-        showManageCryptoAccount = true;
-    }
-
-    function onBalanceRefreshed() {
-        balanceError = undefined;
-    }
-
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        balanceError = ev.detail;
-    }
 </script>
-
-{#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
-    <ManageCryptoAccount bind:token={selectedCryptoAccount} bind:open={showManageCryptoAccount} />
-{/if}
 
 <SectionHeader flush={true} shadow={true}>
     <h4 class="title">{$_("profile")}</h4>
@@ -315,75 +291,7 @@
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
             headerText={$_("accounts")}>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="token">{$_("cryptoAccount.token")}</th>
-                        <th class="balance">{$_("cryptoAccount.shortBalanceLabel")}</th>
-                        <th class="manage" />
-                    </tr>
-                </thead>
-                <tbody>
-                    {#if process.env.ENABLE_MULTI_CRYPTO}
-                        {#each cryptoCurrencyList as token}
-                            <tr>
-                                <td class="token">{token.toUpperCase()}</td>
-                                <td class="balance"
-                                    ><BalanceWithRefresh
-                                        {token}
-                                        value={$cryptoBalance[token]}
-                                        on:refreshed={onBalanceRefreshed}
-                                        on:error={onBalanceRefreshError} /></td>
-                                <td class="manage">
-                                    <LinkButton
-                                        underline={"hover"}
-                                        on:click={() => showManageCrypto(token)}
-                                        >{$_("cryptoAccount.manage")}</LinkButton>
-                                </td>
-                            </tr>
-                        {/each}
-                    {:else}
-                        <tr>
-                            <td class="token">ICP</td>
-                            <td class="balance"
-                                ><BalanceWithRefresh
-                                    token={"icp"}
-                                    value={$cryptoBalance["icp"]}
-                                    on:refreshed={onBalanceRefreshed}
-                                    on:error={onBalanceRefreshError} /></td>
-                            <td class="manage">
-                                <LinkButton
-                                    underline={"hover"}
-                                    on:click={() => showManageCrypto("icp")}
-                                    >{$_("cryptoAccount.manage")}</LinkButton>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="token"
-                                >BTC <span class="coming-soon"
-                                    >{$_("cryptoAccount.comingSoon")}</span
-                                ></td>
-                            <td class="balance">
-                                <BalanceWithRefresh value={BigInt(0)} disabled />
-                            </td>
-                            <td class="manage" />
-                        </tr>
-                        <tr>
-                            <td class="token"
-                                >CHAT <span class="coming-soon"
-                                    >{$_("cryptoAccount.comingSoon")}</span
-                                ></td>
-                            <td class="balance">
-                                <BalanceWithRefresh value={BigInt(0)} disabled />
-                            </td>
-                            <td class="manage" />
-                        </tr>
-                    {/if}
-                </tbody>
-            </table>
-            {#if balanceError !== undefined}
-                <ErrorMessage>{balanceError}</ErrorMessage>
-            {/if}
+            <Accounts />
         </CollapsibleCard>
     </div>
     <div class="storage">
@@ -522,29 +430,6 @@
         padding: $sp3 $sp5 0 $sp5;
         @include mobile() {
             padding: $sp3 $sp4 0 $sp4;
-        }
-    }
-
-    .accounts {
-        table {
-            width: 100%;
-            th,
-            td {
-                padding: $sp3;
-            }
-            .token {
-                text-align: left;
-            }
-            th.balance {
-                padding-right: 38px;
-                @include mobile() {
-                    padding-right: 34.2px;
-                }
-            }
-            .balance,
-            .manage {
-                text-align: right;
-            }
         }
     }
 
