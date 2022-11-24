@@ -216,7 +216,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
                 me: {
                     bg: primary,
-                    muted: dark50,
+                    muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
                     bd: "rgba(255,255,255,0.3)",
                 },
