@@ -711,8 +711,7 @@ impl AllChatEvents {
     }
 
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> EventIndex {
-        self.frozen = true;
-        self.push_event(
+        let event_index = self.push_event(
             None,
             ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
                 frozen_by: user_id,
@@ -720,7 +719,9 @@ impl AllChatEvents {
             })),
             0,
             now,
-        )
+        );
+        self.frozen = true;
+        event_index
     }
 
     pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) -> EventIndex {
