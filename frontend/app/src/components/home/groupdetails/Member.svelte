@@ -19,7 +19,7 @@
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import type { OpenChat, BlockedMember, FullMember } from "openchat-client";
     import { AvatarSize } from "openchat-client";
-    import FilteredUsername from "./FilteredUsername.svelte";
+    import FilteredUsername from "../../FilteredUsername.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

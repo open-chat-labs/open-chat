@@ -161,6 +161,7 @@
     h4 {
         flex: 1;
         padding: 0 $sp4;
+        @include font-size(fs-120);
     }
     .close {
         flex: 0 0 30px;
@@ -186,7 +187,10 @@
         overflow: auto;
         overflow-x: hidden;
         @include nice-scrollbar();
-        padding: $sp3 0 0 0;
+        padding: $sp3 $sp5 0 $sp5;
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
+        }
     }
 
     .sub-section {
