@@ -25,6 +25,10 @@ export type TermTooLong = {
     kind: "term_too_long";
 };
 
+export type TooManyUsers = {
+    kind: "too_many_users";
+};
+
 export type TermInvalid = {
     kind: "term_invalid";
 };
@@ -48,6 +52,7 @@ export type SearchGroupChatResponse =
     | SearchMessagesSuccess
     | TermTooShort
     | TermTooLong
+    | TooManyUsers
     | TermInvalid
     | CallerNotInGroup;
 
