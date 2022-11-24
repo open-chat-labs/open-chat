@@ -621,5 +621,6 @@
     "oneMessageDeleted": "1 Nachricht gelöscht",
     "nMessagesDeleted": "{number} Nachrichten gelöscht",
     "undeleteMessage": "Wiederherstellen",
-    "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht"
+    "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
+    "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden"
 }

@@ -425,7 +425,11 @@
             return
         };
 
-        client.undeleteMessage(chat.chatId, undefined, message.messageId);
+        client.undeleteMessage(chat.chatId, undefined, message.messageId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("undeleteMessageFailed");
+            }
+        });
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {

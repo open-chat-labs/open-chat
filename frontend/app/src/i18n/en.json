@@ -619,5 +619,6 @@
     "oneMessageDeleted": "1 message deleted",
     "nMessagesDeleted": "{number} messages deleted",
     "undeleteMessage": "Undelete",
-    "undeletingMessage": "Undeleting message by {username} on {timestamp}"
+    "undeletingMessage": "Undeleting message by {username} on {timestamp}",
+    "undeleteMessageFailed": "Failed to undelete the message"
 }
