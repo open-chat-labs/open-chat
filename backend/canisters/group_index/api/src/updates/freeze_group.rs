@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use types::{ChatFrozen, ChatId, EventWrapper};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,7 +10,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(EventWrapper<ChatFrozen>),
     ChatAlreadyFrozen,
     ChatNotFound,
     NotAuthorized,
