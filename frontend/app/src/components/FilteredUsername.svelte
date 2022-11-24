@@ -6,7 +6,8 @@
     export let username: string | undefined;
 
     $: name = username ?? $_("unknownUser");
-    $: index = searchTerm === "" ? -1 : name.indexOf(searchTerm);
+    $: lower = name.toLowerCase();
+    $: index = searchTerm === "" ? -1 : lower.indexOf(searchTerm);
     $: prefix = name.substring(0, index);
     $: match = name.substring(index, index + searchTerm.length);
     $: postfix = name.substring(index + searchTerm.length);
