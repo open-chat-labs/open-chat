@@ -31,7 +31,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
         reason: args.reason.clone(),
     };
     match group_canister_c2c_client::c2c_freeze_group(args.chat_id.into(), &c2c_args).await {
-        Ok(group_canister::c2c_freeze_group::Response::Success) => {
+        Ok(group_canister::c2c_freeze_group::Response::Success(event)) => {
             mutate_state(|state| {
                 let info = FrozenGroupInfo {
                     timestamp: state.env.now(),
@@ -40,7 +40,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
                 };
                 commit(&args.chat_id, Some(info), state);
             });
-            Success
+            Success(event)
         }
         Ok(group_canister::c2c_freeze_group::Response::ChatAlreadyFrozen) => ChatAlreadyFrozen,
         Err(error) => InternalError(format!("{error:?}")),
@@ -70,9 +70,9 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
 
     let c2c_args = group_canister::c2c_unfreeze_group::Args { caller: user_id };
     match group_canister_c2c_client::c2c_unfreeze_group(args.chat_id.into(), &c2c_args).await {
-        Ok(group_canister::c2c_unfreeze_group::Response::Success) => {
+        Ok(group_canister::c2c_unfreeze_group::Response::Success(event)) => {
             mutate_state(|state| commit(&args.chat_id, None, state));
-            Success
+            Success(event)
         }
         Ok(group_canister::c2c_unfreeze_group::Response::ChatNotFrozen) => ChatNotFrozen,
         Err(error) => InternalError(format!("{error:?}")),
