@@ -4,6 +4,6 @@ use types::Version;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub eligible_for_sns1_airdrop: bool,
+    pub was_sent_incorrect_sns1_message: bool,
     pub wasm_version: Version,
 }
