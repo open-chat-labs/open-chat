@@ -565,6 +565,7 @@ type SearchMessagesArgs =
     record {
         search_term: text;
         max_results: nat8;
+        users: opt vec UserId;
     };
 
 type SearchMessagesResponse =
@@ -572,6 +573,7 @@ type SearchMessagesResponse =
         Success: SearchMessagesSuccessResult;
         TermTooShort: nat8;
         TermTooLong: nat8;
+        TooManyUsers: nat8;
         InvalidTerm;
         CallerNotInGroup;
     };

@@ -1,5 +1,9 @@
+use std::collections::HashSet;
+use types::UserId;
+
 pub struct Query {
     pub tokens: Vec<Token>,
+    pub users: HashSet<UserId>,
 }
 
 pub struct Token {
@@ -17,6 +21,7 @@ impl Query {
                     value_lower: word.to_lowercase(),
                 })
                 .collect(),
+            users: HashSet::new(),
         }
     }
 }
