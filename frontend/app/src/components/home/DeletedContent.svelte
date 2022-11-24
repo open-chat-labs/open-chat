@@ -17,18 +17,19 @@
 </script>
 
 <div class="deleted">
-    <p>
+    {#if undeleting}
+        {$_("undeletingMessage", {
+            values: { username, timestamp: timestampStr },
+        })}
+    {:else}
         {$_("messageDeleted", {
             values: { username, timestamp: timestampStr },
-        })}    
-    </p>
-    {#if undeleting}
-        <p>{$_("undeleting")}</p>
+        })}
     {/if}
 </div>
 
 <style type="text/scss">
     .deleted {
-        @include font(light, normal, fs-100);
+        @include font(light, italic, fs-90);
     }
 </style>

@@ -622,5 +622,5 @@
     "oneMessageDeleted": "1 mensaje eliminado",
     "nMessagesDeleted": "{number} mensajes eliminados",
     "undeleteMessage": "recuperar",
-    "undeleting": "Recuperando..."
+    "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}"
 }

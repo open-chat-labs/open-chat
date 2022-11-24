@@ -621,5 +621,5 @@
     "oneMessageDeleted": "1 сообщение удалено",
     "nMessagesDeleted": "{number} сообщений удалено",
     "undeleteMessage": "Восстановить",
-    "undeleting": "Восстановление..."
+    "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}"
 }

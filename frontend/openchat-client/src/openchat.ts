@@ -1061,8 +1061,9 @@ export class OpenChat extends EventTarget {
                 }
                 return success;
             })
-            .catch((_) => {
+            .catch((err) => {
                 _undelete();
+                this._logger.error("Delete message failed: ", err);
                 return false;
             });
     }
@@ -1089,7 +1090,10 @@ export class OpenChat extends EventTarget {
                 }
                 return success;
             })
-            .catch((_) => false)
+            .catch((err) => {
+                this._logger.error("Undelete message failed: ", err);
+                return false;
+            })
             .finally(() => {
                 undeletingMessagesStore.delete(messageId);
             });

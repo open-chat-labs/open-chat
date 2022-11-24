@@ -619,5 +619,5 @@
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו",
     "undeleteMessage": "בטל מחיקה",
-    "undeleting": "מבטל מחיקה..."
+    "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}"
 }

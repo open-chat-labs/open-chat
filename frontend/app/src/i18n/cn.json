@@ -622,5 +622,5 @@
     "joined": "已加入",
     "oneMessageDeleted": "已删除 1 条消息",
     "undeleteMessage": "取消删除",
-    "undeleting": "正在取消删除..."
+    "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息"
 }

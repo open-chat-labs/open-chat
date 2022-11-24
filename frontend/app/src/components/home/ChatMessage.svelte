@@ -121,7 +121,7 @@
     $: isProposal = msg.content.kind === "proposal_content";
     $: inert = deleted || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
-    $: undeleting = $undeletingMessagesStore.has(msg.messageId) ?? false;
+    $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: canUndelete = msg.content.kind === "deleted_content" && msg.content.deletedBy === user.userId && !undeleting;
 
     afterUpdate(() => {

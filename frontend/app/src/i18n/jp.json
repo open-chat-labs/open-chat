@@ -622,5 +622,5 @@
     "oneMessageDeleted": "1 件のメッセージを削除しました",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
     "undeleteMessage": "削除を取り消す",
-    "undeleting": "削除を取り消しています..."
+    "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています"
 }
