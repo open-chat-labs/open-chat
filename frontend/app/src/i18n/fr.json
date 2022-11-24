@@ -35,7 +35,6 @@
     "maxStorage": "Vous pouvez passer à un maximum de 1 Go de stockage",
     "myAccount": "Mon compte",
     "supportsMarkdown": "prend en charge la démarque",
-    "preferredLanguage": "langue préférée",
     "dark": "foncé",
     "light": "lumière",
     "original": "original",
@@ -68,7 +67,6 @@
     "durationMins": "{duration} minutes",
     "durationHours": "{duration} heures",
     "removeChat": "Supprimer le chat",
-    "profile": "Profil",
     "durationDays": "{duration} jours",
     "oneHour": "1 heure",
     "oneDay": "Un jour",
@@ -619,5 +617,6 @@
     "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?",
     "joined": "Rejoint",
     "oneMessageDeleted": "1 message supprimé",
-    "nMessagesDeleted": "{number} messages supprimés"
+    "nMessagesDeleted": "{number} messages supprimés",
+    "profile": "Paramètres de profil"
 }

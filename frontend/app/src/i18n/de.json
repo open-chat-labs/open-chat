@@ -35,7 +35,6 @@
     "maxStorage": "Sie können auf maximal 1 GB Speicherplatz aufrüsten",
     "myAccount": "Mein Konto",
     "supportsMarkdown": "Unterstützt Markdown",
-    "preferredLanguage": "Bevorzugte Sprache",
     "dark": "dunkel",
     "light": "hell",
     "original": "Original",
@@ -68,7 +67,6 @@
     "durationMins": "{duration} Minuten",
     "durationHours": "{duration} Stunden",
     "removeChat": "Chat entfernen",
-    "profile": "Profil",
     "durationDays": "{duration} Tage",
     "oneHour": "1 Stunde",
     "oneDay": "1 Tag",
@@ -619,5 +617,6 @@
     "whatsOnYourMind": "Was haben Sie auf dem Herzen?",
     "joined": "Trat bei",
     "oneMessageDeleted": "1 Nachricht gelöscht",
-    "nMessagesDeleted": "{number} Nachrichten gelöscht"
+    "nMessagesDeleted": "{number} Nachrichten gelöscht",
+    "profile": "Profileinstellungen"
 }

@@ -57,8 +57,10 @@
 
 <div class="container">
     <div class="link">{link}</div>
-    <div class="qr">
-        <QR text={link} />
+    <div class="qr-wrapper">
+        <div class="qr">
+            <QR text={link} />
+        </div>
     </div>
     <div class="message">
         {$_("userReferralMessage")}
@@ -108,8 +110,18 @@
 {/if}
 
 <style type="text/scss">
-    .qr {
-        background-color: #fff;
+    .qr-wrapper {
+        border: 1px solid var(--bd);
+        .qr {
+            background-color: #fff;
+            margin: $sp5 auto;
+            width: 200px;
+
+            @include mobile() {
+                width: 100%;
+                margin: 0;
+            }
+        }
     }
 
     .link,

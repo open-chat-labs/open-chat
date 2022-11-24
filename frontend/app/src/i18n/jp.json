@@ -35,7 +35,6 @@
     "maxStorage": "最大1GBのストレージにアップグレードすることができます",
     "myAccount": "マイアカウント",
     "supportsMarkdown": "マークダウンをサポートしています",
-    "preferredLanguage": "優先言語",
     "dark": "ダーク",
     "light": "ライト",
     "original": "オリジナル",
@@ -68,7 +67,6 @@
     "durationMins": "{duration} 分",
     "durationHours": "{duration} 時間",
     "removeChat": "チャットの削除",
-    "profile": "プロファイル",
     "durationDays": "{duration} 日",
     "oneHour": "1 時間",
     "oneDay": "1 日",
@@ -620,5 +618,6 @@
     "whatsOnYourMind": "何を考えているの？",
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
-    "nMessagesDeleted": "{number} 件のメッセージが削除されました"
+    "nMessagesDeleted": "{number} 件のメッセージが削除されました",
+    "profile": "プロファイル設定"
 }

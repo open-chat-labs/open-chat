@@ -80,6 +80,7 @@
         position: absolute;
         right: 10px;
         top: 11px;
+        @include font(light, normal, fs-80);
 
         &.near-max {
             color: darkred;

@@ -35,7 +35,6 @@
     "maxStorage": "אתה יכול לשדרג לאחסון של 1GB לכל היותר",
     "myAccount": "החשבון שלי",
     "supportsMarkdown": "תומך ב-markdown",
-    "preferredLanguage": "שפה מועדפת",
     "fontSize": "גודל גופן",
     "dark": "אפל",
     "light": "אוֹר",
@@ -69,7 +68,6 @@
     "durationMins": "{duration} דקות",
     "durationHours": "{duration} שעות",
     "removeChat": "הסר צ'אט",
-    "profile": "פּרוֹפִיל",
     "durationDays": "{duration} ימים",
     "oneHour": "1 שעה",
     "oneDay": "יום 1",
@@ -617,5 +615,6 @@
     "whatsOnYourMind": "על מה אתה חושב?",
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
-    "nMessagesDeleted": "{number} הודעות נמחקו"
+    "nMessagesDeleted": "{number} הודעות נמחקו",
+    "profile": "הגדרות פרופיל"
 }

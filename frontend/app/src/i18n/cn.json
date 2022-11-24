@@ -7,7 +7,6 @@
     "usernameRules": "仅支持字母，数字和下划线",
     "enterBio": "自我介绍",
     "supportsMarkdown": "支持markdown格式",
-    "preferredLanguage": "偏好语言",
     "dark": "深色模式",
     "light": "浅色模式",
     "original": "普通模式",
@@ -39,7 +38,6 @@
     "durationMins": "{duration} 分钟",
     "durationHours": "{duration} 小时",
     "removeChat": "删除该聊天",
-    "profile": "我的账户",
     "durationDays": "{duration} 天",
     "oneHour": "1 小时",
     "oneDay": "1 天",
@@ -620,5 +618,6 @@
     "whatsOnYourMind": "你在想什么？",
     "nMessagesDeleted": "{number} 条消息已删除",
     "joined": "已加入",
-    "oneMessageDeleted": "已删除 1 条消息"
+    "oneMessageDeleted": "已删除 1 条消息",
+    "profile": "配置文件设置"
 }

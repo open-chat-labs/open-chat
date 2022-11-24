@@ -35,7 +35,6 @@
     "maxStorage": "È possibile eseguire l'aggiornamento a un massimo di 1 GB di spazio di archiviazione",
     "myAccount": "Il mio account",
     "supportsMarkdown": "supporta markdown",
-    "preferredLanguage": "Lingua preferita",
     "dark": "buio",
     "light": "luce",
     "original": "originale",
@@ -68,7 +67,6 @@
     "durationMins": "{duration} minuti",
     "durationHours": "{duration} ore",
     "removeChat": "Rimuovi chat",
-    "profile": "Profilo",
     "durationDays": "{duration} giorni",
     "oneHour": "1 ora",
     "oneDay": "1 giorno",
@@ -619,5 +617,6 @@
     "whatsOnYourMind": "Cos'hai in mente?",
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
-    "nMessagesDeleted": "{number} messaggi eliminati"
+    "nMessagesDeleted": "{number} messaggi eliminati",
+    "profile": "Impostazioni del profilo"
 }

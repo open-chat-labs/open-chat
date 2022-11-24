@@ -202,7 +202,7 @@
                     image={client.userAvatarUrl(user)}
                     on:imageSelected={userAvatarSelected} />
             </div>
-            <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
+            <Legend label={$_("username")} rules={$_("usernameRules")} />
             <UsernameInput
                 {client}
                 originalUsername={user?.username ?? ""}
@@ -214,7 +214,7 @@
                 {/if}
             </UsernameInput>
 
-            <Legend>{$_("bio")} ({$_("supportsMarkdown")})</Legend>
+            <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
             <TextArea
                 rows={3}
                 bind:value={userbio}
@@ -230,7 +230,7 @@
                     loading={saving || checkingUsername}
                     disabled={(!bioDirty && validUsername === undefined) || saving}
                     fill={true}
-                    small={true}>{$_("update")}</Button>
+                    small>{$_("update")}</Button>
             </div>
         </CollapsibleCard>
     </div>
@@ -239,7 +239,7 @@
             on:toggle={appearanceSectionOpen.toggle}
             open={$appearanceSectionOpen}
             headerText={$_("appearance")}>
-            <Legend>{$_("preferredLanguage")}</Legend>
+            <Legend label={$_("preferredLanguage")} />
             <Select bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
                     <option value={lang.code}>{lang.name}</option>
@@ -247,9 +247,10 @@
             </Select>
 
             <div class="para">
-                <Legend>{$_("theme")}</Legend>
+                <Legend label={$_("theme")} />
                 <Toggle
                     id={"inherit-system"}
+                    small
                     on:change={toggleSystemTheme}
                     label={$_("inheritSystem")}
                     checked={$themeNameStore === "system"} />
@@ -272,7 +273,7 @@
             </div>
 
             <div class="para">
-                <Legend>{$_("fontSize")}</Legend>
+                <Legend label={$_("fontSize")} />
                 <FontSize />
             </div>
         </CollapsibleCard>
@@ -292,12 +293,14 @@
             headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
+                small
                 on:change={() => enterSend.toggle()}
                 label={$_("enterToSend")}
                 checked={$enterSend} />
             {#if notificationsSupported}
                 <Toggle
                     id={"notifications"}
+                    small
                     disabled={$notificationStatus === "hard-denied"}
                     on:change={toggleNotifications}
                     label={$notificationStatus === "hard-denied"
@@ -400,9 +403,9 @@
                     </LinkButton>
                 </p>
                 <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                    <Button on:click={() => dispatch("upgrade", "sms")} small
                         >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                    <Button on:click={() => dispatch("upgrade", "icp")} small
                         >{$_("upgradeByTransfer")}</Button>
                 </ButtonGroup>
             {:else}
@@ -410,7 +413,7 @@
                 {#if $storageStore.byteLimit < ONE_GB}
                     <p class="para">{$_("chooseTransfer")}</p>
                     <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
+                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
                             >{$_("upgradeStorage")}</Button>
                     </div>
                 {/if}
@@ -431,11 +434,11 @@
             open={$advancedSectionOpen}
             headerText={$_("advanced")}>
             <div class="userid">
-                <Legend>{$_("userId")} ({$_("alsoCanisterId")})</Legend>
+                <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
                 <div>{user.userId}</div>
             </div>
             <div>
-                <Legend>{$_("version")} ({$_("websiteVersion")})</Legend>
+                <Legend label={$_("version")} rules={$_("websiteVersion")} />
                 <div>{version}</div>
             </div>
         </CollapsibleCard>
@@ -547,7 +550,6 @@
 
     .title {
         flex: 1;
-        padding: 0 $sp4;
         @include font-size(fs-120);
     }
 

@@ -32,7 +32,6 @@
     "maxStorage": "Bạn có thể nâng cấp tối đa 1GB cho dung lượng lưu trữ",
     "myAccount": "Tài khoản",
     "supportsMarkdown": "Hỗ trợ ngôn ngữ Markdown",
-    "preferredLanguage": "Lựa chọn ngôn ngữ",
     "dark": "Tối",
     "light": "Sáng",
     "original": "Nguyên bản",
@@ -64,7 +63,6 @@
     "durationMins": "{duration} phút",
     "durationHours": "{duration} tiếng",
     "removeChat": "Xóa cuộc trò chuyện",
-    "profile": "Thông tin của bạn",
     "durationDays": "{duration} ngày",
     "oneHour": "1 tiếng",
     "oneDay": "1 ngày",
@@ -620,5 +618,6 @@
     "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
     "joined": "đã tham gia",
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
-    "nMessagesDeleted": "{number} tin nhắn đã bị xóa"
+    "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
+    "profile": "Cài đặt cấu hình"
 }
