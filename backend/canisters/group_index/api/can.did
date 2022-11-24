@@ -35,7 +35,12 @@ type FreezeGroupArgs =
 
 type FreezeGroupResponse =
     variant {
-        Success;
+        Success: record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            correlation_id: nat64;
+            event: ChatFrozen;
+        };
         ChatAlreadyFrozen;
         ChatNotFound;
         NotAuthorized;
@@ -49,7 +54,12 @@ type UnfreezeGroupArgs =
 
 type UnfreezeGroupResponse =
     variant {
-        Success;
+        Success: record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            correlation_id: nat64;
+            event: ChatUnfrozen;
+        };
         ChatNotFrozen;
         ChatNotFound;
         NotAuthorized;

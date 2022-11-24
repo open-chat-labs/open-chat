@@ -81,7 +81,7 @@ fn can_only_be_called_by_super_admin() {
     ));
 
     let response2 = client::group_index::freeze_group(&mut env, user1.principal, canister_ids.group_index, &freeze_args);
-    assert!(matches!(response2, group_index_canister::freeze_group::Response::Success));
+    assert!(matches!(response2, group_index_canister::freeze_group::Response::Success(_)));
 
     let unfreeze_args = group_index_canister::unfreeze_group::Args { chat_id: group_id };
 
@@ -92,7 +92,10 @@ fn can_only_be_called_by_super_admin() {
     ));
 
     let response4 = client::group_index::unfreeze_group(&mut env, user1.principal, canister_ids.group_index, &unfreeze_args);
-    assert!(matches!(response4, group_index_canister::unfreeze_group::Response::Success));
+    assert!(matches!(
+        response4,
+        group_index_canister::unfreeze_group::Response::Success(_)
+    ));
 
     return_env(TestEnv {
         env,
