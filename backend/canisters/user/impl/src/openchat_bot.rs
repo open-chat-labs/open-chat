@@ -93,12 +93,8 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 }
 
 pub(crate) fn send_sns1_airdrop_message(runtime_state: &mut RuntimeState) {
-    let text = "You are eligible for the upcoming SNS-1 airdrop!
-Here's how to take part -
-1. Sign in to https://nns.ic0.app/
-2. Click on 'Neurons'
-3. Copy your principal id
-4. Send your principal id to the [SNS1_Bot](/#/pa5wn-hqaaa-aaaaf-az7rq-cai)"
+    let text = "Please ignore the previous message about the SNS-1 airdrop!
+The SNS-1 airdrop has been closed for a few days now and that message was sent in error."
         .to_string();
 
     send_text_message(text, true, runtime_state);

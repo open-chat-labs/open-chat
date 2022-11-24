@@ -27,7 +27,7 @@ fn post_upgrade(args: Args) {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
 
-    if args.eligible_for_sns1_airdrop {
+    if args.was_sent_incorrect_sns1_message {
         mutate_state(openchat_bot::send_sns1_airdrop_message);
     }
 
