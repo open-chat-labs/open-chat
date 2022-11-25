@@ -550,9 +550,11 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        const users: Principal[] = [];
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
+            users: apiOptional(identity, users)
         };
         return this.handleQueryResponse(
             () => this.groupService.search_messages(args),

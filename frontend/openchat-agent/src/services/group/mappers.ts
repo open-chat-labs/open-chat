@@ -670,6 +670,11 @@ export function searchGroupChatResponse(
             kind: "term_too_long",
         };
     }
+    if ("TooManyUsers" in candid) {
+        return {
+            kind: "too_many_users",
+        };
+    }
     if ("InvalidTerm" in candid) {
         return {
             kind: "term_invalid",
