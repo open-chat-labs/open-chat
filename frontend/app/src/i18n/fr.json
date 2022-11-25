@@ -621,5 +621,8 @@
     "profile": "Paramètres de profil",
     "undeleteMessage": "Annuler la suppression",
     "undeletingMessage": "Récupération du message de {username} sur {timestamp}",
-    "undeleteMessageFailed": "Échec de la restauration du message"
+    "undeleteMessageFailed": "Échec de la restauration du message",
+    "homepage": "Page d'accueil",
+    "preferredLanguage": "Langue préférée",
+    "theme": "Thème"
 }

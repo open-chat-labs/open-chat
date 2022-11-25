@@ -622,5 +622,8 @@
     "profile": "プロファイル設定",
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
-    "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした"
+    "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした",
+    "homepage": "ホームページ",
+    "preferredLanguage": "優先言語",
+    "theme": "テーマ"
 }

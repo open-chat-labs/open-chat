@@ -622,5 +622,8 @@
     "profile": "Cài đặt cấu hình",
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
-    "undeleteMessageFailed": "Không thể khôi phục tin nhắn"
+    "undeleteMessageFailed": "Không thể khôi phục tin nhắn",
+    "homepage": "trang chủ",
+    "preferredLanguage": "ngôn ngữ ưa thích",
+    "theme": "chủ đề"
 }

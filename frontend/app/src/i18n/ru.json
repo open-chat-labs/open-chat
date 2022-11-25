@@ -621,5 +621,8 @@
     "profile": "Настройки профиля",
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",
-    "undeleteMessageFailed": "Не удалось восстановить сообщение"
+    "undeleteMessageFailed": "Не удалось восстановить сообщение",
+    "homepage": "Домашняя страница",
+    "preferredLanguage": "Предпочтительный язык",
+    "theme": "Тема"
 }

@@ -621,5 +621,8 @@
     "profile": "Impostazioni del profilo",
     "undeleteMessage": "Annulla cancellazione",
     "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",
-    "undeleteMessageFailed": "Impossibile annullare l'eliminazione del messaggio"
+    "undeleteMessageFailed": "Impossibile annullare l'eliminazione del messaggio",
+    "homepage": "Pagina iniziale",
+    "preferredLanguage": "Lingua preferita",
+    "theme": "Tema"
 }

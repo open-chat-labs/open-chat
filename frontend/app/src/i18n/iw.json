@@ -619,5 +619,8 @@
     "profile": "הגדרות פרופיל",
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
-    "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל"
+    "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
+    "homepage": "דף הבית",
+    "preferredLanguage": "שפה מועדפת",
+    "theme": "נושא"
 }

@@ -622,5 +622,8 @@
     "profile": "Configuración de perfil",
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",
-    "undeleteMessageFailed": "Error al recuperar el mensaje"
+    "undeleteMessageFailed": "Error al recuperar el mensaje",
+    "homepage": "página de inicio",
+    "preferredLanguage": "Idioma preferido",
+    "theme": "Tema"
 }

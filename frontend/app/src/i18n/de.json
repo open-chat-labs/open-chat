@@ -621,5 +621,8 @@
     "profile": "Profileinstellungen",
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
-    "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden"
+    "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden",
+    "homepage": "Startseite",
+    "preferredLanguage": "Bevorzugte Sprache",
+    "theme": "Thema"
 }

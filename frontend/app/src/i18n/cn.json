@@ -622,5 +622,8 @@
     "profile": "配置文件设置",
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
-    "undeleteMessageFailed": "取消删除消息失败"
+    "undeleteMessageFailed": "取消删除消息失败",
+    "homepage": "主页",
+    "preferredLanguage": "首选语言",
+    "theme": "主题"
 }
