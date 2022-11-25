@@ -561,6 +561,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
+    'MessageUndeleted' : UpdatedMessage,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
     'ProposalsUpdated' : ProposalsUpdated,
@@ -980,6 +981,16 @@ export const idlFactory = ({ IDL }) => {
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const UndeleteMessagesArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_ids' : IDL.Vec(MessageId),
+    'correlation_id' : IDL.Nat64,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const UndeleteMessagesResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Record({ 'messages' : IDL.Vec(Message) }),
+  });
   const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const UnmuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -1180,6 +1191,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
+    'undelete_messages' : IDL.Func(
+        [UndeleteMessagesArgs],
+        [UndeleteMessagesResponse],
+        [],
+      ),
     'unmute_notifications' : IDL.Func(
         [UnmuteNotificationsArgs],
         [UnmuteNotificationsResponse],

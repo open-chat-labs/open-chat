@@ -10,6 +10,7 @@ import type {
     IndexRange,
     Message,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
@@ -87,6 +88,10 @@ export interface IGroupClient {
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse>;
+    undeleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;

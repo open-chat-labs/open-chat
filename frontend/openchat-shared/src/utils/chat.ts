@@ -76,6 +76,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 userIds.add(e.event.unpinnedBy);
                 break;
             case "message_deleted":
+            case "message_undeleted":
             case "message_edited":
             case "reaction_added":
             case "reaction_removed":
@@ -189,6 +190,7 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
     return (
         ew.event.kind !== "reaction_added" &&
         ew.event.kind !== "message_deleted" &&
+        ew.event.kind !== "message_undeleted" &&
         ew.event.kind !== "message_edited" &&
         ew.event.kind !== "reaction_removed" &&
         ew.event.kind !== "message_pinned" &&

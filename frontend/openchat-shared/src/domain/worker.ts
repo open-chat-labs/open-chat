@@ -44,6 +44,7 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
     UnblockUserResponse,
+    UndeleteMessageResponse,
     UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateArgs,
@@ -121,6 +122,7 @@ export type WorkerRequest =
     | RemoveDirectChatReaction
     | AddDirectChatReaction
     | DeleteMessage
+    | UndeleteMessage
     | RegisterPollVote
     | UpdateGroup
     | JoinGroup
@@ -498,6 +500,15 @@ type DeleteMessage = Request<{
     kind: "deleteMessage";
 };
 
+type UndeleteMessage = Request<{
+    chatType: "direct_chat" | "group_chat";
+    chatId: string;
+    messageId: bigint;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "undeleteMessage";
+};
+
 type RegisterPollVote = Request<{
     chatId: string;
     messageIdx: number;
@@ -805,6 +816,7 @@ export type WorkerResponse =
     | Response<ListNervousSystemFunctionsResponse>
     | Response<AddRemoveReactionResponse>
     | Response<DeleteMessageResponse>
+    | Response<UndeleteMessageResponse>
     | Response<RegisterPollVoteResponse>
     | Response<UpdateGroupResponse>
     | Response<JoinGroupResponse>

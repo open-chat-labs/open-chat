@@ -107,6 +107,7 @@
         on:replyTo
         on:selectReaction
         on:deleteMessage
+        on:undeleteMessage
         on:blockUser
         on:pinMessage
         on:unpinMessage

@@ -161,6 +161,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_unpinned":
             return event.unpinnedBy;
         case "message_deleted":
+        case "message_undeleted":
         case "message_edited":
         case "reaction_added":
         case "reaction_removed":
@@ -1085,6 +1086,10 @@ function mergeLocalUpdates(
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;
         message.edited = true;
+    }
+
+    if (localUpdates?.undeletedContent !== undefined) {
+        message.content = localUpdates.undeletedContent;
     }
 
     if (localUpdates?.reactions !== undefined) {

@@ -10,6 +10,7 @@ import type {
     ApiAddReactionResponse,
     ApiRemoveReactionResponse,
     ApiDeleteMessageResponse,
+    ApiUndeleteMessageResponse,
     ApiEditMessageResponse,
     ApiSelectedInitialResponse,
     ApiParticipant,
@@ -42,6 +43,7 @@ import {
     UpdateGroupResponse,
     AddRemoveReactionResponse,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
@@ -290,6 +292,26 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
         return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
+
+export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): UndeleteMessageResponse {
+    if ("Success" in candid) {
+        if (candid.Success.messages.length == 0) {
+            return { kind: "internal_error" };
+        } else {
+            return { 
+                kind: "success", 
+                message: message(candid.Success.messages[0])
+            };    
+        }
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "not_in_group" };
+    }
+    if ("MessageNotFound" in candid) {
+        return { kind: "message_not_found" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
 }
 
 export function addRemoveReactionResponse(
@@ -687,6 +709,11 @@ export function searchGroupChatResponse(
             kind: "term_too_long",
         };
     }
+    if ("TooManyUsers" in candid) {
+        return {
+            kind: "too_many_users",
+        };
+    }
     if ("InvalidTerm" in candid) {
         return {
             kind: "term_invalid",
@@ -937,6 +964,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "message_deleted",
             message: updatedMessage(candid.MessageDeleted),
+        };
+    }
+
+    if ("MessageUndeleted" in candid) {
+        return {
+            kind: "message_undeleted",
+            message: updatedMessage(candid.MessageUndeleted),
         };
     }
 

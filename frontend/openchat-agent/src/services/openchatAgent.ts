@@ -97,6 +97,7 @@ import {
     ToggleMuteNotificationResponse,
     Tokens,
     UnblockUserResponse,
+    UndeleteMessageResponse,
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsupportedValueError,
@@ -1011,6 +1012,33 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse> {
         return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
+    }
+
+    undeleteMessage(
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return chatType === "group_chat"
+            ? this.undeleteGroupMessage(chatId, messageId, threadRootMessageIndex)
+            : this.undeleteDirectMessage(chatId, messageId, threadRootMessageIndex);
+    }
+
+    private undeleteGroupMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.getGroupClient(chatId).undeleteMessage(messageId, threadRootMessageIndex);
+    }
+
+    private undeleteDirectMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.userClient.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     markAsOnline(): Promise<void> {

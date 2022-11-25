@@ -72,7 +72,9 @@ type UndeleteMessagesArgs =
 
 type UndeleteMessagesResponse =
     variant {
-        Success;
+        Success: record {
+            messages: vec Message;
+        };
         CallerNotInGroup;
         MessageNotFound;
         UserSuspended;
