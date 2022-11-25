@@ -432,7 +432,7 @@
     }
 
     function unfreezeGroup() {
-        client.unfreezeChat(chat.chatId);
+        client.unfreezeGroup(chat.chatId);
     }
 </script>
 
