@@ -619,5 +619,8 @@
     "joined": "Unido",
     "oneMessageDeleted": "1 mensaje eliminado",
     "nMessagesDeleted": "{number} mensajes eliminados",
-    "profile": "Configuración de perfil"
+    "profile": "Configuración de perfil",
+    "undeleteMessage": "recuperar",
+    "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",
+    "undeleteMessageFailed": "Error al recuperar el mensaje"
 }

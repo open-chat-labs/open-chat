@@ -124,6 +124,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -824,9 +825,11 @@ export type RulesResponse = { 'NotAuthorized' : null } |
 export interface RulesSuccess { 'rules' : [] | [string] }
 export interface SearchMessagesArgs {
   'max_results' : number,
+  'users' : [] | [Array<UserId>],
   'search_term' : string,
 }
 export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'TooManyUsers' : number } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : SearchMessagesSuccessResult } |
   { 'TermTooLong' : number } |
@@ -990,6 +993,14 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface UndeleteMessagesArgs {
+  'message_ids' : Array<MessageId>,
+  'correlation_id' : bigint,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type UndeleteMessagesResponse = { 'MessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : { 'messages' : Array<Message> } };
 export interface UnpinMessageArgs {
   'correlation_id' : bigint,
   'message_index' : MessageIndex,
@@ -1117,6 +1128,10 @@ export interface _SERVICE {
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
+  'undelete_messages' : ActorMethod<
+    [UndeleteMessagesArgs],
+    UndeleteMessagesResponse,
+  >,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
 }

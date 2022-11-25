@@ -618,5 +618,8 @@
     "joined": "Rejoint",
     "oneMessageDeleted": "1 message supprimé",
     "nMessagesDeleted": "{number} messages supprimés",
-    "profile": "Paramètres de profil"
+    "profile": "Paramètres de profil",
+    "undeleteMessage": "Annuler la suppression",
+    "undeletingMessage": "Récupération du message de {username} sur {timestamp}",
+    "undeleteMessageFailed": "Échec de la restauration du message"
 }

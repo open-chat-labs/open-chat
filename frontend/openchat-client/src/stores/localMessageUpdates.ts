@@ -12,8 +12,10 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
     markDeleted(messageId: string, deletedBy: string): void {
         this.applyUpdate(messageId, (_) => ({ deleted: { deletedBy, timestamp: BigInt(Date.now()) } }));
     }
-    markUndeleted(messageId: string): void {
-        this.applyUpdate(messageId, (_) => ({ deleted: undefined }));
+    markUndeleted(messageId: string, content?: MessageContent): void {
+        this.applyUpdate(messageId, (_) => ({ 
+            deleted: undefined,
+            undeletedContent: content }));
     }
     markContentEdited(messageId: string, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({ editedContent: content }));

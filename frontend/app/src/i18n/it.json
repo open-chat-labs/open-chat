@@ -618,5 +618,8 @@
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
     "nMessagesDeleted": "{number} messaggi eliminati",
-    "profile": "Impostazioni del profilo"
+    "profile": "Impostazioni del profilo",
+    "undeleteMessage": "Annulla cancellazione",
+    "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",
+    "undeleteMessageFailed": "Impossibile annullare l'eliminazione del messaggio"
 }

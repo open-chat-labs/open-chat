@@ -618,5 +618,8 @@
     "joined": "Присоединился",
     "oneMessageDeleted": "1 сообщение удалено",
     "nMessagesDeleted": "{number} сообщений удалено",
-    "profile": "Настройки профиля"
+    "profile": "Настройки профиля",
+    "undeleteMessage": "Восстановить",
+    "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",
+    "undeleteMessageFailed": "Не удалось восстановить сообщение"
 }

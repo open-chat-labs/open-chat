@@ -11,6 +11,7 @@ import {
     AddRemoveReactionResponse,
     IndexRange,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
@@ -46,6 +47,7 @@ import {
     updateGroupResponse,
     addRemoveReactionResponse,
     deleteMessageResponse,
+    undeleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
     groupDetailsResponse,
@@ -373,6 +375,21 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
+    undeleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.handleResponse(
+            this.groupService.undelete_messages({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_ids: [messageId],
+                correlation_id: generateUint64(),
+            }),
+            undeleteMessageResponse
+        );
+    }
+
+    @profile("groupClient")
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.handleResponse(
             this.groupService.block_user({
@@ -533,9 +550,11 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        const users: Principal[] = [];
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
+            users: apiOptional(identity, users)
         };
         return this.handleQueryResponse(
             () => this.groupService.search_messages(args),

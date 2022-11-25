@@ -619,5 +619,8 @@
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
-    "profile": "プロファイル設定"
+    "profile": "プロファイル設定",
+    "undeleteMessage": "削除を取り消す",
+    "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
+    "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした"
 }

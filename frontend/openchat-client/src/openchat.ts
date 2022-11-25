@@ -67,6 +67,7 @@ import {
     selectedAuthProviderStore,
 } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
+import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     chatsInitialised,
     chatsLoading,
@@ -1039,7 +1040,7 @@ export class OpenChat extends EventTarget {
             threadRootMessageIndex,
         });
 
-        function undelete() {
+        function _undelete() {
             rtcConnectionsManager.sendMessage(recipients, {
                 kind: "remote_user_undeleted_message",
                 chatType,
@@ -1056,13 +1057,45 @@ export class OpenChat extends EventTarget {
             .then((resp) => {
                 const success = resp === "success";
                 if (!success) {
-                    undelete();
+                    _undelete();
                 }
                 return success;
             })
-            .catch((_) => {
-                undelete();
+            .catch((err) => {
+                _undelete();
+                this._logger.error("Delete message failed: ", err);
                 return false;
+            });
+    }
+
+    undeleteMessage(
+        chatId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint
+    ): Promise<boolean> {
+        const chat = this._liveState.chatSummaries[chatId];
+
+        if (chat === undefined) {
+            return Promise.resolve(false);
+        }
+
+        undeletingMessagesStore.add(messageId);
+
+        return this.api
+            .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
+            .then((resp) => { 
+                const success = resp.kind === "success";
+                if (success) {
+                    localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
+                }
+                return success;
+            })
+            .catch((err) => {
+                this._logger.error("Undelete message failed: ", err);
+                return false;
+            })
+            .finally(() => {
+                undeletingMessagesStore.delete(messageId);
             });
     }
 
@@ -2880,6 +2913,7 @@ export class OpenChat extends EventTarget {
     chatsInitialised = chatsInitialised;
     currentChatDraftMessage = currentChatDraftMessage;
     blockedUsers = blockedUsers;
+    undeletingMessagesStore = undeletingMessagesStore;
     focusMessageIndex = focusMessageIndex;
     userGroupKeys = userGroupKeys;
     unconfirmedReadByThem = unconfirmedReadByThem;
