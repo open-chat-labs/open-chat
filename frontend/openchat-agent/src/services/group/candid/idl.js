@@ -737,6 +737,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
+    'users' : IDL.Opt(IDL.Vec(UserId)),
     'search_term' : IDL.Text,
   });
   const MessageMatch = IDL.Record({
@@ -751,6 +752,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
+    'TooManyUsers' : IDL.Nat8,
     'CallerNotInGroup' : IDL.Null,
     'Success' : SearchMessagesSuccessResult,
     'TermTooLong' : IDL.Nat8,

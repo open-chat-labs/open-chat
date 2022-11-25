@@ -825,9 +825,11 @@ export type RulesResponse = { 'NotAuthorized' : null } |
 export interface RulesSuccess { 'rules' : [] | [string] }
 export interface SearchMessagesArgs {
   'max_results' : number,
+  'users' : [] | [Array<UserId>],
   'search_term' : string,
 }
 export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'TooManyUsers' : number } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : SearchMessagesSuccessResult } |
   { 'TermTooLong' : number } |
