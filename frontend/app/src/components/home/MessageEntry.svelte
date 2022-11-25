@@ -470,17 +470,6 @@
             {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
         </div>
     {:else}
-        <MessageActions
-            bind:this={messageActions}
-            bind:messageAction
-            {fileToAttach}
-            {mode}
-            editing={editingEvent !== undefined}
-            on:tokenTransfer
-            on:attachGif
-            on:clearAttachment
-            on:fileSelected />
-
         {#if recording}
             <div class="recording">
                 <Progress percent={percentRecorded} />
@@ -522,6 +511,17 @@
                     </HoverIcon>
                 </div>
             {/if}
+            <!-- we might need this if we are editing too -->
+            <MessageActions
+                bind:this={messageActions}
+                bind:messageAction
+                {fileToAttach}
+                {mode}
+                editing={editingEvent !== undefined}
+                on:tokenTransfer
+                on:attachGif
+                on:clearAttachment
+                on:fileSelected />
         {:else}
             <div class="send" on:click={sendMessage}>
                 <HoverIcon>
@@ -558,7 +558,7 @@
     .textbox {
         flex: 1;
         margin: 0 $sp3;
-        padding: $sp3 $sp4;
+        padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
         border-radius: $sp3;
