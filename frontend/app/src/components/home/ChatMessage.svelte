@@ -35,6 +35,7 @@
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -119,6 +120,9 @@
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: inert = deleted || collapsed;
+    $: undeletingMessagesStore = client.undeletingMessagesStore;
+    $: undeleting = $undeletingMessagesStore.has(msg.messageId);
+    $: canUndelete = msg.content.kind === "deleted_content" && msg.content.deletedBy === user.userId && !undeleting;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -196,6 +200,10 @@
 
     function deleteMessage() {
         dispatch("deleteMessage", msg);
+    }
+
+    function undeleteMessage() {
+        dispatch("undeleteMessage", msg);
     }
 
     function untranslateMessage() {
@@ -485,6 +493,7 @@
                 {senderId}
                 {chatId}
                 {collapsed}
+                {undeleting}
                 first
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
@@ -520,7 +529,7 @@
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if !inert && !preview}
+            {#if (!inert || canUndelete) && !preview}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
@@ -530,7 +539,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if isProposal && !collapsed}
+                                {#if isProposal && !inert}
                                     <MenuItem on:click={collapseMessage}>
                                         <EyeOff
                                             size={$iconSize}
@@ -539,7 +548,7 @@
                                         <div slot="text">{$_("proposal.collapse")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if publicGroup && confirmed}
+                                {#if publicGroup && confirmed && !inert}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
@@ -557,7 +566,7 @@
                                         <div slot="text">{$_("copyMessageUrl")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && canPin && !inThread}
+                                {#if confirmed && canPin && !inThread && !inert}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
@@ -576,7 +585,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed && supportsReply}
+                                {#if confirmed && supportsReply && !inert}
                                     {#if canQuoteReply}
                                         <MenuItem on:click={reply}>
                                             <Reply
@@ -593,7 +602,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if client.canForward(msg.content) && !inThread}
+                                {#if client.canForward(msg.content) && !inThread && !inert}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
@@ -602,7 +611,7 @@
                                         <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && groupChat && !me && !inThread && !isProposal}
+                                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
                                             size={$iconSize}
@@ -620,7 +629,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if canEdit}
+                                {#if canEdit && !inert}
                                     <MenuItem on:click={editMessage}>
                                         <PencilOutline
                                             size={$iconSize}
@@ -629,13 +638,22 @@
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if (canDelete || me) && !crypto}
+                                {#if (canDelete || me) && !crypto && !inert}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if canUndelete}
+                                    <MenuItem on:click={undeleteMessage}>
+                                        <DeleteOffOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("undeleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if msg.content.kind === "text_content"}

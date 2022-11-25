@@ -11,6 +11,7 @@ import {
     AddRemoveReactionResponse,
     IndexRange,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
@@ -46,6 +47,7 @@ import {
     updateGroupResponse,
     addRemoveReactionResponse,
     deleteMessageResponse,
+    undeleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
     groupDetailsResponse,
@@ -369,6 +371,21 @@ export class GroupClient extends CandidService implements IGroupClient {
                 correlation_id: generateUint64(),
             }),
             deleteMessageResponse
+        );
+    }
+
+    @profile("groupClient")
+    undeleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.handleResponse(
+            this.groupService.undelete_messages({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_ids: [messageId],
+                correlation_id: generateUint64(),
+            }),
+            undeleteMessageResponse
         );
     }
 

@@ -620,5 +620,8 @@
     "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
     "joined": "đã tham gia",
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
-    "nMessagesDeleted": "{number} tin nhắn đã bị xóa"
+    "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
+    "undeleteMessage": "phục hồi xóa",
+    "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
+    "undeleteMessageFailed": "Không thể khôi phục tin nhắn"
 }
