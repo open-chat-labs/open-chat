@@ -17,7 +17,7 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let term_length = args.search_term.len() as u8;
     let users = args.users.unwrap_or_default();
 
-    if term_length < MIN_TERM_LENGTH {
+    if users.is_empty() && term_length < MIN_TERM_LENGTH {
         return TermTooShort(MIN_TERM_LENGTH);
     }
 
