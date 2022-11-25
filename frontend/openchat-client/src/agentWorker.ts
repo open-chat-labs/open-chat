@@ -45,6 +45,7 @@ import {
     GroupRules,
     RegisterPollVoteResponse,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     AddRemoveReactionResponse,
     ListNervousSystemFunctionsResponse,
     UnpinMessageResponse,
@@ -669,6 +670,23 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<DeleteMessageResponse> {
         return this.sendRequest({
             kind: "deleteMessage",
+            payload: {
+                chatType,
+                chatId,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    undeleteMessage(
+        chatType: "direct_chat" | "group_chat",
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.sendRequest({
+            kind: "undeleteMessage",
             payload: {
                 chatType,
                 chatId,

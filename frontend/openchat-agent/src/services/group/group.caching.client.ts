@@ -9,6 +9,7 @@ import type {
     AddRemoveReactionResponse,
     IndexRange,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
     ChangeRoleResponse,
@@ -243,6 +244,13 @@ export class CachingGroupClient implements IGroupClient {
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse> {
         return this.client.deleteMessage(messageId, threadRootMessageIndex);
+    }
+
+    undeleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.client.undeleteMessage(messageId, threadRootMessageIndex);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

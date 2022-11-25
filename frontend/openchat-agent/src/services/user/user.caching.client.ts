@@ -15,6 +15,7 @@ import {
     IndexRange,
     AddRemoveReactionResponse,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
@@ -511,6 +512,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse> {
         return this.client.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
+    }
+
+    undeleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse> {
+        return this.client.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
