@@ -4,6 +4,7 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import SectionHeader from "../SectionHeader.svelte";
+    import ChatSubtext from "./ChatSubtext.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -110,9 +111,6 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
-                subtext: isBot
-                    ? ""
-                    : client.formatLastOnlineDate($_, now, $userStore[chatSummary.them]),
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }
@@ -120,9 +118,6 @@
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary),
-            subtext: chatSummary.public
-                ? $_("publicGroupWithN", { values: { number: chatSummary.memberCount } })
-                : $_("privateGroupWithN", { values: { number: chatSummary.memberCount } }),
             typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
         };
     }
@@ -182,19 +177,19 @@
                 {chat.name}
             {/if}
         </div>
-        <div class="chat-subtext" title={chat.subtext}>
+        <div class="chat-subtext">
             {#if blocked}
                 {$_("blocked")}
             {:else if preview}
-                {chat.subtext}
+                <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isGroup}
                 <div class="members" on:click={showMembers}>
-                    {chat.subtext}
+                    <ChatSubtext chat={selectedChatSummary} />
                 </div>
             {:else}
-                {chat.subtext}
+                <ChatSubtext chat={selectedChatSummary} />
             {/if}
         </div>
     </div>

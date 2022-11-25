@@ -159,7 +159,7 @@
     "privateGroupWithN": "Private group with {number} members",
     "thisIsPublicGroupWithN": "This is a public group with {number} members",
     "thisIsPrivateGroupWithN": "This is a private group with {number} members",
-    "groupWithN": "{number} members",
+    "groupWithN": "{number} Members",
     "muted": "muted",
     "unmuted": "unmuted",
     "yesPlease": "Yes please",

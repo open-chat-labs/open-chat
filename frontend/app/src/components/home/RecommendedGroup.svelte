@@ -121,7 +121,7 @@
         }
 
         .group-name {
-            @include font(bold, normal, fs-140);
+            @include font(book, normal, fs-120);
             @include ellipsis();
         }
 
