@@ -1,48 +1,25 @@
 <script lang="ts">
-    import type { GroupChatSummary, OpenChat } from "openchat-client";
-    import { flip } from "svelte/animate";
+    import type { GroupChatSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import Avatar from "../Avatar.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { push } from "svelte-spa-router";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
-    import Markdown from "./Markdown.svelte";
-    import Footer from "./upgrade/Footer.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import RecommendedGroup from "./RecommendedGroup.svelte";
 
     export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
 
     const dispatch = createEventDispatcher();
-    let selected = 0;
-
-    function previewGroup({ chatId }: GroupChatSummary) {
-        push(`/${chatId}`);
-    }
-
-    function dismiss({ chatId }: GroupChatSummary) {
-        dispatch("dismissRecommendation", chatId);
-    }
 
     function cancelRecommendations() {
         dispatch("cancelRecommendations");
-    }
-
-    function joinGroup(group: GroupChatSummary) {
-        dispatch("joinGroup", {
-            group,
-            select: false,
-        });
     }
 
     function refresh() {
@@ -50,10 +27,10 @@
     }
 </script>
 
-<div class="wrapper" class:no-groups={groups.length === 0}>
-    {#if groups.length > 0}
-        {#if $mobileWidth}
-            <SectionHeader>
+{#if groups.length > 0}
+    <div class="wrapper">
+        <SectionHeader>
+            {#if $mobileWidth}
                 <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
@@ -63,142 +40,77 @@
                         {/if}
                     </HoverIcon>
                 </div>
-                <div>
-                    <h3 class="title">{$_("hotGroups")}</h3>
-                    <p class="subtitle">{$_("selectAGroup")}</p>
-                </div>
-            </SectionHeader>
-        {:else}
-            <h3 class="title">{$_("hotGroups")}</h3>
-            <p class="subtitle">{$_("selectAGroup")}</p>
-        {/if}
-
-        {#each groups as group, i (group.chatId)}
-            <div
-                animate:flip={{ duration: 150 }}
-                class:rtl={$rtlStore}
-                class="group-card"
-                class:selected={selected === i}
-                on:mouseenter={() => (selected = i)}>
-                <div class="main">
-                    {#if !$mobileWidth}
-                        <div class="avatar">
-                            <Avatar
-                                url={client.groupAvatarUrl(group)}
-                                status={UserStatus.None}
-                                size={AvatarSize.Small} />
-                        </div>
-                    {/if}
-                    <div class="body">
-                        <div class="group-title-line">
-                            {#if $mobileWidth}
-                                <div class="avatar">
-                                    <Avatar
-                                        url={client.groupAvatarUrl(group)}
-                                        status={UserStatus.None}
-                                        size={AvatarSize.Tiny} />
-                                </div>
-                            {/if}
-                            <h3 class="group-name">
-                                {group.name}
-                            </h3>
-                        </div>
-                        <p class="group-desc">
-                            <Markdown text={group.description} />
-                        </p>
-                        <p class="user-count">
-                            {$_("groupWithN", { values: { number: group.memberCount } })}
-                        </p>
-                    </div>
-                </div>
-                <Footer align="end">
-                    <a
-                        on:click|preventDefault|stopPropagation={() => dismiss(group)}
-                        role="button"
-                        href="/#"
-                        class="not-interested">
-                        {$_("notInterested")}
-                    </a>
-                    <Button
-                        disabled={joining === group}
-                        small={true}
-                        on:click={() => previewGroup(group)}>{$_("preview")}</Button>
-                    <Button
-                        disabled={joining === group}
-                        loading={joining === group}
-                        small={true}
-                        on:click={() => joinGroup(group)}
-                        secondary={true}>{$_("join")}</Button>
-                </Footer>
+            {/if}
+            <div class="header">
+                <h3 class="title">{$_("hotGroups")}</h3>
+                <p class="subtitle">{$_("selectAGroup")}</p>
             </div>
-        {/each}
-    {:else}
+        </SectionHeader>
+
+        <div class="groups">
+            {#each groups as group, _i (group.chatId)}
+                <RecommendedGroup on:dismissRecommendation on:joinGroup {group} {joining} />
+            {/each}
+        </div>
+    </div>
+{:else}
+    <div class="no-groups">
         <h3 class="title">{$_("noHotGroups")}</h3>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button tiny={true} on:click={cancelRecommendations}>{$_("close")}</Button>
             <Button secondary={true} tiny={true} on:click={refresh}>{$_("refresh")}</Button>
         </ButtonGroup>
-    {/if}
-</div>
+    </div>
+{/if}
 
 <style type="text/scss">
-    :global(.no-groups .buttons button:first-child) {
-        text-transform: capitalize;
-    }
-
-    .subtitle {
-        margin-bottom: $sp6;
-        @include mobile() {
-            margin-bottom: 0;
-            @include font(book, normal, fs-80);
-            @include ellipsis();
-        }
-    }
-
-    .title {
-        @include font(bold, normal, fs-180);
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            margin-bottom: $sp1;
-            @include font(book, normal, fs-120);
-            @include ellipsis();
-        }
-    }
-
     .wrapper {
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        height: 100%;
+        position: relative;
+    }
+
+    .no-groups {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         align-items: center;
         height: 100%;
-        padding-top: $sp4;
-        overflow: auto;
-        overflow-x: hidden;
+    }
 
+    .subtitle {
+        margin-bottom: 0;
+        @include font(book, normal, fs-80);
+        @include ellipsis();
+    }
+
+    .title {
+        @include font(book, normal, fs-120);
+        @include ellipsis();
+        margin-bottom: $sp1;
+    }
+
+    .groups {
+        padding: $sp4;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        column-gap: $sp6;
+        row-gap: $sp6;
         @include nice-scrollbar();
-        @include mobile() {
-            padding-top: 0;
-            background-color: inherit;
+
+        @include size-below(xxl) {
+            grid-template-columns: 1fr 1fr;
         }
 
-        &.no-groups {
-            justify-content: center;
-            text-align: center;
+        @include size-below(md) {
+            grid-template-columns: 1fr;
+        }
 
-            .title {
-                @include mobile() {
-                    @include font(book, normal, fs-160);
-                    @include ellipsis();
-                }
-            }
-
-            .subtitle {
-                @include mobile() {
-                    margin-bottom: $sp6;
-                }
-            }
+        @include mobile() {
+            column-gap: $sp5;
+            row-gap: $sp5;
         }
     }
 
@@ -209,106 +121,6 @@
         &.rtl {
             margin-right: 0;
             margin-left: 5px;
-        }
-    }
-
-    .group-card {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out,
-            opacity 200ms ease-in-out, border-left 200ms ease-in-out;
-        @include box-shadow(1);
-        width: 80%;
-        border-radius: $sp2;
-        background-color: var(--recommended-bg);
-        margin-bottom: $sp5;
-        border-left: 7px solid transparent;
-        backdrop-filter: blur(10px);
-
-        @include mobile() {
-            width: calc(100% - #{$sp4});
-            margin: 0 $sp3 $sp4 $sp3;
-            opacity: 1;
-        }
-
-        .group-title-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: $sp3;
-        }
-
-        @include size-above(sm) {
-            &.selected {
-                @include box-shadow(2);
-                border-left: 7px solid var(--accent);
-                transform: scale(1.01);
-
-                &.rtl {
-                    border-left: none;
-                    border-right: 7px solid var(--accent);
-                }
-            }
-        }
-
-        .main {
-            display: flex;
-            align-items: flex-start;
-            padding: $sp4;
-            gap: $sp3;
-
-            @include mobile() {
-                padding: $sp3;
-            }
-        }
-
-        .avatar {
-            flex: 0 0 60px;
-            @include mobile() {
-                flex: 0 0 45px;
-            }
-        }
-
-        .body {
-            flex: 1;
-        }
-
-        .group-name {
-            @include font(bold, normal, fs-160);
-            margin-bottom: $sp3;
-            @include mobile() {
-                @include font-size(fs-120);
-                @include ellipsis();
-                margin-bottom: 0;
-                flex: 1;
-            }
-        }
-
-        .group-desc {
-            @include font(book, normal, fs-100);
-            margin-bottom: $sp4;
-        }
-
-        .user-count {
-            @include font(light, normal, fs-80);
-            margin-bottom: $sp3;
-
-            @include size-below(md) {
-                margin-bottom: $sp4;
-            }
-        }
-
-        .not-interested {
-            @include font(light, normal, fs-90);
-            text-decoration: underline;
-            text-decoration-color: var(--accent);
-            text-underline-offset: $sp1;
-            text-decoration-thickness: 2px;
-            text-transform: lowercase;
-            position: absolute;
-            left: $sp4;
-            bottom: $sp4;
         }
     }
 </style>

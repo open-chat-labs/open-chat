@@ -250,7 +250,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.recommended,
             // bg: dark15,
             // bg: "rgba(0,0,0,0.3)",
-            bg: hoveredChat,
+            bg: selectedChat,
             // bg: textBox,
         },
 
