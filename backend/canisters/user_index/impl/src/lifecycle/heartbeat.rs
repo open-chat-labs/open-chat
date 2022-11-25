@@ -74,7 +74,7 @@ mod upgrade_canisters {
                 new_wasm: user_canister_wasm.clone(),
                 cycles_to_deposit_if_needed,
                 args: user_canister::post_upgrade::Args {
-                    eligible_for_sns1_airdrop: true,
+                    was_sent_incorrect_sns1_message: current_wasm_version == Version::new(2, 0, 473),
                     wasm_version: user_canister_wasm.version,
                 },
             }),
