@@ -23,6 +23,6 @@
 
 <style type="text/scss">
     .deleted {
-        @include font(light, normal, fs-100);
+        @include font(light, normal, fs-80);
     }
 </style>
