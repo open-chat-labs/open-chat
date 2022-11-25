@@ -58,8 +58,8 @@
         <h3 class="title">{$_("noHotGroups")}</h3>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
-            <Button tiny={true} on:click={cancelRecommendations}>{$_("close")}</Button>
-            <Button secondary={true} tiny={true} on:click={refresh}>{$_("refresh")}</Button>
+            <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
+            <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
         </ButtonGroup>
     </div>
 {/if}
@@ -72,14 +72,6 @@
         position: relative;
     }
 
-    .no-groups {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-    }
-
     .subtitle {
         margin-bottom: 0;
         @include font(book, normal, fs-80);
@@ -90,6 +82,28 @@
         @include font(book, normal, fs-120);
         @include ellipsis();
         margin-bottom: $sp1;
+    }
+
+    .no-groups {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+
+        .subtitle,
+        .title {
+            margin-bottom: $sp3;
+            @include ellipsis();
+        }
+
+        .subtitle {
+            @include font(book, normal, fs-100);
+        }
+
+        .title {
+            @include font(book, normal, fs-180);
+        }
     }
 
     .groups {

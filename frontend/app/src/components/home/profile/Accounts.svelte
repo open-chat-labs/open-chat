@@ -129,7 +129,7 @@
                 background-image: url("../assets/bitcoin_token.png");
             }
             &.chat {
-                background-image: url("../assets/chat_token.png");
+                background-image: url("../assets/spinner.svg");
             }
         }
     }
