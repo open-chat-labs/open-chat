@@ -15,6 +15,7 @@ import type {
     IndexRange,
     AddRemoveReactionResponse,
     DeleteMessageResponse,
+    UndeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
@@ -113,6 +114,11 @@ export interface IUserClient {
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<DeleteMessageResponse>;
+    undeleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<UndeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
     searchDirectChat(
         userId: string,

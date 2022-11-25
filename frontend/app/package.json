@@ -12,7 +12,6 @@
         "validate": "svelte-check --threshold error",
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
-        "codegen": "sh ./codegen.sh",
         "typecheck": "tsc --noEmit",
         "sync_lang": "node ./generate.js"
     },

@@ -542,6 +542,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupRulesChanged' : GroupRulesChanged,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
+    'MessageUndeleted' : UpdatedMessage,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
     'ProposalsUpdated' : ProposalsUpdated,
@@ -853,6 +854,16 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const UndeleteMessagesArgs = IDL.Record({
+    'message_ids' : IDL.Vec(MessageId),
+    'correlation_id' : IDL.Nat64,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const UndeleteMessagesResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({ 'messages' : IDL.Vec(Message) }),
+  });
   const UnpinMessageArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,
     'message_index' : MessageIndex,
@@ -1013,6 +1024,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
+    'undelete_messages' : IDL.Func(
+        [UndeleteMessagesArgs],
+        [UndeleteMessagesResponse],
+        [],
+      ),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),
     'update_group_v2' : IDL.Func(
         [UpdateGroupV2Args],

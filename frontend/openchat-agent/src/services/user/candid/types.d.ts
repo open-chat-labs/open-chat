@@ -102,6 +102,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
@@ -1006,6 +1007,14 @@ export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
+export interface UndeleteMessagesArgs {
+  'user_id' : UserId,
+  'message_ids' : Array<MessageId>,
+  'correlation_id' : bigint,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type UndeleteMessagesResponse = { 'ChatNotFound' : null } |
+  { 'Success' : { 'messages' : Array<Message> } };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
@@ -1140,6 +1149,10 @@ export interface _SERVICE {
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
+  'undelete_messages' : ActorMethod<
+    [UndeleteMessagesArgs],
+    UndeleteMessagesResponse
+  >,
   'unmute_notifications' : ActorMethod<
     [UnmuteNotificationsArgs],
     UnmuteNotificationsResponse
