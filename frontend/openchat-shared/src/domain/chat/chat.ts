@@ -372,6 +372,7 @@ export type LocalChatSummaryUpdates = {
         permissions?: Partial<GroupPermissions>;
         notificationsMuted?: boolean;
         archived?: boolean;
+        frozen?: boolean;
     },
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -1258,7 +1259,7 @@ export type DeleteMessageResponse =
     | "chat_frozen";
 
 export type UndeleteMessageResponse =
-    | { 
+    | {
         kind: "success",
         message: Message,
     }
@@ -1378,14 +1379,14 @@ export type SnsFunctionType =
     | { kind: "generic_nervous_system_function" };
 
 export type FreezeGroupResponse =
-    | "success"
+    | EventWrapper<ChatFrozenEvent>
     | "chat_already_frozen"
     | "chat_not_found"
     | "not_authorized"
     | "internal_error"
 
 export type UnfreezeGroupResponse =
-    | "success"
+    | EventWrapper<ChatUnfrozenEvent>
     | "chat_not_frozen"
     | "chat_not_found"
     | "not_authorized"

@@ -5,11 +5,23 @@ export const idlFactory = ({ IDL }) => {
     'chat_id' : ChatId,
     'reason' : IDL.Opt(IDL.Text),
   });
+  const UserId = CanisterId;
+  const ChatFrozen = IDL.Record({
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
+  const TimestampMillis = IDL.Nat64;
+  const EventIndex = IDL.Nat32;
   const FreezeGroupResponse = IDL.Variant({
     'ChatAlreadyFrozen' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
+    'Success' : IDL.Record({
+      'event' : ChatFrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : IDL.Nat64,
+    }),
     'InternalError' : IDL.Text,
   });
   const SearchArgs = IDL.Record({
@@ -30,10 +42,16 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const UnfreezeGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const UnfreezeGroupResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
+    'Success' : IDL.Record({
+      'event' : ChatUnfrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : IDL.Nat64,
+    }),
     'ChatNotFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });

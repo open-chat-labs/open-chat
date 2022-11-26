@@ -1,4 +1,4 @@
-import { optional } from "../../utils/mapping";
+import { identity, optional } from "../../utils/mapping";
 import type { FreezeGroupResponse, GroupMatch, GroupSearchResponse, UnfreezeGroupResponse } from "openchat-shared";
 import type { ApiFreezeGroupResponse, ApiGroupMatch, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
 import { UnsupportedValueError } from "openchat-shared";
@@ -15,7 +15,15 @@ export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchRespo
 
 export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroupResponse {
     if ("Success" in candid) {
-        return "success";
+        return {
+            event: {
+                kind: "chat_frozen",
+                frozenBy: candid.Success.event.frozen_by.toString(),
+                reason: optional(candid.Success.event.reason, identity),
+            },
+            timestamp: candid.Success.timestamp,
+            index: candid.Success.index,
+        };
     }
     if ("ChatAlreadyFrozen" in candid) {
         return "chat_already_frozen";
@@ -34,7 +42,14 @@ export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroup
 
 export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): UnfreezeGroupResponse {
     if ("Success" in candid) {
-        return "success";
+        return {
+            event: {
+                kind: "chat_unfrozen",
+                unfrozenBy: candid.Success.event.unfrozen_by.toString(),
+            },
+            timestamp: candid.Success.timestamp,
+            index: candid.Success.index,
+        };
     }
     if ("ChatNotFrozen" in candid) {
         return "chat_not_frozen";

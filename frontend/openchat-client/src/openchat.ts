@@ -115,6 +115,7 @@ import {
     addServerEventsToStores,
     addGroupPreview,
     removeGroupPreview,
+    groupPreviewsStore,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -280,6 +281,8 @@ import {
     type Logger,
     type FreezeGroupResponse,
     type UnfreezeGroupResponse,
+    type ChatFrozenEvent,
+    type ChatUnfrozenEvent,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -1094,7 +1097,7 @@ export class OpenChat extends EventTarget {
 
         return this.api
             .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
-            .then((resp) => { 
+            .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
                     localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
@@ -2690,11 +2693,45 @@ export class OpenChat extends EventTarget {
     }
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
-        return this.api.freezeGroup(chatId, reason);
+        return this.api.freezeGroup(chatId, reason)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                }
+                return resp;
+            });
     }
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
-        return this.api.unfreezeGroup(chatId);
+        return this.api.unfreezeGroup(chatId)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                }
+                return resp;
+            });
+    }
+
+    private onChatFrozen(chatId: string, event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>): void {
+        const frozen = event.event.kind === "chat_frozen";
+        if (this.isPreviewing(chatId)) {
+            groupPreviewsStore.update((summaries) => {
+                const summary = summaries[chatId];
+                if (summary === undefined) {
+                    return summaries;
+                }
+                return {
+                    ...summaries,
+                    [chatId]: {
+                        ...summary,
+                        frozen
+                    }
+                };
+            });
+        } else {
+            localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
+            addServerEventsToStores(chatId, [event], undefined);
+        }
     }
 
     private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {

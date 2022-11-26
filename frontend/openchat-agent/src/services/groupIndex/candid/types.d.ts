@@ -206,7 +206,14 @@ export interface FreezeGroupArgs {
 export type FreezeGroupResponse = { 'ChatAlreadyFrozen' : null } |
   { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null } |
+  {
+    'Success' : {
+      'event' : ChatFrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+    }
+  } |
   { 'InternalError' : string };
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
@@ -716,7 +723,14 @@ export type TransactionHash = Uint8Array;
 export interface UnfreezeGroupArgs { 'chat_id' : ChatId }
 export type UnfreezeGroupResponse = { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null } |
+  {
+    'Success' : {
+      'event' : ChatUnfrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+    }
+  } |
   { 'ChatNotFrozen' : null } |
   { 'InternalError' : string };
 export interface UpdatedMessage {
