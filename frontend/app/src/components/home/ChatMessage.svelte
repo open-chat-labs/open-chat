@@ -122,7 +122,10 @@
     $: inert = deleted || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: canUndelete = msg.content.kind === "deleted_content" && msg.content.deletedBy === user.userId && !undeleting;
+    $: canUndelete =
+        msg.content.kind === "deleted_content" &&
+        msg.content.deletedBy === user.userId &&
+        !undeleting;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -495,6 +498,7 @@
                 {collapsed}
                 {undeleting}
                 first
+                repliesTo={msg.repliesTo}
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
