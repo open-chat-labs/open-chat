@@ -65,6 +65,7 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Custom' : IDL.Record({ 'kind' : IDL.Text, 'payload' : IDL.Text }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -359,6 +360,7 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Custom' : IDL.Record({ 'kind' : IDL.Text, 'payload' : IDL.Text }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -656,6 +658,7 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Custom' : IDL.Record({ 'kind' : IDL.Text, 'payload' : IDL.Text }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -953,6 +956,7 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Custom' : IDL.Record({ 'kind' : IDL.Text, 'payload' : IDL.Text }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,

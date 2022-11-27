@@ -126,6 +126,8 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(formatter("giphyMessage"), content.caption);
+    } else if (content.kind === "custom_content") {
+        text = "custom content";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

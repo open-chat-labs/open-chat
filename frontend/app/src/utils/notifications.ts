@@ -1,5 +1,5 @@
 import { push } from "svelte-spa-router";
-import type { Notification, OpenChat } from "openchat-client";
+import type { Notification, NotificationStatus, OpenChat } from "openchat-client";
 
 import { isCanisterUrl } from "../utils/urls";
 
@@ -27,7 +27,7 @@ export async function subscribeToNotifications(
         }
     });
 
-    client.notificationStatus.subscribe((status) => {
+    client.notificationStatus.subscribe((status: NotificationStatus) => {
         switch (status) {
             case "granted":
                 trySubscribe(client);

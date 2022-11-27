@@ -54,6 +54,7 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(p.proposal.summary().to_string(), 1.0);
             }
             MessageContentInternal::Deleted(_) => {}
+            MessageContentInternal::Custom(_) => {}
         }
 
         document

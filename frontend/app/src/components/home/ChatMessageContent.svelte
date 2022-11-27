@@ -38,7 +38,6 @@
     export let undeleting: boolean = false;
 
     $: chess = content.kind === "text_content" && content.text.startsWith("/chess");
-    $: console.log("content: ", content, chess);
 </script>
 
 {#if content.kind === "text_content" && chess}

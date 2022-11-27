@@ -17,6 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
+    'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
   });
   const Milliseconds = IDL.Nat64;
@@ -48,7 +49,10 @@ export const idlFactory = ({ IDL }) => {
   const BioArgs = IDL.Record({});
   const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
-  const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const BlockUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const PermissionRole = IDL.Variant({
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
@@ -101,6 +105,7 @@ export const idlFactory = ({ IDL }) => {
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,
+    'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
@@ -109,8 +114,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const DeleteMessagesArgs = IDL.Record({
@@ -122,6 +129,7 @@ export const idlFactory = ({ IDL }) => {
   const DeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
@@ -178,6 +186,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const CustomContent = IDL.Record({ 'kind' : IDL.Text, 'payload' : IDL.Text });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -360,6 +369,7 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'Custom' : CustomContent,
     'GovernanceProposal' : ProposalContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
@@ -377,6 +387,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
   const EventsArgs = IDL.Record({
@@ -456,6 +467,10 @@ export const idlFactory = ({ IDL }) => {
     'old_permissions' : GroupPermissions,
     'new_permissions' : GroupPermissions,
   });
+  const ChatFrozen = IDL.Record({
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   const PollEnded = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -478,6 +493,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'unblocked_by' : UserId,
   });
+  const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -543,10 +559,12 @@ export const idlFactory = ({ IDL }) => {
     'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
+    'ChatFrozen' : ChatFrozen,
     'PollEnded' : PollEnded,
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'ThreadUpdated' : ThreadUpdated,
     'UsersUnblocked' : UsersUnblocked,
+    'ChatUnfrozen' : ChatUnfrozen,
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
@@ -644,6 +662,11 @@ export const idlFactory = ({ IDL }) => {
     'latest_event' : IDL.Opt(EventIndex),
     'latest_message' : IDL.Opt(MessageIndex),
   });
+  const FrozenGroupInfo = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   const Mention = IDL.Record({
     'message_id' : MessageId,
     'event_index' : EventIndex,
@@ -673,6 +696,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
+    'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
@@ -723,7 +747,9 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
     'Success' : GroupChatSummary,
+    'UserSuspended' : IDL.Null,
     'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
     'InternalError' : IDL.Text,
@@ -737,7 +763,9 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotPublic' : IDL.Null,
     'OwnerCannotLeave' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const ThreadRead = IDL.Record({
@@ -806,6 +834,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
@@ -840,6 +869,7 @@ export const idlFactory = ({ IDL }) => {
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
+    'UserSuspended' : IDL.Null,
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -911,18 +941,23 @@ export const idlFactory = ({ IDL }) => {
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
     'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
+    'RecipientNotFound' : IDL.Null,
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const SetBioArgs = IDL.Record({ 'text' : IDL.Text });
   const SetBioResponse = IDL.Variant({
     'TooLong' : FieldTooLongResult,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -941,6 +976,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
+    'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
@@ -949,6 +985,7 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
@@ -960,7 +997,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
-  const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const UnblockUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const UndeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
@@ -970,6 +1010,7 @@ export const idlFactory = ({ IDL }) => {
   const UndeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Record({ 'messages' : IDL.Vec(Message) }),
+    'UserSuspended' : IDL.Null,
   });
   const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const UnmuteNotificationsResponse = IDL.Variant({
@@ -998,6 +1039,11 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : IDL.Nat,
   });
+  const FrozenGroupUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : FrozenGroupInfo,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
@@ -1013,6 +1059,7 @@ export const idlFactory = ({ IDL }) => {
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
+    'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'mentions' : IDL.Vec(Mention),

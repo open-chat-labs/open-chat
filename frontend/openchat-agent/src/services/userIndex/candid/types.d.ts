@@ -64,16 +64,19 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
@@ -88,6 +91,7 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
+export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -111,6 +115,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CheckUsernameArgs { 'username' : string }
 export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -154,10 +159,13 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'suspended' : boolean,
+      'is_super_admin' : boolean,
       'open_storage_limit_bytes' : bigint,
     }
   } |
   { 'UserNotFound' : null };
+export interface CustomContent { 'kind' : string, 'payload' : string }
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -232,6 +240,14 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FrozenGroupInfo {
+  'timestamp' : TimestampMillis,
+  'frozen_by' : UserId,
+  'reason' : [] | [string],
+}
+export type FrozenGroupUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -269,6 +285,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -295,6 +312,7 @@ export interface GroupChatSummaryUpdates {
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -426,6 +444,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'Custom' : CustomContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
@@ -525,6 +544,7 @@ export interface PartialUserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface Participant {
   'role' : Role,
@@ -615,6 +635,7 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -735,6 +756,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
+export interface SuspendUserArgs {
+  'duration' : [] | [Milliseconds],
+  'user_id' : UserId,
+}
+export type SuspendUserResponse = { 'Success' : null } |
+  { 'InternalError' : string };
 export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
@@ -775,6 +802,9 @@ export interface UnconfirmedPhoneNumberState {
   'valid_until' : TimestampMillis,
   'phone_number' : PhoneNumber,
 }
+export interface UnsuspendUserArgs { 'user_id' : UserId }
+export type UnsuspendUserResponse = { 'Success' : null } |
+  { 'InternalError' : string };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -804,6 +834,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface UsersArgs {
   'user_groups' : Array<
@@ -865,6 +896,8 @@ export interface _SERVICE {
     SubmitPhoneNumberResponse
   >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
+  'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
+  'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
   'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,
   'user' : ActorMethod<[UserArgs], UserResponse>,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,

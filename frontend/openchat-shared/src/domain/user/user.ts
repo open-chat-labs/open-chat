@@ -158,7 +158,7 @@ export type ResendCodeResponse =
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long";
+export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
 
 export type RegisterUserResponse =
     | "user_limit_reached"

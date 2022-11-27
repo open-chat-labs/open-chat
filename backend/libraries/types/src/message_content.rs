@@ -1,6 +1,6 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation, 
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -25,6 +25,7 @@ pub enum MessageContent {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +40,7 @@ pub enum MessageContentInternal {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -94,6 +96,7 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
+            MessageContent::Custom(c) => c.payload.is_empty(),
             MessageContent::Deleted(_) => true,
             MessageContent::Crypto(_) | MessageContent::Giphy(_) | MessageContent::GovernanceProposal(_) => false,
         };
@@ -131,6 +134,7 @@ impl MessageContent {
                 proposal: p.proposal,
                 votes: HashMap::new(),
             }),
+            MessageContent::Custom(c) => MessageContentInternal::Custom(c),
         }
     }
 
@@ -166,7 +170,8 @@ impl MessageContent {
             | MessageContent::Crypto(_)
             | MessageContent::Deleted(_)
             | MessageContent::Giphy(_)
-            | MessageContent::GovernanceProposal(_) => {}
+            | MessageContent::GovernanceProposal(_)
+            | MessageContent::Custom(_) => {}
         }
 
         references
@@ -184,6 +189,7 @@ impl MessageContent {
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContent::Custom(c) => c.payload.len(),
         }
     }
 }
@@ -205,6 +211,7 @@ impl MessageContentInternal {
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
+            MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
     }
 }
@@ -223,6 +230,14 @@ pub struct ImageContent {
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+
+pub struct CustomContent {
+    pub kind: String,
+    pub payload: String,
+}
+
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyImageVariant {

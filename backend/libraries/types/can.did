@@ -486,6 +486,12 @@ type GiphyContent =
         mobile: GiphyImageVariant;
     };
 
+type CustomContent =
+    record {
+        kind: text;
+        payload: text;
+    };
+
 type ImageContent =
     record {
         width: nat32;
@@ -524,6 +530,7 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
+        Custom: CustomContent;
     };
 
 type UpdatedMessage =

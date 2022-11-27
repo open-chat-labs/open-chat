@@ -9,7 +9,7 @@ use types::{
     MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
     ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
-    Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersUnblocked, Message,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -303,6 +303,7 @@ impl MessageInternal {
                     incr(&mut metrics.proposals);
                     incr(&mut sender_metrics.proposals);
                 }
+                MessageContentInternal::Custom(_) => {}
             }
 
             for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {

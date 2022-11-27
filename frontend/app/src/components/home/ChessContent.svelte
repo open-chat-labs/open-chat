@@ -27,15 +27,15 @@
 
     function parseMove(txt: string): [string, string] | undefined {
         const move = txt.replace("/chess", "").trim();
-        return move === ""
-            ? undefined
-            : (move.split("->").map((m) => m.trim()) as [string, string]);
+        return move === "" ? undefined : (move.split(" ").map((m) => m.trim()) as [string, string]);
     }
 
     function move(state: Pieces, m: [string, string] | undefined): Pieces {
         if (m === undefined) return state;
         const [from, to] = m;
-        console.log("MOVE: ", m);
+        console.log("Move is valid: ", validMove(state, from, to));
+        if (!validMove(state, from, to)) return state;
+
         const current = state[from];
         if (current) {
             state[to] = current;
@@ -44,9 +44,63 @@
         return state;
     }
 
-    $: state = move(initialState, parseMove(content.text));
+    function validMove(state: Pieces, from: string, to: string): boolean {
+        const current = state[from];
+        if (current === undefined) return false;
 
-    $: console.log("STATE: ", state);
+        const [fromPos, toPos] = toCoords(from, to);
+
+        switch (current.type) {
+            case "bishop":
+                return validBishop(fromPos, toPos);
+            case "king":
+                return validKing(fromPos, toPos);
+            case "rook":
+                return validRook(fromPos, toPos);
+            case "queen":
+                return validQueen(fromPos, toPos);
+            case "knight":
+                return validKnight(fromPos, toPos);
+            case "pawn":
+                return validPawn(fromPos, toPos);
+        }
+    }
+
+    function toCoords(from: string, to: string): [[number, number], [number, number]] {
+        return [toCoord(from), toCoord(to)];
+    }
+
+    function toCoord(pos: string): [number, number] {
+        const x = letters.indexOf(pos[0].toLowerCase());
+        const y = Number(pos[1]);
+        return [x, y];
+    }
+
+    function validQueen(from: [number, number], to: [number, number]): boolean {
+        return validRook(from, to) || validBishop(from, to);
+    }
+
+    function validBishop([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+        return x2 - x1 === y2 - y1;
+    }
+
+    function validRook([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+        return x2 === x1 || y2 === y1;
+    }
+
+    function validKing([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+        return x2 - x1 <= 1 && y2 - y1 <= 1;
+    }
+
+    function validPawn([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+        return x2 === x1 && y2 - y1 === 1; // not quite good enough
+    }
+
+    function validKnight([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+        return (x2 - x1 === 1 && y2 - y1 === 2) || (x2 - x1 === 2 && y2 - y1 === 1);
+    }
+
+    $: state = move(initialState, parseMove(content.text));
 
     const initialState: Record<string, Piece> = {
         a8: { colour: "white", type: "rook" },

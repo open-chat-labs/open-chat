@@ -36,6 +36,7 @@ import type {
     ApiProposal,
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
+    ApiCustomContent,
 } from "../user/candid/idl";
 import type {
     ApiListNervousSystemFunctionsResponse,
@@ -49,6 +50,7 @@ import {
     type MessageContent,
     type User,
     type ProposalContent,
+    type CustomContent,
     type Proposal,
     ProposalDecisionStatus,
     ProposalRewardStatus,
@@ -148,6 +150,9 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("GovernanceProposal" in candid) {
         return proposalContent(candid.GovernanceProposal);
     }
+    if ("Custom" in candid) {
+        return customContent(candid.Custom);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -164,6 +169,14 @@ function proposalContent(candid: ApiProposalContent): ProposalContent {
         governanceCanisterId: candid.governance_canister_id.toString(),
         proposal: proposal(candid.proposal),
         myVote: optional(candid.my_vote, identity),
+    };
+}
+
+function customContent(candid: ApiCustomContent): CustomContent {
+    return {
+        kind: "custom_content",
+        subtype: candid.kind,
+        payload: candid.payload,
     };
 }
 
@@ -568,9 +581,19 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "proposal_content":
             return { GovernanceProposal: apiProposalContent(domain) };
 
+        case "custom_content":
+            return { Custom: apiCustomContent(domain) };
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
+}
+
+function apiCustomContent(domain: CustomContent): ApiCustomContent {
+    return {
+        kind: domain.subtype,
+        payload: domain.payload,
+    };
 }
 
 function apiProposalContent(_: ProposalContent): ApiProposalContent {

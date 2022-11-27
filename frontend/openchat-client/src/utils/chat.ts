@@ -216,6 +216,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
+        content.kind !== "custom_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -318,7 +319,7 @@ export function mergeLocalSummaryUpdates(
 ): Record<string, ChatSummary> {
     if (Object.keys(localUpdates).length === 0) return server;
 
-    const merged = { ... server };
+    const merged = { ...server };
 
     for (const [chatId, localUpdate] of Object.entries(localUpdates)) {
         if (localUpdate.added !== undefined) {
@@ -334,7 +335,8 @@ export function mergeLocalSummaryUpdates(
                 if (updated.kind === undefined) {
                     merged[chatId] = {
                         ...current,
-                        notificationsMuted: updated.notificationsMuted ?? current.notificationsMuted,
+                        notificationsMuted:
+                            updated.notificationsMuted ?? current.notificationsMuted,
                         archived: updated.archived ?? current.archived,
                     };
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
@@ -344,11 +346,12 @@ export function mergeLocalSummaryUpdates(
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
                         myRole: updated.myRole ?? current.myRole,
-                        notificationsMuted: updated.notificationsMuted ?? current.notificationsMuted,
+                        notificationsMuted:
+                            updated.notificationsMuted ?? current.notificationsMuted,
                         archived: updated.archived ?? current.archived,
                         permissions: {
                             ...current.permissions,
-                            ...updated.permissions
+                            ...updated.permissions,
                         },
                     };
                 }
@@ -356,9 +359,11 @@ export function mergeLocalSummaryUpdates(
         }
         if (localUpdate.removedAtTimestamp) {
             const chat = merged[chatId];
-            if (chat !== undefined && (
-                (chat.kind === "direct_chat" && chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                (chat.kind === "group_chat" && chat.joined < localUpdate.removedAtTimestamp))
+            if (
+                chat !== undefined &&
+                ((chat.kind === "direct_chat" &&
+                    chat.dateCreated < localUpdate.removedAtTimestamp) ||
+                    (chat.kind === "group_chat" && chat.joined < localUpdate.removedAtTimestamp))
             ) {
                 delete merged[chatId];
             }
@@ -373,7 +378,7 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     unconfirmed: UnconfirmedMessages,
-    localUpdates: Record<string, LocalMessageUpdates>,
+    localUpdates: Record<string, LocalMessageUpdates>
 ): ChatSummary {
     const unconfirmedMessages = unconfirmed[chatSummary.chatId]?.messages;
 
@@ -456,7 +461,10 @@ export function groupEvents(
         .map(groupInner ?? groupBySender);
 }
 
-function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string): EventWrapper<ChatEvent>[] {
+function reduceJoinedOrLeft(
+    events: EventWrapper<ChatEvent>[],
+    myUserId: string
+): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
     ): AggregateCommonEvents | undefined {
@@ -466,9 +474,11 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
-        if (e.event.kind === "member_joined" || 
-            e.event.kind === "member_left" || 
-            (e.event.kind === "message" && messageIsHidden(e.event, myUserId))) {
+        if (
+            e.event.kind === "member_joined" ||
+            e.event.kind === "member_left" ||
+            (e.event.kind === "message" && messageIsHidden(e.event, myUserId))
+        ) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
                 agg = {
@@ -511,10 +521,12 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
 }
 
 function messageIsHidden(message: Message, myUserId: string) {
-    return message.content.kind === "deleted_content" &&
+    return (
+        message.content.kind === "deleted_content" &&
         message.content.deletedBy !== myUserId &&
         message.sender !== myUserId &&
-        message.thread === undefined;
+        message.thread === undefined
+    );
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
@@ -737,7 +749,9 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
 }
 
 export function canChangePermissions(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && isPermitted(chat.myRole, chat.permissions.changePermissions);
+    return (
+        chat.kind === "group_chat" && isPermitted(chat.myRole, chat.permissions.changePermissions)
+    );
 }
 
 export function canChangeRoles(
@@ -831,7 +845,11 @@ export function canCreatePolls(chat: ChatSummary): boolean {
     }
 }
 
-export function canSendMessages(chat: ChatSummary, userLookup: UserLookup, proposalsBotUserId: string): boolean {
+export function canSendMessages(
+    chat: ChatSummary,
+    userLookup: UserLookup,
+    proposalsBotUserId: string
+): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.sendMessages);
     }
