@@ -34,6 +34,7 @@
     let mentionPrefix: string | undefined;
     let searchBoxHeight: number | undefined;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let timer: number | undefined;
 
     $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
@@ -149,18 +150,29 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            if (searchTerm.length > 2) {
-                performSearch();
+            if (timer !== undefined) {
+                window.clearTimeout(timer);
             }
+            performSearch();
             e.preventDefault();
         }
     }
 
     function onInput() {
         triggerMentionLookup();
+
+        if (showMentionPicker || lastSearchTerm === searchTerm) {
+            return;
+        }
+        if (timer !== undefined) {
+            window.clearTimeout(timer);
+        }
+        timer = window.setTimeout(() => {   
+            performSearch();
+        }, 300);
     }
 
-    function triggerMentionLookup(): void {
+    function triggerMentionLookup() {
         if (!isGroup) {
             return;        
         }
@@ -220,6 +232,7 @@
         if (user !== undefined) {
             reverseUserLookup[username] = user.userId;
         }
+        performSearch();
     }
 
     function cancelMention() {
