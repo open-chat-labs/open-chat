@@ -166,7 +166,7 @@
         }
         
         const pos = inputElement.selectionEnd ?? 0;
-        const slice = searchTerm.slice(0, pos);
+        const slice = inputElement.value.slice(0, pos);
         const matches = slice.match(mentionRegex);
 
         if (matches !== null) {
