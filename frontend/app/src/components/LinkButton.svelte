@@ -9,7 +9,7 @@
 <style type="text/scss">
     span {
         cursor: pointer;
-        color: var(--link-underline);
+        color: var(--txt);
         display: inline-block;
     }
 

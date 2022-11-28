@@ -31,7 +31,17 @@ export function lightTheme(): Theme {
         primary,
 
         collapsible: {
-            open: pinkAccent,
+            closed: {
+                header: {
+                    txt: txtLight,
+                },
+            },
+            open: {
+                header: {
+                    txt: txt,
+                    arrow: pinkAccent,
+                },
+            },
         },
 
         notificationBar: {
@@ -74,6 +84,7 @@ export function lightTheme(): Theme {
         input: {
             bg: textBox,
             txt,
+            sh: "none",
         },
 
         members: {
@@ -85,6 +96,7 @@ export function lightTheme(): Theme {
             input: {
                 bg: textBox,
                 txt,
+                sh: "none",
             },
         },
 
@@ -111,6 +123,7 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: textBox,
             txt,
+            sh: "none",
 
             section: {
                 txt: "#ffffff",
@@ -134,6 +147,7 @@ export function lightTheme(): Theme {
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
+            bd: "transparent",
         },
 
         button: {
@@ -259,12 +273,9 @@ export function lightTheme(): Theme {
 
         markdown: {
             fg: {
-                color: "#3a3a3a",
-                bright: "#000",
-                muted: "#777",
-            },
-            bg: {
-                dark: "#eeeeee",
+                color: txt,
+                bright: txt,
+                muted: txtLight,
             },
         },
     };

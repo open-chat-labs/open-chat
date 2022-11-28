@@ -22,13 +22,9 @@
         <ChatList
             on:loadMessage
             on:chatWith
-            on:showRoadmap
-            on:showArchitecture
-            on:showFeatures
-            on:showWhitepaper
             on:showFaq
-            on:showAbout
             on:whatsHot
+            on:showHomePage
             on:newGroup
             on:profile
             on:logout

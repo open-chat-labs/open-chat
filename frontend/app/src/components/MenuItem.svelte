@@ -23,16 +23,16 @@
     .menu-item {
         display: flex;
         cursor: pointer;
-        border-bottom: 1px solid var(--bd);
+        // border-bottom: 1px solid var(--bd);
         color: var(--menu-txt);
         align-items: center;
         @include font-size(fs-90);
-        padding: 10px;
+        padding: 12px $sp4;
 
-        @include mobile() {
-            @include font-size(fs-80);
-            padding: 9px;
-        }
+        // @include mobile() {
+        //     @include font-size(fs-80);
+        //     padding: 9px 12px;
+        // }
 
         &:last-child {
             border-bottom: none;

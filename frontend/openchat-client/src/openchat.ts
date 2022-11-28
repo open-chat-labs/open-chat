@@ -41,6 +41,7 @@ import {
     metricsEqual,
     newMessageId,
     sameUser,
+    isFrozen,
     isPreviewing,
     buildTransactionLink,
     buildCryptoTransferText,
@@ -114,6 +115,7 @@ import {
     addServerEventsToStores,
     addGroupPreview,
     removeGroupPreview,
+    groupPreviewsStore,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -277,6 +279,8 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
+    type ChatFrozenEvent,
+    type ChatUnfrozenEvent,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -972,9 +976,17 @@ export class OpenChat extends EventTarget {
         return this.chatPredicate(chatId, isPreviewing);
     }
 
+    isFrozen(chatId: string): boolean {
+        return this.chatPredicate(chatId, isFrozen);
+    }
+
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
+    }
+
+    isSuperAdmin(): boolean {
+        return this.user.isSuperAdmin
     }
 
     canForward = canForward;
@@ -1083,7 +1095,7 @@ export class OpenChat extends EventTarget {
 
         return this.api
             .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
-            .then((resp) => { 
+            .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
                     localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
@@ -1392,7 +1404,10 @@ export class OpenChat extends EventTarget {
             if (selectedChat.kind === "direct_chat") {
                 const them = this._liveState.userStore[selectedChat.them];
                 // Refresh user details if they are more than 5 minutes out of date
-                if (them === undefined || Date.now() - Number(them.updated) > 5 * ONE_MINUTE_MILLIS) {
+                if (
+                    them === undefined ||
+                    Date.now() - Number(them.updated) > 5 * ONE_MINUTE_MILLIS
+                ) {
                     this.getUser(selectedChat.them);
                 }
             }
@@ -1882,11 +1897,7 @@ export class OpenChat extends EventTarget {
 
         // TODO check storage requirements
 
-        // Only forward the primary content not the caption
         const content = { ...msg.content };
-        if ("caption" in content) {
-            content.caption = "";
-        }
 
         const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
 
@@ -2379,11 +2390,10 @@ export class OpenChat extends EventTarget {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.api.searchUsers(searchTerm, maxResults)
-            .then((resp) => {
-                userStore.addMany(resp);
-                return resp;
-            });
+        return this.api.searchUsers(searchTerm, maxResults).then((resp) => {
+            userStore.addMany(resp);
+            return resp;
+        });
     }
 
     registerUser(
@@ -2537,21 +2547,22 @@ export class OpenChat extends EventTarget {
                 ],
             },
             true
-        )
+        );
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale)
-            .then((resp) => {
-                userStore.addMany(resp.users);
-                if (resp.serverTimestamp !== undefined) {
-                    // If we went to the server, all users not returned are still up to date, so we mark them as such
-                    const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
-                    const allOtherUsers = users.userGroups.flatMap((g) => g.users.filter((u) => !usersReturned.has(u)));
-                    userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
-                }
-                return resp;
-            });
+        return this.api.getUsers(users, allowStale).then((resp) => {
+            userStore.addMany(resp.users);
+            if (resp.serverTimestamp !== undefined) {
+                // If we went to the server, all users not returned are still up to date, so we mark them as such
+                const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
+                const allOtherUsers = users.userGroups.flatMap((g) =>
+                    g.users.filter((u) => !usersReturned.has(u))
+                );
+                userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+            }
+            return resp;
+        });
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
@@ -2575,7 +2586,7 @@ export class OpenChat extends EventTarget {
                 if (user !== undefined) {
                     userStore.add({
                         ...user,
-                        username
+                        username,
                     });
                 }
             }
@@ -2676,6 +2687,58 @@ export class OpenChat extends EventTarget {
                 userId: this.user.userId,
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+        }
+    }
+
+    freezeGroup(chatId: string, reason: string | undefined): Promise<boolean> {
+        return this.api.freezeGroup(chatId, reason)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to freeze group", err);
+                return false;
+            });
+    }
+
+    unfreezeGroup(chatId: string): Promise<boolean> {
+        return this.api.unfreezeGroup(chatId)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to unfreeze group", err);
+                return false;
+            });
+    }
+
+    private onChatFrozen(chatId: string, event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>): void {
+        const frozen = event.event.kind === "chat_frozen";
+        if (this.isPreviewing(chatId)) {
+            groupPreviewsStore.update((summaries) => {
+                const summary = summaries[chatId];
+                if (summary === undefined) {
+                    return summaries;
+                }
+                return {
+                    ...summaries,
+                    [chatId]: {
+                        ...summary,
+                        frozen
+                    }
+                };
+            });
+        } else {
+            localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
+            addServerEventsToStores(chatId, [event], undefined);
         }
     }
 

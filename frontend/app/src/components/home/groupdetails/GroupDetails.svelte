@@ -235,6 +235,8 @@
         if (resp === "avatar_too_big") return "avatarTooBig";
         if (resp === "rules_too_short") return "groupRulesTooShort";
         if (resp === "rules_too_long") return "groupRulesTooLong";
+        if (resp === "user_suspended") return "userSuspended";
+        if (resp === "chat_frozen") return "chatFrozen";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -391,7 +393,7 @@
             {:else if originalGroup.description?.length > 0}
                 <fieldset>
                     <legend>
-                        <Legend>{$_("groupDesc")}</Legend>
+                        <Legend label={$_("groupDesc")} />
                     </legend>
                     <Markdown text={description()} />
                 </fieldset>
@@ -547,7 +549,11 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3 0 0 0;
+        padding: $sp3 $sp5 0 $sp5;
+
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
+        }
     }
 
     h4,

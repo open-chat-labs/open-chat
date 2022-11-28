@@ -23,7 +23,7 @@
     }
 </script>
 
-<SectionHeader flush={!$mobileWidth} shadow={true}>
+<SectionHeader border={false} flush={!$mobileWidth} shadow={true}>
     <span title={$_("members")} class="members" on:click={showMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
@@ -42,6 +42,7 @@
         flex: 1;
         margin: 0;
         text-align: center;
+        @include font-size(fs-120);
     }
     .close,
     .members {

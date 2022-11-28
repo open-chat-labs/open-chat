@@ -825,12 +825,8 @@
             {searchTerm}
             {searchResultsAvailable}
             {searching}
-            on:showAbout={showLandingPageRoute("/home")}
+            on:showHomePage={showLandingPageRoute("/home")}
             on:showFaq={() => (modal = ModalType.Faq)}
-            on:showRoadmap={showLandingPageRoute("/roadmap")}
-            on:showArchitecture={showLandingPageRoute("/architecture")}
-            on:showFeatures={showLandingPageRoute("/features")}
-            on:showWhitepaper={showLandingPageRoute("whitepaper")}
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:whatsHot={() => whatsHot(true)}

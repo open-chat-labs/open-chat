@@ -34,12 +34,10 @@
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import { logger } from "../../../utils/logging";
-    import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { Cryptocurrency, cryptoCurrencyList } from "openchat-client";
     import LinkButton from "../../LinkButton.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ReferUsers from "./ReferUsers.svelte";
+    import Accounts from "./Accounts.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,9 +54,6 @@
     let saving = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
-    let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
-    let showManageCryptoAccount = false;
-    let balanceError: string | undefined;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -66,8 +61,6 @@
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: storageStore = client.storageStore;
-    $: cryptoBalance = client.cryptoBalance;
-    $: userStore = client.userStore;
     $: {
         setLocale(selectedLocale);
     }
@@ -162,24 +155,7 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
-
-    function showManageCrypto(crypto: Cryptocurrency) {
-        selectedCryptoAccount = crypto;
-        showManageCryptoAccount = true;
-    }
-
-    function onBalanceRefreshed() {
-        balanceError = undefined;
-    }
-
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        balanceError = ev.detail;
-    }
 </script>
-
-{#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
-    <ManageCryptoAccount bind:token={selectedCryptoAccount} bind:open={showManageCryptoAccount} />
-{/if}
 
 <SectionHeader flush={true} shadow={true}>
     <h4 class="title">{$_("profile")}</h4>
@@ -202,7 +178,7 @@
                     image={client.userAvatarUrl(user)}
                     on:imageSelected={userAvatarSelected} />
             </div>
-            <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
+            <Legend label={$_("username")} rules={$_("usernameRules")} />
             <UsernameInput
                 {client}
                 originalUsername={user?.username ?? ""}
@@ -214,7 +190,7 @@
                 {/if}
             </UsernameInput>
 
-            <Legend>{$_("bio")} ({$_("supportsMarkdown")})</Legend>
+            <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
             <TextArea
                 rows={3}
                 bind:value={userbio}
@@ -230,7 +206,7 @@
                     loading={saving || checkingUsername}
                     disabled={(!bioDirty && validUsername === undefined) || saving}
                     fill={true}
-                    small={true}>{$_("update")}</Button>
+                    small>{$_("update")}</Button>
             </div>
         </CollapsibleCard>
     </div>
@@ -239,7 +215,7 @@
             on:toggle={appearanceSectionOpen.toggle}
             open={$appearanceSectionOpen}
             headerText={$_("appearance")}>
-            <Legend>{$_("preferredLanguage")}</Legend>
+            <Legend label={$_("preferredLanguage")} />
             <Select bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
                     <option value={lang.code}>{lang.name}</option>
@@ -247,9 +223,10 @@
             </Select>
 
             <div class="para">
-                <Legend>{$_("theme")}</Legend>
+                <Legend label={$_("theme")} />
                 <Toggle
                     id={"inherit-system"}
+                    small
                     on:change={toggleSystemTheme}
                     label={$_("inheritSystem")}
                     checked={$themeNameStore === "system"} />
@@ -272,7 +249,7 @@
             </div>
 
             <div class="para">
-                <Legend>{$_("fontSize")}</Legend>
+                <Legend label={$_("fontSize")} />
                 <FontSize />
             </div>
         </CollapsibleCard>
@@ -292,12 +269,14 @@
             headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
+                small
                 on:change={() => enterSend.toggle()}
                 label={$_("enterToSend")}
                 checked={$enterSend} />
             {#if notificationsSupported}
                 <Toggle
                     id={"notifications"}
+                    small
                     disabled={$notificationStatus === "hard-denied"}
                     on:change={toggleNotifications}
                     label={$notificationStatus === "hard-denied"
@@ -312,75 +291,7 @@
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
             headerText={$_("accounts")}>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="token">{$_("cryptoAccount.token")}</th>
-                        <th class="balance">{$_("cryptoAccount.shortBalanceLabel")}</th>
-                        <th class="manage" />
-                    </tr>
-                </thead>
-                <tbody>
-                    {#if process.env.ENABLE_MULTI_CRYPTO}
-                        {#each cryptoCurrencyList as token}
-                            <tr>
-                                <td class="token">{token.toUpperCase()}</td>
-                                <td class="balance"
-                                    ><BalanceWithRefresh
-                                        {token}
-                                        value={$cryptoBalance[token]}
-                                        on:refreshed={onBalanceRefreshed}
-                                        on:error={onBalanceRefreshError} /></td>
-                                <td class="manage">
-                                    <LinkButton
-                                        underline={"hover"}
-                                        on:click={() => showManageCrypto(token)}
-                                        >{$_("cryptoAccount.manage")}</LinkButton>
-                                </td>
-                            </tr>
-                        {/each}
-                    {:else}
-                        <tr>
-                            <td class="token">ICP</td>
-                            <td class="balance"
-                                ><BalanceWithRefresh
-                                    token={"icp"}
-                                    value={$cryptoBalance["icp"]}
-                                    on:refreshed={onBalanceRefreshed}
-                                    on:error={onBalanceRefreshError} /></td>
-                            <td class="manage">
-                                <LinkButton
-                                    underline={"hover"}
-                                    on:click={() => showManageCrypto("icp")}
-                                    >{$_("cryptoAccount.manage")}</LinkButton>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="token"
-                                >BTC <span class="coming-soon"
-                                    >{$_("cryptoAccount.comingSoon")}</span
-                                ></td>
-                            <td class="balance">
-                                <BalanceWithRefresh value={BigInt(0)} disabled />
-                            </td>
-                            <td class="manage" />
-                        </tr>
-                        <tr>
-                            <td class="token"
-                                >CHAT <span class="coming-soon"
-                                    >{$_("cryptoAccount.comingSoon")}</span
-                                ></td>
-                            <td class="balance">
-                                <BalanceWithRefresh value={BigInt(0)} disabled />
-                            </td>
-                            <td class="manage" />
-                        </tr>
-                    {/if}
-                </tbody>
-            </table>
-            {#if balanceError !== undefined}
-                <ErrorMessage>{balanceError}</ErrorMessage>
-            {/if}
+            <Accounts />
         </CollapsibleCard>
     </div>
     <div class="storage">
@@ -400,9 +311,9 @@
                     </LinkButton>
                 </p>
                 <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                    <Button on:click={() => dispatch("upgrade", "sms")} small
                         >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                    <Button on:click={() => dispatch("upgrade", "icp")} small
                         >{$_("upgradeByTransfer")}</Button>
                 </ButtonGroup>
             {:else}
@@ -410,7 +321,7 @@
                 {#if $storageStore.byteLimit < ONE_GB}
                     <p class="para">{$_("chooseTransfer")}</p>
                     <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
+                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
                             >{$_("upgradeStorage")}</Button>
                     </div>
                 {/if}
@@ -431,11 +342,11 @@
             open={$advancedSectionOpen}
             headerText={$_("advanced")}>
             <div class="userid">
-                <Legend>{$_("userId")} ({$_("alsoCanisterId")})</Legend>
+                <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
                 <div>{user.userId}</div>
             </div>
             <div>
-                <Legend>{$_("version")} ({$_("websiteVersion")})</Legend>
+                <Legend label={$_("version")} rules={$_("websiteVersion")} />
                 <div>{version}</div>
             </div>
         </CollapsibleCard>
@@ -464,7 +375,7 @@
             cursor: pointer;
 
             .theme-txt {
-                border-bottom: $sp2 solid hotpink;
+                border-bottom: $sp2 solid var(--accent);
                 padding-bottom: $sp2;
             }
 
@@ -516,46 +427,22 @@
 
     .user-form {
         @include nice-scrollbar();
-
-        padding: $sp3;
-        @include size-above(xl) {
-            padding: $sp3 0 0 0;
-        }
-    }
-
-    .accounts {
-        table {
-            width: 100%;
-            th,
-            td {
-                padding: $sp3;
-            }
-            .token {
-                text-align: left;
-            }
-            th.balance {
-                padding-right: 38px;
-                @include mobile() {
-                    padding-right: 34.2px;
-                }
-            }
-            .balance,
-            .manage {
-                text-align: right;
-            }
+        padding: $sp3 $sp5 0 $sp5;
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
         }
     }
 
     .title {
         flex: 1;
-        padding: 0 $sp4;
+        @include font-size(fs-120);
+
+        @include mobile() {
+            padding: 0 $sp3;
+        }
     }
 
     .close {
         flex: 0 0 30px;
-    }
-
-    .coming-soon {
-        @include font(light, normal, fs-90);
     }
 </style>

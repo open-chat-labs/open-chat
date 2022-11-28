@@ -279,8 +279,9 @@
 <style type="text/scss">
     .wrapper {
         border-radius: 18px;
-        padding: 5px 12px 5px 12px;
+        padding: $sp3 $sp4;
         background-color: var(--chatSearch-bg);
+        box-shadow: var(--chatSearch-sh);
         width: 100%;
         margin: 0 5px;
         flex: 1;

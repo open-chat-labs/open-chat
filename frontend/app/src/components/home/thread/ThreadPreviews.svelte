@@ -80,9 +80,10 @@
     .threads {
         height: 100%;
         overflow-x: hidden;
+        padding: 0 $sp4;
         @include nice-scrollbar();
         @include mobile() {
-            padding: 0;
+            padding: 0 $sp4;
         }
     }
 </style>

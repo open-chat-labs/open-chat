@@ -28,7 +28,7 @@
         top: 0;
         align-items: center;
         width: 100%;
-        padding: $sp4 $sp4;
+        padding: $sp4 $sp5;
         height: toRem(80);
         // margin-bottom: $sp3;
         background-color: var(--section-bg);
