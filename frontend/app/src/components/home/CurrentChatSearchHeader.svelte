@@ -184,7 +184,7 @@
     function onWindowKeyDown(event: KeyboardEvent) {
         if (event.code === "ArrowDown") {
             onPrevious();
-        } else if (event.code === "ArrowUp" || event.code === "Enter") {
+        } else if (event.code === "ArrowUp") {
             onNext();
         } else if (event.code === "Escape") {
             onClose();
