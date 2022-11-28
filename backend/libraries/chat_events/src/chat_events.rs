@@ -587,7 +587,7 @@ impl AllChatEvents {
                     match document.calculate_score(query) {
                         0 => None,
                         n => Some((n, m)),
-                    }    
+                    }
                 }
             })
             .sorted_unstable_by_key(|(score, _)| *score)
