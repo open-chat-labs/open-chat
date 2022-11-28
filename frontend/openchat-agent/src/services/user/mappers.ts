@@ -123,6 +123,9 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     if ("TooLong" in candid) {
         return "bio_too_long";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, candid);
 }
 
@@ -224,6 +227,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
@@ -232,14 +238,17 @@ export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): Und
         if (candid.Success.messages.length == 0) {
             return { kind: "internal_error" };
         } else {
-            return { 
-                kind: "success", 
+            return {
+                kind: "success",
                 message: message(candid.Success.messages[0])
-            };    
+            };
         }
     }
     if ("ChatNotFound" in candid) {
         return { kind: "chat_not_found" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
     }
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
 }
@@ -265,6 +274,9 @@ export function addRemoveReactionResponse(
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiAddRemoveReactionResponse type received",
         candid
@@ -277,6 +289,9 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
     }
     if ("AvatarTooBig" in candid) {
         return "avatar_too_big";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -309,6 +324,9 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     if ("OwnerCannotLeave" in candid) {
         return "owner_cannot_leave";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -340,6 +358,9 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     }
     if ("NotSuperAdmin" in candid) {
         return { kind: "not_super_admin" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
@@ -395,6 +416,9 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     }
     if ("UserBlocked" in candid) {
         return "user_blocked";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
@@ -453,6 +477,9 @@ export function transferWithinGroupResponse(
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
@@ -514,11 +541,14 @@ export function sendMessageResponse(
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
     }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
     if ("InternalError" in candid) {
-        return { kind: "internal_error" };
+        return { kind: "internal_error" }
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -573,6 +603,10 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "rules_too_short" };
     }
 
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
@@ -585,6 +619,9 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";

@@ -4,7 +4,7 @@ import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 
 export type InternalError = { kind: "internal_error" };
-
+export type UserSuspended = { kind: "user_suspended" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 
 export type MessageContent =
@@ -936,7 +936,8 @@ export type CreateGroupResponse =
     | MaxGroupsCreated
     | CreateGroupThrottled
     | GroupRulesTooShort
-    | GroupRulesTooLong;
+    | GroupRulesTooLong
+    | UserSuspended;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -996,6 +997,7 @@ export type AddMembersResponse =
     | AddMembersPartialSuccess
     | AddMembersFailed
     | AddMembersNotInGroup
+    | UserSuspended
     | ChatFrozen;
 
 export type AddMembersSuccess = {
@@ -1037,6 +1039,7 @@ export type EditMessageResponse =
     | "message_not_found"
     | "user_blocked"
     | "not_in_group"
+    | "user_suspended"
     | "chat_frozen";
 
 export type SendMessageResponse =
@@ -1057,6 +1060,7 @@ export type SendMessageResponse =
     | CryptoCurrencyNotSupported
     | NotAuthorised
     | ThreadMessageNotFound
+    | UserSuspended
     | ChatFrozen;
 
 export type SendMessageSuccess = {
@@ -1142,22 +1146,24 @@ export type ChatUnfrozenEvent = {
     unfrozenBy: string;
 }
 
-export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
+export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
 export type ChangeRoleResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
     | "invalid"
+    | "user_suspended"
     | "chat_frozen"
     | "success";
 
-export type DeleteGroupResponse = "internal_error" | "not_authorised" | "chat_frozen" | "success";
+export type DeleteGroupResponse = "internal_error" | "not_authorised" | "chat_frozen" | "success" | "user_suspended";
 
 export type MakeGroupPrivateResponse =
     | "internal_error"
     | "not_authorised"
     | "already_private"
+    | "user_suspended"
     | "chat_frozen"
     | "success";
 
@@ -1168,6 +1174,7 @@ export type RemoveMemberResponse =
     | "success"
     | "cannot_remove_self"
     | "cannot_remove_user"
+    | "user_suspended"
     | "chat_frozen"
     | "internal_error";
 
@@ -1180,6 +1187,7 @@ export type BlockUserResponse =
     | "internal_error"
     | "cannot_block_self"
     | "cannot_block_user"
+    | "user_suspended"
     | "chat_frozen";
 
 export type UnblockUserResponse =
@@ -1188,6 +1196,7 @@ export type UnblockUserResponse =
     | "cannot_unblock_self"
     | "caller_not_in_group"
     | "not_authorised"
+    | "user_suspended"
     | "chat_frozen";
 
 export type LeaveGroupResponse =
@@ -1197,6 +1206,7 @@ export type LeaveGroupResponse =
     | "not_in_group"
     | "owner_cannot_leave"
     | "group_not_public"
+    | "user_suspended"
     | "chat_frozen";
 
 export type JoinGroupResponse =
@@ -1207,6 +1217,7 @@ export type JoinGroupResponse =
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
+    | UserSuspended
     | ChatFrozen
     | InternalError;
 
@@ -1236,10 +1247,11 @@ export type UpdateGroupResponse =
     | "avatar_too_big"
     | "rules_too_short"
     | "rules_too_long"
+    | "user_suspended"
     | "chat_frozen"
     | "internal_error";
 
-export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group" | "chat_frozen";
+export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group" | "user_suspended" | "chat_frozen";
 
 export type AddRemoveReactionResponse =
     | "success"
@@ -1249,6 +1261,7 @@ export type AddRemoveReactionResponse =
     | "not_in_group"
     | "not_authorised"
     | "chat_not_found"
+    | "user_suspended"
     | "chat_frozen";
 
 export type DeleteMessageResponse =
@@ -1256,6 +1269,7 @@ export type DeleteMessageResponse =
     | "chat_not_found"
     | "success"
     | "message_not_found"
+    | "user_suspended"
     | "chat_frozen";
 
 export type UndeleteMessageResponse =
@@ -1266,13 +1280,16 @@ export type UndeleteMessageResponse =
     | { kind: "not_in_group" }
     | { kind: "chat_not_found" }
     | { kind: "internal_error" }
-    | { kind: "message_not_found" };
+    | { kind: "message_not_found" }
+    | UserSuspended
+    | ChatFrozen;
 
 export type UnpinMessageResponse =
     | "no_change"
     | "caller_not_in_group"
     | "not_authorised"
     | "message_not_found"
+    | "user_suspended"
     | "chat_frozen"
     | "success";
 
@@ -1282,6 +1299,7 @@ export type PinMessageResponse =
     | "caller_not_in_group"
     | "not_authorised"
     | "message_not_found"
+    | "user_suspended"
     | "chat_frozen"
     | "success";
 
@@ -1292,6 +1310,7 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found"
+    | "user_suspended"
     | "chat_frozen"
     | "polls_not_valid_for_direct_chats";
 
@@ -1302,16 +1321,16 @@ export type InviteCodeSuccess = {
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | ChatFrozen;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | UserSuspended | ChatFrozen;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = "not_authorised" | "chat_frozen" | "success";
+export type DisableInviteCodeResponse = "not_authorised" | "user_suspended" | "chat_frozen" | "success";
 
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | ChatFrozen;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | UserSuspended | ChatFrozen;
 
 export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
 
@@ -1360,6 +1379,7 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_found"
     | "proposal_not_accepting_votes"
     | "chat_frozen"
+    | "user_suspended"
     | "internal_error";
 
 export type ListNervousSystemFunctionsResponse = {

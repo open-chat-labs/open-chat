@@ -630,5 +630,7 @@
     "chatFrozenBy": "聊天被 {frozenBy} 冻结",
     "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
     "failedToFreezeGroup": "冻结群组失败",
-    "failedToUnfreezeGroup": "解冻群组失败"
+    "failedToUnfreezeGroup": "解冻群组失败",
+    "accountSuspended": "帐户暂停",
+    "yourAccountIsSuspended": "你的账户暂时无法使用"
 }

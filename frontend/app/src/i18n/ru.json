@@ -629,5 +629,7 @@
     "chatFrozenBy": "Чат заморожен пользователем {frozenBy}",
     "chatUnfrozenBy": "Чат разблокирован пользователем {unfrozenBy}",
     "failedToFreezeGroup": "Не удалось заморозить группу",
-    "failedToUnfreezeGroup": "Не удалось разморозить группу"
+    "failedToUnfreezeGroup": "Не удалось разморозить группу",
+    "accountSuspended": "Аккаунт заблокирован",
+    "yourAccountIsSuspended": "Ваш аккаунт заблокирован"
 }

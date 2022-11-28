@@ -630,5 +630,7 @@
     "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
     "chatUnfrozenBy": "{unfrozenBy} によってフリーズ解除されたチャット",
     "failedToFreezeGroup": "グループを凍結できませんでした",
-    "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました"
+    "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました",
+    "accountSuspended": "アカウントが一時停止",
+    "yourAccountIsSuspended": "あなたのアカウントが停止されました"
 }

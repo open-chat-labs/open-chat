@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Uint8Array | number[];
 export interface AddSuperAdminArgs { 'user_id' : UserId }
 export type AddSuperAdminResponse = { 'Success' : null } |
   { 'InternalError' : string } |
@@ -20,7 +20,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Uint8Array | number[],
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -45,7 +45,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Uint8Array | number[],
 }
 export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
 export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
@@ -76,6 +76,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
@@ -158,6 +159,7 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'suspended' : boolean,
       'is_super_admin' : boolean,
       'open_storage_limit_bytes' : bigint,
     }
@@ -195,7 +197,7 @@ export interface DirectChatSummary {
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -302,7 +304,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -396,7 +398,7 @@ export interface ICPRegistrationFee {
 }
 export interface Icrc1Account {
   'owner' : Principal,
-  'subaccount' : [] | [Uint8Array],
+  'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface ImageContent {
   'height' : number,
@@ -540,6 +542,7 @@ export interface PartialUserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface Participant {
   'role' : Role,
@@ -597,7 +600,10 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes {
+  'total' : TotalPollVotes,
+  'user' : Uint32Array | number[],
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -711,7 +717,7 @@ export interface SnsFailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
-export type SnsNeuronId = Uint8Array;
+export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
@@ -751,6 +757,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
+export interface SuspendUserArgs {
+  'duration' : [] | [Milliseconds],
+  'user_id' : UserId,
+}
+export type SuspendUserResponse = { 'Success' : null } |
+  { 'InternalError' : string };
 export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
@@ -777,7 +789,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Uint8Array | number[];
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,
@@ -791,6 +803,9 @@ export interface UnconfirmedPhoneNumberState {
   'valid_until' : TimestampMillis,
   'phone_number' : PhoneNumber,
 }
+export interface UnsuspendUserArgs { 'user_id' : UserId }
+export type UnsuspendUserResponse = { 'Success' : null } |
+  { 'InternalError' : string };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -820,6 +835,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface UsersArgs {
   'user_groups' : Array<
@@ -861,26 +877,28 @@ export interface _SERVICE {
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'confirm_phone_number' : ActorMethod<
     [ConfirmPhoneNumberArgs],
-    ConfirmPhoneNumberResponse,
+    ConfirmPhoneNumberResponse
   >,
   'create_challenge' : ActorMethod<
     [CreateChallengeArgs],
-    CreateChallengeResponse,
+    CreateChallengeResponse
   >,
   'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_super_admin' : ActorMethod<
     [RemoveSuperAdminArgs],
-    RemoveSuperAdminResponse,
+    RemoveSuperAdminResponse
   >,
   'resend_code' : ActorMethod<[ResendCodeArgs], ResendCodeResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
   'submit_phone_number' : ActorMethod<
     [SubmitPhoneNumberArgs],
-    SubmitPhoneNumberResponse,
+    SubmitPhoneNumberResponse
   >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
+  'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
+  'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
   'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,
   'user' : ActorMethod<[UserArgs], UserResponse>,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,

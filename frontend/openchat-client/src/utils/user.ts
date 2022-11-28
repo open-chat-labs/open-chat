@@ -97,6 +97,7 @@ export function nullUser(username: string): UserSummary {
         username,
         lastOnline: 0,
         updated: BigInt(0),
+        suspended: false,
     };
 }
 

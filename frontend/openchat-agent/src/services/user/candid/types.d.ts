@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Uint8Array | number[];
 export interface AddReactionArgs {
   'username' : string,
   'user_id' : UserId,
@@ -14,6 +14,7 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventIndex } |
+  { 'UserSuspended' : null } |
   { 'InvalidReaction' : null };
 export interface AddRecommendedGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
@@ -47,7 +48,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Uint8Array | number[],
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -69,14 +70,15 @@ export interface BlobReference {
 }
 export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
-export type BlockUserResponse = { 'Success' : null };
+export type BlockUserResponse = { 'Success' : null } |
+  { 'UserSuspended' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Uint8Array | number[],
 }
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -173,6 +175,7 @@ export type CreateGroupResponse = { 'NameReserved' : null } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateGroupSuccessResult } |
+  { 'UserSuspended' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
@@ -198,6 +201,7 @@ export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'InternalError' : string };
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
@@ -206,7 +210,8 @@ export interface DeleteMessagesArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -233,7 +238,7 @@ export interface DirectChatSummary {
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -265,6 +270,7 @@ export interface EditMessageArgs {
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
 export type EventIndex = number;
 export interface EventsArgs {
@@ -278,7 +284,7 @@ export interface EventsArgs {
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
-  'events' : Uint32Array,
+  'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -387,7 +393,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -485,7 +491,7 @@ export interface ICPRegistrationFee {
 }
 export interface Icrc1Account {
   'owner' : Principal,
-  'subaccount' : [] | [Uint8Array],
+  'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface ImageContent {
   'height' : number,
@@ -532,6 +538,7 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'AlreadyInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : GroupChatSummary } |
+  { 'UserSuspended' : null } |
   { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
@@ -545,6 +552,7 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'InternalError' : string };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
 export type MarkReadResponse = { 'Success' : null };
@@ -604,7 +612,7 @@ export interface MessageUnpinned {
 }
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'messages' : Uint32Array,
+  'messages' : Uint32Array | number[],
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -698,6 +706,7 @@ export interface PartialUserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface Participant {
   'role' : Role,
@@ -754,7 +763,10 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes {
+  'total' : TotalPollVotes,
+  'user' : Uint32Array | number[],
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -831,7 +843,8 @@ export interface RemoveReactionArgs {
 export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventIndex };
+  { 'Success' : EventIndex } |
+  { 'UserSuspended' : null };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -898,16 +911,19 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
+  { 'UserSuspended' : null } |
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface SetBioArgs { 'text' : string }
 export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -932,7 +948,7 @@ export interface SnsFailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
-export type SnsNeuronId = Uint8Array;
+export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
@@ -993,7 +1009,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Uint8Array | number[];
 export interface TransferCryptoWithinGroupArgs {
   'content' : CryptoContent,
   'recipient' : UserId,
@@ -1019,6 +1035,7 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'RecipientBlocked' : null } |
+  { 'UserSuspended' : null } |
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
@@ -1027,7 +1044,8 @@ export interface UnArchiveChatArgs { 'chat_id' : ChatId }
 export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
-export type UnblockUserResponse = { 'Success' : null };
+export type UnblockUserResponse = { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface UndeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
@@ -1035,7 +1053,8 @@ export interface UndeleteMessagesArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type UndeleteMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : { 'messages' : Array<Message> } };
+  { 'Success' : { 'messages' : Array<Message> } } |
+  { 'UserSuspended' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
@@ -1075,6 +1094,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -1108,12 +1128,12 @@ export interface _SERVICE {
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'add_recommended_group_exclusions' : ActorMethod<
     [AddRecommendedGroupExclusionsArgs],
-    AddRecommendedGroupExclusionsResponse,
+    AddRecommendedGroupExclusionsResponse
   >,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'assume_group_super_admin' : ActorMethod<
     [AssumeGroupSuperAdminArgs],
-    AssumeGroupSuperAdminResponse,
+    AssumeGroupSuperAdminResponse
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
@@ -1127,7 +1147,7 @@ export interface _SERVICE {
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'init_user_principal_migration' : ActorMethod<
     [InitUserPrincipalMigrationArgs],
-    InitUserPrincipalMigrationResponse,
+    InitUserPrincipalMigrationResponse
   >,
   'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
@@ -1135,30 +1155,30 @@ export interface _SERVICE {
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
-    MessagesByMessageIndexResponse,
+    MessagesByMessageIndexResponse
   >,
   'migrate_user_principal' : ActorMethod<
     [MigrateUserPrincipalArgs],
-    MigrateUserPrincipalResponse,
+    MigrateUserPrincipalResponse
   >,
   'mute_notifications' : ActorMethod<
     [MuteNotificationsArgs],
-    MuteNotificationsResponse,
+    MuteNotificationsResponse
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
-    RecommendedGroupsResponse,
+    RecommendedGroupsResponse
   >,
   'relinquish_group_super_admin' : ActorMethod<
     [RelinquishGroupSuperAdminArgs],
-    RelinquishGroupSuperAdminResponse,
+    RelinquishGroupSuperAdminResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_all_messages' : ActorMethod<
     [SearchAllMessagesArgs],
-    SearchAllMessagesResponse,
+    SearchAllMessagesResponse
   >,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
@@ -1166,7 +1186,7 @@ export interface _SERVICE {
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
-    TransferCryptoWithinGroupResponse,
+    TransferCryptoWithinGroupResponse
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
@@ -1176,12 +1196,12 @@ export interface _SERVICE {
   >,
   'unmute_notifications' : ActorMethod<
     [UnmuteNotificationsArgs],
-    UnmuteNotificationsResponse,
+    UnmuteNotificationsResponse
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],
-    WithdrawCryptoResponse,
+    WithdrawCryptoResponse
   >,
 }

@@ -69,6 +69,7 @@ export const idlFactory = ({ IDL }) => {
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'suspended' : IDL.Bool,
       'is_super_admin' : IDL.Bool,
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
@@ -118,6 +119,7 @@ export const idlFactory = ({ IDL }) => {
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'seconds_since_last_online' : IDL.Nat32,
+    'suspended' : IDL.Bool,
   });
   const SearchResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -145,6 +147,20 @@ export const idlFactory = ({ IDL }) => {
   const SuperAdminsArgs = IDL.Record({});
   const SuperAdminsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
+  });
+  const Milliseconds = IDL.Nat64;
+  const SuspendUserArgs = IDL.Record({
+    'duration' : IDL.Opt(Milliseconds),
+    'user_id' : UserId,
+  });
+  const SuspendUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
+  const UnsuspendUserArgs = IDL.Record({ 'user_id' : UserId });
+  const UnsuspendUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const UpgradeStorageArgs = IDL.Record({
     'new_storage_limit_bytes' : IDL.Nat64,
@@ -185,6 +201,7 @@ export const idlFactory = ({ IDL }) => {
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'seconds_since_last_online' : IDL.Nat32,
+    'suspended' : IDL.Bool,
   });
   const UsersResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -236,6 +253,12 @@ export const idlFactory = ({ IDL }) => {
         [SuperAdminsArgs],
         [SuperAdminsResponse],
         ['query'],
+      ),
+    'suspend_user' : IDL.Func([SuspendUserArgs], [SuspendUserResponse], []),
+    'unsuspend_user' : IDL.Func(
+        [UnsuspendUserArgs],
+        [UnsuspendUserResponse],
+        [],
       ),
     'upgrade_storage' : IDL.Func(
         [UpgradeStorageArgs],

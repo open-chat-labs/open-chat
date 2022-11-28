@@ -17,6 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
+    'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
   });
   const Milliseconds = IDL.Nat64;
@@ -48,7 +49,10 @@ export const idlFactory = ({ IDL }) => {
   const BioArgs = IDL.Record({});
   const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
-  const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const BlockUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const PermissionRole = IDL.Variant({
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
@@ -101,6 +105,7 @@ export const idlFactory = ({ IDL }) => {
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,
+    'UserSuspended' : IDL.Null,
     'RulesTooShort' : FieldTooShortResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
@@ -112,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const DeleteMessagesArgs = IDL.Record({
@@ -123,6 +129,7 @@ export const idlFactory = ({ IDL }) => {
   const DeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
@@ -378,6 +385,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
   const EventsArgs = IDL.Record({
@@ -739,6 +747,7 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : GroupChatSummary,
+    'UserSuspended' : IDL.Null,
     'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
     'InternalError' : IDL.Text,
@@ -754,6 +763,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const ThreadRead = IDL.Record({
@@ -857,6 +867,7 @@ export const idlFactory = ({ IDL }) => {
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
+    'UserSuspended' : IDL.Null,
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -928,6 +939,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
     'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
@@ -937,11 +949,13 @@ export const idlFactory = ({ IDL }) => {
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const SetBioArgs = IDL.Record({ 'text' : IDL.Text });
   const SetBioResponse = IDL.Variant({
     'TooLong' : FieldTooLongResult,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -969,6 +983,7 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
@@ -980,7 +995,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
-  const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const UnblockUserResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const UndeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
@@ -990,6 +1008,7 @@ export const idlFactory = ({ IDL }) => {
   const UndeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Record({ 'messages' : IDL.Vec(Message) }),
+    'UserSuspended' : IDL.Null,
   });
   const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const UnmuteNotificationsResponse = IDL.Variant({

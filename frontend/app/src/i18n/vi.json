@@ -630,5 +630,7 @@
     "chatFrozenBy": "Trò chuyện bị đóng băng bởi {frozenBy}",
     "chatUnfrozenBy": "Bỏ đóng băng cuộc trò chuyện của {unfrozenBy}",
     "failedToFreezeGroup": "Không thể đóng băng nhóm",
-    "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm"
+    "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm",
+    "accountSuspended": "Toàn khoản bị đình chỉ",
+    "yourAccountIsSuspended": "Tài khoản của bạn bị treo"
 }
