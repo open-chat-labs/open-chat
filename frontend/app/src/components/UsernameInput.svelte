@@ -21,7 +21,7 @@
     }
 
     function checkUsername(value: string) {
-        if (value.length < 3 || value.length > 25) {
+        if (value.length < MIN_USERNAME_LENGTH || value.length > MAX_USERNAME_LENGTH) {
             stopChecking();
             return;
         }
