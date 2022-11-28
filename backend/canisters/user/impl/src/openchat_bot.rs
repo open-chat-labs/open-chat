@@ -92,14 +92,6 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     send_text_message(text, false, runtime_state);
 }
 
-pub(crate) fn send_sns1_airdrop_message(runtime_state: &mut RuntimeState) {
-    let text = "Please ignore the previous message about the SNS-1 airdrop!
-The SNS-1 airdrop has been closed for a few days now and that message was sent in error."
-        .to_string();
-
-    send_text_message(text, true, runtime_state);
-}
-
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
