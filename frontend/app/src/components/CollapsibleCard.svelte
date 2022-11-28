@@ -27,7 +27,9 @@
             <Arrow
                 size={16}
                 rotate={open ? -45 : 45}
-                color={open ? "var(--collapsible-open)" : "var(--txt)"} />
+                color={open
+                    ? "var(--collapsible-open-header-arrow)"
+                    : "var(--collapsible-closed-header-txt)"} />
         </div>
     </div>
     {#if open}
@@ -43,15 +45,20 @@
     }
 
     .header {
-        padding: $sp4;
+        padding: $sp4 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
         @include font(bold, normal, fs-100);
+        color: var(--collapsible-closed-header-txt);
 
         @include mobile() {
-            padding: $sp3 $sp4;
+            padding: $sp3 0;
+        }
+
+        &.open {
+            color: var(--collapsible-open-header-txt);
         }
     }
 
@@ -62,10 +69,10 @@
     }
 
     .body {
-        padding: $sp4;
+        padding: $sp4 0;
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 0;
         }
     }
 </style>

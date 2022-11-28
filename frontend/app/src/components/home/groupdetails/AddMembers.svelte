@@ -73,6 +73,7 @@
     h4 {
         flex: 1;
         padding: 0 $sp4;
+        @include font-size(fs-120);
     }
     .close {
         flex: 0 0 30px;

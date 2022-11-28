@@ -1,16 +1,12 @@
 <script lang="ts">
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Domain from "svelte-material-icons/Domain.svelte";
-    import FileDocumentOutline from "svelte-material-icons/FileDocumentOutline.svelte";
-    import Rocket from "svelte-material-icons/Rocket.svelte";
+    import Home from "svelte-material-icons/Home.svelte";
     import Avatar from "../Avatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
-    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
-    import Map from "svelte-material-icons/Map.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
@@ -47,6 +43,10 @@
             </span>
             <span slot="menu">
                 <Menu>
+                    <MenuItem on:click={() => dispatch("showHomePage")}>
+                        <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <span slot="text">{$_("homepage")}</span>
+                    </MenuItem>
                     <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus
                             size={$iconSize}
@@ -68,32 +68,6 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <span slot="text">{$_("faq.menu")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("showFeatures")}>
-                        <Rocket size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("features")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("showRoadmap")}>
-                        <Map size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("roadmap")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("showWhitepaper")}>
-                        <FileDocumentOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <span slot="text">{$_("whitepaper")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("showArchitecture")}>
-                        <Domain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("architecture")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("showAbout")}>
-                        <InformationOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />

@@ -20,9 +20,7 @@
     import NotificationsBar from "./NotificationsBar.svelte";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import { menuCloser } from "../../actions/closeMenu";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ThreadsButton from "./ThreadsButton.svelte";
     import ChatsButton from "./ChatsButton.svelte";
@@ -164,18 +162,7 @@
 </script>
 
 {#if user}
-    <CurrentUser
-        on:logout
-        on:whatsHot
-        on:showAbout
-        on:showFaq
-        on:showRoadmap
-        on:showArchitecture
-        on:showFeatures
-        on:showWhitepaper
-        {user}
-        on:profile
-        on:newGroup />
+    <CurrentUser on:showHomePage on:logout on:whatsHot on:showFaq {user} on:profile on:newGroup />
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 

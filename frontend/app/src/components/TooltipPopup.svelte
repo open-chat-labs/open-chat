@@ -35,7 +35,7 @@
 <style type="text/scss">
     .tooltip-popup {
         background-color: var(--menu-bg);
-        border: 1px solid var(--bd);
+        border: 1px solid var(--menu-bd);
         color: var(--menu-txt);
 
         display: flex;

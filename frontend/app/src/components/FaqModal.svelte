@@ -65,4 +65,11 @@
         height: 18px;
         cursor: pointer;
     }
+
+    .faq-body {
+        padding: $sp3 $sp5 0 $sp5;
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
+        }
+    }
 </style>

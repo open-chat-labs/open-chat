@@ -8,7 +8,6 @@
     import type { BlockedMember, FullMember } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { mobileWidth } from "../../../stores/screenDimensions";
 
     export let me: FullMember | BlockedMember | undefined;
     export let publicGroup: boolean;
@@ -26,7 +25,7 @@
     }
 </script>
 
-<SectionHeader border={false}>
+<SectionHeader gap border={false}>
     {#if canAdd}
         <span title={$_("addMembers")} class="add" on:click={addMembers}>
             <HoverIcon>
@@ -50,7 +49,7 @@
     h4 {
         flex: 1;
         margin: 0;
-        text-align: center;
+        @include font-size(fs-120);
     }
     .close,
     .add {

@@ -30,6 +30,6 @@
 
 <style type="text/scss">
     .deleted {
-        @include font(light, italic, fs-90);
+        @include font(light, italic, fs-80);
     }
 </style>

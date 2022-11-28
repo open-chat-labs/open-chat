@@ -26,14 +26,14 @@
     .hover:hover {
         text-decoration: underline;
         text-decoration-color: var(--accent);
-        text-underline-offset: $sp1;
+        text-underline-offset: $sp2;
         text-decoration-thickness: 2px;
     }
 
     .always {
         text-decoration: underline;
         text-decoration-color: var(--accent);
-        text-underline-offset: $sp1;
+        text-underline-offset: $sp2;
         &:hover {
             text-decoration-thickness: 2px;
         }

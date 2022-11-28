@@ -12,7 +12,7 @@
 <li>
     <fieldset>
         <legend>
-            <Legend>{`${$_("group.permissions.whoCan")} ${label}`}</Legend>
+            <Legend label={`${$_("group.permissions.whoCan")} ${label}`} />
         </legend>
         <div class="roles">
             {#each roles as r, _i (r)}
