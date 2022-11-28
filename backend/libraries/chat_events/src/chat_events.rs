@@ -577,12 +577,17 @@ impl AllChatEvents {
             .since(min_visible_event_index)
             .iter()
             .filter_map(|e| e.event.as_message().filter(|m| m.deleted_by.is_none()).map(|m| (e, m)))
+            .filter(|(_, m)| if query.users.is_empty() { true } else { query.users.contains(&m.sender) })
             .filter_map(|(e, m)| {
-                let mut document: Document = (&m.content).into();
-                document.set_age(now - e.timestamp);
-                match document.calculate_score(query) {
-                    0 => None,
-                    n => Some((n, m)),
+                if query.tokens.is_empty() {
+                    Some((1, m))
+                } else {
+                    let mut document: Document = (&m.content).into();
+                    document.set_age(now - e.timestamp);
+                    match document.calculate_score(query) {
+                        0 => None,
+                        n => Some((n, m)),
+                    }
                 }
             })
             .sorted_unstable_by_key(|(score, _)| *score)

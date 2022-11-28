@@ -57,6 +57,10 @@ impl Document {
 }
 
 fn score_field(query: &Query, field: &Field) -> f32 {
+    if query.tokens.is_empty() {
+        return 0.0;
+    }
+
     let mut total = 0.0;
 
     for token in &query.tokens {
