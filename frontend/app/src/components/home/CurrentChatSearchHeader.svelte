@@ -88,6 +88,10 @@
     }
 
     async function performSearch() {
+        if (lastSearchTerm === searchTerm) {
+            return;
+        }
+
         clearMatches();
         const [term, mentions] = extractMentions(searchTerm);
         if (term.length > 2 || mentions.length > 0) {
@@ -196,7 +200,7 @@
     function onWindowKeyDown(event: KeyboardEvent) {
         if (event.code === "ArrowDown") {
             onPrevious();
-        } else if (event.code === "ArrowUp") {
+        } else if (event.code === "ArrowUp" || (event.code === "Enter" && lastSearchTerm === searchTerm)) {
             onNext();
         } else if (event.code === "Escape") {
             onClose();
