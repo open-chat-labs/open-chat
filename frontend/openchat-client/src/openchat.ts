@@ -41,6 +41,7 @@ import {
     metricsEqual,
     newMessageId,
     sameUser,
+    isFrozen,
     isPreviewing,
     buildTransactionLink,
     buildCryptoTransferText,
@@ -114,6 +115,7 @@ import {
     addServerEventsToStores,
     addGroupPreview,
     removeGroupPreview,
+    groupPreviewsStore,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -277,6 +279,8 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
+    type ChatFrozenEvent,
+    type ChatUnfrozenEvent,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -972,9 +976,17 @@ export class OpenChat extends EventTarget {
         return this.chatPredicate(chatId, isPreviewing);
     }
 
+    isFrozen(chatId: string): boolean {
+        return this.chatPredicate(chatId, isFrozen);
+    }
+
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
+    }
+
+    isSuperAdmin(): boolean {
+        return this.user.isSuperAdmin
     }
 
     canForward = canForward;
@@ -1083,7 +1095,7 @@ export class OpenChat extends EventTarget {
 
         return this.api
             .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
-            .then((resp) => { 
+            .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
                     localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
@@ -2675,6 +2687,58 @@ export class OpenChat extends EventTarget {
                 userId: this.user.userId,
             };
             this.sendRtcMessage([...this._liveState.currentChatUserIds], rtc);
+        }
+    }
+
+    freezeGroup(chatId: string, reason: string | undefined): Promise<boolean> {
+        return this.api.freezeGroup(chatId, reason)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to freeze group", err);
+                return false;
+            });
+    }
+
+    unfreezeGroup(chatId: string): Promise<boolean> {
+        return this.api.unfreezeGroup(chatId)
+            .then((resp) => {
+                if (typeof resp !== "string") {
+                    this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to unfreeze group", err);
+                return false;
+            });
+    }
+
+    private onChatFrozen(chatId: string, event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>): void {
+        const frozen = event.event.kind === "chat_frozen";
+        if (this.isPreviewing(chatId)) {
+            groupPreviewsStore.update((summaries) => {
+                const summary = summaries[chatId];
+                if (summary === undefined) {
+                    return summaries;
+                }
+                return {
+                    ...summaries,
+                    [chatId]: {
+                        ...summary,
+                        frozen
+                    }
+                };
+            });
+        } else {
+            localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
+            addServerEventsToStores(chatId, [event], undefined);
         }
     }
 

@@ -11,6 +11,7 @@ export const openChatBotUser: PartialUserSummary = {
     username: OPENCHAT_BOT_USERNAME,
     lastOnline: 0,
     updated: BigInt(0),
+    suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
 };
 
@@ -25,6 +26,7 @@ export function proposalsBotUser(userId: string): PartialUserSummary {
         username: PROPOSALS_BOT_USERNAME,
         lastOnline: 0,
         updated: BigInt(0),
+        suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
     };
 }

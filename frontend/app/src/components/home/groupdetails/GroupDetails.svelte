@@ -235,6 +235,8 @@
         if (resp === "avatar_too_big") return "avatarTooBig";
         if (resp === "rules_too_short") return "groupRulesTooShort";
         if (resp === "rules_too_long") return "groupRulesTooLong";
+        if (resp === "user_suspended") return "userSuspended";
+        if (resp === "chat_frozen") return "chatFrozen";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 

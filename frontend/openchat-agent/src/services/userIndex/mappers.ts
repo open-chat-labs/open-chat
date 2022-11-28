@@ -69,6 +69,7 @@ export function partialUserSummary(
         })),
         lastOnline: Date.now() - candid.seconds_since_last_online * 1000,
         updated: timestamp,
+        suspended: candid.suspended,
     };
 }
 
@@ -83,6 +84,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
             canisterId: candid.user_id.toString(),
         })),
         updated: timestamp,
+        suspended: candid.suspended,
     };
 }
 
@@ -245,6 +247,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             wasmVersion: new Version(version.major, version.minor, version.patch),
             openStorageLimitBytes: Number(r.open_storage_limit_bytes),
             referrals: r.referrals.map((p) => p.toString()),
+            isSuperAdmin: r.is_super_admin,
         };
     }
 

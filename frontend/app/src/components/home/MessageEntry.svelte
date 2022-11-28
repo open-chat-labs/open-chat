@@ -30,6 +30,7 @@
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
+    import { toastStore } from "stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -71,6 +72,8 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let isSuperAdmin = client.isSuperAdmin();
+    let freezingInProgress = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -78,6 +81,7 @@
     $: userStore = client.userStore;
     $: isGroup = chat.kind === "group_chat";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
+    $: isFrozen = client.isFrozen(chat.chatId);
 
     $: {
         if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -424,6 +428,28 @@
     function cancelPreview() {
         dispatch("cancelPreview", chat.chatId);
     }
+
+    function freezeGroup() {
+        freezingInProgress = true;
+        client.freezeGroup(chat.chatId, undefined)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToFreezeGroup");
+                }
+                freezingInProgress = false;
+            });
+    }
+
+    function unfreezeGroup() {
+        freezingInProgress = true;
+        client.unfreezeGroup(chat.chatId)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToUnfreezeGroup");
+                }
+                freezingInProgress = false;
+            });
+    }
 </script>
 
 {#if showMentionPicker}
@@ -454,6 +480,17 @@
         </div>
     {:else if preview}
         <div class="preview">
+            {#if isSuperAdmin}
+                {#if isFrozen}
+                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={unfreezeGroup}>
+                        {$_("unfreezeGroup")}
+                    </Button>
+                {:else}
+                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={freezeGroup}>
+                        {$_("freezeGroup")}
+                    </Button>
+                {/if}
+            {/if}
             <Button secondary={true} small={true} on:click={cancelPreview}>
                 {$_("leave")}
             </Button>

@@ -49,6 +49,7 @@
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
+    $: isSuspended = $userStore[userId]?.suspended ?? false;
     $: hasUserProfile = !isGroup && !isBot;
     $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary.chatId);
 
@@ -110,9 +111,11 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
-                subtext: isBot
-                    ? ""
-                    : client.formatLastOnlineDate($_, now, $userStore[chatSummary.them]),
+                subtext: isSuspended
+                    ? $_("accountSuspended")
+                    : isBot
+                        ? ""
+                        : client.formatLastOnlineDate($_, now, $userStore[chatSummary.them]),
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }

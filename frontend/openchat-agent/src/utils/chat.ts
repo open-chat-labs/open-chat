@@ -133,6 +133,7 @@ function mergeUpdatedGroupChat(
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
         archived: updatedChat.archived ?? chat.archived,
+        frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false
     };
 }
 

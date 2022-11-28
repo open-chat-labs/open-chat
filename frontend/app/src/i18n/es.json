@@ -623,5 +623,14 @@
     "nMessagesDeleted": "{number} mensajes eliminados",
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",
-    "undeleteMessageFailed": "Error al recuperar el mensaje"
+    "undeleteMessageFailed": "Error al recuperar el mensaje",
+    "freezeGroup": "Congelar grupo",
+    "unfreezeGroup": "Descongelar grupo",
+    "chatFrozen": "Este chat ha sido congelado.",
+    "chatFrozenBy": "Chat bloqueado por {frozenBy}",
+    "chatUnfrozenBy": "Chat descongelado por {unfrozenBy}",
+    "failedToFreezeGroup": "No se pudo congelar el grupo",
+    "failedToUnfreezeGroup": "No se pudo descongelar el grupo",
+    "accountSuspended": "Cuenta suspendida",
+    "yourAccountIsSuspended": "Tu cuenta está suspendida"
 }

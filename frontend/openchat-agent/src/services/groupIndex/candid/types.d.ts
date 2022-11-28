@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Uint8Array | number[];
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -16,7 +16,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Uint8Array | number[],
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -41,7 +41,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Uint8Array | number[],
 }
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -57,16 +57,19 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
@@ -81,6 +84,7 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
+export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -104,6 +108,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -153,7 +158,7 @@ export interface DirectChatSummary {
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -195,6 +200,30 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FreezeGroupArgs {
+  'chat_id' : ChatId,
+  'reason' : [] | [string],
+}
+export type FreezeGroupResponse = { 'ChatAlreadyFrozen' : null } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  {
+    'Success' : {
+      'event' : ChatFrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+    }
+  } |
+  { 'InternalError' : string };
+export interface FrozenGroupInfo {
+  'timestamp' : TimestampMillis,
+  'frozen_by' : UserId,
+  'reason' : [] | [string],
+}
+export type FrozenGroupUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -232,6 +261,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -251,13 +281,14 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -350,7 +381,7 @@ export interface ICPRegistrationFee {
 }
 export interface Icrc1Account {
   'owner' : Principal,
-  'subaccount' : [] | [Uint8Array],
+  'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface ImageContent {
   'height' : number,
@@ -494,6 +525,7 @@ export interface PartialUserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface Participant {
   'role' : Role,
@@ -547,7 +579,10 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes {
+  'total' : TotalPollVotes,
+  'user' : Uint32Array | number[],
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -580,6 +615,7 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -631,7 +667,7 @@ export interface SnsFailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
-export type SnsNeuronId = Uint8Array;
+export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
@@ -688,7 +724,20 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Uint8Array | number[];
+export interface UnfreezeGroupArgs { 'chat_id' : ChatId }
+export type UnfreezeGroupResponse = { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  {
+    'Success' : {
+      'event' : ChatUnfrozen,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+      'correlation_id' : bigint,
+    }
+  } |
+  { 'ChatNotFrozen' : null } |
+  { 'InternalError' : string };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -702,6 +751,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -728,5 +778,7 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }
