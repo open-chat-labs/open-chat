@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Uint8Array | number[];
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
@@ -10,12 +10,14 @@ export interface AddParticipantsArgs {
 }
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
+  'users_suspended' : Array<UserId>,
   'users_blocked_from_group' : Array<UserId>,
   'users_who_blocked_request' : Array<UserId>,
   'users_already_in_group' : Array<UserId>,
 }
 export interface AddParticipantsPartialSuccessResult {
   'errors' : Array<UserId>,
+  'users_suspended' : Array<UserId>,
   'users_blocked_from_group' : Array<UserId>,
   'users_not_authorized_to_add' : Array<UserId>,
   'users_added' : Array<UserId>,
@@ -30,6 +32,7 @@ export type AddParticipantsResponse = {
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'ParticipantLimitReached' : number };
 export interface AddReactionArgs {
   'username' : string,
@@ -44,6 +47,7 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex } |
+  { 'UserSuspended' : null } |
   { 'InvalidReaction' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
@@ -59,7 +63,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Uint8Array | number[],
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -85,6 +89,7 @@ export type BlockUserResponse = { 'GroupNotPublic' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'InternalError' : string } |
   { 'CannotBlockSelf' : null } |
   { 'CannotBlockUser' : null };
@@ -94,7 +99,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Uint8Array | number[],
 }
 export interface ChangeRoleArgs {
   'user_id' : UserId,
@@ -106,7 +111,8 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
@@ -130,10 +136,10 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
-  { 'MessageUndeleted' : UpdatedMessage } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
@@ -204,7 +210,8 @@ export interface DeleteMessagesArgs {
 export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -231,7 +238,7 @@ export interface DirectChatSummary {
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -256,7 +263,8 @@ export interface DirectReactionAddedNotification {
 export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
 export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'correlation_id' : bigint,
@@ -266,11 +274,13 @@ export interface EditMessageArgs {
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
 export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } };
+  { 'Success' : { 'code' : bigint } } |
+  { 'UserSuspended' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
@@ -283,7 +293,7 @@ export interface EventsArgs {
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
-  'events' : Uint32Array,
+  'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -393,7 +403,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -487,7 +497,7 @@ export interface ICPRegistrationFee {
 }
 export interface Icrc1Account {
   'owner' : Principal,
-  'subaccount' : [] | [Uint8Array],
+  'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface ImageContent {
   'height' : number,
@@ -514,6 +524,7 @@ export interface MakePrivateArgs { 'correlation_id' : bigint }
 export type MakePrivateResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'AlreadyPrivate' : null } |
   { 'InternalError' : null };
 export type Memo = bigint;
@@ -572,7 +583,7 @@ export interface MessageUnpinned {
 }
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'messages' : Uint32Array,
+  'messages' : Uint32Array | number[],
   'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -672,6 +683,7 @@ export interface PartialUserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface Participant {
   'role' : Role,
@@ -715,7 +727,8 @@ export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex };
+  { 'Success' : EventIndex } |
+  { 'UserSuspended' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -736,7 +749,10 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes {
+  'total' : TotalPollVotes,
+  'user' : Uint32Array | number[],
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -790,6 +806,7 @@ export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |
+  { 'UserSuspended' : null } |
   { 'OptionIndexOutOfRange' : null } |
   { 'PollNotFound' : null };
 export interface RegisterProposalVoteArgs {
@@ -803,6 +820,7 @@ export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'ProposalNotAcceptingVotes' : null } |
   { 'InternalError' : string };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -816,6 +834,7 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'CannotRemoveSelf' : null } |
   { 'CannotRemoveUser' : null } |
   { 'InternalError' : string };
@@ -830,7 +849,8 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex };
+  { 'Success' : EventIndex } |
+  { 'UserSuspended' : null };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -838,7 +858,8 @@ export interface ReplyContext {
 export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
 export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } };
+  { 'Success' : { 'code' : bigint } } |
+  { 'UserSuspended' : null };
 export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
@@ -855,11 +876,9 @@ export type RulesResponse = { 'NotAuthorized' : null } |
 export interface RulesSuccess { 'rules' : [] | [string] }
 export interface SearchMessagesArgs {
   'max_results' : number,
-  'users' : [] | [Array<UserId>],
   'search_term' : string,
 }
 export type SearchMessagesResponse = { 'TermTooShort' : number } |
-  { 'TooManyUsers' : number } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : SearchMessagesSuccessResult } |
   { 'TermTooLong' : number } |
@@ -871,7 +890,7 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'blocked_users' : Array<UserId>,
-  'pinned_messages' : Uint32Array,
+  'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : GroupRules,
 }
@@ -882,9 +901,9 @@ export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
-  'pinned_messages_removed' : Uint32Array,
+  'pinned_messages_removed' : Uint32Array | number[],
   'participants_removed' : Array<UserId>,
-  'pinned_messages_added' : Uint32Array,
+  'pinned_messages_added' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
@@ -913,6 +932,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
+  { 'UserSuspended' : null } |
   { 'InvalidRequest' : string };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
@@ -938,7 +958,7 @@ export interface SnsFailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
-export type SnsNeuronId = Uint8Array;
+export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
@@ -978,7 +998,7 @@ export interface ThreadPreview {
 }
 export interface ThreadPreviewsArgs {
   'latest_client_thread_update' : [] | [TimestampMillis],
-  'threads' : Uint32Array,
+  'threads' : Uint32Array | number[],
 }
 export type ThreadPreviewsResponse = {
     'ReplicaNotUpToDate' : TimestampMillis
@@ -1014,7 +1034,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Uint8Array | number[];
 export interface UnblockUserArgs {
   'user_id' : UserId,
   'correlation_id' : bigint,
@@ -1024,7 +1044,8 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface UndeleteMessagesArgs {
   'message_ids' : Array<MessageId>,
   'correlation_id' : bigint,
@@ -1032,7 +1053,9 @@ export interface UndeleteMessagesArgs {
 }
 export type UndeleteMessagesResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
-  { 'Success' : { 'messages' : Array<Message> } };
+  { 'ChatFrozen' : null } |
+  { 'Success' : { 'messages' : Array<Message> } } |
+  { 'UserSuspended' : null };
 export interface UnpinMessageArgs {
   'correlation_id' : bigint,
   'message_index' : MessageIndex,
@@ -1042,7 +1065,8 @@ export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex };
+  { 'Success' : EventIndex } |
+  { 'UserSuspended' : null };
 export interface UpdateGroupV2Args {
   'permissions' : [] | [OptionalGroupPermissions],
   'name' : [] | [string],
@@ -1060,6 +1084,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null } |
+  { 'UserSuspended' : null } |
   { 'RulesTooShort' : FieldTooShortResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
@@ -1077,6 +1102,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+  'suspended' : boolean,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -1105,7 +1131,7 @@ export type VoteOperation = { 'RegisterVote' : null } |
 export interface _SERVICE {
   'add_participants' : ActorMethod<
     [AddParticipantsArgs],
-    AddParticipantsResponse,
+    AddParticipantsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
@@ -1113,12 +1139,12 @@ export interface _SERVICE {
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'disable_invite_code' : ActorMethod<
     [DisableInviteCodeArgs],
-    DisableInviteCodeResponse,
+    DisableInviteCodeResponse
   >,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
   'enable_invite_code' : ActorMethod<
     [EnableInviteCodeArgs],
-    EnableInviteCodeResponse,
+    EnableInviteCodeResponse
   >,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
@@ -1128,43 +1154,43 @@ export interface _SERVICE {
   'make_private' : ActorMethod<[MakePrivateArgs], MakePrivateResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
-    MessagesByMessageIndexResponse,
+    MessagesByMessageIndexResponse
   >,
   'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<
     [RegisterPollVoteArgs],
-    RegisterPollVoteResponse,
+    RegisterPollVoteResponse
   >,
   'register_proposal_vote' : ActorMethod<
     [RegisterProposalVoteArgs],
-    RegisterProposalVoteResponse,
+    RegisterProposalVoteResponse
   >,
   'remove_participant' : ActorMethod<
     [RemoveParticipantArgs],
-    RemoveParticipantResponse,
+    RemoveParticipantResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'reset_invite_code' : ActorMethod<
     [ResetInviteCodeArgs],
-    ResetInviteCodeResponse,
+    ResetInviteCodeResponse
   >,
   'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
-    SelectedInitialResponse,
+    SelectedInitialResponse
   >,
   'selected_updates' : ActorMethod<
     [SelectedUpdatesArgs],
-    SelectedUpdatesResponse,
+    SelectedUpdatesResponse
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],
-    UndeleteMessagesResponse,
+    UndeleteMessagesResponse
   >,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,

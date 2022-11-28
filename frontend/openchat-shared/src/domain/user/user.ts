@@ -15,6 +15,7 @@ export type UserLastOnline = {
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
     updated: bigint;
+    suspended: boolean;
 };
 
 export type UserSummary = UserLastOnline &
@@ -159,7 +160,7 @@ export type ResendCodeResponse =
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long";
+export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
 
 export type RegisterUserResponse =
     | "user_limit_reached"

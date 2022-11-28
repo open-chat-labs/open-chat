@@ -629,5 +629,7 @@
     "chatFrozenBy": "Chat gelé par {frozenBy}",
     "chatUnfrozenBy": "Chat débloqué par {unfrozenBy}",
     "failedToFreezeGroup": "Échec du gel du groupe",
-    "failedToUnfreezeGroup": "Impossible de dégeler le groupe"
+    "failedToUnfreezeGroup": "Impossible de dégeler le groupe",
+    "accountSuspended": "Compte suspendu",
+    "yourAccountIsSuspended": "Votre compte est suspendu"
 }

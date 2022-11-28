@@ -219,6 +219,9 @@ export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGr
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -240,6 +243,9 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUser
     }
     if ("CannotUnblockSelf" in candid) {
         return "cannot_unblock_self";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -272,6 +278,9 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     if ("CannotBlockUser" in candid) {
         return "cannot_block_user";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -288,6 +297,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -299,10 +311,10 @@ export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): Und
         if (candid.Success.messages.length == 0) {
             return { kind: "internal_error" };
         } else {
-            return { 
-                kind: "success", 
+            return {
+                kind: "success",
                 message: message(candid.Success.messages[0])
-            };    
+            };
         }
     }
     if ("CallerNotInGroup" in candid) {
@@ -310,6 +322,12 @@ export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): Und
     }
     if ("MessageNotFound" in candid) {
         return { kind: "message_not_found" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiUndeleteMessageResponse type received", candid);
 }
@@ -334,6 +352,9 @@ export function addRemoveReactionResponse(
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -384,6 +405,9 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("RulesTooShort" in candid) {
         return "rules_too_short";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -402,6 +426,9 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     }
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -439,6 +466,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("ThreadMessageNotFound" in candid) {
         return { kind: "thread_message_not_found" };
     }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -461,6 +491,9 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleRes
     }
     if ("Invalid" in candid) {
         return "invalid";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -486,6 +519,9 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     }
     if ("CannotRemoveUser" in candid) {
         return "cannot_remove_user";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -543,6 +579,11 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
             kind: "add_members_not_in_group",
         };
     }
+    if ("UserSuspended" in candid) {
+        return {
+            kind: "user_suspended"
+        };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -568,6 +609,9 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageRes
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -589,6 +633,9 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
     }
     if ("MessageNotFound" in candid) {
         return "message_not_found";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -759,6 +806,11 @@ export function enableInviteCodeResponse(
             kind: "not_authorised",
         };
     }
+    if ("UserSuspended" in candid) {
+        return {
+            kind: "user_suspended"
+        };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -776,6 +828,9 @@ export function disableInviteCodeResponse(
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -847,6 +902,11 @@ export function resetInviteCodeResponse(
             kind: "not_authorised",
         };
     }
+    if ("UserSuspended" in candid) {
+        return {
+            kind: "user_suspended"
+        };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -879,6 +939,9 @@ export function registerPollVoteResponse(
     }
     if ("PollsNotValidForDirectChats" in candid) {
         return "polls_not_valid_for_direct_chats";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -1187,6 +1250,9 @@ export function registerProposalVoteResponse(
     }
     if ("ProposalMessageNotFound" in candid) {
         return "proposal_message_not_found";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";

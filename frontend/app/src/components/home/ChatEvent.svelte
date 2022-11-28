@@ -64,6 +64,7 @@
             username: user.username,
             lastOnline: Date.now(),
             updated: BigInt(0),
+            suspended: false,
         };
     }
 

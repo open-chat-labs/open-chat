@@ -40,7 +40,13 @@ export function hexStringToBytes(hex: string): Uint8Array {
     return new Uint8Array(bytes);
 }
 
+export function consolidateBytes(bytes: Uint8Array | number[]): Uint8Array {
+    return Array.isArray(bytes)
+        ? new Uint8Array(bytes)
+        : bytes;
+}
+
 // Convert a byte array to a hex string
-export function bytesToHexString(bytes: Uint8Array): string {
-    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
+export function bytesToHexString(bytes: Uint8Array | number[]): string {
+    return consolidateBytes(bytes).reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }

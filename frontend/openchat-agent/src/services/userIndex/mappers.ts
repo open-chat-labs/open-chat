@@ -69,6 +69,7 @@ export function partialUserSummary(
         })),
         lastOnline: Date.now() - candid.seconds_since_last_online * 1000,
         updated: timestamp,
+        suspended: candid.suspended,
     };
 }
 
@@ -83,6 +84,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
             canisterId: candid.user_id.toString(),
         })),
         updated: timestamp,
+        suspended: candid.suspended,
     };
 }
 
