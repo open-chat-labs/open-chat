@@ -80,6 +80,7 @@
         position: absolute;
         right: 10px;
         top: 11px;
+        @include font(light, normal, fs-80);
 
         &.near-max {
             color: darkred;
@@ -102,6 +103,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
+        box-shadow: var(--input-sh);
 
         &.small {
             @include font(book, normal, fs-80);

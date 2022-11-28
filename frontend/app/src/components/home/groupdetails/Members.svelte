@@ -101,7 +101,7 @@
         on:searchEntered={() => membersList.reset()}
         searching={false}
         bind:searchTerm
-        placeholder={"filterMembers"} />
+        placeholder={"search"} />
 </div>
 
 {#if me !== undefined && me.memberKind === "full_member"}
@@ -119,6 +119,7 @@
         canBlockUser={client.canBlockUsers(chat.chatId)}
         canUnblockUser={client.canUnblockUsers(chat.chatId)}
         canRemoveMember={client.canRemoveMembers(chat.chatId)}
+        {searchTerm}
         on:blockUser
         on:unblockUser
         on:chatWith

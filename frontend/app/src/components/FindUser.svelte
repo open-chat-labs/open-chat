@@ -11,6 +11,7 @@
     import { iconSize } from "../stores/iconSize";
     import { now } from "../stores/time";
     import type { OpenChat } from "openchat-client";
+    import FilteredUsername from "./FilteredUsername.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -102,7 +103,10 @@
                         size={AvatarSize.Small} />
                 </span>
                 <h4 class="details">
-                    {user.username}
+                    <FilteredUsername
+                        {searchTerm}
+                        me={user.userId === client.user.userId}
+                        username={user.username} />
                 </h4>
             </div>
         {/each}

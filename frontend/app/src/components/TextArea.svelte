@@ -73,6 +73,7 @@
         outline: none;
         border-radius: $sp2;
         resize: vertical;
+        box-shadow: var(--input-sh);
 
         &.invalid {
             border: 1px solid var(--error);

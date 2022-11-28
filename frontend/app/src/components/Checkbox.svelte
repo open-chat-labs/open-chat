@@ -81,7 +81,7 @@
         }
 
         input:checked + label {
-            background-color: var(--accent);
+            background-color: var(--button-bg);
         }
 
         input:checked + label:after {

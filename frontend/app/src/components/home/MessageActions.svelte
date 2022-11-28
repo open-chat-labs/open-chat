@@ -5,8 +5,8 @@
     import Close from "svelte-material-icons/Close.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
-    import TrayPlus from "svelte-material-icons/TrayPlus.svelte";
-    import TrayRemove from "svelte-material-icons/TrayRemove.svelte";
+    import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
+    import TrayRemove from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -24,7 +24,7 @@
     $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
-    $: iconColour = editing ? "var(--button-txt)" : "var(--icon-txt)";
+    $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
 
     export function close() {
         drawOpen = false;
@@ -79,11 +79,11 @@
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || fileToAttach !== undefined}
             <HoverIcon>
-                <TrayRemove size={$iconSize} color={iconColour} />
+                <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {:else}
             <HoverIcon>
-                <TrayPlus size={$iconSize} color={iconColour} />
+                <TrayPlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/if}
     </div>
@@ -124,8 +124,12 @@
 
 <style type="text/scss">
     :global(.message-actions.useDrawer.visible .wrapper) {
-        background-color: var(--entry-bg);
+        background-color: var(--button-bg);
         @include box-shadow(1);
+    }
+
+    :global(.message-actions.useDrawer.visible .wrapper path) {
+        fill: var(--txt);
     }
 
     .emoji,

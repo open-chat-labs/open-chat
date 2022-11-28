@@ -1404,7 +1404,10 @@ export class OpenChat extends EventTarget {
             if (selectedChat.kind === "direct_chat") {
                 const them = this._liveState.userStore[selectedChat.them];
                 // Refresh user details if they are more than 5 minutes out of date
-                if (them === undefined || Date.now() - Number(them.updated) > 5 * ONE_MINUTE_MILLIS) {
+                if (
+                    them === undefined ||
+                    Date.now() - Number(them.updated) > 5 * ONE_MINUTE_MILLIS
+                ) {
                     this.getUser(selectedChat.them);
                 }
             }
@@ -1894,11 +1897,7 @@ export class OpenChat extends EventTarget {
 
         // TODO check storage requirements
 
-        // Only forward the primary content not the caption
         const content = { ...msg.content };
-        if ("caption" in content) {
-            content.caption = "";
-        }
 
         const [nextEventIndex, nextMessageIndex] = nextEventAndMessageIndexes();
 
@@ -2391,11 +2390,10 @@ export class OpenChat extends EventTarget {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.api.searchUsers(searchTerm, maxResults)
-            .then((resp) => {
-                userStore.addMany(resp);
-                return resp;
-            });
+        return this.api.searchUsers(searchTerm, maxResults).then((resp) => {
+            userStore.addMany(resp);
+            return resp;
+        });
     }
 
     registerUser(
@@ -2548,21 +2546,22 @@ export class OpenChat extends EventTarget {
                 ],
             },
             true
-        )
+        );
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale)
-            .then((resp) => {
-                userStore.addMany(resp.users);
-                if (resp.serverTimestamp !== undefined) {
-                    // If we went to the server, all users not returned are still up to date, so we mark them as such
-                    const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
-                    const allOtherUsers = users.userGroups.flatMap((g) => g.users.filter((u) => !usersReturned.has(u)));
-                    userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
-                }
-                return resp;
-            });
+        return this.api.getUsers(users, allowStale).then((resp) => {
+            userStore.addMany(resp.users);
+            if (resp.serverTimestamp !== undefined) {
+                // If we went to the server, all users not returned are still up to date, so we mark them as such
+                const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
+                const allOtherUsers = users.userGroups.flatMap((g) =>
+                    g.users.filter((u) => !usersReturned.has(u))
+                );
+                userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+            }
+            return resp;
+        });
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
@@ -2586,7 +2585,7 @@ export class OpenChat extends EventTarget {
                 if (user !== undefined) {
                     userStore.add({
                         ...user,
-                        username
+                        username,
                     });
                 }
             }

@@ -206,7 +206,7 @@
                 {:else}
                     {#if group}
                         <div class="receiver">
-                            <Legend>{$_("tokenTransfer.receiver")}</Legend>
+                            <Legend label={$_("tokenTransfer.receiver")} />
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 members={$currentChatMembers}
@@ -216,16 +216,16 @@
                     {/if}
                     <div class="transfer">
                         <Legend
-                            >{$_("tokenTransfer.amount", {
+                            label={$_("tokenTransfer.amount", {
                                 values: { token: symbol },
-                            })}</Legend>
+                            })} />
                         <TokenInput
                             autofocus={!group}
                             maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
                             bind:amountE8s={draftAmountE8s} />
                     </div>
                     <div class="message">
-                        <Legend>{$_("tokenTransfer.message")}</Legend>
+                        <Legend label={$_("tokenTransfer.message")} />
                         <Input
                             maxlength={100}
                             type={"text"}

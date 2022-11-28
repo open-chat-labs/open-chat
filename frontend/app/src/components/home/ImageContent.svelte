@@ -131,6 +131,8 @@
 {/if}
 
 <style type="text/scss">
+    $radius: $sp3;
+
     .img-wrapper {
         position: relative;
     }
@@ -140,18 +142,8 @@
         position: relative;
     }
 
-    .caption {
-        position: absolute;
-        background-color: rgba(0, 0, 0, 0.2);
-        color: #fff;
-        width: 100%;
-        padding: $sp2 $sp4;
-        top: 0;
-        text-align: center;
-    }
-
     .expand {
-        border-radius: 0 $sp4 0 $sp4;
+        border-radius: 0 $radius 0 $radius;
 
         cursor: zoom-in;
         &.zoomed {
@@ -162,7 +154,7 @@
         &.rtl {
             right: 0;
             left: unset;
-            border-radius: $sp4 0 $sp4 0;
+            border-radius: $radius 0 $radius 0;
             &.zoomed {
                 border-bottom-right-radius: 0;
             }
@@ -194,7 +186,7 @@
         }
 
         &:not(.fill) {
-            border-radius: $sp4;
+            border-radius: $radius;
         }
 
         &.withCaption {
