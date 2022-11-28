@@ -7,29 +7,37 @@
     import Close from "svelte-material-icons/Close.svelte";
     import type {
         MessageMatch,
-        SearchDirectChatResponse,
-        SearchGroupChatResponse,
         ChatSummary,
+        Member,
     } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
-
-    const dispatch = createEventDispatcher();
+    import MentionPicker from "./MentionPicker.svelte";
 
     export let chat: ChatSummary;
     export let searchTerm = "";
+    export let members: Member[];
+    export let blockedUsers: Set<string>;
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
+    const reverseUserLookup: Record<string, string> = {};
+    const mentionRegex = /@([\d\w_]*)$/;
 
     let lastSearchTerm = "";
-    let timer: number | undefined;
     let matches: MessageMatch[] = [];
     let currentMatch = 0;
     let inputElement: HTMLInputElement;
     let searching = false;
+    let showMentionPicker = false;
+    let mentionPrefix: string | undefined;
+    let searchBoxHeight: number | undefined;
+    let rangeToReplace: [number, number] | undefined = undefined;
 
+    $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
+    $: isGroup = chat.kind === "group_chat";
 
     onMount(() => {
         inputElement.focus();
@@ -80,12 +88,13 @@
 
     async function performSearch() {
         clearMatches();
-        if (searchTerm.length > 2) {
+        const [term, mentions] = extractMentions(searchTerm);
+        if (term.length > 2 || mentions.length > 0) {
             lastSearchTerm = searchTerm;
             searching = true;
-            const lowercase = searchTerm.toLowerCase();
+            const lowercase = term.toLowerCase();
             try {
-                let response = await client.searchChat(chat.chatId, lowercase, 50);
+                let response = await client.searchChat(chat.chatId, lowercase, mentions, 50);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {
@@ -98,6 +107,28 @@
                 searching = false;
             }
         }
+    }
+
+    function extractMentions(text: string): [string, string[]] {
+        if (!isGroup) {
+            return [text, []];
+        }
+
+        let mentionedSet = new Set<string>();
+        let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
+            const userId = reverseUserLookup[p1];
+            if (userId !== undefined) {
+                mentionedSet.add(userId);
+                return "";
+            } else {
+                console.log(
+                    `Could not find the userId for user: ${p1}, this should not really happen`
+                );
+            }
+            return match;
+        });
+
+        return [expandedText, Array.from(mentionedSet)];
     }
 
     function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
@@ -116,18 +147,38 @@
         return matches;
     }
 
-    function onInputKeyup() {
-        if (lastSearchTerm === searchTerm) {
-            return;
-        }
-        if (timer !== undefined) {
-            window.clearTimeout(timer);
-        }
-        timer = window.setTimeout(() => {
+    function keyPress(e: KeyboardEvent) {
+        if (e.key === "Enter") {
             if (searchTerm.length > 2) {
                 performSearch();
             }
-        }, 300);
+            e.preventDefault();
+        }
+    }
+
+    function onInput() {
+        triggerMentionLookup();
+    }
+
+    function triggerMentionLookup(): void {
+        if (!isGroup) {
+            return;        
+        }
+        
+        const pos = inputElement.selectionEnd ?? 0;
+        const slice = searchTerm.slice(0, pos);
+        const matches = slice.match(mentionRegex);
+
+        if (matches !== null) {
+            if (matches.index !== undefined) {
+                rangeToReplace = [matches.index, pos];
+                mentionPrefix = matches[1].toLowerCase() || undefined;
+                showMentionPicker = true;
+            }
+        } else {
+            showMentionPicker = false;
+            mentionPrefix = undefined;
+        }
     }
 
     function onWindowKeyDown(event: KeyboardEvent) {
@@ -137,13 +188,60 @@
             onNext();
         } else if (event.code === "Escape") {
             onClose();
+        } else {
+            return;
         }
+
+        if (matches.length > 0) {
+            event.preventDefault();
+        }
+    }
+
+    function setCaretToEnd() {
+        inputElement.setSelectionRange(searchTerm.length, searchTerm.length)
+    }
+ 
+    function replaceTextWith(replacement: string) {
+        if (rangeToReplace === undefined) return;
+        
+        inputElement.setRangeText(replacement, rangeToReplace[0], rangeToReplace[1], "end");
+        inputElement.focus();
+        searchTerm = inputElement.value;
+    }
+
+    function mention(ev: CustomEvent<string>): void {
+        const user = $userStore[ev.detail];
+        const username = user?.username ?? $_("unknown");
+        const userLabel = `@${username}`;
+
+        replaceTextWith(userLabel);
+
+        showMentionPicker = false;
+        if (user !== undefined) {
+            reverseUserLookup[username] = user.userId;
+        }
+    }
+
+    function cancelMention() {
+        showMentionPicker = false;
+        setCaretToEnd();
     }
 </script>
 
 <svelte:window on:keydown={onWindowKeyDown} />
 
-<SectionHeader shadow={true} flush={true} entry={true}>
+{#if showMentionPicker}
+    <MentionPicker
+        {blockedUsers}
+        offset={searchBoxHeight ?? 80}
+        direction={"down"}
+        on:close={cancelMention}
+        on:mention={mention}
+        prefix={mentionPrefix}
+        {members} />
+{/if}
+
+<SectionHeader shadow flush entry bind:height={searchBoxHeight}>
     <div on:click={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -152,7 +250,8 @@
     <div class="wrapper">
         <input
             bind:this={inputElement}
-            on:keyup={onInputKeyup}
+            on:input={onInput}
+            on:keypress={keyPress}
             spellcheck="false"
             bind:value={searchTerm}
             type="text"

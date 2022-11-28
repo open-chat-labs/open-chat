@@ -6,6 +6,7 @@
     export let entry = false;
     export let gap = false;
     export let border = true;
+    export let height: number = 0;
 </script>
 
 <div
@@ -15,7 +16,8 @@
     class:shadow
     class:entry
     class:gap
-    class:rtl={$rtlStore}>
+    class:rtl={$rtlStore}
+    bind:clientHeight={height}>
     <slot />
 </div>
 

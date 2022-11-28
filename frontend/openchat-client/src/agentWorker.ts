@@ -1006,6 +1006,7 @@ export class OpenChatAgentWorker extends EventTarget {
     searchGroupChat(
         chatId: string,
         searchTerm: string,
+        userIds: string[],
         maxResults = 10
     ): Promise<SearchGroupChatResponse> {
         return this.sendRequest({
@@ -1013,6 +1014,7 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 searchTerm,
+                userIds,
                 maxResults,
             },
         });
