@@ -16,6 +16,7 @@ import type {
     EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
+    FreezeGroupResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
@@ -44,6 +45,7 @@ import type {
     ThreadSyncDetails,
     UnblockUserResponse,
     UndeleteMessageResponse,
+    UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateArgs,
     UpdateGroupResponse,
@@ -177,6 +179,8 @@ export type WorkerRequest =
     | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
+    | FreezeGroup
+    | UnfreezeGroup
     | GetInitialState;
 
 type SetCachedMessageFromNotification = Request<{
@@ -714,6 +718,19 @@ type MarkAsOnline = Request & {
     kind: "markAsOnline";
 };
 
+type FreezeGroup = Request<{
+    chatId: string;
+    reason: string | undefined;
+}> & {
+    kind: "freezeGroup";
+};
+
+type UnfreezeGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "unfreezeGroup";
+};
+
 type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
     kind: "getUsers";
 };
@@ -835,6 +852,8 @@ export type WorkerResponse =
     | Response<CurrentUserResponse>
     | Response<MergedUpdatesResponse>
     | Response<EventsResponse<ChatEvent>>
+    | Response<FreezeGroupResponse>
+    | Response<UnfreezeGroupResponse>
     | Response<undefined>;
 
 type Response<T> = {

@@ -22,6 +22,6 @@ export interface NervousSystemFunction {
 export interface _SERVICE {
   'list_nervous_system_functions' : ActorMethod<
     [],
-    ListNervousSystemFunctionsResponse
+    ListNervousSystemFunctionsResponse,
   >,
 }

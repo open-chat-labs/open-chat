@@ -64,10 +64,12 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
+  { 'ChatFrozen' : ChatFrozen } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ChatUnfrozen' : ChatUnfrozen } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
@@ -88,6 +90,7 @@ export interface ChatEventWrapper {
   'index' : EventIndex,
   'correlation_id' : bigint,
 }
+export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -111,6 +114,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export interface CheckUsernameArgs { 'username' : string }
 export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -154,6 +158,7 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'is_super_admin' : boolean,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -232,6 +237,14 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FrozenGroupInfo {
+  'timestamp' : TimestampMillis,
+  'frozen_by' : UserId,
+  'reason' : [] | [string],
+}
+export type FrozenGroupUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : FrozenGroupInfo };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -269,6 +282,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -295,6 +309,7 @@ export interface GroupChatSummaryUpdates {
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
+  'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
@@ -615,6 +630,7 @@ export interface PublicGroupSummary {
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
   'participant_count' : number,
@@ -845,24 +861,24 @@ export interface _SERVICE {
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'confirm_phone_number' : ActorMethod<
     [ConfirmPhoneNumberArgs],
-    ConfirmPhoneNumberResponse
+    ConfirmPhoneNumberResponse,
   >,
   'create_challenge' : ActorMethod<
     [CreateChallengeArgs],
-    CreateChallengeResponse
+    CreateChallengeResponse,
   >,
   'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_super_admin' : ActorMethod<
     [RemoveSuperAdminArgs],
-    RemoveSuperAdminResponse
+    RemoveSuperAdminResponse,
   >,
   'resend_code' : ActorMethod<[ResendCodeArgs], ResendCodeResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
   'submit_phone_number' : ActorMethod<
     [SubmitPhoneNumberArgs],
-    SubmitPhoneNumberResponse
+    SubmitPhoneNumberResponse,
   >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
   'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,

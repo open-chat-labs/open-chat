@@ -623,5 +623,12 @@
     "oneMessageDeleted": "已删除 1 条消息",
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
-    "undeleteMessageFailed": "取消删除消息失败"
+    "undeleteMessageFailed": "取消删除消息失败",
+    "freezeGroup": "冻结组",
+    "unfreezeGroup": "解冻组",
+    "chatFrozen": "此聊天已被冻结",
+    "chatFrozenBy": "聊天被 {frozenBy} 冻结",
+    "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
+    "failedToFreezeGroup": "冻结群组失败",
+    "failedToUnfreezeGroup": "解冻群组失败"
 }

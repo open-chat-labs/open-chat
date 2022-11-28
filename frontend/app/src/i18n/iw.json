@@ -620,5 +620,12 @@
     "nMessagesDeleted": "{number} הודעות נמחקו",
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
-    "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל"
+    "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
+    "freezeGroup": "הקפאת קבוצה",
+    "unfreezeGroup": "בטל את הקפאת הקבוצה",
+    "chatFrozen": "הצ'אט הזה הוקפא",
+    "chatFrozenBy": "הצ'אט הוקפא על ידי {frozenBy}",
+    "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}",
+    "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
+    "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל"
 }

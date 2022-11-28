@@ -622,5 +622,12 @@
     "nMessagesDeleted": "{number} messages supprimés",
     "undeleteMessage": "Annuler la suppression",
     "undeletingMessage": "Récupération du message de {username} sur {timestamp}",
-    "undeleteMessageFailed": "Échec de la restauration du message"
+    "undeleteMessageFailed": "Échec de la restauration du message",
+    "freezeGroup": "Groupe Geler",
+    "unfreezeGroup": "Dégeler le groupe",
+    "chatFrozen": "Ce chat a été gelé",
+    "chatFrozenBy": "Chat gelé par {frozenBy}",
+    "chatUnfrozenBy": "Chat débloqué par {unfrozenBy}",
+    "failedToFreezeGroup": "Échec du gel du groupe",
+    "failedToUnfreezeGroup": "Impossible de dégeler le groupe"
 }

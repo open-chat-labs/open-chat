@@ -622,5 +622,12 @@
     "nMessagesDeleted": "{number} сообщений удалено",
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",
-    "undeleteMessageFailed": "Не удалось восстановить сообщение"
+    "undeleteMessageFailed": "Не удалось восстановить сообщение",
+    "freezeGroup": "Заморозить группу",
+    "unfreezeGroup": "Разморозить группу",
+    "chatFrozen": "Этот чат был заморожен",
+    "chatFrozenBy": "Чат заморожен пользователем {frozenBy}",
+    "chatUnfrozenBy": "Чат разблокирован пользователем {unfrozenBy}",
+    "failedToFreezeGroup": "Не удалось заморозить группу",
+    "failedToUnfreezeGroup": "Не удалось разморозить группу"
 }
