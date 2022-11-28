@@ -1,34 +1,58 @@
 <script lang="ts">
-    import { validate_each_argument } from "svelte/internal";
+    import { createEventDispatcher } from "svelte";
     import ChessPieces from "./ChessPieces.svelte";
-    import { fromCoords, initialGameState, Piece } from "./logic";
+    import type { Game } from "./logic";
 
     export let interactive: boolean;
+    export let gameState: Game;
+
+    const dispatch = createEventDispatcher();
     const letters = "ABCDEFGH";
     const numbers = "87654321";
     const board = new Array(8).fill(new Array(8).fill(0));
 
-    let game = initialGameState;
     let selectedFrom: [number, number] | undefined;
     let selectedTo: [number, number] | undefined;
-
-    /**
-     *  TODO - if we click on one of our own pieces we reset selectedFrom
-     * if we click on any other slot (valid) && we already have a selectedFrom then we set selectedTo
-     */
-    function pieceClicked(col: number, row: number): void {
-        if (!interactive) return;
-        selectedFrom = [col, row];
-    }
+    let render = Symbol();
 
     function cellClicked(col: number, row: number): void {
         if (!interactive) return;
-        selectedFrom = [col, row];
+
+        const piece = gameState.getPiece(col, row);
+
+        if (selectedFrom === undefined) {
+            if (piece && piece.colour === gameState.next) {
+                selectedFrom = [col, row];
+                selectedTo = undefined;
+                render = Symbol();
+                return;
+            }
+        } else {
+            if (piece && piece.colour === gameState.next) {
+                selectedFrom = [col, row];
+                selectedTo = undefined;
+                render = Symbol();
+                return;
+            }
+            if (gameState.validMove(selectedFrom, [col, row])) {
+                selectedTo = [col, row];
+                gameState.move(selectedFrom, selectedTo);
+                dispatch("moveSelected", gameState);
+                render = Symbol();
+                return;
+            }
+        }
     }
 
     function validTarget(col: number, row: number): boolean {
         if (selectedFrom === undefined) return false;
-        return game.validMove(selectedFrom, [col, row]);
+        return gameState.validMove(selectedFrom, [col, row]);
+    }
+
+    function selectTo() {
+        if (selectedFrom && selectedTo) {
+            dispatch("moveSelected", gameState.move(selectedFrom, selectedTo));
+        }
     }
 </script>
 
@@ -47,21 +71,23 @@
                 <div class="num">{num}</div>
             {/each}
         </div>
-        {#key selectedFrom}
+        {#key render}
             <div class="board">
                 {#each board as row, r}
                     {#each row as col, c}
                         <div
-                            class:selected={selectedFrom !== undefined &&
+                            class:selectedFrom={selectedTo === undefined &&
+                                selectedFrom !== undefined &&
                                 selectedFrom[0] === c &&
                                 selectedFrom[1] === r}
-                            on:click={() => cellClicked(c, r)}
+                            class:selectedTo={selectedTo !== undefined &&
+                                selectedTo[0] === c &&
+                                selectedTo[1] === r}
                             class="cell"
-                            class:validTarget={validTarget(c, r)}
+                            on:click={() => cellClicked(c, r)}
+                            class:validTarget={selectedTo === undefined && validTarget(c, r)}
                             class:black={(r + c) % 2 === 0}>
-                            <ChessPieces
-                                on:click={() => pieceClicked(c, r)}
-                                piece={game.getPiece(c, r)} />
+                            <ChessPieces piece={gameState.getPiece(c, r)} />
                         </div>
                     {/each}
                 {/each}
@@ -127,24 +153,27 @@
                 color: black;
             }
 
-            &.selected::after {
+            &.selectedFrom::after,
+            &.validTarget::after,
+            &.selectedTo::after {
                 content: "";
                 width: $size;
                 height: $size;
                 position: absolute;
                 top: 0;
                 left: 0;
-                background-color: #00ff00aa;
             }
 
             &.validTarget::after {
-                content: "";
-                width: $size;
-                height: $size;
-                position: absolute;
-                top: 0;
-                left: 0;
                 background-color: #00ff0050;
+            }
+
+            &.selectedFrom::after {
+                background-color: #00ff00aa;
+            }
+
+            &.selectedTo::after {
+                background-color: #ff000050;
             }
         }
     }

@@ -17,7 +17,6 @@
     import { _ } from "svelte-i18n";
     import ChessContent from "./chess/ChessContent.svelte";
 
-    export let repliesTo: ReplyContext | undefined = undefined;
     export let content: MessageContent;
     export let me: boolean = false;
     export let truncate: boolean = false;
@@ -36,12 +35,10 @@
     export let messageIndex: number;
     export let collapsed = false;
     export let undeleting: boolean = false;
-
-    $: chess = content.kind === "text_content" && content.text.startsWith("/chess");
 </script>
 
-{#if content.kind === "text_content" && chess}
-    <ChessContent {content} {repliesTo} />
+{#if content.kind === "custom_content" && content.subtype === "chess_content"}
+    <ChessContent {content} />
 {:else if content.kind === "text_content"}
     <TextContent {fill} {truncate} {pinned} {messageId} {content} {edited} {height} />
 {:else if content.kind === "image_content"}

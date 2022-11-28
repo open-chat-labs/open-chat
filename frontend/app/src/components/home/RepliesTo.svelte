@@ -42,40 +42,42 @@
     }
 </script>
 
-<Link on:click={zoomToMessage}>
-    <div
-        class="reply-wrapper"
-        class:me
-        class:rtl={$rtlStore}
-        class:crypto={repliesTo.content.kind === "crypto_content"}>
-        <h4 class="username" class:text-content={isTextContent}>
-            {getUsernameFromReplyContext(repliesTo)}
-        </h4>
-        {#if repliesTo.content !== undefined}
-            <ChatMessageContent
-                {me}
-                {preview}
-                {groupChat}
-                {chatId}
-                first={true}
-                messageId={repliesTo.messageId}
-                messageIndex={repliesTo.messageIndex}
-                senderId={repliesTo.senderId}
-                edited={repliesTo.edited}
-                fill={false}
-                reply={true}
-                myUserId={currentUser.userId}
-                content={repliesTo.content} />
-            {#if debug}
-                <pre>EventIdx: {repliesTo.eventIndex}</pre>
-                <pre>MsgId: {repliesTo.messageId}</pre>
-                <pre>SenderId: {repliesTo.senderId}</pre>
+{#if repliesTo.content.kind !== "custom_content"}
+    <Link on:click={zoomToMessage}>
+        <div
+            class="reply-wrapper"
+            class:me
+            class:rtl={$rtlStore}
+            class:crypto={repliesTo.content.kind === "crypto_content"}>
+            <h4 class="username" class:text-content={isTextContent}>
+                {getUsernameFromReplyContext(repliesTo)}
+            </h4>
+            {#if repliesTo.content !== undefined}
+                <ChatMessageContent
+                    {me}
+                    {preview}
+                    {groupChat}
+                    {chatId}
+                    first={true}
+                    messageId={repliesTo.messageId}
+                    messageIndex={repliesTo.messageIndex}
+                    senderId={repliesTo.senderId}
+                    edited={repliesTo.edited}
+                    fill={false}
+                    reply={true}
+                    myUserId={currentUser.userId}
+                    content={repliesTo.content} />
+                {#if debug}
+                    <pre>EventIdx: {repliesTo.eventIndex}</pre>
+                    <pre>MsgId: {repliesTo.messageId}</pre>
+                    <pre>SenderId: {repliesTo.senderId}</pre>
+                {/if}
+            {:else}
+                {"TODO - we don't have the message content for this"}
             {/if}
-        {:else}
-            {"TODO - we don't have the message content for this"}
-        {/if}
-    </div>
-</Link>
+        </div>
+    </Link>
+{/if}
 
 <style type="text/scss">
     :global(.reply-wrapper.me a) {

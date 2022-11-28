@@ -117,10 +117,6 @@
         creatingPoll = true;
     }
 
-    function createChessMove() {
-        creatingChessMove = true;
-    }
-
     function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
         creatingCryptoTransfer = ev.detail ?? {
             token: $lastCryptoSent,
@@ -142,6 +138,13 @@
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
         currentChatDraftMessage.setReplyingTo(chat.chatId, ev.detail);
+
+        if (
+            ev.detail.content.kind === "custom_content" &&
+            ev.detail.content.subtype === "chess_content"
+        ) {
+            creatingChessMove = true;
+        }
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -317,7 +320,7 @@
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}
             on:createPoll={createPoll}
-            on:createChessMove={createChessMove} />
+            on:createChessMove={() => (creatingChessMove = true)} />
     {/if}
 </div>
 

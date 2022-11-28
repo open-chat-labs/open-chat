@@ -25,8 +25,12 @@ export class Game {
 
     validMove(from: [number, number], to: [number, number]): boolean {
         const fromKey = fromCoords(from[0], from[1]);
+        const toKey = fromCoords(to[0], to[1]);
         const current = this.state[fromKey];
+        const target = this.state[toKey];
         if (current === undefined) return false;
+        if (target !== undefined && target.colour === this.next) return false;
+
         if (from[0] === to[0] && from[1] === to[1]) return false;
 
         switch (current.type) {
@@ -45,16 +49,17 @@ export class Game {
         }
     }
 
-    move(state: Pieces, move: [string, string] | undefined): void {
-        if (move === undefined) return;
-        const [from, to] = move;
-        console.log("Move is valid: ", this.validMove(toCoord(from), toCoord(to)));
-        if (!this.validMove(toCoord(from), toCoord(to))) return;
+    move(from: [number, number], to: [number, number]): void {
+        if (!this.validMove(from, to)) return;
 
-        const current = this.state[from];
+        const fromKey = fromCoords(from[0], from[1]);
+        const toKey = fromCoords(to[0], to[1]);
+
+        const current = this.state[fromKey];
         if (current) {
-            this.state[to] = current;
-            delete this.state[from];
+            this.state[toKey] = current;
+            delete this.state[fromKey];
+            this.next = this.next === "white" ? "black" : "white";
         }
     }
 }

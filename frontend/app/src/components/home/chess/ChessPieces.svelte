@@ -25,7 +25,6 @@
         version="1.0"
         width="30"
         height="30"
-        on:click
         xmlns="http://www.w3.org/2000/svg"
         viewBox={viewbox}
         preserveAspectRatio="xMidYMid meet">

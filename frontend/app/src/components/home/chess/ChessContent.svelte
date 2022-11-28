@@ -1,14 +1,15 @@
 <script lang="ts">
-    import type { TextContent, ReplyContext } from "openchat-client";
+    import type { CustomContent } from "openchat-client";
     import ChessBoard from "./ChessBoard.svelte";
+    import { Game } from "./logic";
 
-    export let repliesTo: ReplyContext | undefined = undefined;
-    export let content: TextContent;
+    export let content: CustomContent;
 
-    function parseMove(txt: string): [string, string] | undefined {
-        const move = txt.replace("/chess", "").trim();
-        return move === "" ? undefined : (move.split(" ").map((m) => m.trim()) as [string, string]);
-    }
+    let gameState: Game | undefined;
+
+    $: gameState = new Game(content.payload);
 </script>
 
-<ChessBoard interactive={false} />
+{#if gameState !== undefined}
+    <ChessBoard {gameState} interactive={false} />
+{/if}

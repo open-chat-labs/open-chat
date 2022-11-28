@@ -498,7 +498,6 @@
                 {collapsed}
                 {undeleting}
                 first
-                repliesTo={msg.repliesTo}
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}

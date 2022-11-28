@@ -10,7 +10,7 @@ export interface GenericNervousSystemFunction {
   'target_method_name' : [] | [string],
 }
 export interface ListNervousSystemFunctionsResponse {
-  'reserved_ids' : BigUint64Array | bigint[],
+  'reserved_ids' : BigUint64Array,
   'functions' : Array<NervousSystemFunction>,
 }
 export interface NervousSystemFunction {
