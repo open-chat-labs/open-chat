@@ -625,5 +625,12 @@
     "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした",
     "homepage": "ホームページ",
     "preferredLanguage": "優先言語",
-    "theme": "テーマ"
+    "theme": "テーマ",
+    "freezeGroup": "グループを凍結",
+    "unfreezeGroup": "グループを解凍",
+    "chatFrozen": "このチャットは凍結されました",
+    "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
+    "chatUnfrozenBy": "{unfrozenBy} によってフリーズ解除されたチャット",
+    "failedToFreezeGroup": "グループを凍結できませんでした",
+    "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました"
 }

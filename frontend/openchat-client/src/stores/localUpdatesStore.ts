@@ -18,7 +18,7 @@ export abstract class LocalUpdatesStore<T extends LocalUpdates> {
 
     subscribe = this.store.subscribe;
 
-    applyUpdate(
+    protected applyUpdate(
         key: string,
         updateFn: (current: T) => Partial<T>
     ): void {

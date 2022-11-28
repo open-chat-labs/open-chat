@@ -625,5 +625,12 @@
     "undeleteMessageFailed": "取消删除消息失败",
     "homepage": "主页",
     "preferredLanguage": "首选语言",
-    "theme": "主题"
+    "theme": "主题",
+    "freezeGroup": "冻结组",
+    "unfreezeGroup": "解冻组",
+    "chatFrozen": "此聊天已被冻结",
+    "chatFrozenBy": "聊天被 {frozenBy} 冻结",
+    "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
+    "failedToFreezeGroup": "冻结群组失败",
+    "failedToUnfreezeGroup": "解冻群组失败"
 }

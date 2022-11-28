@@ -624,5 +624,12 @@
     "undeleteMessageFailed": "Impossibile annullare l'eliminazione del messaggio",
     "homepage": "Pagina iniziale",
     "preferredLanguage": "Lingua preferita",
-    "theme": "Tema"
+    "theme": "Tema",
+    "freezeGroup": "Congelare il gruppo",
+    "unfreezeGroup": "Sblocca gruppo",
+    "chatFrozen": "Questa chat è stata bloccata",
+    "chatFrozenBy": "Chat bloccata da {frozenBy}",
+    "chatUnfrozenBy": "Chat sbloccata da {unfrozenBy}",
+    "failedToFreezeGroup": "Impossibile bloccare il gruppo",
+    "failedToUnfreezeGroup": "Impossibile sbloccare il gruppo"
 }

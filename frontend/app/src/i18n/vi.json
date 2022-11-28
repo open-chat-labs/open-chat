@@ -625,5 +625,12 @@
     "undeleteMessageFailed": "Không thể khôi phục tin nhắn",
     "homepage": "trang chủ",
     "preferredLanguage": "ngôn ngữ ưa thích",
-    "theme": "chủ đề"
+    "theme": "chủ đề",
+    "freezeGroup": "Nhóm đóng băng",
+    "unfreezeGroup": "Giải phóng nhóm",
+    "chatFrozen": "Cuộc trò chuyện này đã bị đóng băng",
+    "chatFrozenBy": "Trò chuyện bị đóng băng bởi {frozenBy}",
+    "chatUnfrozenBy": "Bỏ đóng băng cuộc trò chuyện của {unfrozenBy}",
+    "failedToFreezeGroup": "Không thể đóng băng nhóm",
+    "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm"
 }
