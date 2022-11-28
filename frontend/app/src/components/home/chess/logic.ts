@@ -4,10 +4,59 @@ export type PieceType = "pawn" | "rook" | "bishop" | "knight" | "king" | "queen"
 
 export type Pieces = Record<string, Piece>;
 
-export type Game = {
+export class Game {
     state: Pieces;
     next: Colour;
-};
+
+    constructor(serialised?: string) {
+        const game = serialised
+            ? JSON.parse(serialised)
+            : {
+                  state: initialState,
+                  next: "white",
+              };
+        this.state = game.state;
+        this.next = game.next;
+    }
+
+    getPiece(col: number, row: number): Piece | undefined {
+        return this.state[fromCoords(col, row)];
+    }
+
+    validMove(from: [number, number], to: [number, number]): boolean {
+        const fromKey = fromCoords(from[0], from[1]);
+        const current = this.state[fromKey];
+        if (current === undefined) return false;
+
+        switch (current.type) {
+            case "bishop":
+                return validBishop(from, to);
+            case "king":
+                return validKing(from, to);
+            case "rook":
+                return validRook(from, to);
+            case "queen":
+                return validQueen(from, to);
+            case "knight":
+                return validKnight(from, to);
+            case "pawn":
+                return validPawn(from, to);
+        }
+    }
+
+    move(state: Pieces, move: [string, string] | undefined): void {
+        if (move === undefined) return;
+        const [from, to] = move;
+        console.log("Move is valid: ", this.validMove(toCoord(from), toCoord(to)));
+        if (!this.validMove(toCoord(from), toCoord(to))) return;
+
+        const current = this.state[from];
+        if (current) {
+            this.state[to] = current;
+            delete this.state[from];
+        }
+    }
+}
 
 export type Piece = {
     colour: Colour;
@@ -16,7 +65,7 @@ export type Piece = {
 
 const letters = "abcdefgh";
 
-export const initialState: Record<string, Piece> = {
+const initialState: Pieces = {
     a8: { colour: "white", type: "rook" },
     b8: { colour: "white", type: "knight" },
     c8: { colour: "white", type: "bishop" },
@@ -51,48 +100,10 @@ export const initialState: Record<string, Piece> = {
     h1: { colour: "black", type: "rook" },
 };
 
-export function move(state: Pieces, m: [string, string] | undefined): Pieces {
-    if (m === undefined) return state;
-    const [from, to] = m;
-    console.log("Move is valid: ", validMove(state, from, to));
-    if (!validMove(state, from, to)) return state;
-
-    const current = state[from];
-    if (current) {
-        state[to] = current;
-        delete state[from];
-    }
-    return state;
-}
-
-function validMove(state: Pieces, from: string, to: string): boolean {
-    const current = state[from];
-    if (current === undefined) return false;
-
-    const [fromPos, toPos] = toCoords(from, to);
-
-    switch (current.type) {
-        case "bishop":
-            return validBishop(fromPos, toPos);
-        case "king":
-            return validKing(fromPos, toPos);
-        case "rook":
-            return validRook(fromPos, toPos);
-        case "queen":
-            return validQueen(fromPos, toPos);
-        case "knight":
-            return validKnight(fromPos, toPos);
-        case "pawn":
-            return validPawn(fromPos, toPos);
-    }
-}
+export const initialGameState: Game = new Game();
 
 export function fromCoords(c: number, r: number): string {
     return `${letters[c]}${Math.abs(r - 8)}`;
-}
-
-function toCoords(from: string, to: string): [[number, number], [number, number]] {
-    return [toCoord(from), toCoord(to)];
 }
 
 function toCoord(pos: string): [number, number] {
@@ -105,7 +116,7 @@ function validQueen(from: [number, number], to: [number, number]): boolean {
 }
 
 function validBishop([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
-    return x2 - x1 === y2 - y1;
+    return Math.abs(x2 - x1) === Math.abs(y2 - y1);
 }
 
 function validRook([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
@@ -113,13 +124,16 @@ function validRook([x1, y1]: [number, number], [x2, y2]: [number, number]): bool
 }
 
 function validKing([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
-    return x2 - x1 <= 1 && y2 - y1 <= 1;
+    return Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1;
 }
 
 function validPawn([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
-    return x2 === x1 && y2 - y1 === 1; // not quite good enough
+    return x2 === x1 && Math.abs(y2 - y1) === 1; // not quite good enough
 }
 
 function validKnight([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
-    return (x2 - x1 === 1 && y2 - y1 === 2) || (x2 - x1 === 2 && y2 - y1 === 1);
+    return (
+        (Math.abs(x2 - x1) === 1 && Math.abs(y2 - y1) === 2) ||
+        (Math.abs(x2 - x1) === 2 && Math.abs(y2 - y1) === 1)
+    );
 }

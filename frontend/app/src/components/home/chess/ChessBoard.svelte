@@ -1,24 +1,34 @@
 <script lang="ts">
+    import { validate_each_argument } from "svelte/internal";
     import ChessPieces from "./ChessPieces.svelte";
-    import { fromCoords, initialState, Piece } from "./logic";
+    import { fromCoords, initialGameState, Piece } from "./logic";
 
     export let interactive: boolean;
     const letters = "ABCDEFGH";
     const numbers = "87654321";
     const board = new Array(8).fill(new Array(8).fill(0));
 
-    let state = initialState;
-    let selectedCoords: [number, number] | undefined;
+    let game = initialGameState;
+    let selectedFrom: [number, number] | undefined;
+    let selectedTo: [number, number] | undefined;
 
+    /**
+     *  TODO - if we click on one of our own pieces we reset selectedFrom
+     * if we click on any other slot (valid) && we already have a selectedFrom then we set selectedTo
+     */
     function pieceClicked(col: number, row: number): void {
         if (!interactive) return;
-        console.log("piece clicked");
-        selectedCoords = [col, row];
+        selectedFrom = [col, row];
     }
 
     function cellClicked(col: number, row: number): void {
         if (!interactive) return;
-        selectedCoords = [col, row];
+        selectedFrom = [col, row];
+    }
+
+    function validTarget(col: number, row: number): boolean {
+        if (selectedFrom === undefined) return false;
+        return game.validMove(selectedFrom, [col, row]);
     }
 </script>
 
@@ -37,26 +47,26 @@
                 <div class="num">{num}</div>
             {/each}
         </div>
-        <div class="board">
-            {#each board as row, r}
-                {#each row as col, c}
-                    <div
-                        class:selected={selectedCoords !== undefined &&
-                            selectedCoords[0] === c &&
-                            selectedCoords[1] === r}
-                        on:click={() => cellClicked(c, r)}
-                        class="cell"
-                        class:black={(r + c) % 2 === 0}>
-                        {#if state[fromCoords(c, r)]}
+        {#key selectedFrom}
+            <div class="board">
+                {#each board as row, r}
+                    {#each row as col, c}
+                        <div
+                            class:selected={selectedFrom !== undefined &&
+                                selectedFrom[0] === c &&
+                                selectedFrom[1] === r}
+                            on:click={() => cellClicked(c, r)}
+                            class="cell"
+                            class:validTarget={validTarget(c, r)}
+                            class:black={(r + c) % 2 === 0}>
                             <ChessPieces
                                 on:click={() => pieceClicked(c, r)}
-                                type={state[fromCoords(c, r)].type}
-                                color={state[fromCoords(c, r)].colour} />
-                        {/if}
-                    </div>
+                                piece={game.getPiece(c, r)} />
+                        </div>
+                    {/each}
                 {/each}
-            {/each}
-        </div>
+            </div>
+        {/key}
         <div class="side">
             {#each numbers as num}
                 <div class="num">{num}</div>
@@ -112,6 +122,10 @@
 
             &.selected {
                 border: 4px solid red;
+            }
+
+            &.validTarget {
+                border: 4px solid cyan;
             }
         }
     }
