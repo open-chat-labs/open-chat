@@ -15,7 +15,7 @@
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { MessageContent, ReplyContext } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import ChessContent from "./ChessContent.svelte";
+    import ChessContent from "./chess/ChessContent.svelte";
 
     export let repliesTo: ReplyContext | undefined = undefined;
     export let content: MessageContent;

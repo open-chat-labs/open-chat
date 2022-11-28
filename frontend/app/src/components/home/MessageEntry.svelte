@@ -262,6 +262,11 @@
             return true;
         }
 
+        if (/^\/chess$/.test(txt)) {
+            dispatch("createChessMove");
+            return true;
+        }
+
         const searchMatch = txt.match(/^\/search( *(.*))$/);
         if (searchMatch && searchMatch[2] !== undefined) {
             dispatch("searchChat", searchMatch[2]);

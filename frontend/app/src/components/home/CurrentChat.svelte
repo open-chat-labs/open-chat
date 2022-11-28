@@ -21,6 +21,7 @@
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import ChessMoveBuilder from "./chess/ChessMoveBuilder.svelte";
     import GiphySelector from "./GiphySelector.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "stores/toast";
@@ -38,9 +39,11 @@
     let unreadMessages = 0;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
+    let creatingChessMove = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let pollBuilder: PollBuilder;
+    let chessMoveBuilder: ChessMoveBuilder;
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
@@ -112,6 +115,10 @@
             pollBuilder.resetPoll();
         }
         creatingPoll = true;
+    }
+
+    function createChessMove() {
+        creatingChessMove = true;
     }
 
     function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
@@ -209,6 +216,13 @@
     on:sendPoll={sendMessageWithContent}
     bind:open={creatingPoll} />
 
+{#if creatingChessMove}
+    <ChessMoveBuilder
+        bind:this={chessMoveBuilder}
+        on:sendChessMove={sendMessageWithContent}
+        bind:open={creatingChessMove} />
+{/if}
+
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
         {chat}
@@ -302,7 +316,8 @@
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}
-            on:createPoll={createPoll} />
+            on:createPoll={createPoll}
+            on:createChessMove={createChessMove} />
     {/if}
 </div>
 

@@ -139,6 +139,7 @@
         on:startTyping
         on:stopTyping
         on:createPoll
+        on:createChessMove
         on:searchChat
         on:tokenTransfer
         on:attachGif

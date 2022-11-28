@@ -17,13 +17,13 @@
     };
 
     $: viewbox = `${offsetX[type]} ${offsetY[color]} 230 230`;
-    // viewBox="0 0 1280.000000 640.000000"
 </script>
 
 <svg
     version="1.0"
     width="30"
     height="30"
+    on:click
     xmlns="http://www.w3.org/2000/svg"
     viewBox={viewbox}
     preserveAspectRatio="xMidYMid meet">
