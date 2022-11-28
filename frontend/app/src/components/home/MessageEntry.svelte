@@ -438,7 +438,7 @@
                     success = true;
                 }
             })
-            .finally((_) => {
+            .finally(() => {
                 if (!success) {
                     toastStore.showFailureToast("failedToFreezeGroup");
                 }
@@ -455,7 +455,7 @@
                     success = true;
                 }
             })
-            .finally((_) => {
+            .finally(() => {
                 if (!success) {
                     toastStore.showFailureToast("failedToUnfreezeGroup");
                 }
