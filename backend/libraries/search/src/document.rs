@@ -1,5 +1,4 @@
 use crate::query::*;
-use types::UserId;
 
 type Milliseconds = u64;
 
@@ -12,7 +11,6 @@ pub struct Field {
 pub struct Document {
     fields: Vec<Field>,
     age: Option<Milliseconds>,
-    user: Option<UserId>,
 }
 
 impl Document {
@@ -23,11 +21,6 @@ impl Document {
 
     pub fn set_age(&mut self, age: Milliseconds) -> &mut Document {
         self.age = Some(age);
-        self
-    }
-
-    pub fn set_user(&mut self, user: UserId) -> &mut Document {
-        self.user = Some(user);
         self
     }
 
@@ -49,12 +42,6 @@ impl Document {
 
         for field in &self.fields {
             score += score_field(query, field);
-        }
-
-        if let Some(user) = self.user {
-            if query.users.contains(&user) {
-                score += 10.0;
-            }
         }
 
         if score > 0.0 {
