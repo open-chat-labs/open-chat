@@ -522,6 +522,9 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     if ("CannotRemoveUser" in candid) {
         return "cannot_remove_user";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -585,7 +588,9 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
         };
     }
     if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
+        return {
+            kind: "user_suspended",
+        };
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
@@ -810,7 +815,9 @@ export function enableInviteCodeResponse(
         };
     }
     if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
+        return {
+            kind: "user_suspended",
+        };
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
@@ -904,7 +911,9 @@ export function resetInviteCodeResponse(
         };
     }
     if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
+        return {
+            kind: "user_suspended",
+        };
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
@@ -1249,6 +1258,9 @@ export function registerProposalVoteResponse(
     }
     if ("ProposalMessageNotFound" in candid) {
         return "proposal_message_not_found";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";

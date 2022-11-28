@@ -10,6 +10,7 @@ describe("overwrite users", () => {
                     username: "julian_jelfs",
                     lastOnline: 10,
                     updated: BigInt(0),
+                    suspended: false,
                 },
             },
             {
@@ -18,6 +19,7 @@ describe("overwrite users", () => {
                 lastOnline: 20,
                 username: undefined,
                 updated: BigInt(0),
+                suspended: false,
             }
         );
         expect(lookup["abc"].username).toEqual("julian_jelfs");

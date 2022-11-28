@@ -15,6 +15,7 @@ export type UserLastOnline = {
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
     updated: bigint;
+    suspended: boolean;
 };
 
 export type UserSummary = UserLastOnline &

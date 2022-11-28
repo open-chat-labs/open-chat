@@ -292,6 +292,9 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
     if ("AvatarTooBig" in candid) {
         return "avatar_too_big";
     }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
     if ("InternalError" in candid) {
         return "internal_error";
     }

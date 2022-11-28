@@ -868,7 +868,7 @@ export function canSendMessages(
     }
 
     const user = userLookup[chat.them];
-    if (user === undefined) {
+    if (user === undefined || user.suspended) {
         return false;
     }
     if (user.kind === "user") {

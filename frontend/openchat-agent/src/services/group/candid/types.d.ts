@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccountIdentifier = Uint8Array;
+export type AccountIdentifier = Uint8Array | number[];
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
@@ -63,7 +63,7 @@ export interface AudioContent {
 }
 export interface Avatar {
   'id' : bigint,
-  'data' : Uint8Array,
+  'data' : Uint8Array | number[],
   'mime_type' : string,
 }
 export interface AvatarChanged {
@@ -99,7 +99,7 @@ export type CanisterUpgradeStatus = { 'NotRequired' : null } |
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : Version,
-  'module' : Uint8Array,
+  'module' : Uint8Array | number[],
 }
 export interface ChangeRoleArgs {
   'user_id' : UserId,
@@ -239,7 +239,7 @@ export interface DirectChatSummary {
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -294,7 +294,7 @@ export interface EventsArgs {
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
-  'events' : Uint32Array,
+  'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
@@ -404,7 +404,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array,
+  'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -498,7 +498,7 @@ export interface ICPRegistrationFee {
 }
 export interface Icrc1Account {
   'owner' : Principal,
-  'subaccount' : [] | [Uint8Array],
+  'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface ImageContent {
   'height' : number,
@@ -585,7 +585,7 @@ export interface MessageUnpinned {
 }
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'messages' : Uint32Array,
+  'messages' : Uint32Array | number[],
   'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -751,7 +751,10 @@ export interface PollEnded {
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
-export interface PollVotes { 'total' : TotalPollVotes, 'user' : Uint32Array }
+export interface PollVotes {
+  'total' : TotalPollVotes,
+  'user' : Uint32Array | number[],
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -889,7 +892,7 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'blocked_users' : Array<UserId>,
-  'pinned_messages' : Uint32Array,
+  'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : GroupRules,
 }
@@ -900,9 +903,9 @@ export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
-  'pinned_messages_removed' : Uint32Array,
+  'pinned_messages_removed' : Uint32Array | number[],
   'participants_removed' : Array<UserId>,
-  'pinned_messages_added' : Uint32Array,
+  'pinned_messages_added' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
@@ -957,7 +960,7 @@ export interface SnsFailedCryptoTransaction {
   'error_message' : string,
   'amount' : Tokens,
 }
-export type SnsNeuronId = Uint8Array;
+export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
@@ -997,7 +1000,7 @@ export interface ThreadPreview {
 }
 export interface ThreadPreviewsArgs {
   'latest_client_thread_update' : [] | [TimestampMillis],
-  'threads' : Uint32Array,
+  'threads' : Uint32Array | number[],
 }
 export type ThreadPreviewsResponse = {
     'ReplicaNotUpToDate' : TimestampMillis
@@ -1033,7 +1036,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type TransactionHash = Uint8Array;
+export type TransactionHash = Uint8Array | number[];
 export interface UnblockUserArgs {
   'user_id' : UserId,
   'correlation_id' : bigint,

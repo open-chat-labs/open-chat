@@ -79,6 +79,7 @@ function createUser(userId: string, username: string, seconds: number): PartialU
         username,
         lastOnline: now - seconds * 1000,
         updated: BigInt(0),
+        suspended: false,
     };
 }
 

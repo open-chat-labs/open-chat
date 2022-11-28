@@ -631,5 +631,7 @@
     "chatFrozenBy": "Chat eingefroren von {frozenBy}",
     "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben",
     "failedToFreezeGroup": "Die Gruppe konnte nicht eingefroren werden",
-    "failedToUnfreezeGroup": "Die Gruppe konnte nicht freigegeben werden"
+    "failedToUnfreezeGroup": "Die Gruppe konnte nicht freigegeben werden",
+    "accountSuspended": "Konto gesperrt",
+    "yourAccountIsSuspended": "Ihr Account wurde gesperrt"
 }
