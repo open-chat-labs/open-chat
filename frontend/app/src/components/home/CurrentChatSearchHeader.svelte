@@ -235,6 +235,7 @@
         {blockedUsers}
         offset={searchBoxHeight ?? 80}
         direction={"down"}
+        mentionSelf
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
