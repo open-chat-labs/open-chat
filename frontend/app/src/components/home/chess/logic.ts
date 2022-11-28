@@ -27,6 +27,7 @@ export class Game {
         const fromKey = fromCoords(from[0], from[1]);
         const current = this.state[fromKey];
         if (current === undefined) return false;
+        if (from[0] === to[0] && from[1] === to[1]) return false;
 
         switch (current.type) {
             case "bishop":
@@ -128,6 +129,7 @@ function validKing([x1, y1]: [number, number], [x2, y2]: [number, number]): bool
 }
 
 function validPawn([x1, y1]: [number, number], [x2, y2]: [number, number]): boolean {
+    // TODO - need to account for opening move (where 2 spaces is allowed) and possible diagonal moves
     return x2 === x1 && Math.abs(y2 - y1) === 1; // not quite good enough
 }
 

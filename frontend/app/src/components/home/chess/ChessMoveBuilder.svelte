@@ -10,6 +10,8 @@
     import type { OpenChat } from "openchat-client";
     import ChessBoard from "./ChessBoard.svelte";
 
+    export let open: boolean;
+
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();

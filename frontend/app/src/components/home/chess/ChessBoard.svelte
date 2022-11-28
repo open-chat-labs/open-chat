@@ -100,8 +100,14 @@
     .interactive .cell:not(:empty) {
         cursor: pointer;
 
-        &:hover {
-            border: 2px solid lime;
+        &:hover::after {
+            content: "";
+            width: $size;
+            height: $size;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.2);
         }
     }
 
@@ -114,18 +120,31 @@
         .cell {
             background-color: #777;
             color: white;
+            position: relative;
 
             &.black {
                 background-color: white;
                 color: black;
             }
 
-            &.selected {
-                border: 4px solid red;
+            &.selected::after {
+                content: "";
+                width: $size;
+                height: $size;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: #00ff00aa;
             }
 
-            &.validTarget {
-                border: 4px solid cyan;
+            &.validTarget::after {
+                content: "";
+                width: $size;
+                height: $size;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: #00ff0050;
             }
         }
     }
