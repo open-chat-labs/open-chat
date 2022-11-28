@@ -625,5 +625,12 @@
     "undeleteMessageFailed": "Error al recuperar el mensaje",
     "homepage": "página de inicio",
     "preferredLanguage": "Idioma preferido",
-    "theme": "Tema"
+    "theme": "Tema",
+    "freezeGroup": "Congelar grupo",
+    "unfreezeGroup": "Descongelar grupo",
+    "chatFrozen": "Este chat ha sido congelado.",
+    "chatFrozenBy": "Chat bloqueado por {frozenBy}",
+    "chatUnfrozenBy": "Chat descongelado por {unfrozenBy}",
+    "failedToFreezeGroup": "No se pudo congelar el grupo",
+    "failedToUnfreezeGroup": "No se pudo descongelar el grupo"
 }

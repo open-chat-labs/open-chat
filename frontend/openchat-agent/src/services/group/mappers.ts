@@ -474,6 +474,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -520,6 +521,9 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     }
     if ("CannotRemoveUser" in candid) {
         return "cannot_remove_user";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -1196,18 +1200,18 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    //FIXME
-    if ("ChatUnfrozen" in candid) {
-        return {
-            kind: "desc_changed",
-            changedBy: "",
-        };
-    }
-    //FIXME
     if ("ChatFrozen" in candid) {
         return {
-            kind: "desc_changed",
-            changedBy: "",
+            kind: "chat_frozen",
+            frozenBy: candid.ChatFrozen.frozen_by.toString(),
+            reason: optional(candid.ChatFrozen.reason, identity),
+        };
+    }
+
+    if ("ChatUnfrozen" in candid) {
+        return {
+            kind: "chat_unfrozen",
+            unfrozenBy: candid.ChatUnfrozen.unfrozen_by.toString(),
         };
     }
 
@@ -1245,6 +1249,9 @@ export function registerProposalVoteResponse(
     }
     if ("ProposalMessageNotFound" in candid) {
         return "proposal_message_not_found";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
     }
     if ("InternalError" in candid) {
         return "internal_error";

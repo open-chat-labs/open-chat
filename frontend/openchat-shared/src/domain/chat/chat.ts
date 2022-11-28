@@ -381,6 +381,7 @@ export type LocalChatSummaryUpdates = {
               permissions?: Partial<GroupPermissions>;
               notificationsMuted?: boolean;
               archived?: boolean;
+              frozen?: boolean;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -448,7 +449,9 @@ export type GroupChatEvent =
     | GroupInviteCodeChanged
     | DirectChatCreated
     | ThreadUpdated
-    | ProposalsUpdated;
+    | ProposalsUpdated
+    | ChatFrozenEvent
+    | ChatUnfrozenEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -750,6 +753,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
     subtype?: GroupSubtypeUpdate;
+    frozen?: OptionUpdate<boolean>;
 };
 
 export type GroupSubtypeUpdate =
@@ -894,6 +898,7 @@ export type GroupChatSummary = DataContent &
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
         previewed: boolean;
+        frozen: boolean;
     };
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;
@@ -1069,11 +1074,8 @@ export type SendMessageResponse =
     | ChatFrozen
     | CryptoCurrencyNotSupported
     | NotAuthorised
-    | ThreadMessageNotFound;
-
-export type ChatFrozen = {
-    kind: "chat_frozen";
-};
+    | ThreadMessageNotFound
+    | ChatFrozen;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1144,6 +1146,21 @@ export type NotAuthorised = {
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
+
+export type ChatFrozen = {
+    kind: "chat_frozen";
+};
+
+export type ChatFrozenEvent = {
+    kind: "chat_frozen";
+    frozenBy: string;
+    reason: string | undefined;
+};
+
+export type ChatUnfrozenEvent = {
+    kind: "chat_unfrozen";
+    unfrozenBy: string;
+};
 
 export type ChangeRoleResponse =
     | "user_not_in_group"
@@ -1253,7 +1270,11 @@ export type UpdateGroupResponse =
     | "chat_frozen"
     | "internal_error";
 
-export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group";
+export type UpdatePermissionsResponse =
+    | "success"
+    | "not_authorised"
+    | "not_in_group"
+    | "chat_frozen";
 
 export type AddRemoveReactionResponse =
     | "success"
@@ -1411,3 +1432,17 @@ export type NervousSystemFunction = {
 export type SnsFunctionType =
     | { kind: "native_nervous_system_function" }
     | { kind: "generic_nervous_system_function" };
+
+export type FreezeGroupResponse =
+    | EventWrapper<ChatFrozenEvent>
+    | "chat_already_frozen"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type UnfreezeGroupResponse =
+    | EventWrapper<ChatUnfrozenEvent>
+    | "chat_not_frozen"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";

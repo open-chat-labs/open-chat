@@ -114,6 +114,7 @@ export type CreatedUser = {
     wasmVersion: Version;
     openStorageLimitBytes: number;
     referrals: string[];
+    isSuperAdmin: boolean;
 };
 
 export type UserNotFound = {

@@ -546,6 +546,9 @@ export function sendMessageResponse(
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
     }
@@ -825,6 +828,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
             subtype: updatedSubtype(candid.Group.subtype),
             archived: optional(candid.Group.archived, identity),
+            frozen: optionUpdate(candid.Group.frozen, (_) => true),
         };
     }
     if ("Direct" in candid) {
@@ -954,6 +958,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         subtype: optional(candid.subtype, apiGroupSubtype),
         archived: candid.archived,
         previewed: false,
+        frozen: candid.frozen.length > 0,
     };
 }
 

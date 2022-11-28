@@ -622,5 +622,12 @@
     "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
     "homepage": "דף הבית",
     "preferredLanguage": "שפה מועדפת",
-    "theme": "נושא"
+    "theme": "נושא",
+    "freezeGroup": "הקפאת קבוצה",
+    "unfreezeGroup": "בטל את הקפאת הקבוצה",
+    "chatFrozen": "הצ'אט הזה הוקפא",
+    "chatFrozenBy": "הצ'אט הוקפא על ידי {frozenBy}",
+    "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}",
+    "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
+    "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל"
 }
