@@ -629,5 +629,7 @@
     "chatFrozenBy": "Chat frozen by {frozenBy}",
     "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}",
     "failedToFreezeGroup": "Failed to freeze group",
-    "failedToUnfreezeGroup": "Failed to unfreeze group"
+    "failedToUnfreezeGroup": "Failed to unfreeze group",
+    "accountSuspended": "Account suspended",
+    "yourAccountIsSuspended": "Your account is suspended"
 }

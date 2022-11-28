@@ -472,8 +472,8 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[], myUserId: string)
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
-        if (e.event.kind === "member_joined" || 
-            e.event.kind === "member_left" || 
+        if (e.event.kind === "member_joined" ||
+            e.event.kind === "member_left" ||
             (e.event.kind === "message" && messageIsHidden(e.event, myUserId))) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
@@ -844,7 +844,7 @@ export function canSendMessages(chat: ChatSummary, userLookup: UserLookup, propo
     }
 
     const user = userLookup[chat.them];
-    if (user === undefined) {
+    if (user === undefined || user.suspended) {
         return false;
     }
     if (user.kind === "user") {

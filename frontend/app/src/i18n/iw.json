@@ -629,5 +629,7 @@
     "chatFrozenBy": "הצ'אט הוקפא על ידי {frozenBy}",
     "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}",
     "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
-    "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל"
+    "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל",
+    "accountSuspended": "חשבון מושעה",
+    "yourAccountIsSuspended": "החשבון שלך מושעה"
 }

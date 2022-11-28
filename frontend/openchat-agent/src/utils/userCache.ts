@@ -1,7 +1,7 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type { UserSummary } from "openchat-shared";
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 let db: UserDatabase | undefined;
 

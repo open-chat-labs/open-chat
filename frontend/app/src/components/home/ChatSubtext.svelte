@@ -10,10 +10,15 @@
     $: userStore = client.userStore;
     $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isBot = $userStore[userId]?.kind === "bot";
+    $: isSuspended = $userStore[userId]?.suspended ?? false;
 </script>
 
 {#if chat.kind === "direct_chat"}
-    {isBot ? "" : client.formatLastOnlineDate($_, $now, $userStore[chat.them])}
+    {isSuspended
+        ? $_("accountSuspended")
+        : isBot
+        ? ""
+        : client.formatLastOnlineDate($_, $now, $userStore[chat.them])}
 {:else if chat.kind === "group_chat"}
     <div class="wrapper">
         <div class="visibility">
