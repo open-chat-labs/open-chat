@@ -628,5 +628,7 @@
     "unfreezeGroup": "Descongelar grupo",
     "chatFrozen": "Este chat ha sido congelado.",
     "chatFrozenBy": "Chat bloqueado por {frozenBy}",
-    "chatUnfrozenBy": "Chat descongelado por {unfrozenBy}"
+    "chatUnfrozenBy": "Chat descongelado por {unfrozenBy}",
+    "failedToFreezeGroup": "No se pudo congelar el grupo",
+    "failedToUnfreezeGroup": "No se pudo descongelar el grupo"
 }

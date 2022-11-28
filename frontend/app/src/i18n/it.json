@@ -627,5 +627,7 @@
     "unfreezeGroup": "Sblocca gruppo",
     "chatFrozen": "Questa chat è stata bloccata",
     "chatFrozenBy": "Chat bloccata da {frozenBy}",
-    "chatUnfrozenBy": "Chat sbloccata da {unfrozenBy}"
+    "chatUnfrozenBy": "Chat sbloccata da {unfrozenBy}",
+    "failedToFreezeGroup": "Impossibile bloccare il gruppo",
+    "failedToUnfreezeGroup": "Impossibile sbloccare il gruppo"
 }

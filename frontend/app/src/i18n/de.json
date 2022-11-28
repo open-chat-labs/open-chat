@@ -627,5 +627,7 @@
     "unfreezeGroup": "Gruppe entsperren",
     "chatFrozen": "Dieser Chat wurde eingefroren",
     "chatFrozenBy": "Chat eingefroren von {frozenBy}",
-    "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben"
+    "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben",
+    "failedToFreezeGroup": "Die Gruppe konnte nicht eingefroren werden",
+    "failedToUnfreezeGroup": "Die Gruppe konnte nicht freigegeben werden"
 }

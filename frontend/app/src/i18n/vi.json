@@ -628,5 +628,7 @@
     "unfreezeGroup": "Giải phóng nhóm",
     "chatFrozen": "Cuộc trò chuyện này đã bị đóng băng",
     "chatFrozenBy": "Trò chuyện bị đóng băng bởi {frozenBy}",
-    "chatUnfrozenBy": "Bỏ đóng băng cuộc trò chuyện của {unfrozenBy}"
+    "chatUnfrozenBy": "Bỏ đóng băng cuộc trò chuyện của {unfrozenBy}",
+    "failedToFreezeGroup": "Không thể đóng băng nhóm",
+    "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm"
 }

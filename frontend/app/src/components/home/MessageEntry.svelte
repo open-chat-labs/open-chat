@@ -30,6 +30,7 @@
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
+    import { toastStore } from "stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -72,6 +73,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
     let isSuperAdmin = client.isSuperAdmin();
+    let freezingInProgress = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -428,11 +430,37 @@
     }
 
     function freezeGroup() {
-        client.freezeGroup(chat.chatId, undefined);
+        freezingInProgress = true;
+        let success = false;
+        client.freezeGroup(chat.chatId, undefined)
+            .then((resp) => {
+                if (resp) {
+                    success = true;
+                }
+            })
+            .finally((_) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToFreezeGroup");
+                }
+                freezingInProgress = false;
+            });
     }
 
     function unfreezeGroup() {
-        client.unfreezeGroup(chat.chatId);
+        freezingInProgress = true;
+        let success = false;
+        client.unfreezeGroup(chat.chatId)
+            .then((resp) => {
+                if (resp) {
+                    success = true;
+                }
+            })
+            .finally((_) => {
+                if (!success) {
+                    toastStore.showFailureToast("failedToUnfreezeGroup");
+                }
+                freezingInProgress = false;
+            });
     }
 </script>
 
@@ -466,11 +494,11 @@
         <div class="preview">
             {#if isSuperAdmin}
                 {#if isFrozen}
-                    <Button secondary={true} small={true} on:click={unfreezeGroup}>
+                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={unfreezeGroup}>
                         {$_("unfreezeGroup")}
                     </Button>
                 {:else}
-                    <Button secondary={true} small={true} on:click={freezeGroup}>
+                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={freezeGroup}>
                         {$_("freezeGroup")}
                     </Button>
                 {/if}

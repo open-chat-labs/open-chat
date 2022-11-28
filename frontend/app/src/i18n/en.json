@@ -625,5 +625,7 @@
     "unfreezeGroup": "Unfreeze group",
     "chatFrozen": "This chat has been frozen",
     "chatFrozenBy": "Chat frozen by {frozenBy}",
-    "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}"
+    "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}",
+    "failedToFreezeGroup": "Failed to freeze group",
+    "failedToUnfreezeGroup": "Failed to unfreeze group"
 }

@@ -628,5 +628,7 @@
     "unfreezeGroup": "解冻组",
     "chatFrozen": "此聊天已被冻结",
     "chatFrozenBy": "聊天被 {frozenBy} 冻结",
-    "chatUnfrozenBy": "{unfrozenBy} 解冻聊天"
+    "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
+    "failedToFreezeGroup": "冻结群组失败",
+    "failedToUnfreezeGroup": "解冻群组失败"
 }

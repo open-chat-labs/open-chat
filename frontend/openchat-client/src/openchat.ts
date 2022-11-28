@@ -279,8 +279,6 @@ import {
     StorageUpdated,
     UsersLoaded,
     type Logger,
-    type FreezeGroupResponse,
-    type UnfreezeGroupResponse,
     type ChatFrozenEvent,
     type ChatUnfrozenEvent,
 } from "openchat-shared";
@@ -2692,23 +2690,29 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
+    freezeGroup(chatId: string, reason: string | undefined): Promise<boolean> {
         return this.api.freezeGroup(chatId, reason)
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
+                    return true;
                 }
-                return resp;
+
+                this._logger.error("Unable to freeze group", resp);
+                return false;
             });
     }
 
-    unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
+    unfreezeGroup(chatId: string): Promise<boolean> {
         return this.api.unfreezeGroup(chatId)
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
+                    return true;
                 }
-                return resp;
+
+                this._logger.error("Unable to unfreeze group", resp);
+                return false;
             });
     }
 
