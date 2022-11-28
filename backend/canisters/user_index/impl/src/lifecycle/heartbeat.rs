@@ -58,6 +58,7 @@ mod upgrade_canisters {
         let mut user = runtime_state.data.users.get_by_user_id(&user_id).cloned()?;
         let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
+        let date_created = user.date_created;
 
         user.set_canister_upgrade_status(true, None);
 
@@ -74,8 +75,8 @@ mod upgrade_canisters {
                 new_wasm: user_canister_wasm.clone(),
                 cycles_to_deposit_if_needed,
                 args: user_canister::post_upgrade::Args {
-                    was_sent_incorrect_sns1_message: current_wasm_version == Version::new(2, 0, 473),
                     wasm_version: user_canister_wasm.version,
+                    date_created,
                 },
             }),
             result => {
