@@ -2697,8 +2697,10 @@ export class OpenChat extends EventTarget {
                     this.onChatFrozen(chatId, resp);
                     return true;
                 }
-
-                this._logger.error("Unable to freeze group", resp);
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to freeze group", err);
                 return false;
             });
     }
@@ -2710,8 +2712,10 @@ export class OpenChat extends EventTarget {
                     this.onChatFrozen(chatId, resp);
                     return true;
                 }
-
-                this._logger.error("Unable to unfreeze group", resp);
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to unfreeze group", err);
                 return false;
             });
     }

@@ -431,14 +431,8 @@
 
     function freezeGroup() {
         freezingInProgress = true;
-        let success = false;
         client.freezeGroup(chat.chatId, undefined)
-            .then((resp) => {
-                if (resp) {
-                    success = true;
-                }
-            })
-            .finally(() => {
+            .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast("failedToFreezeGroup");
                 }
@@ -448,14 +442,8 @@
 
     function unfreezeGroup() {
         freezingInProgress = true;
-        let success = false;
         client.unfreezeGroup(chat.chatId)
-            .then((resp) => {
-                if (resp) {
-                    success = true;
-                }
-            })
-            .finally(() => {
+            .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast("failedToUnfreezeGroup");
                 }
