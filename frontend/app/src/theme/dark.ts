@@ -218,7 +218,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                     bg: blueAccent,
                     muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
-                    bd: "transparent",
+                    bd: "rgba(255,255,255,0.2)",
                 },
             },
         },
