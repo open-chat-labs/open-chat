@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import ChessPieces from "./ChessPieces.svelte";
-    import type { Game } from "./logic";
+    import { fromCoords, Game } from "./logic";
 
     export let interactive: boolean;
     export let gameState: Game;
@@ -15,43 +15,38 @@
     let selectedTo: [number, number] | undefined;
     let render = Symbol();
 
+    $: validMoves =
+        selectedFrom === undefined ? new Set<string>() : gameState.validMoves(selectedFrom);
+
     function cellClicked(col: number, row: number): void {
         if (!interactive) return;
 
-        const piece = gameState.getPiece(col, row);
+        const piece = gameState.getPiece([col, row]);
+        const key = fromCoords([col, row]);
 
         if (selectedFrom === undefined) {
-            if (piece && piece.colour === gameState.next) {
+            if (piece && piece.color === gameState.turn) {
                 selectedFrom = [col, row];
                 selectedTo = undefined;
                 render = Symbol();
                 return;
             }
         } else {
-            if (piece && piece.colour === gameState.next) {
+            if (piece && piece.color === gameState.turn) {
                 selectedFrom = [col, row];
                 selectedTo = undefined;
                 render = Symbol();
                 return;
             }
-            if (gameState.validMove(selectedFrom, [col, row])) {
+            if (validMoves.has(key)) {
                 selectedTo = [col, row];
-                gameState.move(selectedFrom, selectedTo);
-                dispatch("moveSelected", gameState);
+                const m = gameState.move(selectedFrom, selectedTo);
+                if (m) {
+                    dispatch("moveSelected", gameState.toString());
+                }
                 render = Symbol();
                 return;
             }
-        }
-    }
-
-    function validTarget(col: number, row: number): boolean {
-        if (selectedFrom === undefined) return false;
-        return gameState.validMove(selectedFrom, [col, row]);
-    }
-
-    function selectTo() {
-        if (selectedFrom && selectedTo) {
-            dispatch("moveSelected", gameState.move(selectedFrom, selectedTo));
         }
     }
 </script>
@@ -85,9 +80,9 @@
                                 selectedTo[1] === r}
                             class="cell"
                             on:click={() => cellClicked(c, r)}
-                            class:validTarget={selectedTo === undefined && validTarget(c, r)}
+                            class:validTarget={validMoves.has(fromCoords([c, r]))}
                             class:black={(r + c) % 2 === 0}>
-                            <ChessPieces piece={gameState.getPiece(c, r)} />
+                            <ChessPieces size={40} piece={gameState.getPiece([c, r])} />
                         </div>
                     {/each}
                 {/each}
@@ -109,10 +104,11 @@
 </div>
 
 <style type="text/scss">
-    $size: 40px;
+    $size: 50px;
 
     .outer {
-        max-width: 400px;
+        max-width: 500px;
+        margin: 0 auto;
     }
 
     .wrapper {

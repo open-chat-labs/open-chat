@@ -7,12 +7,14 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import ChessBoard from "./ChessBoard.svelte";
-    import { Game, initialGameState } from "./logic";
+    import { Game } from "./logic";
 
     export let open: boolean;
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
+
+    let moved: string | undefined = undefined;
 
     $: replyingTo = client.currentChatReplyingTo;
 
@@ -23,19 +25,21 @@
             ? new Game($replyingTo.content.payload)
             : new Game();
 
-    function moveSelected(ev: CustomEvent<Game>) {
-        gameState = ev.detail;
+    function moveSelected(ev: CustomEvent<string>) {
+        moved = ev.detail;
     }
 
     function send() {
-        const content = {
-            kind: "custom_content",
-            subtype: "chess_content",
-            payload: JSON.stringify(gameState),
-        };
-        dispatch("sendChessMove", [content, undefined]);
-        open = false;
-        gameState = initialGameState;
+        if (moved !== undefined) {
+            const content = {
+                kind: "custom_content",
+                subtype: "chess_content",
+                payload: moved,
+            };
+            dispatch("sendChessMove", [content, undefined]);
+            open = false;
+            moved = undefined;
+        }
     }
 
     function cancel() {
@@ -45,7 +49,7 @@
 
 <Overlay dismissible>
     <ModalContent>
-        <span class="header" slot="header">{`${gameState.next} to move`}</span>
+        <span class="header" slot="header">{`${gameState.turn} to move`}</span>
         <form slot="body">
             <div class="body">
                 <ChessBoard {gameState} interactive={true} on:moveSelected={moveSelected} />
@@ -53,7 +57,8 @@
         </form>
         <span class="footer" slot="footer">
             <ButtonGroup>
-                <Button tiny={true} on:click={send}>{$_("send")}</Button>
+                <Button disabled={moved === undefined} tiny={true} on:click={send}
+                    >{$_("send")}</Button>
                 <Button tiny={true} secondary={true} on:click={cancel}>{$_("cancel")}</Button>
             </ButtonGroup>
         </span>
@@ -61,4 +66,7 @@
 </Overlay>
 
 <style type="text/scss">
+    .body {
+        text-align: center;
+    }
 </style>

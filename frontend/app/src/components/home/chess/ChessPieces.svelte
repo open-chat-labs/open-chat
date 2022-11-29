@@ -1,30 +1,31 @@
 <script lang="ts">
-    import type { Piece } from "./logic";
+    import type { Piece } from "chess.ts";
 
-    export let piece: Piece | undefined;
+    export let piece: Piece | null;
+    export let size: number;
 
     const offsetY = {
-        white: 322,
-        black: 123,
+        w: 322,
+        b: 123,
     };
 
     const offsetX = {
-        pawn: 1126,
-        rook: 412,
-        bishop: 651,
-        knight: 891,
-        king: 176,
-        queen: -55,
+        p: 1126,
+        r: 412,
+        b: 651,
+        n: 891,
+        k: 176,
+        q: -55,
     };
 
-    $: viewbox = piece ? `${offsetX[piece.type]} ${offsetY[piece.colour]} 230 230` : "";
+    $: viewbox = piece ? `${offsetX[piece.type]} ${offsetY[piece.color]} 230 230` : "";
 </script>
 
 {#if piece !== undefined}
     <svg
         version="1.0"
-        width="30"
-        height="30"
+        width={size}
+        height={size}
         xmlns="http://www.w3.org/2000/svg"
         viewBox={viewbox}
         preserveAspectRatio="xMidYMid meet">

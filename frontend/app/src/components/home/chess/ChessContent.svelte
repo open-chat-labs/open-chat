@@ -7,6 +7,9 @@
 
     let gameState: Game | undefined;
 
+    // TODO - we need to detect whether we have reached a stalemate etc to decide
+    // whether more replies are allowed
+
     $: gameState = new Game(content.payload);
 </script>
 
