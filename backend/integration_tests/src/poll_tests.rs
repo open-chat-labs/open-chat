@@ -86,7 +86,7 @@ fn single_vote_per_user() {
 }
 
 #[test]
-fn poll_ended_correctly() {
+fn polls_ended_correctly() {
     let TestEnv {
         mut env,
         canister_ids,
@@ -95,7 +95,7 @@ fn poll_ended_correctly() {
 
     let current_time = env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 
-    let poll_config = PollConfig {
+    let poll_config1 = PollConfig {
         text: None,
         options: vec!["1".to_string(), "2".to_string()],
         end_date: Some(current_time + 1000), // in 1 second
@@ -108,12 +108,87 @@ fn poll_ended_correctly() {
         user1,
         user2,
         group,
-        create_poll_result,
-    } = init_test_data(&mut env, canister_ids.user_index, poll_config);
+        create_poll_result: create_poll_result1,
+    } = init_test_data(&mut env, canister_ids.user_index, poll_config1);
 
-    if let group_canister::send_message::Response::Success(r) = create_poll_result {
+    let poll_config2 = PollConfig {
+        text: None,
+        options: vec!["1".to_string(), "2".to_string()],
+        end_date: Some(current_time + 2000), // in 2 seconds
+        anonymous: false,
+        show_votes_before_end_date: false,
+        allow_multiple_votes_per_user: false,
+    };
+
+    let create_poll_result2 = client::group::send_message(
+        &mut env,
+        user1.principal,
+        group.into(),
+        &group_canister::send_message::Args {
+            thread_root_message_index: None,
+            message_id: random_message_id(),
+            content: MessageContent::Poll(PollContent {
+                config: poll_config2,
+                votes: PollVotes {
+                    total: TotalVotes::Anonymous(HashMap::default()),
+                    user: Vec::new(),
+                },
+                ended: false,
+            }),
+            sender_name: user1.username(),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            correlation_id: 0,
+        },
+    );
+
+    if let group_canister::send_message::Response::Success(r) = create_poll_result1 {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
         assert!(matches!(register_vote_result1.total, TotalVotes::Hidden(1)));
+
+        env.advance_time(Duration::from_millis(999));
+        env.tick();
+
+        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+            .events
+            .pop()
+            .unwrap();
+
+        if let ChatEvent::Message(m) = event.event {
+            if let MessageContent::Poll(p) = m.content {
+                assert!(!p.ended);
+                assert!(matches!(p.votes.total, TotalVotes::Hidden(_)));
+            } else {
+                unreachable!()
+            }
+        } else {
+            unreachable!()
+        }
+
+        env.advance_time(Duration::from_millis(1));
+        env.tick();
+
+        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+            .events
+            .pop()
+            .unwrap();
+
+        if let ChatEvent::Message(m) = event.event {
+            if let MessageContent::Poll(p) = m.content {
+                assert!(p.ended);
+                assert!(matches!(p.votes.total, TotalVotes::Visible(_)));
+            } else {
+                unreachable!()
+            }
+        } else {
+            unreachable!()
+        }
+    }
+
+    if let group_canister::send_message::Response::Success(r) = create_poll_result2 {
+        let register_vote_result2 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
+        assert!(matches!(register_vote_result2.total, TotalVotes::Hidden(1)));
 
         env.advance_time(Duration::from_millis(999));
         env.tick();

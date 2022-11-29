@@ -83,25 +83,6 @@ pub async fn upgrade_online_users_aggregator_canister(
     println!("Online users aggregator canister upgraded");
 }
 
-pub async fn upgrade_callback_canister(
-    identity: BasicIdentity,
-    url: String,
-    callback_canister_id: CanisterId,
-    version: Version,
-) {
-    upgrade_top_level_canister(
-        identity,
-        url,
-        callback_canister_id,
-        version,
-        callback_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::Callback,
-    )
-    .await;
-
-    println!("Callback canister upgraded");
-}
-
 pub async fn upgrade_proposals_bot_canister(
     identity: BasicIdentity,
     url: String,

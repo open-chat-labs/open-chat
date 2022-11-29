@@ -12,12 +12,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    pub fn recalculate_messages_deleted(&mut self) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.recalculate_messages_deleted();
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

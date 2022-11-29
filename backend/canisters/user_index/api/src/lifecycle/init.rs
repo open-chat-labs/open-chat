@@ -19,8 +19,6 @@ pub struct Args {
 
     pub online_users_aggregator_canister_id: CanisterId,
 
-    pub callback_canister_id: CanisterId,
-
     pub cycles_dispenser_canister_id: CanisterId,
 
     pub open_storage_index_canister_id: CanisterId,

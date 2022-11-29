@@ -49,7 +49,6 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let callback_canister_id = create_canister(env);
     let group_index_canister_id = create_canister(env);
     let notifications_canister_id = create_canister(env);
     let online_users_aggregator_canister_id = create_canister(env);
@@ -59,7 +58,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let open_storage_index_canister_id = create_canister(env);
     let ledger_canister_id = create_canister(env);
 
-    let callback_canister_wasm = wasms::CALLBACK.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
@@ -75,7 +73,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index_canister_id,
         notifications_canister_ids: vec![notifications_canister_id],
         online_users_aggregator_canister_id,
-        callback_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,
@@ -90,7 +87,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_canister_wasm,
         notifications_canister_ids: vec![notifications_canister_id],
         user_index_canister_id,
-        callback_canister_id,
         cycles_dispenser_canister_id,
         ledger_canister_id,
         wasm_version: Version::min(),
@@ -125,13 +121,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         online_users_aggregator_init_args,
     );
 
-    let callback_init_args = callback_canister::init::Args {
-        cycles_dispenser_canister_id,
-        wasm_version: Version::min(),
-        test_mode: true,
-    };
-    install_canister(env, callback_canister_id, callback_canister_wasm, callback_init_args);
-
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
         service_owner_principals: vec![controller],
         user_index_canister_id,
@@ -161,7 +150,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
-        callback: callback_canister_id,
         proposals_bot: proposals_bot_canister_id,
         open_storage_index: open_storage_index_canister_id,
         ledger: ledger_canister_id,
