@@ -1,3 +1,5 @@
+// TODO - replace all this with the chess library. There's actually a lot to it and it's not straightforward
+// really want to be focusing on the custom message api, not on implementing chess
 export type Colour = "white" | "black";
 
 export type PieceType = "pawn" | "rook" | "bishop" | "knight" | "king" | "queen";
@@ -23,6 +25,12 @@ export class Game {
         return this.state[fromCoords(col, row)];
     }
 
+    /**
+     * Needs to account for
+     * 1) things being in the way
+     * 2) special moves (for pawns & rooks)
+     * 3) leaving ourselves in check
+     */
     validMove(from: [number, number], to: [number, number]): boolean {
         const fromKey = fromCoords(from[0], from[1]);
         const toKey = fromCoords(to[0], to[1]);
@@ -30,8 +38,13 @@ export class Game {
         const target = this.state[toKey];
         if (current === undefined) return false;
         if (target !== undefined && target.colour === this.next) return false;
-
         if (from[0] === to[0] && from[1] === to[1]) return false;
+        return this.legalMove(from, to);
+    }
+
+    legalMove(from: [number, number], to: [number, number]): boolean {
+        const fromKey = fromCoords(from[0], from[1]);
+        const current = this.state[fromKey];
 
         switch (current.type) {
             case "bishop":
