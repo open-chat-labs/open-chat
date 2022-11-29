@@ -12,12 +12,4 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
-if ! command -v protoc &> /dev/null
-then
-    echo "Installing protoc"
-    apt update
-    apt install -y protobuf-compiler
-    echo "Installed protoc version: $(protoc --version)"
-fi
-
 cargo test --release --package integration_tests -- --test-threads $TEST_THREADS
