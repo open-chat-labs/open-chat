@@ -14,11 +14,12 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
         build-essential libssl-dev llvm-dev liblmdb-dev clang cmake \
         git protobuf-compiler
 
+RUN protoc --version
+
 # Install Rust and Cargo in /opt
 ENV RUSTUP_HOME=/opt/rustup \
     CARGO_HOME=/opt/cargo \
-    PATH=/cargo/bin:/opt/cargo/bin:$PATH \
-    PROTOC=/usr/protoc/bin/protoc
+    PATH=/cargo/bin:/opt/cargo/bin:$PATH
 
 RUN curl --fail https://sh.rustup.rs -sSf \
         | sh -s -- -y --default-toolchain ${rust_version}-x86_64-unknown-linux-gnu --no-modify-path && \
