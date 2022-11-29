@@ -15,11 +15,3 @@ pub fn caller_is_group_index() -> Result<(), String> {
         Err("Caller is not the group_index canister".to_string())
     }
 }
-
-pub fn caller_is_callback_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_callback_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the callback canister".to_string())
-    }
-}

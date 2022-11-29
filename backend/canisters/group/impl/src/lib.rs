@@ -26,6 +26,7 @@ mod model;
 mod new_joiner_rewards;
 mod queries;
 mod regular_jobs;
+mod timer_jobs;
 mod updates;
 
 thread_local! {
@@ -56,10 +57,6 @@ impl RuntimeState {
 
     pub fn is_caller_group_index(&self) -> bool {
         self.env.caller() == self.data.group_index_canister_id
-    }
-
-    pub fn is_caller_callback_canister(&self) -> bool {
-        self.env.caller() == self.data.callback_canister_id
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -195,7 +192,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    pub callback_canister_id: CanisterId,
     #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
@@ -233,7 +229,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
-        callback_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
@@ -256,7 +251,6 @@ impl Data {
             group_index_canister_id,
             user_index_canister_id,
             notifications_canister_ids,
-            callback_canister_id,
             ledger_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),

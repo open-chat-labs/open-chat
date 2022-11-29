@@ -8,9 +8,6 @@ members = [
     "backend/bots/examples/sns1_airdrop/impl",
     "backend/canister_installer",
     "backend/canister_upgrader",
-    "backend/canisters/callback/api",
-    "backend/canisters/callback/c2c_client",
-    "backend/canisters/callback/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -74,7 +71,7 @@ clap = "3.0.14"
 cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "4cae7b26bb812c69875fc6524ee4ec99018064fd" }
 dirs = "4.0.0"
 dotenv = "0.15.0"
-futures = "0.3.24"
+futures = "0.3.25"
 garcon = "0.2.3"
 getrandom = "0.2.8"
 ic-agent = "0.22.0"
