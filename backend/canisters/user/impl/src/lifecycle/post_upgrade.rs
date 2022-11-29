@@ -19,7 +19,6 @@ fn post_upgrade(args: Args) {
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.user_created = args.date_created;
-    data.direct_chats.recalculate_messages_deleted();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);

@@ -23,25 +23,6 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
-    pub fn recalculate_messages_deleted(&mut self) {
-        let mut overall = 0;
-        let mut per_user = HashMap::new();
-
-        for event in self.main.iter().chain(self.threads.values().flat_map(|t| t.iter())) {
-            if let ChatEventInternal::MessageDeleted(m) = &event.event {
-                overall += 1;
-                *per_user.entry(m.updated_by).or_default() += 1;
-            }
-        }
-
-        self.metrics.deleted_messages = overall;
-        for (user_id, count) in per_user {
-            if let Some(metrics) = self.per_user_metrics.get_mut(&user_id) {
-                metrics.deleted_messages = count;
-            }
-        }
-    }
-
     pub fn get_poll_end_dates(&mut self) -> Vec<(Option<MessageIndex>, MessageIndex, TimestampMillis)> {
         self.threads
             .iter()
