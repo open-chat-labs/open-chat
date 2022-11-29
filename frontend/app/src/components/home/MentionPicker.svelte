@@ -19,6 +19,7 @@
     export let offset: number;
     export let direction: "up" | "down" = "up";
     export let border = false;
+    export let mentionSelf = false;
 
     let index = 0;
     $: userStore = client.userStore;
@@ -27,7 +28,7 @@
     $: maxHeight =
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
-    $: unblocked = members.filter((m) => !blockedUsers.has(m.userId) && m.userId !== user.userId);
+    $: unblocked = members.filter((m) => !blockedUsers.has(m.userId) && (mentionSelf || m.userId !== user.userId));
 
     $: reverseLookup = unblocked.reduce((lookup, u) => {
         const user = $userStore[u.userId];

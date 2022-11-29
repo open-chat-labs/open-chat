@@ -353,8 +353,8 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
-        return this.client.searchGroupChat(searchTerm, maxResults);
+    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse> {
+        return this.client.searchGroupChat(searchTerm, userIds, maxResults);
     }
 
     getInviteCode(): Promise<InviteCodeResponse> {

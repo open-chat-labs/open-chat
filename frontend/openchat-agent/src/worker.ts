@@ -923,7 +923,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "searchGroupChat":
                 agent
-                    .searchGroupChat(payload.chatId, payload.searchTerm, payload.maxResults)
+                    .searchGroupChat(payload.chatId, payload.searchTerm, payload.userIds, payload.maxResults)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

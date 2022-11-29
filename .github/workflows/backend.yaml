@@ -67,4 +67,5 @@ jobs:
           override: true
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
+      - uses: arduino/setup-protoc@v1
       - run: ./scripts/run-integration-tests.sh

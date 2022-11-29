@@ -12,7 +12,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: var(--button-bg);
+        background-color: var(--primary);
         cursor: pointer;
         &:hover {
             background-color: var(--button-hv);
