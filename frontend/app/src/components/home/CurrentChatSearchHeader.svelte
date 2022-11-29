@@ -152,7 +152,7 @@
         return matches;
     }
 
-    function keyPress(e: KeyboardEvent) {
+    function onKeyPress(e: KeyboardEvent) {
         if (e.key === "Enter") {
             if (timer !== undefined) {
                 window.clearTimeout(timer);
@@ -164,7 +164,9 @@
 
     function onInput() {
         triggerMentionLookup();
+    }
 
+    function onInputKeyup() {
         if (showMentionPicker || lastSearchTerm === searchTerm) {
             return;
         }
@@ -269,7 +271,8 @@
         <input
             bind:this={inputElement}
             on:input={onInput}
-            on:keypress={keyPress}
+            on:keyup={onInputKeyup}
+            on:keypress={onKeyPress}
             spellcheck="false"
             bind:value={searchTerm}
             type="text"
