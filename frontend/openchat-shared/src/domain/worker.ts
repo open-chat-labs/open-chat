@@ -303,6 +303,7 @@ type SearchDirectChat = Request<{
 type SearchGroupChat = Request<{
     chatId: string;
     searchTerm: string;
+    userIds: string[];
     maxResults: number;
 }> & {
     kind: "searchGroupChat";

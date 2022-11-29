@@ -111,7 +111,7 @@ export interface IGroupClient {
         voteType: "register" | "delete",
         threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
-    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse>;
+    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse>;
     getInviteCode(): Promise<InviteCodeResponse>;
     enableInviteCode(): Promise<EnableInviteCodeResponse>;
     disableInviteCode(): Promise<DisableInviteCodeResponse>;
