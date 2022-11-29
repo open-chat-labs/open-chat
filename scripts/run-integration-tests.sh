@@ -12,4 +12,10 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
+if ! command -v protoc &> /dev/null
+then
+    apt update
+    apt install -y protobuf-compiler
+fi
+
 cargo test --release --package integration_tests -- --test-threads $TEST_THREADS
