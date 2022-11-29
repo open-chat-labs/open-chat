@@ -228,8 +228,6 @@
     {#if showSearchHeader}
         <CurrentChatSearchHeader
             {chat}
-            members={$currentChatMembers}
-            blockedUsers={$currentChatBlockedUsers}
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />

@@ -8,7 +8,6 @@
     import type {
         MessageMatch,
         ChatSummary,
-        Member,
     } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -17,8 +16,6 @@
 
     export let chat: ChatSummary;
     export let searchTerm = "";
-    export let members: Member[];
-    export let blockedUsers: Set<string>;
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -39,6 +36,8 @@
     $: userStore = client.userStore;
     $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
     $: isGroup = chat.kind === "group_chat";
+    $: members = client.currentChatMembers;
+    $: blockedUsers = client.currentChatBlockedUsers;
 
     onMount(() => {
         inputElement.focus();
@@ -251,14 +250,15 @@
 
 {#if showMentionPicker}
     <MentionPicker
-        {blockedUsers}
         offset={searchBoxHeight ?? 80}
         direction={"down"}
         mentionSelf
+        prefix={mentionPrefix}
+        members={$members} 
+        blockedUsers={$blockedUsers}
         on:close={cancelMention}
         on:mention={mention}
-        prefix={mentionPrefix}
-        {members} />
+        />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
