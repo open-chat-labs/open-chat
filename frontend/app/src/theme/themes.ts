@@ -1,5 +1,6 @@
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
+import { whiteTheme } from "./white";
 import { derived, readable, writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
@@ -12,6 +13,18 @@ import { derived, readable, writable } from "svelte/store";
 // const purpleFrom = "#ed1e79";
 // const purpleTo = "#5f2583";
 // const purpleGradient = `linear-gradient(${purpleFrom}, ${purpleTo})`;
+
+export function hexPercent(hex: string, alpha: number | undefined): string {
+    const r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+
+    if (alpha !== undefined) {
+        return `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+    } else {
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+}
 
 export interface Theme {
     name: string;
@@ -29,6 +42,10 @@ export interface Theme {
     primary: string;
 
     placeholder: string;
+
+    progress: {
+        bd: string;
+    };
 
     collapsible: {
         closed: {
@@ -189,6 +206,7 @@ export interface Theme {
             bg: string;
             muted: string;
             txt: string;
+            inert: string;
 
             me: {
                 bg: string;
@@ -267,6 +285,7 @@ export interface Theme {
 
 export type Themes = {
     light: Theme;
+    white: Theme;
     dark: Theme;
 };
 
@@ -274,6 +293,7 @@ const defaultTheme = lightTheme();
 
 export const themes: Themes = {
     light: defaultTheme,
+    white: whiteTheme(),
     dark: darkTheme(defaultTheme),
 };
 

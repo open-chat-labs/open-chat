@@ -3,7 +3,7 @@ use crate::model::user::{PhoneStatus, SuspendedUntil, UnconfirmedPhoneNumber, Us
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
@@ -28,8 +28,6 @@ pub struct UserMap {
     reserved_usernames: HashSet<String>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
-    #[serde(default)]
-    eligible_for_sns1_airdrop: VecDeque<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -407,14 +405,6 @@ impl UserMap {
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
-    }
-
-    pub fn iter_eligible_for_sns1_airdrop(&self) -> impl Iterator<Item = &User> {
-        self.eligible_for_sns1_airdrop.iter().filter_map(|u| self.users.get(u))
-    }
-
-    pub fn count_eligible_for_sns1_airdrop(&self) -> usize {
-        self.eligible_for_sns1_airdrop.len()
     }
 
     #[cfg(test)]

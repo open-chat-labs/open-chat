@@ -436,24 +436,22 @@
 
     function freezeGroup() {
         freezingInProgress = true;
-        client.freezeGroup(chat.chatId, undefined)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast("failedToFreezeGroup");
-                }
-                freezingInProgress = false;
-            });
+        client.freezeGroup(chat.chatId, undefined).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToFreezeGroup");
+            }
+            freezingInProgress = false;
+        });
     }
 
     function unfreezeGroup() {
         freezingInProgress = true;
-        client.unfreezeGroup(chat.chatId)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast("failedToUnfreezeGroup");
-                }
-                freezingInProgress = false;
-            });
+        client.unfreezeGroup(chat.chatId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToUnfreezeGroup");
+            }
+            freezingInProgress = false;
+        });
     }
 </script>
 
@@ -487,11 +485,19 @@
         <div class="preview">
             {#if isSuperAdmin}
                 {#if isFrozen}
-                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={unfreezeGroup}>
+                    <Button
+                        loading={freezingInProgress}
+                        secondary={true}
+                        small={true}
+                        on:click={unfreezeGroup}>
                         {$_("unfreezeGroup")}
                     </Button>
                 {:else}
-                    <Button loading={freezingInProgress} secondary={true} small={true} on:click={freezeGroup}>
+                    <Button
+                        loading={freezingInProgress}
+                        secondary={true}
+                        small={true}
+                        on:click={freezeGroup}>
                         {$_("freezeGroup")}
                     </Button>
                 {/if}

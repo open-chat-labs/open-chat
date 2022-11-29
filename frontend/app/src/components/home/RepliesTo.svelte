@@ -85,7 +85,7 @@
     }
 
     .reply-wrapper {
-        border-radius: $sp2;
+        border-radius: $sp3;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);

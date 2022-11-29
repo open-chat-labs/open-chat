@@ -1,30 +1,21 @@
-import type { Theme } from "./themes";
+import { hexPercent, Theme } from "./themes";
 
 const backgroundBlack = "#1B1C21";
 
 const dark60pc = `${backgroundBlack}99`;
 
 const borderDark = "#32353F";
-const borderLight = "#ededed";
 const textBlack = "#242834";
 const textBodyLight = "#5C5C5C";
 const textBodyDark = "#b1b1b1";
-
-function hexPercent(hx: string, pc: number) {
-    const n = (pc / 100) * 255;
-    return `${hx}${Math.round(n).toString(16)}`;
-}
 
 const selectedChat = hexPercent(borderDark, 50);
 const hoveredChat = hexPercent(borderDark, 70);
 const chatPanelDark = hexPercent(backgroundBlack, 30);
 const orangeAccent = "#ff8541";
 
-const dark15 = "#383838";
 const dark25 = "#525252";
 const dark45 = "#666666";
-const dark50 = "#777777";
-const dark55 = "#888888";
 const dark60 = "#ababab";
 
 const txtHigh = "#ffffff";
@@ -44,10 +35,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
         "txt-light": textBodyDark,
         bd: borderDark,
         error: "#CF6679",
-        // accent: "#e87fb4",
         accent: "#ff005c",
         disabledTxt: txtLow,
         primary,
+
+        progress: {
+            bd: "rgba(255,255,255,0.2)",
+        },
 
         collapsible: {
             closed: {
@@ -102,7 +96,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         input: {
-            // bg: "#555555",
             bg: textBlack,
             txt: txtHigh,
             sh: "none",
@@ -204,7 +197,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
 
             date: {
-                // bg: "rgba(100,100,100,0.7)",
                 bg: textBlack,
                 txt: "inherit",
             },
@@ -213,12 +205,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: textBlack,
                 muted: txtLow,
                 txt: "rgba(255,255,255,0.8)",
+                inert: textBlack,
 
                 me: {
-                    bg: primary,
+                    bg: blueAccent,
                     muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
-                    bd: "rgba(255,255,255,0.3)",
+                    bd: "rgba(255,255,255,0.2)",
                 },
             },
         },
@@ -248,10 +241,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         recommended: {
             ...defaultTheme.recommended,
-            // bg: dark15,
-            // bg: "rgba(0,0,0,0.3)",
             bg: selectedChat,
-            // bg: textBox,
         },
 
         toggle: {

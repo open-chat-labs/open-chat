@@ -4,7 +4,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-./scripts/generate-wasm.sh callback_canister_impl
 ./scripts/generate-wasm.sh group_canister_impl
 ./scripts/generate-wasm.sh group_index_canister_impl
 ./scripts/generate-wasm.sh notifications_canister_impl

@@ -750,9 +750,10 @@ export class OpenChatAgent extends EventTarget {
     searchGroupChat(
         chatId: string,
         searchTerm: string,
+        userIds: string[],
         maxResults = 10
     ): Promise<SearchGroupChatResponse> {
-        return this.getGroupClient(chatId).searchGroupChat(searchTerm, maxResults);
+        return this.getGroupClient(chatId).searchGroupChat(searchTerm, userIds, maxResults);
     }
 
     searchDirectChat(

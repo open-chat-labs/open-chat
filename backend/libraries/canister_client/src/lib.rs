@@ -20,7 +20,6 @@ pub const USER3_DEFAULT_NAME: &str = "Charlie";
 
 #[derive(Debug)]
 pub enum CanisterName {
-    Callback,
     Group,
     GroupIndex,
     Notifications,
@@ -35,7 +34,6 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "callback" => Ok(CanisterName::Callback),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "notifications" => Ok(CanisterName::Notifications),
@@ -51,7 +49,6 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            CanisterName::Callback => "callback",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::Notifications => "notifications",
@@ -71,7 +68,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications: CanisterId,
     pub online_users_aggregator: CanisterId,
-    pub callback: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,

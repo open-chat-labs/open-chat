@@ -22,7 +22,23 @@ This library contains the OpenChat frontend domain model and is referenced by bo
 
 ### Turborepo
 
-The four packages are managed by `turborepo`. To run locally run `npm i` from the root `frontend` folder then run `npm run dev`.
+The four packages are managed by `turborepo`. Unfortunately turborepo doesn't handle dev mode very well as it doesn't really have any way to deal with tasks that do not end very well.
+
+Therefore to run locally you need to run the `npm run dev` tasks for each front end project separately. This can be made easier using a process manager such as `pm2`.
+
+To run locally run `npm i` from the root `frontend` folder then ensure that you have `pm2` installed globally (`npm i -g pm2`), then run `sh ./dev.sh` from the frontend folder.
+
+This will do the following:
+
+    * start dfx
+    * run openchat-shared in dev mode
+    * run openchat-agent in dev mode
+    * run openchat-client in dev mode
+    * run app in dev mode
+
+To monitor the process you can either run `pm2 monit` from the command line or run `pm2 plus` to get a nice web interface.
+
+Because all of the dev tasks are started concurrently, it is possible that one will fail because a dependent project is currently building (usually app). If this happens it will be apparent in the logs and the failing process will need to be restarted (`pm2 restart app` for example). Hopefully this can be improved further as it _is_ possible for pm2 managed processes to signal readiness.
 
 ## Unit Testing
 
