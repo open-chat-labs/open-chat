@@ -14,6 +14,7 @@ fi
 
 if ! command -v protoc &> /dev/null
 then
+    echo "Installing protoc"
     apt update
     apt install -y protobuf-compiler
 fi
