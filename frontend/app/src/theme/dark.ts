@@ -201,6 +201,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: textBlack,
                 muted: txtLow,
                 txt: "rgba(255,255,255,0.8)",
+                inert: textBlack,
 
                 me: {
                     bg: blueAccent,

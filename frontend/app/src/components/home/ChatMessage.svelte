@@ -122,7 +122,10 @@
     $: inert = deleted || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: canUndelete = msg.content.kind === "deleted_content" && msg.content.deletedBy === user.userId && !undeleting;
+    $: canUndelete =
+        msg.content.kind === "deleted_content" &&
+        msg.content.deletedBy === user.userId &&
+        !undeleting;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -408,7 +411,7 @@
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={$iconSize} color={"#fff"} />
+                        <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -686,7 +689,7 @@
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={$iconSize} color={"#fff"} />
+                        <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -994,6 +997,8 @@
 
         &.inert {
             opacity: 0.8;
+            color: var(--currentChat-msg-txt);
+            background-color: var(--currentChat-msg-inert);
         }
 
         &.collapsed {
