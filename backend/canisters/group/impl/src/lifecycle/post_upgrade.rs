@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::timer_jobs::{self, EndPollJob, Job};
+use crate::timer_jobs::{self, EndPoll, Job, ScheduledJob};
 use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
@@ -23,11 +23,13 @@ fn post_upgrade(args: Args) {
     let now = env.now();
     for (thread_root_message_index, message_index, end_date) in data.events.get_poll_end_dates() {
         timer_jobs::enqueue_job(
-            Job::EndPoll(EndPollJob {
-                thread_root_message_index,
-                message_index,
-            }),
-            end_date,
+            ScheduledJob::new(
+                Job::EndPoll(EndPoll {
+                    thread_root_message_index,
+                    message_index,
+                }),
+                end_date,
+            ),
             now,
         );
     }

@@ -7,28 +7,28 @@ use std::time::Duration;
 use types::{MessageIndex, TimestampMillis};
 
 thread_local! {
-    static JOBS: RefCell<BinaryHeap<JobAndDueDate>> = RefCell::default();
+    static JOBS: RefCell<BinaryHeap<ScheduledJob >> = RefCell::default();
 }
 
-pub fn enqueue_job(job: Job, due: TimestampMillis, now: TimestampMillis) {
-    JOBS.with(|jobs| jobs.borrow_mut().push(JobAndDueDate::new(job, due)));
+pub fn enqueue_job(job: ScheduledJob, now: TimestampMillis) {
+    let delay = job.due.saturating_sub(now);
 
-    let delay = due.saturating_sub(now);
+    JOBS.with(|jobs| jobs.borrow_mut().push(job));
 
     ic_cdk::timer::set_timer(Duration::from_millis(delay), execute_next_job);
 }
 
-pub fn get_jobs() -> Vec<JobAndDueDate> {
+pub fn get_jobs() -> Vec<ScheduledJob> {
     JOBS.with(|jobs| jobs.borrow().iter().cloned().collect())
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Job {
-    EndPoll(EndPollJob),
+    EndPoll(EndPoll),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct EndPollJob {
+pub struct EndPoll {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
@@ -60,32 +60,32 @@ fn take_next_job(now: TimestampMillis) -> Option<Job> {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct JobAndDueDate {
+pub struct ScheduledJob {
     job: Job,
     due: TimestampMillis,
 }
 
-impl JobAndDueDate {
-    fn new(job: Job, due: TimestampMillis) -> JobAndDueDate {
-        JobAndDueDate { job, due }
+impl ScheduledJob {
+    pub fn new(job: Job, due: TimestampMillis) -> ScheduledJob {
+        ScheduledJob { job, due }
     }
 }
 
-impl PartialEq<Self> for JobAndDueDate {
+impl PartialEq<Self> for ScheduledJob {
     fn eq(&self, other: &Self) -> bool {
         self.due == other.due
     }
 }
 
-impl PartialOrd for JobAndDueDate {
+impl PartialOrd for ScheduledJob {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Eq for JobAndDueDate {}
+impl Eq for ScheduledJob {}
 
-impl Ord for JobAndDueDate {
+impl Ord for ScheduledJob {
     fn cmp(&self, other: &Self) -> Ordering {
         self.due.cmp(&other.due).reverse()
     }
