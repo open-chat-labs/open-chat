@@ -215,10 +215,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 txt: "rgba(255,255,255,0.8)",
 
                 me: {
-                    bg: primary,
+                    bg: blueAccent,
                     muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
-                    bd: "rgba(255,255,255,0.3)",
+                    bd: "transparent",
                 },
             },
         },
