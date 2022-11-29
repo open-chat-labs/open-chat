@@ -1,5 +1,6 @@
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
+import { whiteTheme } from "./white";
 import { derived, readable, writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
@@ -41,6 +42,10 @@ export interface Theme {
     primary: string;
 
     placeholder: string;
+
+    progress: {
+        bd: string;
+    };
 
     collapsible: {
         closed: {
@@ -201,6 +206,7 @@ export interface Theme {
             bg: string;
             muted: string;
             txt: string;
+            inert: string;
 
             me: {
                 bg: string;
@@ -279,6 +285,7 @@ export interface Theme {
 
 export type Themes = {
     light: Theme;
+    white: Theme;
     dark: Theme;
 };
 
@@ -286,6 +293,7 @@ const defaultTheme = lightTheme();
 
 export const themes: Themes = {
     light: defaultTheme,
+    white: whiteTheme(),
     dark: darkTheme(defaultTheme),
 };
 
