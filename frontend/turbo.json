@@ -115,11 +115,6 @@
       "inputs": ["src/**/*.ts", "src/**/*.svelte"]
     },
 
-    "dev": {
-      "dependsOn": ["^build"],
-      "cache": false
-    },
-
     "test": {
       "dependsOn": ["build"],
       "outputs": [],
