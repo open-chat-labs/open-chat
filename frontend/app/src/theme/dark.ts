@@ -39,6 +39,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         disabledTxt: txtLow,
         primary,
 
+        progress: {
+            bd: "rgba(255,255,255,0.2)",
+        },
+
         collapsible: {
             closed: {
                 header: {

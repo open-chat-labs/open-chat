@@ -392,7 +392,7 @@
 
         @include mobile() {
             background-size: 800px;
-            background-position: left 0 top 0;
+            background-position: left 0 top toRem(150);
         }
     }
 </style>

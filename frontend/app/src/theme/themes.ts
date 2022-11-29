@@ -43,6 +43,10 @@ export interface Theme {
 
     placeholder: string;
 
+    progress: {
+        bd: string;
+    };
+
     collapsible: {
         closed: {
             header: {

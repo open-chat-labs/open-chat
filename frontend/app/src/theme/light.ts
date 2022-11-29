@@ -29,6 +29,10 @@ export function lightTheme(): Theme {
         placeholder: txtLight,
         primary,
 
+        progress: {
+            bd: "rgba(255,255,255,0.2)",
+        },
+
         collapsible: {
             closed: {
                 header: {

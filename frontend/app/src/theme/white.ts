@@ -27,6 +27,10 @@ export function whiteTheme(): Theme {
         placeholder: txt60,
         primary,
 
+        progress: {
+            bd: "rgba(0,0,0,0.2)",
+        },
+
         collapsible: {
             closed: {
                 header: {
@@ -94,7 +98,7 @@ export function whiteTheme(): Theme {
                 bg: "#ffffff",
                 txt,
                 // sh: "none",
-                sh: "inset 0px 2px 4px rgba(158, 158, 158, 0.5)",
+                sh: "inset 0px 2px 4px rgba(138, 138, 138, 0.5)",
             },
         },
 
@@ -195,7 +199,7 @@ export function whiteTheme(): Theme {
                     bg: primary,
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
-                    bd: "rgba(255,255,255,0.3)",
+                    bd: "rgba(0,0,0,0.05)",
                 },
             },
         },
@@ -230,7 +234,7 @@ export function whiteTheme(): Theme {
         },
 
         recommended: {
-            bg: "rgba(0,0,0,0.08)",
+            bg: "#ffffff",
         },
 
         toggle: {
