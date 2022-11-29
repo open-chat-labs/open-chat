@@ -78,15 +78,15 @@ futures = "0.3.24"
 garcon = "0.2.3"
 getrandom = "0.2.8"
 ic-agent = "0.22.0"
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
-ic-cdk = "0.6.1"
-ic-cdk-macros = "0.6.1"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
-ic-ledger-types = "0.1.2"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "f7e3c96a2be92186718f6a1e67eea37bf3252c00" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-cdk = "0.6.8"
+ic-cdk-macros = "0.6.8"
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-ledger-types = "0.2.0"
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
 ic-utils = "0.22.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
@@ -124,7 +124,7 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "3849c7bede6db8c5d6c310aaa1b2dcada34aed62" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "3849c7bede6db8c5d6c310aaa1b2dcada34aed62" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "3849c7bede6db8c5d6c310aaa1b2dcada34aed62" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }
