@@ -80,7 +80,7 @@
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
                 <p>{status === "" ? "..." : status}</p>
-                <p>{joined}</p>
+                <!-- <p>{joined}</p> -->
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}

@@ -2482,6 +2482,7 @@ export class OpenChat extends EventTarget {
     searchChat(
         chatId: string,
         searchTerm: string,
+        userIds: string[],
         maxResults = 10
     ): Promise<SearchDirectChatResponse | SearchGroupChatResponse> {
         const chat = this._liveState.chatSummaries[chatId];
@@ -2489,7 +2490,7 @@ export class OpenChat extends EventTarget {
         if (chat === undefined) {
             return Promise.resolve({ kind: "chat_not_found" });
         } else if (chat.kind === "group_chat") {
-            return this.api.searchGroupChat(chat.chatId, searchTerm, maxResults);
+            return this.api.searchGroupChat(chat.chatId, searchTerm, userIds, maxResults);
         } else {
             return this.api.searchDirectChat(chat.chatId, searchTerm, maxResults);
         }
