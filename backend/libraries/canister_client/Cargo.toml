@@ -7,7 +7,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-callback_canister = { path = "../../canisters/callback/api" }
 candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros", features = ["ingress"] }
 dirs = { workspace = true }

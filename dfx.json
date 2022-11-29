@@ -25,12 +25,6 @@
       "wasm": "wasms/online_users_aggregator_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh online_users_aggregator_canister_impl"
     },
-    "callback": {
-      "type": "custom",
-      "candid": "backend/canisters/callback/api/can.did",
-      "wasm": "wasms/callback_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh callback_canister_impl"
-    },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",
