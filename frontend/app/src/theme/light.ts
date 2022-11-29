@@ -1,4 +1,4 @@
-import type { Theme } from "./themes";
+import { hexPercent, Theme } from "./themes";
 
 const orangeAccent = "#ff9505";
 // const pinkAccent = "hotpink";
@@ -7,9 +7,9 @@ const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
 const txt = "#ffffff";
-const txtLight = "#ffffffaa";
+const txtLight = hexPercent("#ffffff", 67);
 const txtDark = "#242834";
-const txtDark75pc = `${txtDark}bf`;
+const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
 
 export function lightTheme(): Theme {
@@ -21,7 +21,6 @@ export function lightTheme(): Theme {
         // bg: "#ffffff",
         txt,
         "txt-light": txtLight,
-        // bd: "#ededed",
         bd: "rgba(255,255,255,0.1)",
         error: "#CF6679",
         accent: pinkAccent,
@@ -72,7 +71,6 @@ export function lightTheme(): Theme {
         },
 
         section: {
-            // bg: "#ffffff10",
             bg: "transparent",
             txt,
         },
@@ -104,9 +102,10 @@ export function lightTheme(): Theme {
             bg: "linear-gradient(#22A7F2, #5f2583)",
 
             left: {
-                // bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
-                // bg: "linear-gradient(rgba(255,255,255,0.05), transparent)",
-                bg: "linear-gradient(#22A7F250, #5f258350)",
+                bg: `linear-gradient(${hexPercent("#22A7F2", 31.3)}, ${hexPercent(
+                    "#5f2583",
+                    31.3
+                )})`,
             },
 
             right: {
@@ -143,7 +142,7 @@ export function lightTheme(): Theme {
         menu: {
             bg: "white",
             txt: txtDark75pc,
-            "disabled-txt": `${txtDark}80`,
+            "disabled-txt": hexPercent(txtDark, 50),
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
@@ -166,9 +165,7 @@ export function lightTheme(): Theme {
 
         modal: {
             filter: "blur(5px)",
-            // bg: "linear-gradient(#22A7F2C8, #5f2583C8)",
-            // bg: "linear-gradient(#419ed3d8, #5c3375d8)",
-            bg: "#085d8cee",
+            bg: hexPercent("#085d8c", 93),
             txt: txt,
             bd: "none",
         },
@@ -193,13 +190,11 @@ export function lightTheme(): Theme {
 
             msg: {
                 bg: "rgba(0,0,0,0.08)",
-                // bg: "rgba(255,255,255,0.1)",
-                // bg: "#4c6fc0cc",
                 muted: "rgba(255,255,255,0.6)",
                 txt: "#ffffff",
 
                 me: {
-                    bg: `${primary}80`,
+                    bg: hexPercent(primary, 50),
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
                     bd: "rgba(255,255,255,0.3)",
@@ -208,11 +203,9 @@ export function lightTheme(): Theme {
         },
 
         icon: {
-            // hv: "#dddddd",
             hv: "rgba(0,0,0,0.1)",
             txt,
             inverted: {
-                // hv: "rgba(214,44,125,0.5)",
                 hv: "rgba(0,0,0,0.1)",
                 txt: txtDark75pc,
             },
@@ -239,7 +232,6 @@ export function lightTheme(): Theme {
         },
 
         recommended: {
-            // bg: "#ffffff",
             bg: "rgba(0,0,0,0.08)",
         },
 
@@ -265,10 +257,6 @@ export function lightTheme(): Theme {
             maybe: {
                 color: "#666666",
             },
-            // yes: "lightgreen",
-            // no: "red",
-            // yes: "#2fb953",
-            // no: "#B92F2F",
         },
 
         markdown: {
