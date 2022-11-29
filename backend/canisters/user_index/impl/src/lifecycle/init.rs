@@ -25,7 +25,6 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notifications_canister_ids,
         args.online_users_aggregator_canister_id,
-        args.callback_canister_id,
         args.open_storage_index_canister_id,
         args.ledger_canister_id,
         args.proposals_bot_user_id,

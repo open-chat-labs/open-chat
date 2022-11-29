@@ -21,7 +21,6 @@ fn init(args: Args) {
         user_index_canister_id,
         args.group_index_canister_id,
         args.notifications_canister_ids,
-        args.callback_canister_id,
         args.ledger_canister_id,
         args.username,
         args.test_mode,
