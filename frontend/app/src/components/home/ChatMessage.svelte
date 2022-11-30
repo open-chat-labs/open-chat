@@ -101,11 +101,12 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let chess = msg.content.kind === "custom_content" && msg.content.subtype === "chess_content";
 
     $: storageStore = client.storageStore;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
-    $: canEdit = supportsEdit && !crypto && !poll && me;
+    $: canEdit = supportsEdit && !crypto && !poll && !chess && me;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
@@ -598,7 +599,7 @@
                                             <div slot="text">{$_("quoteReply")}</div>
                                         </MenuItem>
                                     {/if}
-                                    {#if !inThread && canStartThread}
+                                    {#if !inThread && canStartThread && !chess}
                                         <MenuItem on:click={initiateThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
@@ -641,7 +642,7 @@
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if (canDelete || me) && !crypto && !inert}
+                                {#if (canDelete || me) && !crypto && !inert && !chess}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
