@@ -32,7 +32,6 @@
         height: toRem(80);
         // margin-bottom: $sp3;
         background-color: var(--section-bg);
-        color: var(--section-txt);
         @include z-index("section-header");
         flex: 0 0 toRem(80);
 

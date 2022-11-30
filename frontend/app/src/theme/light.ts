@@ -41,7 +41,6 @@ export function lightTheme(): Theme {
             },
             open: {
                 header: {
-                    txt: txt,
                     arrow: pinkAccent,
                 },
             },
@@ -76,7 +75,6 @@ export function lightTheme(): Theme {
 
         section: {
             bg: "transparent",
-            txt,
         },
 
         "sub-section": {
@@ -85,7 +83,6 @@ export function lightTheme(): Theme {
 
         input: {
             bg: textBox,
-            txt,
             sh: "none",
         },
 
@@ -97,7 +94,6 @@ export function lightTheme(): Theme {
             bg: "rgba(226,226,226,0.1)",
             input: {
                 bg: textBox,
-                txt,
                 sh: "none",
             },
         },
@@ -125,19 +121,12 @@ export function lightTheme(): Theme {
 
         chatSearch: {
             bg: textBox,
-            txt,
             sh: "none",
-
-            section: {
-                txt: "#ffffff",
-            },
         },
 
         chatSummary: {
             "bg-selected": "rgba(0,0,0,0.1)",
             hv: "rgba(226,226,226,0.1)",
-            txt1: txt,
-            txt2: txtLight,
             del: pinkAccent,
         },
 
@@ -156,7 +145,7 @@ export function lightTheme(): Theme {
         button: {
             bg: primary,
             hv: "#52baf5",
-            txt: "#ffffff",
+            txt: txt,
             disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
@@ -170,7 +159,6 @@ export function lightTheme(): Theme {
         modal: {
             filter: "blur(5px)",
             bg: hexPercent("#085d8c", 93),
-            txt: txt,
             bd: "none",
         },
 

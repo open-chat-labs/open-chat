@@ -389,7 +389,6 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: var(--chatSummary-txt1);
         padding: $sp4;
         margin-bottom: 0;
         cursor: pointer;
@@ -478,7 +477,6 @@
 
             .chat-name {
                 @include font(medium, normal, fs-100);
-                color: var(--chatSummary-txt1);
 
                 @include ellipsis();
                 flex: auto;
@@ -486,14 +484,14 @@
         }
 
         .chat-msg {
-            color: var(--chatSummary-txt2);
+            color: var(--txt-light);
             @include font(book, normal, fs-80);
         }
     }
 
     .chat-date {
         position: absolute;
-        color: var(--chatSummary-txt2);
+        color: var(--txt-light);
         @include font(book, normal, fs-60);
         top: $sp3;
         &:not(.rtl) {

@@ -225,7 +225,6 @@
         display: flex;
         align-items: center;
         width: calc(100% - 24px);
-        color: var(--section-txt);
         gap: $sp4;
 
         @include mobile() {
@@ -241,12 +240,12 @@
 
         .title {
             @include font(book, normal, fs-100);
-            color: var(--chatSummary-txt1);
+            color: var(--txt);
             @include ellipsis();
         }
 
         .root-msg {
-            color: var(--chatSummary-txt2);
+            color: var(--txt-light);
             @include font(book, normal, fs-80);
         }
     }

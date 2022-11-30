@@ -39,7 +39,6 @@ export function whiteTheme(): Theme {
             },
             open: {
                 header: {
-                    txt: txt,
                     arrow: pinkAccent,
                 },
             },
@@ -74,7 +73,6 @@ export function whiteTheme(): Theme {
 
         section: {
             bg: "transparent",
-            txt,
         },
 
         "sub-section": {
@@ -83,7 +81,6 @@ export function whiteTheme(): Theme {
 
         input: {
             bg: textBox,
-            txt,
             sh: "none",
         },
 
@@ -96,7 +93,6 @@ export function whiteTheme(): Theme {
             input: {
                 //bg: textBox,
                 bg: "#ffffff",
-                txt,
                 // sh: "none",
                 sh: "inset 0px 2px 4px rgba(138, 138, 138, 0.5)",
             },
@@ -122,19 +118,12 @@ export function whiteTheme(): Theme {
 
         chatSearch: {
             bg: textBox,
-            txt,
             sh: "none",
-
-            section: {
-                txt,
-            },
         },
 
         chatSummary: {
             "bg-selected": "rgba(226,226,226,0.5)",
             hv: "rgba(226,226,226,0.1)",
-            txt1: txt,
-            txt2: txt70,
             del: pinkAccent,
         },
 
@@ -167,7 +156,6 @@ export function whiteTheme(): Theme {
         modal: {
             filter: "blur(5px)",
             bg: "#ffffff",
-            txt: txt,
             bd: "none",
         },
 
