@@ -1,9 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{
-    ChatId, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummaryForUser, GroupChatSummaryUpdatesForUser, OptionUpdate,
-    TimestampMillis, UserId, Version,
-};
+use types::{ChatId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -32,8 +29,8 @@ pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub direct_chats_added: Vec<DirectChatSummary>,
     pub direct_chats_updated: Vec<DirectChatSummaryUpdates>,
-    pub group_chats_added: Vec<GroupChatSummaryForUser>,
-    pub group_chats_updated: Vec<GroupChatSummaryUpdatesForUser>,
+    pub group_chats_added: Vec<crate::GroupChatSummary>,
+    pub group_chats_updated: Vec<crate::GroupChatSummaryUpdates>,
     pub chats_removed: Vec<ChatId>,
     pub avatar_id: OptionUpdate<u128>,
     pub user_canister_wasm_version: Option<Version>,

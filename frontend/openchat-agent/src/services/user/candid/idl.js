@@ -734,6 +734,23 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const UserCanisterGroupChatSummary = IDL.Record({
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'chat_id' : ChatId,
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Bool,
+  });
+  const InitialStateV2Response = IDL.Variant({
+    'Success' : IDL.Record({
+      'user_canister_wasm_version' : Version,
+      'blocked_users' : IDL.Vec(UserId),
+      'group_chats' : IDL.Vec(UserCanisterGroupChatSummary),
+      'direct_chats' : IDL.Vec(DirectChatSummary),
+      'timestamp' : TimestampMillis,
+      'cached_group_chat_summaries' : IDL.Vec(GroupChatSummary),
+      'pinned_chats' : IDL.Vec(ChatId),
+    }),
+  });
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
     'as_super_admin' : IDL.Bool,
@@ -1098,6 +1115,26 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const UserCanisterGroupChatSummaryUpdates = IDL.Record({
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'chat_id' : ChatId,
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Opt(IDL.Bool),
+  });
+  const UpdatesV2Response = IDL.Variant({
+    'Success' : IDL.Record({
+      'user_canister_wasm_version' : IDL.Opt(Version),
+      'direct_chats_added' : IDL.Vec(DirectChatSummary),
+      'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
+      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : AvatarIdUpdate,
+      'chats_removed' : IDL.Vec(ChatId),
+      'timestamp' : TimestampMillis,
+      'group_chats_updated' : IDL.Vec(UserCanisterGroupChatSummaryUpdates),
+      'direct_chats_updated' : IDL.Vec(DirectChatSummaryUpdates),
+      'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
+    }),
+  });
   const WithdrawCryptoArgs = IDL.Record({
     'withdrawal' : PendingCryptoTransaction,
   });
@@ -1145,6 +1182,11 @@ export const idlFactory = ({ IDL }) => {
     'initial_state' : IDL.Func(
         [InitialStateArgs],
         [InitialStateResponse],
+        ['query'],
+      ),
+    'initial_state_v2' : IDL.Func(
+        [InitialStateArgs],
+        [InitialStateV2Response],
         ['query'],
       ),
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
@@ -1222,6 +1264,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
+    'updates_v2' : IDL.Func([UpdatesArgs], [UpdatesV2Response], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
         [WithdrawCryptoArgs],
         [WithdrawCryptoResponse],

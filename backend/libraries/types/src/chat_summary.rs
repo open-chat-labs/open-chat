@@ -5,7 +5,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
@@ -337,22 +337,6 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             frozen: s.frozen,
         }
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryForUser {
-    pub chat_id: ChatId,
-    pub read_by_me_up_to: Option<MessageIndex>,
-    pub threads_read: HashMap<MessageIndex, MessageIndex>,
-    pub archived: bool,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryUpdatesForUser {
-    pub chat_id: ChatId,
-    pub read_by_me_up_to: Option<MessageIndex>,
-    pub threads_read: HashMap<MessageIndex, MessageIndex>,
-    pub archived: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]

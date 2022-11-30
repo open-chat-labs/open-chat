@@ -873,6 +873,113 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
   });
+  const SummaryArgs = IDL.Record({});
+  const ChatMetrics = IDL.Record({
+    'audio_messages' : IDL.Nat64,
+    'cycles_messages' : IDL.Nat64,
+    'edits' : IDL.Nat64,
+    'icp_messages' : IDL.Nat64,
+    'last_active' : TimestampMillis,
+    'giphy_messages' : IDL.Nat64,
+    'deleted_messages' : IDL.Nat64,
+    'file_messages' : IDL.Nat64,
+    'poll_votes' : IDL.Nat64,
+    'text_messages' : IDL.Nat64,
+    'image_messages' : IDL.Nat64,
+    'replies' : IDL.Nat64,
+    'video_messages' : IDL.Nat64,
+    'polls' : IDL.Nat64,
+    'proposals' : IDL.Nat64,
+    'reactions' : IDL.Nat64,
+  });
+  const ThreadSyncDetails2 = IDL.Record({
+    'root_message_index' : MessageIndex,
+    'last_updated' : TimestampMillis,
+    'latest_event' : EventIndex,
+    'latest_message' : MessageIndex,
+  });
+  const Mention = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'mentioned_by' : UserId,
+    'message_index' : MessageIndex,
+  });
+  const GroupChatSummary2 = IDL.Record({
+    'is_public' : IDL.Bool,
+    'permissions' : GroupPermissions,
+    'metrics' : ChatMetrics,
+    'subtype' : IDL.Opt(GroupSubtype),
+    'min_visible_event_index' : EventIndex,
+    'name' : IDL.Text,
+    'role' : Role,
+    'wasm_version' : Version,
+    'notifications_muted' : IDL.Bool,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'owner_id' : UserId,
+    'joined' : TimestampMillis,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_threads' : IDL.Vec(ThreadSyncDetails2),
+    'frozen' : IDL.Opt(FrozenGroupInfo),
+    'latest_event_index' : EventIndex,
+    'history_visible_to_new_joiners' : IDL.Bool,
+    'min_visible_message_index' : MessageIndex,
+    'mentions' : IDL.Vec(Mention),
+    'chat_id' : ChatId,
+    'participant_count' : IDL.Nat32,
+    'my_metrics' : ChatMetrics,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const SummaryResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({ 'summary' : GroupChatSummary2 }),
+  });
+  const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const GroupSubtypeUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : GroupSubtype,
+  });
+  const AvatarIdUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Nat,
+  });
+  const FrozenGroupUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : FrozenGroupInfo,
+  });
+  const GroupChatSummaryUpdates2 = IDL.Record({
+    'is_public' : IDL.Opt(IDL.Bool),
+    'permissions' : IDL.Opt(GroupPermissions),
+    'metrics' : IDL.Opt(ChatMetrics),
+    'subtype' : GroupSubtypeUpdate,
+    'name' : IDL.Opt(IDL.Text),
+    'role' : IDL.Opt(Role),
+    'wasm_version' : IDL.Opt(Version),
+    'affected_events' : IDL.Vec(EventIndex),
+    'notifications_muted' : IDL.Opt(IDL.Bool),
+    'description' : IDL.Opt(IDL.Text),
+    'last_updated' : TimestampMillis,
+    'owner_id' : IDL.Opt(UserId),
+    'avatar_id' : AvatarIdUpdate,
+    'latest_threads' : IDL.Vec(ThreadSyncDetails2),
+    'frozen' : FrozenGroupUpdate,
+    'latest_event_index' : IDL.Opt(EventIndex),
+    'mentions' : IDL.Vec(Mention),
+    'chat_id' : ChatId,
+    'affected_events_v2' : IDL.Vec(IDL.Tuple(EventIndex, TimestampMillis)),
+    'participant_count' : IDL.Opt(IDL.Nat32),
+    'my_metrics' : IDL.Opt(ChatMetrics),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const SummaryUpdatesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({ 'updates' : GroupChatSummaryUpdates2 }),
+    'SuccessNoUpdates' : IDL.Null,
+  });
   const ThreadPreviewsArgs = IDL.Record({
     'latest_client_thread_update' : IDL.Opt(TimestampMillis),
     'threads' : IDL.Vec(MessageIndex),
@@ -1073,6 +1180,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
+    'summary_updates' : IDL.Func(
+        [SummaryUpdatesArgs],
+        [SummaryUpdatesResponse],
+        ['query'],
+      ),
     'thread_previews' : IDL.Func(
         [ThreadPreviewsArgs],
         [ThreadPreviewsResponse],
