@@ -1,19 +1,17 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
-use types::{OptionUpdate, UserId};
+use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates_v2::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
 fn updates_v2(args: Args) -> Response {
-    read_state(|state| updates_impl(args, state))
+    read_state(|state| updates_impl(args.updates_since, state))
 }
 
-fn updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn updates_impl(updates_since: TimestampMillis, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let my_user_id: UserId = runtime_state.env.canister_id().into();
-
-    let updates_since = args.updates_since.timestamp;
 
     let mut direct_chats_added = Vec::new();
     let mut direct_chats_updated = Vec::new();

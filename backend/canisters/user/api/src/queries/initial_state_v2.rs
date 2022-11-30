@@ -17,8 +17,9 @@ pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub direct_chats: Vec<DirectChatSummary>,
     pub group_chats: Vec<crate::GroupChatSummary>,
-    pub cached_group_chat_summaries: Vec<GroupChatSummary>,
     pub blocked_users: Vec<UserId>,
     pub user_canister_wasm_version: Version,
     pub pinned_chats: Vec<ChatId>,
+    pub cache_timestamp: TimestampMillis,
+    pub cached_group_chat_summaries: Vec<GroupChatSummary>,
 }

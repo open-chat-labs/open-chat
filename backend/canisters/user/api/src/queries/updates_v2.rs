@@ -4,18 +4,6 @@ use types::{ChatId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, T
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub updates_since: UpdatesSince,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
-pub struct UpdatesSince {
-    pub timestamp: TimestampMillis,
-    pub group_chats: Vec<GroupChatUpdatesSince>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct GroupChatUpdatesSince {
-    pub chat_id: ChatId,
     pub updates_since: TimestampMillis,
 }
 

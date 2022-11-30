@@ -486,10 +486,11 @@ type InitialStateV2Response =
             timestamp: TimestampMillis;
             direct_chats: vec DirectChatSummary;
             group_chats: vec UserCanisterGroupChatSummary;
-            cached_group_chat_summaries: vec GroupChatSummary;
             blocked_users: vec UserId;
             user_canister_wasm_version: Version;
             pinned_chats: vec ChatId;
+            cache_timestamp: TimestampMillis;
+            cached_group_chat_summaries: vec GroupChatSummary;
         };
     };
 
@@ -525,6 +526,11 @@ type UpdatesResponse =
             pinned_chats: opt vec ChatId;
         };
         InternalError: text;
+    };
+
+type UpdatesV2Args =
+    record {
+        updates_since: TimestampMillis;
     };
 
 type UpdatesV2Response =
@@ -743,7 +749,7 @@ service: {
     initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
     initial_state_v2: (InitialStateArgs) -> (InitialStateV2Response) query;
-    updates_v2: (UpdatesArgs) -> (UpdatesV2Response) query;
+    updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
     bio: (BioArgs) -> (BioResponse) query;
