@@ -21,7 +21,6 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "mark_as_online"
         | "resend_code"
         | "set_username"
-        | "upgrade_canister"
         | "upgrade_storage" => {
             let caller = runtime_state.env.caller();
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
