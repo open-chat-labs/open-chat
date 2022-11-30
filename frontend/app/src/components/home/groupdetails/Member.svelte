@@ -206,7 +206,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        color: var(--txt);
         padding: $sp4;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         gap: 12px;

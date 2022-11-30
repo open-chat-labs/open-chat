@@ -986,7 +986,7 @@ export class OpenChat extends EventTarget {
     }
 
     isSuperAdmin(): boolean {
-        return this.user.isSuperAdmin
+        return this.user.isSuperAdmin;
     }
 
     canForward = canForward;
@@ -2691,7 +2691,8 @@ export class OpenChat extends EventTarget {
     }
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<boolean> {
-        return this.api.freezeGroup(chatId, reason)
+        return this.api
+            .freezeGroup(chatId, reason)
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
@@ -2706,7 +2707,8 @@ export class OpenChat extends EventTarget {
     }
 
     unfreezeGroup(chatId: string): Promise<boolean> {
-        return this.api.unfreezeGroup(chatId)
+        return this.api
+            .unfreezeGroup(chatId)
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
@@ -2720,7 +2722,10 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    private onChatFrozen(chatId: string, event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>): void {
+    private onChatFrozen(
+        chatId: string,
+        event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>
+    ): void {
         const frozen = event.event.kind === "chat_frozen";
         if (this.isPreviewing(chatId)) {
             groupPreviewsStore.update((summaries) => {
@@ -2732,8 +2737,8 @@ export class OpenChat extends EventTarget {
                     ...summaries,
                     [chatId]: {
                         ...summary,
-                        frozen
-                    }
+                        frozen,
+                    },
                 };
             });
         } else {

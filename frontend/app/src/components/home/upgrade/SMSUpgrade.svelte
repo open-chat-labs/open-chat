@@ -233,7 +233,7 @@
         height: 40px;
         line-height: 24px;
         @include font(book, normal, fs-100);
-        color: var(--input-txt);
+        color: var(--txt);
         background-color: var(--input-bg);
         border: 1px solid var(--bd);
         outline: none;

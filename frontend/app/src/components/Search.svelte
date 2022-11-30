@@ -82,7 +82,7 @@
     }
     input {
         background-color: transparent;
-        color: var(--chatSearch-txt);
+        color: var(--txt);
         outline: none;
         flex: 1;
         padding: $sp3;

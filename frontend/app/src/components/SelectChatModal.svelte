@@ -123,7 +123,6 @@
         @include mobile() {
             width: 100%;
         }
-        padding: $sp3;
     }
 
     .row {
@@ -133,7 +132,6 @@
         justify-content: space-between;
         align-items: center;
         padding: $sp3;
-        color: var(--chatSummary-txt1);
         background-color: var(--chatSummary-bg);
         border-bottom: var(--chatSummary-bd);
         margin-bottom: 0;
@@ -145,6 +143,11 @@
 
         &:last-child {
             border-bottom: 0;
+        }
+
+        padding: $sp4;
+        @include mobile() {
+            padding: $sp3 $sp4;
         }
     }
 
@@ -160,12 +163,11 @@
         overflow: hidden;
         .name {
             @include font(book, normal, fs-100);
-            color: var(--chatSummary-txt1);
         }
         .description {
             @include ellipsis();
             @include font(book, normal, fs-80);
-            color: var(--chatSummary-txt2);
+            color: var(--txt-light);
         }
     }
 </style>

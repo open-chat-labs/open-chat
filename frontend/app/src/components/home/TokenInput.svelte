@@ -55,7 +55,7 @@
     .amount-val {
         height: 40px;
         @include font(book, normal, fs-140);
-        color: var(--input-txt);
+        color: var(--txt);
         background-color: var(--input-bg);
         border: 1px solid var(--bd);
         line-height: 24px;

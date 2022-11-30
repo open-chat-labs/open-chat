@@ -298,7 +298,6 @@
     .search-subtitle {
         margin-bottom: $sp3;
         margin-left: 0;
-        color: var(--chatSearch-section-txt);
         padding: 0 $sp4;
 
         @include mobile() {
@@ -313,7 +312,7 @@
         margin-bottom: $sp3;
     }
     .search-item-desc {
-        color: var(--chatSummary-txt2);
+        color: var(--txt-light);
         @include font(light, normal, fs-80);
         @include ellipsis();
     }

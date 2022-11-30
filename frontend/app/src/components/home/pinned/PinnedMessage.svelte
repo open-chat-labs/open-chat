@@ -152,14 +152,13 @@
         position: relative;
         padding: 6px $sp3 6px $sp3;
         background-color: var(--currentChat-msg-bg);
-        color: var(--txt);
+        color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
         overflow: hidden;
 
         .username {
             color: inherit;
-            color: var(--txt);
             display: inline;
         }
 
