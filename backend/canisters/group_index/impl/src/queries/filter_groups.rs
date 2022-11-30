@@ -1,13 +1,19 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query_msgpack;
-use group_index_canister::c2c_filter_groups::{Response::*, *};
+use group_index_canister::filter_groups::{Response::*, *};
+use ic_cdk_macros::query;
+
+#[query]
+fn filter_groups(args: Args) -> Response {
+    read_state(|state| filter_groups_impl(args, state))
+}
 
 #[query_msgpack]
 fn c2c_filter_groups(args: Args) -> Response {
-    read_state(|state| c2c_active_and_deleted_groups_impl(args, state))
+    read_state(|state| filter_groups_impl(args, state))
 }
 
-fn c2c_active_and_deleted_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn filter_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let active_since = args.active_in_last.map(|d| runtime_state.env.now().saturating_sub(d));
     let all_deleted = &runtime_state.data.deleted_groups;
 

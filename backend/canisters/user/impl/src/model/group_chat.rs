@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
+use types::{
+    ChatId, GroupChatSummaryForUser, GroupChatSummaryUpdates, GroupChatSummaryUpdatesForUser, MessageIndex, OptionUpdate,
+    ThreadSyncDetails, TimestampMillis, Timestamped,
+};
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
@@ -45,6 +48,28 @@ impl GroupChat {
             true
         } else {
             false
+        }
+    }
+
+    pub fn to_summary(&self) -> GroupChatSummaryForUser {
+        GroupChatSummaryForUser {
+            chat_id: self.chat_id,
+            read_by_me_up_to: self.read_by_me_up_to.value,
+            threads_read: self.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
+            archived: self.archived.value,
+        }
+    }
+
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdatesForUser {
+        GroupChatSummaryUpdatesForUser {
+            chat_id: self.chat_id,
+            read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
+            threads_read: self
+                .threads_read
+                .updated_since(updates_since)
+                .map(|(k, v)| (*k, v.value))
+                .collect(),
+            archived: self.archived.if_set_after(updates_since).copied(),
         }
     }
 

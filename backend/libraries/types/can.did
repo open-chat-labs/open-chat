@@ -273,6 +273,34 @@ type GroupChatSummary =
         frozen: opt FrozenGroupInfo;
     };
 
+type GroupChatSummary2 =
+    record {
+        chat_id: ChatId;
+        last_updated: TimestampMillis;
+        name: text;
+        description: text;
+        subtype: opt GroupSubtype;
+        avatar_id: opt nat;
+        is_public: bool;
+        history_visible_to_new_joiners: bool;
+        min_visible_event_index: EventIndex;
+        min_visible_message_index: MessageIndex;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: EventIndex;
+        joined: TimestampMillis;
+        participant_count: nat32;
+        role: Role;
+        mentions: vec Mention;
+        wasm_version: Version;
+        owner_id: UserId;
+        permissions: GroupPermissions;
+        notifications_muted: bool;
+        metrics: ChatMetrics;
+        my_metrics: ChatMetrics;
+        latest_threads: vec ThreadSyncDetails2;
+        frozen: opt FrozenGroupInfo;
+    };
+
 type GroupChatSummaryUpdates =
     record {
         chat_id: ChatId;
@@ -297,6 +325,32 @@ type GroupChatSummaryUpdates =
         is_public: opt bool;
         latest_threads: vec ThreadSyncDetails;
         archived: opt bool;
+        frozen: FrozenGroupUpdate;
+    };
+
+type GroupChatSummaryUpdates2 =
+    record {
+        chat_id: ChatId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        subtype: GroupSubtypeUpdate;
+        avatar_id: AvatarIdUpdate;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        participant_count: opt nat32;
+        role: opt Role;
+        mentions: vec Mention;
+        wasm_version: opt Version;
+        owner_id: opt UserId;
+        permissions: opt GroupPermissions;
+        affected_events: vec EventIndex;
+        affected_events_v2: vec record { EventIndex; TimestampMillis };
+        metrics: opt ChatMetrics;
+        my_metrics: opt ChatMetrics;
+        is_public: opt bool;
+        latest_threads: vec ThreadSyncDetails2;
+        notifications_muted: opt bool;
         frozen: FrozenGroupUpdate;
     };
 
@@ -1037,6 +1091,14 @@ type ThreadSyncDetails =
         latest_event: opt EventIndex;
         latest_message: opt MessageIndex;
         read_up_to: opt MessageIndex;
+        last_updated: TimestampMillis;
+    };
+
+type ThreadSyncDetails2 =
+    record {
+        root_message_index: MessageIndex;
+        latest_event: EventIndex;
+        latest_message: MessageIndex;
         last_updated: TimestampMillis;
     };
 

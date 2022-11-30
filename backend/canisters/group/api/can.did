@@ -425,6 +425,32 @@ type MakePrivateResponse =
         InternalError;
     };
 
+type SummaryArgs =
+    record {
+    };
+
+type SummaryResponse =
+    variant {
+        Success: record {
+            summary: GroupChatSummary2;
+        };
+        CallerNotInGroup;
+    };
+
+type SummaryUpdatesArgs =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type SummaryUpdatesResponse =
+    variant {
+        Success: record {
+            updates: GroupChatSummaryUpdates2;
+        };
+        SuccessNoUpdates;
+        CallerNotInGroup;
+    };
+
 type SelectedInitialArgs =
     record {
     };
@@ -645,6 +671,8 @@ service: {
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
 
+    summary: (SummaryArgs) -> (SummaryResponse) query;
+    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
 

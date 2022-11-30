@@ -1,7 +1,8 @@
 use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
 use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
-use group_canister::c2c_summary_updates::{Response::*, *};
+use group_canister::summary_updates::{Response::*, *};
+use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashMap;
 use types::{
@@ -9,12 +10,17 @@ use types::{
     Message, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
-#[query_msgpack]
-fn c2c_summary_updates(args: Args) -> Response {
-    read_state(|state| c2c_summary_updates_impl(args, state))
+#[query]
+fn summary_updates(args: Args) -> Response {
+    read_state(|state| summary_updates_impl(args, state))
 }
 
-fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+#[query_msgpack]
+fn c2c_summary_updates(args: Args) -> Response {
+    read_state(|state| summary_updates_impl(args, state))
+}
+
+fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller().into();
     let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
         None => return CallerNotInGroup,
@@ -59,7 +65,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
         };
-        Success(Box::new(SuccessResult { updates }))
+        Success(SuccessResult { updates })
     } else {
         SuccessNoUpdates
     }

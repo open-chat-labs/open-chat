@@ -188,7 +188,7 @@ mod c2c {
             return Vec::new();
         }
 
-        let args = group_canister::c2c_summary::Args {};
+        let args = group_canister::summary::Args {};
         let futures: Vec<_> = chat_ids
             .into_iter()
             .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
@@ -198,7 +198,7 @@ mod c2c {
 
         let mut summaries = Vec::new();
         for response in responses.into_iter().flatten() {
-            if let group_canister::c2c_summary::Response::Success(result) = response {
+            if let group_canister::summary::Response::Success(result) = response {
                 summaries.push(result.summary);
             }
         }
@@ -213,15 +213,15 @@ mod c2c {
 
         async fn get_summary_updates(
             canister_id: CanisterId,
-            args: group_canister::c2c_summary_updates::Args,
-        ) -> CallResult<group_canister::c2c_summary_updates::Response> {
+            args: group_canister::summary_updates::Args,
+        ) -> CallResult<group_canister::summary_updates::Response> {
             group_canister_c2c_client::c2c_summary_updates(canister_id, &args).await
         }
 
         let futures: Vec<_> = group_chats
             .into_iter()
             .map(|(g, t)| {
-                let args = group_canister::c2c_summary_updates::Args { updates_since: t };
+                let args = group_canister::summary_updates::Args { updates_since: t };
                 get_summary_updates(g.into(), args)
             })
             .collect();
@@ -230,7 +230,7 @@ mod c2c {
 
         let mut summary_updates = Vec::new();
         for response in responses.into_iter().flatten() {
-            if let group_canister::c2c_summary_updates::Response::Success(result) = response {
+            if let group_canister::summary_updates::Response::Success(result) = response {
                 summary_updates.push(result.updates);
             }
         }

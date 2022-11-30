@@ -13,6 +13,8 @@ fn main() {
     generate_candid_method!(group, search_messages, query);
     generate_candid_method!(group, selected_initial, query);
     generate_candid_method!(group, selected_updates, query);
+    generate_candid_method!(group, summary, query);
+    generate_candid_method!(group, summary_updates, query);
 
     generate_candid_method!(group, add_participants, update);
     generate_candid_method!(group, add_reaction, update);

@@ -30,6 +30,10 @@ impl DirectChats {
         })
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
+        self.direct_chats.values()
+    }
+
     pub fn len(&self) -> usize {
         self.direct_chats.len()
     }
