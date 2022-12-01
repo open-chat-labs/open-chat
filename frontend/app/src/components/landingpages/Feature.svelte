@@ -28,15 +28,15 @@
 <style type="text/scss">
     .title {
         margin: 0;
-        @include font(bold, normal, fs-230);
+        @include font(medium, normal, fs-230, 68);
         margin-bottom: $sp5;
 
         @include mobile() {
-            @include font(bold, normal, fs-180);
+            @include font(medium, normal, fs-180, 44);
         }
     }
     .blurb {
-        @include font(light, normal, fs-100);
+        @include font(light, normal, fs-100, 28);
 
         &.light {
             color: var(--landing-txt-light);

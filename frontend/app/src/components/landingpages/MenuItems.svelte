@@ -3,27 +3,29 @@
     import Launch from "./Launch.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { location } from "svelte-spa-router";
 
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
 
     const dispatch = createEventDispatcher();
-    $: path = "";
+    $: path = $location;
 </script>
 
 <div class="menu-items">
     <div class="nav">
         <div class="menu-item">
-            <Link selected={path === "features"} mode={"menu"} path="features">Features</Link>
+            <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
+            <Link selected={path === "/roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "whitepaper"} mode={"menu"} path="whitepaper">Whitepaper</Link>
+            <Link selected={path === "/whitepaper"} mode={"menu"} path="whitepaper"
+                >Whitepaper</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "architecture"} mode={"menu"} path="architecture"
+            <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
                 >Architecture</Link>
         </div>
         {#if $identityState === "logged_in"}

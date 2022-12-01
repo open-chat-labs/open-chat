@@ -159,6 +159,11 @@
 </div>
 
 <style type="text/scss">
+    p {
+        @include font(light, normal, fs-120, 28);
+        margin-bottom: toRem(24);
+    }
+
     .phone {
         pointer-events: none;
         overflow: hidden;
