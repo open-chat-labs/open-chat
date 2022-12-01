@@ -638,5 +638,7 @@
     "failedToSuspendUser": "无法暂停用户",
     "failedToUnsuspendUser": "无法取消暂停用户",
     "suspendUser": "暂停用户",
-    "unsuspendUser": "取消暂停用户"
+    "unsuspendUser": "取消暂停用户",
+    "suspendedUser": "暂停用户",
+    "unsuspendedUser": "解除暂停的用户"
 }

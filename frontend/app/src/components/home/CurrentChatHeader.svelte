@@ -157,7 +157,9 @@
 
     function suspendUser() {
         client.suspendUser(userId).then((success) => {
-            if (!success) {
+            if (success) {
+                toastStore.showSuccessToast("suspendedUser");
+            } else {
                 toastStore.showFailureToast("failedToSuspendUser");
             }
         });
@@ -165,7 +167,9 @@
 
     function unsuspendUser() {
         client.unsuspendUser(userId).then((success) => {
-            if (!success) {
+            if (success) {
+                toastStore.showSuccessToast("unsuspendedUser");
+            } else {
                 toastStore.showFailureToast("failedToUnsuspendUser");
             }
         });

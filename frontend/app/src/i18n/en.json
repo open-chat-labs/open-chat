@@ -635,5 +635,7 @@
     "accountSuspended": "Account suspended",
     "yourAccountIsSuspended": "Your account is suspended",
     "failedToSuspendUser": "Failed to suspend user",
-    "failedToUnsuspendUser": "Failed to un-suspend user"
+    "failedToUnsuspendUser": "Failed to un-suspend user",
+    "suspendedUser": "Suspended user",
+    "unsuspendedUser": "Un-suspended user"
 }

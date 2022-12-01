@@ -638,5 +638,7 @@
     "failedToSuspendUser": "Không thể tạm ngưng người dùng",
     "failedToUnsuspendUser": "Không thể hủy tạm ngưng người dùng",
     "suspendUser": "tạm ngưng người dùng",
-    "unsuspendUser": "Hủy tạm ngưng người dùng"
+    "unsuspendUser": "Hủy tạm ngưng người dùng",
+    "suspendedUser": "người dùng bị treo",
+    "unsuspendedUser": "Người dùng không bị tạm ngưng"
 }

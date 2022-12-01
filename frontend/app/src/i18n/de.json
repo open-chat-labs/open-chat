@@ -637,5 +637,7 @@
     "failedToSuspendUser": "Benutzer konnte nicht gesperrt werden",
     "failedToUnsuspendUser": "Sperrung des Benutzers konnte nicht aufgehoben werden",
     "suspendUser": "Benutzer sperren",
-    "unsuspendUser": "Suspendierung des Benutzers aufheben"
+    "unsuspendUser": "Suspendierung des Benutzers aufheben",
+    "suspendedUser": "Gesperrter Benutzer",
+    "unsuspendedUser": "Nicht gesperrter Benutzer"
 }

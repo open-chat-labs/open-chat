@@ -637,5 +637,7 @@
     "failedToSuspendUser": "Impossibile sospendere l'utente",
     "failedToUnsuspendUser": "Impossibile annullare la sospensione dell'utente",
     "suspendUser": "Sospendi utente",
-    "unsuspendUser": "Annulla sospensione utente"
+    "unsuspendUser": "Annulla sospensione utente",
+    "suspendedUser": "Utente sospeso",
+    "unsuspendedUser": "Utente non sospeso"
 }

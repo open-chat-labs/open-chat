@@ -637,5 +637,7 @@
     "failedToSuspendUser": "Échec de la suspension de l'utilisateur",
     "failedToUnsuspendUser": "Échec de l'annulation de la suspension de l'utilisateur",
     "suspendUser": "Suspendre l'utilisateur",
-    "unsuspendUser": "Annuler la suspension de l'utilisateur"
+    "unsuspendUser": "Annuler la suspension de l'utilisateur",
+    "suspendedUser": "Utilisateur suspendu",
+    "unsuspendedUser": "Utilisateur non suspendu"
 }
