@@ -633,5 +633,9 @@
     "failedToFreezeGroup": "Impossibile bloccare il gruppo",
     "failedToUnfreezeGroup": "Impossibile sbloccare il gruppo",
     "accountSuspended": "Account sospeso",
-    "yourAccountIsSuspended": "Il tuo account è sospeso"
+    "yourAccountIsSuspended": "Il tuo account è sospeso",
+    "failedToSuspendUser": "Impossibile sospendere l'utente",
+    "failedToUnsuspendUser": "Impossibile annullare la sospensione dell'utente",
+    "suspendUser": "Sospendi utente",
+    "unsuspendUser": "Annulla sospensione utente"
 }

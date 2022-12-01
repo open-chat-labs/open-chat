@@ -16,6 +16,8 @@ import type {
     UsersResponse,
     UserSummary,
     Logger,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -191,5 +193,13 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
         return this.client.upgradeStorage(newLimitBytes);
+    }
+
+    suspendUser(userId: string): Promise<SuspendUserResponse> {
+        return this.client.suspendUser(userId);
+    }
+
+    unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
+        return this.client.unsuspendUser(userId);
     }
 }

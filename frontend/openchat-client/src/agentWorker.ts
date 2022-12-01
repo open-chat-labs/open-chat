@@ -88,6 +88,8 @@ import {
     ChangeRoleResponse,
     FreezeGroupResponse,
     UnfreezeGroupResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1224,6 +1226,24 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unfreezeGroup",
             payload: {
                 chatId,
+            }
+        });
+    }
+
+    suspendUser(userId: string): Promise<SuspendUserResponse> {
+        return this.sendRequest({
+            kind: "suspendUser",
+            payload: {
+                userId,
+            }
+        });
+    }
+
+    unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
+        return this.sendRequest({
+            kind: "unsuspendUser",
+            payload: {
+                userId,
             }
         });
     }

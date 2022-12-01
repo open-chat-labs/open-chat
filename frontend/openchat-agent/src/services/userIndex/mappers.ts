@@ -15,6 +15,8 @@ import {
     UpgradeStorageResponse,
     Version,
     UnsupportedValueError,
+    SuspendUserResponse,
+    UnsuspendUserResponse
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -29,6 +31,8 @@ import type {
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiSuspendUserResponse,
+    ApiUnsuspendUserResponse,
     ApiUpgradeStorageResponse,
     ApiUsersResponse,
     ApiUserSummary,
@@ -248,6 +252,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             openStorageLimitBytes: Number(r.open_storage_limit_bytes),
             referrals: r.referrals.map((p) => p.toString()),
             isSuperAdmin: r.is_super_admin,
+            suspended: r.suspended,
         };
     }
 
@@ -331,4 +336,24 @@ export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeRes
         return "phone_number_not_submitted";
     }
     throw new UnsupportedValueError("Unexpected ApiResendCodeResponse type received", candid);
+}
+
+export function suspendUserResponse(candid: ApiSuspendUserResponse): SuspendUserResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
+}
+
+export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): UnsuspendUserResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
 }

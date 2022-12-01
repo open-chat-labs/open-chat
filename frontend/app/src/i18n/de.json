@@ -633,5 +633,9 @@
     "failedToFreezeGroup": "Die Gruppe konnte nicht eingefroren werden",
     "failedToUnfreezeGroup": "Die Gruppe konnte nicht freigegeben werden",
     "accountSuspended": "Konto gesperrt",
-    "yourAccountIsSuspended": "Ihr Account wurde gesperrt"
+    "yourAccountIsSuspended": "Ihr Account wurde gesperrt",
+    "failedToSuspendUser": "Benutzer konnte nicht gesperrt werden",
+    "failedToUnsuspendUser": "Sperrung des Benutzers konnte nicht aufgehoben werden",
+    "suspendUser": "Benutzer sperren",
+    "unsuspendUser": "Suspendierung des Benutzers aufheben"
 }

@@ -13,6 +13,8 @@ import type {
     UserSummary,
     RegisterUserResponse,
     UpgradeStorageResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -31,4 +33,6 @@ export interface IUserIndexClient {
     getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
+    suspendUser(userId: string): Promise<SuspendUserResponse>;
+    unsuspendUser(userId: string): Promise<UnsuspendUserResponse>;
 }

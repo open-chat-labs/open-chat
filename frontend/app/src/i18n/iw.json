@@ -631,5 +631,9 @@
     "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
     "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל",
     "accountSuspended": "חשבון מושעה",
-    "yourAccountIsSuspended": "החשבון שלך מושעה"
+    "yourAccountIsSuspended": "החשבון שלך מושעה",
+    "failedToSuspendUser": "השעיית המשתמש נכשלה",
+    "failedToUnsuspendUser": "ביטול השעיית המשתמש נכשל",
+    "suspendUser": "השעיית משתמש",
+    "unsuspendUser": "בטל את השעיית המשתמש"
 }

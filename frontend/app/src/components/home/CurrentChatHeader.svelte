@@ -2,6 +2,8 @@
     import { AvatarSize, OpenChat, TypersByKey, UserStatus } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import TickIcon from "svelte-material-icons/Check.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ChatSubtext from "./ChatSubtext.svelte";
@@ -9,7 +11,6 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import Cancel from "svelte-material-icons/Cancel.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
@@ -32,6 +33,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { notificationsSupported } from "../../utils/notifications";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -50,6 +52,7 @@
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
+    $: isSuspended = $userStore[userId]?.suspended ?? false;
     $: hasUserProfile = !isGroup && !isBot;
     $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary.chatId);
 
@@ -134,6 +137,38 @@
 
     function showPinned() {
         dispatch("showPinned");
+    }
+
+    function freezeGroup() {
+        client.freezeGroup(selectedChatSummary.chatId, undefined).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToFreezeGroup");
+            }
+        });
+    }
+
+    function unfreezeGroup() {
+        client.unfreezeGroup(selectedChatSummary.chatId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToUnfreezeGroup");
+            }
+        });
+    }
+
+    function suspendUser() {
+        client.suspendUser(userId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToSuspendUser");
+            }
+        });
+    }
+
+    function unsuspendUser() {
+        client.unsuspendUser(userId).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("failedToUnsuspendUser");
+            }
+        });
     }
 
     $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
@@ -227,7 +262,7 @@
                         {#if selectedChatSummary.kind === "direct_chat" && !isBot}
                             {#if blocked}
                                 <MenuItem on:click={unblockUser}>
-                                    <Cancel
+                                    <CancelIcon
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
@@ -235,12 +270,31 @@
                                 </MenuItem>
                             {:else}
                                 <MenuItem on:click={blockUser}>
-                                    <Cancel
+                                    <CancelIcon
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("blockUser")}</div>
                                 </MenuItem>
+                            {/if}
+                            {#if client.user.isSuperAdmin}
+                                {#if isSuspended}
+                                    <MenuItem on:click={unsuspendUser}>
+                                        <TickIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("unsuspendUser")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={suspendUser}>
+                                        <CancelIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("suspendUser")}</div>
+                                    </MenuItem>
+                                {/if}
                             {/if}
                         {:else if selectedChatSummary.kind === "group_chat"}
                             <MenuItem on:click={showGroupDetails}>
@@ -283,6 +337,25 @@
                                         slot="icon" />
                                     <div slot="text">{$_("proposal.filter")}</div>
                                 </MenuItem>
+                            {/if}
+                            {#if client.user.isSuperAdmin}
+                                {#if client.isFrozen(selectedChatSummary.chatId)}                            
+                                    <MenuItem on:click={unfreezeGroup}>
+                                        <TickIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("unfreezeGroup")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={freezeGroup}>
+                                        <CancelIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("freezeGroup")}</div>
+                                    </MenuItem>
+                                {/if}
                             {/if}
                         {/if}
                         <MenuItem on:click={searchChat}>
