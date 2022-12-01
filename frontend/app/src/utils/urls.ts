@@ -32,3 +32,9 @@ export function removeQueryStringParam(qs: URLSearchParams, name: string): strin
     qs.delete(name);
     return replaceQueryString(qs);
 }
+
+const landingPageRoutes = ["home", "features", "roadmap", "whitepaper", "architecture"];
+
+export function isLandingPageRoute(path: string): boolean {
+    return landingPageRoutes.includes(path.slice(1).toLowerCase());
+}

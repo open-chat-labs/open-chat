@@ -801,7 +801,8 @@
     }
 
     function showLandingPageRoute(route: string) {
-        return () => (window.location.href = route);
+        return () => push(route);
+        // return () => (window.location.href = route);
     }
 
     async function createDirectChat(chatId: string): Promise<boolean> {

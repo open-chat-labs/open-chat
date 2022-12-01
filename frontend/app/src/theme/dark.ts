@@ -248,5 +248,42 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 muted: textBodyLight,
             },
         },
+
+        landing: {
+            txt,
+            "txt-light": textBodyDark,
+            bg: backgroundBlack,
+
+            context: {
+                bg: "#2f3039",
+            },
+
+            phone: {
+                bd: "#ffffffdd",
+            },
+
+            brag: {
+                op: "0.7",
+            },
+
+            launch: {
+                bg: primary,
+            },
+
+            header: {
+                bg: backgroundBlack,
+                txt: textBodyDark,
+                bd: "1px solid rgba(255,255,255,0.2)",
+            },
+
+            auth: {
+                bg: "rgba(0,0,0,0.6)",
+                txt: textBodyDark,
+            },
+
+            roadmap: {
+                bd: "#32353F",
+            },
+        },
     };
 }

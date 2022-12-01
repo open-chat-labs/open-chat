@@ -269,6 +269,43 @@ export interface Theme {
             muted: string;
         };
     };
+
+    landing: {
+        txt: string;
+        "txt-light": string;
+        bg: string;
+
+        context: {
+            bg: string;
+        };
+
+        phone: {
+            bd: string;
+        };
+
+        brag: {
+            op: string;
+        };
+
+        launch: {
+            bg: string;
+        };
+
+        header: {
+            bg: string;
+            txt: string;
+            bd: string;
+        };
+
+        auth: {
+            bg: string;
+            txt: string;
+        };
+
+        roadmap: {
+            bd: string;
+        };
+    };
 }
 
 export type Themes = {

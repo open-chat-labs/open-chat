@@ -5,7 +5,7 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router from "svelte-spa-router";
+    import Router, { location } from "svelte-spa-router";
     import { routes } from "../routes";
     import Login from "./Login.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
@@ -18,7 +18,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
-    import { isCanisterUrl } from "../utils/urls";
+    import { isCanisterUrl, isLandingPageRoute } from "../utils/urls";
     import { logger } from "../utils/logging";
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -70,6 +70,14 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+
+        return location.subscribe((path) => {
+            if (isLandingPageRoute(path)) {
+                document.body.classList.add("landing-page");
+            } else {
+                document.body.classList.remove("landing-page");
+            }
+        });
     });
 
     function registeredUser(ev: CustomEvent<CreatedUser>) {
@@ -346,6 +354,10 @@
             &.fill {
                 transition: none;
                 padding: 0;
+            }
+
+            &.landing-page {
+                display: block;
             }
         }
 

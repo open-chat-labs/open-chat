@@ -272,6 +272,11 @@ $z-indexed-items: (
         "date-label",
         "section-header",
         "fab",
+        "powered-by",
+        "features",
+        "phone",
+        "phone-image",
+        "landing-page-menu",
         "footer-overlay",
         "overlay",
         "toast",
@@ -450,5 +455,12 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @include mobile() {
         padding: 10px;
         -webkit-overflow-scrolling: touch;
+    }
+}
+
+@mixin lp-content-padding() {
+    padding: 0 toRem(160);
+    @include mobile() {
+        padding: 0 toRem(24);
     }
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 2000 2000" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <g opacity="0.3" filter="url(#filter0_f_261_1367)" transform="matrix(0.395387, 0, 0, 1, 734.925842, 200)" bx:origin="0 0">
+    <rect x="-1100" y="600" width="3642" height="324" fill="url(#paint0_linear_261_1367)"/>
+  </g>
+  <defs>
+    <filter id="filter0_f_261_1367" x="-1700" y="0" width="4842" height="1524" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="300" result="effect1_foregroundBlur_261_1367"/>
+    </filter>
+    <linearGradient id="paint0_linear_261_1367" x1="721" y1="600" x2="721" y2="924" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#23A2EE"/>
+      <stop offset="1" stop-color="#5B2B88"/>
+    </linearGradient>
+  </defs>
+</svg>
