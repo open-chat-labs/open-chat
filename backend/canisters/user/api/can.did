@@ -486,11 +486,21 @@ type InitialStateV2Response =
             timestamp: TimestampMillis;
             direct_chats: vec DirectChatSummary;
             group_chats: vec UserCanisterGroupChatSummary;
+            avatar_id: opt nat;
             blocked_users: vec UserId;
-            user_canister_wasm_version: Version;
             pinned_chats: vec ChatId;
+            user_canister_wasm_version: Version;
+        };
+        SuccessCached: record {
+            timestamp: TimestampMillis;
+            direct_chats: vec DirectChatSummary;
             cache_timestamp: TimestampMillis;
             cached_group_chat_summaries: vec GroupChatSummary;
+            group_chats_added: vec UserCanisterGroupChatSummary;
+            avatar_id: opt nat;
+            blocked_users: vec UserId;
+            pinned_chats: vec ChatId;
+            user_canister_wasm_version: Version;
         };
     };
 

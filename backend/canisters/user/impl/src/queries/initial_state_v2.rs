@@ -1,8 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::model::group_chat::GroupChat;
+use crate::queries::updates_v2::updates_impl;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
-use types::{GroupChatSummary, GroupChatSummaryInternal, ThreadSyncDetails, TimestampMillis, UserId};
+use types::{GroupChatSummary, GroupChatSummaryInternal, ThreadSyncDetails, UserId};
 use user_canister::initial_state_v2::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -13,7 +14,10 @@ fn initial_state_v2(args: Args) -> Response {
 fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let my_user_id: UserId = runtime_state.env.canister_id().into();
-    let disable_cache = args.disable_cache.unwrap_or_default();
+    let avatar_id = runtime_state.data.avatar.value.as_ref().map(|a| a.id);
+    let blocked_users = runtime_state.data.blocked_users.value.iter().copied().collect();
+    let pinned_chats = runtime_state.data.pinned_chats.value.clone();
+    let user_canister_wasm_version = WASM_VERSION.with(|version| version.borrow().value);
 
     let direct_chats = runtime_state
         .data
@@ -22,36 +26,42 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .map(|d| d.to_summary(my_user_id))
         .collect();
 
-    let group_chats = runtime_state.data.group_chats.iter().map(|g| g.to_summary()).collect();
+    let disable_cache = args.disable_cache.unwrap_or_default();
 
-    let (cache_timestamp, cached_group_chat_summaries) = read_cached_data(disable_cache, runtime_state);
+    if let Some(cached) = (!disable_cache)
+        .then(|| runtime_state.data.cached_group_summaries.as_ref())
+        .flatten()
+    {
+        let user_canister::updates_v2::Response::Success(updates) = updates_impl(cached.timestamp, runtime_state);
 
-    Success(SuccessResult {
-        timestamp: now,
-        direct_chats,
-        group_chats,
-        blocked_users: runtime_state.data.blocked_users.value.iter().copied().collect(),
-        user_canister_wasm_version: WASM_VERSION.with(|version| version.borrow().value),
-        pinned_chats: runtime_state.data.pinned_chats.value.clone(),
-        cache_timestamp,
-        cached_group_chat_summaries,
-    })
-}
-
-fn read_cached_data(disable_cache: bool, runtime_state: &RuntimeState) -> (TimestampMillis, Vec<GroupChatSummary>) {
-    if disable_cache {
-        Default::default()
-    } else if let Some(cached) = runtime_state.data.cached_group_summaries.as_ref() {
-        let summaries = cached
-            .groups
-            .iter()
-            .filter_map(|c| runtime_state.data.group_chats.get(&c.chat_id).map(|g| (c, g)))
-            .map(|(c, g)| hydrate_cached_summary(c, g))
-            .collect();
-
-        (cached.timestamp, summaries)
+        SuccessCached(SuccessCachedResult {
+            timestamp: now,
+            direct_chats,
+            cache_timestamp: cached.timestamp,
+            cached_group_chat_summaries: cached
+                .groups
+                .iter()
+                .filter_map(|c| runtime_state.data.group_chats.get(&c.chat_id).map(|g| (c, g)))
+                .map(|(c, g)| hydrate_cached_summary(c, g))
+                .collect(),
+            group_chats_added: updates.group_chats_added,
+            avatar_id,
+            blocked_users,
+            pinned_chats,
+            user_canister_wasm_version,
+        })
     } else {
-        Default::default()
+        let group_chats = runtime_state.data.group_chats.iter().map(|g| g.to_summary()).collect();
+
+        Success(SuccessResult {
+            timestamp: now,
+            direct_chats,
+            group_chats,
+            avatar_id,
+            blocked_users,
+            pinned_chats,
+            user_canister_wasm_version,
+        })
     }
 }
 
