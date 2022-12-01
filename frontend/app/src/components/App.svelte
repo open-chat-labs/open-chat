@@ -358,6 +358,7 @@
 
             &.landing-page {
                 display: block;
+                line-height: toRem(28);
             }
         }
 

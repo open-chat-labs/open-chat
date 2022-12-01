@@ -148,12 +148,12 @@
     }
     .title {
         grid-area: title;
-        @include font(medium, normal, fs-230);
+        @include font(medium, normal, fs-230, 68);
         margin-top: 0;
         margin-bottom: toRem(10);
 
         @include mobile() {
-            @include font(medium, normal, fs-180);
+            @include font(medium, normal, fs-180, 42);
         }
     }
 
@@ -161,6 +161,7 @@
         grid-area: blurb;
         color: var(--landing-txt-light);
         margin-bottom: toRem(24);
+        @include font(book, normal, fs-120, 28);
 
         @include mobile() {
             margin-bottom: toRem(16);

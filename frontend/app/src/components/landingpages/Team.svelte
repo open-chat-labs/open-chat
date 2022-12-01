@@ -26,6 +26,10 @@
 </Section>
 
 <style type="text/scss">
+    h2 {
+        margin-bottom: $sp6;
+    }
+
     .team {
         display: grid;
         grid-template-columns: repeat(3, 1fr);

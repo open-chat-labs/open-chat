@@ -89,6 +89,10 @@ $font-sizes: (
         font-size: toRem(60),
         line-height: 120%,
     ),
+    fs-250: (
+        font-size: toRem(70),
+        line-height: 120%,
+    ),
     fs-260: (
         font-size: toRem(80),
         line-height: 120%,
@@ -337,18 +341,30 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin font-size($type: fs-100) {
+@mixin font-size($type: fs-100, $line-height: null) {
     // Generating mixins below: Do not change
     $type: map-get($font-sizes, $type);
 
     // LINE-HEIGHTS
     @if map-has-key($type, line-height) {
-        line-height: map-get($type, line-height);
+        @if $line-height {
+            line-height: toRem($line-height);
+        } @else {
+            line-height: map-get($type, line-height);
+        }
         @include mobile() {
-            line-height: calc(#{map-get($type, line-height)} * 0.95);
+            @if $line-height {
+                line-height: calc(toRem($line-height) * 0.95);
+            } @else {
+                line-height: calc(#{map-get($type, line-height)} * 0.95);
+            }
         }
         @include size-below(xs) {
-            line-height: calc(#{map-get($type, line-height)} * 0.9);
+            @if $line-height {
+                line-height: calc(toRem($line-height) * 0.9);
+            } @else {
+                line-height: calc(#{map-get($type, line-height)} * 0.9);
+            }
         }
     }
 
@@ -382,7 +398,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin font($weight: book, $style: null, $size: null) {
+@mixin font($weight: book, $style: null, $size: null, $line-height: null) {
     // Error handling
     @if map-has-key($font-weights, $weight) {
         font-weight: map-get($font-weights, $weight);
@@ -396,7 +412,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 
     @if $size {
-        @include font-size($size);
+        @include font-size($size, $line-height);
     }
 }
 

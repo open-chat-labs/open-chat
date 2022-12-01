@@ -104,7 +104,7 @@
         align-items: flex-start;
 
         .item {
-            border-top: solid 1px var(--roadmap-bd);
+            border-top: solid 1px var(--landing-roadmap-bd);
             padding: toRem(48) 0;
             justify-content: flex-start;
             gap: $sp3;
@@ -121,7 +121,7 @@
         }
 
         .item:last-child {
-            border-bottom: solid 1px var(--roadmap-bd);
+            border-bottom: solid 1px var(--landing-roadmap-bd);
         }
 
         .status {
@@ -135,17 +135,17 @@
 
         .title {
             grid-area: title;
-            @include font(bold, normal, fs-240);
+            @include font(bold, normal, fs-230, 57);
             flex: 4;
 
             @include mobile() {
-                @include font(bold, normal, fs-160);
+                @include font(bold, normal, fs-160, 38);
                 margin-bottom: toRem(20);
             }
         }
 
         .when {
-            @include font(bold, normal, fs-160);
+            @include font(bold, normal, fs-160, 32);
             color: #23a2ee;
         }
 
@@ -161,7 +161,7 @@
 
         .complete {
             color: #23a2ee;
-            @include font(bold, normal, fs-100);
+            @include font(bold, normal, fs-100, 28);
         }
     }
 </style>

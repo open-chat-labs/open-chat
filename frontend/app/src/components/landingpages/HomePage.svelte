@@ -55,12 +55,13 @@
 
         h2 {
             grid-area: title;
-            @include font(medium, normal, fs-240);
+            @include font(medium, normal, fs-250, 91);
             margin-bottom: toRem(48);
             text-align: left;
 
             @include mobile() {
                 @include font(medium, normal, fs-220);
+                line-height: toRem(51);
                 margin-bottom: toRem(16);
             }
         }
@@ -69,6 +70,7 @@
             margin-bottom: 0;
             color: var(--txt-light);
             max-width: 80%;
+            @include font(book, normal, fs-120, 28);
 
             @include mobile() {
                 max-width: 100%;

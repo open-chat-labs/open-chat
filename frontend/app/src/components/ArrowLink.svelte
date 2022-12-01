@@ -43,6 +43,7 @@
         align-items: center;
         gap: $sp3;
         transition: color 250ms ease-in-out;
+        white-space: nowrap;
 
         .arrow {
             transition: flex 250ms ease-in-out;
@@ -52,7 +53,7 @@
 
         &:hover {
             text-decoration: none;
-            color: var(--txt-light);
+            color: var(--landing-txt-light);
 
             .arrow {
                 flex: 0 0 toRem(24);
