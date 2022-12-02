@@ -2,13 +2,10 @@ use canister_client_macros::*;
 use local_user_index_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_lookup_principal);
 generate_c2c_call!(c2c_lookup_user);
-generate_c2c_call!(c2c_lookup_user_id);
 
 // Updates
-// generate_c2c_call!(c2c_mark_send_message_failed);
-// generate_c2c_call!(c2c_mark_users_online);
-// generate_c2c_call!(c2c_migrate_user_principal);
-// generate_c2c_call!(c2c_set_avatar);
-// generate_c2c_call!(c2c_register_bot);
+generate_c2c_call!(c2c_create_user);
+generate_c2c_call!(c2c_notify_low_balance);
+generate_c2c_call!(c2c_notify_user_index_events);
+generate_c2c_call!(c2c_upgrade_user_canister_wasm);
