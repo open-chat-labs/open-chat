@@ -16,6 +16,8 @@ import type {
     UpgradeStorageResponse,
     ChallengeAttempt,
     CreateChallengeResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -30,6 +32,8 @@ import {
     userSearchResponse,
     registerUserResponse,
     upgradeStorageResponse,
+    suspendUserResponse,
+    unsuspendUserResponse
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -175,6 +179,27 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 confirmation_code: code,
             }),
             confirmPhoneNumber
+        );
+    }
+
+    @profile("userIndexClient")
+    suspendUser(userId: string): Promise<SuspendUserResponse> {
+        return this.handleResponse(
+            this.userService.suspend_user({
+                user_id: Principal.fromText(userId),
+                duration: []
+            }),
+            suspendUserResponse
+        );
+    }
+
+    @profile("userIndexClient")
+    unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
+        return this.handleResponse(
+            this.userService.unsuspend_user({
+                user_id: Principal.fromText(userId),
+            }),
+            unsuspendUserResponse
         );
     }
 }

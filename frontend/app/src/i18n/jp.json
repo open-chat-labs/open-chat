@@ -634,5 +634,11 @@
     "failedToFreezeGroup": "グループを凍結できませんでした",
     "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました",
     "accountSuspended": "アカウントが一時停止",
-    "yourAccountIsSuspended": "あなたのアカウントが停止されました"
+    "yourAccountIsSuspended": "あなたのアカウントが停止されました",
+    "failedToSuspendUser": "ユーザーを一時停止できませんでした",
+    "failedToUnsuspendUser": "ユーザーの停止を解除できませんでした",
+    "suspendUser": "ユーザーの停止",
+    "unsuspendUser": "ユーザーの停止を解除",
+    "suspendedUser": "停止中のユーザー",
+    "unsuspendedUser": "停止されていないユーザー"
 }

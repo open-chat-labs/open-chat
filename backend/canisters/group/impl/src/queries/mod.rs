@@ -1,6 +1,4 @@
 mod c2c_search_messages;
-mod c2c_summary;
-mod c2c_summary_updates;
 mod events;
 mod events_by_index;
 mod events_range;
@@ -13,4 +11,6 @@ mod rules;
 mod search_messages;
 mod selected_initial;
 mod selected_updates;
+mod summary;
+mod summary_updates;
 mod thread_previews;

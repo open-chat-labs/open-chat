@@ -482,6 +482,10 @@ export class OpenChat extends EventTarget {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
+        if (user.suspended) {
+            alert("User account suspended");
+            this.logout();
+        }
         this._user = user;
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
@@ -2718,6 +2722,26 @@ export class OpenChat extends EventTarget {
             })
             .catch((err) => {
                 this._logger.error("Unable to unfreeze group", err);
+                return false;
+            });
+    }
+
+    suspendUser(userId: string): Promise<boolean> {
+        return this.api
+            .suspendUser(userId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to suspend user", err);
+                return false;
+            });
+    }
+
+    unsuspendUser(userId: string): Promise<boolean> {
+        return this.api
+            .unsuspendUser(userId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to un-suspend user", err);
                 return false;
             });
     }

@@ -634,5 +634,11 @@
     "failedToFreezeGroup": "Không thể đóng băng nhóm",
     "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm",
     "accountSuspended": "Toàn khoản bị đình chỉ",
-    "yourAccountIsSuspended": "Tài khoản của bạn bị treo"
+    "yourAccountIsSuspended": "Tài khoản của bạn bị treo",
+    "failedToSuspendUser": "Không thể tạm ngưng người dùng",
+    "failedToUnsuspendUser": "Không thể hủy tạm ngưng người dùng",
+    "suspendUser": "tạm ngưng người dùng",
+    "unsuspendUser": "Hủy tạm ngưng người dùng",
+    "suspendedUser": "người dùng bị treo",
+    "unsuspendedUser": "Người dùng không bị tạm ngưng"
 }

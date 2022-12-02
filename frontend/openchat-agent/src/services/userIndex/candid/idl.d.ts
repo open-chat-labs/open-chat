@@ -25,6 +25,8 @@ import {
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -51,6 +53,8 @@ export {
     RegisterUserResponse as ApiRegisterUserResponse,
     PhoneStatus as ApiPhoneStatus,
     UpgradeStorageResponse as ApiUpgradeStorageResponse,
+    SuspendUserResponse as ApiSuspendUserResponse,
+    UnsuspendUserResponse as ApiUnsuspendUserResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

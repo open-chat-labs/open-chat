@@ -1,7 +1,7 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
-use types::{MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{DirectChatSummary, DirectChatSummaryUpdates, MessageIndex, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -50,6 +50,48 @@ impl DirectChat {
             true
         } else {
             false
+        }
+    }
+
+    pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
+        let chat_events = self.events.main();
+
+        DirectChatSummary {
+            them: self.them,
+            latest_message: chat_events.latest_message(Some(my_user_id)).unwrap(),
+            latest_event_index: chat_events.last().index,
+            date_created: self.date_created,
+            read_by_me_up_to: self.read_by_me_up_to.value,
+            read_by_them_up_to: self.read_by_them_up_to.value,
+            notifications_muted: self.notifications_muted.value,
+            metrics: self.events.metrics().clone(),
+            my_metrics: self.events.user_metrics(&my_user_id, None).cloned().unwrap_or_default(),
+            archived: self.archived.value,
+        }
+    }
+
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
+        let chat_events = self.events.main();
+
+        let latest_message = chat_events.latest_message_if_updated(updates_since, Some(my_user_id));
+        let latest_event = chat_events.last();
+        let has_new_events = latest_event.timestamp > updates_since;
+        let latest_event_index = if has_new_events { Some(latest_event.index) } else { None };
+        let metrics = if has_new_events { Some(self.events.metrics().clone()) } else { None };
+        let notifications_muted = self.notifications_muted.if_set_after(updates_since).copied();
+        let affected_events = chat_events.affected_event_indexes_since(updates_since, 100);
+
+        DirectChatSummaryUpdates {
+            chat_id: self.them.into(),
+            latest_message,
+            latest_event_index,
+            read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
+            read_by_them_up_to: self.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
+            notifications_muted,
+            affected_events,
+            metrics,
+            my_metrics: self.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
+            archived: self.archived.if_set_after(updates_since).copied(),
         }
     }
 }

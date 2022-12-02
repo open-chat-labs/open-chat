@@ -70,6 +70,7 @@ import type {
     SetBioResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
+    SuspendUserResponse,
     UnpinChatResponse,
     UpgradeStorageResponse,
     User,
@@ -77,6 +78,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    UnsuspendUserResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -181,6 +183,8 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | SuspendUser
+    | UnsuspendUser
     | GetInitialState;
 
 type SetCachedMessageFromNotification = Request<{
@@ -732,6 +736,18 @@ type UnfreezeGroup = Request<{
     kind: "unfreezeGroup";
 };
 
+type SuspendUser = Request<{
+    userId: string;
+}> & {
+    kind: "suspendUser";
+};
+
+type UnsuspendUser = Request<{
+    userId: string;
+}> & {
+    kind: "unsuspendUser";
+};
+
 type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
     kind: "getUsers";
 };
@@ -855,6 +871,8 @@ export type WorkerResponse =
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
+    | Response<SuspendUserResponse>
+    | Response<UnsuspendUserResponse>
     | Response<undefined>;
 
 type Response<T> = {
