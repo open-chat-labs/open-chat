@@ -56,9 +56,11 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
+        // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
         : `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
+        // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
         : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
@@ -167,7 +169,7 @@
             <div class="title-block">
                 <div class="title">
                     {#if proposal.url.length > 0}
-                        <a href={proposal.url} target="_blank"
+                        <a href={proposal.url} rel="noreferrer" target="_blank"
                             >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
                     {:else}
                         {proposal.title}
@@ -180,7 +182,11 @@
             <div class="subtitle">
                 {typeValue} |
                 {$_("proposal.proposedBy")}
-                <a target="_blank" href={proposerUrl}>{truncatedProposerId()}</a>
+                {#if isNns}
+                    <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
+                {:else}
+                    {truncatedProposerId()}
+                {/if}
             </div>
         </div>
 
@@ -268,7 +274,11 @@
         </div>
     </div>
     <div class="more" class:rtl={$rtlStore}>
-        <a href={proposalUrl} target="_blank">{proposal.id}</a>
+        {#if isNns}
+            <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
+        {:else}
+            {proposal.id}
+        {/if}
     </div>
 {/if}
 
