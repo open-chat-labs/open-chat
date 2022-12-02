@@ -362,6 +362,62 @@ export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
 }
+export interface GroupCanisterGroupChatSummary {
+  'is_public' : boolean,
+  'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
+  'min_visible_event_index' : EventIndex,
+  'name' : string,
+  'role' : Role,
+  'wasm_version' : Version,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'owner_id' : UserId,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
+  'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'my_metrics' : ChatMetrics,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterGroupChatSummaryUpdates {
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
+  'name' : [] | [string],
+  'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
+  'affected_events' : Uint32Array | number[],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'owner_id' : [] | [UserId],
+  'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : FrozenGroupUpdate,
+  'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'participant_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterThreadDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'latest_event' : EventIndex,
+  'latest_message' : MessageIndex,
+}
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -991,6 +1047,13 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SummaryArgs = {};
+export type SummaryResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : { 'summary' : GroupCanisterGroupChatSummary } };
+export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
+export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : { 'updates' : GroupCanisterGroupChatSummaryUpdates } } |
+  { 'SuccessNoUpdates' : null };
 export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
@@ -1188,6 +1251,8 @@ export interface _SERVICE {
     SelectedUpdatesResponse
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
+  'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<

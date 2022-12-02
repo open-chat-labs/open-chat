@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, GroupChatSummaryInternal, TimestampMillis};
+use types::{ChatId, GroupCanisterGroupChatSummary, TimestampMillis};
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct CachedGroupSummaries {
     pub timestamp: TimestampMillis,
-    pub groups: Vec<GroupChatSummaryInternal>,
+    pub groups: Vec<GroupCanisterGroupChatSummary>,
 }
 
 impl CachedGroupSummaries {

@@ -48,6 +48,28 @@ impl GroupChat {
         }
     }
 
+    pub fn to_summary(&self) -> user_canister::GroupChatSummary {
+        user_canister::GroupChatSummary {
+            chat_id: self.chat_id,
+            read_by_me_up_to: self.read_by_me_up_to.value,
+            threads_read: self.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
+            archived: self.archived.value,
+        }
+    }
+
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> user_canister::GroupChatSummaryUpdates {
+        user_canister::GroupChatSummaryUpdates {
+            chat_id: self.chat_id,
+            read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
+            threads_read: self
+                .threads_read
+                .updated_since(updates_since)
+                .map(|(k, v)| (*k, v.value))
+                .collect(),
+            archived: self.archived.if_set_after(updates_since).copied(),
+        }
+    }
+
     pub fn to_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
         GroupChatSummaryUpdates {
             chat_id: self.chat_id,
