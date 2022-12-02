@@ -4,8 +4,8 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
-    ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, GroupChatSummary, GroupChatSummaryInternal,
-    GroupChatSummaryUpdates, GroupChatSummaryUpdatesInternal, OptionUpdate, TimestampMillis,
+    ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, OptionUpdate, TimestampMillis,
 };
 use user_canister::{initial_state, updates};
 
@@ -66,8 +66,8 @@ async fn updates(args: updates::Args) -> updates::Response {
 
 fn finalize(
     updates_since: TimestampMillis,
-    group_chats_added: Vec<GroupChatSummaryInternal>,
-    group_chats_updated: Vec<GroupChatSummaryUpdatesInternal>,
+    group_chats_added: Vec<GroupCanisterGroupChatSummary>,
+    group_chats_updated: Vec<GroupCanisterGroupChatSummaryUpdates>,
     group_chats_deleted: Vec<DeletedGroupInfo>,
     group_chat_upgrades_in_progress: Vec<ChatId>,
     runtime_state: &RuntimeState,

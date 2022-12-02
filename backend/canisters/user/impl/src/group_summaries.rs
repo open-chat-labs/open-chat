@@ -2,7 +2,9 @@ use crate::{CachedGroupSummaries, Data};
 use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, ChatId, DeletedGroupInfo, GroupChatSummaryInternal, GroupChatSummaryUpdatesInternal, TimestampMillis};
+use types::{
+    CanisterId, ChatId, DeletedGroupInfo, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, TimestampMillis,
+};
 use user_canister::updates::UpdatesSince;
 
 pub(crate) struct SummariesArgs {
@@ -13,7 +15,7 @@ pub(crate) struct SummariesArgs {
 }
 
 pub(crate) struct Summaries {
-    pub groups: Vec<GroupChatSummaryInternal>,
+    pub groups: Vec<GroupCanisterGroupChatSummary>,
     pub upgrades_in_progress: Vec<ChatId>,
 }
 
@@ -26,8 +28,8 @@ pub(crate) struct UpdatesArgs {
 }
 
 pub(crate) struct Updates {
-    pub added: Vec<GroupChatSummaryInternal>,
-    pub updated: Vec<GroupChatSummaryUpdatesInternal>,
+    pub added: Vec<GroupCanisterGroupChatSummary>,
+    pub updated: Vec<GroupCanisterGroupChatSummaryUpdates>,
     pub deleted: Vec<DeletedGroupInfo>,
     pub upgrades_in_progress: Vec<ChatId>,
 }
@@ -161,9 +163,9 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
 }
 
 fn merge_updates(
-    summaries: Vec<GroupChatSummaryInternal>,
-    updates: Vec<GroupChatSummaryUpdatesInternal>,
-) -> Vec<GroupChatSummaryInternal> {
+    summaries: Vec<GroupCanisterGroupChatSummary>,
+    updates: Vec<GroupCanisterGroupChatSummaryUpdates>,
+) -> Vec<GroupCanisterGroupChatSummary> {
     if updates.is_empty() {
         summaries
     } else {
@@ -183,7 +185,7 @@ fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> boo
 mod c2c {
     use super::*;
 
-    pub async fn summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummaryInternal> {
+    pub async fn summaries(chat_ids: Vec<ChatId>) -> Vec<GroupCanisterGroupChatSummary> {
         if chat_ids.is_empty() {
             return Vec::new();
         }
@@ -206,7 +208,7 @@ mod c2c {
         summaries
     }
 
-    pub async fn summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupChatSummaryUpdatesInternal> {
+    pub async fn summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupCanisterGroupChatSummaryUpdates> {
         if group_chats.is_empty() {
             return Vec::new();
         }

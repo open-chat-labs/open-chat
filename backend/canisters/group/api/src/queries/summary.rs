@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::GroupChatSummaryInternal;
+use types::GroupCanisterGroupChatSummary;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
@@ -15,5 +15,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub summary: GroupChatSummaryInternal,
+    pub summary: GroupCanisterGroupChatSummary,
 }

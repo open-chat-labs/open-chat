@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use crate::queries::updates_v2::updates_impl;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
-use types::{GroupChatSummary, GroupChatSummaryInternal, ThreadSyncDetails, UserId};
+use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId};
 use user_canister::initial_state_v2::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -29,7 +29,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let disable_cache = args.disable_cache.unwrap_or_default();
 
     if let Some(cached) = (!disable_cache)
-        .then(|| runtime_state.data.cached_group_summaries.as_ref())
+        .then_some(runtime_state.data.cached_group_summaries.as_ref())
         .flatten()
     {
         let user_canister::updates_v2::Response::Success(updates) = updates_impl(cached.timestamp, runtime_state);
@@ -65,7 +65,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 }
 
-fn hydrate_cached_summary(cached: &GroupChatSummaryInternal, user_details: &GroupChat) -> GroupChatSummary {
+fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: &GroupChat) -> GroupChatSummary {
     GroupChatSummary {
         chat_id: cached.chat_id,
         last_updated: cached.last_updated,

@@ -6,7 +6,7 @@ use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashMap;
 use types::{
-    EventIndex, EventWrapper, FrozenGroupInfo, GroupChatSummaryUpdatesInternal, GroupPermissions, GroupSubtype, Mention,
+    EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
     Message, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
@@ -29,7 +29,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let updates_from_events = process_events(args.updates_since, participant, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
-        let updates = GroupChatSummaryUpdatesInternal {
+        let updates = GroupCanisterGroupChatSummaryUpdates {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated,
             name: updates_from_events.name,

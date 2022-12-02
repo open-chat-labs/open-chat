@@ -656,7 +656,7 @@ impl AllChatEvents {
         from_set: &HashSet<MessageIndex>,
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
-    ) -> Vec<ThreadSyncDetailsInternal> {
+    ) -> Vec<GroupCanisterThreadDetails> {
         from_set
             .iter()
             .filter_map(|root_message_index| {
@@ -664,7 +664,7 @@ impl AllChatEvents {
                     let latest_event = thread_events.last();
                     updated_since
                         .map_or(true, |since| latest_event.timestamp > since)
-                        .then_some(ThreadSyncDetailsInternal {
+                        .then_some(GroupCanisterThreadDetails {
                             root_message_index: *root_message_index,
                             latest_event: latest_event.index,
                             latest_message: thread_events.latest_message_index().unwrap_or_default(),
