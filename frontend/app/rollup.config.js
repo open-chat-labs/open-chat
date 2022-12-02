@@ -241,7 +241,7 @@ export default {
                     `var parcelRequire;`,
                 ];
                 const cspHashValues = inlineScripts.map(generateCspHashValue);
-                let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ ${cspHashValues.join(
+                let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                     " "
                 )}`;
                 if (!production) {
