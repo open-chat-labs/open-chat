@@ -104,8 +104,8 @@ fn commit(
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
-    runtime_state.data.local_users.create(user_id, wasm_version, now);
-    runtime_state.data.global_users.create(user_principal, user_id, false);
+    runtime_state.data.local_users.add(user_id, wasm_version, now);
+    runtime_state.data.global_users.add(user_principal, user_id, false);
 
     if let Some(referred_by) = referred_by {
         runtime_state.data.user_event_sync_queue.push(

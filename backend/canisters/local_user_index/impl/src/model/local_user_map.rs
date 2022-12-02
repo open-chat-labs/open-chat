@@ -8,7 +8,7 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn create(&mut self, user_id: UserId, wasm_version: Version, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, wasm_version: Version, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
     }

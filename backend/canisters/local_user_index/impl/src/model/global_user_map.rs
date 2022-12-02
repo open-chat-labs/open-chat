@@ -12,7 +12,7 @@ pub struct GlobalUserMap {
 }
 
 impl GlobalUserMap {
-    pub fn create(&mut self, principal: Principal, user_id: UserId, is_bot: bool) {
+    pub fn add(&mut self, principal: Principal, user_id: UserId, is_bot: bool) {
         self.user_id_to_principal.insert(user_id, principal);
         self.principal_to_user_id.insert(principal, user_id);
 

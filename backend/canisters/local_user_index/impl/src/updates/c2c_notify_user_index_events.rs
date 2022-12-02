@@ -49,10 +49,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             );
         }
         UserIndexEvent::UserRegistered(ev) => {
-            runtime_state
-                .data
-                .global_users
-                .create(ev.user_principal, ev.user_id, ev.is_bot);
+            runtime_state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
 
             if let Some(referred_by) = ev.referred_by {
                 runtime_state.data.user_event_sync_queue.push(
@@ -72,7 +69,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
         UserIndexEvent::LocalUserAdded(ev) => {
-            runtime_state.data.local_users.create(ev.user_id, ev.wasm_version, ev.created);
+            runtime_state.data.local_users.add(ev.user_id, ev.wasm_version, ev.created);
         }
     }
 }
