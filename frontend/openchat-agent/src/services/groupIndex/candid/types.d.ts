@@ -136,6 +136,13 @@ export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DeletedGroupInfo {
+  'id' : ChatId,
+  'public' : boolean,
+  'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
+  'group_name' : string,
+}
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -200,6 +207,18 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface FilterGroupsArgs {
+  'active_since' : [] | [TimestampMillis],
+  'chat_ids' : Array<ChatId>,
+}
+export type FilterGroupsResponse = {
+    'Success' : {
+      'upgrades_in_progress' : Array<ChatId>,
+      'deleted_groups' : Array<DeletedGroupInfo>,
+      'active_groups' : Array<ChatId>,
+      'timestamp' : TimestampMillis,
+    }
+  };
 export interface FreezeGroupArgs {
   'chat_id' : ChatId,
   'reason' : [] | [string],
@@ -239,6 +258,62 @@ export interface GiphyImageVariant {
 export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
+}
+export interface GroupCanisterGroupChatSummary {
+  'is_public' : boolean,
+  'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
+  'min_visible_event_index' : EventIndex,
+  'name' : string,
+  'role' : Role,
+  'wasm_version' : Version,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'owner_id' : UserId,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
+  'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'my_metrics' : ChatMetrics,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterGroupChatSummaryUpdates {
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
+  'name' : [] | [string],
+  'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
+  'affected_events' : Uint32Array | number[],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'owner_id' : [] | [UserId],
+  'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : FrozenGroupUpdate,
+  'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'participant_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterThreadDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'latest_event' : EventIndex,
+  'latest_message' : MessageIndex,
 }
 export interface GroupChatCreated {
   'name' : string,
@@ -778,6 +853,7 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,

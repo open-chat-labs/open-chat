@@ -12,4 +12,6 @@ pub mod rules;
 pub mod search_messages;
 pub mod selected_initial;
 pub mod selected_updates;
+pub mod summary;
+pub mod summary_updates;
 pub mod thread_previews;

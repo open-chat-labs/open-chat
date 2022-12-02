@@ -1,16 +1,35 @@
 export const idlFactory = ({ IDL }) => {
+  const TimestampMillis = IDL.Nat64;
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
+  const FilterGroupsArgs = IDL.Record({
+    'active_since' : IDL.Opt(TimestampMillis),
+    'chat_ids' : IDL.Vec(ChatId),
+  });
+  const UserId = CanisterId;
+  const DeletedGroupInfo = IDL.Record({
+    'id' : ChatId,
+    'public' : IDL.Bool,
+    'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
+    'group_name' : IDL.Text,
+  });
+  const FilterGroupsResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'upgrades_in_progress' : IDL.Vec(ChatId),
+      'deleted_groups' : IDL.Vec(DeletedGroupInfo),
+      'active_groups' : IDL.Vec(ChatId),
+      'timestamp' : TimestampMillis,
+    }),
+  });
   const FreezeGroupArgs = IDL.Record({
     'chat_id' : ChatId,
     'reason' : IDL.Opt(IDL.Text),
   });
-  const UserId = CanisterId;
   const ChatFrozen = IDL.Record({
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
-  const TimestampMillis = IDL.Nat64;
   const EventIndex = IDL.Nat32;
   const FreezeGroupResponse = IDL.Variant({
     'ChatAlreadyFrozen' : IDL.Null,
@@ -56,6 +75,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'filter_groups' : IDL.Func(
+        [FilterGroupsArgs],
+        [FilterGroupsResponse],
+        ['query'],
+      ),
     'freeze_group' : IDL.Func([FreezeGroupArgs], [FreezeGroupResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'unfreeze_group' : IDL.Func(

@@ -1,5 +1,30 @@
 import "../../../libraries/types/can.did";
 
+type FilterGroupsArgs =
+    record {
+        chat_ids: vec ChatId;
+        active_since: opt TimestampMillis;
+    };
+
+type FilterGroupsResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            active_groups: vec ChatId;
+            deleted_groups: vec DeletedGroupInfo;
+            upgrades_in_progress: vec ChatId;
+        };
+    };
+
+type DeletedGroupInfo =
+    record {
+        id: ChatId;
+        timestamp: TimestampMillis;
+        deleted_by: UserId;
+        group_name: text;
+        public: bool;
+    };
+
 type SearchArgs =
     record {
         search_term: text;
@@ -67,6 +92,7 @@ type UnfreezeGroupResponse =
     };
 
 service: {
+    filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
