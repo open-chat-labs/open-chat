@@ -58,7 +58,6 @@
         flex: 0 0 30px;
     }
     .proposal-filters {
-        color: var(--section-txt);
         background-color: var(--bg);
         padding: $sp4;
         padding-bottom: 0;

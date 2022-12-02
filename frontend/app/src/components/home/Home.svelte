@@ -51,6 +51,7 @@
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
+    import { themeStore } from "../../theme/themes";
 
     export let logout: () => void;
 
@@ -945,13 +946,15 @@
     </Overlay>
 {/if}
 
-<BackgroundLogo
-    width={`${bgHeight}px`}
-    bottom={"unset"}
-    left={"0"}
-    opacity={"0.05"}
-    skew={"5deg"}
-    viewBox={`0 0 361 ${bgClip}`} />
+{#if $themeStore.name !== "white"}
+    <BackgroundLogo
+        width={`${bgHeight}px`}
+        bottom={"unset"}
+        left={"0"}
+        opacity={"0.05"}
+        skew={"5deg"}
+        viewBox={`0 0 361 ${bgClip}`} />
+{/if}
 
 <style type="text/scss">
     :global(.edited-msg) {

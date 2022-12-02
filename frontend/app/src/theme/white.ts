@@ -5,38 +5,36 @@ const orangeAccent = "#ff9505";
 const pinkAccent = "#ff005c";
 const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
-const textBox = "rgba(0,0,0,0.1)";
-const txt = "#ffffff";
-const txtLight = hexPercent("#ffffff", 67);
+const textBox = "rgba(226,226,226,0.5)";
+const txt = "#242834";
+const txt70 = hexPercent(txt, 70);
+const txt60 = hexPercent(txt, 60);
 const txtDark = "#242834";
-const txtDark75pc = hexPercent(txtDark, 75);
-const disabledTxt = txtLight;
+const disabledTxt = txt70;
 
-export function lightTheme(): Theme {
+export function whiteTheme(): Theme {
     return {
-        name: "light",
-        label: "Light",
-
-        bg: "linear-gradient(#22A7F2, #5f2583)",
-        // bg: "#ffffff",
+        name: "white",
+        label: "White",
+        bg: "#ffffff",
         txt,
-        "txt-light": txtLight,
-        bd: "rgba(255,255,255,0.1)",
+        "txt-light": txt70,
+        bd: "#ededed",
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
-        disabledTxt: txtLight,
-        placeholder: txtLight,
+        disabledTxt: txt70,
+        placeholder: txt60,
         primary,
 
         progress: {
-            bd: "rgba(255,255,255,0.2)",
+            bd: "rgba(0,0,0,0.2)",
         },
 
         collapsible: {
             closed: {
                 header: {
-                    txt: txtLight,
+                    txt: txt70,
                 },
             },
             open: {
@@ -58,7 +56,7 @@ export function lightTheme(): Theme {
         },
 
         timeline: {
-            txt: txtLight,
+            txt: txt70,
             bg: "transparent",
         },
 
@@ -93,24 +91,23 @@ export function lightTheme(): Theme {
         entry: {
             bg: "rgba(226,226,226,0.1)",
             input: {
-                bg: textBox,
-                sh: "none",
+                //bg: textBox,
+                bg: "#ffffff",
+                // sh: "none",
+                sh: "inset 0px 2px 4px rgba(138, 138, 138, 0.5)",
             },
         },
 
         panel: {
-            bg: "linear-gradient(#22A7F2, #5f2583)",
+            bg: "transparent",
 
             left: {
-                bg: `linear-gradient(${hexPercent("#22A7F2", 31.3)}, ${hexPercent(
-                    "#5f2583",
-                    31.3
-                )})`,
+                bg: "transparent",
             },
 
             right: {
-                bg: "linear-gradient(rgba(255,255,255,0.1), transparent)",
-                modal: "linear-gradient(#22A7F2, #5f2583)",
+                bg: "transparent",
+                modal: "#ffffff",
             },
         },
 
@@ -125,7 +122,7 @@ export function lightTheme(): Theme {
         },
 
         chatSummary: {
-            "bg-selected": "rgba(0,0,0,0.1)",
+            "bg-selected": "rgba(226,226,226,0.5)",
             hv: "rgba(226,226,226,0.1)",
             del: pinkAccent,
         },
@@ -134,7 +131,7 @@ export function lightTheme(): Theme {
 
         menu: {
             bg: "white",
-            txt: txtDark75pc,
+            txt: txt70,
             "disabled-txt": hexPercent(txtDark, 50),
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
@@ -145,7 +142,7 @@ export function lightTheme(): Theme {
         button: {
             bg: primary,
             hv: "#52baf5",
-            txt: txt,
+            txt: "#ffffff",
             disabled: "rgba(0,0,0,0.1)",
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
@@ -158,13 +155,13 @@ export function lightTheme(): Theme {
 
         modal: {
             filter: "blur(5px)",
-            bg: hexPercent("#085d8c", 93),
+            bg: "#ffffff",
             bd: "none",
         },
 
         modalPage: {
             bg: "rgba(255, 255, 255, 0.5)",
-            txt: "#191919",
+            txt,
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
             filter: "blur(10px)",
             "txt-sh": "1px 1px rgba(255, 255, 255, 0.2)",
@@ -181,26 +178,26 @@ export function lightTheme(): Theme {
             },
 
             msg: {
-                bg: "rgba(0,0,0,0.08)",
+                bg: "rgba(226,226,226,0.5)",
                 muted: "rgba(255,255,255,0.6)",
-                txt: "#ffffff",
-                inert: "rgba(0,0,0,0.1)",
+                txt: txt70,
+                inert: "rgba(226,226,226,0.8)",
 
                 me: {
-                    bg: hexPercent(primary, 50),
+                    bg: primary,
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
-                    bd: "rgba(255,255,255,0.3)",
+                    bd: "rgba(0,0,0,0.05)",
                 },
             },
         },
 
         icon: {
             hv: "rgba(0,0,0,0.1)",
-            txt,
+            txt: txt60,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
-                txt: txtDark75pc,
+                txt: txt60,
             },
             msg: {
                 hv: "rgba(255,255,255,0.3)",
@@ -225,7 +222,7 @@ export function lightTheme(): Theme {
         },
 
         recommended: {
-            bg: "rgba(0,0,0,0.08)",
+            bg: "#ffffff",
         },
 
         toggle: {
@@ -256,7 +253,7 @@ export function lightTheme(): Theme {
             fg: {
                 color: txt,
                 bright: txt,
-                muted: txtLight,
+                muted: txt70,
             },
         },
     };

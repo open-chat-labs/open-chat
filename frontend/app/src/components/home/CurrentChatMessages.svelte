@@ -420,10 +420,12 @@
     }
 
     function doUndeleteMessage(message: Message) {
-        if (message.content.kind !== "deleted_content" || 
-            message.content.deletedBy !== user.userId) {
-            return
-        };
+        if (
+            message.content.kind !== "deleted_content" ||
+            message.content.deletedBy !== user.userId
+        ) {
+            return;
+        }
 
         client.undeleteMessage(chat.chatId, undefined, message.messageId).then((success) => {
             if (!success) {

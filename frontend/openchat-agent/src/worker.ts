@@ -610,7 +610,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
-    
+
             case "addDirectChatReaction":
                 agent
                     .addDirectChatReaction(
@@ -923,7 +923,12 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "searchGroupChat":
                 agent
-                    .searchGroupChat(payload.chatId, payload.searchTerm, payload.userIds, payload.maxResults)
+                    .searchGroupChat(
+                        payload.chatId,
+                        payload.searchTerm,
+                        payload.userIds,
+                        payload.maxResults
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1141,7 +1146,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "freezeGroup":
                 agent
                     .freezeGroup(payload.chatId, payload.reason)
-                    .then(response =>
+                    .then((response) =>
                         sendResponse(correlationId, {
                             response,
                         })
@@ -1152,7 +1157,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "unfreezeGroup":
                 agent
                     .unfreezeGroup(payload.chatId)
-                    .then(response =>
+                    .then((response) =>
                         sendResponse(correlationId, {
                             response,
                         })

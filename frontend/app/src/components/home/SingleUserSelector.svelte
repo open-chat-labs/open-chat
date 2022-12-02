@@ -92,7 +92,7 @@
         padding: $sp3;
         height: 40px;
         @include font(book, normal, fs-100);
-        color: var(--input-txt);
+        color: var(--txt);
         background-color: var(--input-bg);
         border: 1px solid var(--bd);
         outline: none;

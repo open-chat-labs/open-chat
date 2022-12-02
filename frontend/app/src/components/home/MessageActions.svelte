@@ -129,7 +129,11 @@
     }
 
     :global(.message-actions.useDrawer.visible .wrapper path) {
-        fill: var(--txt);
+        fill: var(--button-txt);
+    }
+
+    :global(.message-actions.useDrawer.visible .wrapper ellipse) {
+        fill: var(--button-txt);
     }
 
     .emoji,

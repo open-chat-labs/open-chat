@@ -78,6 +78,17 @@ impl RuntimeState {
         self.data.online_users_aggregator_canister_ids.contains(&caller)
     }
 
+    pub fn is_caller_super_admin(&self) -> bool {
+        let caller = self.env.caller();
+        if self.data.service_principals.contains(&caller) {
+            true
+        } else if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.super_admins.contains(&user.user_id)
+        } else {
+            false
+        }
+    }
+
     pub fn generate_6_digit_code(&mut self) -> String {
         let random = self.env.random_u32();
         format!("{:0>6}", random % 1000000)

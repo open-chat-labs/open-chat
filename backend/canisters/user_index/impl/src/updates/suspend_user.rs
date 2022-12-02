@@ -1,4 +1,4 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_super_admin;
 use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use types::{ChatId, Milliseconds, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
-#[update(guard = "caller_is_controller")]
+#[update(guard = "caller_is_super_admin")]
 #[trace]
 async fn suspend_user(args: Args) -> Response {
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: true };
