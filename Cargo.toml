@@ -18,7 +18,6 @@ members = [
     "backend/canisters/group_index/impl",
     "backend/canisters/local_user_index/api",
     "backend/canisters/local_user_index/c2c_client",
-    "backend/canisters/local_user_index/client",
     "backend/canisters/local_user_index/impl",
     "backend/canisters/notifications/api",
     "backend/canisters/notifications/c2c_client",

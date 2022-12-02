@@ -3,6 +3,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
+use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -38,24 +39,19 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    /// Traps if the caller is not an OpenChat user or an OpenChat user's canister
-    pub fn trap_if_caller_not_open_chat_user(&self) {
-        let caller = self.env.caller();
-
-        if !self.data.global_users.is_valid_caller(caller) {
-            #[cfg(not(test))]
-            ic_cdk::trap("Not authorized");
-        }
-    }
-
     pub fn is_caller_notifications_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.notifications_canister_ids.contains(&caller)
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.user_index_canister_id == caller
+    }
+
+    pub fn is_caller_local_user_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_users.get(&caller.into()).is_some()
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -75,6 +71,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            user_events_queue_length: self.data.user_event_sync_queue.len(),
         }
     }
 }
@@ -85,14 +82,16 @@ struct Data {
     pub global_users: GlobalUserMap,
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
+    pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    pub ledger_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub ledger_canister_id: CanisterId,
+    pub user_event_sync_queue: UserEventSyncQueue,
     pub test_mode: bool,
-    pub max_concurrent_canister_upgrades: usize,
+    pub max_concurrent_canister_upgrades: u32,
 }
 
 impl Data {
@@ -100,6 +99,7 @@ impl Data {
     pub fn new(
         service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
+        user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         ledger_canister_id: CanisterId,
@@ -111,12 +111,14 @@ impl Data {
             global_users: GlobalUserMap::default(),
             service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
+            user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
+            ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            ledger_canister_id,
+            user_event_sync_queue: UserEventSyncQueue::default(),
             test_mode,
             max_concurrent_canister_upgrades: 2,
         }
@@ -131,12 +133,14 @@ impl Default for Data {
             global_users: GlobalUserMap::default(),
             service_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
+            user_index_canister_id: Principal::anonymous(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_ids: vec![Principal::anonymous()],
+            ledger_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
-            ledger_canister_id: Principal::anonymous(),
+            user_event_sync_queue: UserEventSyncQueue::default(),
             test_mode: true,
             max_concurrent_canister_upgrades: 2,
         }
@@ -158,5 +162,6 @@ pub struct Metrics {
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: Version,
-    pub max_concurrent_canister_upgrades: usize,
+    pub max_concurrent_canister_upgrades: u32,
+    pub user_events_queue_length: usize,
 }

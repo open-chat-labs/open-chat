@@ -4948,17 +4948,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "local_user_index_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid 0.8.3",
- "canister_client_macros 0.1.0",
- "ic-agent",
- "local_user_index_canister",
- "types 0.1.0",
-]
-
-[[package]]
 name = "local_user_index_canister_impl"
 version = "0.1.0"
 dependencies = [

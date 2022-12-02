@@ -11,6 +11,7 @@ pub struct Args {
     pub user_canister_wasm: CanisterWasm,
 
     // Passed to user canister during creation
+    pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_id: CanisterId,

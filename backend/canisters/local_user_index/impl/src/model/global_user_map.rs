@@ -12,12 +12,7 @@ pub struct GlobalUserMap {
 }
 
 impl GlobalUserMap {
-    pub fn new(
-        &mut self,
-        principal: Principal,
-        user_id: UserId,
-        is_bot: bool,
-    ) {
+    pub fn create(&mut self, principal: Principal, user_id: UserId, is_bot: bool) {
         self.user_id_to_principal.insert(user_id, principal);
         self.principal_to_user_id.insert(principal, user_id);
 
@@ -26,8 +21,17 @@ impl GlobalUserMap {
         }
     }
 
+    pub fn set_super_admin(&mut self, user_id: UserId, is_super_admin: bool) {
+        if is_super_admin {
+            self.super_admins.insert(user_id);
+        } else {
+            self.super_admins.remove(&user_id);
+        }
+    }
+
     pub fn get(&self, user_id_or_principal: &Principal) -> Option<GlobalUser> {
-        self.get_by_principal(user_id_or_principal).or_else(|| self.get_by_user_id(&UserId::from(*user_id_or_principal)))
+        self.get_by_principal(user_id_or_principal)
+            .or_else(|| self.get_by_user_id(&UserId::from(*user_id_or_principal)))
     }
 
     pub fn get_by_principal(&self, principal: &Principal) -> Option<GlobalUser> {
@@ -48,8 +52,8 @@ impl GlobalUserMap {
         })
     }
 
-    pub fn is_valid_caller(&self, caller: Principal) -> bool {
-        self.principal_to_user_id.contains_key(&caller) || self.user_id_to_principal.contains_key(&caller.into())
+    pub fn is_bot(&self, user_id: &UserId) -> bool {
+        self.bots.contains(user_id)
     }
 }
 

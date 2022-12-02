@@ -8,18 +8,17 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn new(
-        &mut self,
-        user_id: UserId,
-        wasm_version: Version,
-        now: TimestampMillis,
-    ) {
+    pub fn create(&mut self, user_id: UserId, wasm_version: Version, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<&LocalUser> {
         self.users.get(user_id)
+    }
+
+    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut LocalUser> {
+        self.users.get_mut(user_id)
     }
 
     pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
@@ -31,8 +30,8 @@ impl LocalUserMap {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &LocalUser> {
-        self.users.values()
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
+        self.users.iter()
     }
 
     pub fn len(&self) -> usize {

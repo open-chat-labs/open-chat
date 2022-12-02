@@ -2,8 +2,8 @@ use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
-use tracing::info;
 use local_user_index_canister::init::Args;
+use tracing::info;
 use utils::env::canister::CanisterEnv;
 
 const CANISTER_POOL_TARGET_SIZE: u16 = 20;
@@ -20,6 +20,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.service_principals,
         args.user_canister_wasm,
+        args.user_index_canister_id,
         args.group_index_canister_id,
         args.notifications_canister_ids,
         args.ledger_canister_id,

@@ -10,6 +10,7 @@ fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
     cycles_dispenser_client::run();
+    sync_events_to_user_canisters::run();
 }
 
 mod upgrade_canisters {
@@ -25,7 +26,7 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades;
+        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades as usize;
 
         (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
@@ -43,7 +44,7 @@ mod upgrade_canisters {
 
     fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let user_id = canister_id.into();
-        let mut user = runtime_state.data.local_users.get(&user_id)?;
+        let user = runtime_state.data.local_users.get_mut(&user_id)?;
         let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
         let date_created = user.date_created;
@@ -117,7 +118,7 @@ mod upgrade_canisters {
     }
 
     fn mark_upgrade_complete(user_id: UserId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
-        if let Some(mut user) = runtime_state.data.local_users.get(&user_id) {
+        if let Some(user) = runtime_state.data.local_users.get_mut(&user_id) {
             user.set_canister_upgrade_status(false, new_wasm_version);
         }
     }
@@ -151,5 +152,39 @@ mod topup_canister_pool {
     fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
         runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
+}
+
+mod sync_events_to_user_canisters {
+    use types::UserEvent;
+
+    use super::*;
+
+    pub fn run() {
+        if let Some(users_events) = mutate_state(next_batch) {
+            for (user_id, events) in users_events {
+                ic_cdk::spawn(sync_events(user_id, events));
+            }
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(UserId, Vec<UserEvent>)>> {
+        runtime_state.data.user_event_sync_queue.try_start_sync()
+    }
+
+    async fn sync_events(user_id: UserId, events: Vec<UserEvent>) {
+        let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
+        match user_canister_c2c_client::c2c_notify_user_events(user_id.into(), &args).await {
+            Ok(_) => mutate_state(on_success),
+            Err(_) => mutate_state(|state| on_failure(user_id, events, state)),
+        }
+    }
+
+    fn on_success(runtime_state: &mut RuntimeState) {
+        runtime_state.data.user_event_sync_queue.mark_sync_completed();
+    }
+
+    fn on_failure(user_id: UserId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
+        runtime_state.data.user_event_sync_queue.mark_sync_failed(user_id, events);
     }
 }

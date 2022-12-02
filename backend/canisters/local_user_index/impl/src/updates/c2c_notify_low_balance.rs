@@ -1,3 +1,4 @@
+use crate::guards::caller_is_local_user_canister;
 use crate::{mutate_state, read_state, RuntimeState, USER_CANISTER_TOP_UP_AMOUNT};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -5,7 +6,7 @@ use types::{CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse, UserId}
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::cycles::{can_spend_cycles, top_up_canister};
 
-#[update_msgpack]
+#[update_msgpack(guard = "caller_is_local_user_canister")]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
     let prepare_ok = match read_state(prepare) {
@@ -36,12 +37,10 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
         amount: top_up_amount,
     };
 
-    if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
-        Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
-    } else if runtime_state.data.local_users.get(&user_id).is_some() {
+    if can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
         Ok(PrepareResult { user_id, top_up })
     } else {
-        panic!("Caller not recognised. {caller}");
+        Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
     }
 }
 
