@@ -7,6 +7,7 @@
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
     import { createEventDispatcher } from "svelte";
+    import RoadmapPage from "./RoadmapPage.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -14,7 +15,7 @@
         return {
             "/home": HomePage,
             "/features": FeaturesPage,
-            "/roadmap": HomePage,
+            "/roadmap": RoadmapPage,
             "/whitepaper": HomePage,
             "/architecture": HomePage,
             "*": NotFound,

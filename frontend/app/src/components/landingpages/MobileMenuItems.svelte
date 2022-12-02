@@ -3,14 +3,14 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
     import { AuthProvider, OpenChat } from "openchat-client";
-    import { push } from "svelte-spa-router";
+    import { push, location } from "svelte-spa-router";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
-    $: path = "features";
+    $: path = $location;
 
     let showAuthProviders = false;
 
@@ -40,16 +40,16 @@
 
 <div class="menu-items">
     <div class="menu-item">
-        <Link selected={path === "features"} mode={"menu"} path="features">Features</Link>
+        <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
     </div>
     <div class="menu-item">
-        <Link selected={path === "roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
+        <Link selected={path === "/roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
     </div>
     <div class="menu-item">
-        <Link selected={path === "whitepaper"} mode={"menu"} path="whitepaper">Whitepaper</Link>
+        <Link selected={path === "/whitepaper"} mode={"menu"} path="whitepaper">Whitepaper</Link>
     </div>
     <div class="menu-item">
-        <Link selected={path === "architecture"} mode={"menu"} path="architecture"
+        <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
             >Architecture</Link>
     </div>
     <div class="menu-item">
