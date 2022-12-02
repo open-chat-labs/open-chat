@@ -66,6 +66,6 @@
     }
 
     .blurb {
-        color: var(--txt-light);
+        color: var(--landing-txt-light);
     }
 </style>

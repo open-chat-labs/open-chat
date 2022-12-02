@@ -1,6 +1,6 @@
 <script lang="ts">
     export let backgroundColor: string;
-    export let color: string = "var(--txt)";
+    export let color: string = "var(--landing-txt)";
 
     export let title: string;
     export let height: number;

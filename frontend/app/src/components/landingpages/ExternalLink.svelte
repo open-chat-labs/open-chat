@@ -9,7 +9,7 @@
     <slot />
 
     <div class="icon">
-        <OpenInNew {viewBox} size={"1em"} color={"var(--txt)"} />
+        <OpenInNew {viewBox} size={"1em"} color={"var(--landing-txt)"} />
     </div>
 </a>
 

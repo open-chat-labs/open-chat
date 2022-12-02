@@ -601,7 +601,6 @@
         }
     }
 
-    .footnote,
     .body p,
     .body li {
         @include font(book, normal, fs-100, 28);
@@ -615,6 +614,7 @@
         display: flex;
         align-items: center;
         flex: auto;
+        color: var(--landing-txt);
         @include font(medium, normal, fs-160, 38);
 
         @include mobile() {
@@ -646,10 +646,6 @@
         &:hover .copy {
             opacity: 1;
         }
-    }
-
-    .footnote {
-        margin-top: toRem(80);
     }
 
     .list {

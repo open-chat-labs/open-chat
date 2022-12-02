@@ -22,10 +22,10 @@
         {#if $mobileWidth}
             <div class="menu-toggle" on:click|stopPropagation={() => (showMenu = !showMenu)}>
                 {#if showMenu}
-                    <Close size={"1.6em"} color={"var(--txt)"} />
+                    <Close size={"1.6em"} color={"var(--landing-txt)"} />
                     <MobileMenuItems on:close={() => (showMenu = false)} on:login on:logout />
                 {:else}
-                    <Menu size={"1.6em"} color={"var(--txt)"} />
+                    <Menu size={"1.6em"} color={"var(--landing-txt)"} />
                 {/if}
             </div>
         {:else}

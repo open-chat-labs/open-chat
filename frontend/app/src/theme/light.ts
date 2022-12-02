@@ -264,6 +264,7 @@ export function lightTheme(): Theme {
             txt: txtDark,
             "txt-light": "#5C5C5C",
             bg: "white",
+            bd: "#ededed",
 
             brag: {
                 op: "0.3",

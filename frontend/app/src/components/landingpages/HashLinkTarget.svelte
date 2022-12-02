@@ -24,7 +24,7 @@
         <h5 class="link-target" {id}><slot /></h5>
     {/if}
     <div class="copy" on:click={() => dispatch("copyUrl", id)}>
-        <Copy {size} color={"var(--txt)"} />
+        <Copy {size} color={"var(--landing-txt)"} />
     </div>
 </div>
 

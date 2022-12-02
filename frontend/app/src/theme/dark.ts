@@ -253,6 +253,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             txt,
             "txt-light": textBodyDark,
             bg: backgroundBlack,
+            bd: borderDark,
 
             context: {
                 bg: "#2f3039",

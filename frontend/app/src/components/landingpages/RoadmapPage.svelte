@@ -284,6 +284,7 @@
         display: flex;
         align-items: center;
         flex: auto;
+        color: var(--landing-txt);
         @include font(medium, normal, fs-160, 38);
 
         @include mobile() {
@@ -315,7 +316,7 @@
 
         .year {
             @include font(book, normal, fs-100, 28);
-            color: var(--txt-light);
+            color: var(--landing-txt-light);
         }
 
         &.future {

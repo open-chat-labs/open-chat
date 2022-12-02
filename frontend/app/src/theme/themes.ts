@@ -274,6 +274,7 @@ export interface Theme {
         txt: string;
         "txt-light": string;
         bg: string;
+        bd: string;
 
         context: {
             bg: string;

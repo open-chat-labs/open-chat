@@ -5,10 +5,17 @@
     import SellingPoints from "./SellingPoints.svelte";
     import BragBox from "./BragBox.svelte";
     import ArrowLink from "../ArrowLink.svelte";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
+
+    function login() {
+        dispatch("routeEvent", "login");
+    }
 </script>
 
 <div class="content">
-    <Intro on:login />
+    <Intro on:login={login} />
 
     <div class="headline">
         <h2>OpenChat users can send messages to each other containing tokens like ICP and BTC.</h2>
@@ -68,7 +75,7 @@
         p {
             grid-area: blurb;
             margin-bottom: 0;
-            color: var(--txt-light);
+            color: var(--landing-txt-light);
             max-width: 80%;
             @include font(book, normal, fs-120, 28);
 

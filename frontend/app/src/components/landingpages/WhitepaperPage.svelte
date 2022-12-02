@@ -1038,6 +1038,7 @@
         display: flex;
         align-items: center;
         flex: auto;
+        color: var(--landing-txt);
         @include font(medium, normal, fs-160, 38);
 
         @include mobile() {
@@ -1075,7 +1076,7 @@
         display: grid;
         grid-template-columns: 4fr 1fr;
         margin-bottom: $sp4;
-        color: var(--txt-light);
+        color: var(--landing-txt-light);
         @include font(book, normal, fs-80, 24);
 
         > div {

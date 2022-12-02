@@ -2,7 +2,6 @@
     import Router from "svelte-spa-router";
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
-    import NotFound from "../NotFound.svelte";
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
@@ -20,7 +19,7 @@
             "/roadmap": RoadmapPage,
             "/whitepaper": WhitepaperPage,
             "/architecture": ArchitecturePage,
-            "*": NotFound,
+            "*": HomePage,
         };
     }
     function login() {
@@ -37,6 +36,10 @@
             top: 0,
         });
     }
+
+    function routeEvent(ev: CustomEvent<string>) {
+        dispatch(ev.detail);
+    }
 </script>
 
 <Header on:login={login} on:logout={logout} />
@@ -48,6 +51,7 @@
     {:else}
         <Content>
             <Router
+                on:routeEvent={routeEvent}
                 on:routeLoaded={scrollToTop}
                 routes={routes(() => {
                     console.log("logout");
@@ -58,6 +62,12 @@
 </main>
 
 <style type="text/scss">
+    :global(.landing-page .card) {
+        --bd: var(--landing-bd);
+        --collapsible-closed-header-txt: var(--landing-txt-light);
+        --collapsible-open-header-arrow: var(--primary);
+    }
+
     .main {
         position: relative;
         overflow-y: auto;

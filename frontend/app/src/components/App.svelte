@@ -7,7 +7,6 @@
     import { _ } from "svelte-i18n";
     import Router, { location } from "svelte-spa-router";
     import { routes } from "../routes";
-    import Login from "./Login.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
@@ -360,6 +359,8 @@
             &.landing-page {
                 display: block;
                 line-height: toRem(28);
+                background: var(--landing-bg);
+                color: var(--landing-txt);
             }
         }
 
