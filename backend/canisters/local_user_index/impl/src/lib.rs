@@ -37,11 +37,6 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.notifications_canister_ids.contains(&caller)
-    }
-
     pub fn is_caller_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.user_index_canister_id == caller
@@ -115,27 +110,6 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: UserEventSyncQueue::default(),
             test_mode,
-            max_concurrent_canister_upgrades: 2,
-        }
-    }
-}
-
-#[cfg(test)]
-impl Default for Data {
-    fn default() -> Data {
-        Data {
-            local_users: LocalUserMap::default(),
-            global_users: GlobalUserMap::default(),
-            user_canister_wasm: CanisterWasm::default(),
-            user_index_canister_id: Principal::anonymous(),
-            group_index_canister_id: Principal::anonymous(),
-            notifications_canister_ids: vec![Principal::anonymous()],
-            ledger_canister_id: Principal::anonymous(),
-            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(5),
-            total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: UserEventSyncQueue::default(),
-            test_mode: true,
             max_concurrent_canister_upgrades: 2,
         }
     }
