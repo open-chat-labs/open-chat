@@ -741,13 +741,24 @@ export const idlFactory = ({ IDL }) => {
     'archived' : IDL.Bool,
   });
   const InitialStateV2Response = IDL.Variant({
+    'SuccessCached' : IDL.Record({
+      'user_canister_wasm_version' : Version,
+      'blocked_users' : IDL.Vec(UserId),
+      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : IDL.Opt(IDL.Nat),
+      'direct_chats' : IDL.Vec(DirectChatSummary),
+      'timestamp' : TimestampMillis,
+      'cached_group_chat_summaries' : IDL.Vec(GroupChatSummary),
+      'cache_timestamp' : TimestampMillis,
+      'pinned_chats' : IDL.Vec(ChatId),
+    }),
     'Success' : IDL.Record({
       'user_canister_wasm_version' : Version,
       'blocked_users' : IDL.Vec(UserId),
       'group_chats' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : IDL.Vec(DirectChatSummary),
       'timestamp' : TimestampMillis,
-      'cached_group_chat_summaries' : IDL.Vec(GroupChatSummary),
       'pinned_chats' : IDL.Vec(ChatId),
     }),
   });
@@ -1115,6 +1126,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
   const UserCanisterGroupChatSummaryUpdates = IDL.Record({
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
@@ -1264,7 +1276,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
-    'updates_v2' : IDL.Func([UpdatesArgs], [UpdatesV2Response], ['query']),
+    'updates_v2' : IDL.Func([UpdatesV2Args], [UpdatesV2Response], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
         [WithdrawCryptoArgs],
         [WithdrawCryptoResponse],

@@ -892,7 +892,7 @@ export const idlFactory = ({ IDL }) => {
     'proposals' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
-  const ThreadSyncDetails2 = IDL.Record({
+  const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
     'latest_event' : EventIndex,
@@ -905,7 +905,7 @@ export const idlFactory = ({ IDL }) => {
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
-  const GroupChatSummary2 = IDL.Record({
+  const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
@@ -920,7 +920,7 @@ export const idlFactory = ({ IDL }) => {
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'latest_threads' : IDL.Vec(ThreadSyncDetails2),
+    'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -933,7 +933,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SummaryResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Record({ 'summary' : GroupChatSummary2 }),
+    'Success' : IDL.Record({ 'summary' : GroupCanisterGroupChatSummary }),
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
   const GroupSubtypeUpdate = IDL.Variant({
@@ -951,7 +951,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : FrozenGroupInfo,
   });
-  const GroupChatSummaryUpdates2 = IDL.Record({
+  const GroupCanisterGroupChatSummaryUpdates = IDL.Record({
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
@@ -965,7 +965,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
-    'latest_threads' : IDL.Vec(ThreadSyncDetails2),
+    'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
@@ -977,7 +977,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const SummaryUpdatesResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Record({ 'updates' : GroupChatSummaryUpdates2 }),
+    'Success' : IDL.Record({
+      'updates' : GroupCanisterGroupChatSummaryUpdates,
+    }),
     'SuccessNoUpdates' : IDL.Null,
   });
   const ThreadPreviewsArgs = IDL.Record({

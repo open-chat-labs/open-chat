@@ -352,6 +352,62 @@ export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
 }
+export interface GroupCanisterGroupChatSummary {
+  'is_public' : boolean,
+  'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
+  'min_visible_event_index' : EventIndex,
+  'name' : string,
+  'role' : Role,
+  'wasm_version' : Version,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'owner_id' : UserId,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
+  'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'my_metrics' : ChatMetrics,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterGroupChatSummaryUpdates {
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
+  'name' : [] | [string],
+  'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
+  'affected_events' : Uint32Array | number[],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'owner_id' : [] | [UserId],
+  'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'frozen' : FrozenGroupUpdate,
+  'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
+  'chat_id' : ChatId,
+  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'participant_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface GroupCanisterThreadDetails {
+  'root_message_index' : MessageIndex,
+  'last_updated' : TimestampMillis,
+  'latest_event' : EventIndex,
+  'latest_message' : MessageIndex,
+}
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -385,32 +441,6 @@ export interface GroupChatSummary {
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface GroupChatSummary2 {
-  'is_public' : boolean,
-  'permissions' : GroupPermissions,
-  'metrics' : ChatMetrics,
-  'subtype' : [] | [GroupSubtype],
-  'min_visible_event_index' : EventIndex,
-  'name' : string,
-  'role' : Role,
-  'wasm_version' : Version,
-  'notifications_muted' : boolean,
-  'description' : string,
-  'last_updated' : TimestampMillis,
-  'owner_id' : UserId,
-  'joined' : TimestampMillis,
-  'avatar_id' : [] | [bigint],
-  'latest_threads' : Array<ThreadSyncDetails2>,
-  'frozen' : [] | [FrozenGroupInfo],
-  'latest_event_index' : EventIndex,
-  'history_visible_to_new_joiners' : boolean,
-  'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'participant_count' : number,
-  'my_metrics' : ChatMetrics,
-  'latest_message' : [] | [MessageEventWrapper],
-}
 export interface GroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
@@ -432,30 +462,6 @@ export interface GroupChatSummaryUpdates {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'archived' : [] | [boolean],
-  'participant_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
-  'latest_message' : [] | [MessageEventWrapper],
-}
-export interface GroupChatSummaryUpdates2 {
-  'is_public' : [] | [boolean],
-  'permissions' : [] | [GroupPermissions],
-  'metrics' : [] | [ChatMetrics],
-  'subtype' : GroupSubtypeUpdate,
-  'name' : [] | [string],
-  'role' : [] | [Role],
-  'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array | number[],
-  'notifications_muted' : [] | [boolean],
-  'description' : [] | [string],
-  'last_updated' : TimestampMillis,
-  'owner_id' : [] | [UserId],
-  'avatar_id' : AvatarIdUpdate,
-  'latest_threads' : Array<ThreadSyncDetails2>,
-  'frozen' : FrozenGroupUpdate,
-  'latest_event_index' : [] | [EventIndex],
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -571,13 +577,26 @@ export type InitialStateResponse = {
   } |
   { 'InternalError' : string };
 export type InitialStateV2Response = {
+    'SuccessCached' : {
+      'user_canister_wasm_version' : Version,
+      'blocked_users' : Array<UserId>,
+      'group_chats_added' : Array<UserCanisterGroupChatSummary>,
+      'avatar_id' : [] | [bigint],
+      'direct_chats' : Array<DirectChatSummary>,
+      'timestamp' : TimestampMillis,
+      'cached_group_chat_summaries' : Array<GroupChatSummary>,
+      'cache_timestamp' : TimestampMillis,
+      'pinned_chats' : Array<ChatId>,
+    }
+  } |
+  {
     'Success' : {
       'user_canister_wasm_version' : Version,
       'blocked_users' : Array<UserId>,
       'group_chats' : Array<UserCanisterGroupChatSummary>,
+      'avatar_id' : [] | [bigint],
       'direct_chats' : Array<DirectChatSummary>,
       'timestamp' : TimestampMillis,
-      'cached_group_chat_summaries' : Array<GroupChatSummary>,
       'pinned_chats' : Array<ChatId>,
     }
   };
@@ -1059,12 +1078,6 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
-export interface ThreadSyncDetails2 {
-  'root_message_index' : MessageIndex,
-  'last_updated' : TimestampMillis,
-  'latest_event' : EventIndex,
-  'latest_message' : MessageIndex,
-}
 export interface ThreadUpdated {
   'latest_thread_message_index_if_updated' : [] | [MessageIndex],
   'event_index' : EventIndex,
@@ -1153,6 +1166,7 @@ export interface UpdatesSince {
   'group_chats' : Array<GroupChatUpdatesSince>,
   'timestamp' : TimestampMillis,
 }
+export interface UpdatesV2Args { 'updates_since' : TimestampMillis }
 export type UpdatesV2Response = {
     'Success' : {
       'user_canister_wasm_version' : [] | [Version],
@@ -1294,7 +1308,7 @@ export interface _SERVICE {
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
-  'updates_v2' : ActorMethod<[UpdatesArgs], UpdatesV2Response>,
+  'updates_v2' : ActorMethod<[UpdatesV2Args], UpdatesV2Response>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],
     WithdrawCryptoResponse
