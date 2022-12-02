@@ -195,7 +195,7 @@ function proposal(candid: ApiProposal): Proposal {
             kind: "sns",
             id: p.id,
             action: Number(p.action),
-            proposer: Buffer.from(p.proposer).toString("hex"),
+            proposer: bytesToHexString(p.proposer),
             title: p.title,
             summary: p.summary,
             url: p.url,
