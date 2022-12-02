@@ -18,7 +18,7 @@ const dark25 = "#525252";
 const dark45 = "#666666";
 const dark60 = "#ababab";
 
-const txtHigh = "#ffffff";
+const txt = "#ffffff";
 const txtLow = "rgba(255,255,255,0.38)";
 
 const primary = "#23a2ee";
@@ -31,13 +31,17 @@ export function darkTheme(defaultTheme: Theme): Theme {
         label: "Dark",
 
         bg: backgroundBlack,
-        txt: txtHigh,
+        txt: txt,
         "txt-light": textBodyDark,
         bd: borderDark,
         error: "#CF6679",
         accent: "#ff005c",
         disabledTxt: txtLow,
         primary,
+
+        progress: {
+            bd: "rgba(255,255,255,0.2)",
+        },
 
         collapsible: {
             closed: {
@@ -47,7 +51,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
             open: {
                 header: {
-                    txt: txtHigh,
                     arrow: primary,
                 },
             },
@@ -61,7 +64,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         reaction: {
             ...defaultTheme.reaction,
             bg: textBlack,
-            txt: txtHigh,
+            txt: txt,
             me: "#085d8c",
         },
 
@@ -84,7 +87,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         section: {
             bg: "transparent",
-            txt: txtHigh,
         },
 
         "sub-section": {
@@ -93,7 +95,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         input: {
             bg: textBlack,
-            txt: txtHigh,
             sh: "none",
         },
 
@@ -106,7 +107,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark60pc,
             input: {
                 bg: textBlack,
-                txt: txtHigh,
                 sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
             },
         },
@@ -133,21 +133,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
         chatSearch: {
             ...defaultTheme.chatSearch,
             bg: textBlack,
-            txt: txtHigh,
             sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
-
-            section: {
-                ...defaultTheme.chatSearch.section,
-                txt: txtHigh,
-            },
         },
 
         chatSummary: {
             ...defaultTheme.chatSummary,
             "bg-selected": selectedChat,
             hv: hoveredChat,
-            txt1: txtHigh,
-            txt2: textBodyDark,
             del: "#085d8c",
         },
 
@@ -164,7 +156,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         button: {
             bg: blueAccent,
             hv: "#053d5c",
-            txt: txtHigh,
+            txt: txt,
             disabled: textBlack,
             spinner: dark60,
             "disabled-txt": "#999999",
@@ -174,13 +166,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
         modal: {
             filter: "blur(5px)",
             bg: backgroundBlack,
-            txt: txtHigh,
             bd: `1px solid ${borderDark}`,
         },
 
         modalPage: {
             bg: "rgba(0, 0, 0, 0.4)",
-            txt: txtHigh,
+            txt: txt,
             sh: "none",
             filter: "blur(10px)",
             "txt-sh": "1px 1px rgba(0, 0, 0, 0.2)",
@@ -201,6 +192,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: textBlack,
                 muted: txtLow,
                 txt: "rgba(255,255,255,0.8)",
+                inert: textBlack,
 
                 me: {
                     bg: blueAccent,
@@ -251,8 +243,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         markdown: {
             fg: {
-                color: txtHigh,
-                bright: txtHigh,
+                color: txt,
+                bright: txt,
                 muted: textBodyLight,
             },
         },

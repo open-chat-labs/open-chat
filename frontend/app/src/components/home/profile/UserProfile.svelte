@@ -411,7 +411,6 @@
     .advanced {
         margin-bottom: $sp3;
         border-bottom: var(--bd);
-        color: var(--section-txt);
     }
 
     .advanced {

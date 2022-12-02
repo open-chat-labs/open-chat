@@ -58,7 +58,7 @@
         }
 
         &.open {
-            color: var(--collapsible-open-header-txt);
+            color: var(--txt);
         }
     }
 

@@ -75,7 +75,6 @@
 
     .members {
         flex: 1;
-        color: var(--section-txt);
         display: flex;
         flex-direction: column;
         justify-content: space-around;

@@ -538,7 +538,6 @@
 
     .group-details {
         flex: 1;
-        color: var(--section-txt);
         overflow: auto;
         overflow-x: hidden;
         @include nice-scrollbar();

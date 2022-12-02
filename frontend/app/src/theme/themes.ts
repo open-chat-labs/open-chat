@@ -1,5 +1,6 @@
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
+import { whiteTheme } from "./white";
 import { derived, readable, writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
@@ -42,6 +43,10 @@ export interface Theme {
 
     placeholder: string;
 
+    progress: {
+        bd: string;
+    };
+
     collapsible: {
         closed: {
             header: {
@@ -50,7 +55,6 @@ export interface Theme {
         };
         open: {
             header: {
-                txt: string;
                 arrow: string;
             };
         };
@@ -74,7 +78,6 @@ export interface Theme {
 
     section: {
         bg: string;
-        txt: string;
     };
 
     "sub-section": {
@@ -94,7 +97,6 @@ export interface Theme {
 
     input: {
         bg: string;
-        txt: string;
         sh: string;
     };
 
@@ -105,7 +107,6 @@ export interface Theme {
     entry: {
         bg: string;
         input: {
-            txt: string;
             bg: string;
             sh: string;
         };
@@ -132,19 +133,12 @@ export interface Theme {
 
     chatSearch: {
         bg: string;
-        txt: string;
         sh: string;
-
-        section: {
-            txt: string;
-        };
     };
 
     chatSummary: {
         "bg-selected": string;
         hv: string;
-        txt1: string;
-        txt2: string;
         del: string;
     };
 
@@ -177,7 +171,6 @@ export interface Theme {
     modal: {
         filter: string;
         bg: string;
-        txt: string;
         bd: string;
     };
 
@@ -201,6 +194,7 @@ export interface Theme {
             bg: string;
             muted: string;
             txt: string;
+            inert: string;
 
             me: {
                 bg: string;
@@ -279,6 +273,7 @@ export interface Theme {
 
 export type Themes = {
     light: Theme;
+    white: Theme;
     dark: Theme;
 };
 
@@ -286,6 +281,7 @@ const defaultTheme = lightTheme();
 
 export const themes: Themes = {
     light: defaultTheme,
+    white: whiteTheme(),
     dark: darkTheme(defaultTheme),
 };
 

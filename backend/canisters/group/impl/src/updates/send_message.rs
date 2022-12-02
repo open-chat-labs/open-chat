@@ -1,14 +1,14 @@
+use crate::timer_jobs::{EndPoll, Job, ScheduledJob};
 use crate::updates::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, timer_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
-use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
-    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
+    ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
+    MessageContent, MessageIndex, Notification, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -89,7 +89,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let message_event = runtime_state.data.events.push_message(push_message_args);
 
-        register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
+        register_jobs_if_required(args.thread_root_message_index, &message_event, runtime_state);
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
@@ -172,40 +172,25 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-fn register_callbacks_if_required(
+fn register_jobs_if_required(
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
     runtime_state: &mut RuntimeState,
 ) {
     if let MessageContent::Poll(p) = &message_event.event.content {
         if let Some(end_date) = p.config.end_date {
-            ic_cdk::spawn(register_end_poll_callback(
-                runtime_state.data.callback_canister_id,
-                thread_root_message_index,
-                message_event.event.message_index,
-                end_date,
-            ));
+            timer_jobs::enqueue_job(
+                ScheduledJob::new(
+                    Job::EndPoll(EndPoll {
+                        thread_root_message_index,
+                        message_index: message_event.event.message_index,
+                    }),
+                    end_date,
+                ),
+                runtime_state.env.now(),
+            );
         }
     }
-}
-
-async fn register_end_poll_callback(
-    canister_id: CanisterId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_index: MessageIndex,
-    end_date: TimestampMillis,
-) {
-    let payload = ByteBuf::from(msgpack::serialize(&group_canister::c2c_end_poll::Args {
-        thread_root_message_index,
-        message_index,
-        correlation_id: 0,
-    }));
-    let args = callback_canister::c2c_register_callback::Args {
-        method_name: "c2c_end_poll_msgpack".to_string(),
-        payload,
-        timestamp: end_date,
-    };
-    let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
 fn get_user_being_replied_to(

@@ -31,3 +31,11 @@ pub fn caller_is_online_users_aggregator_canister() -> Result<(), String> {
         Err("Caller is not the online users aggregator canister".to_owned())
     }
 }
+
+pub fn caller_is_super_admin() -> Result<(), String> {
+    if read_state(|state| state.is_caller_super_admin()) {
+        Ok(())
+    } else {
+        Err("Caller is not a super admin".to_owned())
+    }
+}

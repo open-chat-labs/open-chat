@@ -5,10 +5,7 @@
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type {
-        MessageMatch,
-        ChatSummary,
-    } from "openchat-client";
+    import type { MessageMatch, ChatSummary } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
@@ -172,16 +169,16 @@
         if (timer !== undefined) {
             window.clearTimeout(timer);
         }
-        timer = window.setTimeout(() => {   
+        timer = window.setTimeout(() => {
             performSearch();
         }, 300);
     }
 
     function triggerMentionLookup() {
         if (!isGroup) {
-            return;        
+            return;
         }
-        
+
         const pos = inputElement.selectionEnd ?? 0;
         const slice = inputElement.value.slice(0, pos);
         const matches = slice.match(mentionRegex);
@@ -201,7 +198,10 @@
     function onWindowKeyDown(event: KeyboardEvent) {
         if (event.code === "ArrowDown") {
             onPrevious();
-        } else if (event.code === "ArrowUp" || (event.code === "Enter" && lastSearchTerm === searchTerm)) {
+        } else if (
+            event.code === "ArrowUp" ||
+            (event.code === "Enter" && lastSearchTerm === searchTerm)
+        ) {
             onNext();
         } else if (event.code === "Escape") {
             onClose();
@@ -215,12 +215,12 @@
     }
 
     function setCaretToEnd() {
-        inputElement.setSelectionRange(searchTerm.length, searchTerm.length)
+        inputElement.setSelectionRange(searchTerm.length, searchTerm.length);
     }
- 
+
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
-        
+
         inputElement.setRangeText(replacement, rangeToReplace[0], rangeToReplace[1], "end");
         inputElement.focus();
         searchTerm = inputElement.value;
@@ -254,11 +254,10 @@
         direction={"down"}
         mentionSelf
         prefix={mentionPrefix}
-        members={$members} 
+        members={$members}
         blockedUsers={$blockedUsers}
         on:close={cancelMention}
-        on:mention={mention}
-        />
+        on:mention={mention} />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
@@ -319,7 +318,7 @@
         outline: none;
         border: none;
         @include font(book, normal, fs-100);
-        color: var(--chatSearch-txt);
+        color: var(--txt);
         background-color: transparent;
 
         &::placeholder {
@@ -334,7 +333,7 @@
 
     .count {
         @include font(light, normal, fs-70);
-        color: var(--chatSearch-txt);
+        color: var(--txt);
         align-self: center;
     }
 </style>

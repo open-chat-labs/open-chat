@@ -141,7 +141,7 @@
     .chat-subtext {
         @include font(book, normal, fs-80);
         @include ellipsis();
-        color: var(--chatSummary-txt2);
+        color: var(--txt-light);
     }
 
     .chat-details {

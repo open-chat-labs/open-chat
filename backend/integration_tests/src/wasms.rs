@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use types::{CanisterWasm, Version};
 
 lazy_static! {
-    pub static ref CALLBACK: CanisterWasm = get_canister_wasm("callback");
     pub static ref GROUP: CanisterWasm = get_canister_wasm("group");
     pub static ref GROUP_INDEX: CanisterWasm = get_canister_wasm("group_index");
     pub static ref NOTIFICATIONS: CanisterWasm = get_canister_wasm("notifications");

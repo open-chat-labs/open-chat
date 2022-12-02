@@ -183,7 +183,6 @@
 
     .group-form {
         flex: 1;
-        color: var(--section-txt);
         overflow: auto;
         overflow-x: hidden;
         @include nice-scrollbar();
@@ -194,7 +193,7 @@
     }
 
     .sub-section {
-        padding: $sp4;
+        padding: $sp4 0;
         // border: 1px solid var(--bd);
         // border-radius: $sp2;
         margin-bottom: $sp3;

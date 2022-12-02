@@ -603,7 +603,6 @@
         margin: 0 $sp3;
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
-        color: var(--entry-input-txt);
         border-radius: $sp3;
         outline: none;
         border: 0;
@@ -625,7 +624,7 @@
         }
 
         &.dragging {
-            border: 1px dashed var(--entry-input-txt);
+            border: 1px dashed var(--txt);
         }
 
         &.recording {

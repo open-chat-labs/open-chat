@@ -78,6 +78,17 @@ impl RuntimeState {
         self.data.online_users_aggregator_canister_ids.contains(&caller)
     }
 
+    pub fn is_caller_super_admin(&self) -> bool {
+        let caller = self.env.caller();
+        if self.data.service_principals.contains(&caller) {
+            true
+        } else if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.super_admins.contains(&user.user_id)
+        } else {
+            false
+        }
+    }
+
     pub fn generate_6_digit_code(&mut self) -> String {
         let random = self.env.random_u32();
         format!("{:0>6}", random % 1000000)
@@ -127,7 +138,6 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
-    pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_event_sync_queue: UserEventSyncQueue,
@@ -152,7 +162,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         online_users_aggregator_canister_id: CanisterId,
-        callback_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
@@ -181,7 +190,6 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
-            callback_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -214,7 +222,6 @@ impl Default for Data {
             notifications_canister_ids: vec![Principal::anonymous()],
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
-            callback_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
