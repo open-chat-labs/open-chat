@@ -8,6 +8,8 @@
     import { location } from "svelte-spa-router";
     import { createEventDispatcher } from "svelte";
     import RoadmapPage from "./RoadmapPage.svelte";
+    import WhitepaperPage from "./WhitepaperPage.svelte";
+    import ArchitecturePage from "./ArchitecturePage.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -16,8 +18,8 @@
             "/home": HomePage,
             "/features": FeaturesPage,
             "/roadmap": RoadmapPage,
-            "/whitepaper": HomePage,
-            "/architecture": HomePage,
+            "/whitepaper": WhitepaperPage,
+            "/architecture": ArchitecturePage,
             "*": NotFound,
         };
     }
@@ -27,6 +29,13 @@
 
     function logout() {
         dispatch("logout");
+    }
+
+    function scrollToTop() {
+        window.scrollTo({
+            behavior: "auto",
+            top: 0,
+        });
     }
 </script>
 
@@ -39,6 +48,7 @@
     {:else}
         <Content>
             <Router
+                on:routeLoaded={scrollToTop}
                 routes={routes(() => {
                     console.log("logout");
                     return Promise.resolve();

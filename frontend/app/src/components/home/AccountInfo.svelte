@@ -5,6 +5,7 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { CreatedUser } from "openchat-client";
+    import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
@@ -17,17 +18,16 @@
         return account;
     }
 
-    function copyToClipboard() {
-        navigator.clipboard.writeText(user.cryptoAccount).then(
-            () => {
+    function copy() {
+        copyToClipboard(user.cryptoAccount).then((success) => {
+            if (success) {
                 toastStore.showSuccessToast("copiedToClipboard");
-            },
-            () => {
+            } else {
                 toastStore.showFailureToast("failedToCopyToClipboard", {
                     values: { account: user.cryptoAccount },
                 });
             }
-        );
+        });
     }
 </script>
 
@@ -39,7 +39,7 @@
         <div class="account">
             {accountSummary}
         </div>
-        <div class="copy" title={$_("copyToClipboard")} on:click={copyToClipboard}>
+        <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
             <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
         </div>
     </div>

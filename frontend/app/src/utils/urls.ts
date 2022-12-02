@@ -38,3 +38,46 @@ const landingPageRoutes = ["home", "features", "roadmap", "whitepaper", "archite
 export function isLandingPageRoute(path: string): boolean {
     return landingPageRoutes.includes(path.slice(1).toLowerCase());
 }
+
+export function copyToClipboard(txt: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        navigator.clipboard.writeText(txt).then(
+            () => resolve(true),
+            () => resolve(false)
+        );
+    });
+}
+
+export function copyUrl(txt: string): Promise<boolean> {
+    return copyToClipboard(`${window.location.origin}${window.location.pathname}#${txt}`);
+}
+
+export function scrollToHash(hash: string): number | undefined {
+    const matches = /^(\d{1})(?:-(\d{1}))?(?:-(\d{1}))?$/.exec(hash);
+    if (!matches) {
+        return undefined;
+    }
+
+    const [_, one] = matches;
+
+    setTimeout(() => {
+        const target = document.getElementById(hash);
+        if (!target) {
+            console.log("target not found");
+            return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const top = rect.top + window.scrollY - 80;
+        console.log("Scrolling to ", window.scrollY, rect);
+        window.scrollTo({
+            top,
+        });
+        target.classList.add("highlight");
+        window.setTimeout(() => {
+            target.classList.remove("highlight");
+        }, 1000);
+    }, 200); // this 200 is the duration of the collapsible card transition :puke:
+
+    return Number(one);
+}

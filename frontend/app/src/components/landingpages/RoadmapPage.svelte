@@ -262,7 +262,6 @@
     }
 
     .body {
-        padding: 0 0 toRem(30) toRem(80);
         padding: 0 0 toRem(30) toRem(160);
         max-width: 75%;
 
@@ -275,6 +274,10 @@
     .body p,
     .body li {
         @include font(book, normal, fs-100, 28);
+    }
+
+    .body p {
+        margin-bottom: toRem(24);
     }
 
     .header {

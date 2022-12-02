@@ -156,7 +156,7 @@
 
         .detail,
         .year {
-            color: var(--txt-light);
+            color: var(--landing-txt-light);
         }
 
         .complete {

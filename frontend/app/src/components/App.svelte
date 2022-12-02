@@ -20,6 +20,7 @@
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
     import { isCanisterUrl, isLandingPageRoute } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import LandingPage from "./landingpages/LandingPage.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -119,7 +120,7 @@
 {#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "requires_login" || $identityState === "logging_in"}
-    <Login loading={$identityState === "logging_in"} on:login={() => client.login()} />
+    <LandingPage on:login={() => client.login()} />
 {:else if $identityState === "registering"}
     <Register on:logout={() => client.logout()} on:createdUser={registeredUser} {referredBy} />
 {:else if $identityState === "logged_in"}
