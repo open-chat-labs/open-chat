@@ -1,6 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
+use std::cmp::min;
 use types::EventIndex;
 use user_canister::events_window::{Response::*, *};
 
@@ -20,9 +21,12 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let my_user_id = runtime_state.env.canister_id().into();
         let chat_events = chat.events.main();
 
-        let (events, affected_events) = if let Some(mid_point) = chat_events.event_index_by_message_index(args.mid_point) {
+        let latest_message_index = chat_events.latest_message_index().unwrap_or_default();
+        let mid_point = min(args.mid_point, latest_message_index);
+
+        let (events, affected_events) = if let Some(event_index) = chat_events.event_index_by_message_index(mid_point) {
             let events =
-                chat_events.get_events_window(mid_point, args.max_events as usize, EventIndex::default(), Some(my_user_id));
+                chat_events.get_events_window(event_index, args.max_events as usize, EventIndex::default(), Some(my_user_id));
             let affected_events = chat_events.affected_events(&events, Some(my_user_id));
 
             (events, affected_events)
