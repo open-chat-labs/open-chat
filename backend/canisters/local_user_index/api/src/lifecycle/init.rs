@@ -10,15 +10,12 @@ pub struct Args {
     // The wasm module for creating user canisters
     pub user_canister_wasm: CanisterWasm,
 
-    // Passed to user canister during creation
+    // The wasm version running on this canister
+    pub wasm_version: Version,
+
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_id: CanisterId,
-
-    // The wasm version running on this canister
-    pub wasm_version: Version,
-
-    // Accepts confirmation code 123456
     pub test_mode: bool,
 }
