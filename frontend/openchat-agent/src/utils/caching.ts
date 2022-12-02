@@ -251,6 +251,13 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         return [[], missing, true];
     }
 
+    if (min > midpoint) {
+        min = midpoint;
+    }
+    if (max < midpoint) {
+        max = midpoint;
+    }
+
     const half = MAX_EVENTS / 2;
     const lowerBound = Math.max(min, midpoint - half);
     const upperBound = Math.min(max, midpoint + half);
