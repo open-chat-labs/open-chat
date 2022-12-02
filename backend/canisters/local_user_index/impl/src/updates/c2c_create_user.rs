@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_create_user::{Response::*, *};
-use types::{CanisterId, CanisterWasm, Cycles, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, ReferredUserRegistered, UserEvent, UserId, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use utils::canister;
 use utils::canister::CreateAndInstallError;
@@ -30,7 +30,16 @@ async fn c2c_create_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| commit(args.principal, prepare_ok.canister_wasm.version, user_id, state));
+            mutate_state(|state| {
+                commit(
+                    args.principal,
+                    args.username,
+                    args.referred_by,
+                    prepare_ok.canister_wasm.version,
+                    user_id,
+                    state,
+                )
+            });
             Success(user_id)
         }
         Err(error) => {
@@ -86,10 +95,24 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     })
 }
 
-fn commit(user_principal: Principal, wasm_version: Version, user_id: UserId, runtime_state: &mut RuntimeState) {
+fn commit(
+    user_principal: Principal,
+    username: String,
+    referred_by: Option<UserId>,
+    wasm_version: Version,
+    user_id: UserId,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
     runtime_state.data.local_users.create(user_id, wasm_version, now);
     runtime_state.data.global_users.create(user_principal, user_id, false);
+
+    if let Some(referred_by) = referred_by {
+        runtime_state.data.user_event_sync_queue.push(
+            referred_by,
+            UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
+        );
+    }
 }
 
 fn rollback(canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
