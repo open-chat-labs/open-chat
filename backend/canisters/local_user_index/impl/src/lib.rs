@@ -1,4 +1,3 @@
-use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
@@ -6,7 +5,6 @@ use model::local_user_map::LocalUserMap;
 use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -80,7 +78,6 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -97,7 +94,6 @@ struct Data {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
@@ -109,7 +105,6 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
             user_index_canister_id,
             group_index_canister_id,
@@ -131,7 +126,6 @@ impl Default for Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            service_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
             group_index_canister_id: Principal::anonymous(),
