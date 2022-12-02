@@ -91,6 +91,7 @@ import {
     SetUsernameResponse,
     StorageStatus,
     SubmitPhoneNumberResponse,
+    SuspendUserResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
@@ -112,6 +113,7 @@ import {
     WithdrawCryptocurrencyResponse,
     FreezeGroupResponse,
     UnfreezeGroupResponse,
+    UnsuspendUserResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
@@ -1346,5 +1348,13 @@ export class OpenChatAgent extends EventTarget {
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this._groupIndexClient.unfreezeGroup(chatId);
+    }
+
+    suspendUser(userId: string): Promise<SuspendUserResponse> {
+        return this._userIndexClient.suspendUser(userId);
+    }
+
+    unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
+        return this._userIndexClient.unsuspendUser(userId);
     }
 }

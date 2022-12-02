@@ -633,5 +633,11 @@
     "failedToFreezeGroup": "Не удалось заморозить группу",
     "failedToUnfreezeGroup": "Не удалось разморозить группу",
     "accountSuspended": "Аккаунт заблокирован",
-    "yourAccountIsSuspended": "Ваш аккаунт заблокирован"
+    "yourAccountIsSuspended": "Ваш аккаунт заблокирован",
+    "failedToSuspendUser": "Не удалось приостановить действие пользователя",
+    "failedToUnsuspendUser": "Не удалось разблокировать пользователя",
+    "suspendUser": "Заблокировать пользователя",
+    "unsuspendUser": "Разблокировать пользователя",
+    "suspendedUser": "Заблокированный пользователь",
+    "unsuspendedUser": "Разблокированный пользователь"
 }

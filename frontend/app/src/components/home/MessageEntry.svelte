@@ -29,8 +29,8 @@
     import Button from "../Button.svelte";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
-    import { addQueryStringParam } from "utils/urls";
-    import { toastStore } from "stores/toast";
+    import { addQueryStringParam } from "../../utils/urls";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 

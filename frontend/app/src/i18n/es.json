@@ -634,5 +634,11 @@
     "failedToFreezeGroup": "No se pudo congelar el grupo",
     "failedToUnfreezeGroup": "No se pudo descongelar el grupo",
     "accountSuspended": "Cuenta suspendida",
-    "yourAccountIsSuspended": "Tu cuenta está suspendida"
+    "yourAccountIsSuspended": "Tu cuenta está suspendida",
+    "failedToSuspendUser": "No se pudo suspender al usuario",
+    "failedToUnsuspendUser": "No se pudo anular la suspensión del usuario",
+    "suspendUser": "Suspender usuario",
+    "unsuspendUser": "Des-suspender usuario",
+    "suspendedUser": "usuario suspendido",
+    "unsuspendedUser": "Usuario no suspendido"
 }

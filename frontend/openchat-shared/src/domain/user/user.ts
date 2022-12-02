@@ -116,6 +116,7 @@ export type CreatedUser = {
     openStorageLimitBytes: number;
     referrals: string[];
     isSuperAdmin: boolean;
+    suspended: boolean;
 };
 
 export type UserNotFound = {
@@ -196,3 +197,8 @@ export type MigrateUserPrincipalResponse =
     | "migration_already_in_progress"
     | "internal_error"
     | "migration_not_initialized";
+
+export type SuspendUserResponse = "success" | "internal_error";
+
+export type UnsuspendUserResponse = "success" | "internal_error";
+
