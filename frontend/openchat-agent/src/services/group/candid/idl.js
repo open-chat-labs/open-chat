@@ -890,6 +890,7 @@ export const idlFactory = ({ IDL }) => {
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
+    'reported_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const GroupCanisterThreadDetails = IDL.Record({

@@ -644,6 +644,7 @@ export const idlFactory = ({ IDL }) => {
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
+    'reported_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const GovernanceProposalsSubtype = IDL.Record({
@@ -897,6 +898,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
   });
+  const SearchMessagesArgs = IDL.Record({
+    'max_results' : IDL.Nat8,
+    'user_id' : UserId,
+    'search_term' : IDL.Text,
+  });
   const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
@@ -906,11 +912,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),
-  });
-  const SearchMessagesArgs = IDL.Record({
-    'max_results' : IDL.Nat8,
-    'user_id' : UserId,
-    'search_term' : IDL.Text,
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
