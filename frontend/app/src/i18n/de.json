@@ -72,7 +72,6 @@
     "oneDay": "1 Tag",
     "onlineNow": "Jetzt online",
     "messages": "Mitteilungen",
-    "searchPlaceholder": "Benutzer, Gruppen und Nachrichten durchsuchen...",
     "groupDetails": "Gruppendetails",
     "theInternetComputer": "Der Internet-Computer",
     "unexpectedError": "Unerwarteter Fehler",
@@ -642,5 +641,6 @@
     "suspendUser": "Benutzer sperren",
     "unsuspendUser": "Suspendierung des Benutzers aufheben",
     "suspendedUser": "Gesperrter Benutzer",
-    "unsuspendedUser": "Nicht gesperrter Benutzer"
+    "unsuspendedUser": "Nicht gesperrter Benutzer",
+    "searchPlaceholder": "Nach Benutzern und Gruppen suchen..."
 }

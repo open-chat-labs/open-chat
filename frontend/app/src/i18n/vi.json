@@ -68,7 +68,6 @@
     "oneDay": "1 ngày",
     "onlineNow": "Đang Online",
     "messages": "Tin nhắn",
-    "searchPlaceholder": "Tìm kiếm người dùng, nhóm, hoặc tin nhắn...",
     "groupDetails": "Chi tiêt về Nhóm",
     "theInternetComputer": "Internet Computer",
     "unexpectedError": "Đã xảy ra lỗi",
@@ -643,5 +642,6 @@
     "suspendUser": "tạm ngưng người dùng",
     "unsuspendUser": "Hủy tạm ngưng người dùng",
     "suspendedUser": "người dùng bị treo",
-    "unsuspendedUser": "Người dùng không bị tạm ngưng"
+    "unsuspendedUser": "Người dùng không bị tạm ngưng",
+    "searchPlaceholder": "Tìm kiếm người dùng và nhóm..."
 }

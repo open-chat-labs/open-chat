@@ -30,7 +30,6 @@
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
@@ -233,34 +232,6 @@
                                         <h4 class="search-item-title">
                                             @{user.username}
                                         </h4>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
-                {#if messageSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await messageSearchResults then resp}
-                            {#if resp.kind == "success" && resp.matches.length > 0}
-                                <h3 class="search-subtitle">{$_("messages")}</h3>
-                                {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.groupAvatarUrl(
-                                            messageMatchDataContent(msg)
-                                        )}
-                                        showSpinner={false}
-                                        on:click={() => loadMessage(msg)}>
-                                        <h4 class="search-item-title">
-                                            {messageMatchTitle(msg)}
-                                        </h4>
-                                        <div class="search-item-desc">
-                                            <Markdown
-                                                text={client.getContentAsText($_, msg.content)}
-                                                oneLine={true}
-                                                suppressLinks={true} />
-                                        </div>
                                     </SearchResult>
                                 {/each}
                             {/if}
