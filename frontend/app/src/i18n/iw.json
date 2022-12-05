@@ -640,5 +640,6 @@
     "suspendUser": "השעיית משתמש",
     "unsuspendUser": "בטל את השעיית המשתמש",
     "suspendedUser": "משתמש מושעה",
-    "unsuspendedUser": "משתמש לא מושעה"
+    "unsuspendedUser": "משתמש לא מושעה",
+    "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה"
 }
