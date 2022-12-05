@@ -11,6 +11,7 @@ import type {
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
     serverChatSummariesStore,
+    myServerChatSummariesStore,
     chatSummariesStore,
     groupPreviewsStore,
     selectedChatId,
@@ -49,6 +50,7 @@ export class LiveState {
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: Record<string, ChatSummary>;
+    myServerChatSummaries!: Record<string, ChatSummary>;
     chatSummaries!: Record<string, ChatSummary>;
     groupPreviews!: Record<string, GroupChatSummary>;
     selectedChatId: string | undefined;
@@ -71,6 +73,7 @@ export class LiveState {
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
+        myServerChatSummariesStore.subscribe((data) => (this.myServerChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
