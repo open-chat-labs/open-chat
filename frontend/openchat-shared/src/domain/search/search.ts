@@ -42,12 +42,6 @@ export type GroupSearchSuccess = {
     matches: GroupMatch[];
 };
 
-export type SearchAllMessagesResponse =
-    | SearchMessagesSuccess
-    | TermTooShort
-    | TermTooLong
-    | TermInvalid;
-
 export type SearchGroupChatResponse =
     | SearchMessagesSuccess
     | TermTooShort

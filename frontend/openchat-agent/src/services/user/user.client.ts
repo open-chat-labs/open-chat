@@ -39,7 +39,6 @@ import {
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SetBioResponse,
     textToCode,
@@ -64,7 +63,6 @@ import {
     markReadResponse,
     recommendedGroupsResponse,
     searchDirectChatResponse,
-    searchAllMessagesResponse,
     sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
@@ -538,19 +536,6 @@ export class UserClient extends CandidService implements IUserClient {
                 correlation_id: generateUint64(),
             }),
             undeleteMessageResponse
-        );
-    }
-
-    @profile("userClient")
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        const args = {
-            search_term: searchTerm,
-            max_results: maxResults,
-        };
-        return this.handleQueryResponse(
-            () => this.userService.search_all_messages(args),
-            searchAllMessagesResponse,
-            args
         );
     }
 

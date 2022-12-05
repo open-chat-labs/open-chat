@@ -897,10 +897,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
   });
-  const SearchAllMessagesArgs = IDL.Record({
-    'max_results' : IDL.Nat8,
-    'search_term' : IDL.Text,
-  });
   const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
@@ -910,12 +906,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),
-  });
-  const SearchAllMessagesResponse = IDL.Variant({
-    'TermTooShort' : IDL.Nat8,
-    'Success' : SearchMessagesSuccessResult,
-    'TermTooLong' : IDL.Nat8,
-    'InvalidTerm' : IDL.Null,
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -1239,11 +1229,6 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionArgs],
         [RemoveReactionResponse],
         [],
-      ),
-    'search_all_messages' : IDL.Func(
-        [SearchAllMessagesArgs],
-        [SearchAllMessagesResponse],
-        ['query'],
       ),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],

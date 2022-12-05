@@ -72,7 +72,6 @@
     "oneDay": "1 日",
     "onlineNow": "今すぐオンライン",
     "messages": "メッセージ",
-    "searchPlaceholder": "ユーザー、グループ、メッセージの検索...",
     "groupDetails": "グループ詳細",
     "theInternetComputer": "インターネットコンピューター",
     "unexpectedError": "予期しないエラー",
@@ -644,5 +643,6 @@
     "unsuspendUser": "ユーザーの停止を解除",
     "suspendedUser": "停止中のユーザー",
     "unsuspendedUser": "停止されていないユーザー",
-    "nUsersJoined": "{number} 人のユーザーがグループに参加しました"
+    "nUsersJoined": "{number} 人のユーザーがグループに参加しました",
+    "searchPlaceholder": "ユーザーとグループを検索..."
 }

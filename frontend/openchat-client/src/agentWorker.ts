@@ -61,7 +61,6 @@ import {
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
-    SearchAllMessagesResponse,
     GroupSearchResponse,
     GroupInvite,
     SearchGroupChatResponse,
@@ -965,16 +964,6 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "getGroupRules",
             payload: {
                 chatId,
-            },
-        });
-    }
-
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.sendRequest({
-            kind: "searchAllMessages",
-            payload: {
-                searchTerm,
-                maxResults,
             },
         });
     }

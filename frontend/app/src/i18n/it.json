@@ -72,7 +72,6 @@
     "oneDay": "1 giorno",
     "onlineNow": "Online adesso",
     "messages": "Messaggi",
-    "searchPlaceholder": "Cerca utenti, gruppi e messaggi...",
     "groupDetails": "Dettagli del gruppo",
     "theInternetComputer": "Internet Computer",
     "unexpectedError": "Errore inaspettato",
@@ -643,5 +642,6 @@
     "unsuspendUser": "Annulla sospensione utente",
     "suspendedUser": "Utente sospeso",
     "unsuspendedUser": "Utente non sospeso",
-    "nUsersJoined": "{number} utenti si sono uniti al gruppo"
+    "nUsersJoined": "{number} utenti si sono uniti al gruppo",
+    "searchPlaceholder": "Cerca utenti e gruppi..."
 }

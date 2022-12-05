@@ -73,7 +73,6 @@
     "oneDay": "יום 1",
     "onlineNow": "מקוון עכשיו",
     "messages": "הודעות",
-    "searchPlaceholder": "חפש משתמשים, קבוצות והודעות...",
     "groupDetails": "פרטי הקבוצה",
     "theInternetComputer": "מחשב האינטרנט",
     "unexpectedError": "שגיאה בלתי צפויה",
@@ -641,5 +640,6 @@
     "unsuspendUser": "בטל את השעיית המשתמש",
     "suspendedUser": "משתמש מושעה",
     "unsuspendedUser": "משתמש לא מושעה",
-    "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה"
+    "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה",
+    "searchPlaceholder": "חפש משתמשים וקבוצות..."
 }

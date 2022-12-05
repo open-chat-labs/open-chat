@@ -72,7 +72,6 @@
     "oneDay": "1 день",
     "onlineNow": "Сейчас в сети",
     "messages": "Сообщения",
-    "searchPlaceholder": "Поиск пользователей, групп и сообщений...",
     "groupDetails": "Сведения о группе",
     "theInternetComputer": "Интернет-компьютер",
     "unexpectedError": "Непредвиденная ошибка",
@@ -643,5 +642,6 @@
     "unsuspendUser": "Разблокировать пользователя",
     "suspendedUser": "Заблокированный пользователь",
     "unsuspendedUser": "Разблокированный пользователь",
-    "nUsersJoined": "{number} пользователей присоединились к группе"
+    "nUsersJoined": "{number} пользователей присоединились к группе",
+    "searchPlaceholder": "Поиск пользователей и групп..."
 }

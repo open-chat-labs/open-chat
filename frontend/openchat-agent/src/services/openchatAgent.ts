@@ -83,7 +83,6 @@ import {
     RemoveMemberResponse,
     ResendCodeResponse,
     ResetInviteCodeResponse,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -743,10 +742,6 @@ export class OpenChatAgent extends EventTarget {
             }
             return res;
         });
-    }
-
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.userClient.searchAllMessages(searchTerm, maxResults);
     }
 
     searchGroupChat(

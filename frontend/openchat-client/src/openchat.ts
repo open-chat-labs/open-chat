@@ -242,7 +242,6 @@ import {
     type RemoveMemberResponse,
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
-    type SearchAllMessagesResponse,
     type GroupSearchResponse,
     type GroupInvite,
     type SearchDirectChatResponse,
@@ -2472,10 +2471,6 @@ export class OpenChat extends EventTarget {
 
     getGroupRules(chatId: string): Promise<GroupRules | undefined> {
         return this.api.getGroupRules(chatId);
-    }
-
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.api.searchAllMessages(searchTerm, maxResults);
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
