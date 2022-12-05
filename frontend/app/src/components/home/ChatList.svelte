@@ -9,7 +9,6 @@
         GroupMatch,
         GroupSearchResponse,
         MessageMatch,
-        SearchAllMessagesResponse,
         UserSummary,
         DataContent,
         OpenChat,

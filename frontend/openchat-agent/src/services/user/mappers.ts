@@ -19,7 +19,6 @@ import type {
     ApiUndeleteMessageResponse,
     ApiJoinGroupResponse,
     ApiSearchDirectChatResponse,
-    ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
     ApiInitialStateResponse,
@@ -84,7 +83,6 @@ import {
     MessageMatch,
     MigrateUserPrincipalResponse,
     PinChatResponse,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SetBioResponse,
     UnpinChatResponse,
@@ -140,36 +138,6 @@ export function recommendedGroupsResponse(
     }
     throw new UnsupportedValueError(
         `Unexpected ApiRecommendedGroupsResponse type received`,
-        candid
-    );
-}
-
-export function searchAllMessagesResponse(
-    candid: ApiSearchAllMessagesResponse
-): SearchAllMessagesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            matches: candid.Success.matches.map(messageMatch),
-        };
-    }
-    if ("TermTooShort" in candid) {
-        return {
-            kind: "term_too_short",
-        };
-    }
-    if ("TermTooLong" in candid) {
-        return {
-            kind: "term_too_long",
-        };
-    }
-    if ("InvalidTerm" in candid) {
-        return {
-            kind: "term_invalid",
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unknown UserIndex.ApiSearchMessagesResponse type received",
         candid
     );
 }

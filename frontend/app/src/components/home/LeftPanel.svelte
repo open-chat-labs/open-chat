@@ -3,7 +3,6 @@
     import ChatList from "./ChatList.svelte";
     import type {
         GroupSearchResponse,
-        SearchAllMessagesResponse,
         UserSummary,
     } from "openchat-client";
 

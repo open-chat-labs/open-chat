@@ -12,7 +12,6 @@
     import {
         GroupSearchResponse,
         MessageMatch,
-        SearchAllMessagesResponse,
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
