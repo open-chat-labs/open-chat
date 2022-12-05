@@ -42,7 +42,7 @@
         iti = intlTelInput(phoneElement, {
             initialCountry: "gb",
             preferredCountries: [],
-            excludeCountries: ["cn", "ru", "ng"],
+            excludeCountries: ["cn", "ru", "ng", "by", "ir"],
         });
 
         phoneElement.addEventListener("countrychange", () => {
