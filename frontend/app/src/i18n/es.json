@@ -308,7 +308,10 @@
         "confirm": "Confirmar",
         "challengeAttemptFailed": "El valor que ingresó es incorrecto. Prueba el nuevo desafío.",
         "challengeThrottled": "Se han generado demasiados desafíos. Por favor, inténtelo de nuevo más tarde.",
-        "attemptChallenge": "Por favor escriba los caracteres que ve"
+        "attemptChallenge": "Por favor escriba los caracteres que ve",
+        "smsWarning": "Hay una serie de países a los que actualmente no podemos enviar mensajes SMS (por ejemplo, China, Nigeria, Irán y otros). Si no recibe un código, es posible que se encuentre en un país al que actualmente no podemos enviar. Mejoraremos esto en el futuro.",
+        "closedTitle": "Registro en pausa",
+        "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -640,5 +643,6 @@
     "suspendUser": "Suspender usuario",
     "unsuspendUser": "Des-suspender usuario",
     "suspendedUser": "usuario suspendido",
-    "unsuspendedUser": "Usuario no suspendido"
+    "unsuspendedUser": "Usuario no suspendido",
+    "nUsersJoined": "{number} usuarios se unieron al grupo"
 }
