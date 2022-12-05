@@ -189,6 +189,7 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
+    SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
@@ -2913,6 +2914,7 @@ export class OpenChat extends EventTarget {
                 if (selectedChatId !== undefined) {
                     if (this._liveState.chatSummaries[selectedChatId] === undefined) {
                         clearSelectedChat();
+                        this.dispatchEvent(new SelectedChatInvalid());
                     } else {
                         chatUpdatedStore.set({
                             affectedEvents: chatsResponse.affectedEvents[selectedChatId] ?? [],
