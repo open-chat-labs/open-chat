@@ -642,5 +642,6 @@
     "unsuspendUser": "Suspendierung des Benutzers aufheben",
     "suspendedUser": "Gesperrter Benutzer",
     "unsuspendedUser": "Nicht gesperrter Benutzer",
+    "nUsersJoined": "{number} Benutzer sind der Gruppe beigetreten",
     "searchPlaceholder": "Nach Benutzern und Gruppen suchen..."
 }

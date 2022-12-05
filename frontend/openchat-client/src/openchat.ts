@@ -189,6 +189,7 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
+    SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
@@ -838,6 +839,12 @@ export class OpenChat extends EventTarget {
                     }
                     return "failure";
                 }
+            })
+            .then((resp) => {
+                if (resp === "success" && this._liveState.groupPreviews[group.chatId] !== undefined) {
+                    removeGroupPreview(group.chatId);
+                }
+                return resp;
             })
             .catch((err) => {
                 this._logger.error("Unable to join group", err);
@@ -2852,7 +2859,7 @@ export class OpenChat extends EventTarget {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const chats = Object.values(this._liveState.serverChatSummaries);
+            const chats = Object.values(this._liveState.myServerChatSummaries);
             const selectedChat = this._liveState.selectedChat;
             const userLookup = this._liveState.userStore;
             const currentState: CurrentChatState = {
@@ -2890,25 +2897,24 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                const selectedChat = this._liveState.selectedChat;
-                let selectedChatInvalid = true;
-
                 myServerChatSummariesStore.set(
                     chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                         rec[chat.chatId] = chat;
-                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                            selectedChatInvalid = false;
-                        }
                         return rec;
                     }, {})
                 );
 
-                if (selectedChatInvalid) {
-                    clearSelectedChat();
-                } else if (selectedChat !== undefined) {
-                    chatUpdatedStore.set({
-                        affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
-                    });
+                const selectedChatId = this._liveState.selectedChatId;
+
+                if (selectedChatId !== undefined) {
+                    if (this._liveState.chatSummaries[selectedChatId] === undefined) {
+                        clearSelectedChat();
+                        this.dispatchEvent(new SelectedChatInvalid());
+                    } else {
+                        chatUpdatedStore.set({
+                            affectedEvents: chatsResponse.affectedEvents[selectedChatId] ?? [],
+                        });
+                    }
                 }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {

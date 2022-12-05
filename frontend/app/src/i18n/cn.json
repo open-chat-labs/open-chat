@@ -643,5 +643,6 @@
     "unsuspendUser": "取消暂停用户",
     "suspendedUser": "暂停用户",
     "unsuspendedUser": "解除暂停的用户",
+    "nUsersJoined": "{number} 位用户加入了群组",
     "searchPlaceholder": "搜索用户和组..."
 }
