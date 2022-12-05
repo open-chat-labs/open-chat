@@ -501,7 +501,9 @@
         "pollVotes": "sondages",
         "replies": "réponses",
         "reactions": "réactions",
-        "deletedMessages": "messages supprimés"
+        "deletedMessages": "messages supprimés",
+        "reportedMessages": "Messages signalés",
+        "reportedMessagesInfo": "Les messages que vous avez envoyés et qui ont été supprimés ou signalés par d'autres. Cela peut être utilisé comme une indication que vous ne contribuez pas positivement à la communauté."
     },
     "andNMore": ", et {n} de plus",
     "confirmMakeGroupPrivate": "Voulez-vous vraiment rendre ce groupe privé ? Actuellement, cette opération ne peut pas être annulée !",

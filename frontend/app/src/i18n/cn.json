@@ -501,7 +501,9 @@
         "pollVotes": "投票",
         "replies": "回复",
         "reactions": "反应",
-        "deletedMessages": "已删除的消息"
+        "deletedMessages": "已删除的消息",
+        "reportedMessages": "举报信息",
+        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。"
     },
     "andNMore": ", 和 {n} 更多",
     "confirmMakeGroupPrivate": "您确定要将此组设为私有吗？目前此操作无法撤消！",

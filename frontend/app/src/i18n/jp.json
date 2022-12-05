@@ -501,7 +501,9 @@
         "pollVotes": "得票",
         "replies": "返信",
         "reactions": "反応",
-        "deletedMessages": "削除されたメッセージ"
+        "deletedMessages": "削除されたメッセージ",
+        "reportedMessages": "報告されたメッセージ",
+        "reportedMessagesInfo": "あなたが送信したメッセージで、他のユーザーによって削除または報告されたもの。これは、コミュニティに積極的に貢献していないことを示すものとして使用される場合があります。"
     },
     "andNMore": "、および{n} more",
     "confirmMakeGroupPrivate": "このグループを絶対に非公開にしますか？現在、この操作を元に戻すことはできません。",

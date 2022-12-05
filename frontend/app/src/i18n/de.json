@@ -501,7 +501,9 @@
         "pollVotes": "Umfrage Stimmen",
         "replies": "antwortet",
         "reactions": "Reaktionen",
-        "deletedMessages": "gelöschte Nachrichten"
+        "deletedMessages": "gelöschte Nachrichten",
+        "reportedMessages": "Gemeldete Nachrichten",
+        "reportedMessagesInfo": "Von Ihnen gesendete Nachrichten, die von anderen gelöscht oder gemeldet wurden. Dies kann als Hinweis darauf verwendet werden, dass Sie keinen positiven Beitrag zur Gemeinschaft leisten."
     },
     "andNMore": ", und {n} mehr",
     "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
