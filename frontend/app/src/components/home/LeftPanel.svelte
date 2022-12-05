@@ -3,13 +3,11 @@
     import ChatList from "./ChatList.svelte";
     import type {
         GroupSearchResponse,
-        SearchAllMessagesResponse,
         UserSummary,
     } from "openchat-client";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
@@ -39,8 +37,7 @@
             {searchTerm}
             {searching}
             {groupSearchResults}
-            {userSearchResults}
-            {messageSearchResults} />
+            {userSearchResults} />
     </div>
 </Panel>
 

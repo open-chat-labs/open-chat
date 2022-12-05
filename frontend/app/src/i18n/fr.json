@@ -72,7 +72,6 @@
     "oneDay": "Un jour",
     "onlineNow": "Maintenant en ligne",
     "messages": "messages",
-    "searchPlaceholder": "Rechercher des utilisateurs, des groupes et des messages...",
     "groupDetails": "Détails du groupe",
     "theInternetComputer": "L'ordinateur Internet",
     "unexpectedError": "Erreur inattendue",
@@ -644,5 +643,7 @@
     "suspendUser": "Suspendre l'utilisateur",
     "unsuspendUser": "Annuler la suspension de l'utilisateur",
     "suspendedUser": "Utilisateur suspendu",
-    "unsuspendedUser": "Utilisateur non suspendu"
+    "unsuspendedUser": "Utilisateur non suspendu",
+    "nUsersJoined": "{number} utilisateurs ont rejoint le groupe",
+    "searchPlaceholder": "Rechercher des utilisateurs et des groupes..."
 }

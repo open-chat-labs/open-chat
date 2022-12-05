@@ -29,7 +29,6 @@ import type {
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SetBioResponse,
     ToggleMuteNotificationResponse,
@@ -119,7 +118,6 @@ export interface IUserClient {
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<UndeleteMessageResponse>;
-    searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
     searchDirectChat(
         userId: string,
         searchTerm: string,

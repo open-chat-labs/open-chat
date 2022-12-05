@@ -77,6 +77,7 @@ type ChatMetrics =
         edits: nat64;
         reactions: nat64;
         proposals: nat64;
+        messages_reported_by_others: nat64;
         last_active: TimestampMillis;
     };
 

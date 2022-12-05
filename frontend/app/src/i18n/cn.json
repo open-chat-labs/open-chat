@@ -43,7 +43,6 @@
     "oneDay": "1 天",
     "onlineNow": "在线",
     "messages": "消息",
-    "searchPlaceholder": "搜索用户，群聊和消息...",
     "groupDetails": "群聊简介",
     "theInternetComputer": "互联网计算机",
     "unexpectedError": "未知错误",
@@ -645,5 +644,7 @@
     "suspendUser": "暂停用户",
     "unsuspendUser": "取消暂停用户",
     "suspendedUser": "暂停用户",
-    "unsuspendedUser": "解除暂停的用户"
+    "unsuspendedUser": "解除暂停的用户",
+    "nUsersJoined": "{number} 位用户加入了群组",
+    "searchPlaceholder": "搜索用户和组..."
 }
