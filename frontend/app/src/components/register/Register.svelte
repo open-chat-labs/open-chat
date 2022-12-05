@@ -8,6 +8,7 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { writable, Writable } from "svelte/store";
     import type { Challenge, ChallengeAttempt, CreatedUser, OpenChat } from "openchat-client";
+    import Button from "../Button.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -27,6 +28,7 @@
     let challenge: Writable<Challenge | undefined> = writable(undefined);
     let challengeAttempt: ChallengeAttempt | undefined = undefined;
     let createdUser: CreatedUser | undefined = undefined;
+    let closed: boolean = true;
 
     onMount(() => {
         createChallenge();
@@ -137,7 +139,13 @@
 </script>
 
 <ModalPage minHeight="380px">
-    {#if $state.kind === "spinning"}
+    {#if closed}
+        <div class="closed">
+            <h4 class="subtitle">{$_("register.closedTitle")}</h4>
+            <h4>{$_("register.closed")}</h4>
+            <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+        </div>
+    {:else if $state.kind === "spinning"}
         <div class="spinner" />
     {:else if $state.kind === "awaiting_challenge_attempt"}
         <ChallengeComponent
@@ -198,5 +206,14 @@
         @include font(bold, normal, fs-140);
         margin-bottom: $sp4;
         text-shadow: var(--modalPage-txt-sh);
+    }
+
+    .closed {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: $sp5;
+        flex: auto;
     }
 </style>
