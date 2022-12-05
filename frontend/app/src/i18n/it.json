@@ -642,5 +642,6 @@
     "suspendUser": "Sospendi utente",
     "unsuspendUser": "Annulla sospensione utente",
     "suspendedUser": "Utente sospeso",
-    "unsuspendedUser": "Utente non sospeso"
+    "unsuspendedUser": "Utente non sospeso",
+    "nUsersJoined": "{number} utenti si sono uniti al gruppo"
 }

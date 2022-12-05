@@ -16,7 +16,7 @@
     let deletedMessagesElement: HTMLElement;
 
     $: userStore = client.userStore;
-    $: joinedText = buildText($userStore, joined, "userJoined");
+    $: joinedText = buildJoinedText($userStore, joined);
     $: deletedText = messagesDeleted.length > 0 
         ? messagesDeleted.length === 1
         ? $_("oneMessageDeleted") 
@@ -41,13 +41,18 @@
         }
     });
 
-    function buildText(
+    function buildJoinedText(
         userStore: UserLookup,
-        userIds: Set<string>,
-        template: string
+        userIds: Set<string>
     ): string | undefined {
-        return userIds.size !== 0
-            ? $_(template, {
+        return userIds.size > 10
+            ? $_("nUsersJoined", {
+                  values: {
+                      number: userIds.size.toString(),
+                  },
+              })
+            : userIds.size > 0
+            ? $_("userJoined", {
                   values: {
                       username: buildUserList(userStore, userIds),
                   },

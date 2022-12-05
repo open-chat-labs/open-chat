@@ -640,5 +640,6 @@
     "failedToSuspendUser": "Failed to suspend user",
     "failedToUnsuspendUser": "Failed to un-suspend user",
     "suspendedUser": "Suspended user",
-    "unsuspendedUser": "Un-suspended user"
+    "unsuspendedUser": "Un-suspended user",
+    "nUsersJoined": "{number} users joined the group"
 }

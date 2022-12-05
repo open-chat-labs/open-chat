@@ -643,5 +643,6 @@
     "suspendUser": "tạm ngưng người dùng",
     "unsuspendUser": "Hủy tạm ngưng người dùng",
     "suspendedUser": "người dùng bị treo",
-    "unsuspendedUser": "Người dùng không bị tạm ngưng"
+    "unsuspendedUser": "Người dùng không bị tạm ngưng",
+    "nUsersJoined": "{number} người dùng đã tham gia nhóm"
 }

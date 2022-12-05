@@ -643,5 +643,6 @@
     "suspendUser": "ユーザーの停止",
     "unsuspendUser": "ユーザーの停止を解除",
     "suspendedUser": "停止中のユーザー",
-    "unsuspendedUser": "停止されていないユーザー"
+    "unsuspendedUser": "停止されていないユーザー",
+    "nUsersJoined": "{number} 人のユーザーがグループに参加しました"
 }
