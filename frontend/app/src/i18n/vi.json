@@ -308,7 +308,10 @@
         "createUser": "Tạo tài khoản",
         "challengeAttemptFailed": "Giá trị bạn đã nhập không chính xác. Hãy thử thách thức mới.",
         "challengeThrottled": "Quá nhiều thách thức đã được tạo ra. Vui lòng thử lại sau.",
-        "attemptChallenge": "Vui lòng nhập các ký tự bạn thấy"
+        "attemptChallenge": "Vui lòng nhập các ký tự bạn thấy",
+        "smsWarning": "Có một số quốc gia mà chúng tôi hiện không thể gửi tin nhắn SMS tới (ví dụ: Trung Quốc, Nigeria, Iran và các quốc gia khác). Nếu bạn không nhận được mã, bạn có thể đang ở một quốc gia mà chúng tôi hiện không thể gửi mã đến. Chúng tôi sẽ cải thiện điều này trong tương lai.",
+        "closedTitle": "Đăng ký bị tạm dừng",
+        "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!"
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
