@@ -156,8 +156,8 @@ impl ChatEventInternal {
             ChatEventInternal::MessageDeleted(m) => {
                 if let Some(sender) = deleted_message_sender {
                     if sender != m.updated_by {
-                        incr(&mut metrics.messages_reported_by_others);
-                        incr(&mut per_user_metrics.entry(sender).or_default().messages_reported_by_others);
+                        incr(&mut metrics.reported_messages);
+                        incr(&mut per_user_metrics.entry(sender).or_default().reported_messages);
                     }
                 }
                 incr(&mut metrics.deleted_messages);
@@ -166,8 +166,8 @@ impl ChatEventInternal {
             ChatEventInternal::MessageUndeleted(m) => {
                 if let Some(sender) = deleted_message_sender {
                     if sender != m.updated_by {
-                        decr(&mut metrics.messages_reported_by_others);
-                        decr(&mut per_user_metrics.entry(sender).or_default().messages_reported_by_others);
+                        decr(&mut metrics.reported_messages);
+                        decr(&mut per_user_metrics.entry(sender).or_default().reported_messages);
                     }
                 }
                 decr(&mut metrics.deleted_messages);

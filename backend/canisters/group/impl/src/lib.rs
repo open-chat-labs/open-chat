@@ -169,7 +169,7 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
-            reported_messages: chat_metrics.messages_reported_by_others,
+            reported_messages: chat_metrics.reported_messages,
             last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
