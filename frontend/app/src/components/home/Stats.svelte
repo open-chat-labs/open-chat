@@ -1,10 +1,12 @@
 <script lang="ts">
     import { cubicOut } from "svelte/easing";
+    import Flag from "svelte-material-icons/Flag.svelte";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
     import type { ChatMetrics, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
+    import { iconSize } from "stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     export let stats: ChatMetrics;
@@ -235,6 +237,13 @@
     <div class="deleted-messages">
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         {$_("stats.deletedMessages")}
+    </div>
+    <div class="reported-messages">
+        <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
+        {$_("stats.reportedMessages")}
+        <div class="icon">
+            <Flag size={$iconSize} color={"var(--error)"} />
+        </div>
     </div>
 </div>
 
