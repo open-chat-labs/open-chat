@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, DeletedGroupInfo, Milliseconds};
+use types::{ChatId, Milliseconds};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,14 +8,4 @@ pub struct Args {
     pub active_in_last: Option<Milliseconds>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub active_groups: Vec<ChatId>,
-    pub deleted_groups: Vec<DeletedGroupInfo>,
-    pub upgrades_in_progress: Vec<ChatId>,
-}
+pub type Response = crate::filter_groups::Response;

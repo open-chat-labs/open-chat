@@ -43,7 +43,6 @@
     "oneDay": "1 天",
     "onlineNow": "在线",
     "messages": "消息",
-    "searchPlaceholder": "搜索用户，群聊和消息...",
     "groupDetails": "群聊简介",
     "theInternetComputer": "互联网计算机",
     "unexpectedError": "未知错误",
@@ -256,7 +255,10 @@
         "bioTooLong": "你的简历太长了",
         "challengeAttemptFailed": "您输入的值不正确。请尝试新的挑战。",
         "challengeThrottled": "已经产生了太多的挑战。请稍后再试。",
-        "attemptChallenge": "请输入您看到的字符"
+        "attemptChallenge": "请输入您看到的字符",
+        "smsWarning": "我们目前无法向许多国家/地区发送 SMS 消息（例如中国、尼日利亚、伊朗等）。如果您没有收到代码，您可能位于我们目前无法发送到的国家/地区。我们将在未来改进这一点。",
+        "closedTitle": "注册暂停",
+        "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -634,5 +636,13 @@
     "failedToFreezeGroup": "冻结群组失败",
     "failedToUnfreezeGroup": "解冻群组失败",
     "accountSuspended": "帐户暂停",
-    "yourAccountIsSuspended": "你的账户暂时无法使用"
+    "yourAccountIsSuspended": "你的账户暂时无法使用",
+    "failedToSuspendUser": "无法暂停用户",
+    "failedToUnsuspendUser": "无法取消暂停用户",
+    "suspendUser": "暂停用户",
+    "unsuspendUser": "取消暂停用户",
+    "suspendedUser": "暂停用户",
+    "unsuspendedUser": "解除暂停的用户",
+    "nUsersJoined": "{number} 位用户加入了群组",
+    "searchPlaceholder": "搜索用户和组..."
 }

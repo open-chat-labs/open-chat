@@ -67,7 +67,6 @@
     "oneDay": "1 día",
     "onlineNow": "En linea ahora",
     "messages": "Mensajes",
-    "searchPlaceholder": "Buscar usuarios, grupos y mensajes...",
     "groupDetails": "Detalles del grupo",
     "theInternetComputer": "Internet Computer",
     "unexpectedError": "Error inesperado",
@@ -308,7 +307,10 @@
         "confirm": "Confirmar",
         "challengeAttemptFailed": "El valor que ingresó es incorrecto. Prueba el nuevo desafío.",
         "challengeThrottled": "Se han generado demasiados desafíos. Por favor, inténtelo de nuevo más tarde.",
-        "attemptChallenge": "Por favor escriba los caracteres que ve"
+        "attemptChallenge": "Por favor escriba los caracteres que ve",
+        "smsWarning": "Hay una serie de países a los que actualmente no podemos enviar mensajes SMS (por ejemplo, China, Nigeria, Irán y otros). Si no recibe un código, es posible que se encuentre en un país al que actualmente no podemos enviar. Mejoraremos esto en el futuro.",
+        "closedTitle": "Registro en pausa",
+        "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -634,5 +636,13 @@
     "failedToFreezeGroup": "No se pudo congelar el grupo",
     "failedToUnfreezeGroup": "No se pudo descongelar el grupo",
     "accountSuspended": "Cuenta suspendida",
-    "yourAccountIsSuspended": "Tu cuenta está suspendida"
+    "yourAccountIsSuspended": "Tu cuenta está suspendida",
+    "failedToSuspendUser": "No se pudo suspender al usuario",
+    "failedToUnsuspendUser": "No se pudo anular la suspensión del usuario",
+    "suspendUser": "Suspender usuario",
+    "unsuspendUser": "Des-suspender usuario",
+    "suspendedUser": "usuario suspendido",
+    "unsuspendedUser": "Usuario no suspendido",
+    "nUsersJoined": "{number} usuarios se unieron al grupo",
+    "searchPlaceholder": "Buscar usuarios y grupos..."
 }

@@ -72,7 +72,6 @@
     "oneDay": "1 Tag",
     "onlineNow": "Jetzt online",
     "messages": "Mitteilungen",
-    "searchPlaceholder": "Benutzer, Gruppen und Nachrichten durchsuchen...",
     "groupDetails": "Gruppendetails",
     "theInternetComputer": "Der Internet-Computer",
     "unexpectedError": "Unerwarteter Fehler",
@@ -312,7 +311,10 @@
         "createUser": "Benutzer erstellen",
         "challengeAttemptFailed": "Der eingegebene Wert ist falsch. Bitte versuchen Sie die neue Herausforderung.",
         "challengeThrottled": "Es wurden zu viele Herausforderungen generiert. Bitte versuchen Sie es später erneut.",
-        "attemptChallenge": "Bitte geben Sie die angezeigten Zeichen ein"
+        "attemptChallenge": "Bitte geben Sie die angezeigten Zeichen ein",
+        "smsWarning": "Es gibt eine Reihe von Ländern, in die wir derzeit keine SMS-Nachrichten senden können (z. B. China, Nigeria, Iran und andere). Wenn Sie keinen Code erhalten, befinden Sie sich möglicherweise in einem Land, in das wir derzeit nicht versenden können. Wir werden dies in Zukunft verbessern.",
+        "closedTitle": "Registrierung pausiert",
+        "closed": "Aufgrund der sehr hohen Nachfrage sind die Registrierungen neuer Benutzer vorübergehend geschlossen. Wir werden bald über mehrere Subnetze skalieren und können dann unbegrenzt wachsen!"
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
@@ -633,5 +635,13 @@
     "failedToFreezeGroup": "Die Gruppe konnte nicht eingefroren werden",
     "failedToUnfreezeGroup": "Die Gruppe konnte nicht freigegeben werden",
     "accountSuspended": "Konto gesperrt",
-    "yourAccountIsSuspended": "Ihr Account wurde gesperrt"
+    "yourAccountIsSuspended": "Ihr Account wurde gesperrt",
+    "failedToSuspendUser": "Benutzer konnte nicht gesperrt werden",
+    "failedToUnsuspendUser": "Sperrung des Benutzers konnte nicht aufgehoben werden",
+    "suspendUser": "Benutzer sperren",
+    "unsuspendUser": "Suspendierung des Benutzers aufheben",
+    "suspendedUser": "Gesperrter Benutzer",
+    "unsuspendedUser": "Nicht gesperrter Benutzer",
+    "nUsersJoined": "{number} Benutzer sind der Gruppe beigetreten",
+    "searchPlaceholder": "Nach Benutzern und Gruppen suchen..."
 }

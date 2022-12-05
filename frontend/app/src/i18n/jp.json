@@ -72,7 +72,6 @@
     "oneDay": "1 日",
     "onlineNow": "今すぐオンライン",
     "messages": "メッセージ",
-    "searchPlaceholder": "ユーザー、グループ、メッセージの検索...",
     "groupDetails": "グループ詳細",
     "theInternetComputer": "インターネットコンピューター",
     "unexpectedError": "予期しないエラー",
@@ -286,7 +285,10 @@
         "createUser": "ユーザーを作成する",
         "challengeAttemptFailed": "入力した値が正しくありません。新しいチャレンジをお試しください。",
         "challengeThrottled": "あまりにも多くの課題が発生しました。後でもう一度やり直してください。",
-        "attemptChallenge": "表示されている文字を入力してください"
+        "attemptChallenge": "表示されている文字を入力してください",
+        "smsWarning": "現在、SMS メッセージを送信できない国がいくつかあります (例: 中国、ナイジェリア、イランなど)。コードが届かない場合は、現在送信できない国にいる可能性があります。これは今後改善していきます。",
+        "closedTitle": "登録を一時停止しました",
+        "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!"
     },
     "faq": {
         "menu": "FAQ",
@@ -634,5 +636,13 @@
     "failedToFreezeGroup": "グループを凍結できませんでした",
     "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました",
     "accountSuspended": "アカウントが一時停止",
-    "yourAccountIsSuspended": "あなたのアカウントが停止されました"
+    "yourAccountIsSuspended": "あなたのアカウントが停止されました",
+    "failedToSuspendUser": "ユーザーを一時停止できませんでした",
+    "failedToUnsuspendUser": "ユーザーの停止を解除できませんでした",
+    "suspendUser": "ユーザーの停止",
+    "unsuspendUser": "ユーザーの停止を解除",
+    "suspendedUser": "停止中のユーザー",
+    "unsuspendedUser": "停止されていないユーザー",
+    "nUsersJoined": "{number} 人のユーザーがグループに参加しました",
+    "searchPlaceholder": "ユーザーとグループを検索..."
 }

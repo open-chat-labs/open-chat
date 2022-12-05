@@ -480,6 +480,30 @@ type InitialStateResponse =
         InternalError: text;
     };
 
+type InitialStateV2Response =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            direct_chats: vec DirectChatSummary;
+            group_chats: vec UserCanisterGroupChatSummary;
+            avatar_id: opt nat;
+            blocked_users: vec UserId;
+            pinned_chats: vec ChatId;
+            user_canister_wasm_version: Version;
+        };
+        SuccessCached: record {
+            timestamp: TimestampMillis;
+            direct_chats: vec DirectChatSummary;
+            cache_timestamp: TimestampMillis;
+            cached_group_chat_summaries: vec GroupChatSummary;
+            group_chats_added: vec UserCanisterGroupChatSummary;
+            avatar_id: opt nat;
+            blocked_users: vec UserId;
+            pinned_chats: vec ChatId;
+            user_canister_wasm_version: Version;
+        };
+    };
+
 type GroupChatUpdatesSince =
     record {
         chat_id: ChatId;
@@ -512,6 +536,43 @@ type UpdatesResponse =
             pinned_chats: opt vec ChatId;
         };
         InternalError: text;
+    };
+
+type UpdatesV2Args =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type UpdatesV2Response =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            direct_chats_added: vec DirectChatSummary;
+            direct_chats_updated: vec DirectChatSummaryUpdates;
+            group_chats_added: vec UserCanisterGroupChatSummary;
+            group_chats_updated: vec UserCanisterGroupChatSummaryUpdates;
+            chats_removed: vec ChatId;
+            avatar_id: AvatarIdUpdate;
+            user_canister_wasm_version: opt Version;
+            blocked_users_v2: opt vec UserId;
+            pinned_chats: opt vec ChatId;
+        };
+    };
+
+type UserCanisterGroupChatSummary =
+    record {
+        chat_id: ChatId;
+        read_by_me_up_to: opt MessageIndex;
+        threads_read: vec record { MessageIndex; MessageIndex };
+        archived: bool;
+    };
+
+type UserCanisterGroupChatSummaryUpdates =
+    record {
+        chat_id: ChatId;
+        read_by_me_up_to: opt MessageIndex;
+        threads_read: vec record { MessageIndex; MessageIndex };
+        archived: opt bool;
     };
 
 type EventsArgs =
@@ -619,20 +680,6 @@ type SearchMessagesSuccessResult =
         matches: vec MessageMatch;
     };
 
-type SearchAllMessagesArgs =
-    record {
-        search_term: text;
-        max_results: nat8;
-    };
-
-type SearchAllMessagesResponse =
-    variant {
-        Success: SearchMessagesSuccessResult;
-        TermTooShort: nat8;
-        TermTooLong: nat8;
-        InvalidTerm;
-    };
-
 type BioArgs = record {};
 
 type BioResponse =
@@ -697,8 +744,9 @@ service: {
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
+    initial_state_v2: (InitialStateArgs) -> (InitialStateV2Response) query;
+    updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
-    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
     bio: (BioArgs) -> (BioResponse) query;
     public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
 }

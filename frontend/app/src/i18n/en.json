@@ -79,7 +79,7 @@
     "oneDay": "1 day",
     "onlineNow": "Online now",
     "messages": "Messages",
-    "searchPlaceholder": "Search users, groups and messages...",
+    "searchPlaceholder": "Search for users and groups...",
     "groupDetails": "Group details",
     "theInternetComputer": "The Internet Computer",
     "unexpectedError": "Unexpected Error",
@@ -286,6 +286,7 @@
         "registerAs": "To register as a user",
         "enterCodeSentTo": "code sent to ",
         "enterPhone": "Please enter your phone number",
+        "smsWarning": "There are a number of countries that we cannot currently send SMS messages to (e.g. China, Nigeria, Iran and others). If you do not receive a code you may be in a country we cannot currently send to. We will improve this in the future.",
         "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
         "pleaseEnterCode": "Please enter the code",
@@ -318,7 +319,9 @@
         "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
         "challengeThrottled": "Too many challenges have been generated. Please try again later.",
         "attemptChallenge": "Please type in the characters you see",
-        "createUser": "Create user"
+        "createUser": "Create user",
+        "closedTitle": "Registration paused",
+        "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!"
     },
     "faq": {
         "menu": "FAQ",
@@ -630,6 +633,13 @@
     "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}",
     "failedToFreezeGroup": "Failed to freeze group",
     "failedToUnfreezeGroup": "Failed to unfreeze group",
+    "suspendUser": "Suspend user",
+    "unsuspendUser": "Un-suspend user",
     "accountSuspended": "Account suspended",
-    "yourAccountIsSuspended": "Your account is suspended"
+    "yourAccountIsSuspended": "Your account is suspended",
+    "failedToSuspendUser": "Failed to suspend user",
+    "failedToUnsuspendUser": "Failed to un-suspend user",
+    "suspendedUser": "Suspended user",
+    "unsuspendedUser": "Un-suspended user",
+    "nUsersJoined": "{number} users joined the group"
 }

@@ -176,6 +176,9 @@
                     type="tel" />
             </div>
         </form>
+        <div class="note">
+            {$_("register.smsWarning")}
+        </div>
         {#if error}
             <ErrorMessage>{$_(error)}</ErrorMessage>
         {/if}
@@ -247,6 +250,11 @@
         @include font(bold, normal, fs-120);
         margin: $sp4 $sp4;
         text-shadow: var(--modalPage-txt-sh);
+    }
+
+    .note {
+        @include font(light, normal, fs-80);
+        margin-bottom: $sp3;
     }
 
     .enter-code {

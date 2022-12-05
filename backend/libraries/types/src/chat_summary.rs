@@ -165,7 +165,7 @@ pub struct PublicGroupSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryInternal {
+pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
     pub name: String,
@@ -188,12 +188,12 @@ pub struct GroupChatSummaryInternal {
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub frozen: Option<FrozenGroupInfo>,
 }
 
-impl GroupChatSummaryInternal {
-    pub fn merge(self, updates: GroupChatSummaryUpdatesInternal) -> Self {
+impl GroupCanisterGroupChatSummary {
+    pub fn merge(self, updates: GroupCanisterGroupChatSummaryUpdates) -> Self {
         if self.chat_id != updates.chat_id {
             panic!(
                 "Updates are not from the same chat. Original: {}. Updates: {}",
@@ -221,7 +221,7 @@ impl GroupChatSummaryInternal {
             .take(MAX_THREADS_IN_SUMMARY)
             .collect();
 
-        GroupChatSummaryInternal {
+        GroupCanisterGroupChatSummary {
             chat_id: self.chat_id,
             last_updated: updates.last_updated,
             name: updates.name.unwrap_or(self.name),
@@ -250,8 +250,8 @@ impl GroupChatSummaryInternal {
     }
 }
 
-impl From<GroupChatSummaryInternal> for GroupChatSummary {
-    fn from(s: GroupChatSummaryInternal) -> Self {
+impl From<GroupCanisterGroupChatSummary> for GroupChatSummary {
+    fn from(s: GroupCanisterGroupChatSummary) -> Self {
         GroupChatSummary {
             chat_id: s.chat_id,
             last_updated: s.last_updated,
@@ -284,7 +284,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryUpdatesInternal {
+pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
@@ -304,13 +304,13 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
-    pub latest_threads: Vec<ThreadSyncDetailsInternal>,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
 }
 
-impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
-    fn from(s: GroupChatSummaryUpdatesInternal) -> Self {
+impl From<GroupCanisterGroupChatSummaryUpdates> for GroupChatSummaryUpdates {
+    fn from(s: GroupCanisterGroupChatSummaryUpdates) -> Self {
         GroupChatSummaryUpdates {
             chat_id: s.chat_id,
             last_updated: s.last_updated,
@@ -356,6 +356,8 @@ pub struct ChatMetrics {
     pub edits: u64,
     pub reactions: u64,
     pub proposals: u64,
+    #[serde(default)]
+    pub messages_reported_by_others: u64,
     pub last_active: TimestampMillis,
 }
 
@@ -390,15 +392,15 @@ pub struct ThreadSyncDetails {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct ThreadSyncDetailsInternal {
+pub struct GroupCanisterThreadDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
     pub latest_message: MessageIndex,
     pub last_updated: TimestampMillis,
 }
 
-impl From<ThreadSyncDetailsInternal> for ThreadSyncDetails {
-    fn from(s: ThreadSyncDetailsInternal) -> Self {
+impl From<GroupCanisterThreadDetails> for ThreadSyncDetails {
+    fn from(s: GroupCanisterThreadDetails) -> Self {
         ThreadSyncDetails {
             root_message_index: s.root_message_index,
             latest_event: Some(s.latest_event),

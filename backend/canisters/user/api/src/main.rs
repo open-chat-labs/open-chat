@@ -7,12 +7,13 @@ fn main() {
     generate_candid_method!(user, events_range, query);
     generate_candid_method!(user, events_window, query);
     generate_candid_method!(user, initial_state, query);
+    generate_candid_method!(user, initial_state_v2, query);
     generate_candid_method!(user, messages_by_message_index, query);
     generate_candid_method!(user, public_profile, query);
     generate_candid_method!(user, recommended_groups, query);
-    generate_candid_method!(user, search_all_messages, query);
     generate_candid_method!(user, search_messages, query);
     generate_candid_method!(user, updates, query);
+    generate_candid_method!(user, updates_v2, query);
 
     generate_candid_method!(user, add_recommended_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);

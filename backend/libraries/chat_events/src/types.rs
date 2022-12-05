@@ -144,6 +144,7 @@ impl ChatEventInternal {
         &self,
         metrics: &mut ChatMetrics,
         per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
+        deleted_message_sender: Option<UserId>,
         timestamp: TimestampMillis,
     ) {
         match &self {
@@ -153,10 +154,20 @@ impl ChatEventInternal {
                 incr(&mut per_user_metrics.entry(m.updated_by).or_default().edits);
             }
             ChatEventInternal::MessageDeleted(m) => {
+                if let Some(sender) = deleted_message_sender {
+                    if sender != m.updated_by {
+                        incr(&mut per_user_metrics.entry(sender).or_default().messages_reported_by_others);
+                    }
+                }
                 incr(&mut metrics.deleted_messages);
                 incr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
             }
             ChatEventInternal::MessageUndeleted(m) => {
+                if let Some(sender) = deleted_message_sender {
+                    if sender != m.updated_by {
+                        decr(&mut per_user_metrics.entry(sender).or_default().messages_reported_by_others);
+                    }
+                }
                 decr(&mut metrics.deleted_messages);
                 decr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
             }
@@ -333,7 +344,7 @@ pub struct ProposalsUpdatedInternal {
 }
 
 fn incr(counter: &mut u64) {
-    *counter += 1;
+    *counter = counter.saturating_add(1);
 }
 
 fn decr(counter: &mut u64) {

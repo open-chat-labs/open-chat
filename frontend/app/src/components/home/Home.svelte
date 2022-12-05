@@ -12,7 +12,6 @@
     import {
         GroupSearchResponse,
         MessageMatch,
-        SearchAllMessagesResponse,
         UserSummary,
         ChatSummary,
         EnhancedReplyContext,
@@ -23,6 +22,7 @@
         OpenChat,
         ThreadSelected,
         ThreadClosed,
+        SelectedChatInvalid,
         SendMessageFailed,
         ChatsUpdated,
         Notification,
@@ -97,7 +97,6 @@
     let modal = ModalType.None;
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
@@ -162,15 +161,12 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
-        }
-        if (ev instanceof ThreadClosed) {
+        } else if (ev instanceof ThreadClosed) {
             closeThread();
-        }
-        if (ev instanceof SendMessageFailed) {
+        } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
             toastStore.showFailureToast("errorSendingMessage");
-        }
-        if (ev instanceof ChatsUpdated) {
+        } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (
                     notification.kind === "direct_notification" ||
@@ -187,6 +183,8 @@
 
                 return false;
             });
+        } else if (ev instanceof SelectedChatInvalid) {
+            replace("/");
         }
     }
 
@@ -356,12 +354,10 @@
             const lowercase = searchTerm.toLowerCase();
             groupSearchResults = client.searchGroups(lowercase, 10);
             userSearchResults = client.searchUsers(lowercase, 10);
-            messageSearchResults = client.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
                     groupSearchResults,
                     userSearchResults,
-                    messageSearchResults,
                 ]).then(() => {
                     if (searchTerm !== "") {
                         searchResultsAvailable = true;
@@ -379,7 +375,7 @@
     }
 
     function clearSearch() {
-        groupSearchResults = userSearchResults = messageSearchResults = undefined;
+        groupSearchResults = userSearchResults = undefined;
         searchTerm = "";
         searching = false;
         searchResultsAvailable = false;
@@ -823,7 +819,6 @@
         <LeftPanel
             {groupSearchResults}
             {userSearchResults}
-            {messageSearchResults}
             {searchTerm}
             {searchResultsAvailable}
             {searching}

@@ -70,6 +70,7 @@ import type {
     SetBioResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
+    SuspendUserResponse,
     UnpinChatResponse,
     UpgradeStorageResponse,
     User,
@@ -77,10 +78,10 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    UnsuspendUserResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "./search/search";
@@ -99,7 +100,6 @@ type Request<T = unknown> = {
 export type WorkerRequest =
     | DismissRecommendations
     | SearchGroups
-    | SearchAllMessages
     | GetGroupRules
     | GetRecommendedGroups
     | RegisterProposalVote
@@ -181,6 +181,8 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | SuspendUser
+    | UnsuspendUser
     | GetInitialState;
 
 type SetCachedMessageFromNotification = Request<{
@@ -322,13 +324,6 @@ type DismissRecommendations = Request<{
 };
 
 type SearchGroups = Request<{
-    searchTerm: string;
-    maxResults: number;
-}> & {
-    kind: "searchAllMessages";
-};
-
-type SearchAllMessages = Request<{
     searchTerm: string;
     maxResults: number;
 }> & {
@@ -732,6 +727,18 @@ type UnfreezeGroup = Request<{
     kind: "unfreezeGroup";
 };
 
+type SuspendUser = Request<{
+    userId: string;
+}> & {
+    kind: "suspendUser";
+};
+
+type UnsuspendUser = Request<{
+    userId: string;
+}> & {
+    kind: "unsuspendUser";
+};
+
 type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
     kind: "getUsers";
 };
@@ -800,7 +807,6 @@ export type WorkerResponse =
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
     | Response<GroupSearchResponse>
-    | Response<SearchAllMessagesResponse>
     | Response<GroupRules | undefined>
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
@@ -855,6 +861,8 @@ export type WorkerResponse =
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
+    | Response<SuspendUserResponse>
+    | Response<UnsuspendUserResponse>
     | Response<undefined>;
 
 type Response<T> = {

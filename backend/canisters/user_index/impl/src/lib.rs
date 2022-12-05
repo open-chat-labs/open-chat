@@ -24,7 +24,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 60_000;
+pub const USER_LIMIT: usize = 65_000;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
@@ -76,6 +76,17 @@ impl RuntimeState {
     pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.online_users_aggregator_canister_ids.contains(&caller)
+    }
+
+    pub fn is_caller_super_admin(&self) -> bool {
+        let caller = self.env.caller();
+        if self.data.service_principals.contains(&caller) {
+            true
+        } else if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.super_admins.contains(&user.user_id)
+        } else {
+            false
+        }
     }
 
     pub fn generate_6_digit_code(&mut self) -> String {

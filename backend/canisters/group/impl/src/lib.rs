@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupChatSummaryInternal, GroupPermissions, GroupRules,
-    GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions,
+    GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
     MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
@@ -75,12 +75,12 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal) -> GroupChatSummaryInternal {
+    pub fn summary(&self, participant: &ParticipantInternal) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
         let latest_event = data.events.main().last();
         let min_visible_message_index = participant.min_visible_message_index();
 
-        GroupChatSummaryInternal {
+        GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: latest_event.timestamp,
             name: data.name.clone(),

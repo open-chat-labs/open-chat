@@ -734,6 +734,34 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const UserCanisterGroupChatSummary = IDL.Record({
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'chat_id' : ChatId,
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Bool,
+  });
+  const InitialStateV2Response = IDL.Variant({
+    'SuccessCached' : IDL.Record({
+      'user_canister_wasm_version' : Version,
+      'blocked_users' : IDL.Vec(UserId),
+      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : IDL.Opt(IDL.Nat),
+      'direct_chats' : IDL.Vec(DirectChatSummary),
+      'timestamp' : TimestampMillis,
+      'cached_group_chat_summaries' : IDL.Vec(GroupChatSummary),
+      'cache_timestamp' : TimestampMillis,
+      'pinned_chats' : IDL.Vec(ChatId),
+    }),
+    'Success' : IDL.Record({
+      'user_canister_wasm_version' : Version,
+      'blocked_users' : IDL.Vec(UserId),
+      'group_chats' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : IDL.Opt(IDL.Nat),
+      'direct_chats' : IDL.Vec(DirectChatSummary),
+      'timestamp' : TimestampMillis,
+      'pinned_chats' : IDL.Vec(ChatId),
+    }),
+  });
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
     'as_super_admin' : IDL.Bool,
@@ -869,10 +897,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
   });
-  const SearchAllMessagesArgs = IDL.Record({
-    'max_results' : IDL.Nat8,
-    'search_term' : IDL.Text,
-  });
   const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
@@ -882,12 +906,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),
-  });
-  const SearchAllMessagesResponse = IDL.Variant({
-    'TermTooShort' : IDL.Nat8,
-    'Success' : SearchMessagesSuccessResult,
-    'TermTooLong' : IDL.Nat8,
-    'InvalidTerm' : IDL.Null,
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -1098,6 +1116,27 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const UpdatesV2Args = IDL.Record({ 'updates_since' : TimestampMillis });
+  const UserCanisterGroupChatSummaryUpdates = IDL.Record({
+    'read_by_me_up_to' : IDL.Opt(MessageIndex),
+    'chat_id' : ChatId,
+    'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'archived' : IDL.Opt(IDL.Bool),
+  });
+  const UpdatesV2Response = IDL.Variant({
+    'Success' : IDL.Record({
+      'user_canister_wasm_version' : IDL.Opt(Version),
+      'direct_chats_added' : IDL.Vec(DirectChatSummary),
+      'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
+      'group_chats_added' : IDL.Vec(UserCanisterGroupChatSummary),
+      'avatar_id' : AvatarIdUpdate,
+      'chats_removed' : IDL.Vec(ChatId),
+      'timestamp' : TimestampMillis,
+      'group_chats_updated' : IDL.Vec(UserCanisterGroupChatSummaryUpdates),
+      'direct_chats_updated' : IDL.Vec(DirectChatSummaryUpdates),
+      'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
+    }),
+  });
   const WithdrawCryptoArgs = IDL.Record({
     'withdrawal' : PendingCryptoTransaction,
   });
@@ -1147,6 +1186,11 @@ export const idlFactory = ({ IDL }) => {
         [InitialStateResponse],
         ['query'],
       ),
+    'initial_state_v2' : IDL.Func(
+        [InitialStateArgs],
+        [InitialStateV2Response],
+        ['query'],
+      ),
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read_v2' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
@@ -1186,11 +1230,6 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionResponse],
         [],
       ),
-    'search_all_messages' : IDL.Func(
-        [SearchAllMessagesArgs],
-        [SearchAllMessagesResponse],
-        ['query'],
-      ),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],
@@ -1222,6 +1261,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
+    'updates_v2' : IDL.Func([UpdatesV2Args], [UpdatesV2Response], ['query']),
     'withdraw_crypto_v2' : IDL.Func(
         [WithdrawCryptoArgs],
         [WithdrawCryptoResponse],

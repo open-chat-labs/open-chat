@@ -656,7 +656,7 @@ impl AllChatEvents {
         from_set: &HashSet<MessageIndex>,
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
-    ) -> Vec<ThreadSyncDetailsInternal> {
+    ) -> Vec<GroupCanisterThreadDetails> {
         from_set
             .iter()
             .filter_map(|root_message_index| {
@@ -664,7 +664,7 @@ impl AllChatEvents {
                     let latest_event = thread_events.last();
                     updated_since
                         .map_or(true, |since| latest_event.timestamp > since)
-                        .then_some(ThreadSyncDetailsInternal {
+                        .then_some(GroupCanisterThreadDetails {
                             root_message_index: *root_message_index,
                             latest_event: latest_event.index,
                             latest_message: thread_events.latest_message_index().unwrap_or_default(),
@@ -723,7 +723,7 @@ impl AllChatEvents {
             panic!("This chat is frozen");
         }
 
-        self.add_to_metrics(&event, now);
+        self.add_to_metrics(&event, thread_root_message_index, now);
 
         let event_index = self
             .get_mut(thread_root_message_index)
@@ -831,8 +831,21 @@ impl AllChatEvents {
         }
     }
 
-    fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
-        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
+    fn add_to_metrics(
+        &mut self,
+        event: &ChatEventInternal,
+        thread_root_message_index: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) {
+        let deleted_message_sender = match event {
+            ChatEventInternal::MessageDeleted(m) | ChatEventInternal::MessageUndeleted(m) => self
+                .get(thread_root_message_index)
+                .and_then(|e| e.message_internal_by_message_id(m.message_id))
+                .map(|m| m.sender),
+            _ => None,
+        };
+
+        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, deleted_message_sender, now);
     }
 
     fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {

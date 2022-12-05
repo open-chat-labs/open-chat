@@ -197,7 +197,7 @@
         <div class="poll legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.fileMessages")}
+                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.pollMessages")}
             </div>
         </div>
         <div class="icp legend">

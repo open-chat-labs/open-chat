@@ -1,20 +1,26 @@
 use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
 use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
-use group_canister::c2c_summary_updates::{Response::*, *};
+use group_canister::summary_updates::{Response::*, *};
+use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashMap;
 use types::{
-    EventIndex, EventWrapper, FrozenGroupInfo, GroupChatSummaryUpdatesInternal, GroupPermissions, GroupSubtype, Mention,
+    EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
     Message, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
-#[query_msgpack]
-fn c2c_summary_updates(args: Args) -> Response {
-    read_state(|state| c2c_summary_updates_impl(args, state))
+#[query]
+fn summary_updates(args: Args) -> Response {
+    read_state(|state| summary_updates_impl(args, state))
 }
 
-fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+#[query_msgpack]
+fn c2c_summary_updates(args: Args) -> Response {
+    read_state(|state| summary_updates_impl(args, state))
+}
+
+fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller().into();
     let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
         None => return CallerNotInGroup,
@@ -23,7 +29,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     let updates_from_events = process_events(args.updates_since, participant, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
-        let updates = GroupChatSummaryUpdatesInternal {
+        let updates = GroupCanisterGroupChatSummaryUpdates {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated,
             name: updates_from_events.name,
@@ -59,7 +65,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
         };
-        Success(Box::new(SuccessResult { updates }))
+        Success(SuccessResult { updates })
     } else {
         SuccessNoUpdates
     }
