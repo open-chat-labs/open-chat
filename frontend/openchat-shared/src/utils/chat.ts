@@ -175,6 +175,7 @@ export function emptyChatMetrics(): ChatMetrics {
         icpMessages: 0,
         giphyMessages: 0,
         deletedMessages: 0,
+        reportedMessages: 0,
         fileMessages: 0,
         pollVotes: 0,
         textMessages: 0,

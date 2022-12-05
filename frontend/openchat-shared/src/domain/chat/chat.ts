@@ -359,21 +359,23 @@ export type LocalPollVote = {
 
 export type LocalChatSummaryUpdates = {
     added?: ChatSummary;
-    updated?: {
-        kind?: undefined;
-        notificationsMuted?: boolean;
-        archived?: boolean;
-    } | {
-        kind: "group_chat";
-        name?: string;
-        description?: string;
-        public?: boolean;
-        myRole?: MemberRole;
-        permissions?: Partial<GroupPermissions>;
-        notificationsMuted?: boolean;
-        archived?: boolean;
-        frozen?: boolean;
-    },
+    updated?:
+        | {
+              kind?: undefined;
+              notificationsMuted?: boolean;
+              archived?: boolean;
+          }
+        | {
+              kind: "group_chat";
+              name?: string;
+              description?: string;
+              public?: boolean;
+              myRole?: MemberRole;
+              permissions?: Partial<GroupPermissions>;
+              notificationsMuted?: boolean;
+              archived?: boolean;
+              frozen?: boolean;
+          };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
 };
@@ -1133,18 +1135,18 @@ export type NotAuthorised = {
 
 export type ChatFrozen = {
     kind: "chat_frozen";
-}
+};
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
     frozenBy: string;
     reason: string | undefined;
-}
+};
 
 export type ChatUnfrozenEvent = {
     kind: "chat_unfrozen";
     unfrozenBy: string;
-}
+};
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
@@ -1157,7 +1159,12 @@ export type ChangeRoleResponse =
     | "chat_frozen"
     | "success";
 
-export type DeleteGroupResponse = "internal_error" | "not_authorised" | "chat_frozen" | "success" | "user_suspended";
+export type DeleteGroupResponse =
+    | "internal_error"
+    | "not_authorised"
+    | "chat_frozen"
+    | "success"
+    | "user_suspended";
 
 export type MakeGroupPrivateResponse =
     | "internal_error"
@@ -1251,7 +1258,12 @@ export type UpdateGroupResponse =
     | "chat_frozen"
     | "internal_error";
 
-export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group" | "user_suspended" | "chat_frozen";
+export type UpdatePermissionsResponse =
+    | "success"
+    | "not_authorised"
+    | "not_in_group"
+    | "user_suspended"
+    | "chat_frozen";
 
 export type AddRemoveReactionResponse =
     | "success"
@@ -1274,9 +1286,9 @@ export type DeleteMessageResponse =
 
 export type UndeleteMessageResponse =
     | {
-        kind: "success",
-        message: Message,
-    }
+          kind: "success";
+          message: Message;
+      }
     | { kind: "not_in_group" }
     | { kind: "chat_not_found" }
     | { kind: "internal_error" }
@@ -1321,16 +1333,28 @@ export type InviteCodeSuccess = {
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | UserSuspended | ChatFrozen;
+export type EnableInviteCodeResponse =
+    | EnableInviteCodeSuccess
+    | NotAuthorised
+    | UserSuspended
+    | ChatFrozen;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = "not_authorised" | "user_suspended" | "chat_frozen" | "success";
+export type DisableInviteCodeResponse =
+    | "not_authorised"
+    | "user_suspended"
+    | "chat_frozen"
+    | "success";
 
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | UserSuspended | ChatFrozen;
+export type ResetInviteCodeResponse =
+    | ResetInviteCodeSuccess
+    | NotAuthorised
+    | UserSuspended
+    | ChatFrozen;
 
 export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
 
@@ -1360,6 +1384,7 @@ export type ChatMetrics = {
     icpMessages: number;
     giphyMessages: number;
     deletedMessages: number;
+    reportedMessages: number;
     fileMessages: number;
     pollVotes: number;
     textMessages: number;
@@ -1403,11 +1428,11 @@ export type FreezeGroupResponse =
     | "chat_already_frozen"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error"
+    | "internal_error";
 
 export type UnfreezeGroupResponse =
     | EventWrapper<ChatUnfrozenEvent>
     | "chat_not_frozen"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error"
+    | "internal_error";

@@ -201,14 +201,16 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): UndeleteMessageResponse {
+export function undeleteMessageResponse(
+    candid: ApiUndeleteMessageResponse
+): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
             return { kind: "internal_error" };
         } else {
             return {
                 kind: "success",
-                message: message(candid.Success.messages[0])
+                message: message(candid.Success.messages[0]),
             };
         }
     }
@@ -516,7 +518,7 @@ export function sendMessageResponse(
         return { kind: "chat_frozen" };
     }
     if ("InternalError" in candid) {
-        return { kind: "internal_error" }
+        return { kind: "internal_error" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -873,6 +875,7 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         icpMessages: Number(candid.icp_messages),
         giphyMessages: Number(candid.giphy_messages),
         deletedMessages: Number(candid.deleted_messages),
+        reportedMessages: Number(candid.messages_reported_by_others),
         fileMessages: Number(candid.file_messages),
         pollVotes: Number(candid.poll_votes),
         textMessages: Number(candid.text_messages),
