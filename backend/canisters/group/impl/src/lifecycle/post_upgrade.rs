@@ -34,6 +34,8 @@ fn post_upgrade(args: Args) {
         );
     }
 
+    data.events.recalculate_reported_message_metrics();
+
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
 
