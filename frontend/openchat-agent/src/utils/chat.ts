@@ -133,7 +133,7 @@ function mergeUpdatedGroupChat(
         latestThreads: mergeThreadSyncDetails(updatedChat.latestThreads, chat.latestThreads),
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
         archived: updatedChat.archived ?? chat.archived,
-        frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false
+        frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false,
     };
 }
 
@@ -164,7 +164,10 @@ function mergeThreadSyncDetails(
     );
 }
 
-function mergeSubtype(updated: GroupSubtypeUpdate | undefined, existing: GroupSubtype): GroupSubtype {
+function mergeSubtype(
+    updated: GroupSubtypeUpdate | undefined,
+    existing: GroupSubtype
+): GroupSubtype {
     if (updated === undefined || updated.kind === "no_change") {
         return existing;
     } else if (updated.kind === "set_to_none") {
@@ -319,6 +322,7 @@ export function emptyChatMetrics(): ChatMetrics {
         icpMessages: 0,
         giphyMessages: 0,
         deletedMessages: 0,
+        reportedMessages: 0,
         fileMessages: 0,
         pollVotes: 0,
         textMessages: 0,

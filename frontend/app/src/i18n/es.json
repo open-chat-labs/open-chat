@@ -501,7 +501,9 @@
         "pollVotes": "Votos electorales",
         "replies": "respuestas",
         "reactions": "reacciones",
-        "deletedMessages": "Mensajes eliminados"
+        "deletedMessages": "Mensajes eliminados",
+        "reportedMessages": "Mensajes denunciados",
+        "reportedMessagesInfo": "Mensajes enviados por usted que fueron eliminados o denunciados por otros. Esto puede usarse como una indicación de que no está contribuyendo positivamente a la comunidad."
     },
     "andNMore": "y {n} más",
     "confirmMakeGroupPrivate": "¿Definitivamente quieres que este grupo sea privado? ¡Actualmente esta operación no se puede revertir!",

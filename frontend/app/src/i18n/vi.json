@@ -501,7 +501,9 @@
         "pollVotes": "phiếu thăm dò ý kiến",
         "replies": "trả lời",
         "reactions": "phản ứng",
-        "deletedMessages": "tin nhắn đã xóa"
+        "deletedMessages": "tin nhắn đã xóa",
+        "reportedMessages": "Tin nhắn được báo cáo",
+        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng."
     },
     "andNMore": "và {n} khác",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",

@@ -520,7 +520,9 @@
         "pollVotes": "Poll votes",
         "replies": "Replies",
         "reactions": "Reactions",
-        "deletedMessages": "Deleted messages"
+        "deletedMessages": "Deleted messages",
+        "reportedMessages": "Reported messages",
+        "reportedMessagesInfo": "Messages sent by you that were deleted or reported by others. This may be used as an indication that you are not contributing positively to the community."
     },
     "andNMore": ", and {n} more",
     "confirmMakeGroupPrivate": "Do you definitely want to make this group private? Currently this operation cannot be reversed!",
