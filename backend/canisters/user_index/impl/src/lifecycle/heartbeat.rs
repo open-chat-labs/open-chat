@@ -393,6 +393,7 @@ mod prune_unconfirmed_phone_numbers {
 mod set_users_suspended {
     use super::*;
     use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
+    use crate::updates::suspend_user::suspend_user_impl;
     use crate::updates::unsuspend_user::unsuspend_user_impl;
 
     const MAX_BATCH_SIZE: usize = 10;
@@ -420,6 +421,9 @@ mod set_users_suspended {
 
     async fn process_single(value: SetUserSuspended) {
         match value {
+            SetUserSuspended::User(user_id, duration) => {
+                suspend_user_impl(user_id, duration).await;
+            }
             SetUserSuspended::Unsuspend(user_id) => {
                 unsuspend_user_impl(user_id).await;
             }

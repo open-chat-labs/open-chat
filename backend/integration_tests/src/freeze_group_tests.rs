@@ -2,6 +2,7 @@ use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
 use candid::Principal;
+use group_index_canister::freeze_group::SuspendDuration;
 use ic_state_machine_tests::StateMachine;
 use types::{CanisterId, ChatId};
 
@@ -22,6 +23,7 @@ fn freeze_then_unfreeze() {
         &group_index_canister::freeze_group::Args {
             chat_id: group_id,
             reason: None,
+            suspend_members: None,
         },
     );
 
@@ -72,6 +74,7 @@ fn can_only_be_called_by_super_admin() {
     let freeze_args = group_index_canister::freeze_group::Args {
         chat_id: group_id,
         reason: None,
+        suspend_members: None,
     };
 
     let response1 = client::group_index::freeze_group(&mut env, user2.principal, canister_ids.group_index, &freeze_args);
@@ -139,6 +142,7 @@ fn search_excludes_frozen_groups() {
         &group_index_canister::freeze_group::Args {
             chat_id: group_id,
             reason: None,
+            suspend_members: None,
         },
     );
 
@@ -149,6 +153,40 @@ fn search_excludes_frozen_groups() {
     } else {
         panic!()
     }
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
+}
+
+#[test]
+fn freeze_and_suspend_users() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
+
+    let TestData {
+        user1, user2, group_id, ..
+    } = init_test_data(&mut env, canister_ids.user_index, controller);
+
+    client::group_index::freeze_group(
+        &mut env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_group::Args {
+            chat_id: group_id,
+            reason: None,
+            suspend_members: Some(SuspendDuration { duration: None }),
+        },
+    );
+
+    let user = client::user_index::happy_path::current_user(&env, user2.principal, canister_ids.user_index);
+
+    assert!(user.suspended);
 
     return_env(TestEnv {
         env,

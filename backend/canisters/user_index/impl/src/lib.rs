@@ -63,6 +63,11 @@ impl RuntimeState {
         self.data.service_principals.contains(&caller)
     }
 
+    pub fn is_caller_group_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.group_index_canister_id
+    }
+
     pub fn is_caller_sms_service(&self) -> bool {
         let caller = self.env.caller();
         self.data.sms_service_principals.contains(&caller)
