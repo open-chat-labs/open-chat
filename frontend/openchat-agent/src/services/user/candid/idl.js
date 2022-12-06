@@ -638,13 +638,13 @@ export const idlFactory = ({ IDL }) => {
     'deleted_messages' : IDL.Nat64,
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
-    'messages_reported_by_others' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
+    'reported_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const GovernanceProposalsSubtype = IDL.Record({

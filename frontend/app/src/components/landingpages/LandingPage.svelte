@@ -5,12 +5,20 @@
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import RoadmapPage from "./RoadmapPage.svelte";
     import WhitepaperPage from "./WhitepaperPage.svelte";
     import ArchitecturePage from "./ArchitecturePage.svelte";
+    import type { OpenChat } from "openchat-client";
+    import Overlay from "../Overlay.svelte";
+    import Register from "../register/Register.svelte";
 
     const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
+
+    export let referredBy: string | undefined;
+
+    $: identityState = client.identityState;
 
     function routes(_logout: () => Promise<void>): any {
         return {
@@ -40,7 +48,15 @@
     function routeEvent(ev: CustomEvent<string>) {
         dispatch(ev.detail);
     }
+
+    function closeModal() {}
 </script>
+
+{#if $identityState === "registering"}
+    <Overlay dismissible={false}>
+        <Register on:logout={logout} on:createdUser {referredBy} />
+    </Overlay>
+{/if}
 
 <Header on:login={login} on:logout={logout} />
 

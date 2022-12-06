@@ -118,10 +118,8 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "requires_login" || $identityState === "logging_in"}
-    <LandingPage on:login={() => client.login()} />
-{:else if $identityState === "registering"}
-    <Register on:logout={() => client.logout()} on:createdUser={registeredUser} {referredBy} />
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
+    <LandingPage {referredBy} on:login={() => client.login()} on:createdUser={registeredUser} />
 {:else if $identityState === "logged_in"}
     <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
