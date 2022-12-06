@@ -2,7 +2,7 @@ use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
 use candid::Principal;
-use group_index_canister::freeze_group::SuspendDuration;
+use group_index_canister::freeze_group::SuspensionDetails;
 use ic_state_machine_tests::StateMachine;
 use types::{CanisterId, ChatId};
 
@@ -180,7 +180,10 @@ fn freeze_and_suspend_users() {
         &group_index_canister::freeze_group::Args {
             chat_id: group_id,
             reason: None,
-            suspend_members: Some(SuspendDuration { duration: None }),
+            suspend_members: Some(SuspensionDetails {
+                duration: None,
+                reason: "spam".to_string(),
+            }),
         },
     );
 
