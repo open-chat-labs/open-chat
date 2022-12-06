@@ -61,8 +61,8 @@ fn take_next_job(now: TimestampMillis) -> Option<Job> {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ScheduledJob {
-    job: Job,
-    due: TimestampMillis,
+    pub job: Job,
+    pub due: TimestampMillis,
 }
 
 impl ScheduledJob {
