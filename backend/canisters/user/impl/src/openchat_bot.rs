@@ -99,7 +99,7 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: &mut RuntimeState) {
     let action = match event.duration {
         SuspensionDuration::Duration(ms) => {
-            let days = (ms / DAY_IN_MS).floor();
+            let days = ms / DAY_IN_MS;
             format!("unsuspended in {days} days")
         }
         SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
@@ -107,7 +107,7 @@ pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: 
 
     let reason = &event.reason;
 
-    let text = format!("Your account has been suspended because \"{reason}\". You can appeal this suspension by sending a direct message to @OpenChat twitter account otherwise your account will be {action}.");
+    let text = format!("Your account has been suspended because \"{reason}\". You can appeal this suspension by sending a direct message to @OpenChat Twitter account otherwise your account will be {action}.");
 
     send_text_message(text, false, runtime_state);
 }
