@@ -37,5 +37,8 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
         UserEvent::ReferredUserRegistered(ev) => {
             openchat_bot::send_referred_user_joined_message(&ev, runtime_state);
         }
+        UserEvent::UserSuspended(ev) => {
+            openchat_bot::send_user_suspended_message(&ev, runtime_state);
+        }
     }
 }

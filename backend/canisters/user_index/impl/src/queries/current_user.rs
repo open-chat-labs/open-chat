@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{model::user::SuspensionDuration, read_state, RuntimeState, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use ic_cdk_macros::query;
 use ledger_utils::default_ledger_account;
 use types::CanisterUpgradeStatus;
@@ -11,7 +11,6 @@ fn current_user(_args: Args) -> Response {
 
 fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
 
     if let Some(u) = runtime_state.data.users.get_by_principal(&caller) {
         let canister_upgrade_status = if u.upgrade_in_progress {
@@ -31,8 +30,21 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             crate::model::user::PhoneStatus::None => PhoneStatus::None,
         };
 
-        let suspended = u.suspension_details.as_ref().map_or(false, |sd| sd.until.is_suspended(now));
-        let suspended_date = if suspended { Some(u.suspension_details.as_ref().unwrap().timestamp) } else { None };
+        let (suspended, suspension_details) = match &u.suspension_details {
+            Some(d) => (
+                true,
+                Some(SuspensionDetails {
+                    reason: d.reason.to_owned(),
+                    action: match d.duration {
+                        SuspensionDuration::Duration(ms) => SuspensionAction::Unsuspend(d.timestamp + ms),
+                        SuspensionDuration::Indefinitely => {
+                            SuspensionAction::Delete(d.timestamp + TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS)
+                        }
+                    },
+                }),
+            ),
+            None => (false, None),
+        };
 
         Success(SuccessResult {
             user_id: u.user_id,
@@ -45,7 +57,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
-            suspended_date,
+            suspension_details,
             suspended,
         })
     } else {

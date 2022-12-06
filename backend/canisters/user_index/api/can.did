@@ -176,10 +176,22 @@ type CurrentUserResponse =
             icp_account: AccountIdentifier;
             referrals: vec UserId;
             is_super_admin: bool;
-            suspension_date: opt TimestampMillis;
+            suspension_details: opt SuspensionDetails;
             suspended: bool;
         };
         UserNotFound;
+    };
+
+type SuspensionDetails =
+    record {
+        reason: text;
+        action: SuspensionAction;
+    };
+
+type SuspensionAction =
+    variant {
+        Unsuspend: TimestampMillis;
+        Delete: TimestampMillis;
     };
 
 type PhoneStatus =
@@ -276,6 +288,7 @@ type SuspendUserArgs =
     record {
         user_id: UserId;
         duration: opt Milliseconds;
+        reason: text;
     };
 
 type SuspendUserResponse =
