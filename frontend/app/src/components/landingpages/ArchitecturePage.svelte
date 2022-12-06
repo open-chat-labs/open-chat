@@ -4,7 +4,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, copyUrl, scrollToHash } from "../../utils/urls";
+    import { copyToClipboard, copyUrl, scrollToSection } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import HashLink from "./HashLink.svelte";
@@ -31,7 +31,7 @@
             const qs = new URLSearchParams($querystring);
             const section = qs.get("section");
             if (section) {
-                linked = scrollToHash(section);
+                linked = scrollToSection(section);
             }
         }
     }

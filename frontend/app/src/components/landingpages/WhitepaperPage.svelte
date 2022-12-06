@@ -8,7 +8,7 @@
     import ExternalLink from "./ExternalLink.svelte";
     import GoogleChart from "./GoogleChart.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, copyUrl, scrollToHash } from "../../utils/urls";
+    import { copyToClipboard, copyUrl, scrollToSection } from "../../utils/urls";
     import { location, querystring } from "svelte-spa-router";
 
     let width = 0;
@@ -28,7 +28,7 @@
             const qs = new URLSearchParams($querystring);
             const section = qs.get("section");
             if (section) {
-                linked = scrollToHash(section);
+                linked = scrollToSection(section);
             }
         }
     }

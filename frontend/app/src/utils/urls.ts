@@ -52,8 +52,8 @@ export function copyUrl(txt: string): Promise<boolean> {
     return copyToClipboard(`${window.location.origin}${window.location.pathname}#${txt}`);
 }
 
-export function scrollToHash(hash: string): number | undefined {
-    const matches = /^(\d{1})(?:-(\d{1}))?(?:-(\d{1}))?$/.exec(hash);
+export function scrollToSection(section: string): number | undefined {
+    const matches = /^(\d{1})(?:-(\d{1}))?(?:-(\d{1}))?$/.exec(section);
     if (!matches) {
         return undefined;
     }
@@ -61,7 +61,7 @@ export function scrollToHash(hash: string): number | undefined {
     const [_, one] = matches;
 
     setTimeout(() => {
-        const target = document.getElementById(hash);
+        const target = document.getElementById(section);
         if (!target) {
             console.log("target not found");
             return;
