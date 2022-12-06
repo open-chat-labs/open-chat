@@ -8,7 +8,8 @@
     import ExternalLink from "./ExternalLink.svelte";
     import GoogleChart from "./GoogleChart.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyUrl, scrollToHash } from "../../utils/urls";
+    import { copyToClipboard, copyUrl, scrollToHash } from "../../utils/urls";
+    import { location, querystring } from "svelte-spa-router";
 
     let width = 0;
     let linked: number | undefined = undefined;
@@ -19,12 +20,18 @@
     $: copySize = $mobileWidth ? "14px" : "16px";
 
     function onCopyUrl(ev: CustomEvent<string>): void {
-        copyUrl(ev.detail);
+        copyToClipboard(`${window.location.origin}/#${$location}?section=${ev.detail}`);
     }
 
-    // $: {
-    //     linked = scrollToHash($currentPath.hash);
-    // }
+    $: {
+        if ($querystring !== undefined) {
+            const qs = new URLSearchParams($querystring);
+            const section = qs.get("section");
+            if (section) {
+                linked = scrollToHash(section);
+            }
+        }
+    }
 </script>
 
 <div class="whitepaper" bind:clientWidth={width}>

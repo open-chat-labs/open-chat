@@ -1,33 +1,40 @@
 <script lang="ts">
     import Headline from "./Headline.svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
-    import { mobileWidth, toPixel } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyUrl, scrollToHash } from "../../utils/urls";
+    import { copyToClipboard, copyUrl, scrollToHash } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import HashLink from "./HashLink.svelte";
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import { location, querystring } from "svelte-spa-router";
 
     let linked: number | undefined = undefined;
     let zooming: { url: string; alt: string } | undefined = undefined;
 
     $: copySize = $mobileWidth ? "14px" : "16px";
 
-    function onCopyUrl(ev: CustomEvent<string>): void {
-        copyUrl(ev.detail);
-    }
-
     function zoomImage(ev: CustomEvent<{ url: string; alt: string }>) {
         zooming = ev.detail;
     }
 
-    // $: {
-    //     linked = scrollToHash($currentPath.hash);
-    // }
+    function onCopyUrl(ev: CustomEvent<string>): void {
+        copyToClipboard(`${window.location.origin}/#${$location}?section=${ev.detail}`);
+    }
+
+    $: {
+        if ($querystring !== undefined) {
+            const qs = new URLSearchParams($querystring);
+            const section = qs.get("section");
+            if (section) {
+                linked = scrollToHash(section);
+            }
+        }
+    }
 </script>
 
 {#if zooming}

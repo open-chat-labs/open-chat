@@ -8,7 +8,6 @@
     import Router, { location } from "svelte-spa-router";
     import { routes } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
-    import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
