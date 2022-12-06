@@ -24,8 +24,10 @@ pub struct SuccessResult {
     pub phone_status: PhoneStatus,
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
-    pub suspended: bool,
     pub is_super_admin: bool,
+    pub suspended_date: Option<TimestampMillis>,
+    // TODO: this field will be subsequently deleted
+    pub suspended: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

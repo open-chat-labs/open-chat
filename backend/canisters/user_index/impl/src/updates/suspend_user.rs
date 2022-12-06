@@ -37,7 +37,7 @@ fn commit(user_id: UserId, duration: Option<Milliseconds>, groups: Vec<ChatId>, 
     );
     let suspended_until = duration.map(|d| now + d);
 
-    runtime_state.data.users.suspend_user(&user_id, suspended_until);
+    runtime_state.data.users.suspend_user(&user_id, suspended_until, now);
 
     // If the user is only suspended for a specified duration, schedule them to be unsuspended
     if let Some(ts) = suspended_until {
