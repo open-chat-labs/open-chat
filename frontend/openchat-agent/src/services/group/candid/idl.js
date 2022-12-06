@@ -884,7 +884,6 @@ export const idlFactory = ({ IDL }) => {
     'deleted_messages' : IDL.Nat64,
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
-    'messages_reported_by_others' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,

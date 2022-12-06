@@ -312,9 +312,9 @@
         "challengeAttemptFailed": "Il valore inserito non è corretto. Per favore, prova la nuova sfida.",
         "challengeThrottled": "Sono state generate troppe sfide. Per favore riprova più tardi.",
         "attemptChallenge": "Per favore digita i caratteri che vedi",
-        "smsWarning": "Ci sono un certo numero di paesi a cui attualmente non possiamo inviare messaggi SMS (ad es. Cina, Nigeria, Iran e altri). Se non ricevi un codice, potresti trovarti in un paese in cui al momento non possiamo inviare. Lo miglioreremo in futuro.",
         "closedTitle": "Registrazione sospesa",
-        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!"
+        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
+        "smsWarning": "Ci sono un certo numero di paesi a cui attualmente non possiamo inviare messaggi SMS (Cina, Nigeria, Russia, Bielorussia e Iran). Se non ricevi un codice, potresti trovarti in un paese in cui al momento non possiamo inviare. Lo miglioreremo in futuro."
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",

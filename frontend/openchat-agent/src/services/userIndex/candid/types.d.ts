@@ -103,7 +103,6 @@ export interface ChatMetrics {
   'deleted_messages' : bigint,
   'file_messages' : bigint,
   'poll_votes' : bigint,
-  'messages_reported_by_others' : bigint,
   'text_messages' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
