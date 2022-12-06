@@ -22,7 +22,7 @@ pub struct User {
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
     #[serde(default)]
-    pub suspended_until: Option<SuspendedUntil>,
+    pub suspension_details: Option<SuspensionDetails>,
 }
 
 impl User {
@@ -93,13 +93,17 @@ impl User {
             phone_status: PhoneStatus::None,
             referred_by,
             is_bot,
-            suspended_until: None,
+            suspension_details: None,
         }
     }
 
     pub fn to_summary(&self, now: TimestampMillis) -> UserSummary {
         let millis_since_last_online = now - self.last_online;
         let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+        let suspended = self
+            .suspension_details
+            .as_ref()
+            .map_or(false, |sd| sd.until.is_suspended(now));
 
         UserSummary {
             user_id: self.user_id,
@@ -107,13 +111,17 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
+            suspended,
         }
     }
 
     pub fn to_partial_summary(&self, include_username: bool, now: TimestampMillis) -> PartialUserSummary {
         let millis_since_last_online = now - self.last_online;
         let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+        let suspended = self
+            .suspension_details
+            .as_ref()
+            .map_or(false, |sd| sd.until.is_suspended(now));
 
         PartialUserSummary {
             user_id: self.user_id,
@@ -121,7 +129,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
+            suspended,
         }
     }
 }
@@ -132,6 +140,12 @@ pub struct UnconfirmedPhoneNumber {
     pub confirmation_code: String,
     pub valid_until: TimestampMillis,
     pub sms_messages_sent: u16,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct SuspensionDetails {
+    pub timestamp: TimestampMillis,
+    pub until: SuspendedUntil,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -169,7 +183,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
-            suspended_until: None,
+            suspension_details: None,
         }
     }
 }

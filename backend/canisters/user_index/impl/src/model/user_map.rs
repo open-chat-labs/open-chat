@@ -8,6 +8,8 @@ use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
+use super::user::SuspensionDetails;
+
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
 const PRUNE_UNCONFIRMED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
@@ -311,9 +313,12 @@ impl UserMap {
         }
     }
 
-    pub fn suspend_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
+    pub fn suspend_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>, now: TimestampMillis) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.suspended_until = Some(until.map_or(SuspendedUntil::Indefinitely, SuspendedUntil::Timestamp));
+            user.suspension_details = Some(SuspensionDetails {
+                timestamp: now,
+                until: until.map_or(SuspendedUntil::Indefinitely, SuspendedUntil::Timestamp),
+            });
             true
         } else {
             false
@@ -322,7 +327,7 @@ impl UserMap {
 
     pub fn unsuspend_user(&mut self, user_id: &UserId) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.suspended_until = None;
+            user.suspension_details = None;
             true
         } else {
             false

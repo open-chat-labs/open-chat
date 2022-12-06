@@ -11,6 +11,7 @@ fn current_user(_args: Args) -> Response {
 
 fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
+    let now = runtime_state.env.now();
 
     if let Some(u) = runtime_state.data.users.get_by_principal(&caller) {
         let canister_upgrade_status = if u.upgrade_in_progress {
@@ -30,6 +31,9 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             crate::model::user::PhoneStatus::None => PhoneStatus::None,
         };
 
+        let suspended = u.suspension_details.as_ref().map_or(false, |sd| sd.until.is_suspended(now));
+        let suspended_date = if suspended { Some(u.suspension_details.as_ref().unwrap().timestamp) } else { None };
+
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
@@ -40,8 +44,9 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             phone_status,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
-            suspended: u.suspended_until.is_some(),
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
+            suspended_date,
+            suspended,
         })
     } else {
         UserNotFound
