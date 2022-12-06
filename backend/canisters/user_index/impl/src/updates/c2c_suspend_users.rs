@@ -19,7 +19,7 @@ fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
     let users_to_suspend: Vec<_> = args
         .user_ids
         .into_iter()
-        .filter(|u| runtime_state.data.users.suspend_user(&u, suspended_until, now))
+        .filter(|u| runtime_state.data.users.suspend_user(u, suspended_until, now))
         .collect();
 
     runtime_state.data.set_user_suspended_queue.enqueue(
