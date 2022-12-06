@@ -13,19 +13,7 @@ fn c2c_suspend_users(args: Args) -> Response {
 
 fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
-
     let suspended_until = args.duration.map(|d| now + d);
-
-    let users_to_suspend: Vec<_> = args
-        .user_ids
-        .into_iter()
-        .filter(|u| {
-            runtime_state
-                .data
-                .users
-                .suspend_user(u, suspended_until, args.reason.clone(), now)
-        })
-        .collect();
 
     runtime_state.data.set_user_suspended_queue.enqueue(
         users_to_suspend
@@ -33,13 +21,5 @@ fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             .map(|u| SetUserSuspended::User(*u, suspended_until, args.reason.clone()))
             .collect(),
     );
-
-    if let Some(ts) = suspended_until {
-        runtime_state
-            .data
-            .set_user_suspended_queue
-            .schedule(users_to_suspend.iter().map(|u| SetUserSuspended::Unsuspend(*u)).collect(), ts);
-    }
-
     Success
 }
