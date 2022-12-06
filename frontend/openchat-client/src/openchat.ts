@@ -3,6 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
+import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
     canAddMembers,
@@ -341,6 +342,11 @@ export class OpenChat extends EventTarget {
                 chatUpdatedStore.set(undefined);
             }
         });
+
+        load()
+            .then((botd) => botd.detect())
+            .then((result) => console.log("BOTD: ", result))
+            .catch((err) => console.error(err));
     }
 
     private chatUpdated(affectedEvents: number[]): void {
@@ -841,7 +847,10 @@ export class OpenChat extends EventTarget {
                 }
             })
             .then((resp) => {
-                if (resp === "success" && this._liveState.groupPreviews[group.chatId] !== undefined) {
+                if (
+                    resp === "success" &&
+                    this._liveState.groupPreviews[group.chatId] !== undefined
+                ) {
                     removeGroupPreview(group.chatId);
                 }
                 return resp;
