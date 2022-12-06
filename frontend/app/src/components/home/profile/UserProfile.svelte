@@ -333,7 +333,7 @@
             on:toggle={statsSectionOpen.toggle}
             open={$statsSectionOpen}
             headerText={$_("stats.userStats")}>
-            <Stats stats={$userMetrics} />
+            <Stats showReported={true} stats={$userMetrics} />
         </CollapsibleCard>
     </div>
     <div class="advanced">

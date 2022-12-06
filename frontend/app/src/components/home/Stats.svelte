@@ -12,6 +12,7 @@
 
     const client = getContext<OpenChat>("client");
     export let stats: ChatMetrics;
+    export let showReported: boolean = false;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
@@ -240,24 +241,26 @@
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         {$_("stats.deletedMessages")}
     </div>
-    <TooltipWrapper alignRight={true} bottomOffset={-4} centreChevron={false}>
-        <div slot="target" class="reported-messages">
-            <span>
-                <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
-                {$_("stats.reportedMessages")}
-            </span>
-            <span class="icon">
-                <Flag size={$iconSize} color={"var(--accent)"} />
-            </span>
-        </div>
-        <div slot="tooltip">
-            <TooltipPopup alignRight={true} textLength={100} longestWord={20}>
-                <div>
-                    {$_("stats.reportedMessagesInfo")}
-                </div>
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
+    {#if showReported}
+        <TooltipWrapper alignRight={true} bottomOffset={-4} centreChevron={false}>
+            <div slot="target" class="reported-messages">
+                <span>
+                    <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
+                    {$_("stats.reportedMessages")}
+                </span>
+                <span class="icon">
+                    <Flag size={$iconSize} color={"var(--accent)"} />
+                </span>
+            </div>
+            <div slot="tooltip">
+                <TooltipPopup alignRight={true} textLength={100} longestWord={20}>
+                    <div>
+                        {$_("stats.reportedMessagesInfo")}
+                    </div>
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {/if}
 </div>
 
 <style type="text/scss">

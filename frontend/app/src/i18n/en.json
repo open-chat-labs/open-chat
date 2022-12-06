@@ -286,7 +286,7 @@
         "registerAs": "To register as a user",
         "enterCodeSentTo": "code sent to ",
         "enterPhone": "Please enter your phone number",
-        "smsWarning": "There are a number of countries that we cannot currently send SMS messages to (e.g. China, Nigeria, Iran and others). If you do not receive a code you may be in a country we cannot currently send to. We will improve this in the future.",
+        "smsWarning": "There are a number of countries that we cannot currently send SMS messages to (China, Nigeria, Russia, Belarus and Iran). If you do not receive a code you may be in a country we cannot currently send to. We will improve this in the future.",
         "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
         "pleaseEnterCode": "Please enter the code",
