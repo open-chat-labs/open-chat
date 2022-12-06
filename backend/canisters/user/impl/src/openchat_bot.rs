@@ -99,7 +99,7 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: &mut RuntimeState) {
     let action = match event.duration {
         SuspensionDuration::Duration(ms) => {
-            let days = (ms as f64 / DAY_IN_MS as f64).floor();
+            let days = (ms / DAY_IN_MS).floor();
             format!("unsuspended in {days} days")
         }
         SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
