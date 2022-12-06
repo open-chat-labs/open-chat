@@ -8,7 +8,7 @@ use types::{
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::format::format_to_decimal_places;
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
@@ -99,8 +99,13 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: &mut RuntimeState) {
     let action = match event.duration {
         SuspensionDuration::Duration(ms) => {
-            let days = ms / DAY_IN_MS;
-            format!("unsuspended in {days} days")
+            if ms < 2 * DAY_IN_MS {
+                let hours = ms / HOUR_IN_MS;
+                format!("unsuspended in {hours} hours")
+            } else {
+                let days = ms / DAY_IN_MS;
+                format!("unsuspended in {days} days")
+            }
         }
         SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
     };

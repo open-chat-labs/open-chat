@@ -23,7 +23,7 @@ fn suspend_user() {
         &user_index_canister::suspend_user::Args {
             user_id: user1.user_id,
             duration: None,
-            reason: "spamming".to_string()
+            reason: "spamming".to_string(),
         },
     );
 
