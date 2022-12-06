@@ -9,10 +9,10 @@ use user_index_canister::suspend_user::{Response::*, *};
 #[update(guard = "caller_is_super_admin")]
 #[trace]
 async fn suspend_user(args: Args) -> Response {
-    suspend_user_impl(args.user_id, args.duration).await
+    suspend_user_impl(args.user_id, args.duration, args.reason).await
 }
 
-pub(crate) async fn suspend_user_impl(user_id: UserId, duration: Option<Milliseconds>) -> Response {
+pub(crate) async fn suspend_user_impl(user_id: UserId, duration: Option<Milliseconds>, reason: String) -> Response {
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: true };
     match user_canister_c2c_client::c2c_set_user_suspended(user_id.into(), &c2c_args).await {
         Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {

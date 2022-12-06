@@ -9,7 +9,7 @@ pub struct SetUserSuspendedQueue {
 
 #[derive(Serialize, Deserialize)]
 pub enum SetUserSuspended {
-    User(UserId, Option<Milliseconds>),
+    User(UserId, Option<Milliseconds>, String),
     Group(SetUserSuspendedInGroup),
     Unsuspend(UserId),
 }

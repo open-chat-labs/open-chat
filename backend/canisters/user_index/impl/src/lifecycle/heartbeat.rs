@@ -421,8 +421,8 @@ mod set_users_suspended {
 
     async fn process_single(value: SetUserSuspended) {
         match value {
-            SetUserSuspended::User(user_id, duration) => {
-                suspend_user_impl(user_id, duration).await;
+            SetUserSuspended::User(user_id, duration, reason) => {
+                suspend_user_impl(user_id, duration, reason).await;
             }
             SetUserSuspended::Unsuspend(user_id) => {
                 unsuspend_user_impl(user_id).await;

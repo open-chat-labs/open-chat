@@ -53,10 +53,11 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
                 commit(&args.chat_id, Some(info), state);
                 state.data.user_index_canister_id
             });
-            if let Some(duration) = args.suspend_members.map(|d| d.duration) {
+            if let Some(suspension_details) = args.suspend_members {
                 let suspend_users_args = user_index_canister::c2c_suspend_users::Args {
                     user_ids: members,
-                    duration,
+                    duration: suspension_details.duration,
+                    reason: suspension_details.reason,
                 };
                 user_index_canister_c2c_client::c2c_suspend_users(user_index_canister_id, &suspend_users_args)
                     .await

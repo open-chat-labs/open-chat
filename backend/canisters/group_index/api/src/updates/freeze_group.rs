@@ -6,12 +6,13 @@ use types::{ChatFrozen, ChatId, EventWrapper, Milliseconds};
 pub struct Args {
     pub chat_id: ChatId,
     pub reason: Option<String>,
-    pub suspend_members: Option<SuspendDuration>,
+    pub suspend_members: Option<SuspensionDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuspendDuration {
+pub struct SuspensionDetails {
     pub duration: Option<Milliseconds>,
+    pub reason: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
