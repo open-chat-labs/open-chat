@@ -23,6 +23,7 @@ fn suspend_user() {
         &user_index_canister::suspend_user::Args {
             user_id: user1.user_id,
             duration: None,
+            reason: "spamming".to_string(),
         },
     );
 
@@ -147,6 +148,7 @@ fn suspend_user_for_duration() {
         &user_index_canister::suspend_user::Args {
             user_id: user.user_id,
             duration: Some(1000),
+            reason: "spamming".to_string(),
         },
     );
 
