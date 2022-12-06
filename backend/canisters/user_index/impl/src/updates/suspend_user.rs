@@ -3,7 +3,7 @@ use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedI
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{ChatId, Milliseconds, UserId};
+use types::{ChatId, Milliseconds, SuspensionDuration, UserEvent, UserId, UserSuspended};
 use user_index_canister::suspend_user::{Response::*, *};
 
 #[update(guard = "caller_is_super_admin")]
@@ -12,14 +12,20 @@ async fn suspend_user(args: Args) -> Response {
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: true };
     match user_canister_c2c_client::c2c_set_user_suspended(args.user_id.into(), &c2c_args).await {
         Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {
-            mutate_state(|state| commit(args.user_id, args.duration, result.groups, state));
+            mutate_state(|state| commit(args.user_id, args.duration, args.reason, result.groups, state));
             Success
         }
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
-fn commit(user_id: UserId, duration: Option<Milliseconds>, groups: Vec<ChatId>, runtime_state: &mut RuntimeState) {
+fn commit(
+    user_id: UserId,
+    duration: Option<Milliseconds>,
+    reason: String,
+    groups: Vec<ChatId>,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
 
     runtime_state.data.set_user_suspended_queue.enqueue(
@@ -35,15 +41,26 @@ fn commit(user_id: UserId, duration: Option<Milliseconds>, groups: Vec<ChatId>, 
             })
             .collect(),
     );
-    let suspended_until = duration.map(|d| now + d);
 
-    runtime_state.data.users.suspend_user(&user_id, suspended_until, now);
+    runtime_state
+        .data
+        .users
+        .suspend_user(&user_id, duration, reason.to_owned(), now);
 
     // If the user is only suspended for a specified duration, schedule them to be unsuspended
-    if let Some(ts) = suspended_until {
+    if let Some(ms) = duration {
         runtime_state
             .data
             .set_user_suspended_queue
-            .schedule(vec![SetUserSuspended::Unsuspend(user_id)], ts);
+            .schedule(vec![SetUserSuspended::Unsuspend(user_id)], now + ms);
     }
+
+    runtime_state.data.user_event_sync_queue.push(
+        user_id,
+        UserEvent::UserSuspended(UserSuspended {
+            timestamp: now,
+            duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
+            reason,
+        }),
+    );
 }

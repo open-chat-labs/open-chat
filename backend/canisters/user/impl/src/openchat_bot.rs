@@ -2,9 +2,13 @@ use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
-use types::{MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use types::{
+    MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, SuspensionDuration, TextContent, UserId,
+    UserSuspended,
+};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::format::format_to_decimal_places;
+use utils::time::DAY_IN_MS;
 
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
@@ -88,6 +92,22 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     let user_id = event.user_id;
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
+
+    send_text_message(text, false, runtime_state);
+}
+
+pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: &mut RuntimeState) {
+    let action = match event.duration {
+        SuspensionDuration::Duration(ms) => {
+            let days = (ms as f64 / DAY_IN_MS as f64).floor();
+            format!("unsuspended in {days} days")
+        }
+        SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
+    };
+
+    let reason = &event.reason;
+
+    let text = format!("Your account has been suspended because {reason}. You can appeal this suspension by sending a direct message to twitter@OpenChat otherwise your account will be {action}.");
 
     send_text_message(text, false, runtime_state);
 }
