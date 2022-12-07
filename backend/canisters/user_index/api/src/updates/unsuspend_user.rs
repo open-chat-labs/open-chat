@@ -10,5 +10,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+    UserNotSuspended,
+    UserNotFound,
     InternalError(String),
 }
