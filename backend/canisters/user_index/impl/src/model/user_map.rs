@@ -318,6 +318,7 @@ impl UserMap {
         user_id: &UserId,
         duration: Option<Milliseconds>,
         reason: String,
+        suspended_by: UserId,
         now: TimestampMillis,
     ) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
@@ -325,6 +326,7 @@ impl UserMap {
                 timestamp: now,
                 duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
                 reason,
+                suspended_by,
             });
             true
         } else {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_super_admin;
-use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
+use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
 use crate::updates::suspend_user::is_user_suspended;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -33,7 +33,7 @@ fn commit(user_id: UserId, groups: Vec<ChatId>, runtime_state: &mut RuntimeState
         groups
             .into_iter()
             .map(|g| {
-                SetUserSuspended::Group(SetUserSuspendedInGroup {
+                SetUserSuspendedType::Group(SetUserSuspendedInGroup {
                     user_id,
                     group: g,
                     suspended: false,

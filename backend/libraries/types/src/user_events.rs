@@ -42,6 +42,7 @@ pub struct UserSuspended {
     pub timestamp: TimestampMillis,
     pub duration: SuspensionDuration,
     pub reason: String,
+    pub suspended_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

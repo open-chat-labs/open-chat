@@ -186,6 +186,7 @@ type SuspensionDetails =
     record {
         reason: text;
         action: SuspensionAction;
+        suspended_by: UserId;
     };
 
 type SuspensionAction =

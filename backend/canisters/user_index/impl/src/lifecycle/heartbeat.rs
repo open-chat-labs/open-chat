@@ -392,7 +392,7 @@ mod prune_unconfirmed_phone_numbers {
 
 mod set_users_suspended {
     use super::*;
-    use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedInGroup};
+    use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
     use crate::updates::suspend_user::suspend_user_impl;
     use crate::updates::unsuspend_user::unsuspend_user_impl;
 
@@ -405,7 +405,7 @@ mod set_users_suspended {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspended> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspendedType> {
         let now = runtime_state.env.now();
 
         (0..MAX_BATCH_SIZE)
@@ -413,21 +413,21 @@ mod set_users_suspended {
             .collect()
     }
 
-    async fn process_batch(batch: Vec<SetUserSuspended>) {
+    async fn process_batch(batch: Vec<SetUserSuspendedType>) {
         let futures: Vec<_> = batch.into_iter().map(process_single).collect();
 
         futures::future::join_all(futures).await;
     }
 
-    async fn process_single(value: SetUserSuspended) {
+    async fn process_single(value: SetUserSuspendedType) {
         match value {
-            SetUserSuspended::User(user_id, duration, reason) => {
-                suspend_user_impl(user_id, duration, reason).await;
+            SetUserSuspendedType::User(details) => {
+                suspend_user_impl(details.user_id, details.duration, details.reason, details.suspended_by).await;
             }
-            SetUserSuspended::Unsuspend(user_id) => {
+            SetUserSuspendedType::Unsuspend(user_id) => {
                 unsuspend_user_impl(user_id).await;
             }
-            SetUserSuspended::Group(SetUserSuspendedInGroup {
+            SetUserSuspendedType::Group(SetUserSuspendedInGroup {
                 user_id,
                 group,
                 suspended,
@@ -442,7 +442,7 @@ mod set_users_suspended {
                     mutate_state(|state| {
                         let now = state.env.now();
                         state.data.set_user_suspended_queue.schedule(
-                            vec![SetUserSuspended::Group(SetUserSuspendedInGroup {
+                            vec![SetUserSuspendedType::Group(SetUserSuspendedInGroup {
                                 user_id,
                                 group,
                                 suspended,

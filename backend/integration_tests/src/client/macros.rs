@@ -10,7 +10,7 @@ macro_rules! generate_query_call {
         ) -> $method_name::Response {
             let method_name = stringify!($method_name);
 
-            crate::client::execute_query(env, sender, canister_id, method_name, args)
+            $crate::client::execute_query(env, sender, canister_id, method_name, args)
         }
     };
 }
@@ -27,7 +27,7 @@ macro_rules! generate_update_call {
         ) -> $method_name::Response {
             let method_name = stringify!($method_name);
 
-            crate::client::execute_update(env, sender, canister_id, method_name, args)
+            $crate::client::execute_update(env, sender, canister_id, method_name, args)
         }
     };
 }
