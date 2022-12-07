@@ -111,8 +111,9 @@ pub(crate) fn send_user_suspended_message(event: &UserSuspended, runtime_state: 
     };
 
     let reason = &event.reason;
+    let suspended_by = event.suspended_by;
 
-    let text = format!("Your account has been suspended because \"{reason}\". You can appeal this suspension by sending a direct message to @OpenChat Twitter account otherwise your account will be {action}.");
+    let text = format!("Your account has been suspended by @UserId({suspended_by} for the reason \"{reason}\". You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be {action}.");
 
     send_text_message(text, false, runtime_state);
 }

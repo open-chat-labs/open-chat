@@ -47,6 +47,7 @@ pub struct UnconfirmedPhoneNumber {
 pub struct SuspensionDetails {
     pub reason: String,
     pub action: SuspensionAction,
+    pub suspended_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

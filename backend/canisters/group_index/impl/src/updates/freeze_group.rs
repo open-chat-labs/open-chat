@@ -58,6 +58,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
                     user_ids: members,
                     duration: suspension_details.duration,
                     reason: suspension_details.reason,
+                    suspended_by: user_id,
                 };
                 user_index_canister_c2c_client::c2c_suspend_users(user_index_canister_id, &suspend_users_args)
                     .await

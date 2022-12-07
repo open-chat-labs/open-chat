@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::model::set_user_suspended_queue::SetUserSuspended;
+use crate::model::set_user_suspended_queue::{SetUserSuspended, SetUserSuspendedType};
 use crate::updates::suspend_user::is_user_suspended;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -13,14 +13,18 @@ fn c2c_suspend_users(args: Args) -> Response {
 }
 
 fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
-    let suspended_until = args.duration.map(|d| now + d);
-
     runtime_state.data.set_user_suspended_queue.enqueue(
         args.user_ids
             .into_iter()
             .filter(|u| matches!(is_user_suspended(u, runtime_state), Some(false)))
-            .map(|u| SetUserSuspended::User(u, suspended_until, args.reason.clone()))
+            .map(|u| {
+                SetUserSuspendedType::User(SetUserSuspended {
+                    user_id: u,
+                    duration: args.duration,
+                    reason: args.reason.clone(),
+                    suspended_by: args.suspended_by,
+                })
+            })
             .collect(),
     );
     Success
