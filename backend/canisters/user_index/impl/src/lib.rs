@@ -89,9 +89,7 @@ impl RuntimeState {
 
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
-        if self.data.service_principals.contains(&caller) {
-            true
-        } else if let Some(user) = self.data.users.get_by_principal(&caller) {
+        if let Some(user) = self.data.users.get_by_principal(&caller) {
             self.data.super_admins.contains(&user.user_id)
         } else {
             false

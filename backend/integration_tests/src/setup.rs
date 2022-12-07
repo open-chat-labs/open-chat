@@ -45,7 +45,7 @@ pub fn return_env(env: TestEnv) {
 }
 
 fn try_take_existing_env() -> Option<TestEnv> {
-    ENV.try_lock().ok().map(|mut e| e.pop()).flatten()
+    ENV.try_lock().ok().and_then(|mut e| e.pop())
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {

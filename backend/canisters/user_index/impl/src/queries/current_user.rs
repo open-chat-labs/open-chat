@@ -41,6 +41,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                             SuspensionAction::Delete(d.timestamp + TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS)
                         }
                     },
+                    suspended_by: d.suspended_by,
                 }),
             ),
             None => (false, None),

@@ -140,6 +140,16 @@ fn suspend_user_for_duration() {
     } = setup_env();
 
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let super_admin = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+
+    client::user_index::add_super_admin(
+        &mut env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::add_super_admin::Args {
+            user_id: super_admin.user_id,
+        },
+    );
 
     client::user_index::suspend_user(
         &mut env,
