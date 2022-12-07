@@ -27,6 +27,7 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
+        if (client.isReadOnly()) return;
         dispatch("joinGroup", {
             group,
             select: false,

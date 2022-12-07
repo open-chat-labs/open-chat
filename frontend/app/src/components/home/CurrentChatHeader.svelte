@@ -156,7 +156,7 @@
     }
 
     function suspendUser() {
-        client.suspendUser(userId).then((success) => {
+        client.suspendUser(userId, "").then((success) => {
             if (success) {
                 toastStore.showSuccessToast("suspendedUser");
             } else {

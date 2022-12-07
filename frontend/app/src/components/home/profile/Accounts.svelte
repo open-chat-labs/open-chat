@@ -24,6 +24,7 @@
     }
 
     function showManageCrypto(crypto: Cryptocurrency) {
+        if (client.isReadOnly()) return;
         selectedCryptoAccount = crypto;
         showManageCryptoAccount = true;
     }

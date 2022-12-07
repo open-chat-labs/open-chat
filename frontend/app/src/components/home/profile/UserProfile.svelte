@@ -78,6 +78,7 @@
     }
 
     function saveUser() {
+        if (client.isReadOnly()) return;        
         saving = true;
         usernameError = undefined;
         bioError = undefined;
@@ -133,6 +134,7 @@
     }
 
     function toggleNotifications() {
+        if (client.isReadOnly()) return;
         if ($notificationStatus !== "granted") {
             client.askForNotificationPermission();
         } else {
@@ -149,6 +151,7 @@
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        if (client.isReadOnly()) return;        
         dispatch("userAvatarSelected", ev.detail);
     }
 
@@ -294,46 +297,48 @@
             <Accounts />
         </CollapsibleCard>
     </div>
-    <div class="storage">
-        <CollapsibleCard
-            on:toggle={storageSectionOpen.toggle}
-            open={$storageSectionOpen}
-            headerText={$_("storage")}>
-            {#if $storageStore.byteLimit === 0}
-                <p class="para">
-                    {$_("noStorageAdvice")}
-                </p>
-                <p class="para last">
-                    {$_("chooseUpgrade")}
+    {#if !client.isReadOnly()}
+        <div class="storage">
+            <CollapsibleCard
+                on:toggle={storageSectionOpen.toggle}
+                open={$storageSectionOpen}
+                headerText={$_("storage")}>
+                {#if $storageStore.byteLimit === 0}
+                    <p class="para">
+                        {$_("noStorageAdvice")}
+                    </p>
+                    <p class="para last">
+                        {$_("chooseUpgrade")}
 
-                    <LinkButton underline={"always"} on:click={whySms}>
-                        {$_("tellMeMore")}
-                    </LinkButton>
-                </p>
-                <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small
-                        >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small
-                        >{$_("upgradeByTransfer")}</Button>
-                </ButtonGroup>
-            {:else}
-                <StorageUsage />
-                {#if $storageStore.byteLimit < ONE_GB}
-                    <p class="para">{$_("chooseTransfer")}</p>
-                    <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
-                            >{$_("upgradeStorage")}</Button>
-                    </div>
+                        <LinkButton underline={"always"} on:click={whySms}>
+                            {$_("tellMeMore")}
+                        </LinkButton>
+                    </p>
+                    <ButtonGroup align={"fill"}>
+                        <Button on:click={() => dispatch("upgrade", "sms")} small
+                            >{$_("upgradeBySMS")}</Button>
+                        <Button on:click={() => dispatch("upgrade", "icp")} small
+                            >{$_("upgradeByTransfer")}</Button>
+                    </ButtonGroup>
+                {:else}
+                    <StorageUsage />
+                    {#if $storageStore.byteLimit < ONE_GB}
+                        <p class="para">{$_("chooseTransfer")}</p>
+                        <div class="full-width-btn">
+                            <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
+                                >{$_("upgradeStorage")}</Button>
+                        </div>
+                    {/if}
                 {/if}
-            {/if}
-        </CollapsibleCard>
-    </div>
+            </CollapsibleCard>
+        </div>
+    {/if}
     <div class="stats">
         <CollapsibleCard
             on:toggle={statsSectionOpen.toggle}
             open={$statsSectionOpen}
             headerText={$_("stats.userStats")}>
-            <Stats showReported={true} stats={$userMetrics} />
+            <Stats showReported stats={$userMetrics} />
         </CollapsibleCard>
     </div>
     <div class="advanced">

@@ -23,6 +23,7 @@
     export let user: PartialUserSummary;
 
     function newGroup() {
+        if (client.isReadOnly()) return;
         dispatch("newGroup");
     }
 </script>

@@ -189,7 +189,7 @@
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = client.isPreviewing(chatSummary.chatId);
-    $: canDelete =
+    $: canDelete = !client.isReadOnly() &&
         (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
@@ -269,79 +269,81 @@
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
-            <div class="menu">
-                <MenuIcon>
-                    <div class="menu-icon" slot="icon">
-                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
-                    </div>
-                    <div slot="menu">
-                        <Menu>
-                            {#if !pinned}
-                                <MenuItem on:click={pinChat}>
-                                    <PinIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("pinChat.menuItem")}</div>
-                                </MenuItem>
-                            {:else}
-                                <MenuItem on:click={unpinChat}>
-                                    <PinOffIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if notificationsSupported}
-                                {#if muted}
-                                    <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                        <BellIcon
+            {#if !client.isReadOnly()}
+                <div class="menu">
+                    <MenuIcon>
+                        <div class="menu-icon" slot="icon">
+                            <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                        </div>
+                        <div slot="menu">
+                            <Menu>
+                                {#if !pinned}
+                                    <MenuItem on:click={pinChat}>
+                                        <PinIcon
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("unmuteNotifications")}</div>
+                                        <div slot="text">{$_("pinChat.menuItem")}</div>
                                     </MenuItem>
                                 {:else}
-                                    <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                        <MutedIcon
+                                    <MenuItem on:click={unpinChat}>
+                                        <PinOffIcon
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("muteNotifications")}</div>
+                                        <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                     </MenuItem>
                                 {/if}
-                            {/if}
-                            {#if chatSummary.archived}
-                                <MenuItem on:click={selectChat}>
-                                    <ArchiveOffIcon
+                                {#if notificationsSupported}
+                                    {#if muted}
+                                        <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                                            <BellIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("unmuteNotifications")}</div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                                            <MutedIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("muteNotifications")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                {/if}
+                                {#if chatSummary.archived}
+                                    <MenuItem on:click={selectChat}>
+                                        <ArchiveOffIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("unarchiveChat")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={archiveChat}>
+                                        <ArchiveIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("archiveChat")}</div>
+                                    </MenuItem>
+                                {/if}
+                                <MenuItem
+                                    disabled={unreadMessages === 0}
+                                    on:click={() => client.markAllRead(chatSummary)}>
+                                    <CheckboxMultipleMarked
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("unarchiveChat")}</div>
+                                    <div slot="text">{$_("markAllRead")}</div>
                                 </MenuItem>
-                            {:else}
-                                <MenuItem on:click={archiveChat}>
-                                    <ArchiveIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("archiveChat")}</div>
-                                </MenuItem>
-                            {/if}
-                            <MenuItem
-                                disabled={unreadMessages === 0}
-                                on:click={() => client.markAllRead(chatSummary)}>
-                                <CheckboxMultipleMarked
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("markAllRead")}</div>
-                            </MenuItem>
-                        </Menu>
-                    </div>
-                </MenuIcon>
-            </div>
+                            </Menu>
+                        </div>
+                    </MenuIcon>
+                </div>
+            {/if}
         {/if}
         {#if canDelete}
             <div
