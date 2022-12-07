@@ -19,7 +19,7 @@ fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
     runtime_state.data.set_user_suspended_queue.enqueue(
         args.user_ids
             .into_iter()
-            .filter(|u| matches!(is_user_suspended(u, runtime_state), Ok(false)))
+            .filter(|u| matches!(is_user_suspended(u, runtime_state), Some(false)))
             .map(|u| SetUserSuspended::User(u, suspended_until, args.reason.clone()))
             .collect(),
     );

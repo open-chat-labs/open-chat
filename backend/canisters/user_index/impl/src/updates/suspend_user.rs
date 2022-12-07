@@ -10,9 +10,9 @@ use user_index_canister::suspend_user::{Response::*, *};
 #[trace]
 async fn suspend_user(args: Args) -> Response {
     match read_state(|state| is_user_suspended(&args.user_id, state)) {
-        Ok(false) => suspend_user_impl(args.user_id, args.duration, args.reason).await,
-        Ok(true) => UserAlreadySuspended,
-        Err(_) => UserNotFound,
+        Some(false) => suspend_user_impl(args.user_id, args.duration, args.reason).await,
+        Some(true) => UserAlreadySuspended,
+        None => UserNotFound,
     }
 }
 
@@ -27,12 +27,9 @@ pub(crate) async fn suspend_user_impl(user_id: UserId, duration: Option<Millisec
     }
 }
 
-pub(crate) fn is_user_suspended(user_id: &UserId, runtime_state: &RuntimeState) -> Result<bool, ()> {
-    if let Some(user) = runtime_state.data.users.get_by_user_id(user_id) {
-        Ok(user.suspension_details.is_some())
-    } else {
-        Err(())
-    }
+pub(crate) fn is_user_suspended(user_id: &UserId, runtime_state: &RuntimeState) -> Option<bool> {
+    let user = runtime_state.data.users.get_by_user_id(user_id)?;
+    Some(user.suspension_details.is_some())
 }
 
 fn commit(
