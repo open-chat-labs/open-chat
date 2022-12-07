@@ -27,15 +27,30 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             now,
         );
 
-        Success(EventWrapper {
-            index: event_index,
-            timestamp: now,
-            correlation_id: 0,
-            event: ChatFrozen {
-                frozen_by: args.caller,
-                reason: args.reason,
-            },
-        })
+        if args.return_members {
+            SuccessWithMembers(
+                EventWrapper {
+                    index: event_index,
+                    timestamp: now,
+                    correlation_id: 0,
+                    event: ChatFrozen {
+                        frozen_by: args.caller,
+                        reason: args.reason,
+                    },
+                },
+                runtime_state.data.participants.iter().map(|p| p.user_id).collect(),
+            )
+        } else {
+            Success(EventWrapper {
+                index: event_index,
+                timestamp: now,
+                correlation_id: 0,
+                event: ChatFrozen {
+                    frozen_by: args.caller,
+                    reason: args.reason,
+                },
+            })
+        }
     } else {
         ChatAlreadyFrozen
     }

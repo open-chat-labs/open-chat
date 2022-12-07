@@ -294,6 +294,8 @@ type SuspendUserArgs =
 type SuspendUserResponse =
     variant {
         Success;
+        UserAlreadySuspended;
+        UserNotFound;
         InternalError: text;
     };
 
@@ -306,6 +308,8 @@ type UnsuspendUserArgs =
 type UnsuspendUserResponse =
     variant {
         Success;
+        UserNotSuspended;
+        UserNotFound;
         InternalError: text;
     };
 

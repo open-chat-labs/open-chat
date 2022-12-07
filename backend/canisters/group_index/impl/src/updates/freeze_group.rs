@@ -29,6 +29,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
     let c2c_args = group_canister::c2c_freeze_group::Args {
         caller: user_id,
         reason: args.reason.clone(),
+        return_members: args.suspend_members.is_some(),
     };
     match group_canister_c2c_client::c2c_freeze_group(args.chat_id.into(), &c2c_args).await {
         Ok(group_canister::c2c_freeze_group::Response::Success(event)) => {
@@ -40,6 +41,28 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
                 };
                 commit(&args.chat_id, Some(info), state);
             });
+            Success(event)
+        }
+        Ok(group_canister::c2c_freeze_group::Response::SuccessWithMembers(event, members)) => {
+            let user_index_canister_id = mutate_state(|state| {
+                let info = FrozenGroupInfo {
+                    timestamp: state.env.now(),
+                    frozen_by: user_id,
+                    reason: args.reason,
+                };
+                commit(&args.chat_id, Some(info), state);
+                state.data.user_index_canister_id
+            });
+            if let Some(suspension_details) = args.suspend_members {
+                let suspend_users_args = user_index_canister::c2c_suspend_users::Args {
+                    user_ids: members,
+                    duration: suspension_details.duration,
+                    reason: suspension_details.reason,
+                };
+                user_index_canister_c2c_client::c2c_suspend_users(user_index_canister_id, &suspend_users_args)
+                    .await
+                    .unwrap();
+            }
             Success(event)
         }
         Ok(group_canister::c2c_freeze_group::Response::ChatAlreadyFrozen) => ChatAlreadyFrozen,

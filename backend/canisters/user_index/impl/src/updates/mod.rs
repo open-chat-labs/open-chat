@@ -5,6 +5,7 @@ pub mod c2c_migrate_user_principal;
 pub mod c2c_notify_low_balance;
 pub mod c2c_register_bot;
 pub mod c2c_set_avatar;
+pub mod c2c_suspend_users;
 pub mod confirm_phone_number;
 pub mod create_challenge;
 pub mod register_user;
