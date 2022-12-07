@@ -67,8 +67,8 @@
             bottom: -5px;
             left: 18px;
             transform: rotate(45deg);
-            border-right: 1px solid inherit;
-            border-bottom: 1px solid inherit;
+            border-bottom: 1px solid var(--menu-bd);
+            border-right: 1px solid var(--menu-bd);
             content: "";
         }
     }

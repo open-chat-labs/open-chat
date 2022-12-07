@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{PhoneStatus, SuspendedUntil, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
+
+use super::user::{SuspensionDetails, SuspensionDuration};
 
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
@@ -311,9 +313,19 @@ impl UserMap {
         }
     }
 
-    pub fn suspend_user(&mut self, user_id: &UserId, until: Option<TimestampMillis>) -> bool {
+    pub fn suspend_user(
+        &mut self,
+        user_id: &UserId,
+        duration: Option<Milliseconds>,
+        reason: String,
+        now: TimestampMillis,
+    ) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.suspended_until = Some(until.map_or(SuspendedUntil::Indefinitely, SuspendedUntil::Timestamp));
+            user.suspension_details = Some(SuspensionDetails {
+                timestamp: now,
+                duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
+                reason,
+            });
             true
         } else {
             false
@@ -322,7 +334,7 @@ impl UserMap {
 
     pub fn unsuspend_user(&mut self, user_id: &UserId) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
-            user.suspended_until = None;
+            user.suspension_details = None;
             true
         } else {
             false

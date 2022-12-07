@@ -68,7 +68,6 @@
     "oneDay": "1 ngày",
     "onlineNow": "Đang Online",
     "messages": "Tin nhắn",
-    "searchPlaceholder": "Tìm kiếm người dùng, nhóm, hoặc tin nhắn...",
     "groupDetails": "Chi tiêt về Nhóm",
     "theInternetComputer": "Internet Computer",
     "unexpectedError": "Đã xảy ra lỗi",
@@ -309,9 +308,9 @@
         "challengeAttemptFailed": "Giá trị bạn đã nhập không chính xác. Hãy thử thách thức mới.",
         "challengeThrottled": "Quá nhiều thách thức đã được tạo ra. Vui lòng thử lại sau.",
         "attemptChallenge": "Vui lòng nhập các ký tự bạn thấy",
-        "smsWarning": "Có một số quốc gia mà chúng tôi hiện không thể gửi tin nhắn SMS tới (ví dụ: Trung Quốc, Nigeria, Iran và các quốc gia khác). Nếu bạn không nhận được mã, bạn có thể đang ở một quốc gia mà chúng tôi hiện không thể gửi mã đến. Chúng tôi sẽ cải thiện điều này trong tương lai.",
         "closedTitle": "Đăng ký bị tạm dừng",
-        "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!"
+        "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
+        "smsWarning": "Có một số quốc gia mà chúng tôi hiện không thể gửi tin nhắn SMS tới (Trung Quốc, Nigeria, Nga, Belarus và Iran). Nếu bạn không nhận được mã, bạn có thể đang ở một quốc gia mà chúng tôi hiện không thể gửi mã đến. Chúng tôi sẽ cải thiện điều này trong tương lai."
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
@@ -502,7 +501,9 @@
         "pollVotes": "phiếu thăm dò ý kiến",
         "replies": "trả lời",
         "reactions": "phản ứng",
-        "deletedMessages": "tin nhắn đã xóa"
+        "deletedMessages": "tin nhắn đã xóa",
+        "reportedMessages": "Tin nhắn được báo cáo",
+        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng."
     },
     "andNMore": "và {n} khác",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",
@@ -644,5 +645,6 @@
     "unsuspendUser": "Hủy tạm ngưng người dùng",
     "suspendedUser": "người dùng bị treo",
     "unsuspendedUser": "Người dùng không bị tạm ngưng",
-    "nUsersJoined": "{number} người dùng đã tham gia nhóm"
+    "nUsersJoined": "{number} người dùng đã tham gia nhóm",
+    "searchPlaceholder": "Tìm kiếm người dùng và nhóm..."
 }

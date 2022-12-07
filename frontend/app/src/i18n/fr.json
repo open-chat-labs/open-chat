@@ -72,7 +72,6 @@
     "oneDay": "Un jour",
     "onlineNow": "Maintenant en ligne",
     "messages": "messages",
-    "searchPlaceholder": "Rechercher des utilisateurs, des groupes et des messages...",
     "groupDetails": "Détails du groupe",
     "theInternetComputer": "L'ordinateur Internet",
     "unexpectedError": "Erreur inattendue",
@@ -312,9 +311,9 @@
         "challengeAttemptFailed": "La valeur que vous avez entrée est incorrecte. Veuillez essayer le nouveau défi.",
         "challengeThrottled": "Trop de défis ont été générés. Veuillez réessayer plus tard.",
         "attemptChallenge": "Veuillez saisir les caractères que vous voyez",
-        "smsWarning": "Il existe un certain nombre de pays vers lesquels nous ne pouvons actuellement pas envoyer de SMS (par exemple, la Chine, le Nigeria, l'Iran et d'autres). Si vous ne recevez pas de code, vous vous trouvez peut-être dans un pays vers lequel nous ne pouvons actuellement pas envoyer. Nous améliorerons cela à l'avenir.",
         "closedTitle": "Inscription en pause",
-        "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !"
+        "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
+        "smsWarning": "Il existe un certain nombre de pays vers lesquels nous ne pouvons actuellement pas envoyer de SMS (Chine, Nigeria, Russie, Biélorussie et Iran). Si vous ne recevez pas de code, vous vous trouvez peut-être dans un pays vers lequel nous ne pouvons actuellement pas envoyer. Nous améliorerons cela à l'avenir."
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
@@ -501,7 +500,9 @@
         "pollVotes": "sondages",
         "replies": "réponses",
         "reactions": "réactions",
-        "deletedMessages": "messages supprimés"
+        "deletedMessages": "messages supprimés",
+        "reportedMessages": "Messages signalés",
+        "reportedMessagesInfo": "Les messages que vous avez envoyés et qui ont été supprimés ou signalés par d'autres. Cela peut être utilisé comme une indication que vous ne contribuez pas positivement à la communauté."
     },
     "andNMore": ", et {n} de plus",
     "confirmMakeGroupPrivate": "Voulez-vous vraiment rendre ce groupe privé ? Actuellement, cette opération ne peut pas être annulée !",
@@ -643,5 +644,6 @@
     "unsuspendUser": "Annuler la suspension de l'utilisateur",
     "suspendedUser": "Utilisateur suspendu",
     "unsuspendedUser": "Utilisateur non suspendu",
-    "nUsersJoined": "{number} utilisateurs ont rejoint le groupe"
+    "nUsersJoined": "{number} utilisateurs ont rejoint le groupe",
+    "searchPlaceholder": "Rechercher des utilisateurs et des groupes..."
 }

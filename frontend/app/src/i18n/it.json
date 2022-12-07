@@ -72,7 +72,6 @@
     "oneDay": "1 giorno",
     "onlineNow": "Online adesso",
     "messages": "Messaggi",
-    "searchPlaceholder": "Cerca utenti, gruppi e messaggi...",
     "groupDetails": "Dettagli del gruppo",
     "theInternetComputer": "Internet Computer",
     "unexpectedError": "Errore inaspettato",
@@ -313,9 +312,9 @@
         "challengeAttemptFailed": "Il valore inserito non è corretto. Per favore, prova la nuova sfida.",
         "challengeThrottled": "Sono state generate troppe sfide. Per favore riprova più tardi.",
         "attemptChallenge": "Per favore digita i caratteri che vedi",
-        "smsWarning": "Ci sono un certo numero di paesi a cui attualmente non possiamo inviare messaggi SMS (ad es. Cina, Nigeria, Iran e altri). Se non ricevi un codice, potresti trovarti in un paese in cui al momento non possiamo inviare. Lo miglioreremo in futuro.",
         "closedTitle": "Registrazione sospesa",
-        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!"
+        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
+        "smsWarning": "Ci sono un certo numero di paesi a cui attualmente non possiamo inviare messaggi SMS (Cina, Nigeria, Russia, Bielorussia e Iran). Se non ricevi un codice, potresti trovarti in un paese in cui al momento non possiamo inviare. Lo miglioreremo in futuro."
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",
@@ -501,7 +500,9 @@
         "pollVotes": "voti elettorali",
         "replies": "risposte",
         "reactions": "reazioni",
-        "deletedMessages": "messaggi cancellati"
+        "deletedMessages": "messaggi cancellati",
+        "reportedMessages": "Messaggi segnalati",
+        "reportedMessagesInfo": "Messaggi inviati da te che sono stati eliminati o segnalati da altri. Questo può essere usato come un'indicazione che non stai contribuendo positivamente alla comunità."
     },
     "andNMore": ", e {n} altro",
     "confirmMakeGroupPrivate": "Vuoi assolutamente rendere privato questo gruppo? Attualmente questa operazione non può essere annullata!",
@@ -643,5 +644,6 @@
     "unsuspendUser": "Annulla sospensione utente",
     "suspendedUser": "Utente sospeso",
     "unsuspendedUser": "Utente non sospeso",
-    "nUsersJoined": "{number} utenti si sono uniti al gruppo"
+    "nUsersJoined": "{number} utenti si sono uniti al gruppo",
+    "searchPlaceholder": "Cerca utenti e gruppi..."
 }

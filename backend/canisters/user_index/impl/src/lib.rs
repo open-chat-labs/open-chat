@@ -11,11 +11,14 @@ use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 use utils::{canister, memory};
 
 mod guards;
@@ -29,7 +32,8 @@ pub const USER_LIMIT: usize = 65_000;
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
-const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * 60 * 1000; // 10 minutes
+const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * MINUTE_IN_MS; // 10 minutes
+const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -61,6 +65,11 @@ impl RuntimeState {
     pub fn is_caller_service_principal(&self) -> bool {
         let caller = self.env.caller();
         self.data.service_principals.contains(&caller)
+    }
+
+    pub fn is_caller_group_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.group_index_canister_id
     }
 
     pub fn is_caller_sms_service(&self) -> bool {

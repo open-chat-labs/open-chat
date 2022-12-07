@@ -105,6 +105,10 @@
             border-radius: $sp2 $sp2 0 0;
             border-bottom: none;
         }
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 
     .user-pill {

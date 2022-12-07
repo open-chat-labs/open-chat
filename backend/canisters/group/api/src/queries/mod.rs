@@ -1,4 +1,3 @@
-pub mod c2c_search_messages;
 pub mod c2c_summary;
 pub mod c2c_summary_updates;
 pub mod events;
