@@ -21,8 +21,9 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = "#211b1b";
     base.modal.bd = base.bd;
     base.modal.bg = base.panel.right.modal;
-    base.chatSummary["bg-selected"] = "rgb(64 55 55 / 50%)";
+    base.chatSummary["bg-selected"] = "rgb(64 55 55 / 40%)";
     base.chatSummary.hv = "rgb(64 55 55 / 30%)";
+    base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
     base.entry.input.bg = "#2a1e1e";
     base.input.bg = "#2a1e1e";
