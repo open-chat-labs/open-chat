@@ -46,6 +46,7 @@ export function getTheme(base: Theme): Theme {
     base.reaction.me = red100;
     base.primary = red100;
     base.link.underline = base.primary;
+    base.scrollbar.bg = base.button.hv;
 
     return base;
 }
