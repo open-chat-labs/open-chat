@@ -57,7 +57,7 @@
 
     export let chat: ChatSummary;
     export let unreadMessages: number;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let canPin: boolean;
     export let canBlockUser: boolean;
@@ -599,7 +599,7 @@
     }
 
     function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
-        if (preview) return true;
+        if (readonly) return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
             let messageIndex =
@@ -618,8 +618,6 @@
     }
 
     function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
-        if (preview) return false;
-
         if (evt.event.kind === "message") {
             return store.has(evt.event.messageIndex);
         }
@@ -776,7 +774,7 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === innerGroup.length}
-                        {preview}
+                        {readonly}
                         {canPin}
                         {canBlockUser}
                         {canDelete}
@@ -830,7 +828,7 @@
         {/if}
     {/if}
 </div>
-{#if !preview}
+{#if !readonly}
     <div
         title={$_("goToFirstMention")}
         class:show={firstUnreadMention !== undefined}

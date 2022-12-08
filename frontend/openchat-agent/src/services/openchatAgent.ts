@@ -1345,8 +1345,8 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.unfreezeGroup(chatId);
     }
 
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
-        return this._userIndexClient.suspendUser(userId);
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
+        return this._userIndexClient.suspendUser(userId, reason);
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {

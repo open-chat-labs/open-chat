@@ -29,7 +29,7 @@
     export let messageIndex: number;
     export let messageId: bigint;
     export let collapsed: boolean;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let reply: boolean;
 
     const client = getContext<OpenChat>("client");
@@ -66,7 +66,7 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
-    $: disable = preview || reply || votingEnded;
+    $: disable = readonly || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";

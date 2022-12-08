@@ -24,7 +24,7 @@
     export let reply: boolean = false;
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let groupChat: boolean;
     export let senderId: string;
     export let myUserId: string | undefined;
@@ -55,7 +55,7 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
-    <PollContent {preview} {me} {content} {myUserId} {senderId} on:registerVote />
+    <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
     <IntersectionObserver let:intersecting>
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
@@ -67,7 +67,7 @@
         {messageIndex}
         {messageId}
         {collapsed}
-        {preview}
+        {readonly}
         {reply}
         on:expandMessage />
 {/if}
