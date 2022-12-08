@@ -9,7 +9,7 @@ export function getTheme(base: Theme): Theme {
     base.name = "red";
     base.label = "Submarine";
     base.burst = false;
-    base.bg = "radial-gradient(circle, rgba(101,6,6,1) 10%, rgba(0,0,0,1) 79%)";
+    base.bg = "radial-gradient(circle, rgba(66,5,5,1) 20%, rgba(0,0,0,1) 79%)";
     base.bd = "#4f1515";
     base.txt = txt;
     base["txt-light"] = txtLight;
