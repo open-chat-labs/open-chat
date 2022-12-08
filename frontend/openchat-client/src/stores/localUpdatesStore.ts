@@ -23,14 +23,24 @@ export abstract class LocalUpdatesStore<T extends LocalUpdates> {
         updateFn: (current: T) => Partial<T>
     ): void {
         this.store.update((state) => {
-            const updates = state[key];
+            const current = state[key];
             state[key] = {
-                ...updates,
-                ...updateFn(updates),
+                ...current,
+                ...updateFn(current),
                 lastUpdated: Date.now(),
             };
             return state;
         });
+    }
+
+    protected deleteKey(key: string): void {
+        if (this.storeValue[key] !== undefined) {
+            this.store.update((state) => {
+                const clone = { ...state };
+                delete clone[key];
+                return clone;
+            });
+        }
     }
 
     private pruneLocalUpdates(): void {

@@ -459,6 +459,7 @@ export function createDirectChat(chatId: string): void {
 }
 
 export function addGroupPreview(chat: GroupChatSummary): void {
+    localChatSummaryUpdates.delete(chat.chatId);
     groupPreviewsStore.update((summaries) => ({
         ...summaries,
         [chat.chatId]: chat
