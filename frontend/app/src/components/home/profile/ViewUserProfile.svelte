@@ -83,8 +83,8 @@
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
                 <p>{status === "" ? "..." : status}</p>
+                <p>{joined}</p>
                 {#if client.user.isSuperAdmin}
-                    <p>{joined}</p>
                     {#if isPremium}
                         <p>PREMIUM</p>
                     {/if}
