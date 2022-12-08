@@ -45,6 +45,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.hv = base.chatSummary.hv;
     base.reaction.me = red100;
     base.primary = red100;
+    base.link.underline = base.primary;
 
     return base;
 }
