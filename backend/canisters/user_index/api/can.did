@@ -177,7 +177,6 @@ type CurrentUserResponse =
             referrals: vec UserId;
             is_super_admin: bool;
             suspension_details: opt SuspensionDetails;
-            suspended: bool;
         };
         UserNotFound;
     };
