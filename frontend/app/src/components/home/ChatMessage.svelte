@@ -647,7 +647,7 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("deleteMessage")}</div>
+                                        <div slot="text">{$_(me ? "deleteMessage" : "deleteMessageAndReport")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if canUndelete}

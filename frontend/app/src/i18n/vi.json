@@ -648,5 +648,6 @@
     "nUsersJoined": "{number} người dùng đã tham gia nhóm",
     "searchPlaceholder": "Tìm kiếm người dùng và nhóm...",
     "reasonForSuspension": "lý do đình chỉ",
-    "suspend": "Đình chỉ"
+    "suspend": "Đình chỉ",
+    "deleteMessageAndReport": "Xóa và báo cáo"
 }
