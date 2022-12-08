@@ -645,5 +645,6 @@
     "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה",
     "searchPlaceholder": "חפש משתמשים וקבוצות...",
     "reasonForSuspension": "סיבה להשעיה",
-    "suspend": "לְהַשְׁעוֹת"
+    "suspend": "לְהַשְׁעוֹת",
+    "deleteMessageAndReport": "מחק ודווח"
 }

@@ -648,5 +648,6 @@
     "nUsersJoined": "{number} 位用户加入了群组",
     "searchPlaceholder": "搜索用户和组...",
     "reasonForSuspension": "暂停原因",
-    "suspend": "暂停"
+    "suspend": "暂停",
+    "deleteMessageAndReport": "删除并举报"
 }

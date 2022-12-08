@@ -648,5 +648,6 @@
     "nUsersJoined": "{number} usuarios se unieron al grupo",
     "searchPlaceholder": "Buscar usuarios y grupos...",
     "reasonForSuspension": "motivo de suspensión",
-    "suspend": "Suspender"
+    "suspend": "Suspender",
+    "deleteMessageAndReport": "Eliminar e informar"
 }
