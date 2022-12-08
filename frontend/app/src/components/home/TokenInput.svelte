@@ -68,6 +68,10 @@
         display: block;
         outline: none;
         padding: 0 $sp3;
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 
     /* Chrome, Safari, Edge, Opera */

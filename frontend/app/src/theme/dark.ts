@@ -29,6 +29,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         ...defaultTheme,
         name: "dark",
         label: "Dark",
+        burst: true,
 
         bg: backgroundBlack,
         txt: txt,

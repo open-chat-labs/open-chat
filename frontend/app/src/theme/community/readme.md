@@ -8,21 +8,48 @@ but you are free to create your own and try out those created by others.
 
 ## How to create a theme
 
-To create a theme of your own you must create a \*.json file with a unique name representing your theme e.g. `disco.json` and place it in the
-`community` directory.
+First create a new typescript file in this folder. Take `red.ts` as an example. In this file you can see that it defines a function called `getTheme`. This function will
+accept an existing theme to base your new theme on and you must simply change the properties that you are interested in changing.
 
-Your theme must adhere to the schema defined in the `themes.ts` file.
+For example we can see that the main background is changed in the red theme as follows:
+
+```
+    base.bg = "radial-gradient(circle, rgba(101,6,6,1) 10%, rgba(0,0,0,1) 79%)";
+```
+
+Note that you _must_ give your theme a unique name and label.
 
 ### Do I have to fill out everything?
 
-No. You can base your theme on any other theme (either built in or another custom theme). Simply specify the theme you wish to extend in the
-`extends` property of your json file.
-
-If you are extending another theme, you need only specify the properties that you actually want to change in your theme.
+No. You only need to overwrite the things that you want to change. So pick an existing theme that is as close to what you want to start with as you can and it will be easier.
 
 ### What next?
 
-Once you've created your theme, you will need to make a pull request to the openchat repo to get your custom theme reviewed and merged.
+Once you have created your theme you need to plug it into the user profile page.
+
+To do that open `themes.ts`. At the top of this file you will see something like the following:
+
+```
+const defaultTheme = lightTheme();
+const dark = darkTheme(defaultTheme);
+const white = whiteTheme();
+const red = getRedTheme(cloneTheme(dark));
+
+export const communityThemes = [white, red];
+
+const themes: Themes = {
+    light: defaultTheme,
+    dark,
+    white,
+    red,
+};
+```
+
+You will need to import the theme you just created and then make sure it is added to both the `communityThemes` list and to the `themes` map.
+
+With this done you should be able to select your custom theme from the user profile page.
+
+Once you are happy you will need to make a pull request to the openchat repo to get your custom theme reviewed and merged.
 
 Once it has been merged and deployed your custom theme will appear in the user profile section of every user and anyone will be able to
 use it.

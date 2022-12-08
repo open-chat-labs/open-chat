@@ -2,17 +2,21 @@ import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
 import { whiteTheme } from "./community/white";
 import { derived, readable, writable } from "svelte/store";
+import { getTheme as getRedTheme } from "./community/red";
 
-// these are the gradients used in the logo (from light to dark)
-// const blueFrom = "#28aae2";
-// const blueTo = "#146b91";
-// const blueGradient = `linear-gradient(${blueFrom}, ${blueTo})`;
-// const orangeFrom = "#fbb03b";
-// const orangeTo = "#f05a24";
-// const orangeGradient = `linear-gradient(${orangeFrom}, ${orangeTo})`;
-// const purpleFrom = "#ed1e79";
-// const purpleTo = "#5f2583";
-// const purpleGradient = `linear-gradient(${purpleFrom}, ${purpleTo})`;
+const defaultTheme = lightTheme();
+const dark = darkTheme(defaultTheme);
+const white = whiteTheme();
+const red = getRedTheme(cloneTheme(dark));
+
+export const communityThemes = [white, red];
+
+const themes: Themes = {
+    light: defaultTheme,
+    dark,
+    white,
+    red,
+};
 
 export function hexPercent(hex: string, alpha: number | undefined): string {
     const r = parseInt(hex.slice(1, 3), 16),
@@ -29,6 +33,7 @@ export function hexPercent(hex: string, alpha: number | undefined): string {
 export interface Theme {
     name: string;
     label: string;
+    burst: boolean;
 
     bg: string;
     txt: string;
@@ -271,19 +276,14 @@ export interface Theme {
     };
 }
 
-export type Themes = {
+export type Themes = Record<string, Theme> & {
     light: Theme;
-    white: Theme;
     dark: Theme;
 };
 
-const defaultTheme = lightTheme();
-
-export const themes: Themes = {
-    light: defaultTheme,
-    white: whiteTheme(),
-    dark: darkTheme(defaultTheme),
-};
+function cloneTheme(theme: Theme): Theme {
+    return JSON.parse(JSON.stringify(theme));
+}
 
 function writeCssVars(prefix: string, section: Theme): void {
     for (const [comp, props] of Object.entries(section)) {
@@ -306,10 +306,10 @@ const osDarkStore = readable(window.matchMedia(prefersDarkQuery).matches, (set) 
     return () => mediaQueryList.removeEventListener("change", updateDarkPref);
 });
 
-export const themeNameStore = writable<string | null>(getCurrentThemeName());
+export const themeNameStore = writable<string>(getCurrentThemeName());
 
 export const themeStore = derived([osDarkStore, themeNameStore], ([$dark, $themeName]) =>
-    themeByName($themeName, $dark)
+    themeByName($themeName ?? null, $dark)
 );
 
 themeStore.subscribe((theme) => writeCssVars("--", theme));
@@ -318,7 +318,7 @@ function themeByName(name: string | null, prefersDark: boolean): Theme {
     if (!name || name === "system") {
         return prefersDark ? themes.dark : themes.light;
     }
-    return themes[name as keyof Themes] ?? themes.light;
+    return themes[name] ?? themes.light;
 }
 
 export function getCurrentThemeName(): string {

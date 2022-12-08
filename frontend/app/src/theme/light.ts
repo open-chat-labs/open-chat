@@ -16,6 +16,7 @@ export function lightTheme(): Theme {
     return {
         name: "light",
         label: "Light",
+        burst: false,
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",
