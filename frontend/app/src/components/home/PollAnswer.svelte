@@ -97,7 +97,7 @@
             cursor: default;
         }
 
-        &.preview {
+        &.readonly {
             cursor: default;
         }
     }
