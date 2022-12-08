@@ -478,7 +478,7 @@
             on:toggle={groupStatsOpen.toggle}
             open={$groupStatsOpen}
             headerText={$_("stats.groupStats")}>
-            <Stats stats={originalGroup.metrics} />
+            <Stats showReported={false} stats={originalGroup.metrics} />
         </CollapsibleCard>
         {#if client.canDeleteGroup(originalGroup.chatId)}
             <CollapsibleCard

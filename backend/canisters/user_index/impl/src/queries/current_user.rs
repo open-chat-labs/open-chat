@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{model::user::SuspensionDuration, read_state, RuntimeState, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use ic_cdk_macros::query;
 use ledger_utils::default_ledger_account;
 use types::CanisterUpgradeStatus;
@@ -30,6 +30,23 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             crate::model::user::PhoneStatus::None => PhoneStatus::None,
         };
 
+        let (suspended, suspension_details) = match &u.suspension_details {
+            Some(d) => (
+                true,
+                Some(SuspensionDetails {
+                    reason: d.reason.to_owned(),
+                    action: match d.duration {
+                        SuspensionDuration::Duration(ms) => SuspensionAction::Unsuspend(d.timestamp + ms),
+                        SuspensionDuration::Indefinitely => {
+                            SuspensionAction::Delete(d.timestamp + TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS)
+                        }
+                    },
+                    suspended_by: d.suspended_by,
+                }),
+            ),
+            None => (false, None),
+        };
+
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
@@ -40,8 +57,9 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             phone_status,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
-            suspended: u.suspended_until.is_some(),
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
+            suspension_details,
+            suspended,
         })
     } else {
         UserNotFound

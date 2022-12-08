@@ -175,10 +175,24 @@ type CurrentUserResponse =
             phone_status: PhoneStatus;
             icp_account: AccountIdentifier;
             referrals: vec UserId;
-            suspended: bool;
             is_super_admin: bool;
+            suspension_details: opt SuspensionDetails;
+            suspended: bool;
         };
         UserNotFound;
+    };
+
+type SuspensionDetails =
+    record {
+        reason: text;
+        action: SuspensionAction;
+        suspended_by: UserId;
+    };
+
+type SuspensionAction =
+    variant {
+        Unsuspend: TimestampMillis;
+        Delete: TimestampMillis;
     };
 
 type PhoneStatus =
@@ -275,11 +289,14 @@ type SuspendUserArgs =
     record {
         user_id: UserId;
         duration: opt Milliseconds;
+        reason: text;
     };
 
 type SuspendUserResponse =
     variant {
         Success;
+        UserAlreadySuspended;
+        UserNotFound;
         InternalError: text;
     };
 
@@ -292,6 +309,8 @@ type UnsuspendUserArgs =
 type UnsuspendUserResponse =
     variant {
         Success;
+        UserNotSuspended;
+        UserNotFound;
         InternalError: text;
     };
 

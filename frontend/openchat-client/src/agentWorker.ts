@@ -93,7 +93,7 @@ import {
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
-const WORKER_TIMEOUT = 1000 * 60;
+const WORKER_TIMEOUT = 1000 * 90;
 
 type UnresolvedRequest = {
     kind: string;
@@ -1206,7 +1206,7 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 reason,
-            }
+            },
         });
     }
 
@@ -1215,7 +1215,7 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unfreezeGroup",
             payload: {
                 chatId,
-            }
+            },
         });
     }
 
@@ -1224,7 +1224,7 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "suspendUser",
             payload: {
                 userId,
-            }
+            },
         });
     }
 
@@ -1233,7 +1233,7 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unsuspendUser",
             payload: {
                 userId,
-            }
+            },
         });
     }
 }

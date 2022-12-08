@@ -5,7 +5,7 @@ use crate::new_joiner_rewards::process_new_joiner_reward;
 use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::AllChatEvents;
+use chat_events::{AllChatEvents, ChatEventInternal};
 use notifications_canister::c2c_push_notification_v2;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -19,6 +19,7 @@ use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
+use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 mod guards;
 mod lifecycle;
@@ -147,13 +148,29 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let chat_metrics = self.data.events.metrics();
 
+        let now = self.env.now();
+        let messages_in_last_hour = self
+            .data
+            .events
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
+            as u64;
+        let messages_in_last_day = self
+            .data
+            .events
+            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
+            as u64;
+        let events_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;
+        let events_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            participants: self.data.participants.len() as u32,
+            public: self.data.is_public,
+            date_created: self.data.date_created,
+            members: self.data.participants.len() as u32,
             admins: self.data.participants.admin_count(),
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
@@ -170,6 +187,10 @@ impl RuntimeState {
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
             reported_messages: chat_metrics.reported_messages,
+            messages_in_last_hour,
+            messages_in_last_day,
+            events_in_last_hour,
+            events_in_last_day,
             last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
@@ -302,7 +323,9 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
-    pub participants: u32,
+    pub public: bool,
+    pub date_created: TimestampMillis,
+    pub members: u32,
     pub admins: u32,
     pub text_messages: u64,
     pub image_messages: u64,
@@ -319,6 +342,10 @@ pub struct Metrics {
     pub edits: u64,
     pub reactions: u64,
     pub reported_messages: u64,
+    pub messages_in_last_hour: u64,
+    pub messages_in_last_day: u64,
+    pub events_in_last_hour: u64,
+    pub events_in_last_day: u64,
     pub last_active: TimestampMillis,
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,

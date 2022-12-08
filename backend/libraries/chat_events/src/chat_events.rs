@@ -607,6 +607,15 @@ impl AllChatEvents {
         &self.metrics
     }
 
+    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
+        self.main.event_count_since(since, &filter)
+            + self
+                .threads
+                .values()
+                .map(|e| e.event_count_since(since, &filter))
+                .sum::<usize>()
+    }
+
     pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetrics> {
         self.per_user_metrics
             .get(user_id)
@@ -1021,6 +1030,15 @@ impl ChatEvents {
             correlation_id: message_event.correlation_id,
             event: self.hydrate_message(message_event.event, my_user_id),
         }
+    }
+
+    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| e.timestamp > since)
+            .filter(|e| filter(&e.event))
+            .count()
     }
 
     fn update_thread_summary(

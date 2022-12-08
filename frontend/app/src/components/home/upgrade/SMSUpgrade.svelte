@@ -42,6 +42,7 @@
         iti = intlTelInput(phoneElement, {
             initialCountry: "gb",
             preferredCountries: [],
+            excludeCountries: ["cn", "ru", "ng", "by", "ir"],
         });
 
         phoneElement.addEventListener("countrychange", () => {
@@ -202,6 +203,10 @@
 </Footer>
 
 <style type="text/scss">
+    :global(.iti__country) {
+        color: #191919;
+    }
+
     .body {
         padding: $sp4 $sp5;
         height: 200px;
@@ -244,6 +249,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 
     .title {
@@ -254,7 +263,7 @@
 
     .note {
         @include font(light, normal, fs-80);
-        margin-bottom: $sp3;
+        margin-bottom: $sp5;
     }
 
     .enter-code {
