@@ -13,6 +13,9 @@ async fn main() {
     match opts.canister_to_upgrade {
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::NotificationsIndex => {
+            upgrade_notifications_index_canister(identity, opts.url, opts.notifications_index, opts.version).await
+        }
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
         }
@@ -33,6 +36,7 @@ struct Opts {
     controller: String,
     user_index: CanisterId,
     group_index: CanisterId,
+    notifications_index: CanisterId,
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     proposals_bot: CanisterId,

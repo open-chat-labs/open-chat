@@ -19,6 +19,7 @@ ic-agent = { workspace = true }
 ic-utils = { workspace = true }
 itertools = { workspace = true }
 notifications_canister = { path = "../../canisters/notifications/api" }
+notifications_index_canister = { path = "../../canisters/notifications_index/api" }
 proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 serde = { workspace = true }
 types = { path = "../types" }

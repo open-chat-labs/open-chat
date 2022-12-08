@@ -8,7 +8,7 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::user_event_sync_queue::UserEventSyncQueue;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
@@ -77,9 +77,9 @@ impl RuntimeState {
         self.data.sms_service_principals.contains(&caller)
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
+    pub fn is_caller_notifications_index_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.notifications_canister_ids.contains(&caller)
+        caller == self.data.notifications_index_canister_id
     }
 
     pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
@@ -140,7 +140,8 @@ struct Data {
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
+    pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -160,6 +161,15 @@ struct Data {
     pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 
+fn notifications_index_canister<'de, D>(deserializer: D) -> Result<CanisterId, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let vec: Vec<CanisterId> = Vec::deserialize(deserializer)?;
+
+    Ok(vec.first().copied().unwrap())
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -167,7 +177,7 @@ impl Data {
         sms_service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_index_canister_id: CanisterId,
         online_users_aggregator_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -195,7 +205,7 @@ impl Data {
             sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_messages: EventStream::default(),
             group_index_canister_id,
-            notifications_canister_ids,
+            notifications_index_canister_id,
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -226,7 +236,7 @@ impl Default for Data {
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
-            notifications_canister_ids: vec![Principal::anonymous()],
+            notification_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),

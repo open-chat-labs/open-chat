@@ -2,6 +2,7 @@ use candid::Principal;
 use index_store::DummyStore;
 use sms_sender_aws::pinpoint::PinpointClient;
 use sms_sender_core::{run, IcAgent, IcAgentConfig};
+use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::info;
 use types::Error;
@@ -15,9 +16,9 @@ async fn main() -> Result<(), Error> {
 
     let args: Vec<String> = std::env::args().collect();
     let index = args[1].parse::<u64>().unwrap();
-    let index_store = DummyStore::new(Some(index));
 
     let canister_id = Principal::from_text(dotenv::var("USER_INDEX_CANISTER_ID")?).unwrap();
+    let index_store = DummyStore::new(HashMap::from([(canister_id, index)]));
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
@@ -38,5 +39,5 @@ async fn main() -> Result<(), Error> {
 
     info!("Configuration complete");
 
-    run(&ic_agent, &index_store, &pinpoint_client).await
+    run(canister_id, &ic_agent, &index_store, &pinpoint_client).await
 }

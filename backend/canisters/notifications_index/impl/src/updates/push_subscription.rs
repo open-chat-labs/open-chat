@@ -2,8 +2,8 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use notifications_canister::push_subscription::{Response::*, *};
-use types::{CanisterId, SubscriptionInfo, UserId};
+use notifications_index_canister::push_subscription::{Response::*, *};
+use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user_id;
 
 #[update]
@@ -19,12 +19,12 @@ async fn push_subscription(args: Args) -> Response {
                     user_id
                 }
                 Ok(user_index_canister::c2c_lookup_user_id::Response::UserNotFound) => panic!("User not found"),
-                Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_lookup_user_id': {error:?}")),
+                Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_user_id': {error:?}")),
             }
         }
     };
 
-    mutate_state(|state| add_subscription(user_id, args.subscription, state));
+    mutate_state(|state| state.add_subscription(user_id, args.subscription));
     Success
 }
 
@@ -44,9 +44,4 @@ enum LookupResult {
 
 fn add_user_locally(principal: Principal, user_id: UserId, runtime_state: &mut RuntimeState) {
     runtime_state.data.principal_to_user_id.insert(principal, user_id);
-}
-
-fn add_subscription(user_id: UserId, subscription: SubscriptionInfo, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.subscriptions.push(user_id, subscription, now);
 }

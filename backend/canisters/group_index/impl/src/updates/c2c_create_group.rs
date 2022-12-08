@@ -130,7 +130,7 @@ fn prepare(
             mark_active_duration: MARK_ACTIVE_DURATION,
             wasm_version: canister_wasm.version,
             user_index_canister_id: runtime_state.data.user_index_canister_id,
-            notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
+            notifications_canister_ids: vec![runtime_state.data.notifications_canister_id],
             ledger_canister_id: runtime_state.data.ledger_canister_id,
             avatar: args.avatar,
             test_mode: runtime_state.data.test_mode,

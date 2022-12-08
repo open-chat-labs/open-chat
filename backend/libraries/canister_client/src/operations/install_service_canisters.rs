@@ -16,9 +16,9 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let (
         user_index_canister_id,
         group_index_canister_id,
+        notifications_index_canister_id,
         notifications_canister_id,
         online_users_aggregator_canister_id,
-        proposals_bot_canister_id,
     ) = futures::future::join5(
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
@@ -28,15 +28,18 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    let (cycles_dispenser_canister_id, open_storage_index_canister_id, ledger_canister_id) = futures::future::join3(
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-    )
-    .await;
+    let (proposals_bot_canister_id, cycles_dispenser_canister_id, open_storage_index_canister_id, ledger_canister_id) =
+        futures::future::join4(
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+        )
+        .await;
 
     println!("user_index canister id: {user_index_canister_id}");
     println!("group_index canister id: {group_index_canister_id}");
+    println!("notifications index canister id: {notifications_index_canister_id}");
     println!("notifications canister id: {notifications_canister_id}");
     println!("users_online_aggregator canister id: {online_users_aggregator_canister_id}");
     println!("proposals_bot canister id: {proposals_bot_canister_id}");
@@ -47,6 +50,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let canister_ids = CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
+        notifications_index: notifications_canister_id,
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
         proposals_bot: proposals_bot_canister_id,
@@ -99,7 +103,8 @@ async fn install_service_canisters_impl(
         sms_service_principals: vec![principal],
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
-        notifications_canister_ids: vec![canister_ids.notifications],
+        notifications_index_canister_id: canister_ids.notifications_index,
+        notifications_canister_id: canister_ids.notifications,
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
@@ -114,7 +119,8 @@ async fn install_service_canisters_impl(
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
-        notifications_canister_ids: vec![canister_ids.notifications],
+        notifications_index_canister_id: canister_ids.notifications_index,
+        notifications_canister_id: canister_ids.notifications,
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         ledger_canister_id: canister_ids.ledger,
@@ -122,11 +128,22 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
-    let notifications_init_args = notifications_canister::init::Args {
+    let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
+    let notifications_index_init_args = notifications_index_canister::init::Args {
+        service_principals: vec![principal],
+        notifications_canister_ids: vec![canister_ids.notifications],
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
+    let notifications_init_args = notifications_canister::init::Args {
+        notifications_index_canister_id: canister_ids.notifications_index,
+        push_service_principals: vec![principal],
+        authorizers: vec![canister_ids.user_index, canister_ids.group_index],
         wasm_version: version,
         test_mode,
     };
@@ -188,6 +205,12 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
+            &canister_ids.notifications_index,
+            &notifications_index_canister_wasm.module,
+            notifications_index_init_args,
+        ),
+        install_wasm(
+            management_canister,
             &canister_ids.notifications,
             &notifications_canister_wasm.module,
             notifications_init_args,
@@ -198,16 +221,16 @@ async fn install_service_canisters_impl(
             &online_users_aggregator_canister_wasm.module,
             online_users_aggregator_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join3(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
             proposals_bot_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join(
         install_wasm(
             management_canister,
             &canister_ids.cycles_dispenser,

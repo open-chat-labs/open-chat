@@ -16,11 +16,11 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_notifications_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_notifications_canister()) {
+pub fn caller_is_notifications_index_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_notifications_index_canister()) {
         Ok(())
     } else {
-        Err("Caller is not the notifications canister".to_string())
+        Err("Caller is not the notifications index canister".to_string())
     }
 }
 

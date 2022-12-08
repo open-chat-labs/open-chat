@@ -317,7 +317,7 @@ mod notify_user_principal_migrations {
                     .map(|_| ())
             }
             CanisterToNotifyOfUserPrincipalMigration::Notifications(canister_id, args) => {
-                notifications_canister_c2c_client::c2c_update_user_principal(*canister_id, args)
+                notifications_index_canister_c2c_client::c2c_update_user_principal(*canister_id, args)
                     .await
                     .map(|_| ())
             }

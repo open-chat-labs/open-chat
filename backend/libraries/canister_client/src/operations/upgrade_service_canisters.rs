@@ -45,6 +45,25 @@ pub async fn upgrade_user_index_canister(
     println!("User index canister upgraded");
 }
 
+pub async fn upgrade_notifications_index_canister(
+    identity: BasicIdentity,
+    url: String,
+    notifications_index_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        notifications_index_canister_id,
+        version,
+        notifications_index_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::NotificationsIndex,
+    )
+    .await;
+
+    println!("Notifications index canister upgraded");
+}
+
 pub async fn upgrade_notifications_canister(
     identity: BasicIdentity,
     url: String,

@@ -11,6 +11,7 @@ async fn main() {
     let canister_ids = CanisterIds {
         user_index: opts.user_index,
         group_index: opts.group_index,
+        notifications_index: opts.notifications_index,
         notifications: opts.notifications,
         online_users_aggregator: opts.online_users_aggregator,
         proposals_bot: opts.proposals_bot,
@@ -32,6 +33,7 @@ struct Opts {
     controller: String,
     user_index: CanisterId,
     group_index: CanisterId,
+    notifications_index: CanisterId,
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     proposals_bot: CanisterId,

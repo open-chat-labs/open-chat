@@ -3,19 +3,24 @@ use futures::future;
 use index_store::IndexStore;
 use tokio::time;
 use tracing::{error, info};
-use types::Error;
+use types::{CanisterId, Error};
 
-pub async fn run(sms_reader: &dyn SmsReader, index_store: &dyn IndexStore, sms_sender: &dyn SmsSender) -> Result<(), Error> {
+pub async fn run(
+    canister_id: CanisterId,
+    sms_reader: &dyn SmsReader,
+    index_store: &dyn IndexStore,
+    sms_sender: &dyn SmsSender,
+) -> Result<(), Error> {
     info!("Starting runner");
 
     let mut interval = time::interval(time::Duration::from_secs(2));
-    let mut processed_up_to = index_store.get().await?;
+    let mut processed_up_to = index_store.get(canister_id).await?;
     let mut pruned_up_to = 0;
 
     loop {
         match send_messages(sms_reader, processed_up_to.map_or(0, |i| i + 1), sms_sender).await {
             Ok(Some(new_processed_up_to)) => {
-                index_store.set(new_processed_up_to).await?;
+                index_store.set(canister_id, new_processed_up_to).await?;
                 processed_up_to = Some(new_processed_up_to);
             }
             Ok(None) => {}

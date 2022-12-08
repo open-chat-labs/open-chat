@@ -6,7 +6,7 @@ use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::{AllChatEvents, ChatEventInternal};
-use notifications_canister::c2c_push_notification_v2;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -64,15 +64,16 @@ impl RuntimeState {
         let random = self.env.random_u32() as usize;
 
         if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification_v2::Args {
+            let args = c2c_push_notification::Args {
                 recipients,
+                authorizer: Some(self.data.group_index_canister_id),
                 notification_bytes: candid::encode_one(&notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
 
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification_v2::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification_v2(canister_id, &args).await;
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
     }
 
