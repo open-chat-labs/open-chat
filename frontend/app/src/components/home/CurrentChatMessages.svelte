@@ -618,8 +618,6 @@
     }
 
     function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
-        //if (preview) return false;
-
         if (evt.event.kind === "message") {
             return store.has(evt.event.messageIndex);
         }
