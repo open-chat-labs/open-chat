@@ -449,6 +449,7 @@
         });
     }
 </script>
+
 {#if showMentionPicker}
     <MentionPicker
         {blockedUsers}

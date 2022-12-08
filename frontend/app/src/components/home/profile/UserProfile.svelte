@@ -55,6 +55,7 @@
     let saving = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
+    let readonly = client.isReadOnly();
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -174,7 +175,7 @@
             open={$userInfoOpen}
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
-                {#if client.isReadOnly()}
+                {#if readonly}
                     <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
                 {:else}
                     <EditableAvatar
@@ -187,7 +188,7 @@
             <UsernameInput
                 {client}
                 originalUsername={user?.username ?? ""}
-                disabled={client.isReadOnly()}
+                disabled={readonly}
                 bind:validUsername
                 bind:checking={checkingUsername}
                 bind:error={usernameError}>
@@ -201,7 +202,7 @@
                 rows={3}
                 bind:value={userbio}
                 invalid={false}
-                disabled={client.isReadOnly()}
+                disabled={readonly}
                 maxlength={MAX_BIO_LENGTH}
                 placeholder={$_("enterBio")}>
                 {#if bioError !== undefined}
@@ -211,7 +212,7 @@
             <div class="full-width-btn">
                 <Button
                     loading={saving || checkingUsername}
-                    disabled={(!bioDirty && validUsername === undefined) || saving || client.isReadOnly()}
+                    disabled={(!bioDirty && validUsername === undefined) || saving || readonly}
                     fill={true}
                     small>{$_("update")}</Button>
             </div>
@@ -301,7 +302,7 @@
             <Accounts />
         </CollapsibleCard>
     </div>
-    {#if !client.isReadOnly()}
+    {#if !readonly}
         <div class="storage">
             <CollapsibleCard
                 on:toggle={storageSectionOpen.toggle}
