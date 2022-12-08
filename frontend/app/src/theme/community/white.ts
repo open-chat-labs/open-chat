@@ -1,4 +1,4 @@
-import { hexPercent, Theme } from "./themes";
+import { hexPercent, Theme } from "../themes";
 
 const orangeAccent = "#ff9505";
 // const pinkAccent = "hotpink";

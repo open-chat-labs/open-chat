@@ -1,6 +1,6 @@
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
-import { whiteTheme } from "./white";
+import { whiteTheme } from "./community/white";
 import { derived, readable, writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
