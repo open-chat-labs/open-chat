@@ -52,13 +52,15 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
 
             if let Some(referred_by) = ev.referred_by {
-                runtime_state.data.user_event_sync_queue.push(
-                    referred_by,
-                    UserEvent::ReferredUserRegistered(ReferredUserRegistered {
-                        user_id: ev.user_id,
-                        username: ev.username,
-                    }),
-                );
+                if runtime_state.data.local_users.get(&referred_by).is_some() {
+                    runtime_state.data.user_event_sync_queue.push(
+                        referred_by,
+                        UserEvent::ReferredUserRegistered(ReferredUserRegistered {
+                            user_id: ev.user_id,
+                            username: ev.username,
+                        }),
+                    );
+                }
             }
         }
         UserIndexEvent::SuperAdminStatusChanged(ev) => {
