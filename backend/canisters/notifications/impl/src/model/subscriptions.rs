@@ -1,11 +1,8 @@
-use crate::HashSet;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use std::time::Duration;
 use types::{SubscriptionInfo, UserId};
-use user_index_canister_c2c_client::user;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Subscriptions {
@@ -15,7 +12,7 @@ pub struct Subscriptions {
 
 impl Subscriptions {
     pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
-        self.subscriptions.get(user_id).map(|subscriptions| subscriptions.clone())
+        self.subscriptions.get(user_id).cloned()
     }
 
     pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) {

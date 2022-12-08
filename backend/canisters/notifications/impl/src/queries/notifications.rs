@@ -1,5 +1,5 @@
 use crate::guards::caller_is_push_service;
-use crate::{read_state, RuntimeState, MAX_SUBSCRIPTION_AGE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;

@@ -84,7 +84,7 @@ impl RuntimeState {
     }
 
     fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent) {
-        for notifications_canister in self.data.notifications_canisters.iter_mut() {
+        for notifications_canister in self.data.notifications_canisters.values_mut() {
             notifications_canister.enqueue_event(event.clone())
         }
     }
@@ -93,7 +93,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub service_principals: HashSet<Principal>,
-    pub notifications_canisters: Vec<NotificationsCanister>,
+    pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
@@ -113,7 +113,7 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             notifications_canisters: notifications_canister_ids
                 .into_iter()
-                .map(NotificationsCanister::new)
+                .map(|c| (c, NotificationsCanister::default()))
                 .collect(),
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,

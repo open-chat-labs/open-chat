@@ -77,9 +77,9 @@ impl RuntimeState {
         self.data.sms_service_principals.contains(&caller)
     }
 
-    pub fn is_caller_notifications_index_canister(&self) -> bool {
+    pub fn is_caller_notifications_canister(&self) -> bool {
         let caller = self.env.caller();
-        caller == self.data.notifications_index_canister_id
+        caller == self.data.notifications_canister_id
     }
 
     pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
@@ -142,6 +142,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
     pub notifications_index_canister_id: CanisterId,
+    // TODO #[serde(default = "")]
+    pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -178,6 +180,7 @@ impl Data {
         user_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
+        notifications_canister_id: CanisterId,
         online_users_aggregator_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -206,6 +209,7 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_index_canister_id,
+            notifications_canister_id,
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -236,7 +240,8 @@ impl Default for Data {
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
-            notification_index_canister_id: Principal::anonymous(),
+            notifications_index_canister_id: Principal::anonymous(),
+            notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),

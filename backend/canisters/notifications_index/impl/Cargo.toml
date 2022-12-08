@@ -17,10 +17,13 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 cycles_dispenser_client = { workspace = true }
+futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
+notifications_canister = { path = "../../notifications/api" }
+notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 notifications_index_canister = { path = "../api" }
 serde = { workspace = true }
 stable_memory = { workspace = true }

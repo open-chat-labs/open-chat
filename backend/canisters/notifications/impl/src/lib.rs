@@ -6,7 +6,6 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use std::time::Duration;
 use types::{CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -17,8 +16,6 @@ mod lifecycle;
 mod model;
 mod queries;
 mod updates;
-
-const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();

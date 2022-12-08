@@ -17,12 +17,8 @@ impl AuthorizedPrincipals {
         }
     }
 
-    pub fn add_authorizer(&mut self, canister_id: CanisterId) -> bool {
-        self.authorizers.insert(canister_id)
-    }
-
-    pub fn add_principal(&mut self, principal: Principal, authorized: bool) -> bool {
-        !matches!(self.principals.insert(principal, authorized), Some(authorized))
+    pub fn add_principal(&mut self, principal: Principal, authorized: bool) {
+        self.principals.insert(principal, authorized);
     }
 
     pub fn is_authorizer(&self, canister_id: &CanisterId) -> bool {

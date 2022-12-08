@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_index_canister::push_subscription::{Response::*, *};
 use types::{CanisterId, UserId};
-use user_index_canister::c2c_lookup_user_id;
+use user_index_canister::c2c_lookup_user;
 
 #[update]
 #[trace]
@@ -12,14 +12,16 @@ async fn push_subscription(args: Args) -> Response {
     let user_id = match read_state(lookup_user_locally) {
         LookupResult::Found(user_id) => user_id,
         LookupResult::NotFound((user_principal, user_index_canister_id)) => {
-            let c2c_lookup_user_id_args = c2c_lookup_user_id::Args { user_principal };
-            match user_index_canister_c2c_client::c2c_lookup_user_id(user_index_canister_id, &c2c_lookup_user_id_args).await {
-                Ok(user_index_canister::c2c_lookup_user_id::Response::Success(user_id)) => {
-                    mutate_state(|state| add_user_locally(user_principal, user_id, state));
-                    user_id
+            let c2c_lookup_user_args = c2c_lookup_user::Args {
+                user_id_or_principal: user_principal,
+            };
+            match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &c2c_lookup_user_args).await {
+                Ok(c2c_lookup_user::Response::Success(user)) => {
+                    mutate_state(|state| add_user_locally(user_principal, user.user_id, state));
+                    user.user_id
                 }
-                Ok(user_index_canister::c2c_lookup_user_id::Response::UserNotFound) => panic!("User not found"),
-                Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_user_id': {error:?}")),
+                Ok(c2c_lookup_user::Response::UserNotFound) => panic!("User not found"),
+                Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_user': {error:?}")),
             }
         }
     };

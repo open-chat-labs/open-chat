@@ -1,26 +1,17 @@
 use notifications_index_canister::NotificationsIndexEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{CanisterId, TimestampMillis};
+use types::TimestampMillis;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct NotificationsCanister {
-    canister_id: CanisterId,
     events_queue: VecDeque<NotificationsIndexEvent>,
     sync_in_progress: Option<TimestampMillis>,
 }
 
 impl NotificationsCanister {
-    pub fn new(canister_id: CanisterId) -> NotificationsCanister {
-        NotificationsCanister {
-            canister_id,
-            events_queue: VecDeque::default(),
-            sync_in_progress: None,
-        }
-    }
-
-    pub fn canister_id(&self) -> CanisterId {
-        self.canister_id
+    pub fn queue_len(&self) -> usize {
+        self.events_queue.len()
     }
 
     pub fn sync_in_progress(&self) -> bool {

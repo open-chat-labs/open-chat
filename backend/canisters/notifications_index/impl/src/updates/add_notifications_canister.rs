@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
+use std::collections::hash_map::Entry::Vacant;
 
 #[update(guard = "caller_is_controller")]
 #[trace]
@@ -12,15 +13,8 @@ fn add_notifications_canister(args: Args) -> Response {
 }
 
 fn add_notifications_canister_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state
-        .data
-        .notifications_canisters
-        .iter()
-        .any(|n| n.canister_id() == args.canister_id)
-    {
-        AlreadyAdded
-    } else {
-        let mut notifications_canister = NotificationsCanister::new(args.canister_id);
+    if let Vacant(e) = runtime_state.data.notifications_canisters.entry(args.canister_id) {
+        let mut notifications_canister = NotificationsCanister::default();
 
         for (user_id, subscription) in runtime_state
             .data
@@ -34,8 +28,10 @@ fn add_notifications_canister_impl(args: Args, runtime_state: &mut RuntimeState)
             }));
         }
 
-        runtime_state.data.notifications_canisters.push(notifications_canister);
+        e.insert(notifications_canister);
 
         Success
+    } else {
+        AlreadyAdded
     }
 }

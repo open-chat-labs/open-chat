@@ -18,7 +18,7 @@ pub async fn run(
     loop {
         for _ in 0..30 {
             if let Err(error) = push_notifications::run(
-                &ic_agent,
+                ic_agent,
                 index_canister_id,
                 notifications_canister_id,
                 index_store,
@@ -32,7 +32,7 @@ pub async fn run(
             interval.tick().await;
         }
 
-        if let Err(error) = prune_notifications::run(&ic_agent, notifications_canister_id, index_store).await {
+        if let Err(error) = prune_notifications::run(ic_agent, notifications_canister_id, index_store).await {
             error!(?error, "Prune notifications failed");
         }
     }

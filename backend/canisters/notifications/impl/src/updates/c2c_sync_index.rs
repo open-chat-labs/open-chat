@@ -12,7 +12,6 @@ fn c2c_sync_index(args: Args) -> Response {
 }
 
 fn c2c_sync_index_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
     for event in args.events {
         match event {
             NotificationsIndexEvent::SubscriptionAdded(s) => {
