@@ -647,5 +647,6 @@
     "nUsersJoined": "{number} пользователей присоединились к группе",
     "searchPlaceholder": "Поиск пользователей и групп...",
     "reasonForSuspension": "причина приостановки",
-    "suspend": "Приостановить"
+    "suspend": "Приостановить",
+    "deleteMessageAndReport": "Удалить и пожаловаться"
 }
