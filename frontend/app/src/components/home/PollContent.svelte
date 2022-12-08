@@ -13,7 +13,7 @@
     export let content: PollContent;
     export let me: boolean;
     export let myUserId: string | undefined;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let senderId: string;
 
     $: txtColor = me ? "#ffffff" : "var(--txt)";
@@ -30,7 +30,7 @@
             (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
     function vote(idx: number) {
-        if (content.ended || preview) return;
+        if (content.ended || readonly) return;
 
         dispatch("registerVote", {
             type: votedFor(idx) ? "delete" : "register",
@@ -110,7 +110,7 @@
             <PollAnswer
                 on:click={() => vote(i)}
                 finished={content.ended}
-                {preview}
+                {readonly}
                 percent={percentageOfVote(i)}
                 {answer}
                 voted={votedFor(i)}

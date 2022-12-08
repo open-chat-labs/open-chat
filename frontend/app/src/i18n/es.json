@@ -646,5 +646,7 @@
     "suspendedUser": "usuario suspendido",
     "unsuspendedUser": "Usuario no suspendido",
     "nUsersJoined": "{number} usuarios se unieron al grupo",
-    "searchPlaceholder": "Buscar usuarios y grupos..."
+    "searchPlaceholder": "Buscar usuarios y grupos...",
+    "reasonForSuspension": "motivo de suspensión",
+    "suspend": "Suspender"
 }

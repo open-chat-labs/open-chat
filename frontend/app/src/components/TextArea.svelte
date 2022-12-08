@@ -22,6 +22,7 @@
 <div class="outer-wrapper">
     <div class="input-wrapper">
         <textarea
+            bind:this={inp}
             {rows}
             class:invalid
             spellcheck="false"

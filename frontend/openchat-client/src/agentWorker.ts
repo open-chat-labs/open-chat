@@ -1219,11 +1219,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.sendRequest({
             kind: "suspendUser",
             payload: {
                 userId,
+                reason,
             },
         });
     }

@@ -34,17 +34,19 @@
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
+    import SuspendModal from "./SuspendModal.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
     export let blocked: boolean;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let unreadMessages: number;
     export let hasPinned: boolean;
 
     let viewProfile = false;
+    let showSuspendUserModal = false;
 
     $: isProposalGroup = client.isProposalGroup;
     $: typingByChat = client.typingByChat;
@@ -155,14 +157,8 @@
         });
     }
 
-    function suspendUser() {
-        client.suspendUser(userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("suspendedUser");
-            } else {
-                toastStore.showFailureToast("failedToSuspendUser");
-            }
-        });
+    function onSuspendUser() {
+        showSuspendUserModal = true;
     }
 
     function unsuspendUser() {
@@ -177,6 +173,10 @@
 
     $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
 </script>
+
+{#if showSuspendUserModal}
+    <SuspendModal {userId} on:close={() => showSuspendUserModal = false} />
+{/if}
 
 <SectionHeader shadow flush>
     {#if $mobileWidth}
@@ -204,7 +204,7 @@
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
-            {#if isGroup && !preview}
+            {#if isGroup && !readonly}
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
                 </span>
@@ -219,7 +219,7 @@
         <div class="chat-subtext">
             {#if blocked}
                 {$_("blocked")}
-            {:else if preview}
+            {:else if readonly}
                 <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
@@ -239,7 +239,7 @@
             </HoverIcon>
         </div>
     {/if}
-    {#if !preview}
+    {#if !readonly}
         {#if !$mobileWidth}
             {#if $isProposalGroup}
                 <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
@@ -291,7 +291,7 @@
                                         <div slot="text">{$_("unsuspendUser")}</div>
                                     </MenuItem>
                                 {:else}
-                                    <MenuItem on:click={suspendUser}>
+                                    <MenuItem on:click={onSuspendUser}>
                                         <CancelIcon
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}

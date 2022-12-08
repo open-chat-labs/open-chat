@@ -482,10 +482,6 @@ export class OpenChat extends EventTarget {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
-        if (user.suspended) {
-            alert("User account suspended");
-            this.logout();
-        }
         this._user = user;
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
@@ -988,6 +984,18 @@ export class OpenChat extends EventTarget {
 
     isFrozen(chatId: string): boolean {
         return this.chatPredicate(chatId, isFrozen);
+    }
+
+    isOpenChatBot(userId: string): boolean {
+        return userId === OPENCHAT_BOT_USER_ID;
+    }
+
+    isReadOnly(): boolean {
+        return (this._user?.suspensionDetails ?? undefined) != undefined;
+    }
+
+    isChatReadOnly(chatId: string): boolean {
+        return this.isReadOnly() || this.isPreviewing(chatId);
     }
 
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
@@ -2728,9 +2736,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    suspendUser(userId: string): Promise<boolean> {
+    suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.api
-            .suspendUser(userId)
+            .suspendUser(userId, reason)
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to suspend user", err);
@@ -2962,10 +2970,6 @@ export class OpenChat extends EventTarget {
         } finally {
             chatsLoading.set(false);
         }
-    }
-
-    isOpenChatBot(userId: string): boolean {
-        return userId === OPENCHAT_BOT_USER_ID;
     }
 
     /**

@@ -81,9 +81,9 @@
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 <RepliesTo
                     messageId={msg.messageId}
-                    preview={true}
+                    readonly
                     {chatId}
-                    groupChat={true}
+                    groupChat
                     repliesTo={msg.repliesTo} />
             {:else}
                 <UnresolvedReply />
@@ -91,16 +91,16 @@
         {/if}
 
         <ChatMessageContent
-            preview={true}
-            pinned={true}
+            readonly
+            pinned
             {senderId}
             {fill}
             {chatId}
             edited={msg.edited}
             messageIndex={msg.messageIndex}
             messageId={msg.messageId}
-            first={true}
-            groupChat={true}
+            first
+            groupChat
             {me}
             myUserId={user.userId}
             content={msg.content} />

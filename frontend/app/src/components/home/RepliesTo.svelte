@@ -16,7 +16,7 @@
     export let messageId: bigint;
     export let chatId: string;
     export let repliesTo: RehydratedReplyContext;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let groupChat: boolean;
 
     let debug = false;
@@ -54,7 +54,7 @@
         {#if repliesTo.content !== undefined}
             <ChatMessageContent
                 {me}
-                {preview}
+                {readonly}
                 {groupChat}
                 {chatId}
                 first={true}
