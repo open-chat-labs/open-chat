@@ -19,7 +19,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 cycles_dispenser_client = { workspace = true }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
