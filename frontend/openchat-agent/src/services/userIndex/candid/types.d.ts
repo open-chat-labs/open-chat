@@ -109,6 +109,7 @@ export interface ChatMetrics {
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
+  'reported_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -161,6 +162,7 @@ export type CurrentUserResponse = {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspended' : boolean,
       'is_super_admin' : boolean,
+      'suspension_details' : [] | [SuspensionDetails],
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -816,9 +818,19 @@ export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface SuspendUserArgs {
   'duration' : [] | [Milliseconds],
   'user_id' : UserId,
+  'reason' : string,
 }
-export type SuspendUserResponse = { 'Success' : null } |
-  { 'InternalError' : string };
+export type SuspendUserResponse = { 'UserAlreadySuspended' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
+export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
+  { 'Delete' : TimestampMillis };
+export interface SuspensionDetails {
+  'action' : SuspensionAction,
+  'suspended_by' : UserId,
+  'reason' : string,
+}
 export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
@@ -860,8 +872,10 @@ export interface UnconfirmedPhoneNumberState {
   'phone_number' : PhoneNumber,
 }
 export interface UnsuspendUserArgs { 'user_id' : UserId }
-export type UnsuspendUserResponse = { 'Success' : null } |
-  { 'InternalError' : string };
+export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,

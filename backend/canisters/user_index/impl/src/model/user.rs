@@ -1,7 +1,9 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
+use types::{
+    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct User {
@@ -22,7 +24,7 @@ pub struct User {
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
     #[serde(default)]
-    pub suspended_until: Option<SuspendedUntil>,
+    pub suspension_details: Option<SuspensionDetails>,
 }
 
 impl User {
@@ -93,7 +95,7 @@ impl User {
             phone_status: PhoneStatus::None,
             referred_by,
             is_bot,
-            suspended_until: None,
+            suspension_details: None,
         }
     }
 
@@ -107,7 +109,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
+            suspended: self.suspension_details.is_some(),
         }
     }
 
@@ -121,7 +123,7 @@ impl User {
             seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
-            suspended: self.suspended_until.as_ref().map_or(false, |f| f.is_suspended(now)),
+            suspended: self.suspension_details.is_some(),
         }
     }
 }
@@ -135,18 +137,17 @@ pub struct UnconfirmedPhoneNumber {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum SuspendedUntil {
-    Timestamp(TimestampMillis),
-    Indefinitely,
+pub struct SuspensionDetails {
+    pub timestamp: TimestampMillis,
+    pub duration: SuspensionDuration,
+    pub reason: String,
+    pub suspended_by: UserId,
 }
 
-impl SuspendedUntil {
-    pub fn is_suspended(&self, now: TimestampMillis) -> bool {
-        match self {
-            SuspendedUntil::Timestamp(ts) => *ts > now,
-            SuspendedUntil::Indefinitely => true,
-        }
-    }
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum SuspensionDuration {
+    Duration(Milliseconds),
+    Indefinitely,
 }
 
 #[cfg(test)]
@@ -169,7 +170,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
-            suspended_until: None,
+            suspension_details: None,
         }
     }
 }

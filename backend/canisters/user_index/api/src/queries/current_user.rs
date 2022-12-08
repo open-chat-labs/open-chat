@@ -24,8 +24,8 @@ pub struct SuccessResult {
     pub phone_status: PhoneStatus,
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
-    pub suspended: bool,
     pub is_super_admin: bool,
+    pub suspension_details: Option<SuspensionDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -39,4 +39,17 @@ pub enum PhoneStatus {
 pub struct UnconfirmedPhoneNumber {
     pub phone_number: PhoneNumber,
     pub valid_until: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuspensionDetails {
+    pub reason: String,
+    pub action: SuspensionAction,
+    pub suspended_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum SuspensionAction {
+    Unsuspend(TimestampMillis),
+    Delete(TimestampMillis),
 }

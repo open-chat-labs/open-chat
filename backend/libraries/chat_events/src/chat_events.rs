@@ -47,6 +47,27 @@ impl AllChatEvents {
             .collect()
     }
 
+    pub fn recalculate_reported_message_metrics(&mut self) {
+        let users: Vec<_> = self
+            .threads
+            .iter()
+            .flat_map(|(_, events)| events.iter().filter_map(|e| e.event.as_message()))
+            .chain(self.main.events.iter().filter_map(|e| e.event.as_message()))
+            .filter(|m| m.deleted_by.as_ref().map_or(false, |d| d.deleted_by != m.sender))
+            .map(|m| m.sender)
+            .collect();
+
+        self.metrics.reported_messages = 0;
+        for metrics in self.per_user_metrics.values_mut() {
+            metrics.reported_messages = 0;
+        }
+
+        for user_id in users {
+            self.metrics.reported_messages += 1;
+            self.per_user_metrics.entry(user_id).or_default().reported_messages += 1;
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
@@ -586,6 +607,15 @@ impl AllChatEvents {
         &self.metrics
     }
 
+    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
+        self.main.event_count_since(since, &filter)
+            + self
+                .threads
+                .values()
+                .map(|e| e.event_count_since(since, &filter))
+                .sum::<usize>()
+    }
+
     pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetrics> {
         self.per_user_metrics
             .get(user_id)
@@ -723,7 +753,7 @@ impl AllChatEvents {
             panic!("This chat is frozen");
         }
 
-        self.add_to_metrics(&event, now);
+        self.add_to_metrics(&event, thread_root_message_index, now);
 
         let event_index = self
             .get_mut(thread_root_message_index)
@@ -831,8 +861,21 @@ impl AllChatEvents {
         }
     }
 
-    fn add_to_metrics(&mut self, event: &ChatEventInternal, now: TimestampMillis) {
-        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
+    fn add_to_metrics(
+        &mut self,
+        event: &ChatEventInternal,
+        thread_root_message_index: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) {
+        let deleted_message_sender = match event {
+            ChatEventInternal::MessageDeleted(m) | ChatEventInternal::MessageUndeleted(m) => self
+                .get(thread_root_message_index)
+                .and_then(|e| e.message_internal_by_message_id(m.message_id))
+                .map(|m| m.sender),
+            _ => None,
+        };
+
+        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, deleted_message_sender, now);
     }
 
     fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
@@ -987,6 +1030,15 @@ impl ChatEvents {
             correlation_id: message_event.correlation_id,
             event: self.hydrate_message(message_event.event, my_user_id),
         }
+    }
+
+    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| e.timestamp > since)
+            .filter(|e| filter(&e.event))
+            .count()
     }
 
     fn update_thread_summary(

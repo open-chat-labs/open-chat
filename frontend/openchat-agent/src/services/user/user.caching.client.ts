@@ -33,7 +33,6 @@ import {
     missingUserIds,
     PinChatResponse,
     PublicProfile,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SetBioResponse,
     ToggleMuteNotificationResponse,
@@ -520,10 +519,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         threadRootMessageIndex?: number
     ): Promise<UndeleteMessageResponse> {
         return this.client.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
-    }
-
-    searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
-        return this.client.searchAllMessages(searchTerm, maxResults);
     }
 
     searchDirectChat(

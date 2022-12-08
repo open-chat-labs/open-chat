@@ -18,7 +18,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 51;
+const CACHE_VERSION = 52;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -249,6 +249,13 @@ async function aggregateEventsWindow<T extends ChatEvent>(
             "cache total miss: could not even find the starting event index for the message window"
         );
         return [[], missing, true];
+    }
+
+    if (min > midpoint) {
+        min = midpoint;
+    }
+    if (max < midpoint) {
+        max = midpoint;
     }
 
     const half = MAX_EVENTS / 2;

@@ -1,14 +1,15 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, VecDeque};
-use types::{ChatId, TimestampMillis, UserId};
+use types::{ChatId, Milliseconds, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct SetUserSuspendedQueue {
-    queue: BTreeMap<TimestampMillis, VecDeque<SetUserSuspended>>,
+    queue: BTreeMap<TimestampMillis, VecDeque<SetUserSuspendedType>>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum SetUserSuspended {
+pub enum SetUserSuspendedType {
+    User(SetUserSuspended),
     Group(SetUserSuspendedInGroup),
     Unsuspend(UserId),
 }
@@ -21,8 +22,16 @@ pub struct SetUserSuspendedInGroup {
     pub attempt: usize,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SetUserSuspended {
+    pub user_id: UserId,
+    pub duration: Option<Milliseconds>,
+    pub reason: String,
+    pub suspended_by: UserId,
+}
+
 impl SetUserSuspendedQueue {
-    pub fn take_next_due(&mut self, now: TimestampMillis) -> Option<SetUserSuspended> {
+    pub fn take_next_due(&mut self, now: TimestampMillis) -> Option<SetUserSuspendedType> {
         let (&key, queue) = self.queue.iter_mut().next().filter(|(&k, _)| k < now)?;
         let next = queue.pop_front();
         if queue.is_empty() {
@@ -31,15 +40,15 @@ impl SetUserSuspendedQueue {
         next
     }
 
-    pub fn enqueue(&mut self, values: Vec<SetUserSuspended>) {
+    pub fn enqueue(&mut self, values: Vec<SetUserSuspendedType>) {
         self.enqueue_internal(values, 0);
     }
 
-    pub fn schedule(&mut self, values: Vec<SetUserSuspended>, due: TimestampMillis) {
+    pub fn schedule(&mut self, values: Vec<SetUserSuspendedType>, due: TimestampMillis) {
         self.enqueue_internal(values, due);
     }
 
-    fn enqueue_internal(&mut self, values: Vec<SetUserSuspended>, due: TimestampMillis) {
+    fn enqueue_internal(&mut self, values: Vec<SetUserSuspendedType>, due: TimestampMillis) {
         self.queue.entry(due).or_default().extend(values);
     }
 }

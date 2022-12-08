@@ -881,17 +881,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "searchAllMessages":
-                agent
-                    .searchAllMessages(payload.searchTerm, payload.maxResults)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
             case "searchGroups":
                 agent
                     .searchGroups(payload.searchTerm, payload.maxResults)
@@ -1167,7 +1156,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "suspendUser":
                 agent
-                    .suspendUser(payload.userId)
+                    .suspendUser(payload.userId, payload.reason)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

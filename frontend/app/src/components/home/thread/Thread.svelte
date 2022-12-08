@@ -153,7 +153,7 @@
     $: messages = client
         .groupEvents([rootEvent, ...$threadEvents], user.userId)
         .reverse() as EventWrapper<Message>[][][];
-    $: preview = client.isPreviewing(chat.chatId);
+    $: readonly = client.isChatReadOnly(chat.chatId);
     $: pollsAllowed = client.canCreatePolls(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
 
@@ -494,8 +494,8 @@
                             {observer}
                             focused={evt.event.kind === "message" &&
                                 focusMessageIndex === evt.event.messageIndex}
-                            {preview}
-                            inThread={true}
+                            {readonly}
+                            inThread
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
@@ -534,7 +534,7 @@
     {/if}
 </div>
 
-{#if !preview}
+{#if !readonly}
     <Footer
         {chat}
         fileToAttach={$fileToAttach}
@@ -545,7 +545,7 @@
         blockedUsers={$currentChatBlockedUsers}
         {user}
         joining={undefined}
-        {preview}
+        preview={false}
         mode={"thread"}
         {blocked}
         on:joinGroup

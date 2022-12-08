@@ -172,6 +172,7 @@ export interface ChatMetrics {
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
+  'reported_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |

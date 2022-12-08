@@ -15,14 +15,25 @@ fn suspend_user() {
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let group = client::user::happy_path::create_group(&mut env, &user1, "SUSPEND_USER_TEST", false, false);
+    let super_admin = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+
+    client::user_index::add_super_admin(
+        &mut env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::add_super_admin::Args {
+            user_id: super_admin.user_id,
+        },
+    );
 
     client::user_index::suspend_user(
         &mut env,
-        controller,
+        super_admin.principal,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
             user_id: user1.user_id,
             duration: None,
+            reason: "spamming".to_string(),
         },
     );
 
@@ -73,7 +84,7 @@ fn suspend_user() {
 
     client::user_index::unsuspend_user(
         &mut env,
-        controller,
+        super_admin.principal,
         canister_ids.user_index,
         &user_index_canister::unsuspend_user::Args { user_id: user1.user_id },
     );
@@ -139,14 +150,25 @@ fn suspend_user_for_duration() {
     } = setup_env();
 
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let super_admin = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+
+    client::user_index::add_super_admin(
+        &mut env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::add_super_admin::Args {
+            user_id: super_admin.user_id,
+        },
+    );
 
     client::user_index::suspend_user(
         &mut env,
-        controller,
+        super_admin.principal,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
             user_id: user.user_id,
             duration: Some(1000),
+            reason: "spamming".to_string(),
         },
     );
 

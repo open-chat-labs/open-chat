@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::{PhoneNumber, UserId};
+use crate::{Milliseconds, PhoneNumber, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
@@ -9,6 +9,7 @@ pub enum UserEvent {
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
     ReferredUserRegistered(ReferredUserRegistered),
+    UserSuspended(UserSuspended),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -34,4 +35,18 @@ pub struct StorageUpgraded {
 pub struct ReferredUserRegistered {
     pub user_id: UserId,
     pub username: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct UserSuspended {
+    pub timestamp: TimestampMillis,
+    pub duration: SuspensionDuration,
+    pub reason: String,
+    pub suspended_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum SuspensionDuration {
+    Duration(Milliseconds),
+    Indefinitely,
 }

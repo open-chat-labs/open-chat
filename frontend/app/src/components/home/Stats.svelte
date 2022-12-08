@@ -1,13 +1,18 @@
 <script lang="ts">
     import { cubicOut } from "svelte/easing";
+    import Flag from "svelte-material-icons/Flag.svelte";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
     import type { ChatMetrics, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
+    import { iconSize } from "stores/iconSize";
+    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import TooltipPopup from "../TooltipPopup.svelte";
 
     const client = getContext<OpenChat>("client");
     export let stats: ChatMetrics;
+    export let showReported: boolean = false;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
@@ -197,7 +202,7 @@
         <div class="poll legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.fileMessages")}
+                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.pollMessages")}
             </div>
         </div>
         <div class="icp legend">
@@ -236,6 +241,26 @@
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         {$_("stats.deletedMessages")}
     </div>
+    {#if showReported}
+        <TooltipWrapper alignRight={true} bottomOffset={-4} centreChevron={false}>
+            <div slot="target" class="reported-messages">
+                <span>
+                    <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
+                    {$_("stats.reportedMessages")}
+                </span>
+                <span class="icon">
+                    <Flag size={$iconSize} color={"var(--accent)"} />
+                </span>
+            </div>
+            <div slot="tooltip">
+                <TooltipPopup alignRight={true} textLength={100} longestWord={20}>
+                    <div>
+                        {$_("stats.reportedMessagesInfo")}
+                    </div>
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -272,6 +297,19 @@
 
         @include mobile() {
             gap: 6px;
+        }
+
+        .reported-messages {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: $sp3;
+            color: var(--accent);
+
+            .icon {
+                position: relative;
+                top: $sp2;
+            }
         }
     }
 

@@ -189,6 +189,7 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
+    SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
@@ -241,7 +242,6 @@ import {
     type RemoveMemberResponse,
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
-    type SearchAllMessagesResponse,
     type GroupSearchResponse,
     type GroupInvite,
     type SearchDirectChatResponse,
@@ -481,10 +481,6 @@ export class OpenChat extends EventTarget {
     onCreatedUser(user: CreatedUser): void {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
-        }
-        if (user.suspended) {
-            alert("User account suspended");
-            this.logout();
         }
         this._user = user;
         const id = this._identity;
@@ -840,6 +836,12 @@ export class OpenChat extends EventTarget {
                     return "failure";
                 }
             })
+            .then((resp) => {
+                if (resp === "success" && this._liveState.groupPreviews[group.chatId] !== undefined) {
+                    removeGroupPreview(group.chatId);
+                }
+                return resp;
+            })
             .catch((err) => {
                 this._logger.error("Unable to join group", err);
                 return "failure";
@@ -982,6 +984,18 @@ export class OpenChat extends EventTarget {
 
     isFrozen(chatId: string): boolean {
         return this.chatPredicate(chatId, isFrozen);
+    }
+
+    isOpenChatBot(userId: string): boolean {
+        return userId === OPENCHAT_BOT_USER_ID;
+    }
+
+    isReadOnly(): boolean {
+        return (this._user?.suspensionDetails ?? undefined) != undefined;
+    }
+
+    isChatReadOnly(chatId: string): boolean {
+        return this.isReadOnly() || this.isPreviewing(chatId);
     }
 
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
@@ -2467,10 +2481,6 @@ export class OpenChat extends EventTarget {
         return this.api.getGroupRules(chatId);
     }
 
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.api.searchAllMessages(searchTerm, maxResults);
-    }
-
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.api.searchGroups(searchTerm, maxResults);
     }
@@ -2726,9 +2736,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    suspendUser(userId: string): Promise<boolean> {
+    suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.api
-            .suspendUser(userId)
+            .suspendUser(userId, reason)
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to suspend user", err);
@@ -2857,7 +2867,7 @@ export class OpenChat extends EventTarget {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const chats = Object.values(this._liveState.serverChatSummaries);
+            const chats = Object.values(this._liveState.myServerChatSummaries);
             const selectedChat = this._liveState.selectedChat;
             const userLookup = this._liveState.userStore;
             const currentState: CurrentChatState = {
@@ -2895,25 +2905,24 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                const selectedChat = this._liveState.selectedChat;
-                let selectedChatInvalid = true;
-
                 myServerChatSummariesStore.set(
                     chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                         rec[chat.chatId] = chat;
-                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                            selectedChatInvalid = false;
-                        }
                         return rec;
                     }, {})
                 );
 
-                if (selectedChatInvalid) {
-                    clearSelectedChat();
-                } else if (selectedChat !== undefined) {
-                    chatUpdatedStore.set({
-                        affectedEvents: chatsResponse.affectedEvents[selectedChat.chatId] ?? [],
-                    });
+                const selectedChatId = this._liveState.selectedChatId;
+
+                if (selectedChatId !== undefined) {
+                    if (this._liveState.chatSummaries[selectedChatId] === undefined) {
+                        clearSelectedChat();
+                        this.dispatchEvent(new SelectedChatInvalid());
+                    } else {
+                        chatUpdatedStore.set({
+                            affectedEvents: chatsResponse.affectedEvents[selectedChatId] ?? [],
+                        });
+                    }
                 }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {
@@ -2961,10 +2970,6 @@ export class OpenChat extends EventTarget {
         } finally {
             chatsLoading.set(false);
         }
-    }
-
-    isOpenChatBot(userId: string): boolean {
-        return userId === OPENCHAT_BOT_USER_ID;
     }
 
     /**

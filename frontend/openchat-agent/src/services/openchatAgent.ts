@@ -83,7 +83,6 @@ import {
     RemoveMemberResponse,
     ResendCodeResponse,
     ResetInviteCodeResponse,
-    SearchAllMessagesResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -745,10 +744,6 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.userClient.searchAllMessages(searchTerm, maxResults);
-    }
-
     searchGroupChat(
         chatId: string,
         searchTerm: string,
@@ -1350,8 +1345,8 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.unfreezeGroup(chatId);
     }
 
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
-        return this._userIndexClient.suspendUser(userId);
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
+        return this._userIndexClient.suspendUser(userId, reason);
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {

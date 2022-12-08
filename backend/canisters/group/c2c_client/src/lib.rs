@@ -2,7 +2,6 @@ use canister_client_macros::*;
 use group_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_search_messages);
 generate_c2c_call!(c2c_summary);
 generate_c2c_call!(c2c_summary_updates);
 generate_c2c_call!(public_summary);

@@ -144,6 +144,7 @@ export interface ChatMetrics {
   'video_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
+  'reported_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -939,14 +940,6 @@ export interface RoleChanged {
   'old_role' : Role,
   'new_role' : Role,
 }
-export interface SearchAllMessagesArgs {
-  'max_results' : number,
-  'search_term' : string,
-}
-export type SearchAllMessagesResponse = { 'TermTooShort' : number } |
-  { 'Success' : SearchMessagesSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null };
 export interface SearchMessagesArgs {
   'max_results' : number,
   'user_id' : UserId,
@@ -1284,10 +1277,6 @@ export interface _SERVICE {
     RelinquishGroupSuperAdminResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
-  'search_all_messages' : ActorMethod<
-    [SearchAllMessagesArgs],
-    SearchAllMessagesResponse
-  >,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,

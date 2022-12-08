@@ -43,7 +43,6 @@
     "oneDay": "1 天",
     "onlineNow": "在线",
     "messages": "消息",
-    "searchPlaceholder": "搜索用户，群聊和消息...",
     "groupDetails": "群聊简介",
     "theInternetComputer": "互联网计算机",
     "unexpectedError": "未知错误",
@@ -256,7 +255,10 @@
         "bioTooLong": "你的简历太长了",
         "challengeAttemptFailed": "您输入的值不正确。请尝试新的挑战。",
         "challengeThrottled": "已经产生了太多的挑战。请稍后再试。",
-        "attemptChallenge": "请输入您看到的字符"
+        "attemptChallenge": "请输入您看到的字符",
+        "closedTitle": "注册暂停",
+        "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
+        "smsWarning": "我们目前无法向许多国家/地区发送 SMS 消息（中国、尼日利亚、俄罗斯、白俄罗斯和伊朗）。如果您没有收到代码，您可能位于我们目前无法发送到的国家/地区。我们将在未来改进这一点。"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -498,7 +500,9 @@
         "pollVotes": "投票",
         "replies": "回复",
         "reactions": "反应",
-        "deletedMessages": "已删除的消息"
+        "deletedMessages": "已删除的消息",
+        "reportedMessages": "举报信息",
+        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。"
     },
     "andNMore": ", 和 {n} 更多",
     "confirmMakeGroupPrivate": "您确定要将此组设为私有吗？目前此操作无法撤消！",
@@ -640,5 +644,9 @@
     "suspendUser": "暂停用户",
     "unsuspendUser": "取消暂停用户",
     "suspendedUser": "暂停用户",
-    "unsuspendedUser": "解除暂停的用户"
+    "unsuspendedUser": "解除暂停的用户",
+    "nUsersJoined": "{number} 位用户加入了群组",
+    "searchPlaceholder": "搜索用户和组...",
+    "reasonForSuspension": "暂停原因",
+    "suspend": "暂停"
 }

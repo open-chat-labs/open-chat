@@ -116,7 +116,25 @@ export type CreatedUser = {
     openStorageLimitBytes: number;
     referrals: string[];
     isSuperAdmin: boolean;
-    suspended: boolean;
+    suspensionDetails: SuspensionDetails | undefined;
+};
+
+export type SuspensionDetails = {
+    reason: string,
+    action: SuspensionAction,
+    suspendedBy: string,
+}
+
+export type SuspensionAction = UnsuspendAction | DeleteAction;
+
+export type UnsuspendAction = {
+    kind: "unsuspend_action";
+    timestamp: bigint;
+};
+
+export type DeleteAction = {
+    kind: "delete_action";
+    timestamp: bigint;
 };
 
 export type UserNotFound = {
@@ -198,7 +216,7 @@ export type MigrateUserPrincipalResponse =
     | "internal_error"
     | "migration_not_initialized";
 
-export type SuspendUserResponse = "success" | "internal_error";
+export type SuspendUserResponse = "success" | "user_not_found" | "user_already_suspended" | "internal_error";
 
-export type UnsuspendUserResponse = "success" | "internal_error";
+export type UnsuspendUserResponse = "success" | "user_not_found" | "user_not_suspended" | "internal_error";
 

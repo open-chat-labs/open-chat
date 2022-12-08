@@ -6,10 +6,12 @@ use types::{ChatFrozen, EventWrapper, UserId};
 pub struct Args {
     pub caller: UserId,
     pub reason: Option<String>,
+    pub return_members: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(EventWrapper<ChatFrozen>),
+    SuccessWithMembers(EventWrapper<ChatFrozen>, Vec<UserId>),
     ChatAlreadyFrozen,
 }

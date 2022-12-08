@@ -61,7 +61,6 @@ import {
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
-    SearchAllMessagesResponse,
     GroupSearchResponse,
     GroupInvite,
     SearchGroupChatResponse,
@@ -94,7 +93,7 @@ import {
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 
-const WORKER_TIMEOUT = 1000 * 60;
+const WORKER_TIMEOUT = 1000 * 90;
 
 type UnresolvedRequest = {
     kind: string;
@@ -969,16 +968,6 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.sendRequest({
-            kind: "searchAllMessages",
-            payload: {
-                searchTerm,
-                maxResults,
-            },
-        });
-    }
-
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({
             kind: "searchGroups",
@@ -1217,7 +1206,7 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 reason,
-            }
+            },
         });
     }
 
@@ -1226,16 +1215,17 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unfreezeGroup",
             payload: {
                 chatId,
-            }
+            },
         });
     }
 
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.sendRequest({
             kind: "suspendUser",
             payload: {
                 userId,
-            }
+                reason,
+            },
         });
     }
 
@@ -1244,7 +1234,7 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unsuspendUser",
             payload: {
                 userId,
-            }
+            },
         });
     }
 }
