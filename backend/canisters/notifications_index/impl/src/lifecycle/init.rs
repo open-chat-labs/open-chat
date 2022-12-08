@@ -16,9 +16,10 @@ fn init(args: Args) {
     let env = Box::new(CanisterEnv::new());
     let data = Data::new(
         args.service_principals,
-        args.notifications_canister_ids,
         args.push_service_principals,
         args.user_index_canister_id,
+        args.authorizers,
+        args.notifications_canister_wasm,
         args.test_mode,
     );
 

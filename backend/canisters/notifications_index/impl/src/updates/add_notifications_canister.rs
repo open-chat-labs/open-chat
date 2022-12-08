@@ -1,20 +1,52 @@
 use crate::guards::caller_is_controller;
-use crate::{mutate_state, NotificationsCanister, RuntimeState};
+use crate::{mutate_state, NotificationsCanister, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use std::collections::hash_map::Entry::Vacant;
+use types::{CanisterId, CanisterWasm, Version};
+use utils::canister::install;
 
 #[update(guard = "caller_is_controller")]
 #[trace]
-fn add_notifications_canister(args: Args) -> Response {
-    mutate_state(|state| add_notifications_canister_impl(args, state))
+async fn add_notifications_canister(args: Args) -> Response {
+    match read_state(|state| prepare(args.canister_id, state)) {
+        Ok(result) => {
+            match install(args.canister_id, result.canister_wasm.module, candid::encode_one(result.init_args).unwrap()).await {
+                Ok(_) => mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state)),
+                Err(error) => InternalError(format!("{error:?}"))
+            }
+        }
+        Err(response) => response
+    }
 }
 
-fn add_notifications_canister_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Vacant(e) = runtime_state.data.notifications_canisters.entry(args.canister_id) {
-        let mut notifications_canister = NotificationsCanister::default();
+struct PrepareResult {
+    canister_wasm: CanisterWasm,
+    init_args: notifications_canister::init::Args
+}
+
+fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !runtime_state.data.notifications_canisters.contains_key(&canister_id) {
+        Ok(PrepareResult {
+            canister_wasm: runtime_state.data.notifications_canister_wasm.clone(),
+            init_args: notifications_canister::init::Args {
+                notifications_index_canister_id: runtime_state.env.canister_id(),
+                push_service_principals: runtime_state.data.push_service_principals.iter().copied().collect(),
+                authorizers: runtime_state.data.authorizers.clone(),
+                wasm_version: runtime_state.data.notifications_canister_wasm.version,
+                test_mode: runtime_state.data.test_mode,
+            }
+        })
+    } else {
+        Err(AlreadyAdded)
+    }
+}
+
+fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) -> Response {
+    if let Vacant(e) = runtime_state.data.notifications_canisters.entry(canister_id) {
+        let mut notifications_canister = NotificationsCanister::new(wasm_version);
 
         for (user_id, subscription) in runtime_state
             .data

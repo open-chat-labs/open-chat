@@ -4661,6 +4661,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "notifications_canister",
+ "notifications_index_canister",
  "online_users_aggregator_canister",
  "proposals_bot_canister",
  "rand",

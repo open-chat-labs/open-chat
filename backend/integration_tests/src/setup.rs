@@ -1,6 +1,6 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::{wasms, CanisterIds};
+use crate::{client, wasms, CanisterIds};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
@@ -51,9 +51,11 @@ fn try_take_existing_env() -> Option<TestEnv> {
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
     let group_index_canister_id = create_canister(env);
     let notifications_canister_id = create_canister(env);
+    let notifications_index_canister_id = create_canister(env);
     let online_users_aggregator_canister_id = create_canister(env);
     let proposals_bot_canister_id = create_canister(env);
     let user_index_canister_id = create_canister(env);
+
     let cycles_dispenser_canister_id = create_canister(env);
     let open_storage_index_canister_id = create_canister(env);
     let ledger_canister_id = create_canister(env);
@@ -61,6 +63,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
+    let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_aggregator_canister_wasm = wasms::ONLINE_USERS_AGGREGATOR.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let user_canister_wasm = wasms::USER.clone();
@@ -71,7 +74,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         sms_service_principals: vec![controller],
         user_canister_wasm,
         group_index_canister_id,
-        notifications_canister_ids: vec![notifications_canister_id],
+        notifications_index_canister_id,
+        notifications_canister_id,
         online_users_aggregator_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
@@ -85,7 +89,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![controller],
         group_canister_wasm,
-        notifications_canister_ids: vec![notifications_canister_id],
+        notifications_index_canister_id,
+        notifications_canister_id,
         user_index_canister_id,
         cycles_dispenser_canister_id,
         ledger_canister_id,
@@ -94,18 +99,21 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(env, group_index_canister_id, group_index_canister_wasm, group_index_init_args);
 
-    let notifications_init_args = notifications_canister::init::Args {
+    let notifications_index_init_args = notifications_index_canister::init::Args {
+        service_principals: vec![controller],
         push_service_principals: vec![controller],
         user_index_canister_id,
+        authorizers: vec![user_index_canister_id, group_index_canister_id],
         cycles_dispenser_canister_id,
+        notifications_canister_wasm,
         wasm_version: Version::min(),
         test_mode: true,
     };
     install_canister(
         env,
-        notifications_canister_id,
-        notifications_canister_wasm,
-        notifications_init_args,
+        notifications_index_canister_id,
+        notifications_index_canister_wasm,
+        notifications_index_init_args,
     );
 
     let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
@@ -144,6 +152,15 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     //     wasm_version: version,
     //     test_mode,
     // };
+
+    client::notifications_index::add_notifications_canister(
+        env,
+        controller,
+        notifications_index_canister_id,
+        &notifications_index_canister::add_notifications_canister::Args {
+            canister_id: notifications_canister_id,
+        },
+    );
 
     CanisterIds {
         user_index: user_index_canister_id,

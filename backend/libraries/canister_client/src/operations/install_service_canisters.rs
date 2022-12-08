@@ -1,8 +1,8 @@
-use crate::utils::{build_ic_agent, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
+use crate::utils::{build_ic_agent, create_empty_canister, delay, get_canister_wasm, install_wasm, set_controllers};
 use crate::{CanisterIds, CanisterName, CyclesDispenserInitArgs, OpenStorageCanisterName, OpenStorageInitArgs};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
-use ic_agent::Identity;
+use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use types::{CanisterId, Version};
 
@@ -59,7 +59,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         ledger: ledger_canister_id,
     };
 
-    install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
+    install_service_canisters_impl(principal, &canister_ids, &agent, &management_canister, test_mode).await;
 
     canister_ids
 }
@@ -69,12 +69,13 @@ pub async fn install_service_canisters(identity: BasicIdentity, url: String, can
     let agent = build_ic_agent(url, identity).await;
     let management_canister = ManagementCanister::create(&agent);
 
-    install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
+    install_service_canisters_impl(principal, &canister_ids, &agent, &management_canister, test_mode).await;
 }
 
 async fn install_service_canisters_impl(
     principal: Principal,
     canister_ids: &CanisterIds,
+    agent: &Agent,
     management_canister: &ManagementCanister<'_>,
     test_mode: bool,
 ) {
@@ -129,21 +130,14 @@ async fn install_service_canisters_impl(
     };
 
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
     let notifications_index_init_args = notifications_index_canister::init::Args {
         service_principals: vec![principal],
-        notifications_canister_ids: vec![canister_ids.notifications],
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        wasm_version: version,
-        test_mode,
-    };
-
-    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
-    let notifications_init_args = notifications_canister::init::Args {
-        notifications_index_canister_id: canister_ids.notifications_index,
-        push_service_principals: vec![principal],
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        notifications_canister_wasm,
         wasm_version: version,
         test_mode,
     };
@@ -211,26 +205,20 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.notifications,
-            &notifications_canister_wasm.module,
-            notifications_init_args,
-        ),
-        install_wasm(
-            management_canister,
             &canister_ids.online_users_aggregator,
             &online_users_aggregator_canister_wasm.module,
             online_users_aggregator_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join3(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
             proposals_bot_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join(
         install_wasm(
             management_canister,
             &canister_ids.cycles_dispenser,
@@ -245,6 +233,13 @@ async fn install_service_canisters_impl(
         ),
     )
     .await;
+
+    agent
+        .update(&canister_ids.notifications_index, "add_notifications_canister")
+        .with_arg(&candid::encode_one(notifications_index_canister::add_notifications_canister::Args {
+            canister_id: canister_ids.notifications
+        }).unwrap())
+        .call_and_wait(delay()).await.unwrap();
 
     println!("Canister wasms installed");
 }

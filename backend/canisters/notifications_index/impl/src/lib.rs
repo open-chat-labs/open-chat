@@ -7,7 +7,7 @@ use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, S
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 
@@ -96,29 +96,31 @@ struct Data {
     pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
+    pub authorizers: Vec<CanisterId>,
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub subscriptions: Subscriptions,
+    pub notifications_canister_wasm: CanisterWasm,
     pub test_mode: bool,
 }
 
 impl Data {
     pub fn new(
         service_principals: Vec<Principal>,
-        notifications_canister_ids: Vec<CanisterId>,
         push_service_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,
+        authorizers: Vec<CanisterId>,
+        notifications_canister_wasm: CanisterWasm,
         test_mode: bool,
     ) -> Data {
         Data {
             service_principals: service_principals.into_iter().collect(),
-            notifications_canisters: notifications_canister_ids
-                .into_iter()
-                .map(|c| (c, NotificationsCanister::default()))
-                .collect(),
+            notifications_canisters: HashMap::default(),
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
+            authorizers,
             principal_to_user_id: HashMap::default(),
             subscriptions: Subscriptions::default(),
+            notifications_canister_wasm,
             test_mode,
         }
     }
