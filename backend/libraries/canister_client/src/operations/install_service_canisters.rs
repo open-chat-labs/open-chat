@@ -83,7 +83,16 @@ async fn install_service_canisters_impl(
     futures::future::join_all(vec![
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.notifications, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
+        set_controllers(
+            management_canister,
+            &canister_ids.notifications,
+            controllers
+                .iter()
+                .copied()
+                .chain([canister_ids.notifications_index])
+                .collect(),
+        ),
         set_controllers(
             management_canister,
             &canister_ids.online_users_aggregator,
@@ -236,10 +245,15 @@ async fn install_service_canisters_impl(
 
     agent
         .update(&canister_ids.notifications_index, "add_notifications_canister")
-        .with_arg(&candid::encode_one(notifications_index_canister::add_notifications_canister::Args {
-            canister_id: canister_ids.notifications
-        }).unwrap())
-        .call_and_wait(delay()).await.unwrap();
+        .with_arg(
+            &candid::encode_one(notifications_index_canister::add_notifications_canister::Args {
+                canister_id: canister_ids.notifications,
+            })
+            .unwrap(),
+        )
+        .call_and_wait(delay())
+        .await
+        .unwrap();
 
     println!("Canister wasms installed");
 }
