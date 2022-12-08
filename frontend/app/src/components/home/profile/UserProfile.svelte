@@ -1,11 +1,12 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, ONE_GB } from "openchat-client";
+    import { PartialUserSummary, OpenChat, ONE_GB, AvatarSize } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -78,7 +79,6 @@
     }
 
     function saveUser() {
-        if (client.isReadOnly()) return;        
         saving = true;
         usernameError = undefined;
         bioError = undefined;
@@ -134,7 +134,6 @@
     }
 
     function toggleNotifications() {
-        if (client.isReadOnly()) return;
         if ($notificationStatus !== "granted") {
             client.askForNotificationPermission();
         } else {
@@ -151,7 +150,6 @@
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        if (client.isReadOnly()) return;        
         dispatch("userAvatarSelected", ev.detail);
     }
 
@@ -176,15 +174,20 @@
             open={$userInfoOpen}
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
-                <EditableAvatar
-                    overlayIcon={true}
-                    image={client.userAvatarUrl(user)}
-                    on:imageSelected={userAvatarSelected} />
+                {#if client.isReadOnly()}
+                    <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                {:else}
+                    <EditableAvatar
+                        overlayIcon={true}
+                        image={client.userAvatarUrl(user)}
+                        on:imageSelected={userAvatarSelected} />
+                {/if}
             </div>
             <Legend label={$_("username")} rules={$_("usernameRules")} />
             <UsernameInput
                 {client}
                 originalUsername={user?.username ?? ""}
+                disabled={client.isReadOnly()}
                 bind:validUsername
                 bind:checking={checkingUsername}
                 bind:error={usernameError}>
@@ -198,6 +201,7 @@
                 rows={3}
                 bind:value={userbio}
                 invalid={false}
+                disabled={client.isReadOnly()}
                 maxlength={MAX_BIO_LENGTH}
                 placeholder={$_("enterBio")}>
                 {#if bioError !== undefined}
@@ -207,7 +211,7 @@
             <div class="full-width-btn">
                 <Button
                     loading={saving || checkingUsername}
-                    disabled={(!bioDirty && validUsername === undefined) || saving}
+                    disabled={(!bioDirty && validUsername === undefined) || saving || client.isReadOnly()}
                     fill={true}
                     small>{$_("update")}</Button>
             </div>

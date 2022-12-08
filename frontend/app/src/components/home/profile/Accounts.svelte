@@ -66,7 +66,7 @@
                 on:error={onBalanceRefreshError} />
         </div>
         <div class="manage">
-            {#if !token.disabled && !client.isReadOnly()}
+            {#if !token.disabled}
                 <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.symbol)}
                     >{$_("cryptoAccount.manage")}</LinkButton>
             {/if}

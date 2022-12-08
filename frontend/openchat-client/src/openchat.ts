@@ -979,11 +979,11 @@ export class OpenChat extends EventTarget {
     }
 
     isPreviewing(chatId: string): boolean {
-        return this.chatPredicate(chatId, isPreviewing, false);
+        return this.chatPredicate(chatId, isPreviewing);
     }
 
     isFrozen(chatId: string): boolean {
-        return this.chatPredicate(chatId, isFrozen, false);
+        return this.chatPredicate(chatId, isFrozen);
     }
 
     isOpenChatBot(userId: string): boolean {
@@ -998,8 +998,7 @@ export class OpenChat extends EventTarget {
         return this.isReadOnly() || this.isPreviewing(chatId);
     }
 
-    private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean, write=true): boolean {
-        if (write && this.isReadOnly()) return false;
+    private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
     }

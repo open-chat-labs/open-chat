@@ -12,6 +12,7 @@
     export let validUsername: string | undefined = undefined;
     export let error: string | undefined = undefined;
     export let checking = false;
+    export let disabled = false;
 
     let timer: number | undefined = undefined;
     let input: Input;
@@ -89,6 +90,7 @@
     invalid={false}
     value={originalUsername}
     autofocus={true}
+    {disabled}
     minlength={MIN_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
     countdown={true}

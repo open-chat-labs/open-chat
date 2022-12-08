@@ -23,7 +23,6 @@
     export let user: PartialUserSummary;
 
     function newGroup() {
-        if (client.isReadOnly()) return;
         dispatch("newGroup");
     }
 </script>
@@ -48,13 +47,15 @@
                         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("homepage")}</span>
                     </MenuItem>
-                    <MenuItem on:click={newGroup}>
-                        <AccountMultiplePlus
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <span slot="text">{$_("newGroup")}</span>
-                    </MenuItem>
+                    {#if !client.isReadOnly()}
+                        <MenuItem on:click={newGroup}>
+                            <AccountMultiplePlus
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <span slot="text">{$_("newGroup")}</span>
+                        </MenuItem>
+                    {/if}
                     <MenuItem on:click={() => dispatch("whatsHot")}>
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
