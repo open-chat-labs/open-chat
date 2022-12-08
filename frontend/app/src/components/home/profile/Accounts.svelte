@@ -24,7 +24,6 @@
     }
 
     function showManageCrypto(crypto: Cryptocurrency) {
-        if (client.isReadOnly()) return;
         selectedCryptoAccount = crypto;
         showManageCryptoAccount = true;
     }
@@ -67,7 +66,7 @@
                 on:error={onBalanceRefreshError} />
         </div>
         <div class="manage">
-            {#if !token.disabled}
+            {#if !token.disabled && !client.isReadOnly()}
                 <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.symbol)}
                     >{$_("cryptoAccount.manage")}</LinkButton>
             {/if}

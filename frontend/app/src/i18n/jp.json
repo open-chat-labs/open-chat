@@ -646,5 +646,7 @@
     "suspendedUser": "停止中のユーザー",
     "unsuspendedUser": "停止されていないユーザー",
     "nUsersJoined": "{number} 人のユーザーがグループに参加しました",
-    "searchPlaceholder": "ユーザーとグループを検索..."
+    "searchPlaceholder": "ユーザーとグループを検索...",
+    "reasonForSuspension": "停止の理由",
+    "suspend": "サスペンド"
 }

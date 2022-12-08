@@ -979,17 +979,27 @@ export class OpenChat extends EventTarget {
     }
 
     isPreviewing(chatId: string): boolean {
-        if (this.isReadOnly()) return true;
-        return this.chatPredicate(chatId, isPreviewing);
+        return this.chatPredicate(chatId, isPreviewing, false);
     }
 
     isFrozen(chatId: string): boolean {
-        if (this.isReadOnly()) return true;
-        return this.chatPredicate(chatId, isFrozen);
+        return this.chatPredicate(chatId, isFrozen, false);
     }
 
-    private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
-        if (this.isReadOnly()) return false;
+    isOpenChatBot(userId: string): boolean {
+        return userId === OPENCHAT_BOT_USER_ID;
+    }
+
+    isReadOnly(): boolean {
+        return (this._user?.suspensionDetails ?? undefined) != undefined;
+    }
+
+    isChatReadOnly(chatId: string): boolean {
+        return this.isReadOnly() || this.isPreviewing(chatId);
+    }
+
+    private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean, write=true): boolean {
+        if (write && this.isReadOnly()) return false;
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
     }
@@ -2961,14 +2971,6 @@ export class OpenChat extends EventTarget {
         } finally {
             chatsLoading.set(false);
         }
-    }
-
-    isOpenChatBot(userId: string): boolean {
-        return userId === OPENCHAT_BOT_USER_ID;
-    }
-
-    isReadOnly(): boolean {
-        return (this._user?.suspensionDetails ?? undefined) != undefined;
     }
 
     /**

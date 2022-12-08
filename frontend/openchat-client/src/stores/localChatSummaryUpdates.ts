@@ -11,6 +11,9 @@ class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<LocalChatSummaryUpd
     markRemoved(chatId: string): void {
         this.applyUpdate(chatId, (_) => ({ added: undefined, removedAtTimestamp: BigInt(Date.now()) }));
     }
+    delete(chatId: string): void {
+        this.deleteKey(chatId);
+    }
 }
 
 export const localChatSummaryUpdates = new LocalChatSummaryUpdatesStore();

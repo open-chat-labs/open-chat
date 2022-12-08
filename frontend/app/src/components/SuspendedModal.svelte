@@ -13,24 +13,19 @@
         const actionText = suspensionDetails.action.kind === "delete_action"
             ? "deleted"
             : "unsuspended";
-        return `
-Your account has been suspended by @UserId(${suspensionDetails.suspendedBy} for the reason "${suspensionDetails.reason}". 
 
-You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be ${actionText} on ${actionDate.toUTCString()}.`;
+        return `Your account has been suspended.
+
+Reason:
+"${suspensionDetails.reason}"
+
+You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be ${actionText} on ${actionDate.toLocaleString()}.`;
     }
-
-    function updateUserStore() {
-        const suspensionDetails = client.user.suspensionDetails!;
-        return client.getMissingUsers([suspensionDetails.suspendedBy]);
-    }
-
 </script>
 
-{#await updateUserStore()}
-    <ModalContent on:close>
-        <div slot="header">{$_("accountSuspended")}</div>
-        <div slot="body">
-            <Markdown text={buildNoticeText()} />
-        </div>
-    </ModalContent>
-{/await}
+<ModalContent on:close>
+    <div slot="header">{$_("accountSuspended")}</div>
+    <div slot="body">
+        <Markdown text={buildNoticeText()} />
+    </div>
+</ModalContent>

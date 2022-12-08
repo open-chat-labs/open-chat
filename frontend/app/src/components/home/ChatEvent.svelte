@@ -38,7 +38,7 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let pinned: boolean;
     export let canPin: boolean;
     export let canBlockUser: boolean;
@@ -88,7 +88,7 @@
         {me}
         {first}
         {last}
-        {preview}
+        {readonly}
         {pinned}
         {canPin}
         {canBlockUser}

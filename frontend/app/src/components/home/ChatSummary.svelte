@@ -188,9 +188,8 @@
 
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
-    $: preview = client.isPreviewing(chatSummary.chatId);
-    $: canDelete = !client.isReadOnly() &&
-        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
+    $: readonly = client.isChatReadOnly(chatSummary.chatId);
+    $: canDelete = (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
     $: muted = chatSummary.notificationsMuted;
@@ -236,7 +235,7 @@
         <div class:rtl={$rtlStore} class="chat-date">
             {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
         </div>
-        {#if !preview}
+        {#if !readonly}
             {#if muted && notificationsSupported}
                 <div class="mute icon" class:rtl={$rtlStore}>
                     <MutedIcon size={$iconSize} color={"var(--icon-txt)"} />

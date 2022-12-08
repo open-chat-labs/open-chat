@@ -13,7 +13,7 @@
     const client = getContext<OpenChat>("client");
 
     export let finished: boolean;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let percent: number;
     export let answer: string;
     export let voted: boolean;
@@ -63,7 +63,7 @@
 </script>
 
 <TooltipWrapper enable={showVotes} {alignRight} bottomOffset={4}>
-    <div slot="target" class:preview class="answer-text" class:finished on:click>
+    <div slot="target" class:readonly class="answer-text" class:finished on:click>
         <Progress bg={"button"} {percent}>
             <div class="label">
                 <span>{answer}</span>

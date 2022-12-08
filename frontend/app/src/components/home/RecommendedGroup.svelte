@@ -27,7 +27,6 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
-        if (client.isReadOnly()) return;
         dispatch("joinGroup", {
             group,
             select: false,
@@ -63,12 +62,14 @@
         </div>
     </div>
     <Footer align="end">
-        <Button
-            disabled={joining === group}
-            loading={joining === group}
-            tiny={true}
-            hollow={true}
-            on:click={() => joinGroup(group)}>{$_("join")}</Button>
+        {#if !client.isReadOnly()}
+            <Button
+                disabled={joining === group}
+                loading={joining === group}
+                tiny={true}
+                hollow={true}
+                on:click={() => joinGroup(group)}>{$_("join")}</Button>
+        {/if}
         <Button disabled={joining === group} tiny={true} on:click={() => previewGroup(group)}
             >{$_("preview")}</Button>
     </Footer>

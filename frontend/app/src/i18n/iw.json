@@ -643,5 +643,7 @@
     "suspendedUser": "משתמש מושעה",
     "unsuspendedUser": "משתמש לא מושעה",
     "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה",
-    "searchPlaceholder": "חפש משתמשים וקבוצות..."
+    "searchPlaceholder": "חפש משתמשים וקבוצות...",
+    "reasonForSuspension": "סיבה להשעיה",
+    "suspend": "לְהַשְׁעוֹת"
 }
