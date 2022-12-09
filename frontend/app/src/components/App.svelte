@@ -102,7 +102,9 @@
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
 </script>
 
-<div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{#if $themeStore.burst}
+    <div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{/if}
 
 <svelte:head>
     <meta name="viewport" content={viewPortContent} />
@@ -364,6 +366,7 @@
 
         a {
             color: #22a7f2;
+            color: var(--primary);
         }
 
         .iti__flag {
