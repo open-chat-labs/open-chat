@@ -374,7 +374,7 @@ service: {
     // Search for users matching some query
     search: (SearchArgs) -> (SearchResponse) query;
 
-    // Mark the caller as a suspcted bot
+    // Mark the caller as a suspected bot
     mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     // Only callable by "service principals"
