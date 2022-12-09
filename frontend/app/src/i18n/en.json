@@ -648,5 +648,6 @@
     "unsuspendedUser": "Un-suspended user",
     "nUsersJoined": "{number} users joined the group",
     "reasonForSuspension": "reason for suspension",
-    "suspend": "Suspend"
+    "suspend": "Suspend",
+    "deleteMessageAndReport": "Delete and report"
 }

@@ -650,5 +650,6 @@
     "suspend": "Sospendere",
     "communityTheme": "Tema comunitario",
     "selectCommunityTheme": "Seleziona un tema della community",
-    "useAtOwnRisk": "Utilizzare a proprio rischio"
+    "useAtOwnRisk": "Utilizzare a proprio rischio",
+    "deleteMessageAndReport": "Elimina e segnala"
 }

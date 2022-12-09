@@ -651,5 +651,6 @@
     "suspend": "暂停",
     "communityTheme": "社区主题",
     "selectCommunityTheme": "选择社区主题",
-    "useAtOwnRisk": "使用风险自负"
+    "useAtOwnRisk": "使用风险自负",
+    "deleteMessageAndReport": "删除并举报"
 }

@@ -9,9 +9,15 @@
     },
     "group_index": {
       "type": "custom",
-      "candid": "backend/canisters/user_index/api/can.did",
+      "candid": "backend/canisters/group_index/api/can.did",
       "wasm": "wasms/group_index_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh group_index_canister_impl"
+    },
+    "local_user_index": {
+      "type": "custom",
+      "candid": "backend/canisters/local_user_index/api/can.did",
+      "wasm": "wasms/local_user_index_canister_impl.wasm.gz",
+      "build": "./scripts/generate-wasm.sh local_user_index_canister_impl"
     },
     "notifications": {
       "type": "custom",
