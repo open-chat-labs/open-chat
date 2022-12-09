@@ -1,44 +1,45 @@
 import type { Theme } from "../types";
 import { hexPercent } from "../themes";
 
-const red100 = "#ae1111";
-const txtLight = "#922222";
-const txt = red100;
+const green = "#0d8329";
+const txtLight = "#0d8329ba";
+const txt = green;
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
-    base.name = "submarine";
-    base.label = "Submarine";
+    base.name = "nightvision";
+    base.label = "Nightvision";
     base.burst = false;
-    base.bg = "radial-gradient(circle, rgba(66,5,5,1) 20%, rgba(0,0,0,1) 79%)";
-    base.bd = "#4f1515";
+    base.bg = "radial-gradient(circle, rgba(4,48,10,1) 10%, rgba(0,0,0,1) 79%)";
+    base.bd = "#0f3918";
     base.txt = txt;
     base["txt-light"] = txtLight;
-    base.icon.txt = red100;
+    base.icon.txt = green;
     base.collapsible.closed.header.txt = txt;
-    base.collapsible.open.header.arrow = red100;
-    base.accent = "#87441c";
+    base.collapsible.open.header.arrow = green;
+    base.accent = "#a9be54";
     base.panel.left.bg = "rgba(0,0,0,0.1)";
-    base.panel.right.modal = "#211b1b";
+    base.panel.right.modal = "#151a15";
     base.modal.bd = base.bd;
     base.modal.bg = base.panel.right.modal;
-    base.chatSummary["bg-selected"] = "rgb(64 55 55 / 40%)";
-    base.chatSummary.hv = "rgb(64 55 55 / 30%)";
+    base.chatSummary["bg-selected"] = "rgb(39 65 39 / 40%)";
+    base.chatSummary.hv = "rgb(39 65 39 / 30%)";
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
-    base.entry.input.bg = "#2a1e1e";
-    base.input.bg = "#2a1e1e";
-    base.chatSearch.bg = "#2a1e1e";
-    base.button.bg = "#7c0a0a";
-    base.button.hv = "#5b0505";
+    base.entry.input.bg = "#151f19";
+    base.input.bg = "#151f19";
+    base.chatSearch.bg = "#151f19";
+    base.button.bg = "#084a16";
+    base.button.hv = "#094a17";
+    base.button.disabled = "#151f19";
     base.button.txt = "rgba(255 255 255 / 80%)";
-    base.button.disabled = "#2a1e1e";
-    base.currentChat.msg.bg = "#342424";
+    base.currentChat.msg.bg = "#243427";
     base.currentChat.msg.me.bg = hexPercent(base.button.bg, 70);
     base.currentChat.msg.txt = "rgba(255 255 255 / 50%)";
     base.currentChat.date.bg = base.currentChat.msg.bg;
     base.currentChat.msg.inert = base.currentChat.msg.bg;
-    base.notificationBar.bg = "#8b3403";
+    base.currentChat.msg.me.bg = hexPercent(base.button.bg, 70);
+    base.notificationBar.bg = "#04621f";
     base.notificationBar.txt = "rgba(255 255 255 / 50%)";
     base.timeline.txt = base.notificationBar.txt;
     base.menu.bd = base.bd;
@@ -47,8 +48,8 @@ export function getTheme(base: Theme): Theme {
     base.menu["disabled-txt"] = txtLight;
     base.icon.inverted.txt = txt;
     base.menu.hv = base.chatSummary.hv;
-    base.reaction.me = red100;
-    base.primary = red100;
+    base.reaction.me = green;
+    base.primary = green;
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
 
