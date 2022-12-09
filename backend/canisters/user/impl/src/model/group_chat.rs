@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
+use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
@@ -40,7 +41,13 @@ impl GroupChat {
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if self.read_by_me_up_to.value < Some(message_index) {
+        // Update the value if the new value is higher or if the old value is at least an hour old.
+        // By allowing `read_by_me_up_to` to decrease we can handle the case where it has
+        // incorrectly been set too high due to an error on the frontend.
+        // The reason for only allowing it to decrease after an hour is so that if people are using
+        // multiple devices the value doesn't jump up and down.
+        if self.read_by_me_up_to.value < Some(message_index) || now.saturating_sub(self.read_by_me_up_to.timestamp) > HOUR_IN_MS
+        {
             self.read_by_me_up_to = Timestamped::new(Some(message_index), now);
             true
         } else {
