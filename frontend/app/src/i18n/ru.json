@@ -648,5 +648,8 @@
     "searchPlaceholder": "Поиск пользователей и групп...",
     "reasonForSuspension": "причина приостановки",
     "suspend": "Приостановить",
+    "communityTheme": "Тема сообщества",
+    "selectCommunityTheme": "Выберите тему сообщества",
+    "useAtOwnRisk": "Используйте на свой риск",
     "deleteMessageAndReport": "Удалить и пожаловаться"
 }

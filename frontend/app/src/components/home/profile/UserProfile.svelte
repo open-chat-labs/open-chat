@@ -6,6 +6,7 @@
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import CommunityThemes from "./CommunityThemes.svelte";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
@@ -253,6 +254,7 @@
                             </div>
                         {/each}
                     </div>
+                    <CommunityThemes />
                 {/if}
             </div>
 
@@ -376,6 +378,7 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+        margin-bottom: $sp4;
         .theme {
             text-align: center;
             padding: 22px;
