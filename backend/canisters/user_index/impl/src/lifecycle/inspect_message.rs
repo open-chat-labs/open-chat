@@ -16,13 +16,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "confirm_phone_number"
-        | "create_canister"
-        | "mark_as_online"
-        | "resend_code"
-        | "set_username"
-        | "upgrade_canister"
-        | "upgrade_storage" => {
+        "confirm_phone_number" | "create_canister" | "mark_as_online" | "resend_code" | "set_username" | "upgrade_storage" => {
             let caller = runtime_state.env.caller();
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
