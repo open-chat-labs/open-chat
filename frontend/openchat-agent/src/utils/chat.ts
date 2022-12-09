@@ -112,14 +112,18 @@ function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
     updatedChat: GroupChatSummaryUpdates
 ): GroupChatSummary {
+    const latestMessage = getLatestMessage(chat, updatedChat);
+    const readByMeUpTo = updatedChat.readByMeUpTo ?? chat.readByMeUpTo;
     return {
         ...chat,
         name: updatedChat.name ?? chat.name,
         description: updatedChat.description ?? chat.description,
-        readByMeUpTo: updatedChat.readByMeUpTo ?? chat.readByMeUpTo,
+        readByMeUpTo: latestMessage !== undefined && readByMeUpTo !== undefined
+            ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+            : readByMeUpTo,
         lastUpdated: updatedChat.lastUpdated,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
-        latestMessage: getLatestMessage(chat, updatedChat),
+        latestMessage,
         blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
         notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
         memberCount: updatedChat.memberCount ?? chat.memberCount,
