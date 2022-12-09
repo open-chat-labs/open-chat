@@ -889,17 +889,20 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
 
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
     const ownerId = candid.owner_id.toString();
+    const latestMessage = optional(candid.latest_message, (ev) => {
+        return {
+            index: ev.index,
+            timestamp: ev.timestamp,
+            event: message(ev.event),
+        };
+    });
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
-        latestMessage: optional(candid.latest_message, (ev) => {
-            return {
-                index: ev.index,
-                timestamp: ev.timestamp,
-                event: message(ev.event),
-            };
-        }),
-        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        latestMessage,
+        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => latestMessage !== undefined
+            ? Math.min(latestMessage.event.messageIndex, r)
+            : r),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,

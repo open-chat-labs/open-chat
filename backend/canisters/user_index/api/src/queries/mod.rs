@@ -6,5 +6,6 @@ pub mod current_user;
 pub mod search;
 pub mod sms_messages;
 pub mod super_admins;
+pub mod suspected_bots;
 pub mod user;
 pub mod users;
