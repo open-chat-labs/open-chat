@@ -129,7 +129,7 @@
                         me={thread.rootMessage.event.sender === user.userId}
                         first={true}
                         last={true}
-                        preview={true}
+                        readonly={true}
                         inThread={true}
                         pinned={false}
                         supportsEdit={false}
@@ -170,7 +170,7 @@
                             me={evt.event.sender === user.userId}
                             first={i === 0}
                             last={i === userGroup.length - 1}
-                            preview={true}
+                            readonly={true}
                             inThread={true}
                             pinned={false}
                             supportsEdit={false}

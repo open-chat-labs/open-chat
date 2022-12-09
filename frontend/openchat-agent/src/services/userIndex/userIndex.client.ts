@@ -183,11 +183,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.handleResponse(
             this.userService.suspend_user({
                 user_id: Principal.fromText(userId),
-                duration: []
+                duration: [],
+                reason,
             }),
             suspendUserResponse
         );

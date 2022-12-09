@@ -1,15 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../../stores/screenDimensions";
     import Loading from "../../Loading.svelte";
-    import { rtlStore } from "../../../stores/rtl";
-    import { iconSize } from "../../../stores/iconSize";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import { push } from "svelte-spa-router";
     import { getContext } from "svelte";
     import type { ThreadPreview, EventWrapper, Message, ThreadSyncDetails } from "openchat-client";
     import { toastStore } from "../../../stores/toast";

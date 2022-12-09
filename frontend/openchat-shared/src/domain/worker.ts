@@ -729,6 +729,7 @@ type UnfreezeGroup = Request<{
 
 type SuspendUser = Request<{
     userId: string;
+    reason: string;
 }> & {
     kind: "suspendUser";
 };

@@ -26,7 +26,9 @@ import {
     PhoneStatus,
     UpgradeStorageResponse,
     SuspendUserResponse,
-    UnsuspendUserResponse
+    UnsuspendUserResponse,
+    SuspensionDetails,
+    SuspensionAction,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -55,6 +57,8 @@ export {
     UpgradeStorageResponse as ApiUpgradeStorageResponse,
     SuspendUserResponse as ApiSuspendUserResponse,
     UnsuspendUserResponse as ApiUnsuspendUserResponse,
+    SuspensionDetails as ApiSuspensionDetails,
+    SuspensionAction as ApiSuspensionAction,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

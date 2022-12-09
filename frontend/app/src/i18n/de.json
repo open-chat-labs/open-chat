@@ -645,5 +645,8 @@
     "suspendedUser": "Gesperrter Benutzer",
     "unsuspendedUser": "Nicht gesperrter Benutzer",
     "nUsersJoined": "{number} Benutzer sind der Gruppe beigetreten",
-    "searchPlaceholder": "Nach Benutzern und Gruppen suchen..."
+    "searchPlaceholder": "Nach Benutzern und Gruppen suchen...",
+    "reasonForSuspension": "Grund der Suspendierung",
+    "suspend": "Aussetzen",
+    "deleteMessageAndReport": "Löschen und melden"
 }

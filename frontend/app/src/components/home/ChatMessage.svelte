@@ -73,7 +73,7 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let pinned: boolean;
     export let canPin: boolean;
     export let canBlockUser: boolean;
@@ -478,7 +478,7 @@
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
                         messageId={msg.messageId}
-                        {preview}
+                        {readonly}
                         {chatId}
                         {groupChat}
                         on:goToMessageIndex
@@ -489,7 +489,7 @@
             {/if}
 
             <ChatMessageContent
-                {preview}
+                {readonly}
                 {fill}
                 {me}
                 {groupChat}
@@ -532,7 +532,7 @@
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if (!inert || canUndelete) && !preview}
+            {#if (!inert || canUndelete) && !readonly}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
@@ -647,7 +647,7 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("deleteMessage")}</div>
+                                        <div slot="text">{$_(me ? "deleteMessage" : "deleteMessageAndReport")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if canUndelete}

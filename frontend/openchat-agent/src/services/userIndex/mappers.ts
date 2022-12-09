@@ -16,7 +16,9 @@ import {
     Version,
     UnsupportedValueError,
     SuspendUserResponse,
-    UnsuspendUserResponse
+    UnsuspendUserResponse,
+    SuspensionDetails,
+    SuspensionAction
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -32,6 +34,8 @@ import type {
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
     ApiSuspendUserResponse,
+    ApiSuspensionAction,
+    ApiSuspensionDetails,
     ApiUnsuspendUserResponse,
     ApiUpgradeStorageResponse,
     ApiUsersResponse,
@@ -233,7 +237,7 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Success" in candid) {
-        const r = candid.Success;
+        const r = candid.Success
         console.log("User: ", r);
         const version = r.wasm_version;
         return {
@@ -252,7 +256,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             openStorageLimitBytes: Number(r.open_storage_limit_bytes),
             referrals: r.referrals.map((p) => p.toString()),
             isSuperAdmin: r.is_super_admin,
-            suspended: r.suspended,
+            suspensionDetails: optional(r.suspension_details, suspensionDetails),
         };
     }
 
@@ -261,7 +265,30 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     }
 
     throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
-    // throw new UnsupportedValueError("Unexpected ApiCurrentUserResponse type received", candid);
+}
+
+function suspensionDetails(candid: ApiSuspensionDetails): SuspensionDetails {
+    return {
+        reason: candid.reason,
+        action: suspensionAction(candid.action),
+        suspendedBy: candid.suspended_by.toString(),
+    };
+}
+
+function suspensionAction(candid: ApiSuspensionAction): SuspensionAction {
+    if ("Unsuspend" in candid) {
+        return {
+            kind: "unsuspend_action",
+            timestamp: candid.Unsuspend,
+        };
+    } else if ("Delete" in candid) {
+        return {
+            kind: "delete_action",
+            timestamp: candid.Delete,
+        };
+    }
+
+    throw new Error(`Unexpected ApiSuspensionAction type received: ${candid}`);
 }
 
 export function phoneStatus(candid: ApiPhoneStatus): PhoneStatus {
@@ -345,6 +372,12 @@ export function suspendUserResponse(candid: ApiSuspendUserResponse): SuspendUser
     if ("InternalError" in candid) {
         return "internal_error";
     }
+    if ("UserAlreadySuspended" in candid) {
+        return "user_already_suspended";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
 }
 
@@ -354,6 +387,12 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
     }
     if ("InternalError" in candid) {
         return "internal_error";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    if ("UserNotSuspended" in candid) {
+        return "user_not_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
 }

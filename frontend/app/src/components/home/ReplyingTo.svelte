@@ -13,7 +13,7 @@
 
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
-    export let preview: boolean;
+    export let readonly: boolean;
     export let groupChat: boolean;
     export let chatId: string;
 
@@ -40,7 +40,7 @@
         {username}
     </h4>
     <ChatMessageContent
-        {preview}
+        {readonly}
         {groupChat}
         {chatId}
         fill={false}

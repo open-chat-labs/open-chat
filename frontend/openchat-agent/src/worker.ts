@@ -1156,7 +1156,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "suspendUser":
                 agent
-                    .suspendUser(payload.userId)
+                    .suspendUser(payload.userId, payload.reason)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

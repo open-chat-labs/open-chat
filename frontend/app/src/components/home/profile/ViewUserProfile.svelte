@@ -23,8 +23,9 @@
     let profile: PublicProfile | undefined = undefined;
     let user: PartialUserSummary | undefined;
 
+    $: isSuspended = user?.suspended ?? false;
     $: modal = alignTo === undefined || $mobileWidth;
-    $: status = user?.suspended ? $_("accountSuspended") : client.formatLastOnlineDate($_, Date.now(), user);
+    $: status = isSuspended ? $_("accountSuspended") : client.formatLastOnlineDate($_, Date.now(), user);
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
@@ -82,8 +83,8 @@
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
                 <p>{status === "" ? "..." : status}</p>
+                <p>{joined}</p>
                 {#if client.user.isSuperAdmin}
-                    <p>{joined}</p>
                     {#if isPremium}
                         <p>PREMIUM</p>
                     {/if}
