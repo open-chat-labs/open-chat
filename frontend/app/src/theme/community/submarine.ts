@@ -1,4 +1,5 @@
-import { hexPercent, Theme } from "../themes";
+import type { Theme } from "../types";
+import { hexPercent } from "../themes";
 
 const red100 = "#ae1111";
 const txtLight = "#922222";

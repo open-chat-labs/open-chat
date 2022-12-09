@@ -11,7 +11,7 @@ but you are free to create your own and try out those created by others.
 First create a new typescript file in this folder. Take `submarine.ts` as an example. In this file you can see that it defines a function called `getTheme`. This function will
 accept an existing theme to base your new theme on and you must simply change the properties that you are interested in changing.
 
-For example we can see that the main background is changed in the red theme as follows:
+For example we can see that the main background is changed in the submarine theme as follows:
 
 ```
     base.bg = "radial-gradient(circle, rgba(101,6,6,1) 10%, rgba(0,0,0,1) 79%)";
@@ -30,22 +30,21 @@ Once you have created your theme you need to plug it into the user profile page.
 To do that open `themes.ts`. At the top of this file you will see something like the following:
 
 ```
+import { getTheme as getWhiteTheme } from "./community/white";
+import { getTheme as getSubmarineTheme } from "./community/submarine";
+
 const defaultTheme = lightTheme();
 const dark = darkTheme(defaultTheme);
-const white = whiteTheme();
-const red = getRedTheme(cloneTheme(dark));
 
-export const communityThemes = [white, red];
+// Community themes need to be added here
+export const communityThemes = [
+    getWhiteTheme(cloneTheme(defaultTheme)),
+    getSubmarineTheme(cloneTheme(dark)),
+];
 
-const themes: Themes = {
-    light: defaultTheme,
-    dark,
-    white,
-    red,
-};
 ```
 
-You will need to import the theme you just created and then make sure it is added to both the `communityThemes` list and to the `themes` map.
+You will need to import the theme you just created and then make sure it is added to the `communityThemes` list.
 
 With this done you should be able to select your custom theme from the user profile page.
 
@@ -56,5 +55,5 @@ use it.
 
 ### In future
 
-If this is a popular feature, we may consider making it more user freindly and also perhaps allow people to rate community themes so that good
+If this is a popular feature, we may consider making it more user friendly and also perhaps allow people to rate community themes so that good
 quality themes float to the top and are easily discoverable.
