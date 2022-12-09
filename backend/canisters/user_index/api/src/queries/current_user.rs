@@ -26,6 +26,7 @@ pub struct SuccessResult {
     pub referrals: Vec<UserId>,
     pub is_super_admin: bool,
     pub suspension_details: Option<SuspensionDetails>,
+    pub is_suspected_bot: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

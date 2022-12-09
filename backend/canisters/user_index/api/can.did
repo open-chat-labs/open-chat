@@ -177,6 +177,7 @@ type CurrentUserResponse =
             referrals: vec UserId;
             is_super_admin: bool;
             suspension_details: opt SuspensionDetails;
+            is_suspected_bot: bool;
         };
         UserNotFound;
     };
@@ -284,6 +285,19 @@ type SuperAdminsResponse =
         };
     };
 
+type SuspectedBotsArgs =
+    record {
+        after: opt UserId;
+        count: nat32;
+    };
+
+type SuspectedBotsResponse =
+    variant {
+        Success: record {
+            users: vec UserId;
+        };
+    };
+
 type SuspendUserArgs =
     record {
         user_id: UserId;
@@ -311,6 +325,15 @@ type UnsuspendUserResponse =
         UserNotSuspended;
         UserNotFound;
         InternalError: text;
+    };
+
+type MarkSuspectedBotArgs =
+    record {
+    };
+
+type MarkSuspectedBotResponse =
+    variant {
+        Success;
     };
 
 service: {
@@ -351,10 +374,16 @@ service: {
     // Search for users matching some query
     search: (SearchArgs) -> (SearchResponse) query;
 
+    // Mark the caller as a suspcted bot
+    mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
+
     // Only callable by "service principals"
     add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
     remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
     super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
+    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+
+    // Only callable by "super admins"
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
 }
