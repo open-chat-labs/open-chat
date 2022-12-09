@@ -40,7 +40,7 @@ fn suspend_user() {
     env.tick();
 
     let user_response1 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
-    assert!(user_response1.suspended);
+    assert!(user_response1.suspension_details.is_some());
 
     let direct_message_response1 = client::user::send_message(
         &mut env,
@@ -92,7 +92,7 @@ fn suspend_user() {
     env.tick();
 
     let user_response2 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
-    assert!(!user_response2.suspended);
+    assert!(!user_response2.suspension_details.is_some());
 
     let direct_message_response2 = client::user::send_message(
         &mut env,
@@ -176,13 +176,13 @@ fn suspend_user_for_duration() {
     env.tick();
 
     let user_response1 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
-    assert!(user_response1.suspended);
+    assert!(user_response1.suspension_details.is_some());
 
     env.advance_time(Duration::from_millis(1));
     env.tick();
 
     let user_response2 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
-    assert!(!user_response2.suspended);
+    assert!(!user_response2.suspension_details.is_some());
 
     return_env(TestEnv {
         env,
