@@ -53,6 +53,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             referrals: runtime_state.data.users.referrals(&u.user_id),
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
             suspension_details,
+            is_suspected_bot: runtime_state.data.users.is_suspected_bot(&u.user_id),
         })
     } else {
         UserNotFound
