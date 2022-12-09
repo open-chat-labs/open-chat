@@ -28,9 +28,11 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             is_user
         }
         "suspend_user" | "unsuspend_user" => runtime_state.is_caller_super_admin(),
-        "add_super_admin" | "remove_super_admin" | "set_max_concurrent_canister_upgrades" | "upgrade_user_canister_wasm" | "suspected_bots" => {
-            runtime_state.is_caller_service_principal()
-        }
+        "add_super_admin"
+        | "remove_super_admin"
+        | "set_max_concurrent_canister_upgrades"
+        | "upgrade_user_canister_wasm"
+        | "suspected_bots" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "create_challenge"
         | "generate_registration_fee"
