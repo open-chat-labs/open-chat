@@ -4,6 +4,7 @@ import { hexPercent } from "../themes";
 const red100 = "#ae1111";
 const txtLight = "#922222";
 const txt = red100;
+const componentBg = "#2a1e1e";
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
@@ -26,13 +27,13 @@ export function getTheme(base: Theme): Theme {
     base.chatSummary.hv = "rgb(64 55 55 / 30%)";
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
-    base.entry.input.bg = "#2a1e1e";
-    base.input.bg = "#2a1e1e";
-    base.chatSearch.bg = "#2a1e1e";
+    base.entry.input.bg = componentBg;
+    base.input.bg = componentBg;
+    base.chatSearch.bg = componentBg;
     base.button.bg = "#7c0a0a";
     base.button.hv = "#5b0505";
     base.button.txt = "rgba(255 255 255 / 80%)";
-    base.button.disabled = "#2a1e1e";
+    base.button.disabled = componentBg;
     base.currentChat.msg.bg = "#342424";
     base.currentChat.msg.me.bg = hexPercent(base.button.bg, 70);
     base.currentChat.msg.txt = "rgba(255 255 255 / 50%)";
