@@ -41,7 +41,7 @@ impl GroupChat {
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        // Update the value if the new value is higher or if the old value is at least an hour old.
+        // Update `read_by_me_up_to` if the new value is higher or the old value is > 1 hour old.
         // By allowing `read_by_me_up_to` to decrease we can handle the case where it has
         // incorrectly been set too high due to an error on the frontend.
         // The reason for only allowing it to decrease after an hour is so that if people are using
