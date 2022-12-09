@@ -8,7 +8,7 @@ but you are free to create your own and try out those created by others.
 
 ## How to create a theme
 
-First create a new typescript file in this folder. Take `red.ts` as an example. In this file you can see that it defines a function called `getTheme`. This function will
+First create a new typescript file in this folder. Take `submarine.ts` as an example. In this file you can see that it defines a function called `getTheme`. This function will
 accept an existing theme to base your new theme on and you must simply change the properties that you are interested in changing.
 
 For example we can see that the main background is changed in the red theme as follows:

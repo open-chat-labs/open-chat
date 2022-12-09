@@ -6,7 +6,7 @@ const txt = red100;
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
-    base.name = "red";
+    base.name = "submarine";
     base.label = "Submarine";
     base.burst = false;
     base.bg = "radial-gradient(circle, rgba(66,5,5,1) 20%, rgba(0,0,0,1) 79%)";

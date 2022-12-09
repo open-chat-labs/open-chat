@@ -1,21 +1,21 @@
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
-import { whiteTheme } from "./community/white";
+import { getTheme as getWhiteTheme } from "./community/white";
 import { derived, readable, writable } from "svelte/store";
-import { getTheme as getRedTheme } from "./community/red";
+import { getTheme as getSubmarineTheme } from "./community/submarine";
 
 const defaultTheme = lightTheme();
 const dark = darkTheme(defaultTheme);
-const white = whiteTheme();
-const red = getRedTheme(cloneTheme(dark));
+const white = getWhiteTheme(cloneTheme(defaultTheme));
+const submarine = getSubmarineTheme(cloneTheme(dark));
 
-export const communityThemes = [white, red];
+export const communityThemes = [white, submarine];
 
 const themes: Themes = {
     light: defaultTheme,
     dark,
     white,
-    red,
+    submarine,
 };
 
 export function hexPercent(hex: string, alpha: number | undefined): string {
