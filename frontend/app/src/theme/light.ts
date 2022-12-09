@@ -1,7 +1,7 @@
-import { hexPercent, Theme } from "./themes";
+import { hexPercent } from "./themes";
+import type { Theme } from "./types";
 
 const orangeAccent = "#ff9505";
-// const pinkAccent = "hotpink";
 const pinkAccent = "#ff005c";
 const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
@@ -16,6 +16,7 @@ export function lightTheme(): Theme {
     return {
         name: "light",
         label: "Light",
+        burst: false,
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",

@@ -646,5 +646,8 @@
     "searchPlaceholder": "חפש משתמשים וקבוצות...",
     "reasonForSuspension": "סיבה להשעיה",
     "suspend": "לְהַשְׁעוֹת",
+    "communityTheme": "נושא קהילה",
+    "selectCommunityTheme": "בחר נושא קהילה",
+    "useAtOwnRisk": "השימוש על אחריותך בלבד",
     "deleteMessageAndReport": "מחק ודווח"
 }

@@ -648,5 +648,8 @@
     "searchPlaceholder": "Rechercher des utilisateurs et des groupes...",
     "reasonForSuspension": "motif de suspension",
     "suspend": "Suspendre",
+    "communityTheme": "Thème communautaire",
+    "selectCommunityTheme": "Sélectionnez un thème communautaire",
+    "useAtOwnRisk": "À utiliser à vos risques et périls",
     "deleteMessageAndReport": "Supprimer et signaler"
 }
