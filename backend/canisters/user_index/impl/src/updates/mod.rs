@@ -8,6 +8,7 @@ pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
 pub mod confirm_phone_number;
 pub mod create_challenge;
+pub mod mark_suspected_bot;
 pub mod register_user;
 pub mod remove_sms_messages;
 pub mod remove_super_admin;
