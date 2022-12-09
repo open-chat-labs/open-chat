@@ -7,6 +7,7 @@ use types::{CanisterId, UserId};
 mod client;
 mod freeze_group_tests;
 mod initial_state_and_updates_tests;
+mod notification_tests;
 mod poll_tests;
 mod register_user_tests;
 mod rng;
@@ -36,6 +37,7 @@ impl User {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
     pub notifications: CanisterId,
     pub online_users_aggregator: CanisterId,
     pub proposals_bot: CanisterId,

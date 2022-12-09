@@ -5,3 +5,4 @@ use notifications_index_canister::*;
 
 // Updates
 generate_update_call!(add_notifications_canister);
+generate_update_call!(push_subscription);

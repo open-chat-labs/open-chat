@@ -49,16 +49,16 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let group_index_canister_id = create_canister(env);
-    let notifications_canister_id = create_canister(env);
-    let notifications_index_canister_id = create_canister(env);
-    let online_users_aggregator_canister_id = create_canister(env);
-    let proposals_bot_canister_id = create_canister(env);
-    let user_index_canister_id = create_canister(env);
+    let group_index_canister_id = create_canister(env, None);
+    let notifications_index_canister_id = create_canister(env, None);
+    let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
+    let online_users_aggregator_canister_id = create_canister(env, None);
+    let proposals_bot_canister_id = create_canister(env, None);
+    let user_index_canister_id = create_canister(env, None);
 
-    let cycles_dispenser_canister_id = create_canister(env);
-    let open_storage_index_canister_id = create_canister(env);
-    let ledger_canister_id = create_canister(env);
+    let cycles_dispenser_canister_id = create_canister(env, None);
+    let open_storage_index_canister_id = create_canister(env, None);
+    let ledger_canister_id = create_canister(env, None);
 
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
@@ -153,7 +153,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     //     test_mode,
     // };
 
-    client::notifications_index::add_notifications_canister(
+    let add_notifications_canister_response = client::notifications_index::add_notifications_canister(
         env,
         controller,
         notifications_index_canister_id,
@@ -161,10 +161,18 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
             canister_id: notifications_canister_id,
         },
     );
+    assert!(
+        matches!(
+            add_notifications_canister_response,
+            notifications_index_canister::add_notifications_canister::Response::Success
+        ),
+        "{add_notifications_canister_response:?}"
+    );
 
     CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
+        notifications_index: notifications_index_canister_id,
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
         proposals_bot: proposals_bot_canister_id,
