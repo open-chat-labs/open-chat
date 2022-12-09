@@ -645,5 +645,8 @@
     "nUsersJoined": "{number} משתמשים הצטרפו לקבוצה",
     "searchPlaceholder": "חפש משתמשים וקבוצות...",
     "reasonForSuspension": "סיבה להשעיה",
-    "suspend": "לְהַשְׁעוֹת"
+    "suspend": "לְהַשְׁעוֹת",
+    "communityTheme": "נושא קהילה",
+    "selectCommunityTheme": "בחר נושא קהילה",
+    "useAtOwnRisk": "השימוש על אחריותך בלבד"
 }

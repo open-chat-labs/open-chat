@@ -648,5 +648,8 @@
     "nUsersJoined": "{number} 位用户加入了群组",
     "searchPlaceholder": "搜索用户和组...",
     "reasonForSuspension": "暂停原因",
-    "suspend": "暂停"
+    "suspend": "暂停",
+    "communityTheme": "社区主题",
+    "selectCommunityTheme": "选择社区主题",
+    "useAtOwnRisk": "使用风险自负"
 }

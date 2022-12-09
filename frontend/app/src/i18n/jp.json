@@ -648,5 +648,8 @@
     "nUsersJoined": "{number} 人のユーザーがグループに参加しました",
     "searchPlaceholder": "ユーザーとグループを検索...",
     "reasonForSuspension": "停止の理由",
-    "suspend": "サスペンド"
+    "suspend": "サスペンド",
+    "communityTheme": "コミュニティのテーマ",
+    "selectCommunityTheme": "コミュニティのテーマを選択",
+    "useAtOwnRisk": "自己責任"
 }
