@@ -36,7 +36,6 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.bg = "#342424";
     base.currentChat.msg.me.bg = hexPercent(base.button.bg, 70);
     base.currentChat.msg.txt = "rgba(255 255 255 / 50%)";
-<<<<<<< HEAD
     base.currentChat.date.bg = base.currentChat.msg.bg;
     base.currentChat.msg.inert = base.currentChat.msg.bg;
     base.notificationBar.bg = "#8b3403";
@@ -44,13 +43,6 @@ export function getTheme(base: Theme): Theme {
     base.timeline.txt = base.notificationBar.txt;
     base.menu.bd = base.bd;
     base.menu.bg = base.panel.right.modal;
-=======
-    base.notificationBar.bg = "#8b3403";
-    base.notificationBar.txt = "rgba(255 255 255 / 50%)";
-    base.timeline.txt = base.notificationBar.txt;
-    base.menu.bd = "#4f1515";
-    base.menu.bg = "#221b1b";
->>>>>>> master
     base.menu.txt = txt;
     base.menu["disabled-txt"] = txtLight;
     base.icon.inverted.txt = txt;
