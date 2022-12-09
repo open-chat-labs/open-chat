@@ -1,5 +1,5 @@
 use crate::guards::caller_is_controller;
-use crate::{mutate_state, NotificationsCanister, read_state, RuntimeState};
+use crate::{mutate_state, read_state, NotificationsCanister, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
@@ -13,18 +13,24 @@ use utils::canister::install;
 async fn add_notifications_canister(args: Args) -> Response {
     match read_state(|state| prepare(args.canister_id, state)) {
         Ok(result) => {
-            match install(args.canister_id, result.canister_wasm.module, candid::encode_one(result.init_args).unwrap()).await {
+            match install(
+                args.canister_id,
+                result.canister_wasm.module,
+                candid::encode_one(result.init_args).unwrap(),
+            )
+            .await
+            {
                 Ok(_) => mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state)),
-                Err(error) => InternalError(format!("{error:?}"))
+                Err(error) => InternalError(format!("{error:?}")),
             }
         }
-        Err(response) => response
+        Err(response) => response,
     }
 }
 
 struct PrepareResult {
     canister_wasm: CanisterWasm,
-    init_args: notifications_canister::init::Args
+    init_args: notifications_canister::init::Args,
 }
 
 fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -37,7 +43,7 @@ fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<Prep
                 authorizers: runtime_state.data.authorizers.clone(),
                 wasm_version: runtime_state.data.notifications_canister_wasm.version,
                 test_mode: runtime_state.data.test_mode,
-            }
+            },
         })
     } else {
         Err(AlreadyAdded)
