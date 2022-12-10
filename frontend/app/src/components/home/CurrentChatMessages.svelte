@@ -464,7 +464,7 @@
             .then(() => (initialised = true))
             .then(() => {
                 expectedScrollTop = undefined;
-                scrollToMessageIndex(messageIndex, false, true);
+                scrollToMessageIndex(messageIndex, false, false);
             })
             .then(loadMoreIfRequired);
     }

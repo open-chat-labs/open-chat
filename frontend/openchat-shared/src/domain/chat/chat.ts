@@ -677,6 +677,16 @@ export type UpdateArgs = {
     updatesSince: UpdatesSince;
 };
 
+export type ChatStateFull = {
+    timestamp: bigint;
+    directChats: DirectChatSummary[];
+    groupChats: GroupChatSummary[];
+    avatarId: bigint | undefined;
+    blockedUsers: string[];
+    pinnedChats: string[];
+    affectedEvents: Record<string, number[]>;
+};
+
 export type MergedUpdatesResponse = {
     wasUpdated: boolean;
     chatSummaries: ChatSummary[];
@@ -711,6 +721,43 @@ export type InitialStateResponse = {
     chats: ChatSummary[];
     timestamp: bigint;
     cyclesBalance: bigint;
+};
+
+export type InitialStateV2Response = {
+    timestamp: bigint;
+    directChats: DirectChatSummary[];
+    cacheTimestamp: bigint | undefined;
+    cachedGroupChatSummaries: GroupChatSummary[];
+    groupChatsAdded: UserCanisterGroupChatSummary[];
+    avatarId: bigint | undefined;
+    blockedUsers: string[];
+    pinnedChats: string[];
+};
+
+export type UpdatesV2Response = {
+    timestamp: bigint;
+    directChatsAdded: DirectChatSummary[];
+    directChatsUpdated: DirectChatSummaryUpdates[];
+    groupChatsAdded: UserCanisterGroupChatSummary[];
+    groupChatsUpdated: UserCanisterGroupChatSummaryUpdates[];
+    chatsRemoved: string[];
+    avatarId: OptionUpdate<bigint>;
+    blockedUsers: string[] | undefined;
+    pinnedChats: string[] | undefined;
+};
+
+export type UserCanisterGroupChatSummary = {
+    chatId: string;
+    readByMeUpTo: number | undefined,
+    threadsRead: Record<number, number>;
+    archived: boolean;
+};
+
+export type UserCanisterGroupChatSummaryUpdates = {
+    chatId: string;
+    readByMeUpTo: number | undefined;
+    threadsRead: Record<number, number>;
+    archived: boolean | undefined;
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -893,6 +940,68 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         frozen: boolean;
     };
+
+export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
+
+export type GroupCanisterSummaryUpdatesResponse = GroupCanisterGroupChatSummaryUpdates
+    | { kind: "success_no_updates" }
+    | CallerNotInGroup;
+
+export type GroupCanisterGroupChatSummary = {
+    chatId: string;
+    lastUpdated: bigint;
+    name: string;
+    description: string;
+    subtype: GroupSubtype;
+    avatarId: bigint | undefined;
+    public: boolean;
+    historyVisibleToNewJoiners: boolean;
+    minVisibleEventIndex: number;
+    minVisibleMessageIndex: number;
+    latestMessage: EventWrapper<Message> | undefined;
+    latestEventIndex: number;
+    joined: bigint;
+    memberCount: number;
+    myRole: MemberRole;
+    mentions: Mention[];
+    ownerId: string;
+    permissions: GroupPermissions;
+    notificationsMuted: boolean;
+    metrics: ChatMetrics;
+    myMetrics: ChatMetrics;
+    latestThreads: GroupCanisterThreadDetails[];
+    frozen: boolean;
+};
+
+export type GroupCanisterGroupChatSummaryUpdates = {
+    chatId: string;
+    lastUpdated: bigint;
+    name: string | undefined;
+    description: string | undefined;
+    subtype: OptionUpdate<GroupSubtype>;
+    avatarId: OptionUpdate<bigint>;
+    public: boolean | undefined;
+    latestMessage: EventWrapper<Message> | undefined;
+    latestEventIndex: number | undefined;
+    memberCount: number | undefined;
+    myRole: MemberRole | undefined;
+    mentions: Mention[];
+    ownerId: string | undefined;
+    permissions: GroupPermissions | undefined;
+    notificationsMuted: boolean | undefined;
+    metrics: ChatMetrics | undefined;
+    myMetrics: ChatMetrics | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    frozen: OptionUpdate<boolean>;
+    affectedEvents: number[];
+};
+
+export type GroupCanisterThreadDetails = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    latestEventIndex: number;
+    latestMessageIndex: number;
+};
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;
 
@@ -1422,6 +1531,21 @@ export type NervousSystemFunction = {
 export type SnsFunctionType =
     | { kind: "native_nervous_system_function" }
     | { kind: "generic_nervous_system_function" };
+
+export type FilterGroupsResponse = {
+    timestamp: bigint;
+    activeGroups: string[];
+    deletedGroups: DeletedGroupInfo[];
+    upgradesInProgress: string[];
+};
+
+export type DeletedGroupInfo = {
+    id: string;
+    timestamp: bigint;
+    deletedBy: string;
+    groupName: string;
+    public: boolean;
+};
 
 export type FreezeGroupResponse =
     | EventWrapper<ChatFrozenEvent>

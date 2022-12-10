@@ -17,6 +17,8 @@ import type {
     GroupChatDetailsResponse,
     UnblockUserResponse,
     GroupChatSummary,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
     MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -93,6 +95,14 @@ export class CachingGroupClient implements IGroupClient {
                     return resp;
                 });
         }
+    }
+
+    summary(): Promise<GroupCanisterSummaryResponse> {
+        return this.client.summary();
+    }
+
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {
+        return this.client.summaryUpdates(updatesSince);
     }
 
     @profile("groupCachingClient")

@@ -54,6 +54,13 @@ import {
     RegisterProposalVoteResponse,
     GroupRules,
     RulesResponse,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    SummaryResponse,
+    SummaryUpdatesResponse,
+    GroupCanisterThreadDetails,
+    GroupSubtype,
+    Mention,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -110,6 +117,13 @@ export {
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
     GroupRules as ApiGroupRules,
     RulesResponse as ApiRulesResponse,
+    GroupCanisterGroupChatSummary as ApiGroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates as ApiGroupCanisterGroupChatSummaryUpdates,
+    SummaryResponse as ApiGroupCanisterSummaryResponse,
+    SummaryUpdatesResponse as ApiGroupCanisterSummaryUpdatesResponse,
+    GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
+    GroupSubtype as ApiGroupSubtype,
+    Mention as ApiMention,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

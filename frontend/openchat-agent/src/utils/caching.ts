@@ -2,6 +2,7 @@ import { MAX_EVENTS } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import {
     ChatEvent,
+    ChatStateFull,
     ChatSummary,
     EventsResponse,
     EventsSuccessResult,
@@ -18,7 +19,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 52;
+const CACHE_VERSION = 53;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -28,6 +29,11 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 };
 
 export interface ChatSchema extends DBSchema {
+    chats_v2: {
+        key: string;
+        value: ChatStateFull;
+    }
+
     chats: {
         key: string; // the user's principal as a string
         value: MergedUpdatesResponse;
@@ -81,6 +87,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("chats")) {
                 db.deleteObjectStore("chats");
             }
+            if (db.objectStoreNames.contains("chats_v2")) {
+                db.deleteObjectStore("chats_v2");
+            }
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
             }
@@ -89,6 +98,7 @@ export function openCache(principal: Principal): Database {
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
+            db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
         },
     });
@@ -113,6 +123,21 @@ export async function openDbAndGetCachedChats(
     if (db !== undefined) {
         return getCachedChats(db, principal);
     }
+}
+
+export async function getCachedChatsV2(
+    db: Database,
+    principal: Principal
+): Promise<ChatStateFull | undefined> {
+    return await (await db).get("chats_v2", principal.toString());
+}
+
+export async function setCachedChatsV2(
+    db: Database,
+    principal: Principal,
+    chatState: ChatStateFull
+): Promise<void> {
+    await (await db).put("chats_v2", chatState, principal.toString());
 }
 
 export async function getCachedChats(

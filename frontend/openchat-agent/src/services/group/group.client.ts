@@ -35,6 +35,8 @@ import {
     textToCode,
     SearchGroupChatResponse,
     User,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -68,6 +70,8 @@ import {
     apiOptionalGroupPermissions,
     apiGroupRules,
     rulesResponse,
+    summaryResponse,
+    summaryUpdatesResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -107,6 +111,26 @@ export class GroupClient extends CandidService implements IGroupClient {
             chatId,
             new GroupClient(identity, config, chatId, inviteCode),
             config.logger
+        );
+    }
+
+    @profile("groupClient")
+    summary(): Promise<GroupCanisterSummaryResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.summary({}),
+            summaryResponse,
+            {}
+        );
+    }
+
+    @profile("groupClient")
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {
+        const args = { updates_since: updatesSince };
+
+        return this.handleQueryResponse(
+            () => this.groupService.summary_updates(args),
+            summaryUpdatesResponse,
+            args
         );
     }
 

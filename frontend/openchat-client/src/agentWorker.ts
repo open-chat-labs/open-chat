@@ -89,6 +89,7 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
+    ChatStateFull,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -282,6 +283,24 @@ export class OpenChatAgentWorker extends EventTarget {
                 args,
                 userStore,
                 selectedChatId,
+            },
+        });
+    }
+
+    getInitialStateV2(): Promise<ChatStateFull> {
+        return this.sendRequest({
+            kind: "getInitialStateV2",
+            payload: {},
+        });
+    }
+
+    getUpdatesV2(
+        currentState: ChatStateFull,
+    ): Promise<ChatStateFull> {
+        return this.sendRequest({
+            kind: "getUpdatesV2",
+            payload: {
+                currentState,
             },
         });
     }

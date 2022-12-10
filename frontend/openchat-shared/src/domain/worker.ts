@@ -6,6 +6,7 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
+    ChatStateFull,
     CreateGroupResponse,
     CurrentChatState,
     DeleteGroupResponse,
@@ -184,7 +185,9 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState;
+    | GetInitialState
+    | GetInitialStateV2
+    | GetUpdatesV2;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -781,6 +784,16 @@ type GetInitialState = Request<{
     kind: "getInitialState";
 };
 
+type GetUpdatesV2 = Request<{
+    currentState: ChatStateFull;
+}> & {
+    kind: "getUpdatesV2";
+};
+
+type GetInitialStateV2 = Request<Record<string, never>> & {
+    kind: "getInitialStateV2";
+};
+
 /**
  * Worker error type
  */
@@ -869,6 +882,7 @@ export type WorkerResponse =
     | Response<UnfreezeGroupResponse>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
+    | Response<ChatStateFull>
     | Response<undefined>;
 
 type Response<T> = {
