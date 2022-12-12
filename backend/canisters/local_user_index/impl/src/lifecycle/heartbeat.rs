@@ -9,7 +9,6 @@ use utils::cycles::can_spend_cycles;
 fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
-    cycles_dispenser_client::run();
     sync_events_to_user_canisters::run();
 }
 
