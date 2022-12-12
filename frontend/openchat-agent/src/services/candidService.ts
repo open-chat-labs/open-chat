@@ -8,8 +8,11 @@ import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
 
-function debug(msg: string): void {
+function debug(msg: string, stackStrace=false): void {
     console.log(msg);
+    if (stackStrace) {
+        console.trace();
+    }
 }
 
 export abstract class CandidService {
@@ -84,7 +87,8 @@ export abstract class CandidService {
                     });
                 } else {
                     debug(
-                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`
+                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`,
+                        true
                     );
                     throw responseErr;
                 }
