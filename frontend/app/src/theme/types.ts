@@ -7,6 +7,7 @@ export interface Theme {
     name: string;
     label: string;
     burst: boolean;
+    mode: "light" | "dark"; // pick the one that makes the most sense for your theme
 
     bg: string;
     txt: string;

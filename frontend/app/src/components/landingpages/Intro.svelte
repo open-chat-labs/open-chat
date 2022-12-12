@@ -14,7 +14,7 @@
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: imgUrl =
-        $themeStore.name === "light"
+        $themeStore.mode === "light"
             ? "../assets/screenshots/intro_light.png"
             : "../assets/screenshots/intro_dark.png";
 
@@ -74,8 +74,8 @@
                 <img class="img" alt="Open chat list" src={imgUrl} />
                 {#if $mobileWidth}
                     <div
-                        class:light={$themeStore.name === "light"}
-                        class:dark={$themeStore.name === "dark"}
+                        class:light={$themeStore.mode === "light"}
+                        class:dark={$themeStore.mode === "dark"}
                         class="overlay" />
                 {/if}
             </div>

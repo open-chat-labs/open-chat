@@ -55,9 +55,10 @@ export abstract class CandidService {
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
-                const debugInfo = `error: ${JSON.stringify(responseErr)}, args: ${JSON.stringify(
-                    args
-                )}`;
+                const debugInfo = `error: ${JSON.stringify(
+                    responseErr,
+                    Object.getOwnPropertyNames(responseErr)
+                )}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof AuthError) &&

@@ -1,8 +1,6 @@
 <script lang="ts">
-    import Header from "./Header.svelte";
-    import Content from "./Content.svelte";
     import Feature from "./Feature.svelte";
-    import { themeStore } from "../../theme/themes";
+    import { communityThemes, themeStore, themes } from "../../theme/themes";
 
     import { mobileWidth, toPixel, availableHeight } from "../../stores/screenDimensions";
 
@@ -32,8 +30,10 @@
         return n;
     }
 
-    const screenshotMap: Record<string, { url: string; alt: string }[]> = {
-        light: [
+    const screenshotMap: Record<string, { url: string; alt: string }[]> = {};
+
+    [...communityThemes, themes.dark, themes.light].forEach((theme) => {
+        screenshotMap[theme.name] = [
             { url: "../assets/screenshots/mobilefirst.png", alt: "mobile first" },
             { url: "../assets/screenshots/creategroup1.png", alt: "create group" },
             { url: "../assets/screenshots/permissions.png", alt: "group permissions" },
@@ -41,29 +41,9 @@
             { url: "../assets/screenshots/userprofile.gif", alt: "user profile" },
             { url: "../assets/screenshots/messages.gif", alt: "sending messages" },
             { url: "../assets/screenshots/search.gif", alt: "searching" },
-            { url: "../assets/screenshots/voting_light.png", alt: "voting" },
-        ],
-        white: [
-            { url: "../assets/screenshots/mobilefirst.png", alt: "mobile first" },
-            { url: "../assets/screenshots/creategroup1.png", alt: "create group" },
-            { url: "../assets/screenshots/permissions.png", alt: "group permissions" },
-            { url: "../assets/screenshots/whatshot.gif", alt: "find groups to join" },
-            { url: "../assets/screenshots/userprofile.gif", alt: "user profile" },
-            { url: "../assets/screenshots/messages.gif", alt: "sending messages" },
-            { url: "../assets/screenshots/search.gif", alt: "searching" },
-            { url: "../assets/screenshots/voting_light.png", alt: "voting" },
-        ],
-        dark: [
-            { url: "../assets/screenshots/mobilefirst.png", alt: "mobile first" },
-            { url: "../assets/screenshots/creategroup1.png", alt: "create group" },
-            { url: "../assets/screenshots/permissions.png", alt: "group permissions" },
-            { url: "../assets/screenshots/whatshot.gif", alt: "find groups to join" },
-            { url: "../assets/screenshots/userprofile.gif", alt: "user profile" },
-            { url: "../assets/screenshots/messages.gif", alt: "sending messages" },
-            { url: "../assets/screenshots/search.gif", alt: "searching" },
-            { url: "../assets/screenshots/voting_dark.png", alt: "voting" },
-        ],
-    };
+            { url: `../assets/screenshots/voting_${theme.mode}.png`, alt: "voting" },
+        ];
+    });
 
     $: screenshots = screenshotMap[$themeStore.name] ?? [];
 </script>
