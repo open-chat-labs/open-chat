@@ -21,8 +21,8 @@ fn c2c_summary_updates(args: Args) -> Response {
 }
 
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller().into();
-    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
+    let caller = runtime_state.env.caller();
+    let participant = match runtime_state.data.participants.get(caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
