@@ -56,7 +56,7 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: messagesRead = client.messagesRead;
     $: directlyBlockedUsers = client.blockedUsers;
-    $: showFooter = !showSearchHeader;
+    $: showFooter = !showSearchHeader && !client.isReadOnly();
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
 
     $: canSend = client.canSendMessages(chat.chatId);
@@ -67,6 +67,7 @@
     $: canReplyInThread = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: canInvite = client.canInviteUsers(chat.chatId);
+    $: readonly = client.isChatReadOnly(chat.chatId);
 
     $: {
         if (chat.chatId !== previousChatId) {
@@ -247,7 +248,7 @@
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             {blocked}
-            {preview}
+            {readonly}
             {unreadMessages}
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
@@ -269,7 +270,7 @@
         {canSend}
         {canReact}
         {canInvite}
-        {preview}
+        {readonly}
         {firstUnreadMention}
         footer={showFooter}
         {unreadMessages} />

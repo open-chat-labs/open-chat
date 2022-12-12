@@ -21,23 +21,24 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "mark_as_online"
         | "resend_code"
         | "set_username"
-        | "upgrade_canister"
-        | "upgrade_storage" => {
+        | "upgrade_storage"
+        | "mark_suspected_bot" => {
             let caller = runtime_state.env.caller();
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
-        "add_super_admin" | "remove_super_admin" | "set_max_concurrent_canister_upgrades" | "upgrade_user_canister_wasm" => {
-            runtime_state.is_caller_service_principal()
-        }
+        "suspend_user" | "unsuspend_user" => runtime_state.is_caller_super_admin(),
+        "add_super_admin"
+        | "remove_super_admin"
+        | "set_max_concurrent_canister_upgrades"
+        | "upgrade_user_canister_wasm"
+        | "suspected_bots" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "create_challenge"
         | "generate_registration_fee"
         | "notify_registration_fee_paid"
         | "register_user"
-        | "submit_phone_number"
-        | "suspend_user"
-        | "unsuspend_user" => true,
+        | "submit_phone_number" => true,
         _ => false,
     };
 

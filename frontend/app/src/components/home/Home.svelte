@@ -52,6 +52,7 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
+    import SuspendedModal from "../SuspendedModal.svelte";
 
     export let logout: () => void;
 
@@ -91,6 +92,7 @@
         None,
         Faq,
         SelectChat,
+        Suspended,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -152,6 +154,10 @@
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
+
+        if (client.user.suspensionDetails !== undefined) {
+            modal = ModalType.Suspended;
+        }
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
@@ -938,6 +944,8 @@
                 chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
+        {:else if modal === ModalType.Suspended}
+            <SuspendedModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

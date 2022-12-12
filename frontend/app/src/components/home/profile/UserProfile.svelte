@@ -1,11 +1,13 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, ONE_GB } from "openchat-client";
+    import { PartialUserSummary, OpenChat, ONE_GB, AvatarSize } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import CommunityThemes from "./CommunityThemes.svelte";
+    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -54,6 +56,7 @@
     let saving = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
+    let readonly = client.isReadOnly();
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -173,15 +176,20 @@
             open={$userInfoOpen}
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
-                <EditableAvatar
-                    overlayIcon={true}
-                    image={client.userAvatarUrl(user)}
-                    on:imageSelected={userAvatarSelected} />
+                {#if readonly}
+                    <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                {:else}
+                    <EditableAvatar
+                        overlayIcon={true}
+                        image={client.userAvatarUrl(user)}
+                        on:imageSelected={userAvatarSelected} />
+                {/if}
             </div>
             <Legend label={$_("username")} rules={$_("usernameRules")} />
             <UsernameInput
                 {client}
                 originalUsername={user?.username ?? ""}
+                disabled={readonly}
                 bind:validUsername
                 bind:checking={checkingUsername}
                 bind:error={usernameError}>
@@ -195,6 +203,7 @@
                 rows={3}
                 bind:value={userbio}
                 invalid={false}
+                disabled={readonly}
                 maxlength={MAX_BIO_LENGTH}
                 placeholder={$_("enterBio")}>
                 {#if bioError !== undefined}
@@ -204,7 +213,7 @@
             <div class="full-width-btn">
                 <Button
                     loading={saving || checkingUsername}
-                    disabled={(!bioDirty && validUsername === undefined) || saving}
+                    disabled={(!bioDirty && validUsername === undefined) || saving || readonly}
                     fill={true}
                     small>{$_("update")}</Button>
             </div>
@@ -245,6 +254,7 @@
                             </div>
                         {/each}
                     </div>
+                    <CommunityThemes />
                 {/if}
             </div>
 
@@ -294,46 +304,48 @@
             <Accounts />
         </CollapsibleCard>
     </div>
-    <div class="storage">
-        <CollapsibleCard
-            on:toggle={storageSectionOpen.toggle}
-            open={$storageSectionOpen}
-            headerText={$_("storage")}>
-            {#if $storageStore.byteLimit === 0}
-                <p class="para">
-                    {$_("noStorageAdvice")}
-                </p>
-                <p class="para last">
-                    {$_("chooseUpgrade")}
+    {#if !readonly}
+        <div class="storage">
+            <CollapsibleCard
+                on:toggle={storageSectionOpen.toggle}
+                open={$storageSectionOpen}
+                headerText={$_("storage")}>
+                {#if $storageStore.byteLimit === 0}
+                    <p class="para">
+                        {$_("noStorageAdvice")}
+                    </p>
+                    <p class="para last">
+                        {$_("chooseUpgrade")}
 
-                    <LinkButton underline={"always"} on:click={whySms}>
-                        {$_("tellMeMore")}
-                    </LinkButton>
-                </p>
-                <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small
-                        >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small
-                        >{$_("upgradeByTransfer")}</Button>
-                </ButtonGroup>
-            {:else}
-                <StorageUsage />
-                {#if $storageStore.byteLimit < ONE_GB}
-                    <p class="para">{$_("chooseTransfer")}</p>
-                    <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
-                            >{$_("upgradeStorage")}</Button>
-                    </div>
+                        <LinkButton underline={"always"} on:click={whySms}>
+                            {$_("tellMeMore")}
+                        </LinkButton>
+                    </p>
+                    <ButtonGroup align={"fill"}>
+                        <Button on:click={() => dispatch("upgrade", "sms")} small
+                            >{$_("upgradeBySMS")}</Button>
+                        <Button on:click={() => dispatch("upgrade", "icp")} small
+                            >{$_("upgradeByTransfer")}</Button>
+                    </ButtonGroup>
+                {:else}
+                    <StorageUsage />
+                    {#if $storageStore.byteLimit < ONE_GB}
+                        <p class="para">{$_("chooseTransfer")}</p>
+                        <div class="full-width-btn">
+                            <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
+                                >{$_("upgradeStorage")}</Button>
+                        </div>
+                    {/if}
                 {/if}
-            {/if}
-        </CollapsibleCard>
-    </div>
+            </CollapsibleCard>
+        </div>
+    {/if}
     <div class="stats">
         <CollapsibleCard
             on:toggle={statsSectionOpen.toggle}
             open={$statsSectionOpen}
             headerText={$_("stats.userStats")}>
-            <Stats showReported={true} stats={$userMetrics} />
+            <Stats showReported stats={$userMetrics} />
         </CollapsibleCard>
     </div>
     <div class="advanced">
@@ -366,6 +378,7 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+        margin-bottom: $sp4;
         .theme {
             text-align: center;
             padding: 22px;

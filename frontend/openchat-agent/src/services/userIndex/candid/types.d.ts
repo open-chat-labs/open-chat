@@ -159,9 +159,10 @@ export type CurrentUserResponse = {
       'referrals' : Array<UserId>,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
+      'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'suspended' : boolean,
       'is_super_admin' : boolean,
+      'suspension_details' : [] | [SuspensionDetails],
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -475,6 +476,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export type MarkSuspectedBotArgs = {};
+export type MarkSuspectedBotResponse = { 'Success' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -814,12 +817,24 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
+export interface SuspectedBotsArgs { 'after' : [] | [UserId], 'count' : number }
+export type SuspectedBotsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface SuspendUserArgs {
   'duration' : [] | [Milliseconds],
   'user_id' : UserId,
+  'reason' : string,
 }
-export type SuspendUserResponse = { 'Success' : null } |
-  { 'InternalError' : string };
+export type SuspendUserResponse = { 'UserAlreadySuspended' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
+export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
+  { 'Delete' : TimestampMillis };
+export interface SuspensionDetails {
+  'action' : SuspensionAction,
+  'suspended_by' : UserId,
+  'reason' : string,
+}
 export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
@@ -861,8 +876,10 @@ export interface UnconfirmedPhoneNumberState {
   'phone_number' : PhoneNumber,
 }
 export interface UnsuspendUserArgs { 'user_id' : UserId }
-export type UnsuspendUserResponse = { 'Success' : null } |
-  { 'InternalError' : string };
+export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -941,6 +958,10 @@ export interface _SERVICE {
     CreateChallengeResponse
   >,
   'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
+  'mark_suspected_bot' : ActorMethod<
+    [MarkSuspectedBotArgs],
+    MarkSuspectedBotResponse
+  >,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_super_admin' : ActorMethod<
     [RemoveSuperAdminArgs],
@@ -954,6 +975,7 @@ export interface _SERVICE {
     SubmitPhoneNumberResponse
   >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
+  'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
   'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,

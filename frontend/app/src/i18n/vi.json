@@ -646,5 +646,11 @@
     "suspendedUser": "người dùng bị treo",
     "unsuspendedUser": "Người dùng không bị tạm ngưng",
     "nUsersJoined": "{number} người dùng đã tham gia nhóm",
-    "searchPlaceholder": "Tìm kiếm người dùng và nhóm..."
+    "searchPlaceholder": "Tìm kiếm người dùng và nhóm...",
+    "reasonForSuspension": "lý do đình chỉ",
+    "suspend": "Đình chỉ",
+    "communityTheme": "chủ đề cộng đồng",
+    "selectCommunityTheme": "Chọn một chủ đề cộng đồng",
+    "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
+    "deleteMessageAndReport": "Xóa và báo cáo"
 }

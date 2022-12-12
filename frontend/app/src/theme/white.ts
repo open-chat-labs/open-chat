@@ -1,4 +1,5 @@
-import { hexPercent, Theme } from "./themes";
+import { hexPercent } from "./themes";
+import type { Theme } from "./types";
 
 const orangeAccent = "#ff9505";
 // const pinkAccent = "hotpink";
@@ -17,6 +18,7 @@ export function whiteTheme(): Theme {
         name: "white",
         label: "White",
         bg: "#ffffff",
+        burst: true,
         txt,
         "txt-light": txt70,
         bd: "#ededed",

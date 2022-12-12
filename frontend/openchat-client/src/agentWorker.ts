@@ -1219,11 +1219,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    suspendUser(userId: string): Promise<SuspendUserResponse> {
+    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.sendRequest({
             kind: "suspendUser",
             payload: {
                 userId,
+                reason,
             },
         });
     }
@@ -1233,6 +1234,14 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unsuspendUser",
             payload: {
                 userId,
+            },
+        });
+    }
+
+    markSuspectedBot(): Promise<void> {
+        return this.sendRequest({
+            kind: "markSuspectedBot",
+            payload: {
             },
         });
     }

@@ -3,6 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
+import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
     canAddMembers,
@@ -308,6 +309,7 @@ export class OpenChat extends EventTarget {
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
     private _chatUpdatesSince: bigint | undefined = undefined;
+    private _botDetected = false;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -341,6 +343,14 @@ export class OpenChat extends EventTarget {
                 chatUpdatedStore.set(undefined);
             }
         });
+
+        load()
+            .then((botd) => botd.detect())
+            .then((result) => {
+                console.log("BOTD: ", result);
+                this._botDetected = result.bot;
+            })
+            .catch((err) => console.error(err));
     }
 
     private chatUpdated(affectedEvents: number[]): void {
@@ -482,10 +492,6 @@ export class OpenChat extends EventTarget {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
-        if (user.suspended) {
-            alert("User account suspended");
-            this.logout();
-        }
         this._user = user;
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
@@ -525,6 +531,11 @@ export class OpenChat extends EventTarget {
             // if (isCanisterUrl) {
             //     unsubscribeNotifications(api);
             // }
+
+            if (this._botDetected && !this._user?.isSuspectedBot) {
+                this.api.markSuspectedBot();
+                console.log("markSuspectedBot");
+            }
         }
     }
 
@@ -841,7 +852,10 @@ export class OpenChat extends EventTarget {
                 }
             })
             .then((resp) => {
-                if (resp === "success" && this._liveState.groupPreviews[group.chatId] !== undefined) {
+                if (
+                    resp === "success" &&
+                    this._liveState.groupPreviews[group.chatId] !== undefined
+                ) {
                     removeGroupPreview(group.chatId);
                 }
                 return resp;
@@ -988,6 +1002,18 @@ export class OpenChat extends EventTarget {
 
     isFrozen(chatId: string): boolean {
         return this.chatPredicate(chatId, isFrozen);
+    }
+
+    isOpenChatBot(userId: string): boolean {
+        return userId === OPENCHAT_BOT_USER_ID;
+    }
+
+    isReadOnly(): boolean {
+        return (this._user?.suspensionDetails ?? undefined) != undefined;
+    }
+
+    isChatReadOnly(chatId: string): boolean {
+        return this.isReadOnly() || this.isPreviewing(chatId);
     }
 
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
@@ -2728,9 +2754,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    suspendUser(userId: string): Promise<boolean> {
+    suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.api
-            .suspendUser(userId)
+            .suspendUser(userId, reason)
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to suspend user", err);
@@ -2962,10 +2988,6 @@ export class OpenChat extends EventTarget {
         } finally {
             chatsLoading.set(false);
         }
-    }
-
-    isOpenChatBot(userId: string): boolean {
-        return userId === OPENCHAT_BOT_USER_ID;
     }
 
     /**

@@ -38,6 +38,9 @@
     "myAccount": "My account",
     "supportsMarkdown": "supports markdown",
     "preferredLanguage": "Preferred language",
+    "communityTheme": "Community Theme",
+    "selectCommunityTheme": "Select a community theme",
+    "useAtOwnRisk": "Use at your own risk",
     "fontSize": "Font Size",
     "dark": "dark",
     "light": "light",
@@ -643,5 +646,8 @@
     "failedToUnsuspendUser": "Failed to un-suspend user",
     "suspendedUser": "Suspended user",
     "unsuspendedUser": "Un-suspended user",
-    "nUsersJoined": "{number} users joined the group"
+    "nUsersJoined": "{number} users joined the group",
+    "reasonForSuspension": "reason for suspension",
+    "suspend": "Suspend",
+    "deleteMessageAndReport": "Delete and report"
 }

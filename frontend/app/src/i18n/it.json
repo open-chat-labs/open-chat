@@ -645,5 +645,11 @@
     "suspendedUser": "Utente sospeso",
     "unsuspendedUser": "Utente non sospeso",
     "nUsersJoined": "{number} utenti si sono uniti al gruppo",
-    "searchPlaceholder": "Cerca utenti e gruppi..."
+    "searchPlaceholder": "Cerca utenti e gruppi...",
+    "reasonForSuspension": "motivo della sospensione",
+    "suspend": "Sospendere",
+    "communityTheme": "Tema comunitario",
+    "selectCommunityTheme": "Seleziona un tema della community",
+    "useAtOwnRisk": "Utilizzare a proprio rischio",
+    "deleteMessageAndReport": "Elimina e segnala"
 }

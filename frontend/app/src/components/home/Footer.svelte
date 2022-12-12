@@ -39,7 +39,6 @@
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
 
-    $: userStore = client.userStore;
     $: canSend =
         mode === "thread"
             ? client.canReplyInThread(chat.chatId)
@@ -100,7 +99,7 @@
                     <ReplyingTo
                         groupChat={chat.kind === "group_chat"}
                         chatId={chat.chatId}
-                        preview={true}
+                        readonly
                         on:cancelReply
                         {user}
                         {replyingTo} />

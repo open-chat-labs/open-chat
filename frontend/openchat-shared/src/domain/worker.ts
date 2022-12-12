@@ -183,6 +183,7 @@ export type WorkerRequest =
     | UnfreezeGroup
     | SuspendUser
     | UnsuspendUser
+    | MarkSuspectedBot
     | GetInitialState;
 
 type SetCachedMessageFromNotification = Request<{
@@ -729,6 +730,7 @@ type UnfreezeGroup = Request<{
 
 type SuspendUser = Request<{
     userId: string;
+    reason: string;
 }> & {
     kind: "suspendUser";
 };
@@ -737,6 +739,10 @@ type UnsuspendUser = Request<{
     userId: string;
 }> & {
     kind: "unsuspendUser";
+};
+
+type MarkSuspectedBot = Request<void> & {
+    kind: "markSuspectedBot";
 };
 
 type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {

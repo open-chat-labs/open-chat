@@ -59,6 +59,15 @@ export const idlFactory = ({ IDL }) => {
     'NotRequired' : IDL.Null,
     'InProgress' : IDL.Null,
   });
+  const SuspensionAction = IDL.Variant({
+    'Unsuspend' : TimestampMillis,
+    'Delete' : TimestampMillis,
+  });
+  const SuspensionDetails = IDL.Record({
+    'action' : SuspensionAction,
+    'suspended_by' : UserId,
+    'reason' : IDL.Text,
+  });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
@@ -68,13 +77,16 @@ export const idlFactory = ({ IDL }) => {
       'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
+      'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'suspended' : IDL.Bool,
       'is_super_admin' : IDL.Bool,
+      'suspension_details' : IDL.Opt(SuspensionDetails),
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,
   });
+  const MarkSuspectedBotArgs = IDL.Record({});
+  const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ChallengeAttempt = IDL.Record({
     'key' : ChallengeKey,
     'chars' : IDL.Text,
@@ -148,19 +160,31 @@ export const idlFactory = ({ IDL }) => {
   const SuperAdminsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
+  const SuspectedBotsArgs = IDL.Record({
+    'after' : IDL.Opt(UserId),
+    'count' : IDL.Nat32,
+  });
+  const SuspectedBotsResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
+  });
   const Milliseconds = IDL.Nat64;
   const SuspendUserArgs = IDL.Record({
     'duration' : IDL.Opt(Milliseconds),
     'user_id' : UserId,
+    'reason' : IDL.Text,
   });
   const SuspendUserResponse = IDL.Variant({
+    'UserAlreadySuspended' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
+    'UserNotFound' : IDL.Null,
   });
   const UnsuspendUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnsuspendUserResponse = IDL.Variant({
+    'UserNotSuspended' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
+    'UserNotFound' : IDL.Null,
   });
   const UpgradeStorageArgs = IDL.Record({
     'new_storage_limit_bytes' : IDL.Nat64,
@@ -235,6 +259,11 @@ export const idlFactory = ({ IDL }) => {
         [CurrentUserResponse],
         ['query'],
       ),
+    'mark_suspected_bot' : IDL.Func(
+        [MarkSuspectedBotArgs],
+        [MarkSuspectedBotResponse],
+        [],
+      ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
     'remove_super_admin' : IDL.Func(
         [RemoveSuperAdminArgs],
@@ -252,6 +281,11 @@ export const idlFactory = ({ IDL }) => {
     'super_admins' : IDL.Func(
         [SuperAdminsArgs],
         [SuperAdminsResponse],
+        ['query'],
+      ),
+    'suspected_bots' : IDL.Func(
+        [SuspectedBotsArgs],
+        [SuspectedBotsResponse],
         ['query'],
       ),
     'suspend_user' : IDL.Func([SuspendUserArgs], [SuspendUserResponse], []),
