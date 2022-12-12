@@ -1,6 +1,5 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    // import { currentPath } from "../stores/route";
 
     export let path: string | undefined = undefined;
     export let mode: "menu" | "link" = "link";
@@ -9,21 +8,17 @@
     const dispatch = createEventDispatcher();
 
     function clickLink(e: MouseEvent) {
-        // if (path !== undefined) {
-        //     currentPath.set({
-        //         path,
-        //         hash: "",
-        //     });
-        // }
-        // e.preventDefault();
-        dispatch("linkClicked");
+        if (path === undefined) {
+            e.preventDefault();
+            dispatch("linkClicked");
+        }
     }
 </script>
 
 <a
     class="link"
     class:menu={mode === "menu"}
-    href={path === undefined ? "#" : `#/${path}`}
+    href={path === undefined ? "" : `#/${path}`}
     class:selected
     on:click={clickLink}><slot /></a>
 

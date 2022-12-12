@@ -19,7 +19,6 @@
     });
 
     function close() {
-        console.log("closing");
         dispatch("close");
     }
 

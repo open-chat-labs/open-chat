@@ -69,15 +69,20 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-
-        return location.subscribe((path) => {
-            if (isLandingPageRoute(path)) {
-                document.body.classList.add("landing-page");
-            } else {
-                document.body.classList.remove("landing-page");
-            }
-        });
     });
+
+    $: {
+        if (
+            isLandingPageRoute($location) ||
+            $identityState === "requires_login" ||
+            $identityState === "logging_in" ||
+            $identityState === "registering"
+        ) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    }
 
     function registeredUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
@@ -120,7 +125,11 @@
 {#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
-    <LandingPage {referredBy} on:login={() => client.login()} on:createdUser={registeredUser} />
+    <LandingPage
+        {referredBy}
+        on:login={() => client.login()}
+        on:logout={() => client.logout()}
+        on:createdUser={registeredUser} />
 {:else if $identityState === "logged_in"}
     <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}

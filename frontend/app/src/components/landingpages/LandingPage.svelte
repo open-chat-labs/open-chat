@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Router from "svelte-spa-router";
+    import Router, { push, replace } from "svelte-spa-router";
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import RoadmapPage from "./RoadmapPage.svelte";
     import WhitepaperPage from "./WhitepaperPage.svelte";
     import ArchitecturePage from "./ArchitecturePage.svelte";
@@ -16,27 +16,9 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let referredBy: string | undefined;
+    export let referredBy: string | undefined = undefined;
 
     $: identityState = client.identityState;
-
-    function routes(_logout: () => Promise<void>): any {
-        return {
-            "/home": HomePage,
-            "/features": FeaturesPage,
-            "/roadmap": RoadmapPage,
-            "/whitepaper": WhitepaperPage,
-            "/architecture": ArchitecturePage,
-            "*": HomePage,
-        };
-    }
-    function login() {
-        dispatch("login");
-    }
-
-    function logout() {
-        dispatch("logout");
-    }
 
     function scrollToTop() {
         window.scrollTo({
@@ -49,16 +31,18 @@
         dispatch(ev.detail);
     }
 
-    function closeModal() {}
+    function logout() {
+        client.logout();
+    }
 </script>
 
 {#if $identityState === "registering"}
     <Overlay dismissible={false}>
-        <Register on:logout={logout} on:createdUser {referredBy} />
+        <Register on:logout on:createdUser {referredBy} />
     </Overlay>
 {/if}
 
-<Header on:login={login} on:logout={logout} />
+<Header on:login={() => client.login()} on:logout={logout} />
 
 <main class="main">
     <!-- TODO: this is a bit weird -->
@@ -69,10 +53,14 @@
             <Router
                 on:routeEvent={routeEvent}
                 on:routeLoaded={scrollToTop}
-                routes={routes(() => {
-                    console.log("logout");
-                    return Promise.resolve();
-                })} />
+                routes={{
+                    "/home": HomePage,
+                    "/features": FeaturesPage,
+                    "/roadmap": RoadmapPage,
+                    "/whitepaper": WhitepaperPage,
+                    "/architecture": ArchitecturePage,
+                    "*": HomePage,
+                }} />
         </Content>
     {/if}
 </main>
