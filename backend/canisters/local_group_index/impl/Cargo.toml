@@ -1,5 +1,5 @@
 [package]
-name = "local_user_index_canister_impl"
+name = "local_group_index_canister_impl"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
@@ -28,7 +28,7 @@ serde_json = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
-user_canister = { path = "../../user/api" }
-user_canister_c2c_client = { path = "../../user/c2c_client" }
-local_user_index_canister = { path = "../api" }
+group_canister = { path = "../../group/api" }
+group_canister_c2c_client = { path = "../../group/c2c_client" }
+local_group_index_canister = { path = "../api" }
 utils = { path = "../../../libraries/utils" }
