@@ -17,7 +17,8 @@ import type {
     ChallengeAttempt,
     CreateChallengeResponse,
     SuspendUserResponse,
-    UnsuspendUserResponse
+    UnsuspendUserResponse,
+    MarkSuspectedBotResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -202,5 +203,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             }),
             unsuspendUserResponse
         );
+    }
+
+    @profile("userIndexClient")
+    markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
+        return this.handleResponse(this.userService.mark_suspected_bot({}), () => "success");
     }
 }

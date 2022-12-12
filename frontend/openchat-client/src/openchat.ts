@@ -309,6 +309,7 @@ export class OpenChat extends EventTarget {
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
     private _chatUpdatesSince: bigint | undefined = undefined;
+    private _botDetected = false;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -345,7 +346,10 @@ export class OpenChat extends EventTarget {
 
         load()
             .then((botd) => botd.detect())
-            .then((result) => console.log("BOTD: ", result))
+            .then((result) => {
+                console.log("BOTD: ", result);
+                this._botDetected = result.bot;
+            })
             .catch((err) => console.error(err));
     }
 
@@ -527,6 +531,11 @@ export class OpenChat extends EventTarget {
             // if (isCanisterUrl) {
             //     unsubscribeNotifications(api);
             // }
+
+            if (this._botDetected && !this._user?.isSuspectedBot) {
+                this.api.markSuspectedBot();
+                console.log("markSuspectedBot");
+            }
         }
     }
 

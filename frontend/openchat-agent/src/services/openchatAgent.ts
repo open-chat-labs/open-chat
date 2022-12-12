@@ -113,6 +113,7 @@ import {
     FreezeGroupResponse,
     UnfreezeGroupResponse,
     UnsuspendUserResponse,
+    MarkSuspectedBotResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
@@ -1351,5 +1352,9 @@ export class OpenChatAgent extends EventTarget {
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this._userIndexClient.unsuspendUser(userId);
+    }
+
+    markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
+        return this._userIndexClient.markSuspectedBot();
     }
 }
