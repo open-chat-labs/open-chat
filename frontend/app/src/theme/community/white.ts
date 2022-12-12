@@ -45,6 +45,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
     base.currentChat.msg.me.bd = "rgba(0,0,0,0.05)";
     base.currentChat.msg.me.bg = base.primary;
+    base.currentChat.date.bg = "rgba(239 239 239 / 80%)";
     base.icon.txt = txt60;
     base.icon.inverted.txt = txt60;
     base.recommended.bg = white;

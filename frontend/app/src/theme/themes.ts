@@ -3,6 +3,7 @@ import { lightTheme } from "./light";
 import { getTheme as getWhiteTheme } from "./community/white";
 import { derived, readable, writable } from "svelte/store";
 import { getTheme as getSubmarineTheme } from "./community/submarine";
+import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import type { Theme, Themes } from "./types";
 
 const defaultTheme = lightTheme();
@@ -12,6 +13,7 @@ const dark = darkTheme(defaultTheme);
 export const communityThemes = [
     getWhiteTheme(cloneTheme(defaultTheme)),
     getSubmarineTheme(cloneTheme(dark)),
+    getNightvisionTheme(cloneTheme(dark)),
 ];
 
 const themes: Themes = {
