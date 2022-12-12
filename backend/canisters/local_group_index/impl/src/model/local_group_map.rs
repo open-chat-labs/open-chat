@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, CyclesTopUp, TimestampMillis, Version};
+use types::{ChatId, CyclesTopUp, Version};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalGroupMap {
@@ -8,8 +8,8 @@ pub struct LocalGroupMap {
 }
 
 impl LocalGroupMap {
-    pub fn add(&mut self, chat_id: ChatId, wasm_version: Version, now: TimestampMillis) {
-        let group = LocalGroup::new(now, wasm_version);
+    pub fn add(&mut self, chat_id: ChatId, wasm_version: Version) {
+        let group = LocalGroup::new(wasm_version);
         self.groups.insert(chat_id, group);
     }
 
@@ -41,7 +41,6 @@ impl LocalGroupMap {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalGroup {
-    pub date_created: TimestampMillis,
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
@@ -61,9 +60,8 @@ impl LocalGroup {
 }
 
 impl LocalGroup {
-    pub fn new(now: TimestampMillis, wasm_version: Version) -> LocalGroup {
+    pub fn new(wasm_version: Version) -> LocalGroup {
         LocalGroup {
-            date_created: now,
             wasm_version,
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),

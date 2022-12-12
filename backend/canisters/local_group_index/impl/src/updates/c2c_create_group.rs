@@ -92,8 +92,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
 }
 
 fn commit(chat_id: ChatId, wasm_version: Version, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.local_groups.add(chat_id, wasm_version, now);
+    runtime_state.data.local_groups.add(chat_id, wasm_version);
 }
 
 fn rollback(canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
