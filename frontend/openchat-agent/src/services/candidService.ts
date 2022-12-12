@@ -8,9 +8,9 @@ import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
 
-function debug(msg: string, stackStrace=false): void {
+function debug(msg: string, stackTrace=false): void {
     console.log(msg);
-    if (stackStrace) {
+    if (stackTrace) {
         console.trace();
     }
 }
