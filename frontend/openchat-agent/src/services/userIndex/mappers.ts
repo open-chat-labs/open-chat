@@ -257,6 +257,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             referrals: r.referrals.map((p) => p.toString()),
             isSuperAdmin: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
+            isSuspectedBot: r.is_suspected_bot,
         };
     }
 

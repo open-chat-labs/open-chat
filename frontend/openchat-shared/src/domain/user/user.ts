@@ -117,6 +117,7 @@ export type CreatedUser = {
     referrals: string[];
     isSuperAdmin: boolean;
     suspensionDetails: SuspensionDetails | undefined;
+    isSuspectedBot: boolean;
 };
 
 export type SuspensionDetails = {
@@ -220,3 +221,4 @@ export type SuspendUserResponse = "success" | "user_not_found" | "user_already_s
 
 export type UnsuspendUserResponse = "success" | "user_not_found" | "user_not_suspended" | "internal_error";
 
+export type MarkSuspectedBotResponse = "success";
