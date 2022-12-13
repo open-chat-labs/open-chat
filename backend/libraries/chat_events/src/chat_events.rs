@@ -18,7 +18,6 @@ pub struct AllChatEvents {
     threads: HashMap<MessageIndex, ChatEvents>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
-    #[serde(default)]
     frozen: bool,
 }
 
@@ -37,52 +36,7 @@ impl AllChatEvents {
             }
         }
     }
-
-    pub fn get_poll_end_dates(&mut self) -> Vec<(Option<MessageIndex>, MessageIndex, TimestampMillis)> {
-        self.threads
-            .iter()
-            .flat_map(|(thread_root_message_index, events)| {
-                events
-                    .iter()
-                    .filter_map(|e| e.event.as_message())
-                    .map(|m| (Some(*thread_root_message_index), m))
-            })
-            .chain(
-                self.main
-                    .events
-                    .iter()
-                    .filter_map(|e| e.event.as_message())
-                    .map(|e| (None, e)),
-            )
-            .filter_map(
-                |(t, m)| if let MessageContentInternal::Poll(p) = &m.content { Some((t, m.message_index, p)) } else { None },
-            )
-            .filter(|(_, _, p)| !p.ended && p.config.end_date.is_some())
-            .map(|(t, m, p)| (t, m, p.config.end_date.unwrap()))
-            .collect()
-    }
-
-    pub fn recalculate_reported_message_metrics(&mut self) {
-        let users: Vec<_> = self
-            .threads
-            .iter()
-            .flat_map(|(_, events)| events.iter().filter_map(|e| e.event.as_message()))
-            .chain(self.main.events.iter().filter_map(|e| e.event.as_message()))
-            .filter(|m| m.deleted_by.as_ref().map_or(false, |d| d.deleted_by != m.sender))
-            .map(|m| m.sender)
-            .collect();
-
-        self.metrics.reported_messages = 0;
-        for metrics in self.per_user_metrics.values_mut() {
-            metrics.reported_messages = 0;
-        }
-
-        for user_id in users {
-            self.metrics.reported_messages += 1;
-            self.per_user_metrics.entry(user_id).or_default().reported_messages += 1;
-        }
-    }
-
+    
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),

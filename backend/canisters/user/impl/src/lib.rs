@@ -148,7 +148,6 @@ struct Data {
     pub user_created: TimestampMillis,
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
-    #[serde(default)]
     pub suspended: Timestamped<bool>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,

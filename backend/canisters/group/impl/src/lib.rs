@@ -216,7 +216,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -225,16 +224,10 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    #[serde(default)]
     pub new_joiner_rewards: Option<NewJoinerRewards>,
-    #[serde(default)]
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-}
-
-fn ledger_canister_id() -> CanisterId {
-    Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]

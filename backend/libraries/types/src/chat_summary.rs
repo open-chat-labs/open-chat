@@ -356,7 +356,6 @@ pub struct ChatMetrics {
     pub edits: u64,
     pub reactions: u64,
     pub proposals: u64,
-    #[serde(default)]
     pub reported_messages: u64,
     pub last_active: TimestampMillis,
 }

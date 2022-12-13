@@ -380,7 +380,6 @@ pub struct ParticipantInternal {
     pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
-    #[serde(default)]
     pub suspended: Timestamped<bool>,
 
     min_visible_event_index: EventIndex,
