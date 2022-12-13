@@ -156,7 +156,6 @@ struct Data {
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    #[serde(default)]
     pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 
