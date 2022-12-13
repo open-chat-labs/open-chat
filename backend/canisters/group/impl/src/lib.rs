@@ -2,6 +2,7 @@ use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
 use crate::model::participants::{AddResult as AddParticipantResult, ParticipantInternal, Participants};
 use crate::new_joiner_rewards::process_new_joiner_reward;
+use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -10,6 +11,7 @@ use notifications_canister::c2c_push_notification_v2;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
+use timer_jobs::TimerJobs;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions,
     GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
@@ -27,7 +29,7 @@ mod model;
 mod new_joiner_rewards;
 mod queries;
 mod regular_jobs;
-mod timer_jobs;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -227,6 +229,8 @@ struct Data {
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     #[serde(default)]
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
 }
 
 fn ledger_canister_id() -> CanisterId {
@@ -283,6 +287,7 @@ impl Data {
             invite_code_enabled: false,
             new_joiner_rewards: None,
             frozen: Timestamped::default(),
+            timer_jobs: TimerJobs::default(),
         }
     }
 

@@ -284,6 +284,20 @@ impl AllChatEvents {
         results
     }
 
+    pub fn remove_deleted_message_content(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> Option<MessageContentInternal> {
+        let message = self.message_internal_mut_by_message_id(thread_root_message_index, message_id)?;
+        let deleted_by = message.deleted_by.clone()?;
+
+        Some(std::mem::replace(
+            &mut message.content,
+            MessageContentInternal::Deleted(deleted_by),
+        ))
+    }
+
     pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
         if let Some(message) = self.message_internal_mut_by_message_index(args.thread_root_message_index, args.message_index) {
             if let MessageContentInternal::Poll(p) = &mut message.content {
@@ -787,8 +801,6 @@ impl AllChatEvents {
                             timestamp: now,
                         });
 
-                        let message_content = message.content.hydrate(Some(caller));
-
                         self.push_event(
                             thread_root_message_index,
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
@@ -799,7 +811,7 @@ impl AllChatEvents {
                             now,
                         );
 
-                        DeleteMessageResult::Success(message_content)
+                        DeleteMessageResult::Success
                     }
                 }
             } else {
@@ -822,9 +834,8 @@ impl AllChatEvents {
             if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
                 if deleted_by == caller {
                     match message.content {
-                        MessageContentInternal::Deleted(_) | MessageContentInternal::Crypto(_) => {
-                            UndeleteMessageResult::InvalidMessageType
-                        }
+                        MessageContentInternal::Deleted(_) => UndeleteMessageResult::ContentRemoved,
+                        MessageContentInternal::Crypto(_) => UndeleteMessageResult::InvalidMessageType,
                         _ => {
                             message.last_updated = Some(now);
                             message.deleted_by = None;
@@ -946,9 +957,8 @@ pub enum EditMessageResult {
     NotFound,
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum DeleteMessageResult {
-    Success(MessageContent),
+    Success,
     AlreadyDeleted,
     MessageTypeCannotBeDeleted,
     NotAuthorized,
@@ -958,6 +968,7 @@ pub enum DeleteMessageResult {
 pub enum UndeleteMessageResult {
     Success,
     NotDeleted,
+    ContentRemoved,
     InvalidMessageType,
     NotAuthorized,
     NotFound,

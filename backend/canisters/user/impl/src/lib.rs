@@ -3,6 +3,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
+use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
+use timer_jobs::TimerJobs;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
@@ -28,6 +30,7 @@ mod model;
 mod openchat_bot;
 mod queries;
 mod regular_jobs;
+mod timer_job_types;
 mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
@@ -147,6 +150,8 @@ struct Data {
     pub pending_user_principal_migration: Option<Principal>,
     #[serde(default)]
     pub suspended: Timestamped<bool>,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
 }
 
 impl Data {
@@ -185,6 +190,7 @@ impl Data {
             pinned_chats: Timestamped::default(),
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
+            timer_jobs: TimerJobs::default(),
         }
     }
 

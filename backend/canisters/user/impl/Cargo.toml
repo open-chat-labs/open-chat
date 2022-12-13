@@ -44,6 +44,7 @@ search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 stable_memory = { workspace = true }
+timer_jobs = { path = "../../../libraries/timer_jobs" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }
