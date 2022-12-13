@@ -28,7 +28,7 @@
     let challenge: Writable<Challenge | undefined> = writable(undefined);
     let challengeAttempt: ChallengeAttempt | undefined = undefined;
     let createdUser: CreatedUser | undefined = undefined;
-    let closed: boolean = true;
+    let closed: boolean = false;
 
     onMount(() => {
         createChallenge();
