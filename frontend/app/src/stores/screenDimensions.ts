@@ -62,18 +62,8 @@ export function toPixel(rem: number): number {
 }
 
 function pixelsFromRems(rem: number, width: number): number {
-    if (width < 354) {
-        return rem * 13;
-    } else if (width < 576) {
-        return rem * 14;
-    } else if (width < 768) {
-        return rem * 14;
-    } else if (width < 992) {
-        return rem * 15;
-    } else if (width < 1200) {
-        return rem * 15;
-    } else if (width < 1792) {
-        return rem * 16;
+    if (width < 768) {
+        return rem * 14.5;
     } else {
         return rem * 16;
     }

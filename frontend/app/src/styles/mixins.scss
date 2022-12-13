@@ -353,31 +353,11 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
         } @else {
             line-height: map-get($type, line-height);
         }
-        @include mobile() {
-            @if $line-height {
-                line-height: calc(toRem($line-height) * 0.95);
-            } @else {
-                line-height: calc(#{map-get($type, line-height)} * 0.95);
-            }
-        }
-        @include size-below(xs) {
-            @if $line-height {
-                line-height: calc(toRem($line-height) * 0.9);
-            } @else {
-                line-height: calc(#{map-get($type, line-height)} * 0.9);
-            }
-        }
     }
 
     // FONT-SIZES
     @if map-has-key($type, font-size) {
         font-size: map-get($type, font-size);
-        @include mobile() {
-            font-size: calc(#{map-get($type, font-size)} * 0.95);
-        }
-        @include size-below(xs) {
-            font-size: calc(#{map-get($type, font-size)} * 0.9);
-        }
     }
 }
 
