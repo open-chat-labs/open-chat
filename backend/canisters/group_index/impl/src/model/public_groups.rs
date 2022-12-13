@@ -168,19 +168,20 @@ impl PublicGroups {
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct PublicGroupInfo {
+    // Fields common to PrivateGroupInfo
     id: ChatId,
+    created: TimestampMillis,
+    marked_active_until: TimestampMillis,
+    wasm_version: Version,
+    cycle_top_ups: Vec<CyclesTopUp>,
+    frozen: Option<FrozenGroupInfo>,
+
+    // Fields particular to PublicGroupInfo
     name: String,
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    created: TimestampMillis,
-    marked_active_until: TimestampMillis,
     activity: PublicGroupActivity,
-    wasm_version: Version,
-    cycle_top_ups: Vec<CyclesTopUp>,
-    upgrade_in_progress: bool,
-    #[serde(default)]
-    frozen: Option<FrozenGroupInfo>,
 }
 
 pub enum UpdateGroupResult {
@@ -215,7 +216,6 @@ impl PublicGroupInfo {
                 date: now,
                 amount: cycles,
             }],
-            upgrade_in_progress: false,
             frozen: None,
         }
     }
@@ -242,15 +242,7 @@ impl PublicGroupInfo {
     }
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-
-    pub fn upgrade_in_progress(&self) -> bool {
-        self.upgrade_in_progress
-    }
-
-    pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
-        self.upgrade_in_progress = upgrade_in_progress;
+        self.cycle_top_ups.push(top_up);
     }
 
     pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
@@ -321,7 +313,6 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
             public_group_info.marked_active_until,
             public_group_info.wasm_version,
             public_group_info.cycle_top_ups,
-            public_group_info.upgrade_in_progress,
         )
     }
 }

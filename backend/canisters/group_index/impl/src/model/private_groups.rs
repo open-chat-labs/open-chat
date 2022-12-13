@@ -66,7 +66,6 @@ pub struct PrivateGroupInfo {
     marked_active_until: TimestampMillis,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
-    upgrade_in_progress: bool,
     #[serde(default)]
     frozen: Option<FrozenGroupInfo>,
 }
@@ -82,7 +81,6 @@ impl PrivateGroupInfo {
                 date: now,
                 amount: cycles,
             }],
-            upgrade_in_progress: false,
             frozen: None,
         }
     }
@@ -93,7 +91,6 @@ impl PrivateGroupInfo {
         marked_active_until: TimestampMillis,
         wasm_version: Version,
         cycle_top_ups: Vec<CyclesTopUp>,
-        upgrade_in_progress: bool,
     ) -> PrivateGroupInfo {
         PrivateGroupInfo {
             id,
@@ -101,7 +98,6 @@ impl PrivateGroupInfo {
             marked_active_until,
             wasm_version,
             cycle_top_ups,
-            upgrade_in_progress,
             frozen: None,
         }
     }
@@ -114,10 +110,6 @@ impl PrivateGroupInfo {
         self.wasm_version
     }
 
-    pub fn set_wasm_version(&mut self, version: Version) {
-        self.wasm_version = version;
-    }
-
     pub fn mark_active(&mut self, until: TimestampMillis) {
         self.marked_active_until = until;
     }
@@ -128,14 +120,6 @@ impl PrivateGroupInfo {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
-    }
-
-    pub fn upgrade_in_progress(&self) -> bool {
-        self.upgrade_in_progress
-    }
-
-    pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
-        self.upgrade_in_progress = upgrade_in_progress;
     }
 
     pub fn frozen(&self) -> bool {

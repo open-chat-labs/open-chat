@@ -1,15 +1,14 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
-use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, DeletedGroupInfo, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
+use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
 use utils::cycles::can_spend_cycles;
 
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
-    topup_canister_pool::run();
     calculate_hot_groups::run();
     push_group_deleted_notifications::run();
     calculate_metrics::run();
@@ -29,7 +28,7 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades;
+        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_local_group_index_canister_upgrades;
 
         (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
@@ -38,22 +37,16 @@ mod upgrade_canisters {
 
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
-        let chat_id = canister_id.into();
 
-        let current_wasm_version: Version;
-        if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
-            chat.set_upgrade_in_progress(true);
-            current_wasm_version = chat.wasm_version();
-        } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
-            chat.set_upgrade_in_progress(true);
-            current_wasm_version = chat.wasm_version();
-        } else {
-            // This happens when a group is deleted
-            runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
-            return None;
-        }
+        let current_wasm_version = match runtime_state.data.local_index_map.get_index(&canister_id) {
+            Some(local_group_index) => local_group_index.wasm_version,
+            None => {
+                runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
+                return None;
+            }
+        };
 
-        let new_wasm = runtime_state.data.group_canister_wasm.clone();
+        let new_wasm = runtime_state.data.local_group_index_canister_wasm.clone();
         let wasm_version = new_wasm.version;
         let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
             Some(CYCLES_REQUIRED_FOR_UPGRADE)
@@ -92,24 +85,15 @@ mod upgrade_canisters {
     }
 
     fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
-        let chat_id = canister_id.into();
         let top_up = top_up.map(|c| CyclesTopUp {
             amount: c,
             date: runtime_state.env.now(),
         });
 
-        if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
-            chat.set_wasm_version(to_version);
-            chat.set_upgrade_in_progress(false);
-            if let Some(top_up) = top_up {
-                chat.mark_cycles_top_up(top_up);
-            }
-        } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
-            chat.set_wasm_version(to_version);
-            chat.set_upgrade_in_progress(false);
-            if let Some(top_up) = top_up {
-                chat.mark_cycles_top_up(top_up);
-            }
+        runtime_state.data.local_index_map.set_wasm_version(canister_id, to_version);
+
+        if let Some(top_up) = top_up {
+            runtime_state.data.local_index_map.mark_cycles_top_up(canister_id, top_up);
         }
 
         runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
@@ -121,37 +105,6 @@ mod upgrade_canisters {
             from_version,
             to_version,
         });
-    }
-}
-
-mod topup_canister_pool {
-    use super::*;
-
-    pub fn run() {
-        let is_full = read_state(is_pool_full);
-        if !is_full {
-            let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-
-            // Only create the new canister if it won't result in the cycles balance being too low
-            if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
-                ic_cdk::spawn(add_new_canister(cycles_to_use));
-            }
-        }
-    }
-
-    fn is_pool_full(runtime_state: &RuntimeState) -> bool {
-        runtime_state.data.canister_pool.is_full()
-    }
-
-    async fn add_new_canister(cycles_to_use: Cycles) {
-        if let Ok(canister_id) = canister::create(cycles_to_use).await {
-            mutate_state(|state| add_canister_to_pool(canister_id, cycles_to_use, state));
-        }
-    }
-
-    fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
-        runtime_state.data.canister_pool.push(canister_id);
-        runtime_state.data.total_cycles_spent_on_canisters += cycles;
     }
 }
 

@@ -12,7 +12,6 @@ type FilterGroupsResponse =
             timestamp: TimestampMillis;
             active_groups: vec ChatId;
             deleted_groups: vec DeletedGroupInfo;
-            upgrades_in_progress: vec ChatId;
         };
     };
 

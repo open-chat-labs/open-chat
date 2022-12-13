@@ -59,6 +59,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let ledger_canister_id = create_canister(env);
 
     let group_canister_wasm = wasms::GROUP.clone();
+    let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
     let online_users_aggregator_canister_wasm = wasms::ONLINE_USERS_AGGREGATOR.clone();
@@ -85,6 +86,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![controller],
         group_canister_wasm,
+        local_group_index_canister_wasm,
         notifications_canister_ids: vec![notifications_canister_id],
         user_index_canister_id,
         cycles_dispenser_canister_id,

@@ -1,11 +1,15 @@
+use std::time::Duration;
+
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
+use crate::{mutate_state, read_state, Data, LOG_MESSAGES};
+use candid::Principal;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
+use local_group_index_canister::c2c_add_initial_groups::Group;
 use stable_memory::deserialize_from_stable_memory;
-use tracing::info;
+use tracing::{error, info};
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
@@ -36,7 +40,49 @@ fn post_upgrade(args: Args) {
     cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
     cycles_dispenser_client::set_min_cycles_balance(3 * MIN_CYCLES_BALANCE / 2);
 
+    // One-time job to load the local_group_index with the groups
+    ic_cdk::timer::set_timer(Duration::ZERO, || {
+        ic_cdk::spawn(bootstrap_local_group_index());
+    });
+
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+pub async fn bootstrap_local_group_index() {
+    let groups: Vec<_> = read_state(|state| {
+        let private_groups = state.data.private_groups.iter().map(|g| Group {
+            chat_id: g.id(),
+            wasm_version: g.wasm_version(),
+        });
+        let public_groups = state.data.public_groups.iter().map(|g| Group {
+            chat_id: g.id(),
+            wasm_version: g.wasm_version(),
+        });
+        private_groups.chain(public_groups).collect()
+    });
+
+    let group_ids: Vec<_> = groups.iter().map(|g| g.chat_id).collect();
+
+    let index_id: Principal = Principal::from_text("first_local_group_index_id").unwrap();
+
+    match local_group_index_canister_c2c_client::c2c_add_initial_groups(
+        index_id,
+        &local_group_index_canister::c2c_add_initial_groups::Args { groups },
+    )
+    .await
+    {
+        Ok(_) => {
+            mutate_state(|state| {
+                state.data.local_index_map.add_index(index_id);
+                for chat_id in group_ids {
+                    state.data.local_index_map.add_group(index_id, chat_id);
+                }
+            });
+        }
+        Err(error) => {
+            error!(?error, "Error calling c2c_notify_group_index_events");
+        }
+    }
 }
 
 fn rehydrate_log_messages(

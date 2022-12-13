@@ -2431,6 +2431,8 @@ dependencies = [
  "http_request",
  "ic-cdk 0.6.8",
  "ic-cdk-macros",
+ "local_group_index_canister",
+ "local_group_index_canister_c2c_client",
  "msgpack",
  "rand",
  "search",
