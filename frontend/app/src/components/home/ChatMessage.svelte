@@ -24,6 +24,7 @@
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
+    import { now } from "../../stores/time";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
@@ -105,7 +106,7 @@
     $: storageStore = client.storageStore;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
-    $: canEdit = supportsEdit && !crypto && !poll && me;
+    $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
@@ -125,6 +126,7 @@
     $: canUndelete =
         msg.content.kind === "deleted_content" &&
         msg.content.deletedBy === user.userId &&
+        $now - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
         !undeleting;
 
     afterUpdate(() => {
