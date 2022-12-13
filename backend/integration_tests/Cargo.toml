@@ -20,6 +20,7 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 test-case = { workspace = true }
-types = { path = "../../backend/libraries/types", default-features = false }
+types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }
+utils = { path = "../libraries/utils" }

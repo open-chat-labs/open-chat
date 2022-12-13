@@ -311,17 +311,17 @@ fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {
 
     let group1 = client::user::happy_path::create_group(env, &user1, "TEST_NAME1", false, false);
     client::group::happy_path::add_participants(env, &user1, group1, vec![user2.user_id]);
-    let send_group_result1 = client::group::happy_path::send_text_message(env, &user2, group1, "3");
+    let send_group_result1 = client::group::happy_path::send_text_message(env, &user2, group1, "3", None);
     env.advance_time(one_second);
 
     let group2 = client::user::happy_path::create_group(env, &user1, "TEST_NAME2", false, false);
     client::group::happy_path::add_participants(env, &user1, group2, vec![user2.user_id]);
-    let send_group_result2 = client::group::happy_path::send_text_message(env, &user2, group2, "4");
+    let send_group_result2 = client::group::happy_path::send_text_message(env, &user2, group2, "4", None);
     env.advance_time(one_second);
 
-    let send_direct_result1 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "1");
+    let send_direct_result1 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "1", None);
     env.advance_time(one_second);
-    let send_direct_result2 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "2");
+    let send_direct_result2 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, "2", None);
     env.advance_time(one_second);
 
     TestData {

@@ -4666,6 +4666,7 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_index_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]

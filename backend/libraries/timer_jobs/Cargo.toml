@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 serde = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }

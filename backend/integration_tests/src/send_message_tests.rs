@@ -14,7 +14,7 @@ fn send_message_succeeds() {
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
 
-    let send_message_result = client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT");
+    let send_message_result = client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT", None);
 
     let events_response =
         client::user::happy_path::events_by_index(&env, &user1, user2.user_id, vec![send_message_result.event_index]);
