@@ -107,7 +107,7 @@ fn delete_group_message_succeeds() {
 }
 
 #[test_case(false; "with_no_delay")]
-#[test_case(false; "with_delay")]
+#[test_case(true; "with_delay")]
 fn delete_then_undelete_group_message(delay: bool) {
     let TestEnv {
         mut env,
