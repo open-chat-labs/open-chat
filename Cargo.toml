@@ -53,6 +53,7 @@ members = [
     "backend/libraries/msgpack",
     "backend/libraries/open_storage_bucket_client",
     "backend/libraries/search",
+    "backend/libraries/timer_jobs",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",

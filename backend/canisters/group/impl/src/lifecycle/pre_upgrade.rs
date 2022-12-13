@@ -1,5 +1,5 @@
 use crate::lifecycle::UPGRADE_BUFFER_SIZE;
-use crate::{take_state, timer_jobs, LOG_MESSAGES};
+use crate::{take_state, LOG_MESSAGES};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use stable_memory::serialize_to_stable_memory;
@@ -13,11 +13,10 @@ fn pre_upgrade() {
     let state = take_state();
 
     let messages_container = LOG_MESSAGES.with(|l| l.take());
-    let timer_jobs = timer_jobs::get_jobs();
     let log_messages = messages_container.logs.drain_messages();
     let trace_messages = messages_container.traces.drain_messages();
 
-    let stable_state = (state.data, timer_jobs, log_messages, trace_messages);
+    let stable_state = (state.data, log_messages, trace_messages);
 
     serialize_to_stable_memory(stable_state, UPGRADE_BUFFER_SIZE).unwrap();
 }

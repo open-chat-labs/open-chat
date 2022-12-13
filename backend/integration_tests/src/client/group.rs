@@ -21,13 +21,14 @@ generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
+generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{ChatId, EventIndex, MessageContent, MessageIndex, PollVotes, TextContent, UserId, VoteOperation};
+    use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, PollVotes, TextContent, UserId, VoteOperation};
 
     pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {
         let response = super::add_participants(
@@ -53,6 +54,7 @@ pub mod happy_path {
         sender: &User,
         group_chat_id: ChatId,
         text: impl ToString,
+        message_id: Option<MessageId>,
     ) -> group_canister::send_message::SuccessResult {
         let response = super::send_message(
             env,
@@ -60,7 +62,7 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::send_message::Args {
                 thread_root_message_index: None,
-                message_id: random_message_id(),
+                message_id: message_id.unwrap_or_else(|| random_message_id()),
                 content: MessageContent::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 replies_to: None,
