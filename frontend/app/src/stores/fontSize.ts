@@ -32,7 +32,7 @@ function setFontSize(size: number): void {
 // Note: if you change this you must also change pixelsFromRems
 function baseFontSizeForScreenWidth(width: number): number {
     if (width < 768) {
-        return 14.5;
+        return 14;
     } else {
         return 16;
     }

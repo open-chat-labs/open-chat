@@ -41,5 +41,8 @@
     }
     h2 {
         @include font(bold, normal, fs-220);
+        @include mobile() {
+            @include font(bold, normal, fs-200);
+        }
     }
 </style>
