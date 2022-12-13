@@ -16,7 +16,11 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
-    import { isCanisterUrl, isLandingPageRoute } from "../utils/urls";
+    import {
+        isCanisterUrl,
+        isLandingPageRoute,
+        redirectLandingPageLinksIfNecessary,
+    } from "../utils/urls";
     import { logger } from "../utils/logging";
     import LandingPage from "./landingpages/LandingPage.svelte";
 
@@ -62,6 +66,7 @@
     }
 
     onMount(() => {
+        redirectLandingPageLinksIfNecessary();
         referredBy = getReferralCode();
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";

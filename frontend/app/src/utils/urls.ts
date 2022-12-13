@@ -39,6 +39,23 @@ export function isLandingPageRoute(path: string): boolean {
     return landingPageRoutes.includes(path.slice(1).toLowerCase());
 }
 
+// it is possible that old style landing page links will still get through the cloudfront redirect, so we will need to
+// address them in-app as well just in case
+export function redirectLandingPageLinksIfNecessary(): void {
+    const path = getRedirectPath(window.location.pathname, window.location.hash);
+    if (path !== window.location.pathname) {
+        window.location.href = path;
+    }
+}
+
+function getRedirectPath(path: string, hash: string): string {
+    const match = path.match(/^\/(home|whitepaper|features|roadmap|architecture)/i);
+    if (match) {
+        return `/#/${match[1]}${hash !== "" ? `?section=${hash.slice(1)}` : ""}`;
+    }
+    return path;
+}
+
 export function copyToClipboard(txt: string): Promise<boolean> {
     return new Promise((resolve) => {
         navigator.clipboard.writeText(txt).then(
