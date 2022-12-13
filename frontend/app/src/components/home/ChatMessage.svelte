@@ -106,7 +106,7 @@
     $: storageStore = client.storageStore;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
-    $: canEdit = supportsEdit && !crypto && !poll && me;
+    $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
