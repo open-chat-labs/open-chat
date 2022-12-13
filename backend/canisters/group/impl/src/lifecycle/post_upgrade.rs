@@ -35,6 +35,7 @@ fn post_upgrade(args: Args) {
         );
     }
 
+    data.events.remove_old_deleted_message_content(now);
     data.events.recalculate_reported_message_metrics();
 
     init_logger(data.test_mode);
