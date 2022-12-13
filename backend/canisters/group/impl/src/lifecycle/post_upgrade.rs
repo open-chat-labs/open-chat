@@ -17,15 +17,13 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, jobs, log_messages, trace_messages): (Data, Vec<ScheduledJob>, Vec<LogMessage>, Vec<LogMessage>) =
+    let (data, jobs, log_messages, trace_messages): (Data, Vec<ScheduledJob>, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     let now = env.now();
     for job in jobs {
         timer_jobs::enqueue_job(job, now);
     }
-
-    data.events.recalculate_reported_message_metrics();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
