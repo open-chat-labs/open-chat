@@ -36,7 +36,7 @@ impl AllChatEvents {
             }
         }
     }
-    
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
