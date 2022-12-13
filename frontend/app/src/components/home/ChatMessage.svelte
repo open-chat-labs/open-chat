@@ -534,14 +534,14 @@
 
             {#if (!inert || canUndelete) && !readonly}
                 <div class="menu" class:rtl={$rtlStore}>
-                    <MenuIcon>
+                    <MenuIcon centered>
                         <div class="menu-icon" slot="icon">
                             <HoverIcon compact={true}>
                                 <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                         <div slot="menu">
-                            <Menu>
+                            <Menu centered>
                                 {#if isProposal && !inert}
                                     <MenuItem on:click={collapseMessage}>
                                         <EyeOff
@@ -647,7 +647,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_(me ? "deleteMessage" : "deleteMessageAndReport")}</div>
+                                        <div slot="text">
+                                            {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if canUndelete}
