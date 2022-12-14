@@ -19,6 +19,7 @@
     import {
         isCanisterUrl,
         isLandingPageRoute,
+        isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
@@ -58,6 +59,7 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
+    $: landingPage = isLandingPageRoute($location);
 
     function getReferralCode(): string | undefined {
         const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
@@ -78,7 +80,7 @@
 
     $: {
         if (
-            isLandingPageRoute($location) ||
+            landingPage ||
             $identityState === "requires_login" ||
             $identityState === "logging_in" ||
             $identityState === "registering"
@@ -117,10 +119,14 @@
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
+    $: burstFixed = isScrollingRoute($location);
 </script>
 
-{#if $themeStore.burst}
-    <div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{#if $themeStore.burst || landingPage}
+    <div
+        class:fixed={burstFixed}
+        class="burst-wrapper"
+        style={`background-image: url(${burstUrl})`} />
 {/if}
 
 <svelte:head>
@@ -140,7 +146,9 @@
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else}
-    <Loading />
+    <div class="loading">
+        <Loading />
+    </div>
 {/if}
 
 {#if profileTrace}
@@ -374,6 +382,8 @@
                 line-height: toRem(28);
                 background: var(--landing-bg);
                 color: var(--landing-txt);
+                min-height: 100vh;
+                height: unset;
             }
         }
 
@@ -419,9 +429,17 @@
         background-origin: 50% 50%;
         background-position: right 20% top toRem(150);
 
+        &.fixed {
+            position: fixed;
+        }
+
         @include mobile() {
             background-size: 800px;
             background-position: left 0 top toRem(150);
         }
+    }
+
+    .loading {
+        height: 100vh;
     }
 </style>

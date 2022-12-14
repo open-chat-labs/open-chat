@@ -33,10 +33,15 @@ export function removeQueryStringParam(qs: URLSearchParams, name: string): strin
     return replaceQueryString(qs);
 }
 
-const landingPageRoutes = ["home", "features", "roadmap", "whitepaper", "architecture"];
+const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture"];
+const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {
     return landingPageRoutes.includes(path.slice(1).toLowerCase());
+}
+
+export function isScrollingRoute(path: string): boolean {
+    return scrollingRoutes.includes(path.slice(1).toLowerCase());
 }
 
 // it is possible that old style landing page links will still get through the cloudfront redirect, so we will need to
