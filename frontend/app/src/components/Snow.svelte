@@ -1,4 +1,6 @@
 <script lang="ts">
+    // Credit goes to: https://codepen.io/josetxu/pen/BaVMaGQ
+
     import { onMount } from "svelte";
     import { snowing } from "../stores/snow";
 
