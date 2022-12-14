@@ -22,6 +22,7 @@ generate_update_call!(relinquish_group_super_admin);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(unblock_user);
+generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
