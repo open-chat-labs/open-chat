@@ -92,9 +92,14 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
+    #[serde(default = "default_concurrent_upgrades")]
     pub max_concurrent_local_group_index_canister_upgrades: usize,
     #[serde(default)]
     pub local_index_map: LocalGroupIndexMap,
+}
+
+fn default_concurrent_upgrades() -> usize {
+    1
 }
 
 impl Data {
