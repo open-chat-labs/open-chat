@@ -70,7 +70,7 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
-            max_concurrent_canister_upgrades: self.data.max_concurrent_local_group_index_canister_upgrades,
+            max_concurrent_local_group_index_canister_upgrades: self.data.max_concurrent_local_group_index_canister_upgrades,
         }
     }
 }
@@ -209,7 +209,7 @@ pub struct Metrics {
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub local_group_index_wasm_version: Version,
-    pub max_concurrent_canister_upgrades: usize,
+    pub max_concurrent_local_group_index_canister_upgrades: usize,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
