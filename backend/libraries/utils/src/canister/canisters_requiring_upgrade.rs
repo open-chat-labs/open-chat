@@ -21,6 +21,10 @@ pub struct CanistersRequiringUpgrade {
 }
 
 impl CanistersRequiringUpgrade {
+    pub fn reset_in_progress(&mut self) {
+        self.in_progress.clear();
+    }
+
     pub fn enqueue(&mut self, canister_id: CanisterId) {
         self.pending.push_back(canister_id);
     }

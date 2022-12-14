@@ -24,6 +24,7 @@ fn post_upgrade(args: Args) {
     ) = deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.public_groups.hydrate();
+    data.canisters_requiring_upgrade.reset_in_progress();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);

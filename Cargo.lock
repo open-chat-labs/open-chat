@@ -2372,6 +2372,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -4665,6 +4666,7 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_index_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -4920,6 +4922,57 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 
 [[package]]
+name = "local_group_index_canister"
+version = "0.1.0"
+dependencies = [
+ "candid 0.8.4",
+ "candid_gen 0.1.0",
+ "ic-ledger-types",
+ "serde",
+ "serde_bytes",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "local_group_index_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client_macros 0.1.0",
+ "ic-cdk 0.6.8",
+ "local_group_index_canister",
+ "msgpack",
+ "tracing",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "local_group_index_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid 0.8.4",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_tracing_macros",
+ "futures",
+ "group_canister",
+ "group_canister_c2c_client",
+ "http_request",
+ "ic-cdk 0.6.8",
+ "ic-cdk-macros",
+ "ic-ledger-types",
+ "ledger_utils",
+ "local_group_index_canister",
+ "msgpack",
+ "serde",
+ "serde_json",
+ "stable_memory",
+ "tracing",
+ "types 0.1.0",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
@@ -4952,7 +5005,6 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "futures",
  "http_request",
  "ic-cdk 0.6.8",
@@ -7514,6 +7566,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "timer_jobs"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk 0.6.8",
+ "serde",
+ "types 0.1.0",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "tiny-keccak"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8086,6 +8148,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",

@@ -1,9 +1,11 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
-use types::UserId;
+use types::{ChatId, UserId};
 use user_canister::c2c_delete_messages::{Response::*, *};
+use utils::time::MINUTE_IN_MS;
 
 #[update_msgpack]
 #[trace]
@@ -20,26 +22,28 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         return UserBlocked;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
+    let chat_id: ChatId = caller.into();
+    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         let now = runtime_state.env.now();
 
         let delete_message_results =
             chat.events
                 .delete_messages(caller, false, None, args.message_ids, args.correlation_id, now);
 
-        let files_to_delete: Vec<_> = delete_message_results
-            .into_iter()
-            .flat_map(|(_, result)| {
-                if let DeleteMessageResult::Success(content) = result {
-                    content.blob_references()
-                } else {
-                    Vec::new()
-                }
-            })
-            .collect();
-
-        if !files_to_delete.is_empty() {
-            ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
+        let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+        for (message_id, result) in delete_message_results {
+            if matches!(result, DeleteMessageResult::Success) {
+                runtime_state.data.timer_jobs.enqueue_job(
+                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                        chat_id,
+                        thread_root_message_index: None,
+                        message_id,
+                        delete_files: false,
+                    }),
+                    remove_deleted_message_content_at,
+                    now,
+                );
+            }
         }
 
         Success
