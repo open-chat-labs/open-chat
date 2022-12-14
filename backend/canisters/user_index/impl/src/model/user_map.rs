@@ -30,7 +30,6 @@ pub struct UserMap {
     reserved_usernames: HashSet<String>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
-    #[serde(default)]
     suspected_bots: BTreeSet<UserId>,
 }
 

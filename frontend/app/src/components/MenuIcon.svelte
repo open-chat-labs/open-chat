@@ -3,6 +3,8 @@
     import { menuStore } from "../stores/menu";
     import { tick } from "svelte";
 
+    export let centered = false;
+
     let menu: HTMLElement;
     let contextMenu: HTMLElement;
 
@@ -15,7 +17,7 @@
         } else {
             const rect = menu.getBoundingClientRect();
             menuStore.showMenu(contextMenu);
-            tick().then(() => menuStore.position(rect));
+            tick().then(() => menuStore.position(rect, centered));
         }
     }
 

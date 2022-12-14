@@ -88,7 +88,6 @@ struct Data {
     pub local_group_index_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -97,10 +96,6 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub max_concurrent_local_group_index_canister_upgrades: usize,
     pub local_index_map: LocalGroupIndexMap,
-}
-
-fn ledger_canister_id() -> CanisterId {
-    Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
 }
 
 impl Data {

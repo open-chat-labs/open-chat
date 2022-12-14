@@ -1,14 +1,14 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { fontSizeScale, setFontSize } from "../../../stores/fontSize";
+    import { fontSizeScale, setFontScale } from "../../../stores/fontSize";
 </script>
 
 <div class="grid">
-    <div class="letter zero" on:click={() => setFontSize(0)}>A</div>
-    <div class="letter one" on:click={() => setFontSize(1)}>A</div>
-    <div class="letter two" on:click={() => setFontSize(2)}>A</div>
-    <div class="letter three" on:click={() => setFontSize(3)}>A</div>
-    <div class="letter four" on:click={() => setFontSize(4)}>A</div>
+    <div class="letter zero" on:click={() => setFontScale(0)}>A</div>
+    <div class="letter one" on:click={() => setFontScale(1)}>A</div>
+    <div class="letter two" on:click={() => setFontScale(2)}>A</div>
+    <div class="letter three" on:click={() => setFontScale(3)}>A</div>
+    <div class="letter four" on:click={() => setFontScale(4)}>A</div>
     <div class="slider">
         <input
             class="range-input"
@@ -16,7 +16,7 @@
             min={0}
             max={4}
             bind:value={$fontSizeScale}
-            on:change={() => setFontSize($fontSizeScale)} />
+            on:change={() => setFontScale($fontSizeScale)} />
     </div>
 </div>
 

@@ -2372,6 +2372,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -4667,6 +4668,7 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_index_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -7566,6 +7568,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "timer_jobs"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk 0.6.8",
+ "serde",
+ "types 0.1.0",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "tiny-keccak"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8138,6 +8150,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",

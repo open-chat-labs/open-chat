@@ -10,7 +10,6 @@ const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CachedHotGroups {
     groups: Vec<CachedPublicGroupSummary>,
-    #[serde(default)]
     next_due: TimestampMillis,
     last_updated: TimestampMillis,
 }

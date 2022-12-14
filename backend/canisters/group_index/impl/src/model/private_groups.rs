@@ -66,7 +66,6 @@ pub struct PrivateGroupInfo {
     marked_active_until: TimestampMillis,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
-    #[serde(default)]
     frozen: Option<FrozenGroupInfo>,
 }
 
