@@ -1,14 +1,11 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::timer_job_types::EndPollJob;
-use crate::{Data, TimerJob, LOG_MESSAGES};
+use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
-use serde::Deserialize;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
-use types::{MessageIndex, TimestampMillis};
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
@@ -19,22 +16,10 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, jobs, log_messages, trace_messages): (Data, Vec<ScheduledJob>, Vec<LogMessage>, Vec<LogMessage>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     let now = env.now();
-    for ScheduledJob { job, due } in jobs {
-        let Job::EndPoll(p) = job;
-        data.timer_jobs.enqueue_job(
-            TimerJob::EndPoll(EndPollJob {
-                thread_root_message_index: p.thread_root_message_index,
-                message_index: p.message_index,
-            }),
-            due,
-            now,
-        );
-    }
-
     data.events.remove_old_deleted_message_content(now);
 
     init_logger(data.test_mode);
@@ -59,21 +44,4 @@ fn rehydrate_log_messages(
     for message in trace_messages {
         messages_container.traces.push(message);
     }
-}
-
-#[derive(Deserialize)]
-struct ScheduledJob {
-    pub job: Job,
-    pub due: TimestampMillis,
-}
-
-#[derive(Deserialize)]
-enum Job {
-    EndPoll(EndPoll),
-}
-
-#[derive(Deserialize)]
-struct EndPoll {
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub message_index: MessageIndex,
 }

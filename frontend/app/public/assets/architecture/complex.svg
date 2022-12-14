@@ -1,0 +1,428 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="background:#fff" viewBox="0 0 4515 3475">
+  <g transform="translate(1140 689)">
+    <rect width="3175" height="2119" fill="#fff" stroke="#e5ad00" stroke-dasharray="20 20" stroke-width="2" pointer-events="none" rx="0" ry="0"/>
+    <text xml:space="preserve" x="10" y="2080" fill="#e5ad00" font-family="Manrope" font-size="24" pointer-events="visible" transform="translate(15)"><tspan x="0" dy="0em">OpenChat</tspan></text>
+    <text xml:space="preserve" x="10" y="2104" fill="#e5ad00" font-family="Manrope" font-size="19" pointer-events="visible" transform="translate(15)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <image pointer-events="visible"/>
+  </g>
+  <g transform="translate(3185 1630)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Group index</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Global registry of groups</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2925 2415)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Users</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Canister per user holding links to</tspan><tspan x="0" dy="1.2em">chats and direct messages</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1690 230)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">UserGeek</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">IC based user analytics system</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1165 2975)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">IC ledgers</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">NNS and SNS accounts and</tspan><tspan x="0" dy="1.2em">transactions</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1855 1075)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Groups</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Canister per group holding messages</tspan><tspan x="0" dy="1.2em">and members</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2450 2975)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">IC governance</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">NNS and SNS neurons and proposals</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1435 1630)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Notifications</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Maintains notifications and</tspan><tspan x="0" dy="1.2em">subscriptions</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(425 1075)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Web push services</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Web push notifications services</tspan><tspan x="0" dy="1.2em">hosted by most browser providers</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2450 1630)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Proposals bot</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Syncs with NNS &amp; SNSs to provide</tspan><tspan x="0" dy="1.2em">proposal groups</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(3845 1075)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Assets canister</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Static assets for the chat app</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(430 2180)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">SMS Service</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">AWS Simple Notification Service</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(3510 715)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Landing page assets</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: AWS s3]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Static assets for the landing pages</tspan><tspan x="0" dy="1.2em">hosted on AWS with CDN</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(435 230)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">WebRTC</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">STUN + Signalling</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(3230 230)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Authentication providers</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Internet Identity and NFID</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1160 2180)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">SMS relay</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: AWS EC2]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Polls for SMSs and relays to SMS</tspan><tspan x="0" dy="1.2em">service</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1160 1075)">
+    <rect width="450" height="300" fill="#ddd" stroke="#c7c7c7" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Notification relay</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: AWS EC2]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Polls for notification and sends to</tspan><tspan x="0" dy="1.2em">web push servers</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2515 200)">
+    <rect width="400" height="240" y="160" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted" rx="70"/>
+    <circle cx="200" cy="88.889" r="88.889" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted"/>
+    <path stroke="#e60053" stroke-width="2" d="M80 266.667V400m240-133.333V400"/>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(200 220)"><tspan x="0" dy="0em">User</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(200 262.5)"><tspan x="0" dy="0em">[Person]</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(200 310)"><tspan x="0" dy="0em">An OpenChat user</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(2490 709)">
+    <rect width="450" height="300" fill="#5d35a5" stroke="#5d35a5" stroke-width="2" pointer-events="visiblePainted" rx="10" ry="10"/>
+    <rect width="430" height="250" x="10" y="40" fill="#673bb7" pointer-events="visiblePainted" rx="10" ry="10"/>
+    <circle cx="20" cy="20" r="10" fill="#673bb7"/>
+    <circle cx="50" cy="20" r="10" fill="#673bb7"/>
+    <circle cx="80" cy="20" r="10" fill="#673bb7"/>
+    <rect width="340" height="20" x="100" y="10" fill="#673bb7" pointer-events="visiblePainted" rx="10" ry="10"/>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 110)"><tspan x="0" dy="0em">Web app</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 152.5)"><tspan x="0" dy="0em">[Container: TypeScript and Svelte]</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 200)"><tspan x="0" dy="0em">Landing pages and PWA</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(3845 2180)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">OpenStorage Index</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Index for scalable file storage system</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1855 2180)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">User index</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Global registry of users</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(3845 1630)">
+    <rect width="450" height="300" fill="#05b09f" stroke="#059e8f" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">OpenStorage Buckets</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Container: Canister]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Data buckets for scalable file storage</tspan><tspan x="0" dy="1.2em">system</tspan></text>
+    <image/>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1459 1375 118 237"/>
+  <path fill="#707070" stroke="#707070" d="M1568.132 1616.556 1586 1630l.035-22.36z"/>
+  <path fill="none" d="m1459 1375 118 237"/>
+  <g cursor="move" pointer-events="none" transform="translate(1518 1493.5)">
+    <rect width="52.404" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-26.2 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Polls</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m4042 1930-15 85s-2 10-1 20l19 125"/>
+  <path fill="#707070" stroke="#707070" d="M4035.173 2161.685 4048 2180l6.956-21.251z"/>
+  <path fill="none" d="m4042 1930-15 85s-2 10-1 20l19 125"/>
+  <g cursor="move" pointer-events="none" transform="translate(4027.505 2044.905)">
+    <rect width="102.699" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-51.3 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sync files</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1160 1225H895"/>
+  <path fill="#707070" stroke="#707070" d="m895 1215-20 10 20 10z"/>
+  <path fill="none" d="M1160 1225H895"/>
+  <g cursor="move" pointer-events="none" transform="translate(1027.5 1225)">
+    <rect width="137.883" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.9 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Sends</tspan><tspan x="0" dy="1.2em">notifications</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="M2305 2330h1520"/>
+  <path fill="#707070" stroke="#707070" d="m3825 2340 20-10-20-10z"/>
+  <path fill="none" d="M2305 2330h1520"/>
+  <g cursor="move" pointer-events="none" transform="translate(3445 2330)">
+    <rect width="156.53" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-78.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Manages user</tspan><tspan x="0" dy="1.2em">access</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2305 2464 136 81s9 5 19 5l445 10"/>
+  <path fill="#707070" stroke="#707070" d="M2904.794 2569.577 2925 2560l-19.785-10.419z"/>
+  <path fill="none" d="m2305 2464 136 81s9 5 19 5l445 10"/>
+  <g cursor="move" pointer-events="none" transform="translate(2531.156 2551.6)">
+    <rect width="134.129" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-67.1 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Creates and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m3185 1873-862 356"/>
+  <path fill="#707070" stroke="#707070" d="M2319.66 2220.115 2305 2237l22.304 1.596z"/>
+  <path fill="none" d="m3185 1873-862 356"/>
+  <g cursor="move" pointer-events="none" transform="translate(2840.2 2015.4)">
+    <rect width="158.175" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-79.1 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Looks-up user</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m4156 2180 79-136s5-9-1-17l-53-80"/>
+  <path fill="#707070" stroke="#707070" d="M4189.414 1941.094 4170 1930l2.773 22.188z"/>
+  <path fill="none" d="m4156 2180 79-136s5-9-1-17l-53-80"/>
+  <g cursor="move" pointer-events="none" transform="translate(4224.11 2062.748)">
+    <rect width="118.46" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-59.2 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sync users</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m3185 1686-862-359"/>
+  <path fill="#707070" stroke="#707070" d="M2327.308 1317.469 2305 1319l14.61 16.928z"/>
+  <path fill="none" d="m3185 1686-862-359"/>
+  <g cursor="move" pointer-events="none" transform="translate(2624.7 1452.65)">
+    <rect width="85.169" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-42.6 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Creates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1775 1930 179 234"/>
+  <path fill="#707070" stroke="#707070" d="M1945.912 2170.178 1966 2180l-4.196-21.964z"/>
+  <path fill="none" d="m1775 1930 179 234"/>
+  <g cursor="move" pointer-events="none" transform="translate(1864.5 2047)">
+    <rect width="158.175" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-79.1 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Looks-up user</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2675 1930v1025"/>
+  <path fill="#707070" stroke="#707070" d="m2665 2955 10 20 10-20z"/>
+  <path fill="none" d="M2675 1930v1025"/>
+  <g cursor="move" pointer-events="none" transform="translate(2675 2391.25)">
+    <rect width="184.206" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-92.1 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Reads proposals</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2783 1009 4 8s3 8 5 18l318 1361"/>
+  <path fill="#707070" stroke="#707070" d="M3100.71 2397.802 3115 2415l5.184-21.751z"/>
+  <path fill="none" d="m2783 1009 4 8s3 8 5 18l318 1361"/>
+  <g cursor="move" pointer-events="none" transform="translate(3061.357 2187.812)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2514 1630-258-241"/>
+  <path fill="#707070" stroke="#707070" d="M2262.442 1381.344 2241 1375l7.79 20.96z"/>
+  <path fill="none" d="m2514 1630-258-241"/>
+  <g cursor="move" pointer-events="none" transform="translate(2333.4 1461.3)">
+    <rect width="110.269" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-55.1 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Updates</tspan><tspan x="0" dy="1.2em">proposals</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2490 989-168 96"/>
+  <path fill="#707070" stroke="#707070" d="M2317.382 1076.38 2305 1095l22.325-1.266z"/>
+  <path fill="none" d="m2490 989-168 96"/>
+  <g cursor="move" pointer-events="none" transform="translate(2406 1037)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2940 920 886 239"/>
+  <path fill="#707070" stroke="#707070" d="M3823.086 1168.449 3845 1164l-16.707-14.862z"/>
+  <path fill="none" d="m2940 920 886 239"/>
+  <g cursor="move" pointer-events="none" transform="translate(3383 1039.5)">
+    <rect width="66.397" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-33.2 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Loads</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1160 2330H900"/>
+  <path fill="#707070" stroke="#707070" d="m900 2320-20 10 20 10z"/>
+  <path fill="none" d="M1160 2330H900"/>
+  <g cursor="move" pointer-events="none" transform="translate(1004 2330)">
+    <rect width="133.012" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-66.5 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends SMSs</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2940 860 550 4"/>
+  <path fill="#707070" stroke="#707070" d="M3489.93 873.86 3510 864l-19.93-10.14z"/>
+  <path fill="none" d="m2940 860 550 4"/>
+  <g cursor="move" pointer-events="none" transform="translate(3215 862)">
+    <rect width="66.397" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-33.2 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Loads</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1610 2330h225"/>
+  <path fill="#707070" stroke="#707070" d="m1835 2340 20-10-20-10z"/>
+  <path fill="none" d="M1610 2330h225"/>
+  <g cursor="move" pointer-events="none" transform="translate(1778.75 2330)">
+    <rect width="52.404" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-26.2 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Polls</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2490 856 231 830s-10 0-10 10l-1 365v20l1 750v20l10 655s0 10 9 15l876 455s9 5 19 5h10"/>
+  <path fill="#707070" stroke="#707070" d="m1145 3135 20-10-20-10z"/>
+  <path fill="none" d="M2490 856 231 830s-10 0-10 10l-1 365v20l1 750v20l10 655s0 10 9 15l876 455s9 5 19 5h10"/>
+  <g cursor="move" pointer-events="none" transform="translate(954.008 838.322)">
+    <rect width="144.213" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-72.1 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Gets balance</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2490 901-745 137s-10 2-11 12l-57 560"/>
+  <path fill="#707070" stroke="#707070" d="M1667.075 1609.09 1675 1630l11.972-18.886z"/>
+  <path fill="none" d="m2490 901-745 137s-10 2-11 12l-57 560"/>
+  <g cursor="move" pointer-events="none" transform="translate(1690.547 1476.908)">
+    <rect width="120.911" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-60.5 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Subscribes</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2925 2416-497-330s-8-6-12-15l-269-677"/>
+  <path fill="#707070" stroke="#707070" d="M2156.676 1389.896 2140 1375l-1.911 22.279z"/>
+  <path fill="none" d="m2925 2416-497-330s-8-6-12-15l-269-677"/>
+  <g cursor="move" pointer-events="none" transform="translate(2221.468 1581.415)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2490 807 904 438"/>
+  <path fill="#707070" stroke="#707070" d="M906.748 427.8 885 433l17.209 14.278z"/>
+  <path fill="none" d="M2490 807 904 438"/>
+  <g cursor="move" pointer-events="none" transform="translate(1300.5 530.25)">
+    <rect width="105.15" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-52.6 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Signals IP</tspan><tspan x="0" dy="1.2em">address</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m3023 2715-208 245"/>
+  <path fill="#707070" stroke="#707070" d="M2807.334 2953.285 2802 2975l20.572-8.762z"/>
+  <path fill="none" d="m3023 2715-208 245"/>
+  <g cursor="move" pointer-events="none" transform="translate(2877.4 2886.5)">
+    <rect width="62.209" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-31.1 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Votes</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m1966 1375-181 239"/>
+  <path fill="#707070" stroke="#707070" d="M1777.096 1608.018 1773 1630l20.044-9.912z"/>
+  <path fill="none" d="m1966 1375-181 239"/>
+  <g cursor="move" pointer-events="none" transform="translate(1866.45 1506.45)">
+    <rect width="67.452" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-33.7 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2940 713 273-177"/>
+  <path fill="#707070" stroke="#707070" d="M3218.658 544.27 3230 525l-22.222 2.488z"/>
+  <path fill="none" d="m2940 713 273-177"/>
+  <g cursor="move" pointer-events="none" transform="translate(3090.15 615.65)">
+    <rect width="154.203" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-77.1 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Authenticates</tspan><tspan x="0" dy="1.2em">with</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2490 724-333-199"/>
+  <path fill="#707070" stroke="#707070" d="M2162.298 516.668 2140 515l12.045 18.84z"/>
+  <path fill="none" d="m2490 724-333-199"/>
+  <g cursor="move" pointer-events="none" transform="translate(2290.2 604.6)">
+    <rect width="187.65" height="91.357" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-93.8 -45.7)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -39.1)"><tspan x="0" dy="0em">Sends</tspan><tspan x="0" dy="1.2em">anonymous user</tspan><tspan x="0" dy="1.2em">metrics</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2080 1375v785"/>
+  <path fill="#707070" stroke="#707070" d="m2070 2160 10 20 10-20z"/>
+  <path fill="none" d="M2080 1375v785"/>
+  <g cursor="move" pointer-events="none" transform="translate(2080 1767.5)">
+    <rect width="87.62" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-43.8 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Queries</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="M2900 1780h265"/>
+  <path fill="#707070" stroke="#707070" d="m3165 1790 20-10-20-10z"/>
+  <path fill="none" d="M2900 1780h265"/>
+  <g cursor="move" pointer-events="none" transform="translate(3059 1780)">
+    <rect width="146.633" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-73.3 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Create group</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2650 1009-497 1153"/>
+  <path fill="#707070" stroke="#707070" d="M2143.737 2157.675 2145 2180l17.102-14.405z"/>
+  <path fill="none" d="m2650 1009-497 1153"/>
+  <g cursor="move" pointer-events="none" transform="translate(2227.55 1989.05)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m1935 1075-128-133s-7-7-17-7L305 920s-10 0-10 10l10 1400v240s0 10 9 14l833 419"/>
+  <path fill="#707070" stroke="#707070" d="m1142.64 3011.958 22.36.042-13.383-17.913z"/>
+  <path fill="none" d="m1935 1075-128-133s-7-7-17-7L305 920s-10 0-10 10l10 1400v240s0 10 9 14l833 419"/>
+  <g cursor="move" pointer-events="none" transform="translate(705.14 924.042)">
+    <rect width="148.898" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-74.4 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends tokens</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2828 1009 457 605"/>
+  <path fill="#707070" stroke="#707070" d="M3276.967 1620.067 3297 1630l-4.073-21.986z"/>
+  <path fill="none" d="m2828 1009 457 605"/>
+  <g cursor="move" pointer-events="none" transform="translate(3079.35 1341.75)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M2715 600v89"/>
+  <path fill="#707070" stroke="#707070" d="m2705 689 10 20 10-20z"/>
+  <path fill="none" d="M2715 600v89"/>
+  <g cursor="move" pointer-events="none" transform="translate(2715 644.5)">
+    <rect width="53.831" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-26.9 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Uses</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m3375 2633 245 74s10 3 10-7l-5-295s0-10-9-7l-222 79"/>
+  <path fill="#707070" stroke="#707070" d="M3390.488 2467.872 3375 2484l22.196 2.713z"/>
+  <path fill="none" d="m3375 2633 245 74s10 3 10-7l-5-295s0-10-9-7l-222 79"/>
+  <g cursor="move" pointer-events="none" transform="translate(3627.679 2563.065)">
+    <rect width="172.044" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-86 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends message</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2925 2520-460-93-20-4-121-31"/>
+  <path fill="#707070" stroke="#707070" d="M2326.843 2382.218 2305 2387l16.932 14.605z"/>
+  <path fill="none" d="m2925 2520-460-93-20-4-121-31"/>
+  <g cursor="move" pointer-events="none" transform="translate(2533.425 2440.834)">
+    <rect width="93.639" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-46.8 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m3200 2415 154-466"/>
+  <path fill="#707070" stroke="#707070" d="M3363.23 1952.126 3360 1930l-15.762 15.86z"/>
+  <path fill="none" d="m3200 2415 154-466"/>
+  <g cursor="move" pointer-events="none" transform="translate(3315.5 2065.5)">
+    <rect width="136.549" height="62.557" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-68.3 -31.3)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -24.7)"><tspan x="0" dy="0em">Queries and</tspan><tspan x="0" dy="1.2em">updates</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2925 2586-1180 113s-10 1-11-9l-60-740"/>
+  <path fill="#707070" stroke="#707070" d="M1683.598 1949.118 1672 1930l-8.336 20.749z"/>
+  <path fill="none" d="m2925 2586-1180 113s-10 1-11-9l-60-740"/>
+  <g cursor="move" pointer-events="none" transform="translate(2151.033 2660.117)">
+    <rect width="67.452" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-33.7 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2925 2637-1291 410"/>
+  <path fill="#707070" stroke="#707070" d="M1631.035 3037.416 1615 3053l22.089 3.478z"/>
+  <path fill="none" d="m2925 2637-1291 410"/>
+  <g cursor="move" pointer-events="none" transform="translate(1892.2 2965)">
+    <rect width="148.898" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-74.4 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Sends tokens</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m2869 1009 3 3s3 3 11 9l859 618s8 6 8 16l5 405s0 10 8 16l110 91"/>
+  <path fill="#707070" stroke="#707070" d="M3866.215 2174.96 3888 2180l-9.038-20.453z"/>
+  <path fill="none" d="m2869 1009 3 3s3 3 11 9l859 618s8 6 8 16l5 405s0 10 8 16l110 91"/>
+  <g cursor="move" pointer-events="none" transform="translate(3753.914 1972.033)">
+    <rect width="189.232" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-94.6 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Discovers bucket</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m2940 966 506 240s9 4 16 11l431 399"/>
+  <path fill="#707070" stroke="#707070" d="M3886.535 1623.735 3908 1630l-7.867-20.931z"/>
+  <path fill="none" d="m2940 966 506 240s9 4 16 11l431 399"/>
+  <g cursor="move" pointer-events="none" transform="translate(3593.302 1338.553)">
+    <rect width="195.748" height="33.757" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-97.9 -16.9)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Manrope" font-size="24" text-anchor="middle" transform="translate(0 -10.3)"><tspan x="0" dy="0em">Reads/writes files</tspan></text>
+  </g>
+</svg>
