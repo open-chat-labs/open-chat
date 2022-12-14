@@ -854,7 +854,6 @@
         <MiddlePanel
             {hotGroups}
             {joining}
-            centered={$numberOfColumns === 3 && $rightPanelHistory.length > 0}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
             on:clearSelection={() => push("/")}
@@ -878,7 +877,7 @@
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
-    {#if $numberOfColumns === 3 && $rightPanelHistory.length > 0}
+    {#if $numberOfColumns === 3}
         <RightPanel
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}

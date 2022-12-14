@@ -447,5 +447,6 @@
 
     .loading {
         height: 100vh;
+        width: 100vw;
     }
 </style>

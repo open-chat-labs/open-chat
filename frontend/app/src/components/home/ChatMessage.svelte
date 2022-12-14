@@ -443,7 +443,7 @@
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !isProposal}
+            {#if first && groupChat && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>

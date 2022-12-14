@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import Transfer from "../icons/Transfer.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
@@ -119,7 +119,7 @@
         </div>
         <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
             <HoverIcon title={"Send Crypto"}>
-                <SwapHorizontal size={$iconSize} color={iconColour} />
+                <Transfer size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>
         <div class="gif" on:click|stopPropagation={sendGif}>
@@ -130,7 +130,7 @@
         {#if pollsAllowed}
             <div class="poll" on:click|stopPropagation={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
-                    <Poll size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    <Poll size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         {/if}

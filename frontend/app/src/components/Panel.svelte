@@ -57,14 +57,6 @@
                 flex: auto;
                 border-right: none;
             }
-
-            @include size-above(lg) {
-                flex: 0 0 500px;
-            }
-
-            @include size-above(xxl) {
-                flex: 0 0 560px;
-            }
         }
 
         &.right {
@@ -87,14 +79,6 @@
                 min-width: 0;
                 max-width: none;
                 border-left: none;
-            }
-
-            @include size-above(lg) {
-                flex: 0 0 500px;
-            }
-
-            @include size-above(xxl) {
-                flex: 0 0 560px;
             }
 
             &.empty {

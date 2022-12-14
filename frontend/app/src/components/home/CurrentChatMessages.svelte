@@ -69,7 +69,6 @@
     export let canReplyInThread: boolean;
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
-    export let centered: boolean;
 
     $: isProposalGroup = client.isProposalGroup;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
@@ -753,7 +752,6 @@
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
-    class:centered
     on:scroll={onScroll}
     id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
@@ -928,16 +926,6 @@
     .chat-messages {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
-
-        &:not(.centered) {
-            @include size-above(lg) {
-                padding: $sp3 calc($sp4 + 500px) $sp3 $sp4;
-            }
-
-            @include size-above(xxl) {
-                padding: $sp3 calc($sp4 + 560px) $sp3 $sp4;
-            }
-        }
     }
 
     .big-avatar {

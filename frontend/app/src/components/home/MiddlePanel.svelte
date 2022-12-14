@@ -18,7 +18,6 @@
     export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
-    export let centered: boolean;
 
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
@@ -51,7 +50,6 @@
         <CurrentChat
             bind:currentChatMessages
             {joining}
-            {centered}
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}

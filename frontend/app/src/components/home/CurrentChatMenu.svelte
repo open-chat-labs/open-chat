@@ -260,10 +260,7 @@
 
                     {#if client.canLeaveGroup(selectedChatSummary.chatId)}
                         <MenuItem warning on:click={leaveGroup}>
-                            <LocationExit
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
+                            <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
                         </MenuItem>
                     {/if}
