@@ -32,7 +32,7 @@ import {
     GroupCanisterThreadDetails,
 } from "openchat-shared";
 import { toRecord } from "./list";
-import { applyOptionUpdate } from "./mapping";
+import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { EVENT_PAGE_SIZE, OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
@@ -298,6 +298,11 @@ export function mergeGroupChatUpdates(
 
         if (u === undefined && g === undefined) return c;
 
+        const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
+            blobId: avatarId,
+            canisterId: c.chatId,
+        }));
+
         return {
             kind: "group_chat",
             chatId: c.chatId,
@@ -325,6 +330,7 @@ export function mergeGroupChatUpdates(
             metrics: g?.metrics ?? c.metrics,
             myMetrics: g?.myMetrics ?? c.myMetrics,
             archived: u?.archived ?? c.archived,
+            blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate)
         }
     })
 }
