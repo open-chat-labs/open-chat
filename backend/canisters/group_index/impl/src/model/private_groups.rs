@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, FrozenGroupInfo, TimestampMillis, Version};
+use types::{ChatId, FrozenGroupInfo, TimestampMillis, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PrivateGroups {
@@ -23,17 +23,11 @@ impl PrivateGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn handle_group_created(
-        &mut self,
-        chat_id: ChatId,
-        now: TimestampMillis,
-        wasm_version: Version,
-        cycles: Cycles,
-    ) -> bool {
+    pub fn handle_group_created(&mut self, chat_id: ChatId, now: TimestampMillis, wasm_version: Version) -> bool {
         match self.groups.entry(chat_id) {
             Occupied(_) => false,
             Vacant(e) => {
-                let group_info = PrivateGroupInfo::new(chat_id, now, wasm_version, cycles);
+                let group_info = PrivateGroupInfo::new(chat_id, now, wasm_version);
                 e.insert(group_info);
                 true
             }
@@ -65,21 +59,16 @@ pub struct PrivateGroupInfo {
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
     wasm_version: Version,
-    cycle_top_ups: Vec<CyclesTopUp>,
     frozen: Option<FrozenGroupInfo>,
 }
 
 impl PrivateGroupInfo {
-    pub fn new(id: ChatId, now: TimestampMillis, wasm_version: Version, cycles: Cycles) -> PrivateGroupInfo {
+    pub fn new(id: ChatId, now: TimestampMillis, wasm_version: Version) -> PrivateGroupInfo {
         PrivateGroupInfo {
             id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
-            cycle_top_ups: vec![CyclesTopUp {
-                date: now,
-                amount: cycles,
-            }],
             frozen: None,
         }
     }
@@ -89,14 +78,12 @@ impl PrivateGroupInfo {
         created: TimestampMillis,
         marked_active_until: TimestampMillis,
         wasm_version: Version,
-        cycle_top_ups: Vec<CyclesTopUp>,
     ) -> PrivateGroupInfo {
         PrivateGroupInfo {
             id,
             created,
             marked_active_until,
             wasm_version,
-            cycle_top_ups,
             frozen: None,
         }
     }
@@ -115,10 +102,6 @@ impl PrivateGroupInfo {
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
         self.marked_active_until > since
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
     }
 
     pub fn frozen(&self) -> bool {

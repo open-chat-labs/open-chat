@@ -9,9 +9,8 @@ use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;
@@ -22,8 +21,6 @@ mod model;
 mod queries;
 mod updates;
 
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
-const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const LOCAL_GROUP_INDEX_CANISTER_TOP_UP_AMOUNT: Cycles = 25_000_000_000_000; // 25T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
@@ -85,6 +82,7 @@ struct Data {
     pub deleted_groups: DeletedGroups,
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
+    #[serde(default)]
     pub local_group_index_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
@@ -95,6 +93,7 @@ struct Data {
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub max_concurrent_local_group_index_canister_upgrades: usize,
+    #[serde(default)]
     pub local_index_map: LocalGroupIndexMap,
 }
 
@@ -127,10 +126,6 @@ impl Data {
             max_concurrent_local_group_index_canister_upgrades: 1,
             local_index_map: LocalGroupIndexMap::default(),
         }
-    }
-
-    pub fn chat_exists(&self, chat_id: &ChatId) -> bool {
-        self.private_groups.get(chat_id).is_some() || self.public_groups.get(chat_id).is_some()
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {

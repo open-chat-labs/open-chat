@@ -1,5 +1,5 @@
 use crate::model::public_groups::GroupCreatedArgs;
-use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -124,15 +124,12 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             avatar_id: args.avatar_id,
             now,
             wasm_version: args.wasm_version,
-            cycles: GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
         });
     } else {
-        runtime_state.data.private_groups.handle_group_created(
-            args.chat_id,
-            now,
-            args.wasm_version,
-            GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
-        );
+        runtime_state
+            .data
+            .private_groups
+            .handle_group_created(args.chat_id, now, args.wasm_version);
     }
 }
 
