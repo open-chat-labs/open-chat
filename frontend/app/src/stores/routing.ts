@@ -8,7 +8,7 @@ export type RouteParams = {
 };
 
 export const pathParams = derived([params], ([$params]) => {
-    if ($params === undefined) {
+    if ($params === undefined || $params === null) {
         return {} as RouteParams;
     } else {
         // NB: it's important that we do not *derive* from the querystring store as well as it is set at a slightly different time

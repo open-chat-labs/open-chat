@@ -16,7 +16,7 @@ export const communityThemes = [
     getNightvisionTheme(cloneTheme(dark)),
 ];
 
-const themes: Themes = {
+export const themes: Themes = {
     light: defaultTheme,
     dark,
 };
