@@ -40,14 +40,6 @@
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
-    {#if isFollowedByMe && unreadCount > 0 && me}
-        <div
-            in:pop={{ duration: 1500 }}
-            title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}
-            class="unread-count">
-            {unreadCount > 999 ? "999+" : unreadCount}
-        </div>
-    {/if}
     <a href={url} class="thread-summary" class:selected>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
@@ -88,7 +80,7 @@
                 <div class:selected class="arrow">&#8595;</div></span>
         </div>
     </a>
-    {#if isFollowedByMe && unreadCount > 0 && !me}
+    {#if isFollowedByMe && unreadCount > 0}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("chatSummary.unread", { values: { count: unreadCount.toString() } })}

@@ -572,6 +572,7 @@
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:attachGif
+                on:createPoll
                 on:clearAttachment
                 on:fileSelected />
         {:else}

@@ -24,11 +24,8 @@
         redirectLandingPageLinksIfNecessary,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
-<<<<<<< HEAD
     import Snow from "./Snow.svelte";
-=======
     import LandingPage from "./landingpages/LandingPage.svelte";
->>>>>>> master
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
