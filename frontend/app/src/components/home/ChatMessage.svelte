@@ -114,7 +114,8 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
-    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
+    // $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
+    $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
@@ -407,16 +408,6 @@
         data-index={msg.messageIndex}
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
-        {#if me && !inert && canReact}
-            <div class="actions">
-                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                    <HoverIcon>
-                        <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-            </div>
-        {/if}
-
         {#if showAvatar}
             <div class="avatar-col">
                 {#if first}
@@ -647,7 +638,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_(me ? "deleteMessage" : "deleteMessageAndReport")}</div>
+                                        <div slot="text">
+                                            {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if canUndelete}
@@ -685,7 +678,7 @@
             {/if}
         </div>
 
-        {#if !me && !inert && canReact}
+        {#if !inert && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -826,9 +819,9 @@
         justify-content: flex-start;
         flex-wrap: wrap;
 
-        &.me {
-            justify-content: flex-end;
-        }
+        // &.me {
+        //     justify-content: flex-end;
+        // }
 
         &.indent {
             margin-left: $avatar-width;
@@ -843,9 +836,9 @@
         justify-content: flex-start;
         margin-bottom: $sp2;
 
-        &.me {
-            justify-content: flex-end;
-        }
+        // &.me {
+        //     justify-content: flex-end;
+        // }
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -940,16 +933,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-
-            &.last:not(.first) {
-                border-radius: $radius $inner-radius $radius $radius;
-            }
-            &.first:not(.last) {
-                border-radius: $radius $radius $inner-radius $radius;
-            }
-            &:not(.first):not(.last) {
-                border-radius: $radius $inner-radius $inner-radius $radius;
-            }
         }
 
         &.crypto {
@@ -965,18 +948,6 @@
             }
             &:not(.first):not(.last) {
                 border-radius: $radius $inner-radius $inner-radius $radius;
-            }
-
-            &.me {
-                &.last:not(.first) {
-                    border-radius: $inner-radius $radius $radius $radius;
-                }
-                &.first:not(.last) {
-                    border-radius: $radius $radius $radius $inner-radius;
-                }
-                &:not(.first):not(.last) {
-                    border-radius: $inner-radius $radius $radius $inner-radius;
-                }
             }
         }
 

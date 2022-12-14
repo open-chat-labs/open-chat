@@ -1,29 +1,13 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, TypersByKey, UserStatus } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import TickIcon from "svelte-material-icons/Check.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
+    import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ChatSubtext from "./ChatSubtext.svelte";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
-    import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Bell from "svelte-material-icons/Bell.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
-    import BellOff from "svelte-material-icons/BellOff.svelte";
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import FilterOutline from "svelte-material-icons/FilterOutline.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -32,8 +16,6 @@
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import { notificationsSupported } from "../../utils/notifications";
-    import { toastStore } from "../../stores/toast";
     import SuspendModal from "./SuspendModal.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -48,66 +30,23 @@
     let viewProfile = false;
     let showSuspendUserModal = false;
 
-    $: isProposalGroup = client.isProposalGroup;
     $: typingByChat = client.typingByChat;
     $: userStore = client.userStore;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
     $: isGroup = selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
-    $: isSuspended = $userStore[userId]?.suspended ?? false;
     $: hasUserProfile = !isGroup && !isBot;
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary.chatId);
 
     function clearSelection() {
         dispatch("clearSelection");
-    }
-
-    function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.chatId, mute });
-    }
-
-    function searchChat() {
-        dispatch("searchChat", "");
-    }
-
-    function createPoll() {
-        dispatch("createPoll");
-    }
-
-    function markAllRead() {
-        dispatch("markAllRead");
-    }
-
-    function blockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("blockUser", { userId: selectedChatSummary.them });
-        }
-    }
-
-    function unblockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("unblockUser", { userId: selectedChatSummary.them });
-        }
     }
 
     function showGroupDetails() {
         dispatch("showGroupDetails");
     }
 
-    function showProposalFilters() {
-        dispatch("showProposalFilters");
-    }
-
     function showMembers() {
         dispatch("showMembers");
-    }
-
-    function addMembers() {
-        dispatch("addMembers");
-    }
-
-    function leaveGroup() {
-        dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.chatId });
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -137,45 +76,11 @@
         viewProfile = false;
     }
 
-    function showPinned() {
-        dispatch("showPinned");
-    }
-
-    function freezeGroup() {
-        client.freezeGroup(selectedChatSummary.chatId, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToFreezeGroup");
-            }
-        });
-    }
-
-    function unfreezeGroup() {
-        client.unfreezeGroup(selectedChatSummary.chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("failedToUnfreezeGroup");
-            }
-        });
-    }
-
-    function onSuspendUser() {
-        showSuspendUserModal = true;
-    }
-
-    function unsuspendUser() {
-        client.unsuspendUser(userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("unsuspendedUser");
-            } else {
-                toastStore.showFailureToast("failedToUnsuspendUser");
-            }
-        });
-    }
-
     $: chat = normaliseChatSummary($now, selectedChatSummary, $typingByChat);
 </script>
 
 {#if showSuspendUserModal}
-    <SuspendModal {userId} on:close={() => showSuspendUserModal = false} />
+    <SuspendModal {userId} on:close={() => (showSuspendUserModal = false)} />
 {/if}
 
 <SectionHeader shadow flush>
@@ -232,191 +137,25 @@
             {/if}
         </div>
     </div>
-    {#if hasPinned}
-        <div title={$_("showPinned")} class="pinned" on:click={showPinned}>
-            <HoverIcon>
-                <Pin size={$iconSize} color={"var(--accent)"} />
-            </HoverIcon>
-        </div>
-    {/if}
     {#if !readonly}
-        {#if !$mobileWidth}
-            {#if $isProposalGroup}
-                <div class="icon" class:rtl={$rtlStore} on:click={showProposalFilters}>
-                    <HoverIcon>
-                        <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-            {/if}
-            <div class="icon" class:rtl={$rtlStore} on:click={searchChat}>
-                <HoverIcon>
-                    <Magnify size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </div>
-        {/if}
-        <div class="menu">
-            <MenuIcon>
-                <div slot="icon">
-                    <HoverIcon>
-                        <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-                <div slot="menu">
-                    <Menu>
-                        {#if selectedChatSummary.kind === "direct_chat" && !isBot}
-                            {#if blocked}
-                                <MenuItem on:click={unblockUser}>
-                                    <CancelIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("unblockUser")}</div>
-                                </MenuItem>
-                            {:else}
-                                <MenuItem on:click={blockUser}>
-                                    <CancelIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("blockUser")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if client.user.isSuperAdmin}
-                                {#if isSuspended}
-                                    <MenuItem on:click={unsuspendUser}>
-                                        <TickIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("unsuspendUser")}</div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={onSuspendUser}>
-                                        <CancelIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("suspendUser")}</div>
-                                    </MenuItem>
-                                {/if}
-                            {/if}
-                        {:else if selectedChatSummary.kind === "group_chat"}
-                            <MenuItem on:click={showGroupDetails}>
-                                <AccountMultiplePlus
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("groupDetails")}</div>
-                            </MenuItem>
-                            {#if client.canLeaveGroup(selectedChatSummary.chatId)}
-                                <MenuItem on:click={leaveGroup}>
-                                    <LocationExit
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("leaveGroup")}</div>
-                                </MenuItem>
-                            {/if}
-                            <MenuItem on:click={showMembers}>
-                                <AccountMultiple
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("members")}</div>
-                            </MenuItem>
-                            {#if client.canAddMembers(selectedChatSummary.chatId)}
-                                <MenuItem on:click={addMembers}>
-                                    <AccountPlusOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("addMembers")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if $isProposalGroup}
-                                <MenuItem on:click={showProposalFilters}>
-                                    <FilterOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("proposal.filter")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if client.user.isSuperAdmin}
-                                {#if client.isFrozen(selectedChatSummary.chatId)}                            
-                                    <MenuItem on:click={unfreezeGroup}>
-                                        <TickIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("unfreezeGroup")}</div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={freezeGroup}>
-                                        <CancelIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("freezeGroup")}</div>
-                                    </MenuItem>
-                                {/if}
-                            {/if}
-                        {/if}
-                        <MenuItem on:click={searchChat}>
-                            <Magnify
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("searchChat")}</div>
-                        </MenuItem>
-                        {#if hasPinned}
-                            <MenuItem on:click={showPinned}>
-                                <Pin
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("showPinned")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if notificationsSupported}
-                            {#if selectedChatSummary.notificationsMuted === true}
-                                <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                    <Bell
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("unmuteNotifications")}</div>
-                                </MenuItem>
-                            {:else}
-                                <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                    <BellOff
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("muteNotifications")}</div>
-                                </MenuItem>
-                            {/if}
-                        {/if}
-                        {#if pollsAllowed}
-                            <MenuItem on:click={createPoll}>
-                                <Poll
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("poll.create")}</div>
-                            </MenuItem>
-                        {/if}
-                        <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
-                            <CheckboxMultipleMarked
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("markAllRead")}</div>
-                        </MenuItem>
-                    </Menu>
-                </div>
-            </MenuIcon>
-        </div>
+        <CurrentChatMenu
+            bind:showSuspendUserModal
+            {hasPinned}
+            {unreadMessages}
+            {selectedChatSummary}
+            {blocked}
+            on:toggleMuteNotifications
+            on:showGroupDetails
+            on:showPinned
+            on:searchChat
+            on:showProposalFilters
+            on:showMembers
+            on:createPoll
+            on:markAllRead
+            on:blockUser
+            on:unblockUser
+            on:addMembers
+            on:leaveGroup />
     {/if}
 </SectionHeader>
 
@@ -456,21 +195,10 @@
         }
     }
 
-    .icon {
-        margin-left: $sp2;
-        &.rtl {
-            margin-right: $sp2;
-        }
-    }
-
     .chat-details {
         flex: 1;
         overflow: auto;
         padding: 0 $sp2;
-    }
-
-    .menu {
-        flex: 0 0 20px;
     }
 
     .back {

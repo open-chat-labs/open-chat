@@ -2,7 +2,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import type { BlockedMember, FullMember } from "openchat-client";
@@ -29,7 +29,7 @@
     {#if canAdd}
         <span title={$_("addMembers")} class="add" on:click={addMembers}>
             <HoverIcon>
-                <AccountPlusOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}

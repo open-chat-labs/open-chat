@@ -1,3 +1,5 @@
+import { writable } from "svelte/store";
+
 import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
@@ -80,3 +82,5 @@ export function filterByChatType(
         return true;
     });
 }
+
+export const rightPanelHistory = writable<RightPanelState[]>([]);

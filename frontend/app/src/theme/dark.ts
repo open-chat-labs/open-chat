@@ -148,6 +148,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         menu: {
             bg: backgroundBlack,
             txt: textBodyDark,
+            warn: "#FF2E2E",
             "disabled-txt": txtLow,
             hv: hoveredChat,
             sh: "none",
@@ -208,6 +209,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         icon: {
             hv: "rgba(255,255,255,0.1)",
             txt: textBodyDark,
+            selected: primary,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
                 txt: textBodyDark,

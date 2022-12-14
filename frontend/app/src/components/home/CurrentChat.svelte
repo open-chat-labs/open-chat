@@ -30,6 +30,7 @@
     export let currentChatMessages: CurrentChatMessages | undefined;
     export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
+    export let centered: boolean;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -260,6 +261,7 @@
         on:chatWith
         on:upgrade
         on:forward
+        {centered}
         {chat}
         {events}
         {filteredProposals}
