@@ -9,7 +9,7 @@ fn updates_v2(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }
 
-pub(crate) fn updates_impl(updates_since: TimestampMillis, runtime_state: &RuntimeState) -> Response {
+fn updates_impl(updates_since: TimestampMillis, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let my_user_id: UserId = runtime_state.env.canister_id().into();
 
