@@ -5,11 +5,9 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router from "svelte-spa-router";
+    import Router, { location } from "svelte-spa-router";
     import { routes } from "../routes";
-    import Login from "./Login.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
-    import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -18,8 +16,13 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
-    import { isCanisterUrl } from "../utils/urls";
+    import {
+        isCanisterUrl,
+        isLandingPageRoute,
+        redirectLandingPageLinksIfNecessary,
+    } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import LandingPage from "./landingpages/LandingPage.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -63,6 +66,7 @@
     }
 
     onMount(() => {
+        redirectLandingPageLinksIfNecessary();
         referredBy = getReferralCode();
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
@@ -71,6 +75,19 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
     });
+
+    $: {
+        if (
+            isLandingPageRoute($location) ||
+            $identityState === "requires_login" ||
+            $identityState === "logging_in" ||
+            $identityState === "registering"
+        ) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    }
 
     function registeredUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
@@ -112,10 +129,12 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "requires_login" || $identityState === "logging_in"}
-    <Login loading={$identityState === "logging_in"} on:login={() => client.login()} />
-{:else if $identityState === "registering"}
-    <Register on:logout={() => client.logout()} on:createdUser={registeredUser} {referredBy} />
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
+    <LandingPage
+        {referredBy}
+        on:login={() => client.login()}
+        on:logout={() => client.logout()}
+        on:createdUser={registeredUser} />
 {:else if $identityState === "logged_in"}
     <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
@@ -348,6 +367,13 @@
             &.fill {
                 transition: none;
                 padding: 0;
+            }
+
+            &.landing-page {
+                display: block;
+                line-height: toRem(28);
+                background: var(--landing-bg);
+                color: var(--landing-txt);
             }
         }
 
