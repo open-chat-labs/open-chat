@@ -1,6 +1,6 @@
-use crate::timer_jobs::{EndPoll, Job, ScheduledJob};
+use crate::timer_job_types::EndPollJob;
 use crate::updates::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, timer_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, PushMessageArgs};
@@ -179,14 +179,12 @@ fn register_jobs_if_required(
 ) {
     if let MessageContent::Poll(p) = &message_event.event.content {
         if let Some(end_date) = p.config.end_date {
-            timer_jobs::enqueue_job(
-                ScheduledJob::new(
-                    Job::EndPoll(EndPoll {
-                        thread_root_message_index,
-                        message_index: message_event.event.message_index,
-                    }),
-                    end_date,
-                ),
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::EndPoll(EndPollJob {
+                    thread_root_message_index,
+                    message_index: message_event.event.message_index,
+                }),
+                end_date,
                 runtime_state.env.now(),
             );
         }

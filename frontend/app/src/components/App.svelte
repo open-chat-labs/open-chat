@@ -5,11 +5,9 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router from "svelte-spa-router";
+    import Router, { location } from "svelte-spa-router";
     import { routes } from "../routes";
-    import Login from "./Login.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
-    import Register from "./register/Register.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -19,9 +17,18 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
-    import { isCanisterUrl } from "../utils/urls";
+    import {
+        isCanisterUrl,
+        isLandingPageRoute,
+        isScrollingRoute,
+        redirectLandingPageLinksIfNecessary,
+    } from "../utils/urls";
     import { logger } from "../utils/logging";
+<<<<<<< HEAD
     import Snow from "./Snow.svelte";
+=======
+    import LandingPage from "./landingpages/LandingPage.svelte";
+>>>>>>> master
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -57,6 +64,7 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
+    $: landingPage = isLandingPageRoute($location);
 
     function getReferralCode(): string | undefined {
         const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
@@ -65,6 +73,7 @@
     }
 
     onMount(() => {
+        redirectLandingPageLinksIfNecessary();
         referredBy = getReferralCode();
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
@@ -73,6 +82,19 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
     });
+
+    $: {
+        if (
+            landingPage ||
+            $identityState === "requires_login" ||
+            $identityState === "logging_in" ||
+            $identityState === "registering"
+        ) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    }
 
     function registeredUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
@@ -102,10 +124,14 @@
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
+    $: burstFixed = isScrollingRoute($location);
 </script>
 
-{#if $themeStore.burst}
-    <div class="burst-wrapper" style={`background-image: url(${burstUrl})`} />
+{#if $themeStore.burst || landingPage}
+    <div
+        class:fixed={burstFixed}
+        class="burst-wrapper"
+        style={`background-image: url(${burstUrl})`} />
 {/if}
 
 <svelte:head>
@@ -114,16 +140,20 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "requires_login" || $identityState === "logging_in"}
-    <Login loading={$identityState === "logging_in"} on:login={() => client.login()} />
-{:else if $identityState === "registering"}
-    <Register on:logout={() => client.logout()} on:createdUser={registeredUser} {referredBy} />
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
+    <LandingPage
+        {referredBy}
+        on:login={() => client.login()}
+        on:logout={() => client.logout()}
+        on:createdUser={registeredUser} />
 {:else if $identityState === "logged_in"}
     <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else}
-    <Loading />
+    <div class="loading">
+        <Loading />
+    </div>
 {/if}
 
 {#if profileTrace}
@@ -355,6 +385,15 @@
                 transition: none;
                 padding: 0;
             }
+
+            &.landing-page {
+                display: block;
+                line-height: toRem(28);
+                background: var(--landing-bg);
+                color: var(--landing-txt);
+                min-height: 100vh;
+                height: unset;
+            }
         }
 
         h1,
@@ -399,9 +438,17 @@
         background-origin: 50% 50%;
         background-position: right 20% top toRem(150);
 
+        &.fixed {
+            position: fixed;
+        }
+
         @include mobile() {
             background-size: 800px;
             background-position: left 0 top toRem(150);
         }
+    }
+
+    .loading {
+        height: 100vh;
     }
 </style>

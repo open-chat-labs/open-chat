@@ -17,6 +17,7 @@ export function lightTheme(): Theme {
         name: "light",
         label: "Light",
         burst: false,
+        mode: "light",
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",
@@ -260,6 +261,44 @@ export function lightTheme(): Theme {
                 color: txt,
                 bright: txt,
                 muted: txtLight,
+            },
+        },
+
+        landing: {
+            txt: txtDark,
+            "txt-light": "#5C5C5C",
+            bg: "white",
+            bd: "#ededed",
+
+            brag: {
+                op: "0.3",
+            },
+
+            context: {
+                bg: "#ffffff",
+            },
+
+            phone: {
+                bd: "#ffffff",
+            },
+
+            launch: {
+                bg: primary,
+            },
+
+            header: {
+                bg: "#ffffff",
+                txt: txtDark,
+                bd: "none",
+            },
+
+            auth: {
+                bg: "rgba(255,255,255,0.9)",
+                txt: "#191919",
+            },
+
+            roadmap: {
+                bd: "#E2E2E2",
             },
         },
     };

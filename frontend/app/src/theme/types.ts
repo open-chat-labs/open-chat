@@ -7,6 +7,7 @@ export interface Theme {
     name: string;
     label: string;
     burst: boolean;
+    mode: "light" | "dark"; // pick the one that makes the most sense for your theme
 
     bg: string;
     txt: string;
@@ -247,6 +248,44 @@ export interface Theme {
             color: string;
             bright: string;
             muted: string;
+        };
+    };
+
+    landing: {
+        txt: string;
+        "txt-light": string;
+        bg: string;
+        bd: string;
+
+        context: {
+            bg: string;
+        };
+
+        phone: {
+            bd: string;
+        };
+
+        brag: {
+            op: string;
+        };
+
+        launch: {
+            bg: string;
+        };
+
+        header: {
+            bg: string;
+            txt: string;
+            bd: string;
+        };
+
+        auth: {
+            bg: string;
+            txt: string;
+        };
+
+        roadmap: {
+            bd: string;
         };
     };
 }

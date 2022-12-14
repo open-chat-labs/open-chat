@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="background:#fff" viewBox="0 0 2475 1739">
+  <g transform="translate(97 649)">
+    <rect width="400" height="240" y="160" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted" rx="70"/>
+    <circle cx="200" cy="88.889" r="88.889" fill="#ff005c" stroke="#e60053" stroke-width="2" pointer-events="visiblePainted"/>
+    <path stroke="#e60053" stroke-width="2" d="M80 266.667V400m240-133.333V400"/>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(200 220)"><tspan x="0" dy="0em">User</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(200 262.5)"><tspan x="0" dy="0em">[Person]</tspan></text>
+    <text xml:space="preserve" y=".8em" fill="#fff" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(200 310)"><tspan x="0" dy="0em">An OpenChat user</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1257 1319)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">UserGeek</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">IC based user analytics system</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(887 704)">
+    <rect width="450" height="300" fill="#fec000" stroke="#e5ad00" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">OpenChat</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">OpenChat system</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(517 119)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">IC ledgers</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">NNS and SNS accounts and</tspan><tspan x="0" dy="1.2em">transactions</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1257 119)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">IC governance</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">NNS and SNS neurons and proposals</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1927 704)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 75)"><tspan x="0" dy="0em">Web push services</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 117.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 165)"><tspan x="0" dy="0em">Web push notifications services</tspan><tspan x="0" dy="1.2em">hosted by most browser providers</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1927 254)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">SMS Service</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">AWS Simple Notification Service</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(1927 1149)">
+    <rect width="450" height="300" fill="#08aedb" stroke="#079dc5" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">WebRTC</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">STUN + Signalling</tspan></text>
+    <image/>
+  </g>
+  <g transform="translate(517 1319)">
+    <rect width="450" height="300" fill="#ff8541" stroke="#e6783b" stroke-width="2" pointer-events="visiblePainted" rx="1" ry="1"/>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="34" font-weight="bold" pointer-events="visible" text-anchor="middle" transform="translate(225 90)"><tspan x="0" dy="0em">Authentication providers</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="19" text-anchor="middle" transform="translate(225 132.5)"><tspan x="0" dy="0em">[Software System]</tspan></text>
+    <text xml:space="preserve" y=".8em" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(225 180)"><tspan x="0" dy="0em">Internet Identity and NFID</tspan></text>
+    <image/>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1337 950 572 245"/>
+  <path fill="#707070" stroke="#707070" d="M1904.678 1204.309 1927 1203l-14.44-17.073z"/>
+  <path fill="none" d="m1337 950 572 245"/>
+  <g cursor="move" pointer-events="none" transform="translate(1623 1072.5)">
+    <rect width="105.178" height="61.593" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-52.6 -30.8)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24.2)"><tspan x="0" dy="0em">Signals IP</tspan><tspan x="0" dy="1.2em">address</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1022 1004-180 298"/>
+  <path fill="#707070" stroke="#707070" d="M833.767 1296.71 832 1319l18.893-11.96z"/>
+  <path fill="none" d="m1022 1004-180 298"/>
+  <g cursor="move" pointer-events="none" transform="translate(932 1153)">
+    <rect width="154.274" height="61.593" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-77.1 -30.8)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24.2)"><tspan x="0" dy="0em">Authenticates</tspan><tspan x="0" dy="1.2em">with</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-width="2" d="m1202 1004 180 298"/>
+  <path fill="#707070" stroke="#707070" d="M1373.107 1307.04 1392 1319l-1.767-22.29z"/>
+  <path fill="none" d="m1202 1004 180 298"/>
+  <g cursor="move" pointer-events="none" transform="translate(1292 1153)">
+    <rect width="187.719" height="90.393" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-93.9 -45.2)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -38.6)"><tspan x="0" dy="0em">Sends</tspan><tspan x="0" dy="1.2em">anonymous user</tspan><tspan x="0" dy="1.2em">metrics</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1207 704 169-268"/>
+  <path fill="#707070" stroke="#707070" d="M1384.775 441.25 1387 419l-19.135 11.57z"/>
+  <path fill="none" d="m1207 704 169-268"/>
+  <g cursor="move" pointer-events="none" transform="translate(1291.5 570)">
+    <rect width="184.287" height="61.593" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-92.1 -30.8)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24.2)"><tspan x="0" dy="0em">Reads proposals</tspan><tspan x="0" dy="1.2em">and votes</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1017 704 848 436"/>
+  <path fill="#707070" stroke="#707070" d="M856.135 430.57 837 419l2.225 22.25z"/>
+  <path fill="none" d="M1017 704 848 436"/>
+  <g cursor="move" pointer-events="none" transform="translate(932.5 570)">
+    <rect width="196.181" height="61.593" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-98.1 -30.8)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24.2)"><tspan x="0" dy="0em">Reads balances</tspan><tspan x="0" dy="1.2em">and sends tokens</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m1337 757 572-248"/>
+  <path fill="#707070" stroke="#707070" d="M1912.633 518.135 1927 501l-22.328-1.213z"/>
+  <path fill="none" d="m1337 757 572-248"/>
+  <g cursor="move" pointer-events="none" transform="translate(1623 633)">
+    <rect width="133.049" height="32.793" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-66.5 -16.4)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.8)"><tspan x="0" dy="0em">Sends SMSs</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="M1337 854h570"/>
+  <path fill="#707070" stroke="#707070" d="m1907 864 20-10-20-10z"/>
+  <path fill="none" d="M1337 854h570"/>
+  <g cursor="move" pointer-events="none" transform="translate(1622 854)">
+    <rect width="137.94" height="61.593" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-69 -30.8)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -24.2)"><tspan x="0" dy="0em">Pushes</tspan><tspan x="0" dy="1.2em">notifications</tspan></text>
+  </g>
+  <path fill="none" stroke="#707070" stroke-dasharray="30 30" stroke-width="2" d="m497 850 370 3"/>
+  <path fill="#707070" stroke="#707070" d="M866.924 862.846 887 853l-19.922-10.154z"/>
+  <path fill="none" d="m497 850 370 3"/>
+  <g cursor="move" pointer-events="none" transform="translate(682 851.5)">
+    <rect width="129.354" height="32.793" fill="#fff" stroke="#fff" stroke-width="20" rx="3" ry="3" transform="translate(-64.7 -16.4)"/>
+    <text xml:space="preserve" y=".8em" fill="#707070" font-family="Open Sans" font-size="24" text-anchor="middle" transform="translate(0 -9.8)"><tspan x="0" dy="0em">Chats using</tspan></text>
+  </g>
+</svg>
