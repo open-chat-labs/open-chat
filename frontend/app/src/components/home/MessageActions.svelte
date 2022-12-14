@@ -20,6 +20,7 @@
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
     export let fileToAttach: MessageContent | undefined;
     export let mode: "thread" | "message" = "message";
+    export let pollsAllowed: boolean;
 
     let drawOpen = false;
 
@@ -27,9 +28,6 @@
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
-
-    // $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(selectedChatSummary.chatId);
-    $: pollsAllowed = true;
 
     export function close() {
         drawOpen = false;

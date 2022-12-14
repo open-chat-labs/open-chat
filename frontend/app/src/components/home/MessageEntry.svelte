@@ -80,9 +80,12 @@
     let textboxId = Symbol();
 
     $: userStore = client.userStore;
+    $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isGroup = chat.kind === "group_chat";
+    $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: isFrozen = client.isFrozen(chat.chatId);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);
 
     $: {
         if (inp) {
@@ -569,6 +572,7 @@
                 bind:messageAction
                 {fileToAttach}
                 {mode}
+                {pollsAllowed}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:attachGif
