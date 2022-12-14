@@ -14,12 +14,14 @@
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
+    import { snowing } from "../stores/snow";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
     import { isCanisterUrl } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import Snow from "./Snow.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let referredBy: string | undefined = undefined;
@@ -129,6 +131,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
 

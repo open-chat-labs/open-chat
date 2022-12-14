@@ -8,6 +8,7 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { snowing } from "../../stores/snow";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
@@ -266,6 +267,11 @@
     function parseCommands(txt: string): boolean {
         if (isGroup && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
+            return true;
+        }
+
+        if (/^\/snow$/.test(txt)) {
+            $snowing = true;
             return true;
         }
 
