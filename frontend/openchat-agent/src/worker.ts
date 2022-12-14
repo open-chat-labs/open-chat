@@ -75,7 +75,7 @@ const sendError = (correlationId: string) => {
         postMessage({
             kind: "worker_error",
             correlationId,
-            error: JSON.stringify(error),
+            error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
         });
     };
 };
@@ -1186,7 +1186,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
-    
+
             case "unsuspendUser":
                 agent
                     .unsuspendUser(payload.userId)
@@ -1197,7 +1197,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
-    
+
             case "markSuspectedBot":
                 agent
                     .markSuspectedBot()
@@ -1208,7 +1208,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
-    
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

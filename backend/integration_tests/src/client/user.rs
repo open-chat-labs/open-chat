@@ -22,18 +22,20 @@ generate_update_call!(relinquish_group_super_admin);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(unblock_user);
+generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{ChatId, EventIndex, GroupRules, MessageContent, TextContent, UserId};
+    use types::{ChatId, EventIndex, GroupRules, MessageContent, MessageId, TextContent, UserId};
 
     pub fn send_text_message(
         env: &mut StateMachine,
         sender: &User,
         recipient: UserId,
         text: impl ToString,
+        message_id: Option<MessageId>,
     ) -> user_canister::send_message::SuccessResult {
         let response = super::send_message(
             env,
@@ -42,7 +44,7 @@ pub mod happy_path {
             &user_canister::send_message::Args {
                 recipient,
                 thread_root_message_index: None,
-                message_id: random_message_id(),
+                message_id: message_id.unwrap_or_else(|| random_message_id()),
                 sender_name: sender.username(),
                 content: MessageContent::Text(TextContent { text: text.to_string() }),
                 replies_to: None,

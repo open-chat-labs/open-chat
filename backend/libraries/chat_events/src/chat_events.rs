@@ -18,53 +18,22 @@ pub struct AllChatEvents {
     threads: HashMap<MessageIndex, ChatEvents>,
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
-    #[serde(default)]
     frozen: bool,
 }
 
 impl AllChatEvents {
-    pub fn get_poll_end_dates(&mut self) -> Vec<(Option<MessageIndex>, MessageIndex, TimestampMillis)> {
-        self.threads
-            .iter()
-            .flat_map(|(thread_root_message_index, events)| {
-                events
-                    .iter()
-                    .filter_map(|e| e.event.as_message())
-                    .map(|m| (Some(*thread_root_message_index), m))
-            })
-            .chain(
-                self.main
-                    .events
-                    .iter()
-                    .filter_map(|e| e.event.as_message())
-                    .map(|e| (None, e)),
-            )
-            .filter_map(
-                |(t, m)| if let MessageContentInternal::Poll(p) = &m.content { Some((t, m.message_index, p)) } else { None },
-            )
-            .filter(|(_, _, p)| !p.ended && p.config.end_date.is_some())
-            .map(|(t, m, p)| (t, m, p.config.end_date.unwrap()))
-            .collect()
-    }
-
-    pub fn recalculate_reported_message_metrics(&mut self) {
-        let users: Vec<_> = self
+    pub fn remove_old_deleted_message_content(&mut self, now: TimestampMillis) {
+        for message in self
             .threads
-            .iter()
-            .flat_map(|(_, events)| events.iter().filter_map(|e| e.event.as_message()))
-            .chain(self.main.events.iter().filter_map(|e| e.event.as_message()))
-            .filter(|m| m.deleted_by.as_ref().map_or(false, |d| d.deleted_by != m.sender))
-            .map(|m| m.sender)
-            .collect();
-
-        self.metrics.reported_messages = 0;
-        for metrics in self.per_user_metrics.values_mut() {
-            metrics.reported_messages = 0;
-        }
-
-        for user_id in users {
-            self.metrics.reported_messages += 1;
-            self.per_user_metrics.entry(user_id).or_default().reported_messages += 1;
+            .values_mut()
+            .flat_map(|events| events.events.iter_mut().filter_map(|e| e.event.as_message_mut()))
+            .chain(self.main.events.iter_mut().filter_map(|e| e.event.as_message_mut()))
+        {
+            if let Some(deleted_by) = &message.deleted_by {
+                if now.saturating_sub(deleted_by.timestamp) > 5 * 60 * 1000 {
+                    message.content = MessageContentInternal::Deleted(deleted_by.clone());
+                }
+            }
         }
     }
 
@@ -282,6 +251,20 @@ impl AllChatEvents {
         }
 
         results
+    }
+
+    pub fn remove_deleted_message_content(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> Option<MessageContentInternal> {
+        let message = self.message_internal_mut_by_message_id(thread_root_message_index, message_id)?;
+        let deleted_by = message.deleted_by.clone()?;
+
+        Some(std::mem::replace(
+            &mut message.content,
+            MessageContentInternal::Deleted(deleted_by),
+        ))
     }
 
     pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
@@ -787,8 +770,6 @@ impl AllChatEvents {
                             timestamp: now,
                         });
 
-                        let message_content = message.content.hydrate(Some(caller));
-
                         self.push_event(
                             thread_root_message_index,
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
@@ -799,7 +780,7 @@ impl AllChatEvents {
                             now,
                         );
 
-                        DeleteMessageResult::Success(message_content)
+                        DeleteMessageResult::Success
                     }
                 }
             } else {
@@ -822,9 +803,8 @@ impl AllChatEvents {
             if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
                 if deleted_by == caller {
                     match message.content {
-                        MessageContentInternal::Deleted(_) | MessageContentInternal::Crypto(_) => {
-                            UndeleteMessageResult::InvalidMessageType
-                        }
+                        MessageContentInternal::Deleted(_) => UndeleteMessageResult::ContentRemoved,
+                        MessageContentInternal::Crypto(_) => UndeleteMessageResult::InvalidMessageType,
                         _ => {
                             message.last_updated = Some(now);
                             message.deleted_by = None;
@@ -946,9 +926,8 @@ pub enum EditMessageResult {
     NotFound,
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum DeleteMessageResult {
-    Success(MessageContent),
+    Success,
     AlreadyDeleted,
     MessageTypeCannotBeDeleted,
     NotAuthorized,
@@ -958,6 +937,7 @@ pub enum DeleteMessageResult {
 pub enum UndeleteMessageResult {
     Success,
     NotDeleted,
+    ContentRemoved,
     InvalidMessageType,
     NotAuthorized,
     NotFound,

@@ -1,11 +1,13 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
+use utils::time::MINUTE_IN_MS;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -30,10 +32,24 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
-            .filter_map(|(message_id, result)| matches!(result, DeleteMessageResult::Success(_)).then_some(message_id))
+            .filter_map(|(message_id, result)| matches!(result, DeleteMessageResult::Success).then_some(message_id))
             .collect();
 
         if !deleted.is_empty() {
+            let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+            for message_id in deleted.iter().copied() {
+                runtime_state.data.timer_jobs.enqueue_job(
+                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                        chat_id: args.user_id.into(),
+                        thread_root_message_index: None,
+                        message_id,
+                        delete_files: true,
+                    }),
+                    remove_deleted_message_content_at,
+                    now,
+                );
+            }
+
             ic_cdk::spawn(delete_on_recipients_canister(
                 args.user_id.into(),
                 deleted,

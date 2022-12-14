@@ -553,7 +553,7 @@ export class OpenChat extends EventTarget {
 
     logout(): Promise<void> {
         return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.reload());
+            return c.logout().then(() => window.location.replace("/"));
         });
     }
 

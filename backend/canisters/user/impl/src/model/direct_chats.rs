@@ -12,6 +12,12 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
+    pub fn remove_old_deleted_message_content(&mut self, now: TimestampMillis) {
+        for chat in self.direct_chats.values_mut() {
+            chat.events.remove_old_deleted_message_content(now);
+        }
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

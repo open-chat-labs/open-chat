@@ -179,7 +179,6 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
-    #[serde(default)]
     frozen: Option<FrozenGroupInfo>,
 }
 

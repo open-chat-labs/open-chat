@@ -77,6 +77,10 @@ $font-sizes: (
         font-size: toRem(32),
         line-height: 120%,
     ),
+    fs-200: (
+        font-size: toRem(36),
+        line-height: 120%,
+    ),
     fs-220: (
         font-size: toRem(40),
         line-height: 120%,
@@ -87,6 +91,10 @@ $font-sizes: (
     ),
     fs-240: (
         font-size: toRem(60),
+        line-height: 120%,
+    ),
+    fs-250: (
+        font-size: toRem(70),
         line-height: 120%,
     ),
     fs-260: (
@@ -272,7 +280,13 @@ $z-indexed-items: (
         "date-label",
         "section-header",
         "fab",
+        "powered-by",
+        "features",
+        "phone",
+        "phone-image",
+        "landing-page-menu",
         "footer-overlay",
+        "zoom",
         "overlay",
         "toast",
         "tooltip",
@@ -332,30 +346,22 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin font-size($type: fs-100) {
+@mixin font-size($type: fs-100, $line-height: null) {
     // Generating mixins below: Do not change
     $type: map-get($font-sizes, $type);
 
     // LINE-HEIGHTS
     @if map-has-key($type, line-height) {
-        line-height: map-get($type, line-height);
-        @include mobile() {
-            line-height: calc(#{map-get($type, line-height)} * 0.95);
-        }
-        @include size-below(xs) {
-            line-height: calc(#{map-get($type, line-height)} * 0.9);
+        @if $line-height {
+            line-height: toRem($line-height);
+        } @else {
+            line-height: map-get($type, line-height);
         }
     }
 
     // FONT-SIZES
     @if map-has-key($type, font-size) {
         font-size: map-get($type, font-size);
-        @include mobile() {
-            font-size: calc(#{map-get($type, font-size)} * 0.95);
-        }
-        @include size-below(xs) {
-            font-size: calc(#{map-get($type, font-size)} * 0.9);
-        }
     }
 }
 
@@ -377,7 +383,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin font($weight: book, $style: null, $size: null) {
+@mixin font($weight: book, $style: null, $size: null, $line-height: null) {
     // Error handling
     @if map-has-key($font-weights, $weight) {
         font-weight: map-get($font-weights, $weight);
@@ -391,7 +397,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 
     @if $size {
-        @include font-size($size);
+        @include font-size($size, $line-height);
     }
 }
 
@@ -450,5 +456,12 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @include mobile() {
         padding: 10px;
         -webkit-overflow-scrolling: touch;
+    }
+}
+
+@mixin lp-content-padding() {
+    padding: 0 toRem(160);
+    @include mobile() {
+        padding: 0 toRem(24);
     }
 }
