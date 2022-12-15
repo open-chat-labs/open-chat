@@ -565,6 +565,7 @@
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
+        gap: 3px;
 
         // &.me {
         //     justify-content: flex-end;

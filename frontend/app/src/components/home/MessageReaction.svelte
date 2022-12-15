@@ -77,17 +77,14 @@
 <style type="text/scss">
     .message-reaction {
         @include pop();
-        border-radius: $sp3;
+        border-radius: $sp2;
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         cursor: pointer;
-        height: 30px;
-        padding: $sp2;
+        padding: $sp1 $sp2;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-left: 1px;
-        margin-right: 1px;
         margin-bottom: $sp2;
         font-size: 120%;
 
