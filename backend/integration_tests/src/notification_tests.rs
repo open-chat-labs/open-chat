@@ -17,7 +17,7 @@ fn direct_message_notification_succeeds() {
 
     let latest_notification_index = latest_notification_index(&env, canister_ids.notifications, controller);
 
-    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT");
+    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT", None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         &env,
@@ -53,7 +53,7 @@ fn group_message_notification_succeeds() {
     let group_id = client::user::happy_path::create_group(&mut env, &user1, &random_string(), false, false);
     client::group::happy_path::add_participants(&mut env, &user1, group_id, vec![user2.user_id]);
 
-    client::group::happy_path::send_text_message(&mut env, &user1, group_id, "TEXT");
+    client::group::happy_path::send_text_message(&mut env, &user1, group_id, "TEXT", None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         &env,
@@ -85,7 +85,7 @@ fn direct_message_notification_muted() {
 
     let TestData { user1, user2 } = init_test_data(&mut env, &canister_ids);
 
-    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT1");
+    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT1", None);
     client::user::mute_notifications(
         &mut env,
         user2.principal,
@@ -97,7 +97,7 @@ fn direct_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(&env, canister_ids.notifications, controller);
 
-    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT2");
+    client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT2", None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         &env,
@@ -139,7 +139,7 @@ fn group_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(&env, canister_ids.notifications, controller);
 
-    client::group::happy_path::send_text_message(&mut env, &user1, group_id, "TEXT");
+    client::group::happy_path::send_text_message(&mut env, &user1, group_id, "TEXT", None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         &env,
