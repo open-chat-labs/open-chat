@@ -766,7 +766,7 @@ export function initialStateV2Response(candid: ApiInitialStateV2Response): Initi
             timestamp: result.timestamp,
             directChats: result.direct_chats.map(directChatSummary),
             cacheTimestamp: result.cache_timestamp,
-            cachedGroupChatSummaries: result.cached_group_chat_summaries.map(groupChatSummary),
+            cachedGroupChatSummaries: result.cached_group_chat_summaries.map((g) => groupChatSummary(g, false)),
             groupChatsAdded: result.group_chats_added.map(userCanisterGroupSummary),
             avatarId: optional(result.avatar_id, identity),
             blockedUsers: result.blocked_users.map((u) => u.toString()),
@@ -951,20 +951,18 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
 }
 
-function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true): GroupChatSummary {
     const ownerId = candid.owner_id.toString();
-    const latestMessage = optional(candid.latest_message, (ev) => {
-        return {
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        };
-    });
+    const latestMessage = optional(candid.latest_message, (ev) => ({
+        index: ev.index,
+        timestamp: ev.timestamp,
+        event: message(ev.event),
+    }));
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
         latestMessage,
-        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => latestMessage !== undefined
+        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => limitReadByMeUpTo && latestMessage !== undefined
             ? Math.min(latestMessage.event.messageIndex, r)
             : r),
         name: candid.name,

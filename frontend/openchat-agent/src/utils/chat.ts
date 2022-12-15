@@ -298,6 +298,9 @@ export function mergeGroupChatUpdates(
 
         if (u === undefined && g === undefined) return c;
 
+        const latestMessage = g?.latestMessage ?? c.latestMessage;
+        const readByMeUpTo = u?.readByMeUpTo ?? c.readByMeUpTo;
+
         const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
             blobId: avatarId,
             canisterId: c.chatId,
@@ -323,9 +326,11 @@ export function mergeGroupChatUpdates(
             subtype: applyOptionUpdate(c.subtype, g?.subtype),
             previewed: false,
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
-            readByMeUpTo: u?.readByMeUpTo ?? c.readByMeUpTo,
+            readByMeUpTo: readByMeUpTo !== undefined && latestMessage !== undefined
+                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                : readByMeUpTo,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
-            latestMessage: g?.latestMessage ?? c.latestMessage,
+            latestMessage,
             notificationsMuted: g?.notificationsMuted ?? c.notificationsMuted,
             metrics: g?.metrics ?? c.metrics,
             myMetrics: g?.myMetrics ?? c.myMetrics,

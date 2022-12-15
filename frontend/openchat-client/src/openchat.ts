@@ -2902,8 +2902,8 @@ export class OpenChat extends EventTarget {
                 pinnedChats: this._liveState.pinnedChats,
             };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
-            const useNewMethod = localStorage.getItem("openchat_new_updates_enabled") === "true";
-            const chatsResponse = useNewMethod
+            const useNewUpdatesMethod = true
+            const chatsResponse = useNewUpdatesMethod
                 ? this._chatUpdatesSince === undefined
                     ? await this.initialStateV2()
                     : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId)
