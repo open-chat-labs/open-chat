@@ -50,6 +50,7 @@ import type {
     UnpinMessageResponse,
     UpdateArgs,
     UpdateGroupResponse,
+    UpdatesResult,
     WithdrawCryptocurrencyResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
@@ -882,7 +883,7 @@ export type WorkerResponse =
     | Response<UnfreezeGroupResponse>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
-    | Response<ChatStateFull>
+    | Response<UpdatesResult>
     | Response<undefined>;
 
 type Response<T> = {

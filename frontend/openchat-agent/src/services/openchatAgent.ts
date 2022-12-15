@@ -131,9 +131,11 @@ import {
     MarkSuspectedBotResponse,
     ChatStateFull,
     ChatSummary,
+    UpdatesResult,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
+import {waitAll} from "../utils/promise";
 
 export const apiKey = Symbol();
 
@@ -869,17 +871,20 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
-    async getInitialStateV2(): Promise<ChatStateFull> {
+    async getInitialStateV2(): Promise<UpdatesResult> {
         const cached = await getCachedChatsV2(this.db, this.principal);
         if (cached !== undefined) {
             return await this.getUpdatesV2(cached);
         }
 
         let state: ChatStateFull;
+        let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialStateV2();
         if (userResponse.cacheTimestamp === undefined) {
             const groupPromises = userResponse.groupChatsAdded.map((g) => this.getGroupClient(g.chatId).summary());
-            const groupChats = (await Promise.all(groupPromises)).filter(isSuccessfulGroupSummaryResponse);
+
+            const groupPromiseResults = await waitAll(groupPromises);
+            const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
 
             state = {
                 timestamp: userResponse.timestamp,
@@ -889,13 +894,17 @@ export class OpenChatAgent extends EventTarget {
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.pinnedChats,
                 affectedEvents: {}
-            }
+            };
+            anyErrors = groupPromiseResults.errors.length > 0;
         } else {
             const groupPromises = userResponse.groupChatsAdded.map((g) => this.getGroupClient(g.chatId).summary());
             const groupUpdatePromises = userResponse.cachedGroupChatSummaries.map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
 
-            const groups = (await Promise.all(groupPromises)).filter(isSuccessfulGroupSummaryResponse);
-            const groupUpdates = (await Promise.all(groupUpdatePromises)).filter(isSuccessfulGroupSummaryUpdatesResponse);
+            const groupPromiseResults = await waitAll(groupPromises);
+            const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+
+            const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+            const groupUpdates = groupUpdatePromiseResults.success.filter(isSuccessfulGroupSummaryUpdatesResponse);
 
             const groupChats = mergeGroupChats(userResponse.groupChatsAdded, groups).concat(
                 mergeGroupChatUpdates(userResponse.cachedGroupChatSummaries, [], groupUpdates));
@@ -908,15 +917,20 @@ export class OpenChatAgent extends EventTarget {
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.pinnedChats,
                 affectedEvents: {}
-            }
+            };
+            anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
         }
 
         await setCachedChatsV2(this.db, this.principal, state);
 
-        return await this.hydrateChatState(state);
+        return await this.hydrateChatState(state).then((s) => ({
+            state: s,
+            anyUpdates: true,
+            anyErrors,
+        }));
     }
 
-    async getUpdatesV2(current: ChatStateFull): Promise<ChatStateFull> {
+    async getUpdatesV2(current: ChatStateFull): Promise<UpdatesResult> {
         const userResponse = await this.userClient.getUpdatesV2(current.timestamp);
         const groupChatIds = current.groupChats.map((g) => g.chatId).concat(userResponse.groupChatsAdded.map((g) => g.chatId));
         const groupIndexResponse = await this._groupIndexClient.filterGroups(groupChatIds, current.timestamp);
@@ -928,8 +942,24 @@ export class OpenChatAgent extends EventTarget {
             .filter((g) => activeGroups.has(g.chatId))
             .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
 
-        const groups = (await Promise.all(groupPromises)).filter(isSuccessfulGroupSummaryResponse);
-        const groupUpdates = (await Promise.all(groupUpdatePromises)).filter(isSuccessfulGroupSummaryUpdatesResponse);
+        const groupPromiseResults = await waitAll(groupPromises);
+        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+
+        const anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
+        const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const groupUpdates = groupUpdatePromiseResults.success.filter(isSuccessfulGroupSummaryUpdatesResponse);
+
+        const anyUpdates =
+            userResponse.directChatsAdded.length > 0 ||
+            userResponse.directChatsUpdated.length > 0 ||
+            userResponse.groupChatsAdded.length > 0 ||
+            userResponse.groupChatsUpdated.length > 0 ||
+            userResponse.chatsRemoved.length > 0 ||
+            userResponse.avatarId !== undefined ||
+            userResponse.blockedUsers !== undefined ||
+            userResponse.pinnedChats !== undefined ||
+            groups.length > 0 ||
+            groupUpdates.length > 0;
 
         const directChats = userResponse.directChatsAdded.concat(
             mergeDirectChatUpdates(current.directChats, userResponse.directChatsUpdated));
@@ -952,7 +982,11 @@ export class OpenChatAgent extends EventTarget {
 
         await setCachedChatsV2(this.db, this.principal, state);
 
-        return this.hydrateChatState(state);
+        return await this.hydrateChatState(state).then((s) => ({
+            state: s,
+            anyUpdates,
+            anyErrors,
+        }));
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {

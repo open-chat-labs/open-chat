@@ -285,6 +285,7 @@ import {
     type ChatUnfrozenEvent,
     MergedUpdatesResponse,
     ThreadRead,
+    UpdatesResult,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -3006,27 +3007,14 @@ export class OpenChat extends EventTarget {
     private async initialStateV2(): Promise<MergedUpdatesResponse> {
         const response = await this.api.getInitialStateV2();
 
-        const chatSummaries = (response.directChats as ChatSummary[]).concat(response.groupChats);
-
-        this.updateReadUpToStore(chatSummaries);
-
-        return {
-            wasUpdated: true,
-            chatSummaries,
-            blockedUsers: new Set(response.blockedUsers),
-            pinnedChats: response.pinnedChats,
-            avatarIdUpdate: response.avatarId !== undefined ? { value: response.avatarId } : undefined,
-            affectedEvents: response.affectedEvents,
-            timestamp: response.timestamp
-        };
+        return this.handleUpdatesV2Result(response, BigInt(0), undefined);
     }
 
     private async updatesV2(
         updatesSince: bigint,
         current: CurrentChatState,
         avatarId: bigint | undefined
-    ): Promise<MergedUpdatesResponse>
-    {
+    ): Promise<MergedUpdatesResponse> {
         const directChats: DirectChatSummary[] = [];
         const groupChats: GroupChatSummary[] = [];
         current.chatSummaries.forEach((c) => {
@@ -3047,24 +3035,33 @@ export class OpenChat extends EventTarget {
             affectedEvents: {}
         });
 
-        const chatSummaries = (response.directChats as ChatSummary[]).concat(response.groupChats);
+        return this.handleUpdatesV2Result(response, updatesSince, avatarId);
+    }
+
+    private handleUpdatesV2Result(
+        result: UpdatesResult,
+        updatesSince: bigint,
+        avatarId: bigint | undefined
+    ): MergedUpdatesResponse {
+        const chatSummaries = (result.state.directChats as ChatSummary[]).concat(result.state.groupChats);
 
         this.updateReadUpToStore(chatSummaries);
 
-        const avatarIdUpdate = response.avatarId === avatarId
+        const avatarIdUpdate = result.state.avatarId === avatarId
             ? undefined
-            : response.avatarId !== undefined
-                ? { value: response.avatarId }
+            : result.state.avatarId !== undefined
+                ? { value: result.state.avatarId }
                 : "set_to_none";
 
         return {
-            wasUpdated: true,
+            wasUpdated: result.anyUpdates,
             chatSummaries,
-            blockedUsers: new Set(response.blockedUsers),
-            pinnedChats: response.pinnedChats,
+            blockedUsers: new Set(result.state.blockedUsers),
+            pinnedChats: result.state.pinnedChats,
             avatarIdUpdate,
-            affectedEvents: response.affectedEvents,
-            timestamp: response.timestamp
+            affectedEvents: result.state.affectedEvents,
+            // If there were any errors we don't bump the timestamp, this ensures no updates get missed
+            timestamp: result.anyErrors ? updatesSince : result.state.timestamp
         };
     }
 

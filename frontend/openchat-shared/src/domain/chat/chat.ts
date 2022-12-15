@@ -677,6 +677,12 @@ export type UpdateArgs = {
     updatesSince: UpdatesSince;
 };
 
+export type UpdatesResult = {
+    state: ChatStateFull,
+    anyUpdates: boolean,
+    anyErrors: boolean,
+}
+
 export type ChatStateFull = {
     timestamp: bigint;
     directChats: DirectChatSummary[];

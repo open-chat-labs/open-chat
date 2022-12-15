@@ -90,6 +90,7 @@ import {
     SuspendUserResponse,
     UnsuspendUserResponse,
     ChatStateFull,
+    UpdatesResult,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -287,7 +288,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getInitialStateV2(): Promise<ChatStateFull> {
+    getInitialStateV2(): Promise<UpdatesResult> {
         return this.sendRequest({
             kind: "getInitialStateV2",
             payload: {},
@@ -296,7 +297,7 @@ export class OpenChatAgentWorker extends EventTarget {
 
     getUpdatesV2(
         currentState: ChatStateFull,
-    ): Promise<ChatStateFull> {
+    ): Promise<UpdatesResult> {
         return this.sendRequest({
             kind: "getUpdatesV2",
             payload: {
