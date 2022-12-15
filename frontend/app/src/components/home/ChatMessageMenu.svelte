@@ -225,7 +225,7 @@
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
                     {#if canBlockUser}
-                        <MenuItem on:click={blockUser}>
+                        <MenuItem warning on:click={blockUser}>
                             <Cancel
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -244,7 +244,7 @@
                     </MenuItem>
                 {/if}
                 {#if (canDelete || me) && !crypto && !inert}
-                    <MenuItem on:click={deleteMessage}>
+                    <MenuItem warning on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
