@@ -893,7 +893,6 @@ export class OpenChatAgent extends EventTarget {
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.pinnedChats,
-                affectedEvents: {}
             };
             anyErrors = groupPromiseResults.errors.length > 0;
         } else {
@@ -916,7 +915,6 @@ export class OpenChatAgent extends EventTarget {
                 avatarId: userResponse.avatarId,
                 blockedUsers: userResponse.blockedUsers,
                 pinnedChats: userResponse.pinnedChats,
-                affectedEvents: {}
             };
             anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
         }
@@ -925,6 +923,7 @@ export class OpenChatAgent extends EventTarget {
 
         return await this.hydrateChatState(state).then((s) => ({
             state: s,
+            affectedEvents: {},
             anyUpdates: true,
             anyErrors,
         }));
@@ -945,7 +944,6 @@ export class OpenChatAgent extends EventTarget {
         const groupPromiseResults = await waitAll(groupPromises);
         const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
 
-        const anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
         const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
         const groupUpdates = groupUpdatePromiseResults.success.filter(isSuccessfulGroupSummaryUpdatesResponse);
 
@@ -960,6 +958,10 @@ export class OpenChatAgent extends EventTarget {
             userResponse.pinnedChats !== undefined ||
             groups.length > 0 ||
             groupUpdates.length > 0;
+
+        const anyErrors =
+            groupPromiseResults.errors.length > 0 ||
+            groupUpdatePromiseResults.errors.length > 0;
 
         const directChats = userResponse.directChatsAdded.concat(
             mergeDirectChatUpdates(current.directChats, userResponse.directChatsUpdated));
@@ -977,13 +979,14 @@ export class OpenChatAgent extends EventTarget {
             avatarId: applyOptionUpdate(current.avatarId, userResponse.avatarId),
             blockedUsers: userResponse.blockedUsers ?? current.blockedUsers,
             pinnedChats: userResponse.pinnedChats ?? current.pinnedChats,
-            affectedEvents: getAffectedEvents(userResponse.directChatsUpdated, groupUpdates),
         }
+        const affectedEvents = getAffectedEvents(userResponse.directChatsUpdated, groupUpdates);
 
         await setCachedChatsV2(this.db, this.principal, state);
 
         return await this.hydrateChatState(state).then((s) => ({
             state: s,
+            affectedEvents,
             anyUpdates,
             anyErrors,
         }));

@@ -3032,7 +3032,6 @@ export class OpenChat extends EventTarget {
             avatarId,
             blockedUsers: [...current.blockedUsers],
             pinnedChats: current.pinnedChats,
-            affectedEvents: {}
         });
 
         return this.handleUpdatesV2Result(response, updatesSince, avatarId);
@@ -3059,7 +3058,7 @@ export class OpenChat extends EventTarget {
             blockedUsers: new Set(result.state.blockedUsers),
             pinnedChats: result.state.pinnedChats,
             avatarIdUpdate,
-            affectedEvents: result.state.affectedEvents,
+            affectedEvents: result.affectedEvents,
             // If there were any errors we don't bump the timestamp, this ensures no updates get missed
             timestamp: result.anyErrors ? updatesSince : result.state.timestamp
         };

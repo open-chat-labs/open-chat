@@ -679,6 +679,7 @@ export type UpdateArgs = {
 
 export type UpdatesResult = {
     state: ChatStateFull,
+    affectedEvents: Record<string, number[]>;
     anyUpdates: boolean,
     anyErrors: boolean,
 }
@@ -690,7 +691,6 @@ export type ChatStateFull = {
     avatarId: bigint | undefined;
     blockedUsers: string[];
     pinnedChats: string[];
-    affectedEvents: Record<string, number[]>;
 };
 
 export type MergedUpdatesResponse = {
