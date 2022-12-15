@@ -208,7 +208,7 @@ export function getMembersString(
     const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsersOnlineFirst)
-        .map((p) => (p.userId === user.userId ? you : p.username));
+        .map((p) => `**${p.userId === user.userId ? you : p.username}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1
