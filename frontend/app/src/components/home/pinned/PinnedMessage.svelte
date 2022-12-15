@@ -5,9 +5,12 @@
     import type { CreatedUser, Message, OpenChat } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import RepliesTo from "../RepliesTo.svelte";
+    import Avatar from "../../Avatar.svelte";
+    import { AvatarSize } from "openchat-client";
     import UnresolvedReply from "../UnresolvedReply.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
+    import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
 
@@ -63,6 +66,11 @@
 {/if}
 
 <div class="message-row" class:me on:click={goToMessageIndex}>
+    <div class="avatar" on:click={openUserProfile}>
+        <Avatar
+            url={client.userAvatarUrl(sender)}
+            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+    </div>
     <div
         class="message-bubble"
         class:fill={fill && !deleted}
@@ -134,11 +142,24 @@
         }
     }
 
+    $avatar-width: 56px;
+    $avatar-width-mob: 43px;
+
     .message-row {
         display: flex;
         justify-content: flex-start;
         cursor: pointer;
         margin-bottom: $sp3;
+        gap: $sp3;
+
+        .avatar {
+            flex: 0 0 $avatar-width;
+            cursor: pointer;
+
+            @include mobile() {
+                flex: 0 0 $avatar-width-mob;
+            }
+        }
     }
 
     .message-bubble {
