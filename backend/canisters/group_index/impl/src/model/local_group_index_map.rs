@@ -11,10 +11,10 @@ pub struct LocalGroupIndexMap {
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct LocalGroupIndex {
-    pub group_count: u32,
-    pub full: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
-    pub wasm_version: Version,
+    group_count: u32,
+    full: bool,
+    cycle_top_ups: Vec<CyclesTopUp>,
+    wasm_version: Version,
 }
 
 impl LocalGroupIndexMap {
@@ -37,24 +37,6 @@ impl LocalGroupIndexMap {
         false
     }
 
-    pub fn mark_cycles_top_up(&mut self, index_id: CanisterId, top_up: CyclesTopUp) -> bool {
-        if let Some(index) = self.index_map.get_mut(&index_id) {
-            index.cycle_top_ups.push(top_up);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn set_wasm_version(&mut self, index_id: CanisterId, wasm_version: Version) -> bool {
-        if let Some(index) = self.index_map.get_mut(&index_id) {
-            index.wasm_version = wasm_version;
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn next_index(&self) -> Option<CanisterId> {
         self.index_map
             .iter()
@@ -67,11 +49,33 @@ impl LocalGroupIndexMap {
         self.index_map.contains_key(index_id)
     }
 
-    pub fn get_index(&self, index_id: &CanisterId) -> Option<&LocalGroupIndex> {
+    pub fn get(&self, index_id: &CanisterId) -> Option<&LocalGroupIndex> {
         self.index_map.get(index_id)
+    }
+
+    pub fn get_mut(&mut self, index_id: &CanisterId) -> Option<&mut LocalGroupIndex> {
+        self.index_map.get_mut(index_id)
     }
 
     pub fn canisters(&self) -> impl Iterator<Item = &CanisterId> {
         self.index_map.keys()
+    }
+}
+
+impl LocalGroupIndex {
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up);
+    }
+
+    pub fn set_wasm_version(&mut self, wasm_version: Version) {
+        self.wasm_version = wasm_version;
+    }
+
+    pub fn mark_full(&mut self) {
+        self.full = true;
+    }
+
+    pub fn wasm_version(&self) -> Version {
+        self.wasm_version
     }
 }

@@ -38,8 +38,8 @@ mod upgrade_canisters {
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
 
-        let current_wasm_version = match runtime_state.data.local_index_map.get_index(&canister_id) {
-            Some(local_group_index) => local_group_index.wasm_version,
+        let current_wasm_version = match runtime_state.data.local_index_map.get(&canister_id) {
+            Some(local_group_index) => local_group_index.wasm_version(),
             None => {
                 runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
                 return None;
@@ -85,15 +85,21 @@ mod upgrade_canisters {
     }
 
     fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
+        let local_group_index = runtime_state
+            .data
+            .local_index_map
+            .get_mut(&canister_id)
+            .expect("Cannot find local_group_index");
+
+        local_group_index.set_wasm_version(to_version);
+
         let top_up = top_up.map(|c| CyclesTopUp {
             amount: c,
             date: runtime_state.env.now(),
         });
 
-        runtime_state.data.local_index_map.set_wasm_version(canister_id, to_version);
-
         if let Some(top_up) = top_up {
-            runtime_state.data.local_index_map.mark_cycles_top_up(canister_id, top_up);
+            local_group_index.mark_cycles_top_up(top_up);
         }
 
         runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
