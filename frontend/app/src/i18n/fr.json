@@ -623,7 +623,9 @@
     "oneMessageDeleted": "1 message supprimé",
     "nMessagesDeleted": "{number} messages supprimés",
     "profile": {
-        "title": "Paramètres de profil"
+        "title": "Paramètres de profil",
+        "chat": "Discuter",
+        "settings": "Réglages"
     },
     "undeleteMessage": "Annuler la suppression",
     "undeletingMessage": "Récupération du message de {username} sur {timestamp}",

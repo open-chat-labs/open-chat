@@ -623,7 +623,9 @@
     "oneMessageDeleted": "1 messaggio eliminato",
     "nMessagesDeleted": "{number} messaggi eliminati",
     "profile": {
-        "title": "Impostazioni del profilo"
+        "title": "Impostazioni del profilo",
+        "chat": "Chiacchierata",
+        "settings": "Impostazioni"
     },
     "undeleteMessage": "Annulla cancellazione",
     "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",

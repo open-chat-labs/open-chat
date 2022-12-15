@@ -624,7 +624,9 @@
     "oneMessageDeleted": "1 件のメッセージを削除しました",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
     "profile": {
-        "title": "プロファイル設定"
+        "title": "プロファイル設定",
+        "chat": "チャット",
+        "settings": "設定"
     },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",

@@ -623,7 +623,9 @@
     "oneMessageDeleted": "1 Nachricht gelöscht",
     "nMessagesDeleted": "{number} Nachrichten gelöscht",
     "profile": {
-        "title": "Profileinstellungen"
+        "title": "Profileinstellungen",
+        "chat": "Plaudern",
+        "settings": "Einstellungen"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",

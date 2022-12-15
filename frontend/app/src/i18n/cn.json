@@ -624,7 +624,9 @@
     "joined": "已加入",
     "oneMessageDeleted": "已删除 1 条消息",
     "profile": {
-        "title": "配置文件设置"
+        "title": "配置文件设置",
+        "chat": "聊天",
+        "settings": "设置"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",

@@ -621,7 +621,9 @@
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו",
     "profile": {
-        "title": "הגדרות פרופיל"
+        "title": "הגדרות פרופיל",
+        "chat": "לְשׂוֹחֵחַ",
+        "settings": "הגדרות"
     },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",

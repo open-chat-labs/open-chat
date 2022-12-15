@@ -624,7 +624,9 @@
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
     "profile": {
-        "title": "Cài đặt cấu hình"
+        "title": "Cài đặt cấu hình",
+        "chat": "Trò chuyện",
+        "settings": "Cài đặt"
     },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",

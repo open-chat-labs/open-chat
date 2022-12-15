@@ -624,7 +624,9 @@
     "oneMessageDeleted": "1 mensaje eliminado",
     "nMessagesDeleted": "{number} mensajes eliminados",
     "profile": {
-        "title": "Configuración de perfil"
+        "title": "Configuración de perfil",
+        "chat": "Charlar",
+        "settings": "Ajustes"
     },
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",
