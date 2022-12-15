@@ -111,7 +111,7 @@
 
     .username {
         margin: 0;
-        margin-bottom: $sp2;
+        margin-bottom: $sp1;
         display: inline;
 
         &.text-content {
