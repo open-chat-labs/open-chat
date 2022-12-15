@@ -919,7 +919,7 @@ export class OpenChatAgent extends EventTarget {
             anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
         }
 
-        await setCachedChatsV2(this.db, this.principal, state);
+        await setCachedChatsV2(this.db, this.principal, state, {});
 
         return await this.hydrateChatState(state).then((s) => ({
             state: s,
@@ -982,7 +982,7 @@ export class OpenChatAgent extends EventTarget {
         }
         const affectedEvents = getAffectedEvents(userResponse.directChatsUpdated, groupUpdates);
 
-        await setCachedChatsV2(this.db, this.principal, state);
+        await setCachedChatsV2(this.db, this.principal, state, affectedEvents);
 
         return await this.hydrateChatState(state).then((s) => ({
             state: s,
