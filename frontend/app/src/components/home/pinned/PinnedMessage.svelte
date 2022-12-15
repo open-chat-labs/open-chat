@@ -70,9 +70,9 @@
         class:deleted
         class:crypto
         class:rtl={$rtlStore}>
-        {#if !me && !deleted}
+        {#if !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
-                <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
+                <Link bind:this={usernameLink} underline={"never"} on:click={openUserProfile}>
                     <h4 class="username" class:fill class:crypto>{username}</h4>
                 </Link>
             </div>
@@ -125,6 +125,7 @@
             color: #fff;
             padding: $sp2 $sp4;
             border-radius: 0 0 $sp4 0;
+            z-index: 1;
 
             &.rtl {
                 right: 0;
@@ -137,11 +138,7 @@
         display: flex;
         justify-content: flex-start;
         cursor: pointer;
-        margin-bottom: $sp2;
-
-        &.me {
-            justify-content: flex-end;
-        }
+        margin-bottom: $sp3;
     }
 
     .message-bubble {

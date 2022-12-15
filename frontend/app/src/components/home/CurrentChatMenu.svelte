@@ -41,6 +41,7 @@
     $: isSuspended = $userStore[userId]?.suspended ?? false;
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: groupDetailsSelected = lastState.kind === "group_details";
+    $: pinnedSelected = lastState.kind === "show_pinned";
     $: membersSelected = lastState.kind === "show_members";
     $: addMembersSelected = lastState.kind === "add_members";
     $: desktop = !$mobileWidth;
@@ -130,9 +131,17 @@
             <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/if}
-    <HoverIcon on:click={searchChat}>
+    <HoverIcon title={$_("searchChat")} on:click={searchChat}>
         <Magnify size={$iconSize} color={"var(--icon-txt)"} />
     </HoverIcon>
+
+    {#if hasPinned}
+        <HoverIcon title={$_("showPinned")} on:click={showPinned}>
+            <Pin
+                size={$iconSize}
+                color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
+    {/if}
 
     {#if selectedChatSummary.kind === "group_chat"}
         <HoverIcon title={$_("groupDetails")} on:click={showGroupDetails}>
@@ -180,6 +189,15 @@
                 {/if}
                 {#if selectedChatSummary.kind === "group_chat"}
                     {#if $mobileWidth}
+                        {#if hasPinned}
+                            <MenuItem on:click={showPinned}>
+                                <Pin
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("showPinned")}</div>
+                            </MenuItem>
+                        {/if}
                         <MenuItem on:click={showGroupDetails}>
                             <FileDocument
                                 size={$iconSize}
@@ -205,12 +223,6 @@
                         {/if}
                     {/if}
 
-                    {#if hasPinned}
-                        <MenuItem on:click={showPinned}>
-                            <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">{$_("showPinned")}</div>
-                        </MenuItem>
-                    {/if}
                     {#if notificationsSupported}
                         {#if selectedChatSummary.notificationsMuted === true}
                             <MenuItem on:click={() => toggleMuteNotifications(false)}>

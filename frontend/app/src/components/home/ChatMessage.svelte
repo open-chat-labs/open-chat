@@ -453,6 +453,7 @@
                     on:shareMessage
                     on:copyMessageUrl
                     on:pinMessage
+                    on:forward
                     on:unpinMessage
                     on:deleteMessage
                     on:reply={reply}
