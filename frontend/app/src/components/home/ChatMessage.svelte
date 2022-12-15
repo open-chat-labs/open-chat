@@ -95,8 +95,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
-    // $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
-    $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
+    $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
@@ -341,7 +340,7 @@
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && groupChat && !isProposal}
+            {#if first && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
