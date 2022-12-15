@@ -27,7 +27,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 65_000;
+pub const USER_LIMIT: usize = 70_000;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
@@ -159,7 +159,6 @@ struct Data {
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    #[serde(default)]
     pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 

@@ -3,7 +3,7 @@ use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
@@ -30,6 +30,7 @@ pub struct UserMap {
     reserved_usernames: HashSet<String>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
+    suspected_bots: BTreeSet<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -419,6 +420,24 @@ impl UserMap {
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
+    }
+
+    pub fn mark_suspected_bot(&mut self, principal: &Principal) {
+        if let Some(user_id) = self.principal_to_user_id.get(principal) {
+            self.suspected_bots.insert(*user_id);
+        }
+    }
+
+    pub fn suspected_bots(&self, after: Option<UserId>, count: usize) -> Vec<UserId> {
+        if let Some(after) = after {
+            self.suspected_bots.range(&after..).skip(1).take(count).copied().collect()
+        } else {
+            self.suspected_bots.iter().take(count).copied().collect()
+        }
+    }
+
+    pub fn is_suspected_bot(&self, user_id: &UserId) -> bool {
+        self.suspected_bots.contains(user_id)
     }
 
     #[cfg(test)]

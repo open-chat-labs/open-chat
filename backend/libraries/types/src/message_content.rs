@@ -134,44 +134,6 @@ impl MessageContent {
         }
     }
 
-    pub fn blob_references(&self) -> Vec<BlobReference> {
-        let mut references = Vec::new();
-
-        match self {
-            MessageContent::Image(i) => {
-                if let Some(br) = i.blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContent::Video(v) => {
-                if let Some(br) = v.video_blob_reference.clone() {
-                    references.push(br);
-                }
-                if let Some(br) = v.image_blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContent::Audio(a) => {
-                if let Some(br) = a.blob_reference.clone() {
-                    references.push(br)
-                }
-            }
-            MessageContent::File(f) => {
-                if let Some(br) = f.blob_reference.clone() {
-                    references.push(br);
-                }
-            }
-            MessageContent::Text(_)
-            | MessageContent::Poll(_)
-            | MessageContent::Crypto(_)
-            | MessageContent::Deleted(_)
-            | MessageContent::Giphy(_)
-            | MessageContent::GovernanceProposal(_) => {}
-        }
-
-        references
-    }
-
     fn text_length(&self) -> usize {
         match self {
             MessageContent::Text(t) => t.text.len(),
@@ -206,6 +168,44 @@ impl MessageContentInternal {
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
         }
+    }
+
+    pub fn blob_references(&self) -> Vec<BlobReference> {
+        let mut references = Vec::new();
+
+        match self {
+            MessageContentInternal::Image(i) => {
+                if let Some(br) = i.blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContentInternal::Video(v) => {
+                if let Some(br) = v.video_blob_reference.clone() {
+                    references.push(br);
+                }
+                if let Some(br) = v.image_blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContentInternal::Audio(a) => {
+                if let Some(br) = a.blob_reference.clone() {
+                    references.push(br)
+                }
+            }
+            MessageContentInternal::File(f) => {
+                if let Some(br) = f.blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContentInternal::Text(_)
+            | MessageContentInternal::Poll(_)
+            | MessageContentInternal::Crypto(_)
+            | MessageContentInternal::Deleted(_)
+            | MessageContentInternal::Giphy(_)
+            | MessageContentInternal::GovernanceProposal(_) => {}
+        }
+
+        references
     }
 }
 

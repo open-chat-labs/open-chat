@@ -649,5 +649,8 @@
     "searchPlaceholder": "Tìm kiếm người dùng và nhóm...",
     "reasonForSuspension": "lý do đình chỉ",
     "suspend": "Đình chỉ",
+    "communityTheme": "chủ đề cộng đồng",
+    "selectCommunityTheme": "Chọn một chủ đề cộng đồng",
+    "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
     "deleteMessageAndReport": "Xóa và báo cáo"
 }

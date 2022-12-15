@@ -84,27 +84,30 @@
     $: isFrozen = client.isFrozen(chat.chatId);
 
     $: {
-        if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
-            if (editingEvent.event.content.kind === "text_content") {
-                inp.textContent = formatMentions(editingEvent.event.content.text);
-                selectedRange = undefined;
-                restoreSelection();
-            } else if ("caption" in editingEvent.event.content) {
-                inp.textContent = editingEvent.event.content.caption ?? "";
-                selectedRange = undefined;
-                restoreSelection();
-            }
-            previousEditingEvent = editingEvent;
-        } else if (inp) {
-            const text = textContent ?? "";
-            // Only set the textbox text when required rather than every time, because doing so sets the focus back to
-            // the start of the textbox on some devices.
-            if (inp.textContent !== text) {
-                inp.textContent = text;
-                // TODO - figure this out
-                // setCaretToEnd();
+        if (inp) {
+            if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
+                if (editingEvent.event.content.kind === "text_content") {
+                    inp.textContent = formatMentions(editingEvent.event.content.text);
+                    selectedRange = undefined;
+                    restoreSelection();
+                } else if ("caption" in editingEvent.event.content) {
+                    inp.textContent = editingEvent.event.content.caption ?? "";
+                    selectedRange = undefined;
+                    restoreSelection();
+                }
+                previousEditingEvent = editingEvent;
+            } else {
+                const text = textContent ?? "";
+                // Only set the textbox text when required rather than every time, because doing so sets the focus back to
+                // the start of the textbox on some devices.
+                if (inp.textContent !== text) {
+                    inp.textContent = text;
+                    // TODO - figure this out
+                    // setCaretToEnd();
+                }
             }
         }
+
         if (editingEvent === undefined) {
             previousEditingEvent = undefined;
         }

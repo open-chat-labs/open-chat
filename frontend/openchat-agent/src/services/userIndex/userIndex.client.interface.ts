@@ -15,6 +15,7 @@ import type {
     UpgradeStorageResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
+    MarkSuspectedBotResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -35,4 +36,5 @@ export interface IUserIndexClient {
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse>;
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse>;
+    markSuspectedBot(): Promise<MarkSuspectedBotResponse>;
 }

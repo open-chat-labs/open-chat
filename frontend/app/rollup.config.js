@@ -260,6 +260,18 @@ export default {
                                     gtag('js', new Date());
                                     gtag('config', 'G-7P9R6CJLNR');
                                 </script>
+                                <meta name="theme-color" media="(prefers-color-scheme: light)" content="#22A7F2" />
+                                <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1B1C21" />
+                                <meta name="description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain." />
+                                <meta property="og:title" content="OpenChat">
+                                <meta property="og:type" content="website" />
+                                <meta property="og:description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
+                                <meta property="og:image" content="/assets/share-oc-light.png">
+                                <meta name="twitter:image" content="/assets/share-oc-light.png">
+                                <meta property="og:url" content="https://oc.app">
+                                <meta name="twitter:card" content="summary_large_image">
+                                <meta property="og:site_name" content="OpenChat">
+                                <meta name="twitter:image:alt" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
                                 <meta http-equiv="Content-Security-Policy" content="${csp}" />
                                 <meta charset="utf-8" />
                                 <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -1237,4 +1237,12 @@ export class OpenChatAgentWorker extends EventTarget {
             },
         });
     }
+
+    markSuspectedBot(): Promise<void> {
+        return this.sendRequest({
+            kind: "markSuspectedBot",
+            payload: {
+            },
+        });
+    }
 }

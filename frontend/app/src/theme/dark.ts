@@ -1,4 +1,5 @@
-import { hexPercent, Theme } from "./themes";
+import { hexPercent } from "./themes";
+import type { Theme } from "./types";
 
 const backgroundBlack = "#1B1C21";
 
@@ -29,6 +30,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         ...defaultTheme,
         name: "dark",
         label: "Dark",
+        burst: true,
+        mode: "dark",
 
         bg: backgroundBlack,
         txt: txt,
@@ -246,6 +249,44 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 color: txt,
                 bright: txt,
                 muted: textBodyLight,
+            },
+        },
+
+        landing: {
+            txt,
+            "txt-light": textBodyDark,
+            bg: backgroundBlack,
+            bd: borderDark,
+
+            context: {
+                bg: "#2f3039",
+            },
+
+            phone: {
+                bd: "#ffffffdd",
+            },
+
+            brag: {
+                op: "0.7",
+            },
+
+            launch: {
+                bg: primary,
+            },
+
+            header: {
+                bg: backgroundBlack,
+                txt: textBodyDark,
+                bd: "1px solid rgba(255,255,255,0.2)",
+            },
+
+            auth: {
+                bg: "rgba(0,0,0,0.6)",
+                txt: textBodyDark,
+            },
+
+            roadmap: {
+                bd: "#32353F",
             },
         },
     };

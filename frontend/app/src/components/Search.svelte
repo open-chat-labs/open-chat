@@ -44,11 +44,11 @@
         placeholder={$_(placeholder)} />
     {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"
-            ><Close size={$iconSize} color={"#ccc"} /></span>
+            ><Close size={$iconSize} color={"var(--icon-txt)"} /></span>
     {:else}
         <span class="icon" class:searching>
             {#if !searching}
-                <Magnify size={$iconSize} color={"#ccc"} />
+                <Magnify size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </span>
     {/if}

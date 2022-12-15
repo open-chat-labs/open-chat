@@ -1,5 +1,4 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::timer_jobs::{self, ScheduledJob};
 use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
@@ -17,15 +16,11 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, jobs, log_messages, trace_messages): (Data, Vec<ScheduledJob>, Vec<LogMessage>, Vec<LogMessage>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     let now = env.now();
-    for job in jobs {
-        timer_jobs::enqueue_job(job, now);
-    }
-
-    data.events.recalculate_reported_message_metrics();
+    data.events.remove_old_deleted_message_content(now);
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);

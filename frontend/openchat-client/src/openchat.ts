@@ -3,6 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
+import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
     canAddMembers,
@@ -308,6 +309,7 @@ export class OpenChat extends EventTarget {
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
     private _chatUpdatesSince: bigint | undefined = undefined;
+    private _botDetected = false;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -341,6 +343,14 @@ export class OpenChat extends EventTarget {
                 chatUpdatedStore.set(undefined);
             }
         });
+
+        load()
+            .then((botd) => botd.detect())
+            .then((result) => {
+                console.log("BOTD: ", result);
+                this._botDetected = result.bot;
+            })
+            .catch((err) => console.error(err));
     }
 
     private chatUpdated(affectedEvents: number[]): void {
@@ -521,6 +531,11 @@ export class OpenChat extends EventTarget {
             // if (isCanisterUrl) {
             //     unsubscribeNotifications(api);
             // }
+
+            if (this._botDetected && !this._user?.isSuspectedBot) {
+                this.api.markSuspectedBot();
+                console.log("markSuspectedBot");
+            }
         }
     }
 
@@ -535,7 +550,7 @@ export class OpenChat extends EventTarget {
 
     logout(): Promise<void> {
         return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.reload());
+            return c.logout().then(() => window.location.replace("/"));
         });
     }
 
@@ -837,7 +852,10 @@ export class OpenChat extends EventTarget {
                 }
             })
             .then((resp) => {
-                if (resp === "success" && this._liveState.groupPreviews[group.chatId] !== undefined) {
+                if (
+                    resp === "success" &&
+                    this._liveState.groupPreviews[group.chatId] !== undefined
+                ) {
                     removeGroupPreview(group.chatId);
                 }
                 return resp;

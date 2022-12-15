@@ -48,6 +48,8 @@ mod upgrade_canisters {
             chat.set_upgrade_in_progress(true);
             current_wasm_version = chat.wasm_version();
         } else {
+            // This happens when a group is deleted
+            runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
             return None;
         }
 

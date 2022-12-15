@@ -81,7 +81,7 @@
 
     .overlay {
         @include z-index("overlay");
-        position: absolute;
+        position: fixed;
         display: flex;
         justify-content: center;
         align-items: center;

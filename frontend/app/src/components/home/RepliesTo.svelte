@@ -95,7 +95,7 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             border: 2px solid var(--currentChat-msg-me-bd);
-            color: #ffffff;
+            color: var(--currentChat-msg-me-txt);
         }
 
         &.crypto {

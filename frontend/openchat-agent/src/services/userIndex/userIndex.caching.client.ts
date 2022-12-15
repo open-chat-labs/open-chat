@@ -18,6 +18,7 @@ import type {
     Logger,
     SuspendUserResponse,
     UnsuspendUserResponse,
+    MarkSuspectedBotResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -201,5 +202,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this.client.unsuspendUser(userId);
+    }
+
+    markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
+        return this.client.markSuspectedBot();
     }
 }

@@ -649,5 +649,8 @@
     "searchPlaceholder": "ユーザーとグループを検索...",
     "reasonForSuspension": "停止の理由",
     "suspend": "サスペンド",
+    "communityTheme": "コミュニティのテーマ",
+    "selectCommunityTheme": "コミュニティのテーマを選択",
+    "useAtOwnRisk": "自己責任",
     "deleteMessageAndReport": "削除して報告"
 }

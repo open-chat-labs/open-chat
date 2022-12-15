@@ -23,7 +23,6 @@ pub struct User {
     pub phone_status: PhoneStatus,
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
-    #[serde(default)]
     pub suspension_details: Option<SuspensionDetails>,
 }
 

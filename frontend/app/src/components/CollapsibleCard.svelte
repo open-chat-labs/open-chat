@@ -7,8 +7,9 @@
     import Arrow from "./Arrow.svelte";
 
     const dispatch = createEventDispatcher();
-    export let headerText: string;
+    export let headerText: string = "";
     export let open = true;
+    export let first = false;
 
     function toggle() {
         open = !open;
@@ -17,7 +18,7 @@
     }
 </script>
 
-<div class="card">
+<div class="card" class:first>
     <div class="header" class:open on:click={toggle}>
         <slot name="titleSlot">
             <div>{headerText}</div>
@@ -42,10 +43,14 @@
 <style type="text/scss">
     .card {
         border-bottom: 1px solid var(--bd);
+
+        &.first {
+            border-top: 1px solid var(--bd);
+        }
     }
 
     .header {
-        padding: $sp4 0;
+        padding: toRem(24) 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
@@ -54,7 +59,7 @@
         color: var(--collapsible-closed-header-txt);
 
         @include mobile() {
-            padding: $sp3 0;
+            padding: toRem(18) 0;
         }
 
         &.open {

@@ -648,5 +648,8 @@
     "searchPlaceholder": "Nach Benutzern und Gruppen suchen...",
     "reasonForSuspension": "Grund der Suspendierung",
     "suspend": "Aussetzen",
+    "communityTheme": "Community-Thema",
+    "selectCommunityTheme": "Wählen Sie ein Community-Design aus",
+    "useAtOwnRisk": "Benutzung auf eigene Gefahr",
     "deleteMessageAndReport": "Löschen und melden"
 }
