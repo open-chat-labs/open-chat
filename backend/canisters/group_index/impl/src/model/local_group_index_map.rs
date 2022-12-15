@@ -19,7 +19,11 @@ pub struct LocalGroupIndex {
 
 impl LocalGroupIndexMap {
     pub fn add_index(&mut self, index_id: CanisterId) -> bool {
-        self.index_map.insert(index_id, LocalGroupIndex::default()).is_none()
+        let exists = self.index_map.contains_key(&index_id);
+        if !exists {
+            self.index_map.insert(index_id, LocalGroupIndex::default());
+        }
+        !exists
     }
 
     pub fn add_group(&mut self, index_id: CanisterId, chat_id: ChatId) -> bool {

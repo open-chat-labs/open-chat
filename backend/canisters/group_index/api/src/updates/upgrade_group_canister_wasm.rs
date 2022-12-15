@@ -11,4 +11,5 @@ pub struct Args {
 pub enum Response {
     Success,
     VersionNotHigher,
+    InternalError(String),
 }

@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{mutate_state, read_state, Data, LOG_MESSAGES};
 use candid::Principal;
@@ -9,6 +7,7 @@ use group_index_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use local_group_index_canister::c2c_add_initial_groups::Group;
 use stable_memory::deserialize_from_stable_memory;
+use std::time::Duration;
 use tracing::{error, info};
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
@@ -63,6 +62,7 @@ pub async fn bootstrap_local_group_index() {
 
     let group_ids: Vec<_> = groups.iter().map(|g| g.chat_id).collect();
 
+    // TODO: We need the local_group_index principle
     let index_id: Principal = Principal::from_text("first_local_group_index_id").unwrap();
 
     match local_group_index_canister_c2c_client::c2c_add_initial_groups(

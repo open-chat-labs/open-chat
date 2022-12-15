@@ -20,8 +20,12 @@ async fn set_max_concurrent_group_canister_upgrades(args: Args) -> Response {
         .map(|canister_id| local_group_index_canister_c2c_client::c2c_set_max_concurrent_group_upgrades(canister_id, &args))
         .collect();
 
-    futures::future::join_all(futures).await;
+    let result = futures::future::join_all(futures).await;
 
-    info!(args.value, "Max concurrent upgrades set");
-    Success
+    if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
+        InternalError(format!("{:?}", first_error))
+    } else {
+        info!(args.value, "Max concurrent upgrades set");
+        Success
+    }
 }

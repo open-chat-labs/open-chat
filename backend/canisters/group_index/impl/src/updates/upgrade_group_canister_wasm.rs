@@ -25,14 +25,18 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
         .map(|canister_id| local_group_index_canister_c2c_client::c2c_upgrade_group_canister_wasm(canister_id, &args))
         .collect();
 
-    futures::future::join_all(futures).await;
+    let result = futures::future::join_all(futures).await;
 
-    mutate_state(|state| {
-        state.data.group_canister_wasm = args.group_canister_wasm;
-    });
+    if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
+        InternalError(format!("{:?}", first_error))
+    } else {
+        mutate_state(|state| {
+            state.data.group_canister_wasm = args.group_canister_wasm;
+        });
 
-    info!(%version, "Group canister wasm upgraded");
-    Success
+        info!(%version, "Group canister wasm upgraded");
+        Success
+    }
 }
 
 fn prepare(version: Version, runtime_state: &RuntimeState) -> Result<Vec<CanisterId>, Response> {
