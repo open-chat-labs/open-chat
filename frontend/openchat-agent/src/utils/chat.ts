@@ -316,7 +316,7 @@ export function mergeGroupChatUpdates(
             minVisibleMessageIndex: c.minVisibleMessageIndex,
             lastUpdated: g?.lastUpdated ?? c.lastUpdated,
             memberCount: g?.memberCount ?? c.memberCount,
-            mentions: g?.mentions ?? c.mentions,
+            mentions: [...g?.mentions, ...c.mentions],
             ownerId: g?.ownerId ?? c.ownerId,
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
