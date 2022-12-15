@@ -295,6 +295,7 @@
     <ViewUserProfile
         alignTo={alignProfileTo}
         userId={sender.userId}
+        chatButton={groupChat}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}

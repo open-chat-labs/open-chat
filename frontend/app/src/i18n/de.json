@@ -622,7 +622,9 @@
     "joined": "Trat bei",
     "oneMessageDeleted": "1 Nachricht gelöscht",
     "nMessagesDeleted": "{number} Nachrichten gelöscht",
-    "profile": "Profileinstellungen",
+    "profile": {
+        "title": "Profileinstellungen"
+    },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
     "undeleteMessageFailed": "Die Nachricht konnte nicht wiederhergestellt werden",
