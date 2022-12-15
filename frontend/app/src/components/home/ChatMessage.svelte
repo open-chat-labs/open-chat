@@ -84,7 +84,6 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
-    $: storageStore = client.storageStore;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
     $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
@@ -447,6 +446,7 @@
                     {canEdit}
                     {canDelete}
                     {canUndelete}
+                    {crypto}
                     translatable={msg.content.kind === "text_content"}
                     {translated}
                     on:collapseMessage
@@ -454,6 +454,7 @@
                     on:copyMessageUrl
                     on:pinMessage
                     on:unpinMessage
+                    on:deleteMessage
                     on:reply={reply}
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />

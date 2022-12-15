@@ -52,6 +52,7 @@
     export let canUndelete: boolean;
     export let translatable: boolean;
     export let translated: boolean;
+    export let crypto: boolean;
     export let msg: Message;
 
     $: translationStore = client.translationStore;
