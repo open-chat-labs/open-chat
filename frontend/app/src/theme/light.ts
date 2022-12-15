@@ -56,7 +56,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: txtDark,
-            me: pinkAccent,
+            me: blueAccent,
         },
 
         timeline: {

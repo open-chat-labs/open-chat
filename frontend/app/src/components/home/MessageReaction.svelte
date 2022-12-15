@@ -92,7 +92,8 @@
         font-size: 120%;
 
         &.selected {
-            border: 2px solid var(--reaction-me);
+            background-color: var(--currentChat-msg-me-bg);
+            color: var(--currentChat-msg-me-txt);
         }
 
         .reaction-count {
