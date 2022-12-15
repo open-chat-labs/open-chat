@@ -149,7 +149,7 @@
         display: flex;
         justify-content: flex-start;
         cursor: pointer;
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
         gap: $sp3;
 
         .avatar {
