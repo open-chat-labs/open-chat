@@ -273,9 +273,8 @@
             return true;
         }
 
-        if (/^\/snow$/.test(txt)) {
+        if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
-            return true;
         }
 
         const searchMatch = txt.match(/^\/search( *(.*))$/);
