@@ -30,7 +30,7 @@ struct PrepareResult {
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
     let canister_id: CanisterId = runtime_state.env.caller();
 
-    if !runtime_state.data.local_index_map.index_exists(&canister_id) {
+    if !runtime_state.data.local_index_map.contains_key(&canister_id) {
         panic!("Caller not recognised. {canister_id}");
     };
 

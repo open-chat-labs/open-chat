@@ -18,10 +18,18 @@ pub struct LocalGroupIndex {
 }
 
 impl LocalGroupIndexMap {
-    pub fn add_index(&mut self, index_id: CanisterId) -> bool {
+    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: Version) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
-            self.index_map.insert(index_id, LocalGroupIndex::default());
+            self.index_map.insert(
+                index_id,
+                LocalGroupIndex {
+                    group_count: 0,
+                    full: false,
+                    cycle_top_ups: Vec::default(),
+                    wasm_version,
+                },
+            );
         }
         !exists
     }
@@ -45,7 +53,7 @@ impl LocalGroupIndexMap {
             .map(|(k, _)| *k)
     }
 
-    pub fn index_exists(&self, index_id: &CanisterId) -> bool {
+    pub fn contains_key(&self, index_id: &CanisterId) -> bool {
         self.index_map.contains_key(index_id)
     }
 
@@ -59,6 +67,10 @@ impl LocalGroupIndexMap {
 
     pub fn canisters(&self) -> impl Iterator<Item = &CanisterId> {
         self.index_map.keys()
+    }
+
+    pub fn len(&self) -> usize {
+        self.index_map.len()
     }
 }
 
