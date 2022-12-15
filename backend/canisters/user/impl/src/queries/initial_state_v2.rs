@@ -1,8 +1,8 @@
 use crate::guards::caller_is_owner;
 use crate::model::group_chat::GroupChat;
-use crate::queries::updates_v2::updates_impl;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
+use std::collections::HashMap;
 use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId};
 use user_canister::initial_state_v2::{Response::*, *};
 
@@ -32,7 +32,10 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .then_some(runtime_state.data.cached_group_summaries.as_ref())
         .flatten()
     {
-        let user_canister::updates_v2::Response::Success(updates) = updates_impl(cached.timestamp, runtime_state);
+        // We must handle the scenario where some groups are missing from the cache due to them
+        // being inaccessible while the cache was refreshed. To do this, we get all groups, and any
+        // groups not found in the cache are included in `group_chats_added`.
+        let mut group_chats: HashMap<_, _> = runtime_state.data.group_chats.get_all(None).map(|g| (g.chat_id, g)).collect();
 
         SuccessCached(SuccessCachedResult {
             timestamp: now,
@@ -41,10 +44,10 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             cached_group_chat_summaries: cached
                 .groups
                 .iter()
-                .filter_map(|c| runtime_state.data.group_chats.get(&c.chat_id).map(|g| (c, g)))
+                .filter_map(|c| group_chats.remove(&c.chat_id).map(|g| (c, g)))
                 .map(|(c, g)| hydrate_cached_summary(c, g))
                 .collect(),
-            group_chats_added: updates.group_chats_added,
+            group_chats_added: group_chats.values().map(|g| g.to_summary()).collect(),
             avatar_id,
             blocked_users,
             pinned_chats,
