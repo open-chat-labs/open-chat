@@ -257,7 +257,7 @@
     function doubleClickMessage() {
         if (me) {
             editMessage();
-        } else {
+        } else if (confirmed) {
             reply();
         }
     }
