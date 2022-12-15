@@ -24,6 +24,7 @@
 
     function close() {
         dispatch("close");
+        messages = { kind: "idle" };
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -33,7 +34,9 @@
 
     $: {
         if (pinned.size > 0) {
-            messages = { kind: "loading" };
+            if (messages.kind !== "success") {
+                messages = { kind: "loading" };
+            }
             client
                 .getGroupMessagesByMessageIndex(chatId, pinned)
                 .then((resp) => {
