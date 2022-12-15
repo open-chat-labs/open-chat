@@ -90,7 +90,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
     {
         Err(AvatarTooBig(FieldTooLongResult {
             length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
-            max_length: MAX_AVATAR_SIZE as u32,
+            max_length: MAX_AVATAR_SIZE,
         }))
     } else {
         let create_group_args = c2c_create_group::Args {
