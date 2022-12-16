@@ -65,7 +65,7 @@ impl RuntimeState {
             deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
             deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
             group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
-            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,

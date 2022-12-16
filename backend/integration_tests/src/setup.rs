@@ -164,7 +164,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         "{add_local_group_index_canister_response:?}"
     );
 
-
     CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,

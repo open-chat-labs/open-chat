@@ -22,7 +22,7 @@ async fn add_local_group_index_canister(args: Args) -> Response {
             {
                 Ok(_) => {
                     let response = mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state));
-                    
+
                     info!(canister_id = %args.canister_id, "local group index canister added");
 
                     if read_state(|state| state.data.local_index_map.len() == 1) {
