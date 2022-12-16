@@ -23,7 +23,7 @@ fn c2c_push_notification_impl(
     {
         runtime_state.data.notifications.add(NotificationEnvelope {
             recipients,
-            notification_bytes: candid::encode_one(&notification).unwrap(),
+            notification_bytes: candid::encode_one(notification).unwrap(),
         });
     }
     Success

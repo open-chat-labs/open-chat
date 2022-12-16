@@ -12,6 +12,7 @@
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
+    import { snowing } from "../stores/snow";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
@@ -23,6 +24,7 @@
         redirectLandingPageLinksIfNecessary,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import Snow from "./Snow.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -156,6 +158,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
 
@@ -441,5 +447,6 @@
 
     .loading {
         height: 100vh;
+        width: 100vw;
     }
 </style>

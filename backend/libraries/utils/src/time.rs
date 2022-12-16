@@ -13,5 +13,5 @@ pub fn now_millis() -> TimestampMillis {
 }
 
 pub fn now_nanos() -> TimestampNanos {
-    ic_cdk::api::time() as u64
+    ic_cdk::api::time()
 }

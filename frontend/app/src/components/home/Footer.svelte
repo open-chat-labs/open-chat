@@ -160,12 +160,12 @@
         flex-direction: column;
         justify-content: center;
         align-content: center;
-        align-items: center;
+        align-items: flex-start;
         background-color: var(--entry-bg);
     }
 
     .draft-container {
         max-width: 80%;
-        padding-bottom: 8px;
+        padding: 0 $sp4 $sp4 $sp4;
     }
 </style>

@@ -1835,15 +1835,13 @@ export class OpenChat extends EventTarget {
 
     private addPinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.add(messageIndex);
-            return new Set(s);
+            return new Set([...s, messageIndex]);
         });
     }
 
     private removePinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.delete(messageIndex);
-            return new Set(s);
+            return new Set([...s].filter((idx) => idx !== messageIndex));
         });
     }
 

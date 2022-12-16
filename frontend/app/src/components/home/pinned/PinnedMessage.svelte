@@ -5,9 +5,12 @@
     import type { CreatedUser, Message, OpenChat } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import RepliesTo from "../RepliesTo.svelte";
+    import Avatar from "../../Avatar.svelte";
+    import { AvatarSize } from "openchat-client";
     import UnresolvedReply from "../UnresolvedReply.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
+    import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
 
@@ -63,6 +66,11 @@
 {/if}
 
 <div class="message-row" class:me on:click={goToMessageIndex}>
+    <div class="avatar" on:click={openUserProfile}>
+        <Avatar
+            url={client.userAvatarUrl(sender)}
+            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+    </div>
     <div
         class="message-bubble"
         class:fill={fill && !deleted}
@@ -70,9 +78,9 @@
         class:deleted
         class:crypto
         class:rtl={$rtlStore}>
-        {#if !me && !deleted}
+        {#if !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
-                <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
+                <Link bind:this={usernameLink} underline={"never"} on:click={openUserProfile}>
                     <h4 class="username" class:fill class:crypto>{username}</h4>
                 </Link>
             </div>
@@ -125,6 +133,7 @@
             color: #fff;
             padding: $sp2 $sp4;
             border-radius: 0 0 $sp4 0;
+            z-index: 1;
 
             &.rtl {
                 right: 0;
@@ -133,14 +142,23 @@
         }
     }
 
+    $avatar-width: 56px;
+    $avatar-width-mob: 43px;
+
     .message-row {
         display: flex;
         justify-content: flex-start;
         cursor: pointer;
-        margin-bottom: $sp2;
+        margin-bottom: $sp4;
+        gap: $sp3;
 
-        &.me {
-            justify-content: flex-end;
+        .avatar {
+            flex: 0 0 $avatar-width;
+            cursor: pointer;
+
+            @include mobile() {
+                flex: 0 0 $avatar-width-mob;
+            }
         }
     }
 

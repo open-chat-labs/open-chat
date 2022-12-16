@@ -1,9 +1,10 @@
 <script lang="ts">
     export let compact: boolean = false;
     export let title: string | undefined = undefined;
+    export let disabled: boolean = false;
 </script>
 
-<div class="wrapper" class:compact role="button" {title}>
+<div class="wrapper" on:click class:compact class:disabled role="button" {title}>
     <slot />
 </div>
 
@@ -22,7 +23,7 @@
             padding: $sp2;
         }
 
-        &:hover {
+        &:not(.disabled):hover {
             background-color: var(--icon-hv);
         }
     }

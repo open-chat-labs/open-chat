@@ -24,6 +24,7 @@
 
     function close() {
         dispatch("close");
+        messages = { kind: "idle" };
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -33,7 +34,9 @@
 
     $: {
         if (pinned.size > 0) {
-            messages = { kind: "loading" };
+            if (messages.kind !== "success") {
+                messages = { kind: "loading" };
+            }
             client
                 .getGroupMessagesByMessageIndex(chatId, pinned)
                 .then((resp) => {
@@ -63,7 +66,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader gap>
     <h4>{$_("pinnedMessages")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
@@ -99,7 +102,7 @@
     h4 {
         flex: 1;
         margin: 0;
-        text-align: center;
+        @include font-size(fs-120);
     }
     .close {
         flex: 0 0 30px;

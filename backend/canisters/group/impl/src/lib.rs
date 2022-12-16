@@ -68,7 +68,7 @@ impl RuntimeState {
         if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
             let args = c2c_push_notification_v2::Args {
                 recipients,
-                notification_bytes: candid::encode_one(&notification).unwrap(),
+                notification_bytes: candid::encode_one(notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
@@ -172,7 +172,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             public: self.data.is_public,
             date_created: self.data.date_created,
-            members: self.data.participants.len() as u32,
+            members: self.data.participants.len(),
             admins: self.data.participants.admin_count(),
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,

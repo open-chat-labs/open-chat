@@ -48,6 +48,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.date.bg = "rgba(239 239 239 / 80%)";
     base.icon.txt = txt60;
     base.icon.inverted.txt = txt60;
+    base.icon.selected = base.primary;
     base.recommended.bg = white;
     base.markdown.fg.color = txt;
     base.markdown.fg.bright = txt;

@@ -117,7 +117,7 @@ impl RuntimeState {
             users_online_1_hour: user_metrics.users_online_1_hour,
             users_online_1_week: user_metrics.users_online_1_week,
             users_online_1_month: user_metrics.users_online_1_month,
-            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,

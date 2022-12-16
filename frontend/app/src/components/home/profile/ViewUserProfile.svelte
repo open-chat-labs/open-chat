@@ -12,6 +12,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { logger } from "../../../utils/logging";
     import type { OpenChat } from "openchat-client";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -23,14 +24,18 @@
     let profile: PublicProfile | undefined = undefined;
     let user: PartialUserSummary | undefined;
 
+    $: me = userId === client.user.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = alignTo === undefined || $mobileWidth;
-    $: status = isSuspended ? $_("accountSuspended") : client.formatLastOnlineDate($_, Date.now(), user);
+    $: status = isSuspended
+        ? $_("accountSuspended")
+        : client.formatLastOnlineDate($_, Date.now(), user);
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
             : "../assets/unknownUserAvatar.svg";
-    $: joined = profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
+    $: joined =
+        profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
     $: isPremium = profile?.isPremium ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
 
@@ -49,6 +54,11 @@
         dispatch("openDirectChat");
     }
 
+    function showUserProfile() {
+        rightPanelHistory.set([{ kind: "user_profile" }]);
+        onClose();
+    }
+
     function onClose() {
         dispatch("close");
     }
@@ -61,9 +71,9 @@
 
     function formatDate(timestamp: bigint): string {
         const date = new Date(Number(timestamp));
-        return date.toLocaleDateString(undefined, { 
-            month: "short", 
-            year: "numeric" 
+        return date.toLocaleDateString(undefined, {
+            month: "short",
+            year: "numeric",
         });
     }
 </script>
@@ -98,10 +108,15 @@
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={chatButton ? "fill" : "center"}>
-                    {#if chatButton}
-                        <Button on:click={handleOpenDirectChat} small={true}>Chat</Button>
+                    {#if chatButton && !me}
+                        <Button on:click={handleOpenDirectChat} small={true}
+                            >{$_("profile.chat")}</Button>
                     {/if}
-                    <Button on:click={onClose} small={true} secondary={true}>Close</Button>
+                    {#if me}
+                        <Button on:click={showUserProfile} small={true}
+                            >{$_("profile.settings")}</Button>
+                    {/if}
+                    <Button on:click={onClose} small={true} secondary={true}>{$_("close")}</Button>
                 </ButtonGroup>
             </div>
         </ModalContent>

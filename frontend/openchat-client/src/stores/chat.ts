@@ -35,6 +35,7 @@ import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
+import { setsAreEqual } from "../utils/set";
 
 export type ChatState = {
     chatId: string;
@@ -74,19 +75,16 @@ export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> =
 export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
 
 export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [
-        myServerChatSummariesStore,
-        groupPreviewsStore
-    ],
+    [myServerChatSummariesStore, groupPreviewsStore],
     ([summaries, previews]) => {
-        return Object.entries<ChatSummary>(previews).concat(Object.entries(summaries)).reduce<Record<string, ChatSummary>>(
-            (result, [chatId, summary]) => {
+        return Object.entries<ChatSummary>(previews)
+            .concat(Object.entries(summaries))
+            .reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
                 result[chatId] = summary;
                 return result;
-            },
-            {}
-        );
-    });
+            }, {});
+    }
+);
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
     [
@@ -107,7 +105,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         currentUser.userId,
                         summary,
                         unconfirmed,
-                        localUpdates,
+                        localUpdates
                     );
                 }
                 return result;
@@ -346,12 +344,13 @@ export const chatDetailsLatestEventIndex = createDerivedPropStore<
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,
     "blockedUsers",
-    () => new Set<string>()
+    () => new Set<string>(),
+    setsAreEqual
 );
 export const currentChatPinnedMessages = createDerivedPropStore<
     ChatSpecificState,
     "pinnedMessages"
->(chatStateStore, "pinnedMessages", () => new Set<number>());
+>(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
 
 export function setSelectedChat(
     api: OpenChatAgentWorker,
@@ -462,7 +461,7 @@ export function addGroupPreview(chat: GroupChatSummary): void {
     localChatSummaryUpdates.delete(chat.chatId);
     groupPreviewsStore.update((summaries) => ({
         ...summaries,
-        [chat.chatId]: chat
+        [chat.chatId]: chat,
     }));
 }
 
@@ -498,9 +497,8 @@ export function addServerEventsToStores(
         return;
     }
 
-    const key = threadRootMessageIndex === undefined
-        ? chatId
-        : `${chatId}_${threadRootMessageIndex}`;
+    const key =
+        threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
 
     for (const event of newEvents) {
         if (event.event.kind === "message") {

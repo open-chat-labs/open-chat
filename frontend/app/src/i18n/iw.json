@@ -620,7 +620,11 @@
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו",
-    "profile": "הגדרות פרופיל",
+    "profile": {
+        "title": "הגדרות פרופיל",
+        "chat": "לְשׂוֹחֵחַ",
+        "settings": "הגדרות"
+    },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
     "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",

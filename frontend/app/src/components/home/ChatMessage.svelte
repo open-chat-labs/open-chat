@@ -17,44 +17,25 @@
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
-    import { _, locale } from "svelte-i18n";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import Cancel from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import Reply from "svelte-material-icons/Reply.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
-    import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
-    import TranslateIcon from "svelte-material-icons/Translate.svelte";
-    import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import PinOff from "svelte-material-icons/PinOff.svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import { translationCodes } from "../../i18n/i18n";
-    import { toastStore } from "stores/toast";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../stores/routing";
     import { canShareMessage } from "../../utils/share";
-    import { push } from "svelte-spa-router";
+    import ChatMessageMenu from "./ChatMessageMenu.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -103,7 +84,6 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
-    $: storageStore = client.storageStore;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
     $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
@@ -115,7 +95,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
-    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
+    $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
@@ -172,80 +152,14 @@
         };
     }
 
-    function pinMessage() {
-        dispatch("pinMessage", msg);
-    }
-
-    function unpinMessage() {
-        dispatch("unpinMessage", msg);
-    }
-
     function reply() {
         if (canQuoteReply) {
             dispatch("replyTo", createReplyContext());
         }
     }
 
-    // this is called if we are starting a new thread so we pass undefined as the threadSummary param
-    function initiateThread() {
-        if (msg.thread !== undefined) {
-            push(`/${chatId}/${msg.messageIndex}`);
-        } else {
-            client.openThread(msg.messageId, msg.messageIndex, true);
-        }
-    }
-
-    function forward() {
-        dispatch("forward", msg);
-    }
-
     function replyPrivately() {
         dispatch("replyPrivatelyTo", createReplyContext());
-    }
-
-    function deleteMessage() {
-        dispatch("deleteMessage", msg);
-    }
-
-    function undeleteMessage() {
-        dispatch("undeleteMessage", msg);
-    }
-
-    function untranslateMessage() {
-        translationStore.untranslate(msg.messageId);
-    }
-
-    function translateMessage() {
-        if ($storageStore.byteLimit === 0) {
-            dispatch("upgrade", "premium");
-        } else {
-            if (msg.content.kind === "text_content") {
-                const params = new URLSearchParams();
-                params.append("q", msg.content.text);
-                params.append("target", translationCodes[$locale || "en"] || "en");
-                params.append("format", "text");
-                params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
-                fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-                    method: "POST",
-                })
-                    .then((resp) => resp.json())
-                    .then(({ data: { translations } }) => {
-                        if (
-                            msg.content.kind === "text_content" &&
-                            Array.isArray(translations) &&
-                            translations.length > 0
-                        ) {
-                            translationStore.translate(
-                                msg.messageId,
-                                translations[0].translatedText
-                            );
-                        }
-                    })
-                    .catch((_err) => {
-                        toastStore.showFailureToast("unableToTranslate");
-                    });
-            }
-        }
     }
 
     function editMessage() {
@@ -329,10 +243,6 @@
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
     }
 
-    function blockUser() {
-        dispatch("blockUser", { userId: senderId });
-    }
-
     function openUserProfile(ev: Event) {
         if (ev.target) {
             alignProfileTo = (ev.target as HTMLElement).getBoundingClientRect();
@@ -354,18 +264,6 @@
 
     function canShare(): boolean {
         return canShareMessage(msg.content);
-    }
-
-    function shareMessage() {
-        dispatch("shareMessage", msg);
-    }
-
-    function copyMessageUrl() {
-        dispatch("copyMessageUrl", msg);
-    }
-
-    function collapseMessage() {
-        dispatch("collapseMessage");
     }
 </script>
 
@@ -397,6 +295,7 @@
     <ViewUserProfile
         alignTo={alignProfileTo}
         userId={sender.userId}
+        chatButton={groupChat}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}
@@ -409,16 +308,6 @@
         data-index={msg.messageIndex}
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
-        {#if me && !inert && canReact}
-            <div class="actions">
-                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                    <HoverIcon>
-                        <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-            </div>
-        {/if}
-
         {#if showAvatar}
             <div class="avatar-col">
                 {#if first}
@@ -452,7 +341,7 @@
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !isProposal}
+            {#if first && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -535,161 +424,45 @@
             {/if}
 
             {#if (!inert || canUndelete) && !readonly}
-                <div class="menu" class:rtl={$rtlStore}>
-                    <MenuIcon centered>
-                        <div class="menu-icon" slot="icon">
-                            <HoverIcon compact={true}>
-                                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
-                            </HoverIcon>
-                        </div>
-                        <div slot="menu">
-                            <Menu centered>
-                                {#if isProposal && !inert}
-                                    <MenuItem on:click={collapseMessage}>
-                                        <EyeOff
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("proposal.collapse")}</div>
-                                    </MenuItem>
-                                {/if}
-                                {#if publicGroup && confirmed && !inert}
-                                    {#if canShare()}
-                                        <MenuItem on:click={shareMessage}>
-                                            <ShareIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("share")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                    <MenuItem on:click={copyMessageUrl}>
-                                        <ContentCopy
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("copyMessageUrl")}</div>
-                                    </MenuItem>
-                                {/if}
-                                {#if confirmed && canPin && !inThread && !inert}
-                                    {#if pinned}
-                                        <MenuItem on:click={unpinMessage}>
-                                            <PinOff
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("unpinMessage")}</div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={pinMessage}>
-                                            <Pin
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("pinMessage")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                                {#if confirmed && supportsReply && !inert}
-                                    {#if canQuoteReply}
-                                        <MenuItem on:click={reply}>
-                                            <Reply
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("quoteReply")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                    {#if !inThread && canStartThread}
-                                        <MenuItem on:click={initiateThread}>
-                                            <span class="thread" slot="icon">🧵</span>
-                                            <div slot="text">{$_("thread.menu")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                                {#if client.canForward(msg.content) && !inThread && !inert}
-                                    <MenuItem on:click={forward}>
-                                        <ForwardIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("forward")}</div>
-                                    </MenuItem>
-                                {/if}
-                                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert}
-                                    <MenuItem on:click={replyPrivately}>
-                                        <ReplyOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("replyPrivately")}</div>
-                                    </MenuItem>
-                                    {#if canBlockUser}
-                                        <MenuItem on:click={blockUser}>
-                                            <Cancel
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("blockUser")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                                {#if canEdit && !inert}
-                                    <MenuItem on:click={editMessage}>
-                                        <PencilOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("editMessage")}</div>
-                                    </MenuItem>
-                                {/if}
-                                {#if (canDelete || me) && !crypto && !inert}
-                                    <MenuItem on:click={deleteMessage}>
-                                        <DeleteOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
-                                        </div>
-                                    </MenuItem>
-                                {/if}
-                                {#if canUndelete}
-                                    <MenuItem on:click={undeleteMessage}>
-                                        <DeleteOffOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("undeleteMessage")}</div>
-                                    </MenuItem>
-                                {/if}
-                                {#if msg.content.kind === "text_content"}
-                                    {#if translated}
-                                        <MenuItem on:click={untranslateMessage}>
-                                            <TranslateOff
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("untranslateMessage")}</div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={translateMessage}>
-                                            <TranslateIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("translateMessage")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                            </Menu>
-                        </div>
-                    </MenuIcon>
-                </div>
+                <ChatMessageMenu
+                    {chatId}
+                    {senderId}
+                    {isProposal}
+                    {inert}
+                    {publicGroup}
+                    {confirmed}
+                    canShare={canShare()}
+                    {me}
+                    {canPin}
+                    {pinned}
+                    {supportsReply}
+                    {canQuoteReply}
+                    {inThread}
+                    {canStartThread}
+                    {groupChat}
+                    {msg}
+                    canForward={client.canForward(msg.content)}
+                    {canBlockUser}
+                    {canEdit}
+                    {canDelete}
+                    {canUndelete}
+                    {crypto}
+                    translatable={msg.content.kind === "text_content"}
+                    {translated}
+                    on:collapseMessage
+                    on:shareMessage
+                    on:copyMessageUrl
+                    on:pinMessage
+                    on:forward
+                    on:unpinMessage
+                    on:deleteMessage
+                    on:reply={reply}
+                    on:replyPrivately={replyPrivately}
+                    on:editMessage={editMessage} />
             {/if}
         </div>
 
-        {#if !me && !inert && canReact}
+        {#if !inert && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -756,26 +529,6 @@
         color: inherit;
     }
 
-    :global(.message-bubble:hover .menu-icon .wrapper) {
-        background-color: var(--icon-msg-hv);
-    }
-
-    :global(.message-bubble.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-        background-color: rgba(255, 255, 255, 0.3);
-    }
-
-    :global(.me .menu-icon:hover .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-hv);
-    }
-
     :global(.actions .reaction .wrapper) {
         padding: 6px;
     }
@@ -808,31 +561,15 @@
         }
     }
 
-    .menu {
-        $offset: -2px;
-        position: absolute;
-        top: -4px;
-        right: $offset;
-
-        &.rtl {
-            left: $offset;
-            right: unset;
-        }
-    }
-
-    .menu-icon {
-        transition: opacity ease-in-out 200ms;
-        opacity: 0;
-    }
-
     .message-reactions {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
+        gap: 3px;
 
-        &.me {
-            justify-content: flex-end;
-        }
+        // &.me {
+        //     justify-content: flex-end;
+        // }
 
         &.indent {
             margin-left: $avatar-width;
@@ -847,9 +584,9 @@
         justify-content: flex-start;
         margin-bottom: $sp2;
 
-        &.me {
-            justify-content: flex-end;
-        }
+        // &.me {
+        //     justify-content: flex-end;
+        // }
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -921,12 +658,6 @@
             }
         }
 
-        &:hover {
-            .menu-icon {
-                opacity: 1;
-            }
-        }
-
         &:not(.readByMe) {
             box-shadow: 0 0 0 5px var(--notificationBar-bg);
         }
@@ -944,16 +675,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-
-            &.last:not(.first) {
-                border-radius: $radius $inner-radius $radius $radius;
-            }
-            &.first:not(.last) {
-                border-radius: $radius $radius $inner-radius $radius;
-            }
-            &:not(.first):not(.last) {
-                border-radius: $radius $inner-radius $inner-radius $radius;
-            }
         }
 
         &.crypto {
@@ -969,18 +690,6 @@
             }
             &:not(.first):not(.last) {
                 border-radius: $radius $inner-radius $inner-radius $radius;
-            }
-
-            &.me {
-                &.last:not(.first) {
-                    border-radius: $inner-radius $radius $radius $radius;
-                }
-                &.first:not(.last) {
-                    border-radius: $radius $radius $radius $inner-radius;
-                }
-                &:not(.first):not(.last) {
-                    border-radius: $inner-radius $radius $radius $inner-radius;
-                }
             }
         }
 

@@ -8,6 +8,7 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { snowing } from "../../stores/snow";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
@@ -79,9 +80,12 @@
     let textboxId = Symbol();
 
     $: userStore = client.userStore;
+    $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isGroup = chat.kind === "group_chat";
+    $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: isFrozen = client.isFrozen(chat.chatId);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);
 
     $: {
         if (inp) {
@@ -267,6 +271,10 @@
         if (isGroup && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
+        }
+
+        if (/snow|xmas|christmas|noel/.test(txt)) {
+            $snowing = true;
         }
 
         const searchMatch = txt.match(/^\/search( *(.*))$/);
@@ -563,9 +571,11 @@
                 bind:messageAction
                 {fileToAttach}
                 {mode}
+                {pollsAllowed}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:attachGif
+                on:createPoll
                 on:clearAttachment
                 on:fileSelected />
         {:else}

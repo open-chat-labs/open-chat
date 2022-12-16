@@ -1,9 +1,11 @@
 <script lang="ts">
     import FileAttacher from "./FileAttacher.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import Transfer from "../icons/Transfer.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
@@ -18,6 +20,7 @@
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
     export let fileToAttach: MessageContent | undefined;
     export let mode: "thread" | "message" = "message";
+    export let pollsAllowed: boolean;
 
     let drawOpen = false;
 
@@ -60,6 +63,11 @@
         } else {
             drawOpen = true;
         }
+    }
+
+    function createPoll() {
+        dispatch("createPoll");
+        drawOpen = false;
     }
 
     function sendGif() {
@@ -111,7 +119,7 @@
         </div>
         <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
             <HoverIcon title={"Send Crypto"}>
-                <SwapHorizontal size={$iconSize} color={iconColour} />
+                <Transfer size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>
         <div class="gif" on:click|stopPropagation={sendGif}>
@@ -119,6 +127,13 @@
                 <StickerEmoji size={$iconSize} color={iconColour} />
             </HoverIcon>
         </div>
+        {#if pollsAllowed}
+            <div class="poll" on:click|stopPropagation={createPoll}>
+                <HoverIcon title={$_("poll.create")}>
+                    <Poll size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -163,12 +178,14 @@
             .emoji,
             .attach,
             .gif,
-            .send-icp {
+            .send-icp,
+            .poll {
                 top: -18px;
-                left: toRem(-38);
+                left: toRem(-44);
                 opacity: 0;
                 position: absolute;
                 transition: top 200ms ease-in, opacity 200ms ease-in;
+                @include z-index("action-list");
             }
 
             &.visible {
@@ -178,21 +195,26 @@
                 .emoji {
                     opacity: 1;
                     top: -75px;
-                    transition-delay: 150ms;
+                    transition-delay: 200ms;
                 }
                 .attach {
                     opacity: 1;
                     top: -120px;
-                    transition-delay: 100ms;
+                    transition-delay: 150ms;
                 }
                 .send-icp {
                     opacity: 1;
                     top: -165px;
-                    transition-delay: 50ms;
+                    transition-delay: 100ms;
                 }
                 .gif {
                     opacity: 1;
                     top: -210px;
+                    transition-delay: 50ms;
+                }
+                .poll {
+                    opacity: 1;
+                    top: -255px;
                 }
             }
         }

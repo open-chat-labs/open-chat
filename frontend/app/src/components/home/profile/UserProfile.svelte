@@ -161,7 +161,7 @@
 </script>
 
 <SectionHeader flush={true} shadow={true}>
-    <h4 class="title">{$_("profile")}</h4>
+    <h4 class="title">{$_("profile.title")}</h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

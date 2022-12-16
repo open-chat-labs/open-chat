@@ -622,7 +622,11 @@
     "joined": "Rejoint",
     "oneMessageDeleted": "1 message supprimé",
     "nMessagesDeleted": "{number} messages supprimés",
-    "profile": "Paramètres de profil",
+    "profile": {
+        "title": "Paramètres de profil",
+        "chat": "Discuter",
+        "settings": "Réglages"
+    },
     "undeleteMessage": "Annuler la suppression",
     "undeletingMessage": "Récupération du message de {username} sur {timestamp}",
     "undeleteMessageFailed": "Échec de la restauration du message",
