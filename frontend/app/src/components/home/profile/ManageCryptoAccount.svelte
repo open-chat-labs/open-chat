@@ -100,9 +100,7 @@
                     bind:this={balanceWithRefresh}
                     {token}
                     value={remainingBalanceE8s}
-                    label={amountToWithdrawE8s > BigInt(0)
-                        ? $_("cryptoAccount.shortRemainingBalanceLabel")
-                        : $_("cryptoAccount.shortBalanceLabel")}
+                    label={$_("cryptoAccount.shortBalanceLabel")}
                     minDecimals={2}
                     bold
                     on:refreshed={onBalanceRefreshed}
@@ -138,7 +136,7 @@
                         {#if !withdrawing}
                             <Send
                                 size={$iconSize}
-                                color={valid ? "var(--accent)" : "var(--icon-txt)"} />
+                                color={valid ? "var(--icon-selected)" : "var(--icon-txt)"} />
                         {/if}
                     </div>
                 </div>
@@ -160,6 +158,10 @@
 {/if}
 
 <style type="text/scss">
+    :global(.target .input-wrapper input) {
+        padding-right: 40px;
+    }
+
     .or {
         display: flex;
         gap: $sp4;
