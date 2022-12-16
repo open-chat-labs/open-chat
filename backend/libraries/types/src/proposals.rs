@@ -174,6 +174,8 @@ pub struct Tally {
     pub yes: u64,
     pub no: u64,
     pub total: u64,
+    #[serde(default)]
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
