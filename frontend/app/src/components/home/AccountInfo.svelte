@@ -4,11 +4,12 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { CreatedUser } from "openchat-client";
+    import type { CreatedUser, Cryptocurrency } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
+    export let token: Cryptocurrency;
 
     let accountSummary = collapseAccount(user.cryptoAccount);
     function collapseAccount(account: string) {
@@ -32,9 +33,12 @@
 </script>
 
 <div class="account-info">
-    <div class="qr" class:smaller={qrSize === "smaller"}>
-        <QR text={user.cryptoAccount} />
+    <div class="qr-wrapper">
+        <div class="qr" class:smaller={qrSize === "smaller"}>
+            <QR text={user.cryptoAccount} />
+        </div>
     </div>
+    <p>{$_("tokenTransfer.yourAccount", { values: { token: token.toUpperCase() } })}</p>
     <div class="receiver">
         <div class="account">
             {accountSummary}
@@ -46,6 +50,15 @@
 </div>
 
 <style type="text/scss">
+    .qr-wrapper {
+        border: 1px solid var(--bd);
+        padding: $sp5;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: $sp4;
+    }
+
     .qr {
         background-color: #fff;
         width: 140px;
@@ -58,25 +71,24 @@
     }
 
     .account-info {
-        text-align: center;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        margin-bottom: $sp4;
     }
 
     .receiver {
         display: flex;
         align-items: center;
+        gap: $sp3;
         .account {
             @include ellipsis();
             @include font(book, normal, fs-80);
-            width: 200px;
+            color: var(--primary);
         }
 
         .copy {
             cursor: pointer;
             width: 30px;
         }
-        margin: $sp4 0;
     }
 </style>

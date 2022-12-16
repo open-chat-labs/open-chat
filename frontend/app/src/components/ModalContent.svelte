@@ -95,6 +95,8 @@
         justify-content: space-between;
         background: var(--modal-bg);
         border: var(--modal-bd);
+        border-radius: $sp4;
+
         @include mobile() {
             &:not(.fit_to_content) {
                 width: 100%;
@@ -119,16 +121,16 @@
         }
     }
     .header {
-        padding: $sp4;
-        border-bottom: 1px solid var(--bd);
+        padding: $sp4 $sp5;
         @include mobile() {
+            padding: $sp3 $sp4;
             border-radius: $sp4 $sp4 0 0;
         }
     }
 
     .body {
         flex: 1;
-        padding: $sp4;
+        padding: $sp4 $sp5;
         overflow-y: auto;
         @include nice-scrollbar();
 
@@ -137,17 +139,17 @@
         }
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
     }
     .footer {
-        padding: $sp4;
+        padding: $sp4 $sp5;
         &.compact {
             padding: $sp3 $sp4;
         }
-        border-top: 1px solid var(--bd);
         text-align: right;
         @include mobile() {
+            padding: $sp3 $sp4;
             border-radius: 0;
         }
         &.rtl {

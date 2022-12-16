@@ -76,8 +76,9 @@
         }
 
         &.secondary {
-            background: var(--button-txt);
-            color: var(--button-bg);
+            background: none;
+            color: var(--txt-light);
+            border: 1px solid var(--bd);
         }
 
         &.fill {

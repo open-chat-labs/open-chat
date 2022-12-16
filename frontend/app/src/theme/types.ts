@@ -15,6 +15,7 @@ export interface Theme {
     bd: string;
 
     error: string;
+    warn: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
