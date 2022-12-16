@@ -1055,7 +1055,12 @@ export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'updates' : GroupCanisterGroupChatSummaryUpdates } } |
   { 'SuccessNoUpdates' : null };
-export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
+export interface Tally {
+  'no' : bigint,
+  'yes' : bigint,
+  'total' : bigint,
+  'timestamp' : TimestampMillis,
+}
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
   'latest_replies' : Array<MessageEventWrapper>,

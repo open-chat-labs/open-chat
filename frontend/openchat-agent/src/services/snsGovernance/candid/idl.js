@@ -1,4 +1,24 @@
 export const idlFactory = ({ IDL }) => {
+  const ProposalId = IDL.Record({ 'id' : IDL.Nat64 });
+  const GetProposal = IDL.Record({ 'proposal_id' : IDL.Opt(ProposalId) });
+  const GovernanceError = IDL.Record({
+    'error_message' : IDL.Text,
+    'error_type' : IDL.Int32,
+  });
+  const Tally = IDL.Record({
+    'no' : IDL.Nat64,
+    'yes' : IDL.Nat64,
+    'total' : IDL.Nat64,
+    'timestamp_seconds' : IDL.Nat64,
+  });
+  const ProposalDataTrimmed = IDL.Record({ 'latest_tally' : IDL.Opt(Tally) });
+  const GetProposalResult = IDL.Variant({
+    'Error' : GovernanceError,
+    'Proposal' : ProposalDataTrimmed,
+  });
+  const GetProposalResponse = IDL.Record({
+    'result' : IDL.Opt(GetProposalResult),
+  });
   const GenericNervousSystemFunction = IDL.Record({
     'validator_canister_id' : IDL.Opt(IDL.Principal),
     'target_canister_id' : IDL.Opt(IDL.Principal),
@@ -20,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
     'functions' : IDL.Vec(NervousSystemFunction),
   });
   return IDL.Service({
+    'get_proposal' : IDL.Func([GetProposal], [GetProposalResponse], ['query']),
     'list_nervous_system_functions' : IDL.Func(
         [],
         [ListNervousSystemFunctionsResponse],

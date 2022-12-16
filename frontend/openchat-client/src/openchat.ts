@@ -138,6 +138,7 @@ import {
 } from "./stores/notifications";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
+import { proposalTallies } from "./stores/proposalTallies";
 import {
     percentageStorageRemaining,
     percentageStorageUsed,
@@ -282,6 +283,7 @@ import {
     type Logger,
     type ChatFrozenEvent,
     type ChatUnfrozenEvent,
+    type Tally,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -2487,6 +2489,14 @@ export class OpenChat extends EventTarget {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
+    }
+
+    getSnsTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
+        return this.api.getSnsTally(snsGovernanceCanisterId, proposalId)
+            .then((tally) => {
+                proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
+                return tally;
+            })
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {

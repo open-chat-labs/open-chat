@@ -688,6 +688,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "getSnsTally":
+                agent
+                    .getSnsTally(payload.snsGovernanceCanisterId, payload.proposalId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "listNervousSystemFunctions":
                 agent
                     .listNervousSystemFunctions(payload.snsGovernanceCanisterId)

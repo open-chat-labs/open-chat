@@ -40,6 +40,7 @@ import type {
     RegisterProposalVoteResponse,
     RemoveMemberResponse,
     SendMessageResponse,
+    Tally,
     ThreadPreview,
     ThreadRead,
     ThreadSyncDetails,
@@ -115,6 +116,7 @@ export type WorkerRequest =
     | SendMessage
     | UnpinMessage
     | PinMessage
+    | GetSnsTallyRequest
     | ListNervousSystemFunctions
     | BlockUserFromGroup
     | AddGroupChatReaction
@@ -435,6 +437,13 @@ type UnpinMessage = Request<{
     messageIndex: number;
 }> & {
     kind: "unpinMessage";
+};
+
+type GetSnsTallyRequest = Request<{
+    snsGovernanceCanisterId: string;
+    proposalId: bigint;
+}> & {
+    kind: "getSnsTally";
 };
 
 type ListNervousSystemFunctions = Request<{
@@ -826,6 +835,7 @@ export type WorkerResponse =
     | Response<[SendMessageResponse, Message]>
     | Response<UnpinMessageResponse>
     | Response<PinMessageResponse>
+    | Response<Tally>
     | Response<ListNervousSystemFunctionsResponse>
     | Response<AddRemoveReactionResponse>
     | Response<DeleteMessageResponse>

@@ -38,6 +38,7 @@ import type {
     ApiProposalRewardStatus,
 } from "../user/candid/idl";
 import type {
+    ApiGetProposalResponse,
     ApiListNervousSystemFunctionsResponse,
     ApiNervousSystemFunction,
     ApiSnsFunctionType,
@@ -79,6 +80,7 @@ import {
     type ListNervousSystemFunctionsResponse,
     type NervousSystemFunction,
     type SnsFunctionType,
+    Tally,
     UnsupportedValueError,
 } from "openchat-shared";
 
@@ -184,6 +186,7 @@ function proposal(candid: ApiProposal): Proposal {
                 yes: Number(p.tally.yes / E8S_AS_BIGINT),
                 no: Number(p.tally.no / E8S_AS_BIGINT),
                 total: Number(p.tally.total / E8S_AS_BIGINT),
+                timestamp: BigInt(0),
             },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
@@ -205,6 +208,7 @@ function proposal(candid: ApiProposal): Proposal {
                 yes: Number(p.tally.yes / E8S_AS_BIGINT),
                 no: Number(p.tally.no / E8S_AS_BIGINT),
                 total: Number(p.tally.total / E8S_AS_BIGINT),
+                timestamp: p.tally.timestamp,
             },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
@@ -756,6 +760,25 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
+}
+
+export function getTallyResponse(
+    candid: ApiGetProposalResponse
+): Tally {
+    const result = candid.result[0];
+    if (result === undefined) {
+        throw new Error("GetProposal returned an empty response");
+    }
+    if ("Proposal" in result && result.Proposal.latest_tally[0] !== undefined) {
+        const tally = result.Proposal.latest_tally[0];
+        return {
+            yes: Number(tally.yes / E8S_AS_BIGINT),
+            no: Number(tally.no / E8S_AS_BIGINT),
+            total: Number(tally.total / E8S_AS_BIGINT),
+            timestamp: tally.timestamp_seconds * BigInt(1000)
+        };
+    }
+    throw new Error("GetProposal returned an error: " + JSON.stringify(candid));
 }
 
 export function nervousSystemFunctions(

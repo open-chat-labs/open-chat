@@ -89,6 +89,7 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
+    Tally,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -779,6 +780,19 @@ export class OpenChatAgentWorker extends EventTarget {
                 userId,
             },
         });
+    }
+
+    getSnsTally(
+        snsGovernanceCanisterId: string,
+        proposalId: bigint
+    ): Promise<Tally> {
+        return this.sendRequest({
+            kind: "getSnsTally",
+            payload: {
+                snsGovernanceCanisterId,
+                proposalId,
+            }
+        })
     }
 
     listNervousSystemFunctions(

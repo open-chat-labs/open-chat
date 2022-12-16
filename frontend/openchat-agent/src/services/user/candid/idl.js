@@ -199,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
     'no' : IDL.Nat64,
     'yes' : IDL.Nat64,
     'total' : IDL.Nat64,
+    'timestamp' : TimestampMillis,
   });
   const ProposalRewardStatus = IDL.Variant({
     'ReadyToSettle' : IDL.Null,

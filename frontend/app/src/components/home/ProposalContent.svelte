@@ -7,6 +7,7 @@
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
     } from "openchat-client";
+    import { Tally } from "openchat-shared";
     import Markdown from "./Markdown.svelte";
     import { now, now500 } from "../../stores/time";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
@@ -71,11 +72,19 @@
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";
     $: showFullSummary = proposal.summary.length < 400;
+    $: tally = getTally(proposal.tally, $proposalTallies[tallyKey(content.governanceCanisterId, proposal.id)]);
 
     $: {
         if (collapsed) {
             summaryExpanded = false;
         }
+    }
+
+    function getTally(original: Tally, update: Tally | undefined): Tally {
+        if (update !== undefined && update.timestamp > original.timestamp) {
+            return update;
+        }
+        return original;
     }
 
     function toggleSummary() {
@@ -99,6 +108,7 @@
                 if (resp === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
+                    updateProposalTally();
                 } else if (resp === "no_eligible_neurons") {
                     showNeuronInfo = true;
                 } else {
@@ -115,6 +125,10 @@
                     proposalVotes.delete(mId);
                 }
             });
+    }
+
+    function updateProposalTally() {
+        client.getSnsTally(content.governanceCanisterId, proposal.id);
     }
 
     function registerProposalVoteErrorMessage(

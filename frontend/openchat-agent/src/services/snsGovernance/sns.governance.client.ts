@@ -1,9 +1,9 @@
 import type { Identity } from "@dfinity/agent";
+import type { ListNervousSystemFunctionsResponse, Tally } from "openchat-shared";
 import { idlFactory, SnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ISnsGovernanceClient } from "./sns.governance.client.interface";
-import type { ListNervousSystemFunctionsResponse } from "openchat-shared";
-import { nervousSystemFunctions } from "../common/chatMappers";
+import { apiOptional, getTallyResponse, nervousSystemFunctions } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 
 export class SnsGovernanceClient extends CandidService implements ISnsGovernanceClient {
@@ -27,9 +27,19 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
         return new SnsGovernanceClient(identity, config, canisterId);
     }
 
+    getTally(proposalId: bigint): Promise<Tally> {
+        const args = {
+            proposal_id: apiOptional((id) => ({ id }), proposalId)
+        };
+        return this.handleQueryResponse(
+            () => this.service.get_proposal(args),
+            getTallyResponse
+        )
+    }
+
     listNervousSystemFunctions(): Promise<ListNervousSystemFunctionsResponse> {
-        return this.handleResponse(
-            this.service.list_nervous_system_functions(),
+        return this.handleQueryResponse(
+            () => this.service.list_nervous_system_functions(),
             nervousSystemFunctions
         );
     }

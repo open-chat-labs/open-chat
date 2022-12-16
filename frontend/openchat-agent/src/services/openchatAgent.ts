@@ -114,6 +114,7 @@ import {
     UnfreezeGroupResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Tally,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
@@ -1233,6 +1234,17 @@ export class OpenChatAgent extends EventTarget {
             undefined
         );
         return userClient.migrateUserPrincipal();
+    }
+
+    getSnsTally(
+        snsGovernanceCanisterId: string,
+        proposalId: bigint
+    ): Promise<Tally> {
+        return SnsGovernanceClient.create(
+            this.identity,
+            this.config,
+            snsGovernanceCanisterId
+        ).getTally(proposalId);
     }
 
     listNervousSystemFunctions(
