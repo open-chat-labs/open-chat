@@ -76,7 +76,11 @@
     "durationMins": "{duration} minutes",
     "durationHours": "{duration} hours",
     "removeChat": "Remove chat",
-    "profile": "Profile settings",
+    "profile": {
+        "title": "Profile settings",
+        "chat": "Chat",
+        "settings": "Settings"
+    },
     "durationDays": "{duration} days",
     "oneHour": "1 hour",
     "oneDay": "1 day",

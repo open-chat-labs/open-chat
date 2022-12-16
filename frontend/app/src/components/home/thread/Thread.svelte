@@ -154,7 +154,6 @@
         .groupEvents([rootEvent, ...$threadEvents], user.userId)
         .reverse() as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
-    $: pollsAllowed = client.canCreatePolls(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
 
     function onSentMessage(event: EventWrapper<Message>) {
@@ -459,7 +458,6 @@
     on:createPoll={createPoll}
     on:closeThread
     {rootEvent}
-    {pollsAllowed}
     chatSummary={chat} />
 
 <div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>

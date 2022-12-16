@@ -622,7 +622,11 @@
     "joined": "Присоединился",
     "oneMessageDeleted": "1 сообщение удалено",
     "nMessagesDeleted": "{number} сообщений удалено",
-    "profile": "Настройки профиля",
+    "profile": {
+        "title": "Настройки профиля",
+        "chat": "Чат",
+        "settings": "Настройки"
+    },
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",
     "undeleteMessageFailed": "Не удалось восстановить сообщение",

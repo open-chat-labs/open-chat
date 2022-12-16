@@ -62,7 +62,7 @@
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("profile")}</span>
+                        <span slot="text">{$_("profile.title")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFaq")}>
                         <HelpCircleOutline

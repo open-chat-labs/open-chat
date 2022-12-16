@@ -15,15 +15,10 @@
     import Typing from "../../Typing.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import Markdown from "../../home/Markdown.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
     import { mobileWidth } from "stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
 
@@ -32,7 +27,6 @@
 
     export let chatSummary: ChatSummary;
     export let rootEvent: EventWrapper<Message>;
-    export let pollsAllowed: boolean;
     export let threadRootMessageIndex: number;
 
     $: byThread = client.typersByThread;
@@ -71,26 +65,9 @@
             typing: someoneTyping !== undefined,
         };
     }
-
-    function createPoll() {
-        dispatch("createPoll");
-    }
 </script>
 
 <SectionHeader gap={true} flush={true} shadow={true}>
-    <div class="close" on:click={close}>
-        <HoverIcon>
-            {#if $mobileWidth}
-                {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                {/if}
-            {:else}
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
-            {/if}
-        </HoverIcon>
-    </div>
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
@@ -110,25 +87,19 @@
             {/if}
         </div>
     </div>
-    {#if pollsAllowed}
-        <div class="menu">
-            <MenuIcon>
-                <div slot="icon">
-                    <HoverIcon>
-                        <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-                <div slot="menu">
-                    <Menu>
-                        <MenuItem on:click={createPoll}>
-                            <Poll size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">{$_("poll.create")}</div>
-                        </MenuItem>
-                    </Menu>
-                </div>
-            </MenuIcon>
-        </div>
-    {/if}
+    <div class="close" on:click={close}>
+        <HoverIcon>
+            {#if $mobileWidth}
+                {#if $rtlStore}
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                {:else}
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                {/if}
+            {:else}
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </HoverIcon>
+    </div>
 </SectionHeader>
 
 <style type="text/scss">

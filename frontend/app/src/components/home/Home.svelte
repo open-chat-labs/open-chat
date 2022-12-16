@@ -41,7 +41,7 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, RightPanelState } from "./rightPanel";
+    import { filterByChatType, rightPanelHistory, RightPanelState } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -107,12 +107,10 @@
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
-    let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: userStore = client.userStore;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: chatsLoading = client.chatsLoading;
@@ -301,9 +299,11 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        rightPanelHistory = rightPanelHistory.filter(
-            (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
-        );
+        rightPanelHistory.update((history) => {
+            return history.filter(
+                (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
+            );
+        });
     }
 
     function closeThread() {
@@ -311,13 +311,15 @@
             creatingThread = false;
             return;
         }
-        rightPanelHistory = rightPanelHistory.filter(
-            (panel) => panel.kind !== "message_thread_panel"
-        );
+        rightPanelHistory.update((history) => {
+            return history.filter((panel) => panel.kind !== "message_thread_panel");
+        });
     }
 
     function resetRightPanel() {
-        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChatStore);
+        rightPanelHistory.update((history) => {
+            return filterByChatType(history, $selectedChatStore);
+        });
     }
 
     function userAvatarSelected(ev: CustomEvent<{ data: Uint8Array }>): void {
@@ -361,10 +363,7 @@
             groupSearchResults = client.searchGroups(lowercase, 10);
             userSearchResults = client.searchUsers(lowercase, 10);
             try {
-                await Promise.all([
-                    groupSearchResults,
-                    userSearchResults,
-                ]).then(() => {
+                await Promise.all([groupSearchResults, userSearchResults]).then(() => {
                     if (searchTerm !== "") {
                         searchResultsAvailable = true;
                         searching = false;
@@ -484,11 +483,11 @@
                 return leaveGroup(confirmActionEvent.chatId);
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory = [];
+                    rightPanelHistory.set([]);
                 });
             case "makePrivate":
                 return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory = [];
+                    rightPanelHistory.set([]);
                 });
             case "rules":
                 return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
@@ -562,7 +561,9 @@
 
     function addMembers() {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "add_members" }];
+            rightPanelHistory.update((history) => {
+                return [...history, { kind: "add_members" }];
+            });
         }
     }
 
@@ -588,7 +589,9 @@
 
     function showMembers() {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, { kind: "show_members" }];
+            rightPanelHistory.update((history) => {
+                return [...history, { kind: "show_members" }];
+            });
         }
     }
 
@@ -596,7 +599,7 @@
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
         }
-        rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
     }
 
     function openThread(ev: {
@@ -609,46 +612,46 @@
                 creatingThread = true;
                 replace(`/${$selectedChatId}`);
             }
-            rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "message_thread_panel",
                     threadRootMessageIndex: ev.threadRootMessageIndex,
                     threadRootMessageId: ev.threadRootMessageId,
                 },
-            ];
+            ]);
         }
     }
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
-            rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "group_details",
                 },
-            ];
+            ]);
         }
     }
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
-            rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
                 },
-            ];
+            ]);
         }
     }
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
             replace(`/${$selectedChatId}`);
-            rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "show_pinned",
                 },
-            ];
+            ]);
         }
     }
 
@@ -770,18 +773,19 @@
         } else {
             client.trackEvent("private_group_created");
         }
-        rightPanelHistory =
+        rightPanelHistory.set(
             $screenWidth === ScreenWidth.ExtraExtraLarge
                 ? [
                       {
                           kind: "group_details",
                       },
                   ]
-                : [];
+                : []
+        );
     }
 
     function newGroup() {
-        rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
+        rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
     }
 
     function filterChatSelection(
@@ -818,6 +822,8 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
+
+    $: console.log("RPH: ", rightPanelHistory);
 </script>
 
 <main>
@@ -873,7 +879,6 @@
     {/if}
     {#if $numberOfColumns === 3}
         <RightPanel
-            bind:rightPanelHistory
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -888,14 +893,13 @@
     {/if}
 </main>
 
-{#if $numberOfColumns === 2 && rightPanelHistory.length > 0}
+{#if $numberOfColumns === 2 && $rightPanelHistory.length > 0}
     <Overlay fade={!$mobileWidth}>
         <div
             transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
             class="right-wrapper"
             class:rtl={$rtlStore}>
             <RightPanel
-                bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}

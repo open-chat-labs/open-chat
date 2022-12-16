@@ -4,6 +4,7 @@
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -13,7 +14,7 @@
 </script>
 
 <div class="timeline-event">
-    <p>{text}</p>
+    <Markdown oneLine={true} suppressLinks={true} {text} />
     <p class="timestamp">
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
     </p>

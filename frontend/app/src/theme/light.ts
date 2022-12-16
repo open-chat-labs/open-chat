@@ -56,7 +56,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: txtDark,
-            me: pinkAccent,
+            me: blueAccent,
         },
 
         timeline: {
@@ -137,6 +137,7 @@ export function lightTheme(): Theme {
         menu: {
             bg: "white",
             txt: txtDark75pc,
+            warn: "#FF2E2E",
             "disabled-txt": hexPercent(txtDark, 50),
             hv: "rgba(226,226,226,0.5)",
             sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
@@ -200,6 +201,7 @@ export function lightTheme(): Theme {
         icon: {
             hv: "rgba(0,0,0,0.1)",
             txt,
+            selected: orangeAccent,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
                 txt: txtDark75pc,
