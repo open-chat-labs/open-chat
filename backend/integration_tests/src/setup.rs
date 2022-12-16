@@ -1,6 +1,6 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::{wasms, CanisterIds};
+use crate::{client, wasms, CanisterIds};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
@@ -49,14 +49,15 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let group_index_canister_id = create_canister(env);
-    let notifications_canister_id = create_canister(env);
-    let online_users_aggregator_canister_id = create_canister(env);
-    let proposals_bot_canister_id = create_canister(env);
-    let user_index_canister_id = create_canister(env);
-    let cycles_dispenser_canister_id = create_canister(env);
-    let open_storage_index_canister_id = create_canister(env);
-    let ledger_canister_id = create_canister(env);
+    let group_index_canister_id = create_canister(env, None);
+    let notifications_canister_id = create_canister(env, None);
+    let online_users_aggregator_canister_id = create_canister(env, None);
+    let proposals_bot_canister_id = create_canister(env, None);
+    let user_index_canister_id = create_canister(env, None);
+    let cycles_dispenser_canister_id = create_canister(env, None);
+    let open_storage_index_canister_id = create_canister(env, None);
+    let ledger_canister_id = create_canister(env, None);
+    let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
 
     let group_canister_wasm = wasms::GROUP.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
@@ -146,6 +147,23 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     //     wasm_version: version,
     //     test_mode,
     // };
+
+    let add_local_group_index_canister_response = client::group_index::add_local_group_index_canister(
+        env,
+        controller,
+        group_index_canister_id,
+        &group_index_canister::add_local_group_index_canister::Args {
+            canister_id: local_group_index_canister_id,
+        },
+    );
+    assert!(
+        matches!(
+            add_local_group_index_canister_response,
+            group_index_canister::add_local_group_index_canister::Response::Success
+        ),
+        "{add_local_group_index_canister_response:?}"
+    );
+
 
     CanisterIds {
         user_index: user_index_canister_id,
