@@ -253,17 +253,14 @@
                     {#if client.user.isSuperAdmin}
                         {#if client.isFrozen(selectedChatSummary.chatId)}
                             <MenuItem warning on:click={unfreezeGroup}>
-                                <TickIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
+                                <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                                 <div slot="text">{$_("unfreezeGroup")}</div>
                             </MenuItem>
                         {:else}
                             <MenuItem warning on:click={freezeGroup}>
                                 <CancelIcon
                                     size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
+                                    color={"var(--menu-warn"}
                                     slot="icon" />
                                 <div slot="text">{$_("freezeGroup")}</div>
                             </MenuItem>
