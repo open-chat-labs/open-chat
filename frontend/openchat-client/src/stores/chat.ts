@@ -36,6 +36,7 @@ import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
+import { proposalTallies } from "./proposalTallies";
 
 export type ChatState = {
     chatId: string;
@@ -477,13 +478,14 @@ export function removeGroupPreview(chatId: string): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, unconfirmed, localMessageUpdates],
-    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates]) => {
+    [serverEventsStore, unconfirmed, localMessageUpdates, proposalTallies],
+    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $proposalTallies]) => {
         const chatId = get(selectedChatId) ?? "";
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
             $unconfirmed[chatId]?.messages ?? [],
-            $localMessageUpdates
+            $localMessageUpdates,
+            $proposalTallies
         );
     }
 );

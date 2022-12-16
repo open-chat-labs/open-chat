@@ -31,8 +31,11 @@ import {
     Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
+    Tally,
+    UnsupportedValueError,
+    getContentAsText,
+    eventIsVisible
 } from "openchat-shared";
-import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
@@ -47,6 +50,7 @@ import { get } from "svelte/store";
 import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";
 import type { TypersByKey } from "../stores/typing";
+import { tallyKey } from "../stores/proposalTallies";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1037,7 +1041,8 @@ export function markAllRead(chat: ChatSummary): void {
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: Record<string, LocalMessageUpdates>
+    localUpdates: Record<string, LocalMessageUpdates>,
+    proposalTallies: Record<string, Tally>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
 
@@ -1051,10 +1056,14 @@ export function mergeEventsAndLocalUpdates(
                     ? localUpdates[e.event.repliesTo.messageId.toString()]
                     : undefined;
 
-            if (updates !== undefined || replyContextUpdates !== undefined) {
+            const tallyUpdate = e.event.content.kind === "proposal_content"
+                ? proposalTallies[tallyKey(e.event.content.governanceCanisterId, e.event.content.proposal.id)]
+                : undefined;
+
+            if (updates !== undefined || replyContextUpdates !== undefined || tallyUpdate !== undefined) {
                 return {
                     ...e,
-                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates),
+                    event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate),
                 };
             }
         }
@@ -1090,9 +1099,10 @@ export function mergeEventsAndLocalUpdates(
 function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
-    replyContextLocalUpdates: LocalMessageUpdates | undefined
+    replyContextLocalUpdates: LocalMessageUpdates | undefined,
+    tallyUpdate: Tally | undefined
 ): Message {
-    if (localUpdates === undefined && replyContextLocalUpdates === undefined) return message;
+    if (localUpdates === undefined && replyContextLocalUpdates === undefined && tallyUpdate === undefined) return message;
 
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1164,6 +1174,19 @@ function mergeLocalUpdates(
                 );
             }
         }
+    }
+
+    if (tallyUpdate !== undefined &&
+        message.content.kind === "proposal_content" &&
+        tallyUpdate.timestamp > message.content.proposal.tally.timestamp)
+    {
+        message.content = {
+            ...message.content,
+            proposal: {
+                ...message.content.proposal,
+                tally: tallyUpdate
+            }
+        };
     }
     return message;
 }
