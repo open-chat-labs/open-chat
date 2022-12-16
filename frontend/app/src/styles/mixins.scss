@@ -168,8 +168,8 @@ $sp11: 192px;
     }
 }
 
-@mixin spin() {
-    animation: loading-spinner 0.8s linear infinite;
+@mixin spin($speed: 0.8s) {
+    animation: loading-spinner $speed linear infinite;
 }
 
 @mixin pulse() {
@@ -184,7 +184,8 @@ $sp11: 192px;
     $size: 1.2em,
     $offset: 0.6em,
     $spinner-color: #191919,
-    $background-image: "../assets/spinner.svg"
+    $background-image: "../assets/spinner.svg",
+    $speed: 0.8s
 ) {
     position: relative;
 
@@ -200,7 +201,7 @@ $sp11: 192px;
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
         transform-origin: 50% 50%;
-        @include spin();
+        @include spin($speed);
         color: $spinner-color;
         z-index: 10;
     }
