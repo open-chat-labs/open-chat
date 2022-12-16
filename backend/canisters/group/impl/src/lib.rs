@@ -59,7 +59,8 @@ impl RuntimeState {
     }
 
     pub fn is_caller_group_index(&self) -> bool {
-        self.env.caller() == self.data.group_index_canister_id
+        let caller = self.env.caller();
+        caller == self.data.group_index_canister_id || caller == self.data.local_group_index_canister_id
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -214,6 +215,7 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
+    pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_id: CanisterId,
@@ -246,6 +248,7 @@ impl Data {
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
+        local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         ledger_canister_id: CanisterId,
@@ -268,6 +271,7 @@ impl Data {
             date_created: now,
             mark_active_duration,
             group_index_canister_id,
+            local_group_index_canister_id,
             user_index_canister_id,
             notifications_canister_ids,
             ledger_canister_id,

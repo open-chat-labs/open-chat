@@ -92,7 +92,7 @@ fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Res
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.next_index() {
+    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_group() {
         let group_wasm_version = runtime_state.data.group_canister_wasm.version;
         Ok(PrepareResult {
             local_group_index_canister,

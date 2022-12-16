@@ -45,7 +45,7 @@ impl LocalGroupIndexMap {
         false
     }
 
-    pub fn next_index(&self) -> Option<CanisterId> {
+    pub fn index_for_new_group(&self) -> Option<CanisterId> {
         self.index_map
             .iter()
             .filter(|(_, v)| !v.full)

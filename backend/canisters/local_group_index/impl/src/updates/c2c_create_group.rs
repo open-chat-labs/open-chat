@@ -76,6 +76,8 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         created_by_user_id: args.created_by_user_id,
         mark_active_duration: MARK_ACTIVE_DURATION,
         wasm_version: canister_wasm.version,
+        group_index_canister_id: runtime_state.data.group_index_canister_id,
+        local_group_index_canister_id: runtime_state.env.canister_id(),
         user_index_canister_id: runtime_state.data.user_index_canister_id,
         notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
         ledger_canister_id: runtime_state.data.ledger_canister_id,
