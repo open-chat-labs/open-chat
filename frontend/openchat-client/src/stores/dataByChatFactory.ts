@@ -86,7 +86,6 @@ export function createDerivedPropStore<S, P extends keyof S>(
     let currentValue: S[P] = storeVal ? storeVal[prop] : empty();
     return derived(store, ($store, set) => {
         const nextValue: S[P] = $store ? $store[prop] : empty();
-        console.log("derived prop check");
         if (!eq(currentValue, nextValue) || !initialised) {
             set(nextValue);
         }
