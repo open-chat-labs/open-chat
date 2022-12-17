@@ -273,7 +273,7 @@
             return true;
         }
 
-        if (/snow|xmas|christmas|noel/.test(txt)) {
+        if (/snow|xmas|christmas|noel/i.test(txt)) {
             $snowing = true;
         }
 
