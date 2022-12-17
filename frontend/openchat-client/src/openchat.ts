@@ -2876,8 +2876,8 @@ export class OpenChat extends EventTarget {
                     })),
                 });
 
-                // Wait 1 second between each batch
-                await new Promise(resolve => window.setTimeout(resolve, 1000));
+                // Add small delay between each batch
+                await new Promise(resolve => window.setTimeout(resolve, 500));
             }
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
