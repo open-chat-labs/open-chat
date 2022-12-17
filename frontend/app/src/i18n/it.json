@@ -51,7 +51,6 @@
     "unableToLoadSMSUpgrade": "Prima di aggiornare lo spazio di archiviazione, è necessario aggiornare OpenChat. Ricarica e riprova.",
     "leave": "Abbandona",
     "preview": "Anteprima",
-    "howToBuyToken": "come acquistare {token}",
     "copyGroupUrl": "Copia l'URL del gruppo",
     "copyToClipboard": "Copia negli appunti",
     "copiedToClipboard": "Indirizzo dell'account copiato negli appunti!",
@@ -354,7 +353,8 @@
         "numVotesBy": "{votes} voti di",
         "oneVote": "1 voto",
         "oneVoteBy": "1 voto di",
-        "numVotesIncludingYours": "{votes} voti compreso il tuo"
+        "numVotesIncludingYours": "{votes} voti compreso il tuo",
+        "atLeastTwo": "Minimo 2"
     },
     "group": {
         "addGroupPhoto": "Aggiungi foto di gruppo",
@@ -441,24 +441,28 @@
     "ownedBy": "Di proprietà di @{nomeutente}",
     "tokenTransfer": {
         "title": "Invia {token}",
-        "amount": "importo ({token}) *",
         "send": "Spedire",
         "message": "Messaggio",
         "messagePlaceholder": "Includi un messaggio facoltativo",
-        "fee": "* verrà aggiunta una commissione di {fee} {token}",
         "unexpected": "È stato ricevuto un tipo di trasferimento crittografico imprevisto",
         "viewTransaction": "[Visualizza transazione]({url})",
-        "warning": "Avvertenza: è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento {token}.",
         "confirm": "Confermare",
         "transfer": "Trasferimento {token}",
         "makeDeposit": "Si prega di effettuare un deposito sul conto sopra e aggiornare il saldo.",
-        "zeroBalance": "Non hai alcun {token} 😭.",
         "confirmedSent": "{sender} ha inviato {amount} {token} a {receiver}",
         "pendingSent": "{sender} sta inviando {amount} {token} a {receiver}",
         "pendingSentByYou": "stai inviando {amount} {token} a {receiver}",
-        "receiver": "Ricevitore",
+        "done": "rinfrescati e continua",
+        "amount": "Quantità",
+        "fee": "Verrà aggiunta una commissione di {fee} {token}",
+        "warning": "ATTENZIONE - è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento di {token}.",
+        "zeroBalance": "Non hai alcun {token}.",
+        "yourAccount": "Il tuo indirizzo {token}",
+        "receiver": "Destinatario",
         "chooseReceiver": "inserire il nome utente del destinatario",
-        "done": "rinfrescati e continua"
+        "icp": "Computer Internet",
+        "btc": "Bitcoin",
+        "chat": "ApriChat"
     },
     "cryptoAccount": {
         "manage": "Gestire",
@@ -655,5 +659,6 @@
     "communityTheme": "Tema comunitario",
     "selectCommunityTheme": "Seleziona un tema della community",
     "useAtOwnRisk": "Utilizzare a proprio rischio",
-    "deleteMessageAndReport": "Elimina e segnala"
+    "deleteMessageAndReport": "Elimina e segnala",
+    "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}"
 }

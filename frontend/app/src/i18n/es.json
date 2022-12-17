@@ -46,7 +46,6 @@
     "unableToLoadEmojiPicker": "¡Lo sentimos! No pudimos cargar el selector de emoji. Recarga el sitio y vuelve a intentarlo.",
     "leave": "Salir",
     "preview": "Vista previa",
-    "howToBuyToken": "como comprar {token}",
     "copyGroupUrl": "Copiar URL del grupo",
     "copyToClipboard": "Copiar al portapapeles",
     "copiedToClipboard": "¡Dirección de cuenta copiada al portapapeles!",
@@ -355,7 +354,8 @@
         "numVotesBy": "{votes} votos por",
         "oneVote": "1 voto",
         "oneVoteBy": "1 voto por",
-        "numVotesIncludingYours": "{votes} votos incluido el tuyo"
+        "numVotesIncludingYours": "{votes} votos incluido el tuyo",
+        "atLeastTwo": "Mínimo de 2"
     },
     "group": {
         "addGroupPhoto": "Añadir foto de grupo",
@@ -442,24 +442,28 @@
     "ownedBy": "Propiedad de @{nombre de usuario}",
     "tokenTransfer": {
         "title": "Enviar {token}",
-        "amount": "cantidad ({token}) *",
         "send": "Enviar",
         "message": "Mensaje",
         "messagePlaceholder": "Incluir un mensaje opcional",
-        "fee": "* se agregará una tarifa de {fee} {token}",
         "unexpected": "Se recibió un tipo de transferencia criptográfico inesperado",
         "viewTransaction": "[Ver transacción]({url})",
-        "warning": "Advertencia: es su responsabilidad asegurarse de que confía en la identidad y los motivos del destinatario. OpenChat no puede revertir ninguna transferencia de {token}.",
         "confirm": "Confirmar",
         "transfer": "transferencia de {token}",
         "makeDeposit": "Realice un depósito en la cuenta anterior y actualice su saldo.",
-        "zeroBalance": "No tienes {token} 😭.",
         "confirmedSent": "{sender} envió {amount} {token} a {receiver}",
         "pendingSent": "{sender} está enviando {amount} {token} a {receiver}",
         "pendingSentByYou": "está enviando {amount} {token} a {receiver}",
-        "receiver": "Receptor",
-        "chooseReceiver": "ingrese el nombre de usuario del receptor",
-        "done": "actualizar y continuar"
+        "done": "actualizar y continuar",
+        "amount": "Monto",
+        "fee": "Se agregará una tarifa de {fee} {token}",
+        "warning": "ADVERTENCIA: es su responsabilidad asegurarse de que confía en la identidad y los motivos del destinatario. OpenChat no puede revertir ninguna transferencia {token}.",
+        "zeroBalance": "No tienes {token}.",
+        "yourAccount": "Tu dirección {token}",
+        "receiver": "Recipiente",
+        "chooseReceiver": "ingrese el nombre de usuario del destinatario",
+        "icp": "Internet computadora",
+        "btc": "Bitcoin",
+        "chat": "Conversación abierta"
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -656,5 +660,6 @@
     "communityTheme": "Tema de la comunidad",
     "selectCommunityTheme": "Seleccione un tema de la comunidad",
     "useAtOwnRisk": "Úselo bajo su propio riesgo",
-    "deleteMessageAndReport": "Eliminar e informar"
+    "deleteMessageAndReport": "Eliminar e informar",
+    "howToBuyToken": "Necesito ayuda para comprar {token}"
 }
