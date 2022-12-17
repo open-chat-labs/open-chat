@@ -293,7 +293,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 200;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -2581,7 +2581,14 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale).then((resp) => {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+        if (userGroups.length === 0) {
+            return Promise.resolve({
+                users: []
+            });
+        }
+
+        return this.api.getUsers({ userGroups }, allowStale).then((resp) => {
             userStore.addMany(resp.users);
             if (resp.serverTimestamp !== undefined) {
                 // If we went to the server, all users not returned are still up to date, so we mark them as such
@@ -2851,7 +2858,7 @@ export class OpenChat extends EventTarget {
             // Also update any users who haven't been updated for at least an hour
             const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
                 }
             }
@@ -2868,6 +2875,9 @@ export class OpenChat extends EventTarget {
                         updatedSince,
                     })),
                 });
+
+                // Wait 1 second between each batch
+                await new Promise(resolve => window.setTimeout(resolve, 1000));
             }
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
