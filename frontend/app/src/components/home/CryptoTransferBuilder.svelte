@@ -218,16 +218,21 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                <Button tiny={$mobileWidth} secondary={true} on:click={cancel}
+                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary={true} on:click={cancel}
                     >{$_("cancel")}</Button>
                 {#if toppingUp || zero}
                     <Button
+                        small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
                         on:click={reset}>{$_("refresh")}</Button>
                 {:else}
-                    <Button disabled={!valid} tiny={$mobileWidth} on:click={send}
+                    <Button
+                        small={!$mobileWidth}
+                        disabled={!valid}
+                        tiny={$mobileWidth}
+                        on:click={send}
                         >{confirming
                             ? $_("tokenTransfer.confirm")
                             : $_("tokenTransfer.send")}</Button>

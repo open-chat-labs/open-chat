@@ -121,8 +121,10 @@
         }
     }
     .header {
+        @include font(bold, normal, fs-130, 29);
         padding: $sp4 $sp5;
         @include mobile() {
+            @include font(bold, normal, fs-120, 29);
             padding: $sp3 $sp4;
             border-radius: $sp4 $sp4 0 0;
         }

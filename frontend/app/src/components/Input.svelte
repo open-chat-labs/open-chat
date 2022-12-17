@@ -49,6 +49,7 @@
 <div class="input-wrapper">
     <input
         class:invalid
+        class:hasCountdown={countdown}
         spellcheck="false"
         {disabled}
         {type}
@@ -83,7 +84,7 @@
         @include font(light, normal, fs-80);
 
         &.near-max {
-            color: darkred;
+            color: var(--warn);
         }
     }
 
@@ -125,6 +126,10 @@
 
         &::placeholder {
             color: var(--placeholder);
+        }
+
+        &.hasCountdown {
+            padding-right: 40px;
         }
     }
 </style>
