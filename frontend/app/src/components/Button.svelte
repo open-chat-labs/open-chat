@@ -36,7 +36,7 @@
         border: none;
         min-height: 45px;
         min-width: 150px;
-        @include font(book, normal, fs-100);
+        @include font(book, normal, fs-100, normal);
 
         &.small {
             padding: $sp2 $sp5;

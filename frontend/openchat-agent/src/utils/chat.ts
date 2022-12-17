@@ -118,9 +118,10 @@ function mergeUpdatedGroupChat(
         ...chat,
         name: updatedChat.name ?? chat.name,
         description: updatedChat.description ?? chat.description,
-        readByMeUpTo: latestMessage !== undefined && readByMeUpTo !== undefined
-            ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-            : readByMeUpTo,
+        readByMeUpTo:
+            latestMessage !== undefined && readByMeUpTo !== undefined
+                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                : readByMeUpTo,
         lastUpdated: updatedChat.lastUpdated,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage,
