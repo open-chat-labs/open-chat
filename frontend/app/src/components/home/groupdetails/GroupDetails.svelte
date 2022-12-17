@@ -1,12 +1,9 @@
 <script lang="ts">
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Stats from "../Stats.svelte";
     import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
@@ -39,6 +36,7 @@
         UpdateGroupResponse,
     } from "openchat-client";
     import { AvatarSize, UnsupportedValueError } from "openchat-client";
+    import AreYouSure from "../../AreYouSure.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -189,6 +187,15 @@
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
+    }
+
+    function onConfirmUpdate(answer: boolean): Promise<void> {
+        if (answer) {
+            updateGroup();
+        } else {
+            close();
+        }
+        return Promise.resolve();
     }
 
     function updateGroup() {
@@ -496,24 +503,11 @@
 </div>
 
 {#if showConfirmation}
-    <Overlay>
-        <ModalContent fill={true}>
-            <span slot="header">{$_("areYouSure")}</span>
-            <span slot="body">
-                <p class="unsaved">
-                    {$_("unsavedGroupChanges")}
-                </p>
-            </span>
-            <span slot="footer" class="footer">
-                <ButtonGroup>
-                    <Button disabled={saving} small on:click={close} secondary={true}
-                        >{$_("discard")}</Button>
-                    <Button loading={saving} disabled={saving} small on:click={updateGroup}
-                        >{$_("save")}</Button>
-                </ButtonGroup>
-            </span>
-        </ModalContent>
-    </Overlay>
+    <AreYouSure
+        yesLabel={$_("save")}
+        noLabel={$_("discard")}
+        message={$_("unsavedGroupChanges")}
+        action={onConfirmUpdate} />
 {/if}
 
 <style type="text/scss">
