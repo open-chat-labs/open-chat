@@ -97,7 +97,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <AccountInfo user={client.user} />
+        <AccountInfo {token} user={client.user} />
 
         <p class="choose">
             {$_("chooseAStorageLevel")}
