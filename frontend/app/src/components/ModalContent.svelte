@@ -2,7 +2,11 @@
     import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import Link from "./Link.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { _ } from "svelte-i18n";
+    import HoverIcon from "./HoverIcon.svelte";
     import { rtlStore } from "../stores/rtl";
+    import { iconSize } from "../stores/iconSize";
     import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
 
@@ -19,6 +23,8 @@
     export let fitToContent: boolean = false;
     export let alignTo: DOMRect | undefined = undefined;
     export let actualWidth: number = 0;
+    export let closeIcon: boolean = false;
+    export let square: boolean = false;
 
     let divElement: HTMLElement;
 
@@ -62,6 +68,7 @@
     bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
+    class:square
     class:large
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
@@ -73,6 +80,13 @@
             <h4>
                 <slot name="header" />
             </h4>
+            {#if closeIcon}
+                <span title={$_("close")} class="close" on:click={onClose}>
+                    <HoverIcon>
+                        <Close size={"1em"} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+            {/if}
         </div>
     {/if}
     <div class="body" class:fill>
@@ -96,6 +110,11 @@
         background: var(--modal-bg);
         border: var(--modal-bd);
         border-radius: $sp4;
+        position: relative;
+
+        &.square {
+            border-radius: $sp3;
+        }
 
         @include mobile() {
             &:not(.fit_to_content) {
@@ -145,17 +164,23 @@
         }
     }
     .footer {
-        padding: $sp4 $sp5;
+        padding: $sp4 $sp5 $sp5 $sp5;
         &.compact {
-            padding: $sp3 $sp4;
+            padding: $sp3 $sp4 $sp4 $sp4;
         }
         text-align: right;
         @include mobile() {
-            padding: $sp3 $sp4;
+            padding: $sp3 $sp4 $sp4 $sp4;
             border-radius: 0;
         }
         &.rtl {
             text-align: left;
         }
+    }
+
+    .close {
+        position: absolute;
+        top: $sp3;
+        right: $sp3;
     }
 </style>
