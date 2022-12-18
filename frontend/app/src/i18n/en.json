@@ -73,8 +73,8 @@
     "lastOnline": "Last online {duration} ago",
     "unresolvedReply": "Message content unavailable",
     "placeholderContent": "Please wait, your message will load shortly",
-    "durationMins": "{duration} minutes",
-    "durationHours": "{duration} hours",
+    "durationMins": "{duration} mins",
+    "durationHours": "{duration} hrs",
     "removeChat": "Remove chat",
     "profile": {
         "label": "Profile",
