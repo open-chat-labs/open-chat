@@ -629,7 +629,8 @@
     "profile": {
         "title": "Impostazioni del profilo",
         "chat": "Chiacchierata",
-        "settings": "Impostazioni"
+        "settings": "Impostazioni",
+        "label": "Profilo"
     },
     "undeleteMessage": "Annulla cancellazione",
     "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",

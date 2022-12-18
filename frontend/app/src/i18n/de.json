@@ -629,7 +629,8 @@
     "profile": {
         "title": "Profileinstellungen",
         "chat": "Plaudern",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "label": "Profil"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",

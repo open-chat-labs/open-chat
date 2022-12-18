@@ -629,7 +629,8 @@
     "profile": {
         "title": "Paramètres de profil",
         "chat": "Discuter",
-        "settings": "Réglages"
+        "settings": "Réglages",
+        "label": "Profil"
     },
     "undeleteMessage": "Annuler la suppression",
     "undeletingMessage": "Récupération du message de {username} sur {timestamp}",

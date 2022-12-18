@@ -627,7 +627,8 @@
     "profile": {
         "title": "הגדרות פרופיל",
         "chat": "לְשׂוֹחֵחַ",
-        "settings": "הגדרות"
+        "settings": "הגדרות",
+        "label": "פּרוֹפִיל"
     },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",

@@ -630,7 +630,8 @@
     "profile": {
         "title": "Configuración de perfil",
         "chat": "Charlar",
-        "settings": "Ajustes"
+        "settings": "Ajustes",
+        "label": "Perfil"
     },
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",

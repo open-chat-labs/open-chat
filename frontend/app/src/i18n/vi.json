@@ -630,7 +630,8 @@
     "profile": {
         "title": "Cài đặt cấu hình",
         "chat": "Trò chuyện",
-        "settings": "Cài đặt"
+        "settings": "Cài đặt",
+        "label": "Hồ sơ"
     },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",

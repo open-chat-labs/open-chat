@@ -630,7 +630,8 @@
     "profile": {
         "title": "配置文件设置",
         "chat": "聊天",
-        "settings": "设置"
+        "settings": "设置",
+        "label": "轮廓"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",

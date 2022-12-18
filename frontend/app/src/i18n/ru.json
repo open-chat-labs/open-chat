@@ -629,7 +629,8 @@
     "profile": {
         "title": "Настройки профиля",
         "chat": "Чат",
-        "settings": "Настройки"
+        "settings": "Настройки",
+        "label": "Профиль"
     },
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",

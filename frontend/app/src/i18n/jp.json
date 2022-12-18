@@ -630,7 +630,8 @@
     "profile": {
         "title": "プロファイル設定",
         "chat": "チャット",
-        "settings": "設定"
+        "settings": "設定",
+        "label": "プロフィール"
     },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
