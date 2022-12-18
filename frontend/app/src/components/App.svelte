@@ -5,7 +5,7 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router, { location } from "svelte-spa-router";
+    import Router, { location, replace } from "svelte-spa-router";
     import { routes } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
@@ -22,6 +22,7 @@
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
+        removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
     import Snow from "./Snow.svelte";
@@ -64,9 +65,15 @@
     $: landingPage = isLandingPageRoute($location);
 
     function getReferralCode(): string | undefined {
-        const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
-        const lsParam = localStorage.getItem("openchat_referredby") ?? undefined;
-        return qsParam ?? lsParam;
+        const qs = new URLSearchParams(window.location.search);
+        const qsParam = qs.get("ref") ?? undefined;
+        if (qsParam) {
+            const updatedQs = removeQueryStringParam(qs, "ref");
+            history.replaceState(null, "", updatedQs);
+            localStorage.setItem("openchat_referredby", qsParam);
+            return qsParam;
+        }
+        return localStorage.getItem("openchat_referredby") ?? undefined;
     }
 
     onMount(() => {
