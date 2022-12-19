@@ -133,7 +133,6 @@ mod tests {
                 avatar_id: None,
                 now: env.now,
                 wasm_version: Version::new(1, 0, 0),
-                cycles: 0,
             });
         }
 

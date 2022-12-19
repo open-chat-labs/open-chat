@@ -29,18 +29,13 @@ fn filter_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let deleted_groups = args.chat_ids.iter().filter_map(|id| all_deleted.get(id)).cloned().collect();
 
     let mut active_groups = Vec::new();
-    let mut upgrades_in_progress = Vec::new();
     for chat_id in args.chat_ids {
         if let Some(g) = runtime_state.data.private_groups.get(&chat_id) {
-            if g.upgrade_in_progress() {
-                upgrades_in_progress.push(g.id());
-            } else if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
+            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
         } else if let Some(g) = runtime_state.data.public_groups.get(&chat_id) {
-            if g.upgrade_in_progress() {
-                upgrades_in_progress.push(g.id());
-            } else if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
+            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
         }
@@ -49,7 +44,7 @@ fn filter_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     Success(SuccessResult {
         timestamp: now,
         active_groups,
-        upgrades_in_progress,
         deleted_groups,
+        upgrades_in_progress: Vec::new(),
     })
 }
