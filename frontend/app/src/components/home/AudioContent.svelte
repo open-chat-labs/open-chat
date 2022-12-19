@@ -85,6 +85,7 @@
         position: relative;
         height: $size;
         width: $size;
+        margin: auto;
         position: relative;
         background: transparent;
 
