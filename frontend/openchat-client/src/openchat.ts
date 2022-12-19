@@ -167,7 +167,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -293,7 +293,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 200;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -2855,30 +2855,28 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            // Also update any users who haven't been updated for at least an hour
             const now = BigInt(Date.now());
+            // Also update any users who haven't been updated for at least 24 hours
             for (const user of Object.values(allUsers)) {
                 if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
+                    if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
+                        break;
+                    }
                 }
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-                const userGroups = groupBy<string, bigint>(batch, (u) => {
-                    return allUsers[u]?.updated ?? BigInt(0);
-                });
+            const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
 
-                await this.getUsers({
-                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                        users,
-                        updatedSince,
-                    })),
-                });
-
-                // Add small delay between each batch
-                await new Promise(resolve => window.setTimeout(resolve, 500));
-            }
+            await this.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
         }
