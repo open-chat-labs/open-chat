@@ -1,45 +1,48 @@
 use crate::guards::caller_is_controller;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::info;
+use types::{CanisterId, Version};
 
 #[update(guard = "caller_is_controller")]
 #[trace]
-fn upgrade_group_canister_wasm(args: Args) -> Response {
-    mutate_state(|state| upgrade_group_canister_wasm_impl(args, state))
-}
-
-fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let version = args.group_canister_wasm.version;
 
-    if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm.version {
-        VersionNotHigher
+    let local_group_index_canisters = match read_state(|state| prepare(version, state)) {
+        Ok(canisters) => canisters,
+        Err(response) => return response,
+    };
+
+    let args = local_group_index_canister::c2c_upgrade_group_canister_wasm::Args {
+        group_canister_wasm: args.group_canister_wasm.clone(),
+    };
+
+    let futures: Vec<_> = local_group_index_canisters
+        .into_iter()
+        .map(|canister_id| local_group_index_canister_c2c_client::c2c_upgrade_group_canister_wasm(canister_id, &args))
+        .collect();
+
+    let result = futures::future::join_all(futures).await;
+
+    if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
+        InternalError(format!("{:?}", first_error))
     } else {
-        runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.group_canister_wasm = args.group_canister_wasm;
+        mutate_state(|state| {
+            state.data.group_canister_wasm = args.group_canister_wasm;
+        });
 
-        for chat_id in runtime_state
-            .data
-            .public_groups
-            .iter()
-            .filter(|g| g.wasm_version() != version)
-            .map(|g| g.id())
-            .chain(
-                runtime_state
-                    .data
-                    .private_groups
-                    .iter()
-                    .filter(|g| g.wasm_version() != version)
-                    .map(|g| g.id()),
-            )
-        {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
-        }
-
-        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
-        info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
+        info!(%version, "Group canister wasm upgraded");
         Success
     }
+}
+
+fn prepare(version: Version, runtime_state: &RuntimeState) -> Result<Vec<CanisterId>, Response> {
+    if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm.version {
+        return Err(VersionNotHigher);
+    }
+
+    Ok(runtime_state.data.local_index_map.canisters().copied().collect())
 }

@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity,
-    PublicGroupSummary, TimestampMillis, Version,
+    ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -63,12 +63,11 @@ impl PublicGroups {
             avatar_id,
             now,
             wasm_version,
-            cycles,
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now, wasm_version, cycles);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now, wasm_version);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -168,18 +167,19 @@ impl PublicGroups {
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct PublicGroupInfo {
+    // Fields common to PrivateGroupInfo
     id: ChatId,
+    created: TimestampMillis,
+    marked_active_until: TimestampMillis,
+    wasm_version: Version,
+    frozen: Option<FrozenGroupInfo>,
+
+    // Fields particular to PublicGroupInfo
     name: String,
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    created: TimestampMillis,
-    marked_active_until: TimestampMillis,
     activity: PublicGroupActivity,
-    wasm_version: Version,
-    cycle_top_ups: Vec<CyclesTopUp>,
-    upgrade_in_progress: bool,
-    frozen: Option<FrozenGroupInfo>,
 }
 
 pub enum UpdateGroupResult {
@@ -198,7 +198,6 @@ impl PublicGroupInfo {
         avatar_id: Option<u128>,
         now: TimestampMillis,
         wasm_version: Version,
-        cycles: Cycles,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -210,11 +209,6 @@ impl PublicGroupInfo {
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::default(),
             wasm_version,
-            cycle_top_ups: vec![CyclesTopUp {
-                date: now,
-                amount: cycles,
-            }],
-            upgrade_in_progress: false,
             frozen: None,
         }
     }
@@ -238,18 +232,6 @@ impl PublicGroupInfo {
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
         self.marked_active_until > since
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-
-    pub fn upgrade_in_progress(&self) -> bool {
-        self.upgrade_in_progress
-    }
-
-    pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
-        self.upgrade_in_progress = upgrade_in_progress;
     }
 
     pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
@@ -319,8 +301,6 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
             public_group_info.created,
             public_group_info.marked_active_until,
             public_group_info.wasm_version,
-            public_group_info.cycle_top_ups,
-            public_group_info.upgrade_in_progress,
         )
     }
 }
@@ -333,7 +313,6 @@ pub struct GroupCreatedArgs {
     pub avatar_id: Option<u128>,
     pub now: TimestampMillis,
     pub wasm_version: Version,
-    pub cycles: Cycles,
 }
 
 #[derive(PartialEq, Eq, Debug)]

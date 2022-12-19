@@ -7,8 +7,6 @@ use tracing::info;
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
-const CANISTER_POOL_TARGET_SIZE: u16 = 20;
-
 #[init]
 #[trace]
 fn init(args: Args) {
@@ -16,15 +14,14 @@ fn init(args: Args) {
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
-    let canister_pool_target_size = if args.test_mode { 0_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
     let data = Data::new(
         args.service_principals,
         args.group_canister_wasm,
+        args.local_group_index_canister_wasm,
         args.notifications_canister_ids,
         args.user_index_canister_id,
         args.ledger_canister_id,
-        canister_pool_target_size,
         args.test_mode,
     );
 
