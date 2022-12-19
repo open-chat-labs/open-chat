@@ -805,6 +805,7 @@ type Tally =
         yes: nat64;
         no: nat64;
         total: nat64;
+        timestamp: TimestampMillis;
     };
 
 type TotalPollVotes =

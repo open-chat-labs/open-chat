@@ -21,11 +21,13 @@ pub const USER3_DEFAULT_NAME: &str = "Charlie";
 #[derive(Debug)]
 pub enum CanisterName {
     Group,
+    LocalGroupIndex,
     GroupIndex,
     Notifications,
     OnlineUsersAggregator,
     ProposalsBot,
     User,
+    LocalUserIndex,
     UserIndex,
 }
 
@@ -35,12 +37,14 @@ impl FromStr for CanisterName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "group" => Ok(CanisterName::Group),
+            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
             "group_index" => Ok(CanisterName::GroupIndex),
             "notifications" => Ok(CanisterName::Notifications),
             "online_users_aggregator" => Ok(CanisterName::OnlineUsersAggregator),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
+            "local_user_index" => Ok(CanisterName::LocalUserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
         }
     }
@@ -50,11 +54,13 @@ impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
             CanisterName::Group => "group",
+            CanisterName::LocalGroupIndex => "local_group_index",
             CanisterName::GroupIndex => "group_index",
             CanisterName::Notifications => "notifications",
             CanisterName::OnlineUsersAggregator => "online_users_aggregator",
             CanisterName::ProposalsBot => "proposals_bot",
             CanisterName::User => "user",
+            CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::UserIndex => "user_index",
         };
 

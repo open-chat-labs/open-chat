@@ -12,6 +12,9 @@ async fn main() {
 
     match opts.canister_to_upgrade {
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::LocalGroupIndex => {
+            upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
+        }
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
@@ -23,6 +26,9 @@ async fn main() {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
+        CanisterName::LocalUserIndex => {
+            upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
+        }
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
     };
 }

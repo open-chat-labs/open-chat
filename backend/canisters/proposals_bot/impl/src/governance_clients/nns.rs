@@ -1,10 +1,10 @@
 use self::governance_response_types::{ListProposalInfoResponse, ProposalInfo};
-use super::common::{RawProposal, WrappedProposalId};
+use super::common::{RawProposal, RawTally, WrappedProposalId};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, NnsNeuronId, ProposalId, Tally};
+use types::{CanisterId, NnsNeuronId, ProposalId};
 
 pub const TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const TOPIC_EXCHANGE_RATE: i32 = 2;
@@ -48,7 +48,7 @@ pub mod governance_response_types {
         pub reject_cost_e8s: u64,
         pub proposal: Option<Proposal>,
         pub proposal_timestamp_seconds: u64,
-        pub latest_tally: Option<Tally>,
+        pub latest_tally: Option<RawTally>,
         pub decided_timestamp_seconds: u64,
         pub executed_timestamp_seconds: u64,
         pub failed_timestamp_seconds: u64,
@@ -90,7 +90,7 @@ pub mod governance_response_types {
                 url: proposal.url,
                 status: p.status.try_into().unwrap(),
                 reward_status: p.reward_status.try_into().unwrap(),
-                tally: p.latest_tally.unwrap_or_default(),
+                tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
                 deadline: p.deadline_timestamp_seconds.ok_or("deadline not set")? * 1000,
                 last_updated: now,
             })

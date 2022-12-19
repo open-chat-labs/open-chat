@@ -1,10 +1,10 @@
 use self::governance_response_types::{ListProposalsResponse, ProposalData};
-use super::common::{RawProposal, WrappedProposalId};
+use super::common::{RawProposal, RawTally, WrappedProposalId};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, SnsNeuronId, Tally};
+use types::{CanisterId, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, SnsNeuronId};
 
 pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListProposals) -> CallResult<Vec<ProposalData>> {
     let method_name = "list_proposals";
@@ -43,7 +43,7 @@ pub mod governance_response_types {
         pub reject_cost_e8s: u64,
         pub proposal: Option<Proposal>,
         pub proposal_creation_timestamp_seconds: u64,
-        pub latest_tally: Option<Tally>,
+        pub latest_tally: Option<RawTally>,
         pub decided_timestamp_seconds: u64,
         pub executed_timestamp_seconds: u64,
         pub failed_timestamp_seconds: u64,
@@ -147,7 +147,7 @@ pub mod governance_response_types {
                 url: proposal.url,
                 status,
                 reward_status,
-                tally: p.latest_tally.unwrap_or_default(),
+                tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
                 deadline,
                 last_updated: now,
             })
