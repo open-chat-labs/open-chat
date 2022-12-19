@@ -53,15 +53,15 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button
-                    loading={inProgress}
-                    disabled={!canConfirm}
-                    small={true}
-                    on:click={() => onClick(true)}>{yesLabel ?? $_("yesPlease")}</Button>
-                <Button
                     disabled={inProgress}
                     small={true}
                     on:click={() => onClick(false)}
                     secondary={true}>{noLabel ?? $_("noThanks")}</Button>
+                <Button
+                    loading={inProgress}
+                    disabled={!canConfirm}
+                    small={true}
+                    on:click={() => onClick(true)}>{yesLabel ?? $_("yesPlease")}</Button>
             </ButtonGroup>
         </span>
     </ModalContent>

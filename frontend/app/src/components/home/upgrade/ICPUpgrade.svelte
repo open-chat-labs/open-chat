@@ -97,7 +97,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <AccountInfo user={client.user} />
+        <AccountInfo {token} user={client.user} />
 
         <p class="choose">
             {$_("chooseAStorageLevel")}
@@ -145,6 +145,10 @@
             {/if}
         </p>
 
+        <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
+            {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+        </a>
+
         {#if error}
             <ErrorMessage>{error}</ErrorMessage>
         {/if}
@@ -152,25 +156,29 @@
 </div>
 <Footer align={$mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={true} on:click={cancel}>{$_("close")}</Button>
+        <Button small={!$mobileWidth} tiny={$mobileWidth} on:click={cancel}>{$_("close")}</Button>
     {:else}
-        {#if !$mobileWidth}
-            <a class="how-to" href={howToBuyUrl} target="_blank">
-                {$_("howToBuyToken", { values: { token: symbol } })}
-            </a>
-        {/if}
         {#if insufficientFunds}
-            <Button disabled={refreshing} loading={refreshing} on:click={refreshBalance} tiny={true}
-                >{$_("refresh")}</Button>
+            <Button
+                disabled={refreshing}
+                loading={refreshing}
+                on:click={refreshBalance}
+                tiny={$mobileWidth}
+                small={!$mobileWidth}>{$_("refresh")}</Button>
         {:else}
             <Button
+                small={!$mobileWidth}
                 disabled={confirming || toPay === 0}
                 loading={confirming}
                 on:click={confirm}
-                tiny={true}>{$_("register.confirm")}</Button>
+                tiny={$mobileWidth}>{$_("register.confirm")}</Button>
         {/if}
-        <Button disabled={confirming} tiny={true} secondary={true} on:click={cancel}
-            >{$_("cancel")}</Button>
+        <Button
+            disabled={confirming}
+            tiny={$mobileWidth}
+            small={!$mobileWidth}
+            secondary={true}
+            on:click={cancel}>{$_("cancel")}</Button>
     {/if}
 </Footer>
 
@@ -186,6 +194,10 @@
 
         &.confirming {
             height: 390px;
+        }
+
+        @include mobile() {
+            padding: $sp3 $sp4;
         }
     }
     .slider {
@@ -216,13 +228,6 @@
     }
 
     .how-to {
-        @include font(light, normal, fs-90);
-        text-decoration: underline;
-        text-decoration-color: var(--accent);
-        text-underline-offset: $sp1;
-        text-decoration-thickness: 2px;
-        position: absolute;
-        left: $sp4;
-        bottom: $sp4;
+        margin-top: $sp4;
     }
 </style>

@@ -88,5 +88,9 @@
         p {
             margin-bottom: $sp4;
         }
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
     }
 </style>

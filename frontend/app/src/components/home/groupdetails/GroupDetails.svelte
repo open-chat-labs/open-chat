@@ -506,10 +506,10 @@
             </span>
             <span slot="footer" class="footer">
                 <ButtonGroup>
-                    <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
-                        >{$_("save")}</Button>
-                    <Button disabled={saving} small={true} on:click={close} secondary={true}
+                    <Button disabled={saving} small on:click={close} secondary
                         >{$_("discard")}</Button>
+                    <Button loading={saving} disabled={saving} small on:click={updateGroup}
+                        >{$_("save")}</Button>
                 </ButtonGroup>
             </span>
         </ModalContent>

@@ -504,6 +504,30 @@
     $avatar-width: 56px;
     $avatar-width-mob: 43px;
 
+    :global(.message-bubble:hover .menu-icon) {
+        opacity: 1;
+    }
+
+    :global(.message-bubble:hover .menu-icon .wrapper) {
+        background-color: var(--icon-msg-hv);
+    }
+
+    :global(.message-bubble.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    :global(.me .menu-icon:hover .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
+
     :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;

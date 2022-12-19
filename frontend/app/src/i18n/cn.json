@@ -22,7 +22,6 @@
     "unableToLoadEmojiPicker": "目前无法选择表情，请稍后再试",
     "leave": "离开",
     "preview": "预览",
-    "howToBuyToken": "如何购买{token}",
     "copyGroupUrl": "复制群聊链接",
     "copyToClipboard": "复制到粘贴板",
     "copiedToClipboard": "账户地址已复制到粘贴板",
@@ -354,7 +353,8 @@
         "numVotesBy": "{votes} 票",
         "oneVote": "1 票",
         "oneVoteBy": "1 票",
-        "numVotesIncludingYours": "{votes} 票，包括你的票"
+        "numVotesIncludingYours": "{votes} 票，包括你的票",
+        "atLeastTwo": "至少 2 个"
     },
     "group": {
         "addGroupPhoto": "添加群聊图片",
@@ -441,24 +441,28 @@
     "ownedBy": "归@{用户名}所有",
     "tokenTransfer": {
         "title": "发{token}",
-        "amount": "金额 ({token}) *",
         "send": "发送",
         "message": "信息",
         "messagePlaceholder": "包括可选消息",
-        "fee": "* 将增加 {fee} {token} 费用",
         "unexpected": "收到了意外的加密传输类型",
         "viewTransaction": "[查看交易]({url})",
-        "warning": "警告 - 您有责任确保您信任收件人的身份和动机。 OpenChat 无法撤销任何 {token} 传输。",
         "confirm": "确认",
         "transfer": "{token}转移",
         "makeDeposit": "请存入上述账户并刷新您的余额。",
-        "zeroBalance": "你没有任何 {token} 😭。",
         "confirmedSent": "{sender} 向 {receiver} 发送了 {amount} {token}",
         "pendingSent": "{sender} 正在向 {receiver} 发送 {amount} {token}",
         "pendingSentByYou": "您正在向 {receiver} 发送 {amount} {token}",
-        "receiver": "接收者",
-        "chooseReceiver": "输入接收者的用户名",
-        "done": "刷新并继续"
+        "done": "刷新并继续",
+        "amount": "数量",
+        "fee": "将增加 {fee} {token} 的费用",
+        "warning": "警告 - 您有责任确保您相信收件人的身份和动机。 OpenChat 无法撤销任何 {token} 传输。",
+        "zeroBalance": "您没有任何 {token}。",
+        "yourAccount": "您的 {token} 地址",
+        "receiver": "接受者",
+        "chooseReceiver": "输入收件人的用户名",
+        "icp": "上网电脑",
+        "btc": "比特币",
+        "chat": "打开聊天"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -626,7 +630,8 @@
     "profile": {
         "title": "配置文件设置",
         "chat": "聊天",
-        "settings": "设置"
+        "settings": "设置",
+        "label": "轮廓"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
@@ -656,5 +661,6 @@
     "communityTheme": "社区主题",
     "selectCommunityTheme": "选择社区主题",
     "useAtOwnRisk": "使用风险自负",
-    "deleteMessageAndReport": "删除并举报"
+    "deleteMessageAndReport": "删除并举报",
+    "howToBuyToken": "我需要购买 {token} 的帮助"
 }

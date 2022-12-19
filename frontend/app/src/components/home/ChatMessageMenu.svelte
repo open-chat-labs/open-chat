@@ -285,30 +285,6 @@
 </div>
 
 <style type="text/scss">
-    :global(.message-bubble:hover .menu-icon) {
-        opacity: 1;
-    }
-
-    :global(.message-bubble:hover .menu-icon .wrapper) {
-        background-color: var(--icon-msg-hv);
-    }
-
-    :global(.message-bubble.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-        background-color: rgba(255, 255, 255, 0.3);
-    }
-
-    :global(.me .menu-icon:hover .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-hv);
-    }
-
     .menu {
         $offset: -2px;
         position: absolute;
