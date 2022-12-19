@@ -192,6 +192,14 @@
                 justify-self: flex-end;
             }
 
+            @include mobile() {
+                .left,
+                .right {
+                    @include font(light, normal, fs-80);
+                    justify-self: center;
+                }
+            }
+
             .suspended {
                 color: var(--menu-warn);
             }
