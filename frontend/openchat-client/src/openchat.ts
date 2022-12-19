@@ -2855,8 +2855,8 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            const now = BigInt(Date.now());
             // Also update any users who haven't been updated for at least 24 hours
+            const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
                 if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
