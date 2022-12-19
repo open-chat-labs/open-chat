@@ -61,15 +61,17 @@
 
             <circle class="background" cx={160} cy={160} r={150} clip-path="url(#hollow)" />
 
-            <circle
-                class={`slice`}
-                cx={160}
-                cy={160}
-                r={75}
-                stroke={"var(--accent)"}
-                clip-path="url(#hollow)"
-                transform={`rotate(${-90})`}
-                stroke-dasharray={`${(percPlayed * circum) / 100} ${circum}`} />
+            {#if percPlayed > 0}
+                <circle
+                    class={`slice`}
+                    cx={160}
+                    cy={160}
+                    r={75}
+                    stroke={"var(--accent)"}
+                    clip-path="url(#hollow)"
+                    transform={`rotate(${-90})`}
+                    stroke-dasharray={`${(percPlayed * circum) / 100} ${circum}`} />
+            {/if}
         </svg>
     </div>
 </div>
