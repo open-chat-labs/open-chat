@@ -317,6 +317,20 @@
         text-align: center;
     }
 
+    .slice {
+        fill: transparent;
+        transform-origin: 50% 50%;
+        stroke-width: 150px;
+        cursor: pointer;
+    }
+    .pie {
+        width: min(250px, 100%);
+        margin-bottom: $sp5;
+        &.rendered circle {
+            transition: transform 200ms ease-in-out;
+        }
+    }
+
     .numbers {
         text-align: left;
         display: grid;
