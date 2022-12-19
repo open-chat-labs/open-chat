@@ -17,7 +17,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         user_index_canister_id,
         group_index_canister_id,
         notifications_canister_id,
-        online_users_aggregator_canister_id,
+        online_users_canister_id,
         proposals_bot_canister_id,
     ) = futures::future::join5(
         create_empty_canister(&management_canister),
@@ -38,7 +38,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("user_index canister id: {user_index_canister_id}");
     println!("group_index canister id: {group_index_canister_id}");
     println!("notifications canister id: {notifications_canister_id}");
-    println!("users_online_aggregator canister id: {online_users_aggregator_canister_id}");
+    println!("users_online_aggregator canister id: {online_users_canister_id}");
     println!("proposals_bot canister id: {proposals_bot_canister_id}");
     println!("cycles_dispenser canister id: {cycles_dispenser_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
@@ -48,7 +48,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
-        online_users_aggregator: online_users_aggregator_canister_id,
+        online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         open_storage_index: open_storage_index_canister_id,
@@ -79,11 +79,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications, controllers.clone()),
-        set_controllers(
-            management_canister,
-            &canister_ids.online_users_aggregator,
-            controllers.clone(),
-        ),
+        set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
         set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
@@ -100,7 +96,7 @@ async fn install_service_canisters_impl(
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_ids: vec![canister_ids.notifications],
-        online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
+        online_users_canister_id: canister_ids.online_users,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
@@ -133,8 +129,8 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version);
-    let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
+    let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version);
+    let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
@@ -159,7 +155,7 @@ async fn install_service_canisters_impl(
             canister_ids.user_index,
             canister_ids.group_index,
             canister_ids.notifications,
-            canister_ids.online_users_aggregator,
+            canister_ids.online_users,
             canister_ids.proposals_bot,
         ],
         max_top_up_amount: 5_000_000_000_000,   // 5T
@@ -196,9 +192,9 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.online_users_aggregator,
-            &online_users_aggregator_canister_wasm.module,
-            online_users_aggregator_init_args,
+            &canister_ids.online_users,
+            &online_users_canister_wasm.module,
+            online_users_init_args,
         ),
         install_wasm(
             management_canister,

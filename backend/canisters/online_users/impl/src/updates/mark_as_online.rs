@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use online_users_aggregator_canister::mark_as_online::{Response::*, *};
+use online_users_canister::mark_as_online::{Response::*, *};
 
 #[update]
 #[trace]

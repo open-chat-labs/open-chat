@@ -51,7 +51,7 @@ fn try_take_existing_env() -> Option<TestEnv> {
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
     let group_index_canister_id = create_canister(env, None);
     let notifications_canister_id = create_canister(env, None);
-    let online_users_aggregator_canister_id = create_canister(env, None);
+    let online_users_canister_id = create_canister(env, None);
     let proposals_bot_canister_id = create_canister(env, None);
     let user_index_canister_id = create_canister(env, None);
     let cycles_dispenser_canister_id = create_canister(env, None);
@@ -63,7 +63,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
-    let online_users_aggregator_canister_wasm = wasms::ONLINE_USERS_AGGREGATOR.clone();
+    let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
@@ -74,7 +74,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_canister_wasm,
         group_index_canister_id,
         notifications_canister_ids: vec![notifications_canister_id],
-        online_users_aggregator_canister_id,
+        online_users_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,
@@ -111,7 +111,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         notifications_init_args,
     );
 
-    let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
+    let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: Version::min(),
@@ -119,9 +119,9 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
-        online_users_aggregator_canister_id,
-        online_users_aggregator_canister_wasm,
-        online_users_aggregator_init_args,
+        online_users_canister_id,
+        online_users_canister_wasm,
+        online_users_init_args,
     );
 
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
@@ -168,7 +168,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
-        online_users_aggregator: online_users_aggregator_canister_id,
+        online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         open_storage_index: open_storage_index_canister_id,
         ledger: ledger_canister_id,

@@ -64,18 +64,18 @@ pub async fn upgrade_notifications_canister(
     println!("Notifications canister upgraded");
 }
 
-pub async fn upgrade_online_users_aggregator_canister(
+pub async fn upgrade_online_users_canister(
     identity: BasicIdentity,
     url: String,
-    online_users_aggregator_canister_id: CanisterId,
+    online_users_canister_id: CanisterId,
     version: Version,
 ) {
     upgrade_top_level_canister(
         identity,
         url,
-        online_users_aggregator_canister_id,
+        online_users_canister_id,
         version,
-        online_users_aggregator_canister::post_upgrade::Args { wasm_version: version },
+        online_users_canister::post_upgrade::Args { wasm_version: version },
         CanisterName::OnlineUsersAggregator,
     )
     .await;
