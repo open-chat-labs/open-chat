@@ -269,5 +269,6 @@
         text-align: center;
         align-items: center;
         min-height: 250px;
+        color: var(--txt);
     }
 </style>
