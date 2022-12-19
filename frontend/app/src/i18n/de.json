@@ -51,7 +51,6 @@
     "unableToLoadSMSUpgrade": "Vor dem Upgrade Ihres Speichers müssen wir OpenChat aktualisieren. Bitte erneut versuchen.",
     "leave": "Verlassen",
     "preview": "Vorschau",
-    "howToBuyToken": "Wie man {token} kauft",
     "copyGroupUrl": "Gruppen-URL kopieren",
     "copyToClipboard": "In die Zwischenablage kopieren",
     "copiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
@@ -354,7 +353,8 @@
         "numVotesBy": "{votes} Stimmen von",
         "oneVote": "1 Stimme",
         "oneVoteBy": "1 Stimme von",
-        "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner"
+        "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner",
+        "atLeastTwo": "Mindestens 2"
     },
     "group": {
         "addGroupPhoto": "Gruppenfoto hinzufügen",
@@ -441,24 +441,28 @@
     "ownedBy": "Im Besitz von @{Benutzername}",
     "tokenTransfer": {
         "title": "{token} senden",
-        "amount": "Menge ({token}) *",
         "send": "Schicken",
         "message": "Nachricht",
         "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
-        "fee": "* Eine Gebühr von {fee} {token} wird hinzugefügt",
         "unexpected": "Ein unerwarteter Kryptoübertragungstyp wurde empfangen",
         "viewTransaction": "[Transaktion anzeigen]({url})",
-        "warning": "Warnung – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine {token}-Übertragungen rückgängig machen.",
         "confirm": "Bestätigen Sie",
         "transfer": "{token}-Übertragung",
         "makeDeposit": "Bitte tätigen Sie eine Einzahlung auf das obige Konto und aktualisieren Sie Ihr Guthaben.",
-        "zeroBalance": "Du hast kein {token} 😭.",
         "confirmedSent": "{sender} hat {amount} {token} an {receiver} gesendet",
         "pendingSent": "{sender} sendet {amount} {token} an {receiver}",
         "pendingSentByYou": "Sie senden {amount} {token} an {receiver}",
+        "done": "aktualisieren und fortfahren",
+        "amount": "Menge",
+        "fee": "Eine Gebühr von {fee} {token} wird hinzugefügt",
+        "warning": "WARNUNG – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine {token}-Übertragungen rückgängig machen.",
+        "zeroBalance": "Sie haben keine {token}.",
+        "yourAccount": "Ihre {token}-Adresse",
         "receiver": "Empfänger",
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
-        "done": "aktualisieren und fortfahren"
+        "icp": "Internet-Computer",
+        "btc": "Bitcoin",
+        "chat": "Chat öffnen"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -625,7 +629,8 @@
     "profile": {
         "title": "Profileinstellungen",
         "chat": "Plaudern",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "label": "Profil"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
@@ -655,5 +660,6 @@
     "communityTheme": "Community-Thema",
     "selectCommunityTheme": "Wählen Sie ein Community-Design aus",
     "useAtOwnRisk": "Benutzung auf eigene Gefahr",
-    "deleteMessageAndReport": "Löschen und melden"
+    "deleteMessageAndReport": "Löschen und melden",
+    "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}"
 }

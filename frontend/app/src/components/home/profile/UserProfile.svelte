@@ -414,22 +414,6 @@
         margin-bottom: $sp4;
     }
 
-    .user,
-    .chats,
-    .invite,
-    .accounts,
-    .stats,
-    .appearance,
-    .storage,
-    .advanced {
-        margin-bottom: $sp3;
-        border-bottom: var(--bd);
-    }
-
-    .advanced {
-        margin-bottom: 0;
-    }
-
     .para {
         margin-bottom: $sp4;
         &.last {

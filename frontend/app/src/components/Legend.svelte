@@ -20,7 +20,6 @@
         .rules {
             @include font(light, normal, fs-60);
             color: var(--txt-light);
-            text-transform: lowercase;
         }
     }
 </style>

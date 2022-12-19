@@ -214,6 +214,10 @@
         flex-direction: column;
         justify-content: center;
         text-align: center;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
     }
 
     .phone-number {

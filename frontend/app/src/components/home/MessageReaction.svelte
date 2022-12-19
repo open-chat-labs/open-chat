@@ -81,7 +81,7 @@
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         cursor: pointer;
-        padding: $sp1 $sp2;
+        padding: 3px $sp2;
         display: flex;
         justify-content: center;
         align-items: center;
