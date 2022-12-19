@@ -14,7 +14,7 @@ ic-state-machine-tests = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 notifications_canister = { path = "../canisters/notifications/api" }
-online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
+online_users_canister = { path = "../canisters/online_users/api" }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 serde = { workspace = true }

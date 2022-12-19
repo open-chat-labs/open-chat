@@ -3,7 +3,7 @@ use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use online_users_aggregator_canister::post_upgrade::Args;
+use online_users_canister::post_upgrade::Args;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use utils::consts::MIN_CYCLES_BALANCE;

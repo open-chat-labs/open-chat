@@ -25,4 +25,4 @@ types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_client = { path = "../../canisters/user_index/client" }
-online_users_aggregator_canister = { path = "../../canisters/online_users_aggregator/api" }
+online_users_canister = { path = "../../canisters/online_users/api" }
