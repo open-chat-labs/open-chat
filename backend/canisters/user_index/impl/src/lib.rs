@@ -144,6 +144,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
+    #[serde(alias = "online_users_aggregator_canister_ids")]
     pub online_users_canister_ids: HashSet<CanisterId>,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
