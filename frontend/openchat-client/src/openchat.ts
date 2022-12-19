@@ -167,7 +167,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -293,7 +293,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -2581,7 +2581,14 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale).then((resp) => {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+        if (userGroups.length === 0) {
+            return Promise.resolve({
+                users: []
+            });
+        }
+
+        return this.api.getUsers({ userGroups }, allowStale).then((resp) => {
             userStore.addMany(resp.users);
             if (resp.serverTimestamp !== undefined) {
                 // If we went to the server, all users not returned are still up to date, so we mark them as such
@@ -2848,27 +2855,28 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            // Also update any users who haven't been updated for at least an hour
+            // Also update any users who haven't been updated for at least 24 hours
             const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
+                    if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
+                        break;
+                    }
                 }
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-                const userGroups = groupBy<string, bigint>(batch, (u) => {
-                    return allUsers[u]?.updated ?? BigInt(0);
-                });
+            const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
 
-                await this.getUsers({
-                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                        users,
-                        updatedSince,
-                    })),
-                });
-            }
+            await this.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
         }

@@ -1,4 +1,4 @@
-import { chunk, distinctBy, flatMap, groupWhile } from "./list";
+import { distinctBy, flatMap, groupWhile } from "./list";
 
 describe("list utils", () => {
     describe("group by", () => {
@@ -88,15 +88,5 @@ describe("list utils", () => {
         expect(distinct[1].b).toEqual(3);
         expect(distinct[2].a).toEqual(3);
         expect(distinct[2].b).toEqual(5);
-    });
-
-    describe("chunk", () => {
-        const array = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        expect(chunk(array, 2)).toEqual([[1, 2], [3, 4], [5, 6], [7, 8], [9]]);
-        expect(chunk(array, 3)).toEqual([
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9],
-        ]);
     });
 });
