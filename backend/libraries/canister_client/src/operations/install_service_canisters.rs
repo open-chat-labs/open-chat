@@ -111,9 +111,11 @@ async fn install_service_canisters_impl(
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
+    let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
+        local_group_index_canister_wasm,
         notifications_canister_ids: vec![canister_ids.notifications],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,

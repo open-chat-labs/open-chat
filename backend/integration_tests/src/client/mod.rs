@@ -6,14 +6,21 @@ pub mod user;
 pub mod user_index;
 
 use candid::{CandidType, Principal};
-use ic_state_machine_tests::{CanisterInstallMode, StateMachine};
+use ic_state_machine_tests::{CanisterInstallMode, CanisterSettingsArgs, StateMachine};
+use itertools::Itertools;
 use serde::de::DeserializeOwned;
 use types::{CanisterId, CanisterWasm};
 
 const INIT_CYCLES_BALANCE: u128 = 1_000_000_000_000_000;
 
-pub fn create_canister(env: &mut StateMachine) -> CanisterId {
-    let canister_id = env.create_canister_with_cycles(INIT_CYCLES_BALANCE.into(), None);
+pub fn create_canister(env: &mut StateMachine, controllers: Option<Vec<Principal>>) -> CanisterId {
+    let canister_id = env.create_canister_with_cycles(
+        INIT_CYCLES_BALANCE.into(),
+        Some(CanisterSettingsArgs {
+            controllers: controllers.map(|c| c.into_iter().map_into().collect()),
+            ..Default::default()
+        }),
+    );
     canister_id.get().0
 }
 
