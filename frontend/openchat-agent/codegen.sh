@@ -13,8 +13,8 @@ didc bind ../../backend/canisters/group_index/api/can.did -t js > ./src/services
 didc bind ../../backend/canisters/notifications/api/can.did -t ts > ./src/services/notifications/candid/types.d.ts
 didc bind ../../backend/canisters/notifications/api/can.did -t js > ./src/services/notifications/candid/idl.js
 
-didc bind ../../backend/canisters/online_users_aggregator/api/can.did -t ts > ./src/services/online/candid/types.d.ts
-didc bind ../../backend/canisters/online_users_aggregator/api/can.did -t js > ./src/services/online/candid/idl.js
+didc bind ../../backend/canisters/online_users/api/can.did -t ts > ./src/services/online/candid/types.d.ts
+didc bind ../../backend/canisters/online_users/api/can.did -t js > ./src/services/online/candid/idl.js
 
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
