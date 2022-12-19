@@ -2,7 +2,7 @@ use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
-use online_users_aggregator_canister::init::Args;
+use online_users_canister::init::Args;
 use tracing::info;
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;

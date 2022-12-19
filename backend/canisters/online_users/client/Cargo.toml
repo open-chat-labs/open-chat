@@ -1,5 +1,5 @@
 [package]
-name = "online_users_aggregator_canister_client"
+name = "online_users_canister_client"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
@@ -11,4 +11,4 @@ candid = { workspace = true }
 canister_client_macros = { path = "../../../libraries/canister_client_macros", features = ["ingress"] }
 ic-agent = { workspace = true }
 types = { path = "../../../libraries/types" }
-online_users_aggregator_canister = { path = "../api" }
+online_users_canister = { path = "../api" }
