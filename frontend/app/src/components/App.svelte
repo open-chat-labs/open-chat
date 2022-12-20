@@ -85,7 +85,7 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        window.superAdmin = { freezeGroup, unfreezeGroup };
+        (<any>window).superAdmin = { freezeGroup, unfreezeGroup };
     });
 
     function freezeGroup(chatId: string, reason: string | undefined): void {
