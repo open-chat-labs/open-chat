@@ -2,7 +2,7 @@ use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, DeletedGroupInfo, UserId, Version};
-use utils::canister::{update_settings, upgrade, FailedUpgrade};
+use utils::canister::{set_controllers, upgrade, FailedUpgrade};
 use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
 use utils::cycles::can_spend_cycles;
 
@@ -246,7 +246,7 @@ mod swap_group_canister_controller {
     }
 
     async fn perform_swap(canister_id: CanisterId, local_group_index_canister_id: CanisterId) {
-        match update_settings(canister_id, vec![local_group_index_canister_id]).await {
+        match set_controllers(canister_id, vec![local_group_index_canister_id]).await {
             Ok(_) => {
                 mutate_state(|state| state.data.canisters_requiring_controller_swap.mark_success(&canister_id));
             }

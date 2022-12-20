@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::CanisterId;
 
-pub async fn update_settings(canister_id: CanisterId, controllers: Vec<Principal>) -> Result<(), canister::Error> {
+pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal>) -> Result<(), canister::Error> {
     let args = UpdateSettingsArgs {
         canister_id,
         settings: CanisterSettings {

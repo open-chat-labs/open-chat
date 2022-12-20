@@ -51,6 +51,7 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let canister_swap_controller_metrics = self.data.canisters_requiring_controller_swap.metrics();
 
         Metrics {
             memory_used: memory::used(),
@@ -73,6 +74,10 @@ impl RuntimeState {
             group_wasm_version: self.data.group_canister_wasm.version,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
             max_concurrent_local_group_index_canister_upgrades: self.data.max_concurrent_local_group_index_canister_upgrades,
+            canister_controllers_swaps_completed: canister_swap_controller_metrics.completed,
+            canister_controllers_swaps_failed: canister_swap_controller_metrics.failed,
+            canister_controllers_swaps_pending: canister_swap_controller_metrics.pending,
+            canister_controllers_swaps_in_progress: canister_swap_controller_metrics.in_progress,
         }
     }
 }
@@ -217,6 +222,10 @@ pub struct Metrics {
     pub group_wasm_version: Version,
     pub local_group_index_wasm_version: Version,
     pub max_concurrent_local_group_index_canister_upgrades: usize,
+    pub canister_controllers_swaps_completed: usize,
+    pub canister_controllers_swaps_failed: usize,
+    pub canister_controllers_swaps_pending: usize,
+    pub canister_controllers_swaps_in_progress: usize,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]

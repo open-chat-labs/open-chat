@@ -9,7 +9,7 @@ pub struct CanistersRequiringControllerSwap {
     pending: VecDeque<CanisterId>,
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<CanisterId>,
-    completed: u64,
+    completed: usize,
 }
 
 impl CanistersRequiringControllerSwap {
@@ -33,12 +33,21 @@ impl CanistersRequiringControllerSwap {
         self.failed.push_back(failed_canister_id);
     }
 
-    pub fn count_pending(&self) -> u64 {
-        self.pending.len() as u64
+    pub fn count_pending(&self) -> usize {
+        self.pending.len()
     }
 
     pub fn count_in_progress(&self) -> usize {
         self.in_progress.len()
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            pending: self.pending.len(),
+            in_progress: self.in_progress.len(),
+            failed: self.failed.len(),
+            completed: self.completed,
+        }
     }
 
     fn mark_swap_no_longer_in_progress(&mut self, canister_id: &CanisterId) {
@@ -46,4 +55,11 @@ impl CanistersRequiringControllerSwap {
             info!("Canister controller swap queue is now empty");
         }
     }
+}
+
+pub struct Metrics {
+    pub completed: usize,
+    pub failed: usize,
+    pub pending: usize,
+    pub in_progress: usize,
 }
