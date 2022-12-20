@@ -8,6 +8,7 @@ mod client;
 mod delete_message_tests;
 mod freeze_group_tests;
 mod initial_state_and_updates_tests;
+mod last_online_date_tests;
 mod poll_tests;
 mod register_user_tests;
 mod rng;
