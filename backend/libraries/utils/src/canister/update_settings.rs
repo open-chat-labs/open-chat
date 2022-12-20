@@ -17,16 +17,13 @@ pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal
         },
     };
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "update_settings", (args,)).await {
-        Ok(x) => x,
-        Err((code, msg)) => {
-            error!(
-                error_code = code as u8,
-                error_message = msg.as_str(),
-                "Error calling update_settings"
-            );
-            return Err(canister::Error { code, msg });
-        }
+    if let Err((code, msg)) = api::call::call::<_, ()>(Principal::management_canister(), "update_settings", (args,)).await {
+        error!(
+            error_code = code as u8,
+            error_message = msg.as_str(),
+            "Error calling update_settings"
+        );
+        return Err(canister::Error { code, msg });
     };
 
     Ok(())

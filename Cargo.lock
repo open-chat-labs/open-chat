@@ -767,7 +767,7 @@ dependencies = [
 [[package]]
 name = "candid"
 version = "0.8.4"
-source = "git+https://github.com/hpeebles/candid?rev=a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9#a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9"
+source = "git+https://github.com/hpeebles/candid?rev=bc66c9eb4373f0312c5874652c87badc5e843f04#bc66c9eb4373f0312c5874652c87badc5e843f04"
 dependencies = [
  "anyhow",
  "binread",
@@ -795,7 +795,7 @@ dependencies = [
 [[package]]
 name = "candid_derive"
 version = "0.5.0"
-source = "git+https://github.com/hpeebles/candid?rev=a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9#a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9"
+source = "git+https://github.com/hpeebles/candid?rev=bc66c9eb4373f0312c5874652c87badc5e843f04#bc66c9eb4373f0312c5874652c87badc5e843f04"
 dependencies = [
  "lazy_static",
  "proc-macro2",
