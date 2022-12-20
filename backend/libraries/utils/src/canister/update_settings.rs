@@ -17,7 +17,7 @@ pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal
         },
     };
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "update_settings", (args,)).await {
+    let _: () = match api::call::call(Principal::management_canister(), "update_settings", (args,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
             error!(

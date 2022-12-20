@@ -13,7 +13,7 @@ pub async fn stop(canister_id: CanisterId) -> Result<(), canister::Error> {
 
     let stop_args = StopArgs { canister_id };
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "stop_canister", (stop_args,)).await {
+    let _: () = match api::call::call(Principal::management_canister(), "stop_canister", (stop_args,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
             error!(

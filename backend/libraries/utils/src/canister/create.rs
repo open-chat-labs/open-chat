@@ -117,7 +117,7 @@ pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Ve
         arg: wasm_arg,
     };
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
+    let _: () = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
             error!(

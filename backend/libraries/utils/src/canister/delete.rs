@@ -13,7 +13,7 @@ pub async fn delete(canister_id: CanisterId) -> Result<(), canister::Error> {
 
     let delete_args = DeleteArgs { canister_id };
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "delete_canister", (delete_args,)).await {
+    let _: () = match api::call::call(Principal::management_canister(), "delete_canister", (delete_args,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
             error!(
