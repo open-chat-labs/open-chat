@@ -9,9 +9,11 @@ fn inspect_message() {
 fn accept_if_valid(runtime_state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
-    // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    if is_c2c_method {
+    let is_frozen = runtime_state.data.frozen.value.is_some();
+
+    // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
+    if is_c2c_method || is_frozen {
         return;
     }
 
@@ -35,7 +37,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "send_message" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
             "unblock_user" => role.can_block_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
-            "update_group" | "update_group_v2" => role.can_update_group(permissions),
+            "update_group_v2" => role.can_update_group(permissions),
             "update_permissions" => role.can_change_permissions(permissions),
             "delete_messages"
             | "undelete_messages"
