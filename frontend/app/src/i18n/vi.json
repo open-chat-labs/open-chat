@@ -662,5 +662,6 @@
     "selectCommunityTheme": "Chọn một chủ đề cộng đồng",
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
     "deleteMessageAndReport": "Xóa và báo cáo",
-    "howToBuyToken": "Tôi cần trợ giúp mua {token}"
+    "howToBuyToken": "Tôi cần trợ giúp mua {token}",
+    "reason": "Lý do"
 }

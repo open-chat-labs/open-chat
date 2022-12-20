@@ -659,5 +659,6 @@
     "nUsersJoined": "{number} users joined the group",
     "reasonForSuspension": "reason for suspension",
     "suspend": "Suspend",
-    "deleteMessageAndReport": "Delete and report"
+    "deleteMessageAndReport": "Delete and report",
+    "reason": "Reason"
 }

@@ -661,5 +661,6 @@
     "selectCommunityTheme": "Seleziona un tema della community",
     "useAtOwnRisk": "Utilizzare a proprio rischio",
     "deleteMessageAndReport": "Elimina e segnala",
-    "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}"
+    "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
+    "reason": "Motivo"
 }

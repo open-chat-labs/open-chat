@@ -85,7 +85,38 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+        (<any>window).superAdmin = { freezeGroup, unfreezeGroup };
     });
+
+    function freezeGroup(chatId: string, reason: string | undefined): void {
+        client
+            .freezeGroup(chatId, reason)
+            .then((success) => {
+                if (success) {
+                    console.log("Group frozen", chatId);
+                } else {
+                    console.log("Failed to freeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to freeze group", e);
+            });
+    }
+
+    function unfreezeGroup(chatId: string): void {
+        client
+            .unfreezeGroup(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Group unfrozen", chatId);
+                } else {
+                    console.log("Failed to unfreeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to unfreeze group", e);
+            });
+    }
 
     $: {
         if (
