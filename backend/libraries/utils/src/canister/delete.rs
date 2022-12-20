@@ -13,16 +13,15 @@ pub async fn delete(canister_id: CanisterId) -> Result<(), canister::Error> {
 
     let delete_args = DeleteArgs { canister_id };
 
-    let _: () = match api::call::call(Principal::management_canister(), "delete_canister", (delete_args,)).await {
-        Ok(x) => x,
-        Err((code, msg)) => {
-            error!(
-                error_code = code as u8,
-                error_message = msg.as_str(),
-                "Error calling delete_canister"
-            );
-            return Err(canister::Error { code, msg });
-        }
+    if let Err((code, msg)) =
+        api::call::call::<_, ()>(Principal::management_canister(), "delete_canister", (delete_args,)).await
+    {
+        error!(
+            error_code = code as u8,
+            error_message = msg.as_str(),
+            "Error calling delete_canister"
+        );
+        return Err(canister::Error { code, msg });
     };
 
     Ok(())
