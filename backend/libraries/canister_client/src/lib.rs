@@ -77,6 +77,7 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,
+    pub local_group_index: CanisterId,
     pub ledger: CanisterId,
 }
 
