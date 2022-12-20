@@ -130,10 +130,10 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-candid = { git = "https://github.com/hpeebles/candid", rev = "ddc574236bcd05fc6b0070a5fd5a3843a15f09ea" }
-candid_derive = { git = "https://github.com/hpeebles/candid", rev = "ddc574236bcd05fc6b0070a5fd5a3843a15f09ea" }
+candid = { git = "https://github.com/hpeebles/candid", rev = "a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9" }
+candid_derive = { git = "https://github.com/hpeebles/candid", rev = "a7df9bd1e84cc67c9504d4d3ef2df40c0c1cddb9" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
-jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "986e0d8531cd152d5da747b760b099f1d4f16136" }
+jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }
