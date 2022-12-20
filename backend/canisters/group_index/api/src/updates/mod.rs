@@ -5,7 +5,6 @@ pub mod c2c_make_private;
 pub mod c2c_mark_active;
 pub mod c2c_notify_low_balance;
 pub mod c2c_update_group;
-pub mod change_group_controller;
 pub mod freeze_group;
 pub mod mark_local_group_index_full;
 pub mod set_max_concurrent_group_canister_upgrades;

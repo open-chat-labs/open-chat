@@ -25,6 +25,7 @@ fn post_upgrade(args: Args) {
 
     data.public_groups.hydrate();
     data.canisters_requiring_upgrade.reset_in_progress();
+    init_swap_group_controller_queue(&mut data);
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
@@ -51,4 +52,14 @@ fn rehydrate_log_messages(
     for message in trace_messages {
         messages_container.traces.push(message);
     }
+}
+
+fn init_swap_group_controller_queue(data: &mut Data) {
+    let private_groups = data.private_groups.iter().map(|g| g.id());
+    let public_groups = data.public_groups.iter().map(|g| g.id());
+    for id in private_groups.chain(public_groups) {
+        data.canisters_requiring_controller_swap.enqueue(id.into());
+    }
+    let canisters_queued_for_swap = data.canisters_requiring_controller_swap.count_pending();
+    info!(canisters_queued_for_swap, "Group canister controller swap initiated");
 }

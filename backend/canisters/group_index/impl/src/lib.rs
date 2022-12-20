@@ -5,6 +5,7 @@ use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use model::canisters_requiring_controller_swap::CanistersRequiringControllerSwap;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -97,6 +98,8 @@ struct Data {
     pub max_concurrent_local_group_index_canister_upgrades: usize,
     #[serde(default)]
     pub local_index_map: LocalGroupIndexMap,
+    #[serde(default)]
+    pub canisters_requiring_controller_swap: CanistersRequiringControllerSwap,
 }
 
 fn default_concurrent_upgrades() -> usize {
@@ -131,6 +134,7 @@ impl Data {
             cached_metrics: CachedMetrics::default(),
             max_concurrent_local_group_index_canister_upgrades: 1,
             local_index_map: LocalGroupIndexMap::default(),
+            canisters_requiring_controller_swap: CanistersRequiringControllerSwap::default(),
         }
     }
 
@@ -186,6 +190,7 @@ impl Default for Data {
             cached_metrics: CachedMetrics::default(),
             max_concurrent_local_group_index_canister_upgrades: 1,
             local_index_map: LocalGroupIndexMap::default(),
+            canisters_requiring_controller_swap: CanistersRequiringControllerSwap::default(),
         }
     }
 }
