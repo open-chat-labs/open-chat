@@ -22,6 +22,7 @@ ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id open_storage_index)
+LOCAL_GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id local_group_index)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -35,4 +36,5 @@ cargo run \
   $PROPOSALS_BOT_CANISTER_ID \
   $CYCLES_DISPENSER_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
+  $LOCAL_GROUP_INDEX_CANISTER_ID \
   $LEDGER_CANISTER_ID \

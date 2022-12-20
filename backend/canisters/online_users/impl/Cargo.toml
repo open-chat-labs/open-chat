@@ -19,7 +19,9 @@ cycles_dispenser_client = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-stable-structures = { workspace = true, features = ["candid"] }
 serde = { workspace = true }
+serializer = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
