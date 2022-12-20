@@ -16,6 +16,7 @@ async fn main() {
         proposals_bot: opts.proposals_bot,
         cycles_dispenser: opts.cycles_dispenser,
         open_storage_index: opts.open_storage_index,
+        local_group_index: opts.local_group_index,
         ledger: opts.ledger,
     };
 
@@ -37,5 +38,6 @@ struct Opts {
     proposals_bot: CanisterId,
     cycles_dispenser: CanisterId,
     open_storage_index: CanisterId,
+    local_group_index: CanisterId,
     ledger: CanisterId,
 }
