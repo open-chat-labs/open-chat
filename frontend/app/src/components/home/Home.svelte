@@ -53,6 +53,7 @@
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
+    import NewGroupWizard from "./addgroup/NewGroupWizard.svelte";
 
     export let logout: () => void;
 
@@ -93,6 +94,7 @@
         Faq,
         SelectChat,
         Suspended,
+        NewGroup,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -785,7 +787,8 @@
     }
 
     function newGroup() {
-        rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
+        // rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
+        modal = ModalType.NewGroup;
     }
 
     function filterChatSelection(
@@ -950,6 +953,8 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.NewGroup}
+            <NewGroupWizard />
         {/if}
     </Overlay>
 {/if}
