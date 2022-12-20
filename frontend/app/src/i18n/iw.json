@@ -659,5 +659,6 @@
     "selectCommunityTheme": "בחר נושא קהילה",
     "useAtOwnRisk": "השימוש על אחריותך בלבד",
     "deleteMessageAndReport": "מחק ודווח",
-    "howToBuyToken": "אני צריך עזרה בקניית {token}"
+    "howToBuyToken": "אני צריך עזרה בקניית {token}",
+    "reason": "סיבה"
 }

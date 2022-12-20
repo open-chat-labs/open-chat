@@ -661,5 +661,6 @@
     "selectCommunityTheme": "Выберите тему сообщества",
     "useAtOwnRisk": "Используйте на свой риск",
     "deleteMessageAndReport": "Удалить и пожаловаться",
-    "howToBuyToken": "Мне нужна помощь в покупке {token}"
+    "howToBuyToken": "Мне нужна помощь в покупке {token}",
+    "reason": "Причина"
 }

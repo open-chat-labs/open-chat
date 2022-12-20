@@ -662,5 +662,6 @@
     "selectCommunityTheme": "コミュニティのテーマを選択",
     "useAtOwnRisk": "自己責任",
     "deleteMessageAndReport": "削除して報告",
-    "howToBuyToken": "{token} の購入についてサポートが必要です"
+    "howToBuyToken": "{token} の購入についてサポートが必要です",
+    "reason": "理由"
 }
