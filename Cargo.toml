@@ -130,6 +130,8 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
+candid = { git = "https://github.com/hpeebles/candid", rev = "ddc574236bcd05fc6b0070a5fd5a3843a15f09ea" }
+candid_derive = { git = "https://github.com/hpeebles/candid", rev = "ddc574236bcd05fc6b0070a5fd5a3843a15f09ea" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
