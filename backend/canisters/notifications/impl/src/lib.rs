@@ -63,16 +63,11 @@ impl RuntimeState {
 struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub test_mode: bool,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {

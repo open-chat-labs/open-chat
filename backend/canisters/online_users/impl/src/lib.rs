@@ -49,21 +49,14 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub online_users: OnlineUsers,
-    #[serde(default)]
     pub last_online_dates: LastOnlineDates,
-    #[serde(default)]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,
     pub failed_batches: u64,
     pub test_mode: bool,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {

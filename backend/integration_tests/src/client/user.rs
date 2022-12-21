@@ -11,6 +11,7 @@ generate_query_call!(updates);
 generate_update_call!(add_reaction);
 generate_update_call!(assume_group_super_admin);
 generate_update_call!(block_user);
+generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
 generate_update_call!(create_group);
