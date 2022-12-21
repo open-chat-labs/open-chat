@@ -12,7 +12,7 @@ fn heartbeat() {
     calculate_hot_groups::run();
     push_group_deleted_notifications::run();
     calculate_metrics::run();
-    //swap_group_canister_controller::run();
+    swap_group_canister_controller::run();
 }
 
 mod upgrade_canisters {
