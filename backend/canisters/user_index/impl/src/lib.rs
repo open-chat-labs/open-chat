@@ -144,9 +144,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    #[serde(alias = "online_users_aggregator_canister_ids")]
     pub online_users_canister_ids: HashSet<CanisterId>,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
@@ -160,10 +158,6 @@ struct Data {
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     pub set_user_suspended_queue: SetUserSuspendedQueue,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {

@@ -20,7 +20,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (data, log_messages, trace_messages, _): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
+    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         serializer::deserialize(reader).unwrap();
 
     init_logger(data.test_mode);
