@@ -33,6 +33,7 @@
 </FormField>
 <FormField label={"Group name"} required>
     <Input
+        autofocus
         bind:value={candidateGroup.name}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}

@@ -79,7 +79,7 @@
 <svelte:window on:resize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Overlay dismissible={true} fade={modal} on:close={onClose}>
+    <Overlay dismissible={true} on:close={onClose}>
         <ModalContent
             closeIcon
             fill

@@ -954,7 +954,7 @@
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NewGroup}
-            <NewGroupWizard />
+            <NewGroupWizard on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

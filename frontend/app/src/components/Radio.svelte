@@ -4,11 +4,16 @@
     export let checked: boolean = false;
     export let id: string;
     export let label: string = "radio-label";
+    export let align: "center" | "start" = "center";
 </script>
 
-<div class="radio">
+<div class="radio" class:align-start={align === "start"}>
     <input {id} type="radio" name={group} {checked} {value} on:change />
-    <label for={id}>{label}</label>
+    <label for={id}>
+        <slot>
+            {label}
+        </slot>
+    </label>
 </div>
 
 <style type="text/scss">
@@ -18,6 +23,14 @@
         margin-bottom: 10px;
         cursor: pointer;
         gap: $sp4;
+
+        &.align-start {
+            align-items: flex-start;
+
+            input {
+                margin-top: 6px;
+            }
+        }
     }
 
     input {
@@ -49,7 +62,7 @@
         border-radius: 50%;
         transform: scale(0);
         transition: 50ms transform ease-in-out;
-        box-shadow: inset 1em 1em var(--button-bg);
+        box-shadow: inset 1em 1em var(--primary);
     }
 
     input[type="radio"]:checked::before {

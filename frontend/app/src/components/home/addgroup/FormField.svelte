@@ -19,6 +19,8 @@
     }
     label {
         @include font(bold, normal, fs-100, 22);
+        display: inline-block;
+        margin-bottom: $sp2;
     }
     .required {
         color: var(--accent);
