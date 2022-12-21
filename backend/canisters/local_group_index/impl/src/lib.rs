@@ -75,11 +75,17 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    #[serde(default = "cycles_dispenser_canister_id")]
+    pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+}
+
+fn cycles_dispenser_canister_id() -> CanisterId {
+    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {
@@ -89,6 +95,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
+        cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
@@ -99,6 +106,7 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
+            cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),

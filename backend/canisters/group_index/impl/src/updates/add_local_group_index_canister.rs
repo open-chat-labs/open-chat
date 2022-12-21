@@ -53,6 +53,7 @@ fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<Prep
                 user_index_canister_id: runtime_state.data.user_index_canister_id,
                 group_index_canister_id: runtime_state.env.canister_id(),
                 notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
+                cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
                 ledger_canister_id: runtime_state.data.ledger_canister_id,
                 test_mode: runtime_state.data.test_mode,
             },
