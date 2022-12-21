@@ -49,6 +49,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         subtype: args.subtype,
                         avatar_id,
                         wasm_version: group_wasm_version,
+                        local_group_index_canister,
                     },
                     state,
                 )
@@ -111,6 +112,7 @@ struct CommitArgs {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     wasm_version: Version,
+    local_group_index_canister: CanisterId,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -131,6 +133,10 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             .private_groups
             .handle_group_created(args.chat_id, now, args.wasm_version);
     }
+    runtime_state
+        .data
+        .local_index_map
+        .add_group(args.local_group_index_canister, args.chat_id);
 }
 
 fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
