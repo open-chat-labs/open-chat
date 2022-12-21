@@ -146,6 +146,8 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     #[serde(alias = "online_users_aggregator_canister_ids")]
     pub online_users_canister_ids: HashSet<CanisterId>,
+    #[serde(default = "cycles_dispenser_canister_id")]
+    pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_event_sync_queue: UserEventSyncQueue,
@@ -160,6 +162,10 @@ struct Data {
     pub set_user_suspended_queue: SetUserSuspendedQueue,
 }
 
+fn cycles_dispenser_canister_id() -> CanisterId {
+    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -169,6 +175,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         online_users_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
@@ -197,6 +204,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             online_users_canister_ids: HashSet::from([online_users_canister_id]),
+            cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -229,6 +237,7 @@ impl Default for Data {
             notifications_canister_ids: vec![Principal::anonymous()],
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_canister_ids: HashSet::new(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),

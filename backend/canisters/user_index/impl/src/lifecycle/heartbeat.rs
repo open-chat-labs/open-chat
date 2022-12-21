@@ -21,7 +21,6 @@ fn heartbeat() {
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
     set_users_suspended::run();
-    cycles_dispenser_client::run();
 }
 
 mod upgrade_canisters {
