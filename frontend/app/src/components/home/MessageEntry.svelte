@@ -332,7 +332,7 @@
         inp.textContent = "";
         dispatch("setTextContent", undefined);
 
-        messageActions.close();
+        messageActions?.close();
         dispatch("stopTyping");
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the

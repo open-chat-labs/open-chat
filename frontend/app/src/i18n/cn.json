@@ -662,5 +662,6 @@
     "selectCommunityTheme": "选择社区主题",
     "useAtOwnRisk": "使用风险自负",
     "deleteMessageAndReport": "删除并举报",
-    "howToBuyToken": "我需要购买 {token} 的帮助"
+    "howToBuyToken": "我需要购买 {token} 的帮助",
+    "reason": "原因"
 }

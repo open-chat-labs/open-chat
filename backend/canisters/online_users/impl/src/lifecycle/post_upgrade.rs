@@ -7,6 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use online_users_canister::post_upgrade::Args;
 use tracing::info;
+use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -19,17 +20,16 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (data, log_messages, trace_messages, cycles_dispenser_client_state): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
+    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         serializer::deserialize(reader).unwrap();
 
     init_logger(data.test_mode);
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
     if !log_messages.is_empty() || !trace_messages.is_empty() {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
-
-    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

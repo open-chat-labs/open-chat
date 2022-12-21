@@ -2,7 +2,6 @@ use crate::client;
 use crate::rng::random_principal;
 use crate::setup::{return_env, setup_env, TestEnv};
 use std::time::Duration;
-use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn set_then_get_last_online_date_succeeds() {

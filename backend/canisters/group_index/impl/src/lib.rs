@@ -83,24 +83,18 @@ struct Data {
     pub deleted_groups: DeletedGroups,
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
-    #[serde(default)]
     pub local_group_index_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-    #[serde(default = "default_concurrent_upgrades")]
     pub max_concurrent_local_group_index_canister_upgrades: usize,
-    #[serde(default)]
     pub local_index_map: LocalGroupIndexMap,
-}
-
-fn default_concurrent_upgrades() -> usize {
-    1
 }
 
 impl Data {
@@ -111,6 +105,7 @@ impl Data {
         local_group_index_canister_wasm: CanisterWasm,
         notifications_canister_ids: Vec<CanisterId>,
         user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -123,6 +118,7 @@ impl Data {
             local_group_index_canister_wasm,
             notifications_canister_ids,
             user_index_canister_id,
+            cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
@@ -178,6 +174,7 @@ impl Default for Data {
             local_group_index_canister_wasm: CanisterWasm::default(),
             notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,

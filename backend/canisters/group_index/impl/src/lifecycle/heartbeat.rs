@@ -2,9 +2,7 @@ use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, DeletedGroupInfo, UserId, Version};
-use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
-use utils::cycles::can_spend_cycles;
+use utils::canister::{upgrade, FailedUpgrade};
 
 #[heartbeat]
 fn heartbeat() {
@@ -12,7 +10,6 @@ fn heartbeat() {
     calculate_hot_groups::run();
     push_group_deleted_notifications::run();
     calculate_metrics::run();
-    cycles_dispenser_client::run();
 }
 
 mod upgrade_canisters {
@@ -48,17 +45,12 @@ mod upgrade_canisters {
 
         let new_wasm = runtime_state.data.local_group_index_canister_wasm.clone();
         let wasm_version = new_wasm.version;
-        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
-            Some(CYCLES_REQUIRED_FOR_UPGRADE)
-        } else {
-            None
-        };
 
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
             new_wasm,
-            cycles_to_deposit_if_needed,
+            deposit_cycles_if_needed: false,
             args: group_canister::post_upgrade::Args { wasm_version },
         })
     }
@@ -74,7 +66,7 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::upgrade(canister_to_upgrade).await {
+        match upgrade(canister_to_upgrade).await {
             Ok(cycles_top_up) => {
                 mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
             }
