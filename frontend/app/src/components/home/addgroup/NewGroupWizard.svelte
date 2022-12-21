@@ -151,12 +151,18 @@
         busy = false;
         candidateGroup = defaultCandidateGroup();
     }
+
+    function changeStep(ev: CustomEvent<number>) {
+        if (valid) {
+            step = ev.detail;
+        }
+    }
 </script>
 
 <ModalContent closeIcon on:close>
     <div class="header" slot="header">{$_("createNewGroup")}</div>
     <div class="body" bind:this={bodyElement} slot="body">
-        <StageHeader {step} />
+        <StageHeader enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details">
