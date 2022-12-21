@@ -1,4 +1,4 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
+use crate::lifecycle::{init_cycles_dispenser_client, init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
 use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
@@ -19,17 +19,16 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (data, log_messages, trace_messages, cycles_dispenser_client_state): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
+    let (data, log_messages, trace_messages, _): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
         serializer::deserialize(reader).unwrap();
 
     init_logger(data.test_mode);
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
     if !log_messages.is_empty() || !trace_messages.is_empty() {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
-
-    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

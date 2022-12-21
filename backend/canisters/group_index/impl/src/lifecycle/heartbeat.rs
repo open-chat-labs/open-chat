@@ -12,7 +12,6 @@ fn heartbeat() {
     calculate_hot_groups::run();
     push_group_deleted_notifications::run();
     calculate_metrics::run();
-    cycles_dispenser_client::run();
     swap_group_canister_controller::run();
 }
 

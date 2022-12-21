@@ -1,10 +1,9 @@
-use crate::lifecycle::{init_logger, init_state};
+use crate::lifecycle::{init_cycles_dispenser_client, init_logger, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use proposals_bot_canister::init::Args;
 use tracing::info;
-use utils::consts::MIN_CYCLES_BALANCE;
 use utils::env::canister::CanisterEnv;
 
 #[init]
@@ -12,6 +11,7 @@ use utils::env::canister::CanisterEnv;
 fn init(args: Args) {
     ic_cdk::setup();
     init_logger(args.test_mode);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
     let env = Box::new(CanisterEnv::new());
 
@@ -19,13 +19,12 @@ fn init(args: Args) {
         args.service_owner_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.group_index_canister_id,
+        args.cycles_dispenser_canister_id,
         args.nns_governance_canister_id,
         args.test_mode,
     );
 
     init_state(env, data, args.wasm_version);
-
-    cycles_dispenser_client::init(args.cycles_dispenser_canister_id, 3 * MIN_CYCLES_BALANCE / 2);
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

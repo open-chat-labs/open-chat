@@ -93,6 +93,8 @@ struct Data {
     pub local_group_index_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "cycles_dispenser_canister_id")]
+    pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -107,6 +109,10 @@ struct Data {
     pub canisters_requiring_controller_swap: CanistersRequiringControllerSwap,
 }
 
+fn cycles_dispenser_canister_id() -> CanisterId {
+    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
+}
+
 fn default_concurrent_upgrades() -> usize {
     1
 }
@@ -119,6 +125,7 @@ impl Data {
         local_group_index_canister_wasm: CanisterWasm,
         notifications_canister_ids: Vec<CanisterId>,
         user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -131,6 +138,7 @@ impl Data {
             local_group_index_canister_wasm,
             notifications_canister_ids,
             user_index_canister_id,
+            cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
@@ -187,6 +195,7 @@ impl Default for Data {
             local_group_index_canister_wasm: CanisterWasm::default(),
             notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
