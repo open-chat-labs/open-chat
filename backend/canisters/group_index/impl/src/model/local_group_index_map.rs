@@ -72,6 +72,10 @@ impl LocalGroupIndexMap {
     pub fn len(&self) -> usize {
         self.index_map.len()
     }
+
+    pub fn get_index_canister(&self, chat_id: &ChatId) -> Option<CanisterId> {
+        self.group_to_index.get(chat_id).copied()
+    }
 }
 
 impl LocalGroupIndex {
