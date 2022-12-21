@@ -1,9 +1,11 @@
 <script lang="ts">
+    import type { CandidateGroupChat } from "openchat-client";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
     export let step: number;
     export let enabled: boolean;
+    export let candidateGroup: CandidateGroupChat;
 
     function selectStep(n: number) {
         if (enabled) {
@@ -17,6 +19,9 @@
     <div on:click={() => selectStep(1)} class:selected={step === 1} class="step">Visibility</div>
     <div on:click={() => selectStep(2)} class:selected={step === 2} class="step">Group rules</div>
     <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">Permissions</div>
+    {#if !candidateGroup.isPublic}
+        <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">Members</div>
+    {/if}
 </div>
 
 <style type="text/scss">

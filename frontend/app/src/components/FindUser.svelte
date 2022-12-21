@@ -16,6 +16,7 @@
     const client = getContext<OpenChat>("client");
 
     export let mode: "add" | "edit";
+    export let enabled = true;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -76,6 +77,7 @@
     <input
         bind:this={inp}
         bind:value={searchTerm}
+        disabled={!enabled}
         type="text"
         on:input={onInput}
         placeholder={$_("searchForUsername")} />
@@ -123,9 +125,9 @@
         padding: $sp2 $sp4;
         border-radius: $sp2;
 
-        // &.add {
-        //     margin: 0 0 $sp3 0;
-        // }
+        &.add {
+            margin: 0;
+        }
 
         // &.edit {
         //     margin: 0 0 $sp3 0;

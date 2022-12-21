@@ -32,6 +32,7 @@
     let user = client.user;
     $: left = step * 550;
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
+    $: finalStep = candidateGroup.isPublic ? 3 : 4;
 
     function defaultCandidateGroup(): CandidateGroupChat {
         return {
@@ -162,23 +163,28 @@
 <ModalContent closeIcon on:close>
     <div class="header" slot="header">{$_("createNewGroup")}</div>
     <div class="body" bind:this={bodyElement} slot="body">
-        <StageHeader enabled={valid} on:step={changeStep} {step} />
+        <StageHeader {candidateGroup} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
-                <div class="details">
+                <div class="details" class:visible={step === 0}>
                     <GroupDetails bind:candidateGroup />
                 </div>
-                <div class="visibility">
+                <div class="visibility" class:visible={step === 1}>
                     <GroupVisibility bind:candidateGroup />
                 </div>
-                <div class="rules">
+                <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />
                 </div>
-                <div class="permissions">
+                <div class="permissions" class:visible={step === 3}>
                     <GroupPermissionsEditor
                         bind:permissions={candidateGroup.permissions}
                         isPublic={candidateGroup.isPublic} />
                 </div>
+                {#if !candidateGroup.isPublic}
+                    <div class="members" class:visible={step === 4}>
+                        <ChooseMembers bind:candidateGroup {busy} />
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
@@ -191,7 +197,7 @@
         <ButtonGroup align="end">
             <Button disabled={false} small on:click={() => dispatch("close")} secondary
                 >{$_("cancel")}</Button>
-            {#if step < 3}
+            {#if step < finalStep}
                 <Button disabled={!valid} small on:click={() => (step = step + 1)}>Next</Button>
             {:else}
                 <Button disabled={busy} loading={busy} small on:click={createGroup}
@@ -229,8 +235,15 @@
     .details,
     .visibility,
     .rules,
+    .members,
     .permissions {
         flex: 0 0 100%;
+        visibility: hidden;
+        transition: visibility 250ms ease-in-out;
+
+        &.visible {
+            visibility: visible;
+        }
     }
 
     .permissions {

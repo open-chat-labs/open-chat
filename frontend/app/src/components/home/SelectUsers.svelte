@@ -9,6 +9,7 @@
 
     export let mode: "add" | "edit";
     export let selectedUsers: UserSummary[];
+    export let enabled = true;
 
     let error: string | undefined = undefined;
 </script>
@@ -29,7 +30,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser {mode} on:selectUser />
+    <FindUser {enabled} {mode} on:selectUser />
 </div>
 
 <style type="text/scss">
