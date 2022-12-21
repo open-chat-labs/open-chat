@@ -18,15 +18,14 @@ fn delete_group_succeeds() {
         &mut env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_group::Args {
-            chat_id: group_id,
-        },
+        &user_canister::delete_group::Args { chat_id: group_id },
     );
 
-    assert!(matches!(
-        delete_group_response,
-        user_canister::delete_group::Response::Success
-    ), "{:?}", delete_group_response);
+    assert!(
+        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        "{:?}",
+        delete_group_response
+    );
 
     return_env(TestEnv {
         env,
@@ -34,7 +33,6 @@ fn delete_group_succeeds() {
         controller,
     });
 }
-
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {
     let user1 = client::user_index::happy_path::register_user(env, user_index);
@@ -45,11 +43,7 @@ fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
     client::group::happy_path::add_participants(env, &user1, group_id, vec![user2.user_id]);
 
-    TestData {
-        user1,
-        user2,
-        group_id,
-    }
+    TestData { user1, user2, group_id }
 }
 
 struct TestData {
