@@ -1,104 +1,265 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
-    import Avatar from "../../Avatar.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import ModalContent from "../../ModalContent.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher } from "svelte";
-    import type { CandidateGroupChat } from "openchat-client";
-    import { iconSize } from "../../../stores/iconSize";
-    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import Rules from "../groupdetails/Rules.svelte";
     import GroupDetails from "./GroupDetails.svelte";
     import GroupVisibility from "./GroupVisibility.svelte";
+    import Rules from "../groupdetails/Rules.svelte";
+    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import { toastStore } from "../../../stores/toast";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ChooseMembers from "./ChooseMembers.svelte";
+    import {
+        CandidateGroupChat,
+        CreateGroupResponse,
+        defaultGroupRules,
+        OpenChat,
+        UnsupportedValueError,
+    } from "openchat-client";
+    import StageHeader from "./StageHeader.svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { push } from "svelte-spa-router";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
 
-    export let candidateGroup: CandidateGroupChat;
-    export let busy: boolean;
-
-    let groupInfoOpen = true;
-    let visibilityOpen = true;
-    let groupRulesOpen = true;
-    let permissionsOpen = false;
-
+    let candidateGroup: CandidateGroupChat = defaultCandidateGroup();
+    let busy = false;
+    let step = 0;
+    let user = client.user;
+    let actualWidth = 0;
+    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
+    $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
+    $: finalStep = candidateGroup.isPublic ? 3 : 4;
 
-    function cancel() {
-        dispatch("cancelNewGroup");
+    function defaultCandidateGroup(): CandidateGroupChat {
+        return {
+            name: "",
+            description: "",
+            historyVisible: true,
+            isPublic: false,
+            members: [],
+            permissions: {
+                changePermissions: "admins",
+                changeRoles: "admins",
+                addMembers: "admins",
+                removeMembers: "admins",
+                blockUsers: "admins",
+                deleteMessages: "admins",
+                updateGroup: "admins",
+                pinMessages: "admins",
+                inviteUsers: "admins",
+                createPolls: "members",
+                sendMessages: "members",
+                reactToMessages: "members",
+                replyInThread: "members",
+            },
+            rules: {
+                text: defaultGroupRules,
+                enabled: false,
+            },
+        };
+    }
+
+    function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "internal_error") return "groupCreationFailed";
+        if (resp.kind === "name_too_short") return "groupNameTooShort";
+        if (resp.kind === "name_too_long") return "groupNameTooLong";
+        if (resp.kind === "name_reserved") return "groupNameReserved";
+        if (resp.kind === "description_too_long") return "groupDescTooLong";
+        if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+        if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
+        if (resp.kind === "max_groups_created") return "maxGroupsCreated";
+        if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
+        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
+        if (resp.kind === "user_suspended") return "userSuspended";
+        throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
+    }
+
+    function optionallyAddMembers(canisterId: string): Promise<void> {
+        if (candidateGroup.members.length === 0) {
+            return Promise.resolve();
+        }
+        return client
+            .addMembers(
+                canisterId,
+                candidateGroup.members.map((m) => m.user.userId),
+                user.username,
+                false
+            )
+            .then((resp) => {
+                if (resp.kind !== "add_members_success") {
+                    Promise.reject("Unable to add members to the new group");
+                }
+            });
     }
 
     function createGroup() {
-        dispatch("createGroup");
+        busy = true;
+
+        client
+            .createGroupChat(user.userId, candidateGroup)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    const err = groupCreationErrorMessage(resp);
+                    if (err) toastStore.showFailureToast(err);
+                    step = 0;
+                } else {
+                    return optionallyAddMembers(resp.canisterId)
+                        .then(() => {
+                            onGroupCreated(resp.canisterId);
+                        })
+                        .catch((err) => {
+                            toastStore.showFailureToast("addMembersFailed");
+                            step = 0;
+                        });
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("groupCreationFailed");
+                step = 0;
+            })
+            .finally(() => (busy = false));
+    }
+
+    function onGroupCreated(canisterId: string) {
+        const url = `/${canisterId}`;
+        dispatch("groupCreated", {
+            chatId: canisterId,
+            isPublic: candidateGroup.isPublic,
+            rules: candidateGroup.rules,
+        });
+        reset();
+
+        // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
+        tick().then(() => push(url)); // trigger the selection of the chat
+    }
+
+    function reset() {
+        step = 0;
+        busy = false;
+        candidateGroup = defaultCandidateGroup();
+    }
+
+    function changeStep(ev: CustomEvent<number>) {
+        if (valid) {
+            step = ev.detail;
+        }
     }
 </script>
 
-<SectionHeader flush={true} shadow={true}>
-    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
-    <h4>{$_("createNewGroup")}</h4>
-    <span title={$_("close")} class="close" on:click={cancel}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
-
-<form class="group-form" on:submit|preventDefault={createGroup}>
-    <div class="form-fields">
-        <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
-            <GroupDetails bind:candidateGroup />
-        </CollapsibleCard>
-        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
-            <GroupVisibility bind:candidateGroup />
-        </CollapsibleCard>
-        <CollapsibleCard open={groupRulesOpen} headerText={$_("group.groupRules")}>
-            <Rules bind:rules={candidateGroup.rules} />
-        </CollapsibleCard>
-        <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor
-                bind:permissions={candidateGroup.permissions}
-                isPublic={candidateGroup.isPublic} />
-        </CollapsibleCard>
+<ModalContent bind:actualWidth closeIcon on:close>
+    <div class="header" slot="header">{$_("createNewGroup")}</div>
+    <div class="body" slot="body">
+        <StageHeader {candidateGroup} enabled={valid} on:step={changeStep} {step} />
+        <div class="wrapper">
+            <div class="sections" style={`left: -${left}px`}>
+                <div class="details" class:visible={step === 0}>
+                    <GroupDetails bind:candidateGroup />
+                </div>
+                <div class="visibility" class:visible={step === 1}>
+                    <GroupVisibility bind:candidateGroup />
+                </div>
+                <div class="rules" class:visible={step === 2}>
+                    <Rules bind:rules={candidateGroup.rules} />
+                </div>
+                <div class="permissions" class:visible={step === 3}>
+                    <GroupPermissionsEditor
+                        bind:permissions={candidateGroup.permissions}
+                        isPublic={candidateGroup.isPublic} />
+                </div>
+                {#if !candidateGroup.isPublic}
+                    <div class="members" class:visible={step === 4}>
+                        <ChooseMembers bind:candidateGroup {busy} />
+                    </div>
+                {/if}
+            </div>
+        </div>
     </div>
-</form>
-<div class="cta">
-    <Button on:click={createGroup} fill={true} disabled={!valid || busy} loading={busy}
-        >{$_("submitNewGroup")}</Button>
-</div>
+    <span class="footer" slot="footer">
+        <div class="back">
+            {#if step > 0}
+                <Button
+                    disabled={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => (step = step - 1)}>Back</Button>
+            {/if}
+        </div>
+        <ButtonGroup align="end">
+            <Button
+                disabled={false}
+                small={!$mobileWidth}
+                tiny={$mobileWidth}
+                on:click={() => dispatch("close")}
+                secondary>{$_("cancel")}</Button>
+            {#if step < finalStep}
+                <Button
+                    disabled={!valid}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => (step = step + 1)}>
+                    Next
+                </Button>
+            {:else}
+                <Button
+                    disabled={busy}
+                    loading={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={createGroup}>Create group</Button>
+            {/if}
+        </ButtonGroup>
+    </span>
+</ModalContent>
 
 <style type="text/scss">
-    :global(.group-form .form-fields .card) {
-        margin-bottom: $sp3;
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    h4 {
-        flex: 1;
-        padding: 0 $sp4;
-        @include font-size(fs-120);
-    }
-    .close {
-        flex: 0 0 30px;
-    }
+    .wrapper {
+        width: 100%;
+        overflow: hidden;
+        height: 550px;
+        position: relative;
 
-    .cta {
-        position: sticky;
-        bottom: 0;
-        height: 57px;
-    }
-
-    .group-form {
-        flex: 1;
-        overflow: auto;
-        overflow-x: hidden;
-        @include nice-scrollbar();
-        padding: $sp3 $sp5 0 $sp5;
         @include mobile() {
-            padding: $sp3 $sp4 0 $sp4;
+            height: 400px;
+        }
+    }
+
+    .sections {
+        display: flex;
+        transition: left 250ms ease-in-out;
+        position: relative;
+        gap: $sp5;
+        height: 100%;
+        @include mobile() {
+            gap: $sp4;
+        }
+    }
+
+    .details,
+    .visibility,
+    .rules,
+    .members,
+    .permissions {
+        flex: 0 0 100%;
+        visibility: hidden;
+        transition: visibility 250ms ease-in-out;
+        @include nice-scrollbar();
+
+        &.visible {
+            visibility: visible;
         }
     }
 </style>

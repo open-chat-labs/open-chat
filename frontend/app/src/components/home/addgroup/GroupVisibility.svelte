@@ -10,6 +10,7 @@
         candidateGroup.isPublic = !candidateGroup.isPublic;
         if (candidateGroup.isPublic) {
             candidateGroup.historyVisible = true;
+            candidateGroup.members = [];
         }
     }
 </script>

@@ -35,10 +35,16 @@
         gap: $sp5;
         border-bottom: 1px solid var(--bd);
 
+        @include mobile() {
+            @include font(book, normal, fs-70);
+            gap: $sp4;
+        }
+
         .step {
             padding-bottom: 12px;
             margin-bottom: -2px;
             border-bottom: 4px solid transparent;
+            white-space: nowrap;
             &.selected {
                 color: var(--txt);
                 border-bottom: 4px solid var(--primary);

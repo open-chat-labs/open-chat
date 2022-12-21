@@ -169,6 +169,7 @@
         margin: 0 0 $sp3 0;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
+        gap: 12px;
 
         @include mobile() {
             padding: $sp3 $sp4;

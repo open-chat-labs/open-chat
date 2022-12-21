@@ -41,7 +41,7 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory, RightPanelState } from "../../stores/rightPanel";
+    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -53,7 +53,7 @@
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
-    import NewGroupWizard from "./addgroup/NewGroupWizard.svelte";
+    import NewGroup from "./addgroup/NewGroup.svelte";
 
     export let logout: () => void;
 
@@ -787,7 +787,6 @@
     }
 
     function newGroup() {
-        // rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
         modal = ModalType.NewGroup;
     }
 
@@ -954,7 +953,7 @@
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NewGroup}
-            <NewGroupWizard on:close={closeModal} />
+            <NewGroup on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
