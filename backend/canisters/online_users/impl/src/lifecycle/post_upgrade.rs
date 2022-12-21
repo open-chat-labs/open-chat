@@ -1,4 +1,4 @@
-use crate::lifecycle::{init_cycles_dispenser_client, init_logger, init_state, UPGRADE_BUFFER_SIZE};
+use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
 use crate::{Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
@@ -7,6 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use online_users_canister::post_upgrade::Args;
 use tracing::info;
+use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]

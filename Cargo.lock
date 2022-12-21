@@ -8200,6 +8200,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros 0.1.0",
+ "cycles_dispenser_client",
  "getrandom 0.2.8",
  "ic-cdk",
  "itertools",

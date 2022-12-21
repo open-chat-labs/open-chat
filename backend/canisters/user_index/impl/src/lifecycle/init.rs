@@ -1,9 +1,10 @@
-use crate::lifecycle::{init_cycles_dispenser_client, init_logger, init_state};
+use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use tracing::info;
 use user_index_canister::init::Args;
+use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
 const CANISTER_POOL_TARGET_SIZE: u16 = 20;
