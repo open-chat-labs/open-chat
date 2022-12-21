@@ -1,4 +1,5 @@
 use crate::canister;
+use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use crate::cycles::top_up_canister;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
@@ -11,7 +12,7 @@ pub struct CanisterToUpgrade<A: CandidType> {
     pub canister_id: CanisterId,
     pub current_wasm_version: Version,
     pub new_wasm: CanisterWasm,
-    pub cycles_to_deposit_if_needed: Option<Cycles>,
+    pub deposit_cycles_if_needed: bool,
     pub args: A,
 }
 
@@ -71,14 +72,18 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
 
     let mut cycles_used = None;
     let mut error = None;
-    if let Err((code, msg)) = &install_code_response {
-        if let Some(cycles) = should_deposit_cycles_and_retry(code, msg, canister_to_upgrade.cycles_to_deposit_if_needed) {
-            if top_up_canister(canister_id, cycles).await.is_ok() {
-                cycles_used = Some(cycles);
-                install_code_response =
-                    api::call::call(Principal::management_canister(), "install_code", (&install_code_args,)).await;
-            }
+    let mut attempt = 0;
+    while let ShouldDepositAndRetry::Yes(cycles) =
+        should_deposit_cycles_and_retry(&install_code_response, canister_to_upgrade.deposit_cycles_if_needed, attempt)
+    {
+        if top_up_canister(canister_id, cycles).await.is_ok() {
+            cycles_used = Some(cycles_used.unwrap_or_default() + cycles);
+            install_code_response =
+                api::call::call(Principal::management_canister(), "install_code", (&install_code_args,)).await;
+        } else {
+            break;
         }
+        attempt += 1;
     }
 
     if let Err((code, msg)) = install_code_response {
@@ -117,14 +122,24 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     }
 }
 
+enum ShouldDepositAndRetry {
+    Yes(Cycles),
+    No,
+}
+
 fn should_deposit_cycles_and_retry(
-    error_code: &RejectionCode,
-    error_message: &str,
-    cycles_to_deposit_if_required: Option<Cycles>,
-) -> Option<Cycles> {
-    if matches!(error_code, RejectionCode::CanisterError) && error_message.contains("out of cycles") {
-        cycles_to_deposit_if_required
-    } else {
-        None
+    response: &CallResult<()>,
+    deposit_cycles_if_needed: bool,
+    attempt: usize,
+) -> ShouldDepositAndRetry {
+    if !deposit_cycles_if_needed || attempt > 5 {
+        return ShouldDepositAndRetry::No;
     }
+
+    if let Err((code, msg)) = response {
+        if matches!(code, RejectionCode::CanisterError) && msg.contains("out of cycles") {
+            return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE);
+        }
+    }
+    ShouldDepositAndRetry::No
 }
