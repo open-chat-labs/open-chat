@@ -5,8 +5,7 @@ use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
-use utils::cycles::can_spend_cycles;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
@@ -58,21 +57,16 @@ mod upgrade_canisters {
         let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
         let date_created = user.date_created;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
         user.set_canister_upgrade_status(true, None);
-
-        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
-            Some(CYCLES_REQUIRED_FOR_UPGRADE)
-        } else {
-            None
-        };
 
         match runtime_state.data.users.update(user) {
             UpdateUserResult::Success => Some(CanisterToUpgrade {
                 canister_id,
                 current_wasm_version,
                 new_wasm: user_canister_wasm.clone(),
-                cycles_to_deposit_if_needed,
+                deposit_cycles_if_needed,
                 args: user_canister::post_upgrade::Args {
                     wasm_version: user_canister_wasm.version,
                     date_created,
