@@ -2,7 +2,7 @@ use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, DeletedGroupInfo, UserId, Version};
-use utils::canister::{set_controllers, upgrade, FailedUpgrade};
+use utils::canister::{upgrade, FailedUpgrade};
 use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
 use utils::cycles::can_spend_cycles;
 
@@ -12,7 +12,6 @@ fn heartbeat() {
     calculate_hot_groups::run();
     push_group_deleted_notifications::run();
     calculate_metrics::run();
-    swap_group_canister_controller::run();
 }
 
 mod upgrade_canisters {
@@ -204,54 +203,5 @@ mod calculate_metrics {
     fn calculate_metrics(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.calculate_metrics(now);
-    }
-}
-
-mod swap_group_canister_controller {
-    use super::*;
-
-    pub fn run() {
-        let (chats_to_swap, local_group_index_canister_id) = mutate_state(next_batch);
-        if !chats_to_swap.is_empty() {
-            ic_cdk::spawn(perform_swaps(chats_to_swap, local_group_index_canister_id));
-        }
-    }
-
-    fn next_batch(runtime_state: &mut RuntimeState) -> (Vec<CanisterId>, CanisterId) {
-        let count_in_progress = runtime_state.data.canisters_requiring_controller_swap.count_in_progress();
-        let max_concurrent_canister_swaps: usize = 10;
-
-        let canisters = (0..(max_concurrent_canister_swaps.saturating_sub(count_in_progress)))
-            .map_while(|_| runtime_state.data.canisters_requiring_controller_swap.try_take_next())
-            .collect();
-
-        let local_group_index_canister_id = *runtime_state
-            .data
-            .local_index_map
-            .canisters()
-            .next()
-            .expect("local_index_map should not be empty");
-
-        (canisters, local_group_index_canister_id)
-    }
-
-    async fn perform_swaps(canisters_to_upgrade: Vec<CanisterId>, local_group_index_canister_id: CanisterId) {
-        let futures: Vec<_> = canisters_to_upgrade
-            .into_iter()
-            .map(|id| perform_swap(id, local_group_index_canister_id))
-            .collect();
-
-        futures::future::join_all(futures).await;
-    }
-
-    async fn perform_swap(canister_id: CanisterId, local_group_index_canister_id: CanisterId) {
-        match set_controllers(canister_id, vec![local_group_index_canister_id]).await {
-            Ok(_) => {
-                mutate_state(|state| state.data.canisters_requiring_controller_swap.mark_success(&canister_id));
-            }
-            Err(_) => {
-                mutate_state(|state| state.data.canisters_requiring_controller_swap.mark_failure(canister_id));
-            }
-        }
     }
 }
