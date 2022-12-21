@@ -4897,6 +4897,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
+ "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
