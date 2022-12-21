@@ -89,11 +89,9 @@ struct Data {
     pub deleted_groups: DeletedGroups,
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
-    #[serde(default)]
     pub local_group_index_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -101,20 +99,9 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-    #[serde(default = "default_concurrent_upgrades")]
     pub max_concurrent_local_group_index_canister_upgrades: usize,
-    #[serde(default)]
     pub local_index_map: LocalGroupIndexMap,
-    #[serde(default)]
     pub canisters_requiring_controller_swap: CanistersRequiringControllerSwap,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
-}
-
-fn default_concurrent_upgrades() -> usize {
-    1
 }
 
 impl Data {

@@ -16,7 +16,7 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, log_messages, trace_messages, _): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.public_groups.hydrate();

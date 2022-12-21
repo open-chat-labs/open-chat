@@ -75,17 +75,12 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {
