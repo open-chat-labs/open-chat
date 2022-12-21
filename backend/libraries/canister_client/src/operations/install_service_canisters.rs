@@ -164,6 +164,7 @@ async fn install_service_canisters_impl(
         canisters: vec![
             canister_ids.user_index,
             canister_ids.group_index,
+            canister_ids.local_group_index,
             canister_ids.notifications,
             canister_ids.online_users,
             canister_ids.proposals_bot,
