@@ -78,6 +78,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,
     pub local_group_index: CanisterId,
+    pub local_user_index: CanisterId,
     pub ledger: CanisterId,
 }
 

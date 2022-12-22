@@ -136,6 +136,7 @@ struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
+    #[serde(default)]
     pub local_user_index_canister_wasm: CanisterWasm,
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
@@ -147,6 +148,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(default)]
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,

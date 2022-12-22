@@ -2,11 +2,11 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
-use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserEvent, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::{canister, memory};
@@ -82,7 +82,7 @@ struct Data {
     pub ledger_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub user_event_sync_queue: UserEventSyncQueue,
+    pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
 }
@@ -111,7 +111,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: UserEventSyncQueue::default(),
+            user_event_sync_queue: CanisterEventSyncQueue::<UserEvent>::default(),
             test_mode,
             max_concurrent_canister_upgrades: 2,
         }

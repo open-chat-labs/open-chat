@@ -116,8 +116,8 @@ mod upgrade_canisters {
         });
     }
 
-    fn mark_upgrade_complete(user_id: UserId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
-        if let Some(user) = runtime_state.data.local_users.get_mut(&user_id) {
+    fn mark_upgrade_complete(canister_id: UserId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
+        if let Some(user) = runtime_state.data.local_users.get_mut(&canister_id) {
             user.set_canister_upgrade_status(false, new_wasm_version);
         }
     }
@@ -161,21 +161,21 @@ mod sync_events_to_user_canisters {
 
     pub fn run() {
         if let Some(users_events) = mutate_state(next_batch) {
-            for (user_id, events) in users_events {
-                ic_cdk::spawn(sync_events(user_id, events));
+            for (canister_id, events) in users_events {
+                ic_cdk::spawn(sync_events(canister_id, events));
             }
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(UserId, Vec<UserEvent>)>> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<UserEvent>)>> {
         runtime_state.data.user_event_sync_queue.try_start_sync()
     }
 
-    async fn sync_events(user_id: UserId, events: Vec<UserEvent>) {
+    async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
         let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
-        match user_canister_c2c_client::c2c_notify_user_events(user_id.into(), &args).await {
+        match user_canister_c2c_client::c2c_notify_user_events(canister_id, &args).await {
             Ok(_) => mutate_state(on_success),
-            Err(_) => mutate_state(|state| on_failure(user_id, events, state)),
+            Err(_) => mutate_state(|state| on_failure(canister_id, events, state)),
         }
     }
 
@@ -183,7 +183,7 @@ mod sync_events_to_user_canisters {
         runtime_state.data.user_event_sync_queue.mark_sync_completed();
     }
 
-    fn on_failure(user_id: UserId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
-        runtime_state.data.user_event_sync_queue.mark_sync_failed(user_id, events);
+    fn on_failure(canister_id: CanisterId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
+        runtime_state.data.user_event_sync_queue.mark_sync_failed(canister_id, events);
     }
 }

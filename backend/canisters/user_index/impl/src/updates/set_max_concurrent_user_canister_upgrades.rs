@@ -17,9 +17,7 @@ fn set_max_concurrent_user_canister_upgrades_impl(args: Args, runtime_state: &mu
     runtime_state
         .data
         .push_event_to_all_local_user_indexes(UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(
-            MaxConcurrentCanisterUpgradesChanged {
-                value: args.value as u32,
-            },
+            MaxConcurrentCanisterUpgradesChanged { value: args.value },
         ));
 
     info!("Max concurrent canister upgrades set to {}", args.value);

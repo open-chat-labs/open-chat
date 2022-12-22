@@ -23,7 +23,7 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
-    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
+    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<local_user_index_canister::post_upgrade::Args>;
 
     pub fn run() {
         let chats_to_upgrade = mutate_state(next_batch);
@@ -45,7 +45,7 @@ mod upgrade_canisters {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
 
         let current_wasm_version = match runtime_state.data.local_index_map.get(&canister_id) {
-            Some(local_group_index) => local_group_index.wasm_version(),
+            Some(local_user_index) => local_user_index.wasm_version(),
             None => {
                 runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
                 return None;
@@ -65,7 +65,7 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm,
             cycles_to_deposit_if_needed,
-            args: group_canister::post_upgrade::Args { wasm_version },
+            args: local_user_index_canister::post_upgrade::Args { wasm_version },
         })
     }
 
@@ -91,13 +91,13 @@ mod upgrade_canisters {
     }
 
     fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
-        let local_group_index = runtime_state
+        let local_user_index = runtime_state
             .data
             .local_index_map
             .get_mut(&canister_id)
-            .expect("Cannot find local_group_index");
+            .expect("Cannot find local_user_index");
 
-        local_group_index.set_wasm_version(to_version);
+        local_user_index.set_wasm_version(to_version);
 
         let top_up = top_up.map(|c| CyclesTopUp {
             amount: c,
@@ -105,7 +105,7 @@ mod upgrade_canisters {
         });
 
         if let Some(top_up) = top_up {
-            local_group_index.mark_cycles_top_up(top_up);
+            local_user_index.mark_cycles_top_up(top_up);
         }
 
         runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);

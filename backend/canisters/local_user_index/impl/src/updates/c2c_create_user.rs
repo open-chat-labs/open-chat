@@ -109,7 +109,7 @@ fn commit(
 
     if let Some(referred_by) = referred_by {
         runtime_state.data.user_event_sync_queue.push(
-            referred_by,
+            referred_by.into(),
             UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
         );
     }

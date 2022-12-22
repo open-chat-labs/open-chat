@@ -24,13 +24,13 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
     match event {
         UserIndexEvent::UsernameChanged(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::UsernameChanged(UsernameChanged { username: ev.username }),
             );
         }
         UserIndexEvent::UserSuspended(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::UserSuspended(UserSuspended {
                     timestamp: ev.timestamp,
                     duration: ev.duration,
@@ -41,7 +41,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
         }
         UserIndexEvent::PhoneNumberConfirmed(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
                     phone_number: ev.phone_number,
                     storage_added: ev.storage_added,
@@ -51,7 +51,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
         }
         UserIndexEvent::StorageUpgraded(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::StorageUpgraded(StorageUpgraded {
                     cost: ev.cost,
                     storage_added: ev.storage_added,
@@ -65,7 +65,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             if let Some(referred_by) = ev.referred_by {
                 if runtime_state.data.local_users.get(&referred_by).is_some() {
                     runtime_state.data.user_event_sync_queue.push(
-                        referred_by,
+                        referred_by.into(),
                         UserEvent::ReferredUserRegistered(ReferredUserRegistered {
                             user_id: ev.user_id,
                             username: ev.username,

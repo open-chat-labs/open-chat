@@ -28,14 +28,20 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    let (cycles_dispenser_canister_id, open_storage_index_canister_id, ledger_canister_id, local_group_index_canister_id) =
-        futures::future::join4(
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-        )
-        .await;
+    let (
+        cycles_dispenser_canister_id,
+        open_storage_index_canister_id,
+        ledger_canister_id,
+        local_group_index_canister_id,
+        local_user_index_canister_id,
+    ) = futures::future::join5(
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+    )
+    .await;
 
     println!("user_index canister id: {user_index_canister_id}");
     println!("group_index canister id: {group_index_canister_id}");
@@ -45,6 +51,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("cycles_dispenser canister id: {cycles_dispenser_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
     println!("local_group_index canister id: {local_group_index_canister_id}");
+    println!("local_user_index canister id: {local_user_index_canister_id}");
     println!("ledger canister id: {ledger_canister_id}");
 
     let canister_ids = CanisterIds {
@@ -56,6 +63,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         cycles_dispenser: cycles_dispenser_canister_id,
         open_storage_index: open_storage_index_canister_id,
         local_group_index: local_group_index_canister_id,
+        local_user_index: local_user_index_canister_id,
         ledger: ledger_canister_id,
     };
 
@@ -248,6 +256,23 @@ async fn install_service_canisters_impl(
         group_index_canister::add_local_group_index_canister::Response::Success
     ) {
         panic!("{add_local_group_index_canister_response:?}");
+    }
+
+    let add_local_user_index_canister_response = user_index_canister_client::add_local_user_index_canister(
+        agent,
+        &canister_ids.user_index,
+        &user_index_canister::add_local_user_index_canister::Args {
+            canister_id: canister_ids.local_user_index,
+        },
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        add_local_user_index_canister_response,
+        user_index_canister::add_local_user_index_canister::Response::Success
+    ) {
+        panic!("{add_local_user_index_canister_response:?}");
     }
 
     println!("Canister wasms installed");

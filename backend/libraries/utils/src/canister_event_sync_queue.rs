@@ -15,16 +15,17 @@ pub struct CanisterEventSyncQueue<T> {
     events: HashMap<CanisterId, Vec<T>>,
 }
 
-#[allow(clippy::should_implement_trait)]
-impl<'a, T: Serialize + Deserialize<'a> + Clone> CanisterEventSyncQueue<T> {
-    pub fn default() -> Self {
+impl<T> Default for CanisterEventSyncQueue<T> {
+    fn default() -> CanisterEventSyncQueue<T> {
         CanisterEventSyncQueue {
             queue: VecDeque::default(),
             sync_in_progress: false,
             events: HashMap::default(),
         }
     }
+}
 
+impl<'a, T: Serialize + Deserialize<'a> + Clone> CanisterEventSyncQueue<T> {
     pub fn len(&self) -> usize {
         self.queue.len()
     }
