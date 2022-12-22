@@ -26,15 +26,28 @@
 
     const dispatch = createEventDispatcher();
 
-    $: chatsPromise = Promise.all(chatsSummaries.map((c) => normaliseChatSummary($now, c)));
+    type NormalisedChat = {
+        id: string,
+        userId: string | undefined,
+        name: string,
+        avatarUrl: string,
+        description: string,
+    };
 
-    async function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
+    $: {
+        Promise.all(chatsSummaries.map((c) => normaliseChatSummary($now, c))).then((c) => {
+            chats = c;
+        });
+    }
+    $: chats = undefined as (NormalisedChat[] | undefined);
+
+    async function normaliseChatSummary(now: number, chatSummary: ChatSummary): Promise<NormalisedChat> {
         if (chatSummary.kind === "direct_chat") {
             const description = await buildDirectChatDescription(chatSummary, now);
             return {
                 id: chatSummary.chatId,
                 userId: chatSummary.them,
-                name: $userStore[chatSummary.them]?.username,
+                name: $userStore[chatSummary.them]?.username ?? "",
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
                 description,
             };
@@ -84,22 +97,20 @@
     </SectionHeader>
     {#if chatsSummaries.length === 0}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
-    {:else}
-        {#await chatsPromise then chats}
-            <div class="body">
-                {#each chats as chat}
-                    <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
-                        <div class="avatar">
-                            <Avatar url={chat.avatarUrl} userId={chat.userId} size={AvatarSize.Small} />
-                        </div>
-                        <div class="details">
-                            <div class="name">{chat.name}</div>
-                            <div class="description">{chat.description}</div>
-                        </div>
+    {:else if chats !== undefined}
+        <div class="body">
+            {#each chats as chat}
+                <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
+                    <div class="avatar">
+                        <Avatar url={chat.avatarUrl} userId={chat.userId} size={AvatarSize.Small} />
                     </div>
-                {/each}
-            </div>
-        {/await}
+                    <div class="details">
+                        <div class="name">{chat.name}</div>
+                        <div class="description">{chat.description}</div>
+                    </div>
+                </div>
+            {/each}
+        </div>
     {/if}
 </Panel>
 

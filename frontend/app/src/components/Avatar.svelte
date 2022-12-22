@@ -13,9 +13,14 @@
     export let blocked: boolean = false;
     export let statusBorder = "white";
 
-    $: userStatus = showStatus && userId !== undefined
-        ? client.getUserStatus(userId, $now)
-        : Promise.resolve(UserStatus.None);
+    $: userStatus = UserStatus.None;
+    $: {
+        if (showStatus && userId !== undefined) {
+            client.getUserStatus(userId, $now).then((status) => {
+                userStatus = status;
+            });
+        }
+    }
 </script>
 
 <div
@@ -28,11 +33,9 @@
     class:extra-large={size === AvatarSize.ExtraLarge}
     class:blocked
     style="background-image: url({url});">
-    {#await userStatus then status}
-        {#if status === UserStatus.Online}
-            <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
-        {/if}
-    {/await}
+    {#if userStatus === UserStatus.Online}
+        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
+    {/if}
 </div>
 
 <style type="text/scss">

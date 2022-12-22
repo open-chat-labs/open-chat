@@ -12,25 +12,22 @@
     $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: isSuspended = $userStore[userId]?.suspended ?? false;
+    $: subtext = isSuspended ? $_("accountSuspended") : "";
+    $: checkLastOnline = !isSuspended && !isBot && chat.kind === "direct_chat";
 
-    async function directChatSubtext(directChat: DirectChatSummary, now: number): Promise<string> {
-        if (isSuspended) {
-            return $_("accountSuspended");
-        } else if (isBot) {
-            return "";
-        } else {
-            const lastOnline = await client.getLastOnlineDate(directChat.them, now);
-            return lastOnline !== undefined
-                ? client.formatLastOnlineDate($_, now, lastOnline)
-                : "";
+    $: {
+        if (checkLastOnline && chat.kind === "direct_chat") {
+            client.getLastOnlineDate(chat.them, $now).then((lastOnline) => {
+                if (lastOnline !== undefined) {
+                    subtext = client.formatLastOnlineDate($_, $now, lastOnline);
+                }
+            });
         }
     }
 </script>
 
 {#if chat.kind === "direct_chat"}
-    {#await directChatSubtext(chat, $now) then text}
-        {text}
-    {/await}
+    {subtext}
 {:else if chat.kind === "group_chat"}
     <div class="wrapper">
         <div class="visibility">
