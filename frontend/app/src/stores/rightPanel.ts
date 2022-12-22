@@ -31,10 +31,6 @@ export type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type NewGroupPanel = {
-    kind: "new_group_panel";
-};
-
 export type AddMembersPanel = {
     kind: "add_members";
 };

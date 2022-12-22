@@ -3,10 +3,9 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddMembers from "./groupdetails/AddMembers.svelte";
-    import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import { RightPanelState, rightPanelHistory } from "../../stores/rightPanel";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import type {
         AddMembersResponse,
         ChatEvent,
@@ -371,8 +370,6 @@
             {user}
             on:userAvatarSelected
             on:closeProfile={popHistory} />
-    {:else if lastState.kind === "new_group_panel"}
-        <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
     {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             on:chatWith

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { CandidateGroupChat } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
@@ -15,12 +16,22 @@
 </script>
 
 <div class="steps" class:enabled>
-    <div on:click={() => selectStep(0)} class:selected={step === 0} class="step">Details</div>
-    <div on:click={() => selectStep(1)} class:selected={step === 1} class="step">Visibility</div>
-    <div on:click={() => selectStep(2)} class:selected={step === 2} class="step">Group rules</div>
-    <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">Permissions</div>
+    <div on:click={() => selectStep(0)} class:selected={step === 0} class="step">
+        {$_("group.details")}
+    </div>
+    <div on:click={() => selectStep(1)} class:selected={step === 1} class="step">
+        {$_("group.visibility")}
+    </div>
+    <div on:click={() => selectStep(2)} class:selected={step === 2} class="step">
+        {$_("group.groupRules")}
+    </div>
+    <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">
+        {$_("group.permissions.permissions")}
+    </div>
     {#if !candidateGroup.isPublic}
-        <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">Members</div>
+        <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">
+            {$_("group.members")}
+        </div>
     {/if}
 </div>
 

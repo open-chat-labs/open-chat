@@ -24,7 +24,7 @@
         group={"group-visibility"}>
         <div class="section-title">
             <div class={"img public"} />
-            <p>Public group</p>
+            <p>{$_("group.publicGroup")}</p>
         </div>
         <div class="info">
             <p>{$_("publicGroupInfo")}</p>
@@ -42,7 +42,7 @@
         group={"group-visibility"}>
         <div class="section-title">
             <div class={"img private"} />
-            <p>Private group</p>
+            <p>{$_("group.privateGroup")}</p>
         </div>
         <div class="info">
             <p>{$_("privateGroupInfo")}</p>

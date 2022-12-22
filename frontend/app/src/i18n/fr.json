@@ -420,7 +420,13 @@
             "acceptTitle": "Règles de groupe",
             "accept": "Accepter",
             "reject": "Rejeter"
-        }
+        },
+        "createTitle": "Créer un nouveau groupe",
+        "back": "Arrière",
+        "next": "Suivant",
+        "create": "Créer un groupe",
+        "details": "Détails",
+        "members": "Membres"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",

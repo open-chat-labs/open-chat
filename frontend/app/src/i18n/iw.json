@@ -433,7 +433,13 @@
             "acceptTitle": "חוקי הקבוצה",
             "accept": "לְקַבֵּל",
             "reject": "לִדחוֹת"
-        }
+        },
+        "createTitle": "צור קבוצה חדשה",
+        "back": "חזור",
+        "next": "הַבָּא",
+        "create": "צור קבוצה",
+        "details": "פרטים",
+        "members": "חברים"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",

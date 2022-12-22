@@ -155,7 +155,7 @@
 </script>
 
 <ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">{$_("createNewGroup")}</div>
+    <div class="header" slot="header">{$_("group.createTitle")}</div>
     <div class="body" slot="body">
         <StageHeader {candidateGroup} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
@@ -189,7 +189,7 @@
                     disabled={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={() => (step = step - 1)}>Back</Button>
+                    on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
             {/if}
         </div>
         <ButtonGroup align="end">
@@ -205,7 +205,7 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => (step = step + 1)}>
-                    Next
+                    {$_("group.next")}
                 </Button>
             {:else}
                 <Button
@@ -213,7 +213,7 @@
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={createGroup}>Create group</Button>
+                    on:click={createGroup}>{$_("group.create")}</Button>
             {/if}
         </ButtonGroup>
     </span>

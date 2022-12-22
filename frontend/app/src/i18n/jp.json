@@ -421,7 +421,13 @@
             "acceptTitle": "グループルール",
             "accept": "承認",
             "reject": "拒絶"
-        }
+        },
+        "createTitle": "新しいグループを作成",
+        "back": "戻る",
+        "next": "次",
+        "create": "グループを作る",
+        "details": "詳細",
+        "members": "メンバー"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",

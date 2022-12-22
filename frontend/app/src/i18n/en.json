@@ -398,6 +398,12 @@
         "numVotesIncludingYours": "{votes} votes including yours"
     },
     "group": {
+        "createTitle": "Create new group",
+        "back": "Back",
+        "next": "Next",
+        "create": "Create group",
+        "details": "Details",
+        "members": "Members",
         "addGroupPhoto": "Add group photo",
         "editGroupPhoto": "Edit group photo",
         "public": "Public",
