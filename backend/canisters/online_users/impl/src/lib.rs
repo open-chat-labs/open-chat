@@ -1,5 +1,4 @@
 use crate::model::last_online_dates::LastOnlineDates;
-use crate::model::online_users::OnlineUsers;
 use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
@@ -48,7 +47,6 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub online_users: OnlineUsers,
     pub last_online_dates: LastOnlineDates,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
@@ -62,7 +60,6 @@ struct Data {
 impl Data {
     pub fn new(user_index_canister_id: CanisterId, cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
         Data {
-            online_users: OnlineUsers::default(),
             last_online_dates: LastOnlineDates::default(),
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             user_index_canister_id,

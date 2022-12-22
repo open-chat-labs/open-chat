@@ -17,9 +17,6 @@ fn set_username(args: Args) -> Response {
 fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-
-    runtime_state.data.users.mark_online(&caller, now);
-
     let username = args.username;
 
     match validate_username(&username) {

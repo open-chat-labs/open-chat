@@ -17,8 +17,6 @@ pub struct Args {
 
     pub notifications_canister_ids: Vec<CanisterId>,
 
-    pub online_users_canister_id: CanisterId,
-
     pub cycles_dispenser_canister_id: CanisterId,
 
     pub open_storage_index_canister_id: CanisterId,

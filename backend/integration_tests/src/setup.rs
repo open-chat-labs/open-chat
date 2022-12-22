@@ -74,7 +74,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_canister_wasm,
         group_index_canister_id,
         notifications_canister_ids: vec![notifications_canister_id],
-        online_users_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,

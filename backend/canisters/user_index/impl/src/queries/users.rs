@@ -20,11 +20,8 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             g.users
                 .into_iter()
                 .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
-                .filter(move |u| u.date_updated > updated_since || u.last_online > updated_since)
-                .map(move |u| {
-                    let include_username = u.date_updated > updated_since;
-                    u.to_partial_summary(include_username, now)
-                })
+                .filter(move |u| u.date_updated > updated_since)
+                .map(|u| u.to_partial_summary())
         })
         .collect();
 
@@ -57,7 +54,6 @@ mod tests {
             username: "abc".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -68,7 +64,6 @@ mod tests {
             username: "def".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -79,7 +74,6 @@ mod tests {
             username: "ghi".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -100,11 +94,9 @@ mod tests {
 
         assert_eq!(users[0].user_id, user_id1);
         assert_eq!(users[0].username, Some("abc".to_string()));
-        assert_eq!(users[0].seconds_since_last_online, 3);
 
         assert_eq!(users[1].user_id, user_id3);
         assert_eq!(users[1].username, Some("ghi".to_string()));
-        assert_eq!(users[1].seconds_since_last_online, 1);
     }
 
     #[test]
@@ -123,7 +115,6 @@ mod tests {
             username: "abc".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -134,7 +125,6 @@ mod tests {
             username: "def".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -145,7 +135,6 @@ mod tests {
             username: "ghi".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -167,7 +156,6 @@ mod tests {
 
         assert_eq!(users[0].user_id, user_id3);
         assert_eq!(users[0].username, Some("ghi".to_string()));
-        assert_eq!(users[0].seconds_since_last_online, 1);
     }
 
     #[test]
@@ -189,7 +177,6 @@ mod tests {
             username: "abc".to_string(),
             date_created: start,
             date_updated: start,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -200,7 +187,6 @@ mod tests {
             username: "def".to_string(),
             date_created: start,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -211,7 +197,6 @@ mod tests {
             username: "ghi".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;

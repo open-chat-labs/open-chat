@@ -130,7 +130,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'seconds_since_last_online' : IDL.Nat32,
     'suspended' : IDL.Bool,
   });
   const SearchResponse = IDL.Variant({
@@ -224,7 +223,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'seconds_since_last_online' : IDL.Nat32,
     'suspended' : IDL.Bool,
   });
   const UsersResponse = IDL.Variant({
