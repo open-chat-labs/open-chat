@@ -3031,9 +3031,13 @@ export class OpenChat extends EventTarget {
         this._lastOnlineDatesPromise = undefined;
         this._lastOnlineDatesPending.clear();
 
-        const response = await this.api.lastOnline(userIds);
-        lastOnlineDates.set(Object.entries(response), Date.now());
-        return response;
+        try {
+            const response = await this.api.lastOnline(userIds);
+            lastOnlineDates.set(Object.entries(response), Date.now());
+            return response;
+        } catch {
+            return {};
+        }
     }
 
     /**
