@@ -177,7 +177,7 @@
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
                 {#if readonly}
-                    <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                    <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.ExtraLarge} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}

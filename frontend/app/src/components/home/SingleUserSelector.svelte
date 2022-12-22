@@ -62,7 +62,7 @@
     {#if selectedReceiver !== undefined}
         <div class="user-pill">
             <div class="avatar">
-                <Avatar url={client.userAvatarUrl(selectedReceiver)} size={AvatarSize.Tiny} />
+                <Avatar url={client.userAvatarUrl(selectedReceiver)} userId={selectedReceiver.userId} size={AvatarSize.Tiny} />
             </div>
             <span class="username">{`@${selectedReceiver.username}`}</span>
             <span class="close" on:click={removeReceiver}>

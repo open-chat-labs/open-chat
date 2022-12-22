@@ -98,8 +98,9 @@
                 <span class="avatar">
                     <Avatar
                         statusBorder={hovering ? "var(--members-hv)" : "transparent"}
+                        showStatus={true}
+                        userId={user.userId}
                         url={client.userAvatarUrl(user)}
-                        status={client.userStatus($now, user)}
                         size={AvatarSize.Small} />
                 </span>
                 <h4 class="details">

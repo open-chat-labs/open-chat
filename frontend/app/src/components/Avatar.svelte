@@ -1,12 +1,26 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
+    import { getContext } from "svelte";
+    import { now } from "stores/time";
+
+    const client = getContext<OpenChat>("client");
 
     export let url: string | undefined;
-    export let status: UserStatus = UserStatus.Offline;
+    export let showStatus: boolean | undefined = false;
+    export let userId: string | undefined = undefined;
     export let size: AvatarSize = AvatarSize.Medium;
     export let blocked: boolean = false;
     export let statusBorder = "white";
+
+    $: userStatus = UserStatus.None;
+    $: {
+        if (showStatus && userId !== undefined) {
+            client.getUserStatus(userId, $now).then((status) => {
+                userStatus = status;
+            });
+        }
+    }
 </script>
 
 <div
@@ -19,7 +33,7 @@
     class:extra-large={size === AvatarSize.ExtraLarge}
     class:blocked
     style="background-image: url({url});">
-    {#if status === UserStatus.Online}
+    {#if userStatus === UserStatus.Online}
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
     {/if}
 </div>

@@ -10,24 +10,21 @@ export type IdentityState =
     | "upgrading_user"
     | "upgrade_user";
 
-export type UserLastOnline = {
+export type UserCommon = DataContent & {
     kind: "user" | "bot";
     userId: string;
-    lastOnline: number; // timestamp calculated from server response in seconds
     updated: bigint;
     suspended: boolean;
 };
 
-export type UserSummary = UserLastOnline &
-    DataContent & {
-        username: string;
-    };
+export type UserSummary = UserCommon & {
+    username: string;
+};
 
 // todo - remember why this exists
-export type PartialUserSummary = UserLastOnline &
-    DataContent & {
-        username?: string;
-    };
+export type PartialUserSummary = UserCommon & {
+    username?: string;
+};
 
 export type UserLookup = Record<string, PartialUserSummary>;
 

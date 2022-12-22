@@ -45,6 +45,7 @@
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
                     url={client.userAvatarUrl($userStore[participantId])}
+                    userId={participantId}
                     size={AvatarSize.Miniscule} />
             {/each}
             {#if threadSummary.participantIds.size > 5}

@@ -69,6 +69,7 @@
     <div class="avatar" on:click={openUserProfile}>
         <Avatar
             url={client.userAvatarUrl(sender)}
+            userId={sender.userId}
             size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
     </div>
     <div
