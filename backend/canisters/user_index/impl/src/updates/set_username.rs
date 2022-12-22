@@ -113,7 +113,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -140,7 +139,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -163,7 +161,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         data.users.add_test_user(User {
@@ -173,7 +170,6 @@ mod tests {
             username: "vwxyz".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -196,7 +192,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -219,7 +214,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -242,7 +236,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
