@@ -688,9 +688,9 @@ name = "bot_c2c_client"
 version = "0.1.0"
 dependencies = [
  "bot_api",
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "tracing",
  "types 0.1.0",
@@ -701,7 +701,7 @@ name = "bucket_canister"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
  "serde",
  "serde_bytes",
@@ -715,7 +715,7 @@ source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bc
 dependencies = [
  "bucket_canister",
  "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "tracing",
  "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
 ]
@@ -766,41 +766,13 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.7.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d510cc32b8b991acc955dd3d5e0cb6f404069d1dccd9203ee90f5865557c9165"
-dependencies = [
- "anyhow",
- "binread",
- "byteorder",
- "candid_derive 0.4.5",
- "codespan-reporting",
- "hex",
- "ic-types 0.5.0",
- "lalrpop",
- "lalrpop-util",
- "leb128",
- "logos",
- "num-bigint 0.4.3",
- "num-traits",
- "num_enum",
- "paste",
- "pretty",
- "serde",
- "serde_bytes",
- "thiserror",
-]
-
-[[package]]
-name = "candid"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "244005a1917bb7614cd775ca8a5d59efeb5ac74397bb14ba29a19347ebd78591"
+source = "git+https://github.com/hpeebles/candid?rev=bc66c9eb4373f0312c5874652c87badc5e843f04#bc66c9eb4373f0312c5874652c87badc5e843f04"
 dependencies = [
  "anyhow",
  "binread",
  "byteorder",
- "candid_derive 0.5.0",
+ "candid_derive",
  "codespan-reporting",
  "crc32fast",
  "data-encoding",
@@ -822,21 +794,8 @@ dependencies = [
 
 [[package]]
 name = "candid_derive"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e02c03c4d547674a3f3f3109538fb49871fbe636216daa019f06a62faca9061"
-dependencies = [
- "lazy_static",
- "proc-macro2",
- "quote 1.0.21",
- "syn 1.0.105",
-]
-
-[[package]]
-name = "candid_derive"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58f1f4db7c7d04b87b70b3a35c5dc5c2c9dd73cef8bdf6760e2f18a0d45350dd"
+source = "git+https://github.com/hpeebles/candid?rev=bc66c9eb4373f0312c5874652c87badc5e843f04#bc66c9eb4373f0312c5874652c87badc5e843f04"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -847,15 +806,6 @@ dependencies = [
 [[package]]
 name = "candid_gen"
 version = "0.1.0"
-dependencies = [
- "quote 1.0.21",
- "syn 1.0.105",
-]
-
-[[package]]
-name = "candid_gen"
-version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
 dependencies = [
  "quote 1.0.21",
  "syn 1.0.105",
@@ -865,6 +815,15 @@ dependencies = [
 name = "candid_gen"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
+dependencies = [
+ "quote 1.0.21",
+ "syn 1.0.105",
+]
+
+[[package]]
+name = "candid_gen"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7#c65b84be6663b82ff1387523f89aa7fa98b46eb7"
 dependencies = [
  "quote 1.0.21",
  "syn 1.0.105",
@@ -885,7 +844,7 @@ dependencies = [
 name = "canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "dirs",
  "futures",
@@ -898,7 +857,8 @@ dependencies = [
  "itertools",
  "notifications_canister",
  "notifications_index_canister",
- "online_users_aggregator_canister",
+ "notifications_index_canister_client",
+ "online_users_canister",
  "proposals_bot_canister",
  "serde",
  "types 0.1.0",
@@ -933,7 +893,7 @@ dependencies = [
 name = "canister_logger"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "serde",
  "tracing",
  "tracing-attributes",
@@ -944,12 +904,12 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071#cfc89a86ae59ee7a12e155ddbc2df74713575071"
+source = "git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed#8ad7972521dff55ec84085fdab35b8b6c27619ed"
 
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7#d9c575fb4b91e1cfe80add0746eac389df33c8f7"
+source = "git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071#cfc89a86ae59ee7a12e155ddbc2df74713575071"
 
 [[package]]
 name = "canister_tracing_macros"
@@ -1010,7 +970,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chat_events"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "itertools",
  "search",
  "serde",
@@ -1573,27 +1533,27 @@ dependencies = [
 [[package]]
 name = "cycles_dispenser"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7#c65b84be6663b82ff1387523f89aa7fa98b46eb7"
 dependencies = [
- "candid 0.8.4",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
+ "candid",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7)",
  "serde",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7)",
 ]
 
 [[package]]
 name = "cycles_dispenser_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7#c65b84be6663b82ff1387523f89aa7fa98b46eb7"
 dependencies = [
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071)",
  "cycles_dispenser",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "rmp-serde",
  "serde",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
- "utils 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7)",
+ "utils 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7)",
 ]
 
 [[package]]
@@ -2311,7 +2271,7 @@ dependencies = [
 name = "group_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "serde_bytes",
@@ -2322,10 +2282,10 @@ dependencies = [
 name = "group_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "group_canister",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "tracing",
  "types 0.1.0",
@@ -2335,7 +2295,7 @@ dependencies = [
 name = "group_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "group_canister",
  "ic-agent",
@@ -2346,10 +2306,10 @@ dependencies = [
 name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -2357,7 +2317,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",
  "itertools",
@@ -2387,7 +2347,7 @@ dependencies = [
 name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "types 0.1.0",
@@ -2399,7 +2359,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
  "group_index_canister",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "tracing",
  "types 0.1.0",
@@ -2409,7 +2369,7 @@ dependencies = [
 name = "group_index_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "group_index_canister",
  "ic-agent",
@@ -2420,19 +2380,20 @@ dependencies = [
 name = "group_index_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
+ "local_group_index_canister",
+ "local_group_index_canister_c2c_client",
  "msgpack",
  "rand",
  "search",
@@ -2591,7 +2552,7 @@ checksum = "0bfe8eed0a9285ef776bb792479ea3834e8b94e13d615c2f66d03dd50a435a29"
 name = "http_request"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_logger",
  "num-traits",
  "serde",
@@ -2748,7 +2709,7 @@ dependencies = [
  "base32",
  "base64 0.13.1",
  "byteorder",
- "candid 0.8.4",
+ "candid",
  "futures-util",
  "garcon",
  "hex",
@@ -2786,7 +2747,7 @@ dependencies = [
  "futures",
  "futures-util",
  "hyper",
- "ic-types 0.8.0",
+ "ic-types",
  "prometheus",
  "slog",
  "tokio",
@@ -2802,7 +2763,7 @@ dependencies = [
  "base32",
  "byte-unit",
  "bytes",
- "candid 0.8.4",
+ "candid",
  "comparable",
  "crc32fast",
  "ic-crypto-sha",
@@ -2821,7 +2782,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "bitcoin",
  "byteorder",
- "candid 0.8.4",
+ "candid",
  "ic-btc-types",
  "ic-btc-types-internal",
  "ic-logger",
@@ -2829,9 +2790,9 @@ dependencies = [
  "ic-protobuf",
  "ic-registry-subnet-features",
  "ic-replicated-state",
- "ic-stable-structures",
+ "ic-stable-structures 0.1.2",
  "ic-state-layout",
- "ic-types 0.8.0",
+ "ic-types",
  "lazy_static",
  "prometheus",
  "serde",
@@ -2844,7 +2805,7 @@ name = "ic-btc-types"
 version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "serde",
  "serde_bytes",
 ]
@@ -2854,7 +2815,7 @@ name = "ic-btc-types-internal"
 version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-btc-types",
  "ic-protobuf",
  "serde",
@@ -2877,7 +2838,7 @@ dependencies = [
  "ic-replicated-state",
  "ic-sys",
  "ic-system-api",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "libc",
@@ -2903,7 +2864,7 @@ dependencies = [
  "ic-replicated-state",
  "ic-sys",
  "ic-system-api",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "libc",
  "nix",
@@ -2926,7 +2887,7 @@ dependencies = [
  "ic-replicated-state",
  "ic-sys",
  "ic-system-api",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-wasm-types",
  "lazy_static",
  "libc",
@@ -2952,7 +2913,7 @@ dependencies = [
  "ic-registry-routing-table",
  "ic-registry-subnet-type",
  "ic-replicated-state",
- "ic-types 0.8.0",
+ "ic-types",
  "leb128",
  "phantom_newtype",
  "serde",
@@ -2962,21 +2923,10 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0554d77b453140eefcb8c8192a342927f8c48cfda911dfa3cd4561a919dbd32f"
-dependencies = [
- "candid 0.7.18",
- "cfg-if 1.0.0",
- "serde",
-]
-
-[[package]]
-name = "ic-cdk"
 version = "0.6.8"
 source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "cfg-if 1.0.0",
  "futures",
  "ic-cdk-macros",
@@ -2991,7 +2941,7 @@ name = "ic-cdk-macros"
 version = "0.6.8"
 source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "proc-macro2",
  "quote 1.0.21",
  "serde",
@@ -3008,7 +2958,7 @@ dependencies = [
  "ic-crypto-tree-hash",
  "ic-crypto-utils-threshold-sig",
  "ic-crypto-utils-threshold-sig-der",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
  "serde_cbor",
  "tree-deserializer",
@@ -3033,7 +2983,7 @@ dependencies = [
  "ic-protobuf",
  "ic-registry-subnet-type",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "json5",
  "serde",
  "slog",
@@ -3090,7 +3040,7 @@ dependencies = [
  "ic-registry-client-helpers",
  "ic-registry-keys",
  "ic-registry-proto-data-provider",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "lazy_static",
  "num-integer",
@@ -3131,7 +3081,7 @@ dependencies = [
  "ic-crypto-internal-basic-sig-der-utils",
  "ic-crypto-internal-basic-sig-ecdsa-secp256r1",
  "ic-crypto-internal-basic-sig-rsa-pkcs1",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
  "serde_cbor",
  "simple_asn1 0.6.2",
@@ -3143,7 +3093,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "hex",
- "ic-types 0.8.0",
+ "ic-types",
  "simple_asn1 0.6.2",
 ]
 
@@ -3157,7 +3107,7 @@ dependencies = [
  "ic-crypto-internal-basic-sig-der-utils",
  "ic-crypto-internal-types",
  "ic-crypto-secrets-containers",
- "ic-types 0.8.0",
+ "ic-types",
  "openssl",
  "serde",
  "serde_bytes",
@@ -3175,7 +3125,7 @@ dependencies = [
  "ic-crypto-internal-basic-sig-der-utils",
  "ic-crypto-internal-types",
  "ic-crypto-secrets-containers",
- "ic-types 0.8.0",
+ "ic-types",
  "openssl",
  "serde",
  "serde_bytes",
@@ -3197,7 +3147,7 @@ dependencies = [
  "ic-crypto-internal-types",
  "ic-crypto-secrets-containers",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "rand",
  "rand_chacha",
  "serde",
@@ -3217,7 +3167,7 @@ dependencies = [
  "ic-crypto-internal-types",
  "ic-crypto-sha",
  "ic-crypto-tree-hash",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -3231,7 +3181,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "ic-crypto-internal-basic-sig-der-utils",
  "ic-crypto-sha",
- "ic-types 0.8.0",
+ "ic-types",
  "num-bigint 0.4.3",
  "num-traits",
  "rsa 0.4.0",
@@ -3289,7 +3239,7 @@ dependencies = [
  "ic-logger",
  "ic-metrics",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "openssl",
  "parking_lot 0.12.1",
@@ -3342,7 +3292,7 @@ dependencies = [
  "ic-crypto-internal-types",
  "ic-crypto-sha",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "rand",
  "rand_chacha",
  "serde",
@@ -3356,7 +3306,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "hex",
  "ic-crypto-sha",
- "ic-types 0.8.0",
+ "ic-types",
  "rand",
  "rand_chacha",
  "serde",
@@ -3396,7 +3346,7 @@ dependencies = [
  "ic-crypto-internal-threshold-sig-bls12381-der",
  "ic-crypto-internal-types",
  "ic-crypto-sha",
- "ic-types 0.8.0",
+ "ic-types",
  "lazy_static",
  "rand",
  "rand_chacha",
@@ -3428,7 +3378,7 @@ dependencies = [
  "ic-crypto-internal-seed",
  "ic-crypto-internal-types",
  "ic-crypto-sha",
- "ic-types 0.8.0",
+ "ic-types",
  "k256",
  "lazy_static",
  "p256",
@@ -3449,7 +3399,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "base64 0.11.0",
  "ic-crypto-internal-basic-sig-ed25519",
- "ic-types 0.8.0",
+ "ic-types",
  "openssl",
  "rand",
  "serde",
@@ -3490,7 +3440,7 @@ dependencies = [
  "ic-interfaces",
  "ic-interfaces-registry",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "tokio",
 ]
 
@@ -3501,7 +3451,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "ic-crypto-sha",
  "ic-interfaces",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-types-test-utils",
  "rand",
  "rand_chacha",
@@ -3532,7 +3482,7 @@ version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "ic-crypto-internal-threshold-sig-ecdsa",
- "ic-types 0.8.0",
+ "ic-types",
 ]
 
 [[package]]
@@ -3555,7 +3505,7 @@ dependencies = [
  "ic-registry-client-fake",
  "ic-registry-keys",
  "ic-registry-proto-data-provider",
- "ic-types 0.8.0",
+ "ic-types",
  "tempfile",
  "tokio",
 ]
@@ -3575,7 +3525,7 @@ dependencies = [
  "ic-registry-client-helpers",
  "ic-registry-keys",
  "ic-registry-proto-data-provider",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
 ]
 
@@ -3591,7 +3541,7 @@ dependencies = [
  "ic-crypto-internal-basic-sig-ed25519",
  "ic-crypto-internal-types",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "x509-parser",
 ]
 
@@ -3602,7 +3552,7 @@ source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709ab
 dependencies = [
  "async-trait",
  "ic-protobuf",
- "ic-types 0.8.0",
+ "ic-types",
  "openssl",
  "serde",
  "tokio",
@@ -3645,7 +3595,7 @@ dependencies = [
  "ic-crypto-internal-threshold-sig-bls12381",
  "ic-crypto-internal-types",
  "ic-interfaces",
- "ic-types 0.8.0",
+ "ic-types",
 ]
 
 [[package]]
@@ -3656,7 +3606,7 @@ dependencies = [
  "base64 0.11.0",
  "ic-crypto-internal-threshold-sig-bls12381-der",
  "ic-crypto-internal-types",
- "ic-types 0.8.0",
+ "ic-types",
 ]
 
 [[package]]
@@ -3672,7 +3622,7 @@ dependencies = [
  "ic-nns-constants",
  "ic-registry-subnet-type",
  "ic-replicated-state",
- "ic-types 0.8.0",
+ "ic-types",
  "prometheus",
  "serde",
  "slog",
@@ -3693,7 +3643,7 @@ dependencies = [
  "ic-replicated-state",
  "ic-sys",
  "ic-system-api",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "libc",
@@ -3729,7 +3679,7 @@ name = "ic-execution-environment"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "escargot",
  "hex",
  "ic-base-types",
@@ -3758,7 +3708,7 @@ dependencies = [
  "ic-state-layout",
  "ic-sys",
  "ic-system-api",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "lazy_static",
@@ -3784,7 +3734,7 @@ name = "ic-ic00-types"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "float-cmp",
  "ic-base-types",
  "ic-btc-types",
@@ -3804,7 +3754,7 @@ name = "ic-icrc1"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ciborium",
  "hex",
  "ic-base-types",
@@ -3822,7 +3772,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "ic-base-types",
  "ic-icrc1",
  "ic-ledger-core",
@@ -3836,7 +3786,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "async-trait",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-icrc1-client",
 ]
 
@@ -3856,7 +3806,7 @@ dependencies = [
  "ic-registry-provisional-whitelist",
  "ic-registry-subnet-type",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "prost",
@@ -3872,7 +3822,7 @@ name = "ic-interfaces-certified-stream-store"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "ic-types 0.8.0",
+ "ic-types",
 ]
 
 [[package]]
@@ -3880,7 +3830,7 @@ name = "ic-interfaces-registry"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "ic-types 0.8.0",
+ "ic-types",
  "prost",
  "serde",
 ]
@@ -3891,7 +3841,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "ic-crypto-tree-hash",
- "ic-types 0.8.0",
+ "ic-types",
  "phantom_newtype",
  "thiserror",
 ]
@@ -3902,7 +3852,7 @@ version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "ic-base-types",
  "ic-constants",
  "ic-ic00-types",
@@ -3917,7 +3867,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "hex",
  "ic-base-types",
  "ic-constants",
@@ -3933,10 +3883,10 @@ name = "ic-ledger-types"
 version = "0.2.0"
 source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "crc32fast",
  "hex",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "serde",
  "serde_bytes",
  "sha2 0.9.9",
@@ -3987,7 +3937,7 @@ dependencies = [
  "ic-registry-subnet-features",
  "ic-registry-subnet-type",
  "ic-replicated-state",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "prometheus",
  "slog",
@@ -4024,7 +3974,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "bincode",
- "candid 0.8.4",
+ "candid",
  "erased-serde",
  "maplit",
  "prost",
@@ -4039,7 +3989,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "ic-interfaces-registry",
- "ic-types 0.8.0",
+ "ic-types",
 ]
 
 [[package]]
@@ -4055,7 +4005,7 @@ dependencies = [
  "ic-registry-provisional-whitelist",
  "ic-registry-routing-table",
  "ic-registry-subnet-features",
- "ic-types 0.8.0",
+ "ic-types",
  "serde_cbor",
 ]
 
@@ -4072,10 +4022,10 @@ name = "ic-registry-keys"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-base-types",
  "ic-ic00-types",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
 ]
 
@@ -4088,7 +4038,7 @@ dependencies = [
  "ic-interfaces-registry",
  "ic-registry-common-proto",
  "ic-registry-transport",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "thiserror",
 ]
@@ -4107,7 +4057,7 @@ name = "ic-registry-routing-table"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-base-types",
  "ic-protobuf",
  "serde",
@@ -4118,7 +4068,7 @@ name = "ic-registry-subnet-features"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-ic00-types",
  "ic-protobuf",
  "serde",
@@ -4129,7 +4079,7 @@ name = "ic-registry-subnet-type"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-protobuf",
  "serde",
  "strum 0.23.0",
@@ -4142,7 +4092,7 @@ version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
  "bytes",
- "candid 0.8.4",
+ "candid",
  "ic-protobuf",
  "prost",
  "serde",
@@ -4171,7 +4121,7 @@ dependencies = [
  "ic-registry-subnet-features",
  "ic-registry-subnet-type",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "lazy_static",
@@ -4193,6 +4143,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8ded18fe296ff693ba8d8fd9890189ea28df4fc75d8b009523e15918452d8b"
 
 [[package]]
+name = "ic-stable-structures"
+version = "0.3.0"
+source = "git+https://github.com/hpeebles/stable-structures?rev=986e0d8531cd152d5da747b760b099f1d4f16136#986e0d8531cd152d5da747b760b099f1d4f16136"
+dependencies = [
+ "candid",
+]
+
+[[package]]
 name = "ic-state-layout"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
@@ -4205,7 +4163,7 @@ dependencies = [
  "ic-protobuf",
  "ic-replicated-state",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "libc",
@@ -4223,7 +4181,7 @@ name = "ic-state-machine-tests"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-config",
  "ic-constants",
  "ic-crypto-internal-seed",
@@ -4254,7 +4212,7 @@ dependencies = [
  "ic-state-manager",
  "ic-test-utilities-metrics",
  "ic-test-utilities-registry",
- "ic-types 0.8.0",
+ "ic-types",
  "serde",
  "serde_cbor",
  "slog",
@@ -4288,7 +4246,7 @@ dependencies = [
  "ic-replicated-state",
  "ic-state-layout",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "nix",
  "parking_lot 0.12.1",
@@ -4322,7 +4280,7 @@ name = "ic-system-api"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-base-types",
  "ic-btc-types",
  "ic-config",
@@ -4337,7 +4295,7 @@ dependencies = [
  "ic-registry-subnet-type",
  "ic-replicated-state",
  "ic-sys",
- "ic-types 0.8.0",
+ "ic-types",
  "ic-utils 0.8.0",
  "ic-wasm-types",
  "prometheus",
@@ -4370,23 +4328,8 @@ dependencies = [
  "ic-registry-proto-data-provider",
  "ic-registry-subnet-features",
  "ic-registry-subnet-type",
- "ic-types 0.8.0",
+ "ic-types",
  "serde_cbor",
-]
-
-[[package]]
-name = "ic-types"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79a17269dff0ec6ca4c3d04e18fca97d018ff53d809e6d92348fc22f9588e1a5"
-dependencies = [
- "crc32fast",
- "data-encoding",
- "hex",
- "serde",
- "serde_bytes",
- "sha2 0.10.6",
- "thiserror",
 ]
 
 [[package]]
@@ -4397,7 +4340,7 @@ dependencies = [
  "base32",
  "base64 0.11.0",
  "bincode",
- "candid 0.8.4",
+ "candid",
  "chrono",
  "derive_more 0.99.8-alpha.0",
  "hex",
@@ -4433,7 +4376,7 @@ name = "ic-types-test-utils"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "ic-types 0.8.0",
+ "ic-types",
  "proptest",
  "strum 0.23.0",
 ]
@@ -4464,7 +4407,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fe431f4ee1f86da88d5cac3979476888dbcd9d44481409f103da5b2b44a440"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "garcon",
  "ic-agent",
  "leb128",
@@ -4528,7 +4471,7 @@ name = "icp_dispenser_bot"
 version = "0.1.0"
 dependencies = [
  "bot_api",
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "ic-ledger-types",
  "serde",
@@ -4541,13 +4484,13 @@ dependencies = [
 name = "icp_dispenser_bot_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",
  "icp_dispenser_bot",
@@ -4599,7 +4542,7 @@ name = "index_canister"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
  "serde",
  "serde_bytes",
@@ -4612,7 +4555,7 @@ version = "0.1.0"
 source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
  "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "index_canister",
  "tracing",
  "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba)",
@@ -4651,7 +4594,7 @@ dependencies = [
 name = "integration_tests"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "group_canister",
  "group_index_canister",
  "ic-state-machine-tests",
@@ -4659,7 +4602,7 @@ dependencies = [
  "lazy_static",
  "notifications_canister",
  "notifications_index_canister",
- "online_users_aggregator_canister",
+ "online_users_canister",
  "proposals_bot_canister",
  "rand",
  "serde",
@@ -4833,7 +4776,7 @@ checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-ledger-types",
  "serde",
  "serde_cbor",
@@ -4927,7 +4870,7 @@ checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 name = "local_group_index_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "ic-ledger-types",
  "serde",
@@ -4940,7 +4883,7 @@ name = "local_group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "local_group_index_canister",
  "msgpack",
  "tracing",
@@ -4951,16 +4894,16 @@ dependencies = [
 name = "local_group_index_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",
  "ledger_utils",
@@ -4978,7 +4921,7 @@ dependencies = [
 name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "ic-ledger-types",
  "serde",
@@ -4991,7 +4934,7 @@ name = "local_user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "local_user_index_canister",
  "msgpack",
  "tracing",
@@ -5002,14 +4945,14 @@ dependencies = [
 name = "local_user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "futures",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",
  "ledger_utils",
@@ -5221,7 +5164,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "aws-config",
- "candid 0.8.4",
+ "candid",
  "dotenv",
  "dynamodb_index_store",
  "futures",
@@ -5239,7 +5182,7 @@ name = "notification_pusher_cli"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "dotenv",
  "futures",
  "index_store",
@@ -5276,7 +5219,7 @@ dependencies = [
 name = "notifications_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "notifications_index_canister",
  "serde",
@@ -5288,7 +5231,7 @@ name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "notifications_canister",
  "tracing",
@@ -5299,7 +5242,7 @@ dependencies = [
 name = "notifications_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-agent",
  "notifications_canister",
@@ -5310,14 +5253,14 @@ dependencies = [
 name = "notifications_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_client_macros 0.1.0",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "msgpack",
  "notifications_canister",
@@ -5335,7 +5278,7 @@ dependencies = [
 name = "notifications_index_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.3",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "types 0.1.0",
@@ -5346,7 +5289,7 @@ name = "notifications_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "notifications_index_canister",
  "tracing",
@@ -5357,7 +5300,7 @@ dependencies = [
 name = "notifications_index_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.3",
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-agent",
  "notifications_index_canister",
@@ -5368,15 +5311,14 @@ dependencies = [
 name = "notifications_index_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.3",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "futures",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "msgpack",
  "notifications_canister",
@@ -5587,40 +5529,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
-name = "online_users_aggregator_canister"
+name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "types 0.1.0",
 ]
 
 [[package]]
-name = "online_users_aggregator_canister_client"
+name = "online_users_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-agent",
- "online_users_aggregator_canister",
+ "online_users_canister",
  "types 0.1.0",
 ]
 
 [[package]]
-name = "online_users_aggregator_canister_impl"
+name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
- "online_users_aggregator_canister",
+ "ic-stable-structures 0.3.0",
+ "online_users_canister",
  "serde",
+ "serializer",
  "stable_memory",
  "tracing",
  "types 0.1.0",
@@ -5642,7 +5585,7 @@ dependencies = [
  "bucket_canister",
  "bucket_canister_c2c_client",
  "futures",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "types 0.1.0",
 ]
 
@@ -5948,7 +5891,7 @@ name = "phantom_newtype"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=997ab2e9cc49189302fe54c1e60709abfbeb1d42#997ab2e9cc49189302fe54c1e60709abfbeb1d42"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "serde",
  "slog",
 ]
@@ -6199,7 +6142,7 @@ dependencies = [
 name = "proposals_bot_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "types 0.1.0",
@@ -6209,17 +6152,16 @@ dependencies = [
 name = "proposals_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "itertools",
  "msgpack",
@@ -6970,6 +6912,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serializer"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed#8ad7972521dff55ec84085fdab35b8b6c27619ed"
+dependencies = [
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7169,7 +7120,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-pinpoint",
  "aws-types",
- "candid 0.8.4",
+ "candid",
  "dotenv",
  "dynamodb_index_store",
  "index_store",
@@ -7185,7 +7136,7 @@ name = "sms_sender_cli"
 version = "0.1.0"
 dependencies = [
  "aws-config",
- "candid 0.8.4",
+ "candid",
  "dotenv",
  "index_store",
  "sms_sender_aws",
@@ -7201,7 +7152,7 @@ name = "sms_sender_core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "candid 0.8.4",
+ "candid",
  "futures",
  "garcon",
  "ic-agent",
@@ -7220,7 +7171,7 @@ name = "sns1_airdrop"
 version = "0.1.0"
 dependencies = [
  "bot_api",
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "serde",
  "types 0.1.0",
@@ -7232,13 +7183,13 @@ dependencies = [
 name = "sns1_airdrop_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "msgpack",
  "serde",
@@ -7308,11 +7259,11 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7#d9c575fb4b91e1cfe80add0746eac389df33c8f7"
+source = "git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed#8ad7972521dff55ec84085fdab35b8b6c27619ed"
 dependencies = [
- "ic-cdk 0.5.7",
- "rmp-serde",
+ "ic-cdk",
  "serde",
+ "serializer",
 ]
 
 [[package]]
@@ -7636,7 +7587,7 @@ dependencies = [
 name = "timer_jobs"
 version = "0.1.0"
 dependencies = [
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "serde",
  "types 0.1.0",
  "utils 0.1.0",
@@ -8039,7 +7990,7 @@ checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 name = "types"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "ic-icrc1",
  "ic-ledger-types",
  "serde",
@@ -8050,9 +8001,10 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
+source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
 dependencies = [
- "candid 0.8.4",
+ "candid",
+ "hex",
  "serde",
  "serde_bytes",
 ]
@@ -8060,10 +8012,9 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=7b5bd30a029c476d0035bcdb0fdb2987108123ba#7b5bd30a029c476d0035bcdb0fdb2987108123ba"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7#c65b84be6663b82ff1387523f89aa7fa98b46eb7"
 dependencies = [
- "candid 0.8.4",
- "hex",
+ "candid",
  "serde",
  "serde_bytes",
 ]
@@ -8147,7 +8098,7 @@ checksum = "e8db7427f936968176eaa7cdf81b7f98b980b18495ec28f1b5791ac3bfe3eea9"
 name = "user_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "ic-ledger-types",
  "serde",
@@ -8160,7 +8111,7 @@ name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "tracing",
  "types 0.1.0",
@@ -8171,7 +8122,7 @@ dependencies = [
 name = "user_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-agent",
  "types 0.1.0",
@@ -8184,10 +8135,10 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "bot_c2c_client",
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -8197,7 +8148,7 @@ dependencies = [
  "group_index_canister_c2c_client",
  "http_request",
  "ic-base-types",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-icrc1",
  "ic-icrc1-client",
@@ -8229,7 +8180,7 @@ dependencies = [
 name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "candid_gen 0.1.0",
  "ic-ledger-types",
  "serde",
@@ -8242,7 +8193,7 @@ name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "msgpack",
  "tracing",
  "types 0.1.0",
@@ -8253,7 +8204,7 @@ dependencies = [
 name = "user_index_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-agent",
  "types 0.1.0",
@@ -8264,18 +8215,17 @@ dependencies = [
 name = "user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d9c575fb4b91e1cfe80add0746eac389df33c8f7)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "captcha",
- "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",
  "index_canister",
@@ -8311,10 +8261,11 @@ checksum = "5190c9442dcdaf0ddd50f37420417d219ae5261bbf5db120d0f9bab996c9cba1"
 name = "utils"
 version = "0.1.0"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "canister_client_macros 0.1.0",
+ "cycles_dispenser_client",
  "getrandom 0.2.8",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "itertools",
  "msgpack",
  "rand",
@@ -8327,13 +8278,13 @@ dependencies = [
 [[package]]
 name = "utils"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd#4cae7b26bb812c69875fc6524ee4ec99018064fd"
+source = "git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7#c65b84be6663b82ff1387523f89aa7fa98b46eb7"
 dependencies = [
- "candid 0.8.4",
+ "candid",
  "getrandom 0.2.8",
- "ic-cdk 0.6.8",
+ "ic-cdk",
  "rand",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=4cae7b26bb812c69875fc6524ee4ec99018064fd)",
+ "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=c65b84be6663b82ff1387523f89aa7fa98b46eb7)",
 ]
 
 [[package]]

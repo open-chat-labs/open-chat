@@ -59,7 +59,8 @@ impl RuntimeState {
     }
 
     pub fn is_caller_group_index(&self) -> bool {
-        self.env.caller() == self.data.group_index_canister_id
+        let caller = self.env.caller();
+        caller == self.data.group_index_canister_id || caller == self.data.local_group_index_canister_id
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -69,7 +70,7 @@ impl RuntimeState {
             let args = c2c_push_notification::Args {
                 recipients,
                 authorizer: Some(self.data.group_index_canister_id),
-                notification_bytes: candid::encode_one(&notification).unwrap(),
+                notification_bytes: candid::encode_one(notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
@@ -173,7 +174,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             public: self.data.is_public,
             date_created: self.data.date_created,
-            members: self.data.participants.len() as u32,
+            members: self.data.participants.len(),
             admins: self.data.participants.admin_count(),
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
@@ -215,6 +216,8 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
+    #[serde(default = "default_local_group_index_canister_id")]
+    pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_id: CanisterId,
@@ -229,6 +232,10 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+}
+
+fn default_local_group_index_canister_id() -> CanisterId {
+    Principal::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -247,6 +254,7 @@ impl Data {
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
+        local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         ledger_canister_id: CanisterId,
@@ -269,6 +277,7 @@ impl Data {
             date_created: now,
             mark_active_duration,
             group_index_canister_id,
+            local_group_index_canister_id,
             user_index_canister_id,
             notifications_canister_ids,
             ledger_canister_id,

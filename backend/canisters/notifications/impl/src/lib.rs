@@ -61,6 +61,7 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub push_service_principals: HashSet<Principal>,
     pub authorized_principals: AuthorizedPrincipals,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub test_mode: bool,
@@ -71,12 +72,14 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         push_service_principals: Vec<Principal>,
         authorizers: Vec<CanisterId>,
+        cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             notifications_index_canister_id,
             push_service_principals: push_service_principals.into_iter().collect(),
             authorized_principals: AuthorizedPrincipals::new(authorizers.into_iter().collect()),
+            cycles_dispenser_canister_id,
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             test_mode,

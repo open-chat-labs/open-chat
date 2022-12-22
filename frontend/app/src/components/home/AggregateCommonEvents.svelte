@@ -4,6 +4,7 @@
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,11 +18,12 @@
 
     $: userStore = client.userStore;
     $: joinedText = buildJoinedText($userStore, joined);
-    $: deletedText = messagesDeleted.length > 0 
-        ? messagesDeleted.length === 1
-        ? $_("oneMessageDeleted") 
-        : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } }) 
-        : undefined;
+    $: deletedText =
+        messagesDeleted.length > 0
+            ? messagesDeleted.length === 1
+                ? $_("oneMessageDeleted")
+                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
+            : undefined;
 
     afterUpdate(() => {
         if (readByMe && observer && deletedMessagesElement) {
@@ -41,10 +43,7 @@
         }
     });
 
-    function buildJoinedText(
-        userStore: UserLookup,
-        userIds: Set<string>
-    ): string | undefined {
+    function buildJoinedText(userStore: UserLookup, userIds: Set<string>): string | undefined {
         return userIds.size > 10
             ? $_("nUsersJoined", {
                   values: {
@@ -76,10 +75,12 @@
 {#if joinedText !== undefined || deletedText !== undefined}
     <div class="timeline-event">
         {#if joinedText !== undefined}
-            <p>{joinedText}</p>
+            <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
-            <p bind:this={deletedMessagesElement} data-index={messagesDeleted.join(" ")}>{deletedText}</p>
+            <p bind:this={deletedMessagesElement} data-index={messagesDeleted.join(" ")}>
+                {deletedText}
+            </p>
         {/if}
     </div>
 {/if}

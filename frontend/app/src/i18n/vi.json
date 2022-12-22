@@ -47,7 +47,6 @@
     "unableToLoadEmojiPicker": "Hiện tại bảng emoji có vấn đề, vui lòng thử lại sau. Xin các bạn thông cảm",
     "leave": "Rời",
     "preview": "Duyệt trước",
-    "howToBuyToken": "Hướng dẫn mua {token}",
     "copyGroupUrl": "Sao chép đường dẫn tới Nhóm",
     "copyToClipboard": "Sao chép",
     "copiedToClipboard": "Đã sao chép địa chỉ!",
@@ -355,7 +354,8 @@
         "numVotesBy": "{votes} phiếu bầu của",
         "oneVote": "1 phiếu bầu",
         "oneVoteBy": "1 phiếu bầu của",
-        "numVotesIncludingYours": "{votes} phiếu bầu bao gồm cả của bạn"
+        "numVotesIncludingYours": "{votes} phiếu bầu bao gồm cả của bạn",
+        "atLeastTwo": "Tối thiểu 2"
     },
     "group": {
         "addGroupPhoto": "Thêm ảnh nhóm",
@@ -442,24 +442,28 @@
     "ownedBy": "Thuộc sở hữu của @ {username}",
     "tokenTransfer": {
         "title": "Gửi {token}",
-        "amount": "số tiền ({token}) *",
         "send": "Gửi",
         "message": "Tin nhắn",
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
-        "fee": "* phí {token} sẽ được thêm vào",
         "unexpected": "Đã nhận được một loại chuyển tiền điện tử không mong muốn",
         "viewTransaction": "[Xem giao dịch] ({url})",
-        "warning": "Cảnh báo - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ quá trình chuyển {token} nào.",
         "confirm": "Xác nhận",
         "transfer": "Chuyển {token}",
         "makeDeposit": "Vui lòng gửi tiền vào tài khoản trên và làm mới số dư của bạn.",
-        "zeroBalance": "Bạn không có bất kỳ {token} nào 😭.",
         "confirmedSent": "{sender} đã gửi {token} {amount} đến {receiver}",
         "pendingSent": "{sender} đang gửi {token} {amount} đến {receiver}",
         "pendingSentByYou": "bạn đang gửi {token} {amount} đến {receiver}",
+        "done": "làm mới và tiếp tục",
+        "amount": "Số lượng",
+        "fee": "Một khoản phí {fee} {token} sẽ được thêm vào",
+        "warning": "CẢNH BÁO - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng vào danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ chuyển khoản {token} nào.",
+        "zeroBalance": "Bạn không có bất kỳ {token} nào.",
+        "yourAccount": "Địa chỉ {token} của bạn",
         "receiver": "Người nhận",
         "chooseReceiver": "nhập tên người dùng của người nhận",
-        "done": "làm mới và tiếp tục"
+        "icp": "Máy tính Internet",
+        "btc": "Bitcoin",
+        "chat": "trò chuyện mở"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -623,7 +627,12 @@
     "joined": "đã tham gia",
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
-    "profile": "Cài đặt cấu hình",
+    "profile": {
+        "title": "Cài đặt cấu hình",
+        "chat": "Trò chuyện",
+        "settings": "Cài đặt",
+        "label": "Hồ sơ"
+    },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
     "undeleteMessageFailed": "Không thể khôi phục tin nhắn",
@@ -652,5 +661,7 @@
     "communityTheme": "chủ đề cộng đồng",
     "selectCommunityTheme": "Chọn một chủ đề cộng đồng",
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
-    "deleteMessageAndReport": "Xóa và báo cáo"
+    "deleteMessageAndReport": "Xóa và báo cáo",
+    "howToBuyToken": "Tôi cần trợ giúp mua {token}",
+    "reason": "Lý do"
 }

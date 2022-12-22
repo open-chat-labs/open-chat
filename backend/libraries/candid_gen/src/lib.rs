@@ -38,7 +38,7 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
             | "group_index"
             | "notifications"
             | "notifications_index"
-            | "online_users_aggregator"
+            | "online_users"
             | "proposals_bot"
             | "user"
             | "user_index" => {

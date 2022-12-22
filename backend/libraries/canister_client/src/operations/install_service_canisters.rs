@@ -1,4 +1,4 @@
-use crate::utils::{build_ic_agent, create_empty_canister, delay, get_canister_wasm, install_wasm, set_controllers};
+use crate::utils::{build_ic_agent, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
 use crate::{CanisterIds, CanisterName, CyclesDispenserInitArgs, OpenStorageCanisterName, OpenStorageInitArgs};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
@@ -17,8 +17,8 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         user_index_canister_id,
         group_index_canister_id,
         notifications_index_canister_id,
-        notifications_canister_id,
-        online_users_aggregator_canister_id,
+        local_user_index_canister_id,
+        local_group_index_canister_id,
     ) = futures::future::join5(
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
@@ -28,20 +28,30 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    let (proposals_bot_canister_id, cycles_dispenser_canister_id, open_storage_index_canister_id, ledger_canister_id) =
-        futures::future::join4(
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-        )
-        .await;
+    let (
+        notifications_canister_id,
+        online_users_canister_id,
+        proposals_bot_canister_id,
+        cycles_dispenser_canister_id,
+        open_storage_index_canister_id,
+    ) = futures::future::join5(
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+    )
+    .await;
+
+    let ledger_canister_id = create_empty_canister(&management_canister).await;
 
     println!("user_index canister id: {user_index_canister_id}");
     println!("group_index canister id: {group_index_canister_id}");
     println!("notifications index canister id: {notifications_index_canister_id}");
+    println!("local_user_index canister id: {local_user_index_canister_id}");
+    println!("local_group_index canister id: {local_group_index_canister_id}");
     println!("notifications canister id: {notifications_canister_id}");
-    println!("users_online_aggregator canister id: {online_users_aggregator_canister_id}");
+    println!("online_users canister id: {online_users_canister_id}");
     println!("proposals_bot canister id: {proposals_bot_canister_id}");
     println!("cycles_dispenser canister id: {cycles_dispenser_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
@@ -51,8 +61,10 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications_index: notifications_canister_id,
+        local_user_index: local_user_index_canister_id,
+        local_group_index: local_group_index_canister_id,
         notifications: notifications_canister_id,
-        online_users_aggregator: online_users_aggregator_canister_id,
+        online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         open_storage_index: open_storage_index_canister_id,
@@ -93,13 +105,14 @@ async fn install_service_canisters_impl(
                 .chain([canister_ids.notifications_index])
                 .collect(),
         ),
-        set_controllers(
-            management_canister,
-            &canister_ids.online_users_aggregator,
-            controllers.clone(),
-        ),
+        set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
+        set_controllers(
+            management_canister,
+            &canister_ids.local_group_index,
+            vec![canister_ids.group_index],
+        ),
         set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
     ])
     .await;
@@ -115,7 +128,6 @@ async fn install_service_canisters_impl(
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
         notifications_canister_id: canister_ids.notifications,
-        online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
@@ -126,9 +138,11 @@ async fn install_service_canisters_impl(
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
+    let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
+        local_group_index_canister_wasm,
         notifications_index_canister_id: canister_ids.notifications_index,
         notifications_canister_id: canister_ids.notifications,
         user_index_canister_id: canister_ids.user_index,
@@ -151,8 +165,8 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version);
-    let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
+    let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
+    let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
@@ -176,8 +190,9 @@ async fn install_service_canisters_impl(
         canisters: vec![
             canister_ids.user_index,
             canister_ids.group_index,
+            canister_ids.local_group_index,
             canister_ids.notifications,
-            canister_ids.online_users_aggregator,
+            canister_ids.online_users,
             canister_ids.proposals_bot,
         ],
         max_top_up_amount: 5_000_000_000_000,   // 5T
@@ -214,9 +229,9 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.online_users_aggregator,
-            &online_users_aggregator_canister_wasm.module,
-            online_users_aggregator_init_args,
+            &canister_ids.online_users,
+            &online_users_canister_wasm.module,
+            online_users_init_args,
         ),
         install_wasm(
             management_canister,
@@ -243,17 +258,40 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    agent
-        .update(&canister_ids.notifications_index, "add_notifications_canister")
-        .with_arg(
-            &candid::encode_one(notifications_index_canister::add_notifications_canister::Args {
-                canister_id: canister_ids.notifications,
-            })
-            .unwrap(),
-        )
-        .call_and_wait(delay())
-        .await
-        .unwrap();
+    let add_local_group_index_canister_response = group_index_canister_client::add_local_group_index_canister(
+        agent,
+        &canister_ids.group_index,
+        &group_index_canister::add_local_group_index_canister::Args {
+            canister_id: canister_ids.local_group_index,
+        },
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        add_local_group_index_canister_response,
+        group_index_canister::add_local_group_index_canister::Response::Success
+    ) {
+        panic!("{add_local_group_index_canister_response:?}");
+    }
+
+    let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
+        agent,
+        &canister_ids.group_index,
+        &notifications_index_canister::add_notifications_canister::Args {
+            canister_id: canister_ids.local_group_index,
+            authorizers: vec![canister_ids.local_user_index, canister_ids.local_group_index],
+        },
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        add_notifications_canister_response,
+        notifications_index_canister::add_notifications_canister::Response::Success
+    ) {
+        panic!("{add_notifications_canister_response:?}");
+    }
 
     println!("Canister wasms installed");
 }

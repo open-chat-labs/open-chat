@@ -11,7 +11,7 @@ use utils::canister::install;
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn add_notifications_canister(args: Args) -> Response {
-    match read_state(|state| prepare(args.canister_id, state)) {
+    match read_state(|state| prepare(args.canister_id, args.authorizers, state)) {
         Ok(result) => {
             match install(
                 args.canister_id,
@@ -33,14 +33,19 @@ struct PrepareResult {
     init_args: notifications_canister::init::Args,
 }
 
-fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(
+    canister_id: CanisterId,
+    authorizers: Vec<CanisterId>,
+    runtime_state: &RuntimeState,
+) -> Result<PrepareResult, Response> {
     if !runtime_state.data.notifications_canisters.contains_key(&canister_id) {
         Ok(PrepareResult {
             canister_wasm: runtime_state.data.notifications_canister_wasm.clone(),
             init_args: notifications_canister::init::Args {
                 notifications_index_canister_id: runtime_state.env.canister_id(),
                 push_service_principals: runtime_state.data.push_service_principals.iter().copied().collect(),
-                authorizers: runtime_state.data.authorizers.clone(),
+                authorizers,
+                cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
                 wasm_version: runtime_state.data.notifications_canister_wasm.version,
                 test_mode: runtime_state.data.test_mode,
             },

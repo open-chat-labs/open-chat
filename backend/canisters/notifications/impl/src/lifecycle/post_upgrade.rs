@@ -6,6 +6,7 @@ use ic_cdk_macros::post_upgrade;
 use notifications_canister::post_upgrade::Args;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
+use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -19,6 +20,7 @@ fn post_upgrade(args: Args) {
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     init_logger(data.test_mode);
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
     if !log_messages.is_empty() || !trace_messages.is_empty() {

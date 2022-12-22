@@ -82,11 +82,6 @@ impl RuntimeState {
         caller == self.data.notifications_canister_id
     }
 
-    pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.online_users_aggregator_canister_ids.contains(&caller)
-    }
-
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -102,7 +97,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let user_metrics = self.data.users.metrics();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
             memory_used: memory::used(),
@@ -112,12 +106,8 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
-            users_created: user_metrics.users_created,
-            users_online_5_minutes: user_metrics.users_online_5_minutes,
-            users_online_1_hour: user_metrics.users_online_1_hour,
-            users_online_1_week: user_metrics.users_online_1_week,
-            users_online_1_month: user_metrics.users_online_1_month,
-            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            users_created: self.data.users.len() as u64,
+            canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
@@ -147,7 +137,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_event_sync_queue: UserEventSyncQueue,
@@ -180,7 +170,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        online_users_aggregator_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
@@ -209,7 +199,7 @@ impl Data {
             group_index_canister_id,
             notifications_index_canister_id,
             notifications_canister_id,
-            online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
+            cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -242,7 +232,7 @@ impl Default for Data {
             notifications_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            online_users_aggregator_canister_ids: HashSet::new(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
@@ -270,10 +260,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
-    pub users_online_5_minutes: u32,
-    pub users_online_1_hour: u32,
-    pub users_online_1_week: u32,
-    pub users_online_1_month: u32,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,

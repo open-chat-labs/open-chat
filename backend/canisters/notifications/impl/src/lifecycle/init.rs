@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use notifications_canister::init::Args;
 use tracing::info;
+use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
 #[init]
@@ -11,12 +12,14 @@ use utils::env::canister::CanisterEnv;
 fn init(args: Args) {
     ic_cdk::setup();
     init_logger(args.test_mode);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
     let env = Box::new(CanisterEnv::new());
     let data = Data::new(
         args.notifications_index_canister_id,
         args.push_service_principals,
         args.authorizers,
+        args.cycles_dispenser_canister_id,
         args.test_mode,
     );
 

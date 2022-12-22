@@ -104,6 +104,7 @@
                 <div class="avatar" slot="icon">
                     <Avatar
                         url={client.userAvatarUrl($userStore[item.userId])}
+                        userId={item.userId}
                         size={AvatarSize.Tiny} />
                 </div>
                 <div slot="text">

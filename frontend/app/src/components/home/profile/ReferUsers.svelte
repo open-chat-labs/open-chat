@@ -88,7 +88,7 @@
                         <div>
                             <Avatar
                                 url={client.userAvatarUrl($userStore[userId])}
-                                status={UserStatus.None}
+                                {userId}
                                 size={AvatarSize.Miniscule} />
                         </div>
                         <LinkButton underline="hover">

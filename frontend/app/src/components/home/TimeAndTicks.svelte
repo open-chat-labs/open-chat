@@ -33,7 +33,7 @@
         {#if confirmed}
             <CheckCircle size={"0.9em"} color={iconColor} />
         {:else}
-            <CheckCircleOutline size={"0.9em"} color={iconColor} />
+            <div class="confirming" />
         {/if}
         {#if chatType === "direct_chat"}
             {#if readByThem}
@@ -42,6 +42,8 @@
                 <CheckCircleOutline size={"0.9em"} color={iconColor} />
             {/if}
         {/if}
+    {:else if !confirmed}
+        <div class="confirming" />
     {/if}
     {#if pinned}
         <Pin size={"0.9em"} color={pinnedColor} />
@@ -93,6 +95,12 @@
                 right: unset;
                 border-radius: 0 $sp4 0 0;
             }
+        }
+
+        .confirming {
+            width: 1.45em;
+            height: 1.4em;
+            @include loading-spinner(1.2em, 0.6em, "#ffffff", "../assets/plain-spinner.svg", 1.5s);
         }
     }
 </style>

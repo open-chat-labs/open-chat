@@ -5,6 +5,7 @@ mod error;
 mod pool;
 mod raw_rand;
 mod stop;
+mod update_settings;
 mod upgrade;
 
 pub use canisters_requiring_upgrade::*;
@@ -14,4 +15,5 @@ pub use error::*;
 pub use pool::*;
 pub use raw_rand::*;
 pub use stop::*;
+pub use update_settings::*;
 pub use upgrade::*;

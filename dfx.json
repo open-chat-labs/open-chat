@@ -37,11 +37,11 @@
       "wasm": "wasms/notifications_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh notifications_canister_impl"
     },
-    "online_users_aggregator": {
+    "online_users": {
       "type": "custom",
       "candid": "backend/canisters/online_users_agg/api/can.did",
-      "wasm": "wasms/online_users_aggregator_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh online_users_aggregator_canister_impl"
+      "wasm": "wasms/online_users_canister_impl.wasm.gz",
+      "build": "./scripts/generate-wasm.sh online_users_canister_impl"
     },
     "proposals_bot": {
       "type": "custom",

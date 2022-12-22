@@ -15,6 +15,7 @@ export interface Theme {
     bd: string;
 
     error: string;
+    warn: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
@@ -126,6 +127,7 @@ export interface Theme {
     menu: {
         bg: string;
         txt: string;
+        warn: string;
         "disabled-txt": string;
         hv: string;
         sh: string;
@@ -187,6 +189,7 @@ export interface Theme {
     icon: {
         hv: string;
         txt: string;
+        selected: string;
         inverted: {
             hv: string;
             txt: string;

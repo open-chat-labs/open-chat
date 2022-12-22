@@ -16,6 +16,7 @@ export function getTheme(base: Theme): Theme {
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.icon.txt = green;
+    base.icon.selected = "limegreen";
     base.button.bg = "#084a16";
     base.button.hv = "#094a17";
     base.button.disabled = componentBg;
@@ -46,6 +47,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.bd = base.bd;
     base.menu.bg = base.panel.right.modal;
     base.menu.txt = txt;
+    base.menu.warn = txt;
     base.menu["disabled-txt"] = txtLight;
     base.icon.inverted.txt = txt;
     base.menu.hv = base.chatSummary.hv;

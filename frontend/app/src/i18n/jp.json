@@ -51,7 +51,6 @@
     "unableToLoadSMSUpgrade": "ストレージをアップグレードする前に、OpenChatをリフレッシュする必要があります。再読み込みして、もう一度お試しください.",
     "leave": "退出",
     "preview": "プレビュー",
-    "howToBuyToken": "{token}の購入方法",
     "copyGroupUrl": "グループURLをコピーする",
     "copyToClipboard": "クリップボードにコピーする",
     "copiedToClipboard": "アカウントアドレスがクリップボードにコピーされました",
@@ -354,7 +353,8 @@
         "numVotesBy": "{votes}による投票",
         "oneVote": "1票",
         "oneVoteBy": "1票",
-        "numVotesIncludingYours": "{votes}あなたを含む投票"
+        "numVotesIncludingYours": "{votes}あなたを含む投票",
+        "atLeastTwo": "最小 2"
     },
     "group": {
         "addGroupPhoto": "グループ写真を追加",
@@ -441,24 +441,28 @@
     "ownedBy": "@ {username}が所有",
     "tokenTransfer": {
         "title": "{token}を送信する",
-        "amount": "金額（{token}）*",
         "send": "送信",
         "message": "メッセージ",
         "messagePlaceholder": "オプションのメッセージを含める",
-        "fee": "*{fee}{token}の料金が追加されます",
         "unexpected": "予期しない暗号転送タイプを受信しました",
         "viewTransaction": "[トランザクションを表示]（{url}）",
-        "warning": "警告-受信者の身元と動機を確実に信頼するのはあなたの責任です。 OpenChatは{token}転送を元に戻すことはできません。",
         "confirm": "確認",
         "transfer": "{token}転送",
         "makeDeposit": "上記の口座に入金し、残高を更新してください。",
-        "zeroBalance": "{token}はありません😭。",
         "confirmedSent": "{sender}は{amount}{token}を{receiver}に送信しました",
         "pendingSent": "{sender}は{amount}{token}を{receiver}に送信しています",
         "pendingSentByYou": "{amount}{token}を{receiver}に送信しています",
-        "receiver": "レシーバー",
+        "done": "更新して続行",
+        "amount": "額",
+        "fee": "{fee} {token} の料金が追加されます",
+        "warning": "警告 - 受信者の身元と動機を信頼することは、あなたの責任です。 OpenChat は {token} 転送を元に戻すことはできません。",
+        "zeroBalance": "あなたは {token} を持っていません。",
+        "yourAccount": "あなたの {token} 住所",
+        "receiver": "受信者",
         "chooseReceiver": "受信者のユーザー名を入力します",
-        "done": "更新して続行"
+        "icp": "インターネット コンピュータ",
+        "btc": "ビットコイン",
+        "chat": "オープンチャット"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -623,7 +627,12 @@
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
-    "profile": "プロファイル設定",
+    "profile": {
+        "title": "プロファイル設定",
+        "chat": "チャット",
+        "settings": "設定",
+        "label": "プロフィール"
+    },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
     "undeleteMessageFailed": "メッセージの削除を取り消すことができませんでした",
@@ -652,5 +661,7 @@
     "communityTheme": "コミュニティのテーマ",
     "selectCommunityTheme": "コミュニティのテーマを選択",
     "useAtOwnRisk": "自己責任",
-    "deleteMessageAndReport": "削除して報告"
+    "deleteMessageAndReport": "削除して報告",
+    "howToBuyToken": "{token} の購入についてサポートが必要です",
+    "reason": "理由"
 }

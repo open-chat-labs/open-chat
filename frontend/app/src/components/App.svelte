@@ -5,13 +5,14 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router, { location } from "svelte-spa-router";
+    import Router, { location, replace } from "svelte-spa-router";
     import { routes } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
+    import { snowing } from "../stores/snow";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
@@ -21,8 +22,10 @@
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
+        removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import Snow from "./Snow.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -62,9 +65,15 @@
     $: landingPage = isLandingPageRoute($location);
 
     function getReferralCode(): string | undefined {
-        const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
-        const lsParam = localStorage.getItem("openchat_referredby") ?? undefined;
-        return qsParam ?? lsParam;
+        const qs = new URLSearchParams(window.location.search);
+        const qsParam = qs.get("ref") ?? undefined;
+        if (qsParam) {
+            const updatedQs = removeQueryStringParam(qs, "ref");
+            history.replaceState(null, "", updatedQs);
+            localStorage.setItem("openchat_referredby", qsParam);
+            return qsParam;
+        }
+        return localStorage.getItem("openchat_referredby") ?? undefined;
     }
 
     onMount(() => {
@@ -76,7 +85,38 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+        (<any>window).superAdmin = { freezeGroup, unfreezeGroup };
     });
+
+    function freezeGroup(chatId: string, reason: string | undefined): void {
+        client
+            .freezeGroup(chatId, reason)
+            .then((success) => {
+                if (success) {
+                    console.log("Group frozen", chatId);
+                } else {
+                    console.log("Failed to freeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to freeze group", e);
+            });
+    }
+
+    function unfreezeGroup(chatId: string): void {
+        client
+            .unfreezeGroup(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Group unfrozen", chatId);
+                } else {
+                    console.log("Failed to unfreeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to unfreeze group", e);
+            });
+    }
 
     $: {
         if (
@@ -156,6 +196,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
 
@@ -441,5 +485,6 @@
 
     .loading {
         height: 100vh;
+        width: 100vw;
     }
 </style>

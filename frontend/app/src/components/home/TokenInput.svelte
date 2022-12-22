@@ -1,14 +1,21 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { E8S_PER_TOKEN, OpenChat } from "openchat-client";
+    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN, OpenChat } from "openchat-client";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import { iconSize } from "stores/iconSize";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 
     export let amountE8s: bigint = BigInt(0);
     export let autofocus: boolean = false;
     export let maxAmountE8s: bigint;
+    export let token: Cryptocurrency;
 
     let inputElement: HTMLInputElement;
+
+    $: symbol = cryptoLookup[token].symbol;
+    $: transferFees = cryptoLookup[token].transferFeesE8s;
 
     onMount(() => {
         if (amountE8s > BigInt(0)) {
@@ -41,37 +48,54 @@
     }
 </script>
 
-<input
-    {autofocus}
-    class="amount-val"
-    min={0}
-    max={Number(maxAmountE8s) / E8S_PER_TOKEN}
-    type="number"
-    bind:this={inputElement}
-    placeholder="0"
-    on:input={onInput} />
+<div class="wrapper">
+    <div class="fee">
+        <Alert size={$iconSize} color={"var(--warn)"} />
+        <span>
+            {$_("tokenTransfer.fee", {
+                values: {
+                    fee: client.formatTokens(transferFees, 0),
+                    token: symbol,
+                },
+            })}
+        </span>
+    </div>
+    <input
+        {autofocus}
+        class="amount-val"
+        min={0}
+        max={Number(maxAmountE8s) / E8S_PER_TOKEN}
+        type="number"
+        bind:this={inputElement}
+        placeholder="0"
+        on:input={onInput} />
+</div>
 
 <style type="text/scss">
+    .wrapper {
+        position: relative;
+    }
+
     .amount-val {
-        height: 40px;
-        @include font(book, normal, fs-140);
-        color: var(--txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--bd);
-        line-height: 24px;
         width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
-        text-align: right;
         display: block;
-        outline: none;
-        padding: 0 $sp3;
+        text-align: start;
+
+        @include input();
 
         &::placeholder {
             color: var(--placeholder);
         }
+    }
+
+    .fee {
+        position: absolute;
+        right: $sp3;
+        top: 12px;
+        display: flex;
+        gap: $sp3;
+        align-items: center;
+        @include font(book, normal, fs-60);
     }
 
     /* Chrome, Safari, Edge, Opera */

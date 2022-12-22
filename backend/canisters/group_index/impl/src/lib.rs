@@ -5,12 +5,12 @@ use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
-use utils::canister::{self, CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
+use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;
@@ -21,8 +21,7 @@ mod model;
 mod queries;
 mod updates;
 
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
-const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const LOCAL_GROUP_INDEX_CANISTER_TOP_UP_AMOUNT: Cycles = 25_000_000_000_000; // 25T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 40;
@@ -71,13 +70,13 @@ impl RuntimeState {
             deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
             deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
             group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
-            canisters_in_pool: self.data.canister_pool.len() as u16,
-            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
-            max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
+            max_concurrent_local_group_index_canister_upgrades: self.data.max_concurrent_local_group_index_canister_upgrades,
         }
     }
 }
@@ -89,19 +88,21 @@ struct Data {
     pub deleted_groups: DeletedGroups,
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
+    pub local_group_index_canister_wasm: CanisterWasm,
     #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
     pub notifications_index_canister_id: CanisterId,
     // TODO #[serde(default = "")]
     pub notifications_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-    pub max_concurrent_canister_upgrades: usize,
+    pub max_concurrent_local_group_index_canister_upgrades: usize,
+    pub local_index_map: LocalGroupIndexMap,
 }
 
 fn notifications_index_canister<'de, D>(deserializer: D) -> Result<CanisterId, D::Error>
@@ -118,11 +119,12 @@ impl Data {
     fn new(
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
+        local_group_index_canister_wasm: CanisterWasm,
         notifications_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
-        canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -131,22 +133,20 @@ impl Data {
             deleted_groups: DeletedGroups::default(),
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
+            local_group_index_canister_wasm,
             notifications_index_canister_id,
             notifications_canister_id,
             user_index_canister_id,
+            cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
-            max_concurrent_canister_upgrades: 2,
+            max_concurrent_local_group_index_canister_upgrades: 1,
+            local_index_map: LocalGroupIndexMap::default(),
         }
-    }
-
-    pub fn chat_exists(&self, chat_id: &ChatId) -> bool {
-        self.private_groups.get(chat_id).is_some() || self.public_groups.get(chat_id).is_some()
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
@@ -190,17 +190,19 @@ impl Default for Data {
             deleted_groups: DeletedGroups::default(),
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
+            local_group_index_canister_wasm: CanisterWasm::default(),
             notifications_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
             user_index_canister_id: Principal::anonymous(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(0),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
-            max_concurrent_canister_upgrades: 2,
+            max_concurrent_local_group_index_canister_upgrades: 1,
+            local_index_map: LocalGroupIndexMap::default(),
         }
     }
 }
@@ -220,13 +222,13 @@ pub struct Metrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
-    pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
-    pub max_concurrent_canister_upgrades: usize,
+    pub local_group_index_wasm_version: Version,
+    pub max_concurrent_local_group_index_canister_upgrades: usize,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]

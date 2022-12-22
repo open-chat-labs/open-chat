@@ -127,6 +127,7 @@ import {
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
+import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
@@ -167,7 +168,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -218,8 +219,6 @@ import {
     type MemberRole,
     type GroupRules,
     type GroupPermissions,
-    userStatus,
-    getUserStatus,
     missingUserIds,
     type EventsResponse,
     type ChatEvent,
@@ -282,6 +281,8 @@ import {
     type Logger,
     type ChatFrozenEvent,
     type ChatUnfrozenEvent,
+    type UserStatus,
+    userStatus,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -293,7 +294,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -310,6 +311,8 @@ export class OpenChat extends EventTarget {
     private _logger: Logger;
     private _chatUpdatesSince: bigint | undefined = undefined;
     private _botDetected = false;
+    private _lastOnlineDatesPending = new Set<string>();
+    private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -909,9 +912,7 @@ export class OpenChat extends EventTarget {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    userStatus = userStatus;
     groupAvatarUrl = groupAvatarUrl;
-    getUserStatus = getUserStatus;
     phoneNumberToString = phoneNumberToString;
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
@@ -1835,15 +1836,13 @@ export class OpenChat extends EventTarget {
 
     private addPinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.add(messageIndex);
-            return new Set(s);
+            return new Set([...s, messageIndex]);
         });
     }
 
     private removePinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.delete(messageIndex);
-            return new Set(s);
+            return new Set([...s].filter((idx) => idx !== messageIndex));
         });
     }
 
@@ -2583,7 +2582,14 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale).then((resp) => {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+        if (userGroups.length === 0) {
+            return Promise.resolve({
+                users: []
+            });
+        }
+
+        return this.api.getUsers({ userGroups }, allowStale).then((resp) => {
             userStore.addMany(resp.users);
             if (resp.serverTimestamp !== undefined) {
                 // If we went to the server, all users not returned are still up to date, so we mark them as such
@@ -2604,6 +2610,24 @@ export class OpenChat extends EventTarget {
             }
             return resp;
         });
+    }
+
+    getUserStatus(userId: string, now: number): Promise<UserStatus> {
+        return this.getLastOnlineDate(userId, now).then((lastOnline) => userStatus(lastOnline, Date.now()));
+    }
+
+    async getLastOnlineDate(userId: string, now: number): Promise<number | undefined> {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return undefined;
+
+        if (userId === this.user.userId) return now;
+
+        let lastOnline = lastOnlineDates.get(userId, now);
+        if (lastOnline === undefined) {
+            const response = await this.getLastOnlineDatesBatched([userId]);
+            lastOnline = response[userId];
+        }
+        return lastOnline;
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
@@ -2850,27 +2874,28 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            // Also update any users who haven't been updated for at least an hour
+            // Also update any users who haven't been updated for at least 24 hours
             const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
+                    if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
+                        break;
+                    }
                 }
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-                const userGroups = groupBy<string, bigint>(batch, (u) => {
-                    return allUsers[u]?.updated ?? BigInt(0);
-                });
+            const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
 
-                await this.getUsers({
-                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                        users,
-                        updatedSince,
-                    })),
-                });
-            }
+            await this.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
         }
@@ -2987,6 +3012,31 @@ export class OpenChat extends EventTarget {
             throw err;
         } finally {
             chatsLoading.set(false);
+        }
+    }
+
+    private async getLastOnlineDatesBatched(userIds: string[]): Promise<Record<string, number>> {
+        userIds.forEach((u) => this._lastOnlineDatesPending.add(u));
+        if (this._lastOnlineDatesPromise === undefined) {
+            // Wait 50ms so that the last online dates can be retrieved in a single batch
+            this._lastOnlineDatesPromise =
+                new Promise(resolve => window.setTimeout(resolve, 50)).then((_) => this.processLastOnlineDatesQueue());
+        }
+
+        return this._lastOnlineDatesPromise;
+    }
+
+    private async processLastOnlineDatesQueue(): Promise<Record<string, number>> {
+        const userIds = [...this._lastOnlineDatesPending];
+        this._lastOnlineDatesPromise = undefined;
+        this._lastOnlineDatesPending.clear();
+
+        try {
+            const response = await this.api.lastOnline(userIds);
+            lastOnlineDates.set(Object.entries(response), Date.now());
+            return response;
+        } catch {
+            return {};
         }
     }
 

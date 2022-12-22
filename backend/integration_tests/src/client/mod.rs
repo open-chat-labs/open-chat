@@ -4,6 +4,7 @@ pub mod group;
 pub mod group_index;
 pub mod notifications;
 pub mod notifications_index;
+pub mod online_users;
 pub mod user;
 pub mod user_index;
 

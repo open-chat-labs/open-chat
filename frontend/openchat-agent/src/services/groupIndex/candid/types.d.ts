@@ -600,7 +600,6 @@ export interface PartialUserSummary {
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
-  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface Participant {
@@ -826,7 +825,6 @@ export interface UserSummary {
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
-  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {

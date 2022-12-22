@@ -5,9 +5,11 @@ use candid::Principal;
 use types::{CanisterId, UserId};
 
 mod client;
+mod delete_group_tests;
 mod delete_message_tests;
 mod freeze_group_tests;
 mod initial_state_and_updates_tests;
+mod last_online_date_tests;
 mod notification_tests;
 mod poll_tests;
 mod register_user_tests;
@@ -40,7 +42,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub notifications: CanisterId,
-    pub online_users_aggregator: CanisterId,
+    pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub open_storage_index: CanisterId,
     pub ledger: CanisterId,

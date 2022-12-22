@@ -38,6 +38,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         "txt-light": textBodyDark,
         bd: borderDark,
         error: "#CF6679",
+        warn: "#f36D28",
         accent: "#ff005c",
         disabledTxt: txtLow,
         primary,
@@ -98,7 +99,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         input: {
             bg: textBlack,
-            sh: "none",
+            sh: "inset 0px 2px 4px rgba(0,0,0,0.8)",
         },
 
         members: {
@@ -149,6 +150,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         menu: {
             bg: backgroundBlack,
             txt: textBodyDark,
+            warn: "#FF2E2E",
             "disabled-txt": txtLow,
             hv: hoveredChat,
             sh: "none",
@@ -160,9 +162,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: blueAccent,
             hv: "#053d5c",
             txt: txt,
-            disabled: textBlack,
+            disabled: textBodyLight,
             spinner: dark60,
-            "disabled-txt": "#999999",
+            "disabled-txt": "#ffffff",
             "disabled-bd": "#999999",
         },
 
@@ -209,6 +211,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         icon: {
             hv: "rgba(255,255,255,0.1)",
             txt: textBodyDark,
+            selected: primary,
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
                 txt: textBodyDark,

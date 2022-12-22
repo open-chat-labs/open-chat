@@ -6,7 +6,6 @@ use types::CanisterId;
 #[heartbeat]
 fn heartbeat() {
     sync_notifications_canisters::run();
-    cycles_dispenser_client::run();
 }
 
 mod sync_notifications_canisters {

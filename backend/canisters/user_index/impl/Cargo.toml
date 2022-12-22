@@ -17,7 +17,6 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 captcha = { workspace = true }
-cycles_dispenser_client = { workspace = true }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }

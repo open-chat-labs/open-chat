@@ -83,7 +83,7 @@ impl RuntimeState {
             let args = c2c_push_notification::Args {
                 recipients,
                 authorizer: Some(self.data.user_index_canister_id),
-                notification_bytes: candid::encode_one(&notification).unwrap(),
+                notification_bytes: candid::encode_one(notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
