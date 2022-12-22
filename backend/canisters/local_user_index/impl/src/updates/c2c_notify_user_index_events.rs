@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Args, Response, UserIndexEvent};
 use tracing::info;
-use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UsernameChanged};
+use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UserSuspended, UsernameChanged};
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
@@ -26,6 +26,17 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id,
                 UserEvent::UsernameChanged(UsernameChanged { username: ev.username }),
+            );
+        }
+        UserIndexEvent::UserSuspended(ev) => {
+            runtime_state.data.user_event_sync_queue.push(
+                ev.user_id,
+                UserEvent::UserSuspended(UserSuspended {
+                    timestamp: ev.timestamp,
+                    duration: ev.duration,
+                    reason: ev.reason,
+                    suspended_by: ev.suspended_by,
+                }),
             );
         }
         UserIndexEvent::PhoneNumberConfirmed(ev) => {

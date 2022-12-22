@@ -8170,6 +8170,8 @@ dependencies = [
  "index_canister_c2c_client",
  "itertools",
  "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "lodepng",
  "msgpack",
  "notifications_canister",

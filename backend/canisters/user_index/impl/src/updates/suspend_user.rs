@@ -3,7 +3,8 @@ use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSus
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{ChatId, Milliseconds, SuspensionDuration, UserEvent, UserId, UserSuspended};
+use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UserSuspended};
+use types::{ChatId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
 #[update(guard = "caller_is_super_admin")]
@@ -86,9 +87,10 @@ fn commit(
             .schedule(vec![SetUserSuspendedType::Unsuspend(user_id)], now + ms);
     }
 
-    runtime_state.data.user_event_sync_queue.push(
+    runtime_state.data.push_event_to_local_user_index(
         user_id,
-        UserEvent::UserSuspended(UserSuspended {
+        UserIndexEvent::UserSuspended(UserSuspended {
+            user_id,
             timestamp: now,
             duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
             reason,
