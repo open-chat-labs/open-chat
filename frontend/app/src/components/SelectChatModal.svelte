@@ -26,29 +26,32 @@
 
     const dispatch = createEventDispatcher();
 
-    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
+    $: chatsPromise = Promise.all(chatsSummaries.map((c) => normaliseChatSummary($now, c)));
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
+    async function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
+            const description = await buildDirectChatDescription(chatSummary, now);
             return {
                 id: chatSummary.chatId,
+                userId: chatSummary.them,
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                description: buildDirectChatDescription(chatSummary, now),
+                description,
             };
         }
         return {
             id: chatSummary.chatId,
+            userId: undefined,
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             description: buildGroupChatDescription(chatSummary),
         };
     }
 
-    function buildDirectChatDescription(chat: DirectChatSummary, now: number): string {
-        return client.getUserStatus(now, $userStore, chat.them) === UserStatus.Offline
-            ? $_("offline")
-            : $_("onlineNow");
+    async function buildDirectChatDescription(chat: DirectChatSummary, now: number): Promise<string> {
+        return await client.getUserStatus(chat.them, now) === UserStatus.Online
+            ? $_("onlineNow")
+            : $_("offline");
     }
 
     function buildGroupChatDescription(group: GroupChatSummary): string {
@@ -79,22 +82,24 @@
             </HoverIcon>
         </span>
     </SectionHeader>
-    {#if chats.length === 0}
+    {#if chatsSummaries.length === 0}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
     {:else}
-        <div class="body">
-            {#each chats as chat}
-                <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
-                    <div class="avatar">
-                        <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+        {#await chatsPromise then chats}
+            <div class="body">
+                {#each chats as chat}
+                    <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
+                        <div class="avatar">
+                            <Avatar url={chat.avatarUrl} userId={chat.userId} size={AvatarSize.Small} />
+                        </div>
+                        <div class="details">
+                            <div class="name">{chat.name}</div>
+                            <div class="description">{chat.description}</div>
+                        </div>
                     </div>
-                    <div class="details">
-                        <div class="name">{chat.name}</div>
-                        <div class="description">{chat.description}</div>
-                    </div>
-                </div>
-            {/each}
-        </div>
+                {/each}
+            </div>
+        {/await}
     {/if}
 </Panel>
 

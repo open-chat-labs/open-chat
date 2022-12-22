@@ -3,6 +3,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
+    import { DirectChatSummary } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     export let chat: ChatSummary;
@@ -11,14 +12,25 @@
     $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: isSuspended = $userStore[userId]?.suspended ?? false;
+
+    async function directChatSubtext(directChat: DirectChatSummary, now: number): Promise<string> {
+        if (isSuspended) {
+            return $_("accountSuspended");
+        } else if (isBot) {
+            return "";
+        } else {
+            const lastOnline = await client.getLastOnlineDate(directChat.them);
+            return lastOnline !== undefined
+                ? client.formatLastOnlineDate($_, now, lastOnline)
+                : "";
+        }
+    }
 </script>
 
 {#if chat.kind === "direct_chat"}
-    {isSuspended
-        ? $_("accountSuspended")
-        : isBot
-        ? ""
-        : client.formatLastOnlineDate($_, $now, $userStore[chat.them])}
+    {#await directChatSubtext(chat, $now) then text}
+        {text}
+    {/await}
 {:else if chat.kind === "group_chat"}
     <div class="wrapper">
         <div class="visibility">

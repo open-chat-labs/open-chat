@@ -71,13 +71,11 @@ const defaultGroupChat: GroupChatSummary = {
     frozen: false,
 };
 
-function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
-    const now = Date.now();
+function createUser(userId: string, username: string): PartialUserSummary {
     return {
         kind: "user",
         userId,
         username,
-        lastOnline: now - seconds * 1000,
         updated: BigInt(0),
         suspended: false,
     };
@@ -317,14 +315,14 @@ describe("get members string for group chat", () => {
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
     const lookup: UserLookup = {
-        a: createUser("a", "Mr A", 200),
-        b: createUser("b", "Mr B", 20),
-        c: createUser("c", "Mr C", 20),
-        d: createUser("d", "Mr D", 20),
-        e: createUser("e", "Mr E", 10),
-        f: createUser("f", "Mr F", 10),
-        g: createUser("g", "Mr G", 10),
-        z: createUser("z", "Mr Z", 10),
+        a: createUser("a", "Mr A"),
+        b: createUser("b", "Mr B"),
+        c: createUser("c", "Mr C"),
+        d: createUser("d", "Mr D"),
+        e: createUser("e", "Mr E"),
+        f: createUser("f", "Mr F"),
+        g: createUser("g", "Mr G"),
+        z: createUser("z", "Mr Z"),
     };
 
     const user = lookup.z as UserSummary;
