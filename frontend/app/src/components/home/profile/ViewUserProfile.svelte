@@ -44,7 +44,7 @@
         try {
             const task1 = client.getPublicProfile(userId);
             const task2 = client.getUser(userId);
-            lastOnline = await client.getLastOnlineDate(userId);
+            lastOnline = await client.getLastOnlineDate(userId, Date.now());
             user = await task2;
             profile = await task1;
         } catch (e: any) {

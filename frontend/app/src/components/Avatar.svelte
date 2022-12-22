@@ -8,7 +8,7 @@
 
     export let url: string | undefined;
     export let showStatus: boolean | undefined = false;
-    export let userId: string | undefined;
+    export let userId: string | undefined = undefined;
     export let size: AvatarSize = AvatarSize.Medium;
     export let blocked: boolean = false;
     export let statusBorder = "white";

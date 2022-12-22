@@ -3,7 +3,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
-    import { DirectChatSummary } from "openchat-shared";
+    import type { DirectChatSummary } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     export let chat: ChatSummary;
@@ -19,7 +19,7 @@
         } else if (isBot) {
             return "";
         } else {
-            const lastOnline = await client.getLastOnlineDate(directChat.them);
+            const lastOnline = await client.getLastOnlineDate(directChat.them, now);
             return lastOnline !== undefined
                 ? client.formatLastOnlineDate($_, now, lastOnline)
                 : "";
