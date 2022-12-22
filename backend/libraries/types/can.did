@@ -616,7 +616,6 @@ type PartialUserSummary =
     record {
         user_id: UserId;
         username: opt text;
-        seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
         suspended: bool;
@@ -894,7 +893,6 @@ type UserSummary =
     record {
         user_id: UserId;
         username: text;
-        seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
         suspended: bool;
