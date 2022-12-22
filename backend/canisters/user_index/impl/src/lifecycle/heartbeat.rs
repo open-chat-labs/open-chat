@@ -4,8 +4,7 @@ use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister::{upgrade, FailedUpgrade};
-use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
-use utils::cycles::can_spend_cycles;
+use utils::consts::MIN_CYCLES_BALANCE;
 use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
@@ -15,7 +14,6 @@ fn heartbeat() {
     sync_users_to_open_storage::run();
     sync_events_to_user_index_canisters::run();
     notify_user_principal_migrations::run();
-    calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
     set_users_suspended::run();
@@ -54,17 +52,13 @@ mod upgrade_canisters {
 
         let new_wasm = runtime_state.data.local_user_index_canister_wasm.clone();
         let wasm_version = new_wasm.version;
-        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
-            Some(CYCLES_REQUIRED_FOR_UPGRADE)
-        } else {
-            None
-        };
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
             new_wasm,
-            cycles_to_deposit_if_needed,
+            deposit_cycles_if_needed,
             args: local_user_index_canister::post_upgrade::Args { wasm_version },
         })
     }
@@ -282,19 +276,6 @@ mod notify_user_principal_migrations {
             Ok(_) => state.data.user_principal_migration_queue.mark_success(user_id),
             Err(_) => state.data.user_principal_migration_queue.mark_failure(user_id, canister),
         });
-    }
-}
-
-mod calculate_metrics {
-    use super::*;
-
-    pub fn run() {
-        mutate_state(calculate_metrics);
-    }
-
-    fn calculate_metrics(runtime_state: &mut RuntimeState) {
-        let now = runtime_state.env.now();
-        runtime_state.data.users.calculate_metrics(now);
     }
 }
 

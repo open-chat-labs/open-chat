@@ -24,7 +24,6 @@
     <div class="pop">
         <Avatar
             url={client.groupAvatarUrl(group)}
-            status={UserStatus.None}
             size={AvatarSize.ExtraLarge} />
     </div>
     <div>

@@ -1,7 +1,6 @@
 pub mod add_local_user_index_canister;
 pub mod add_super_admin;
 pub mod c2c_mark_send_message_failed;
-pub mod c2c_mark_users_online;
 pub mod c2c_migrate_user_principal;
 pub mod c2c_notify_low_balance;
 pub mod c2c_register_bot;

@@ -40,7 +40,7 @@
 
 <SectionHeader border={false} flush={true}>
     <h4>{$_("chooseMembers")}</h4>
-    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
+    <Avatar url={"assets/group.svg"} size={AvatarSize.Tiny} />
 </SectionHeader>
 
 <div class="members">

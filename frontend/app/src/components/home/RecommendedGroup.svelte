@@ -40,7 +40,6 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group)}
-                    status={UserStatus.None}
                     size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
             </div>
             <div class="group-title-line">

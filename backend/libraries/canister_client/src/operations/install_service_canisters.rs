@@ -116,7 +116,6 @@ async fn install_service_canisters_impl(
         local_user_index_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_ids: vec![canister_ids.notifications],
-        online_users_canister_id: canister_ids.online_users,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
@@ -174,6 +173,7 @@ async fn install_service_canisters_impl(
         canisters: vec![
             canister_ids.user_index,
             canister_ids.group_index,
+            canister_ids.local_group_index,
             canister_ids.notifications,
             canister_ids.online_users,
             canister_ids.proposals_bot,

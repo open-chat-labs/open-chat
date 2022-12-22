@@ -32,14 +32,6 @@ pub fn caller_is_sms_sender() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_online_users_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_online_users_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the online users aggregator canister".to_string())
-    }
-}
-
 pub fn caller_is_super_admin() -> Result<(), String> {
     if read_state(|state| state.is_caller_super_admin()) {
         Ok(())

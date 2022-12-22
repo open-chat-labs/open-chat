@@ -12,7 +12,6 @@ pub struct User {
     pub username: String,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
-    pub last_online: TimestampMillis,
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
@@ -76,7 +75,6 @@ impl User {
             username,
             date_created: now,
             date_updated: now,
-            last_online: now,
             wasm_version,
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
@@ -91,28 +89,20 @@ impl User {
         }
     }
 
-    pub fn to_summary(&self, now: TimestampMillis) -> UserSummary {
-        let millis_since_last_online = now - self.last_online;
-        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
-
+    pub fn to_summary(&self) -> UserSummary {
         UserSummary {
             user_id: self.user_id,
             username: self.username.clone(),
-            seconds_since_last_online,
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
         }
     }
 
-    pub fn to_partial_summary(&self, include_username: bool, now: TimestampMillis) -> PartialUserSummary {
-        let millis_since_last_online = now - self.last_online;
-        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
-
+    pub fn to_partial_summary(&self) -> PartialUserSummary {
         PartialUserSummary {
             user_id: self.user_id,
-            username: if include_username { Some(self.username.clone()) } else { None },
-            seconds_since_last_online,
+            username: Some(self.username.clone()),
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
@@ -151,7 +141,6 @@ impl Default for User {
             username: String::new(),
             date_created: 0,
             date_updated: 0,
-            last_online: 0,
             wasm_version: Version::new(0, 0, 0),
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),

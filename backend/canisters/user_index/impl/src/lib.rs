@@ -82,11 +82,6 @@ impl RuntimeState {
         self.data.notifications_canister_ids.contains(&caller)
     }
 
-    pub fn is_caller_online_users_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.online_users_canister_ids.contains(&caller)
-    }
-
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -102,7 +97,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let user_metrics = self.data.users.metrics();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
             memory_used: memory::used(),
@@ -111,11 +105,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
-            users_created: user_metrics.users_created,
-            users_online_5_minutes: user_metrics.users_online_5_minutes,
-            users_online_1_hour: user_metrics.users_online_1_hour,
-            users_online_1_week: user_metrics.users_online_1_week,
-            users_online_1_month: user_metrics.users_online_1_month,
+            users_created: self.data.users.len() as u64,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -144,7 +134,6 @@ struct Data {
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub online_users_canister_ids: HashSet<CanisterId>,
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
@@ -172,7 +161,6 @@ impl Data {
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
-        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -201,7 +189,6 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_canister_ids,
-            online_users_canister_ids: HashSet::from([online_users_canister_id]),
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -247,7 +234,6 @@ impl Default for Data {
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_ids: vec![Principal::anonymous()],
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            online_users_canister_ids: HashSet::new(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
@@ -276,10 +262,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
-    pub users_online_5_minutes: u32,
-    pub users_online_1_hour: u32,
-    pub users_online_1_week: u32,
-    pub users_online_1_month: u32,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,

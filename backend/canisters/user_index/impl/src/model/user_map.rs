@@ -1,17 +1,15 @@
 use crate::model::account_billing::AccountCharge;
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};
-use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
+use utils::time::MINUTE_IN_MS;
 
 use super::user::{SuspensionDetails, SuspensionDuration};
 
-const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
-const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
 const PRUNE_UNCONFIRMED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -23,7 +21,6 @@ pub struct UserMap {
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
-    cached_metrics: Timestamped<Metrics>,
     #[serde(skip)]
     users_with_unconfirmed_phone_numbers: HashSet<UserId>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
@@ -31,15 +28,6 @@ pub struct UserMap {
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
-pub struct Metrics {
-    pub users_created: u64,
-    pub users_online_5_minutes: u32,
-    pub users_online_1_hour: u32,
-    pub users_online_1_week: u32,
-    pub users_online_1_month: u32,
 }
 
 impl UserMap {
@@ -243,15 +231,6 @@ impl UserMap {
         }
     }
 
-    pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
-        if let Some(user) = self.principal_to_user_id.get(principal).and_then(|u| self.users.get_mut(u)) {
-            user.last_online = now;
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn get(&self, user_id_or_principal: &Principal) -> Option<&User> {
         let user_id = self
             .principal_to_user_id
@@ -377,37 +356,6 @@ impl UserMap {
         } else {
             None
         }
-    }
-
-    pub fn metrics(&self) -> Metrics {
-        self.cached_metrics.value.clone()
-    }
-
-    pub fn calculate_metrics(&mut self, now: TimestampMillis) {
-        // Throttle to once every 5 minutes
-        if now < self.cached_metrics.timestamp + FIVE_MINUTES_IN_MS {
-            return;
-        }
-
-        let mut metrics = Metrics::default();
-
-        for user in self.users.values() {
-            metrics.users_created += 1;
-            if user.last_online > now - FIVE_MINUTES_IN_MS {
-                metrics.users_online_5_minutes += 1;
-            }
-            if user.last_online > now - HOUR_IN_MS {
-                metrics.users_online_1_hour += 1;
-            }
-            if user.last_online > now - WEEK_IN_MS {
-                metrics.users_online_1_week += 1;
-            }
-            if user.last_online > now - THIRTY_DAYS_IN_MS {
-                metrics.users_online_1_month += 1;
-            }
-        }
-
-        self.cached_metrics = Timestamped::new(metrics, now);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
@@ -620,7 +568,6 @@ mod tests {
             username: username1.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 
@@ -631,7 +578,6 @@ mod tests {
             username: username2.clone(),
             date_created: 2,
             date_updated: 2,
-            last_online: 2,
             ..Default::default()
         };
 
@@ -665,7 +611,6 @@ mod tests {
             username: username1.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 
@@ -676,7 +621,6 @@ mod tests {
             username: username2.clone(),
             date_created: 2,
             date_updated: 2,
-            last_online: 2,
             ..Default::default()
         };
 
@@ -703,7 +647,6 @@ mod tests {
             username: username.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 

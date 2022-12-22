@@ -54,14 +54,14 @@
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
+                userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
-            userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary),
+            userId: undefined,
             typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
         };
     }
@@ -103,7 +103,8 @@
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
-            status={chat.userStatus}
+            showStatus={true}
+            userId={chat.userId}
             url={chat.avatarUrl}
             size={AvatarSize.Small} />
     </div>
