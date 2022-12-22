@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version};
+use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::memory;
 
@@ -100,6 +101,7 @@ struct Data {
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub subscriptions: Subscriptions,
     pub notifications_canister_wasm: CanisterWasm,
+    pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
 }
 
@@ -121,6 +123,7 @@ impl Data {
             principal_to_user_id: HashMap::default(),
             subscriptions: Subscriptions::default(),
             notifications_canister_wasm,
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
         }
     }

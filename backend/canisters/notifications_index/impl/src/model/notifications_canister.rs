@@ -19,6 +19,14 @@ impl NotificationsCanister {
         }
     }
 
+    pub fn wasm_version(&self) -> Version {
+        self.wasm_version
+    }
+
+    pub fn set_wasm_version(&mut self, version: Version) {
+        self.wasm_version = version;
+    }
+
     pub fn queue_len(&self) -> usize {
         self.events_queue.len()
     }

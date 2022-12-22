@@ -20,7 +20,7 @@ async fn main() {
             upgrade_notifications_index_canister(identity, opts.url, opts.notifications_index, opts.version).await
         }
         CanisterName::Notifications => {
-            upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
+            upgrade_notifications_canister(identity, opts.url, opts.notifications_index, opts.version).await
         }
         CanisterName::OnlineUsers => upgrade_online_users_canister(identity, opts.url, opts.online_users, opts.version).await,
         CanisterName::ProposalsBot => {
@@ -41,7 +41,6 @@ struct Opts {
     user_index: CanisterId,
     group_index: CanisterId,
     notifications_index: CanisterId,
-    notifications: CanisterId,
     online_users: CanisterId,
     proposals_bot: CanisterId,
     canister_to_upgrade: CanisterName,
