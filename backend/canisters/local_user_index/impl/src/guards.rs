@@ -15,3 +15,11 @@ pub fn caller_is_local_user_canister() -> Result<(), String> {
         Err("Caller is not a local user canister".to_owned())
     }
 }
+
+pub fn caller_is_notifications_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_notifications_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a notifications canister".to_owned())
+    }
+}
