@@ -49,18 +49,18 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
+    let user_index_canister_id = create_canister(env, None);
     let group_index_canister_id = create_canister(env, None);
     let notifications_index_canister_id = create_canister(env, None);
-    let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
     let online_users_canister_id = create_canister(env, None);
     let proposals_bot_canister_id = create_canister(env, None);
-    let user_index_canister_id = create_canister(env, None);
     let cycles_dispenser_canister_id = create_canister(env, None);
     let open_storage_index_canister_id = create_canister(env, None);
     let ledger_canister_id = create_canister(env, None);
+
     let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
     let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
-    let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
+    let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
 
     let group_canister_wasm = wasms::GROUP.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();

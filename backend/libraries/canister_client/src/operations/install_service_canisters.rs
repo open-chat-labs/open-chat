@@ -96,24 +96,25 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
-        set_controllers(
-            management_canister,
-            &canister_ids.notifications,
-            controllers
-                .iter()
-                .copied()
-                .chain([canister_ids.notifications_index])
-                .collect(),
-        ),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
+        set_controllers(
+            management_canister,
+            &canister_ids.local_user_index,
+            vec![canister_ids.user_index],
+        ),
         set_controllers(
             management_canister,
             &canister_ids.local_group_index,
             vec![canister_ids.group_index],
         ),
-        set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
+        set_controllers(
+            management_canister,
+            &canister_ids.notifications,
+            vec![canister_ids.notifications_index],
+        ),
     ])
     .await;
 
