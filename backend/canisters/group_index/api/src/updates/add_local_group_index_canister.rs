@@ -5,6 +5,7 @@ use types::CanisterId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
 }
 

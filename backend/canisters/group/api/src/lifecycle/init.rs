@@ -16,6 +16,7 @@ pub struct Args {
     pub created_by_user_id: UserId,
     pub mark_active_duration: Milliseconds,
     pub user_index_canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,

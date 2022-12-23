@@ -1,3 +1,4 @@
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
@@ -77,6 +78,8 @@ struct Data {
     pub local_groups: LocalGroupMap,
     pub group_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "default_local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -88,11 +91,16 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
 }
 
+fn default_local_user_index_canister_id() -> CanisterId {
+    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         group_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         cycles_dispenser_canister_id: CanisterId,
@@ -104,6 +112,7 @@ impl Data {
             local_groups: LocalGroupMap::default(),
             group_canister_wasm,
             user_index_canister_id,
+            local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
             cycles_dispenser_canister_id,
