@@ -8,6 +8,7 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
+use model::canisters_requiring_controller_swap::CanistersRequiringControllerSwap;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -98,6 +99,8 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let canister_swap_controller_metrics = self.data.canisters_requiring_controller_swap.metrics();
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
@@ -117,6 +120,10 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            canister_controllers_swaps_completed: canister_swap_controller_metrics.completed,
+            canister_controllers_swaps_failed: canister_swap_controller_metrics.failed,
+            canister_controllers_swaps_pending: canister_swap_controller_metrics.pending,
+            canister_controllers_swaps_in_progress: canister_swap_controller_metrics.in_progress,
         }
     }
 }
@@ -150,6 +157,8 @@ struct Data {
     pub set_user_suspended_queue: SetUserSuspendedQueue,
     #[serde(default)]
     pub local_index_map: LocalUserIndexMap,
+    #[serde(default)]
+    pub canisters_requiring_controller_swap: CanistersRequiringControllerSwap,
 }
 
 impl Data {
@@ -205,6 +214,7 @@ impl Data {
             max_concurrent_canister_upgrades: 2,
             set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            canisters_requiring_controller_swap: CanistersRequiringControllerSwap::default(),
         }
     }
 
@@ -249,6 +259,7 @@ impl Default for Data {
             max_concurrent_canister_upgrades: 2,
             set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            canisters_requiring_controller_swap: CanistersRequiringControllerSwap::default(),
         }
     }
 }
@@ -273,4 +284,8 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
+    pub canister_controllers_swaps_completed: usize,
+    pub canister_controllers_swaps_failed: usize,
+    pub canister_controllers_swaps_pending: usize,
+    pub canister_controllers_swaps_in_progress: usize,
 }

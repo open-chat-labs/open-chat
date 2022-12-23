@@ -20,6 +20,7 @@ fn post_upgrade(args: Args) {
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.users.rehydrate();
+    init_swap_group_controller_queue(&mut data);
 
     init_logger(data.test_mode);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
@@ -44,4 +45,12 @@ fn rehydrate_log_messages(
     for message in trace_messages {
         messages_container.traces.push(message);
     }
+}
+
+fn init_swap_group_controller_queue(data: &mut Data) {
+    for user in data.users.iter() {
+        data.canisters_requiring_controller_swap.enqueue(user.user_id.into());
+    }
+    let canisters_queued_for_swap = data.canisters_requiring_controller_swap.count_pending();
+    info!(canisters_queued_for_swap, "User canister controller swap initiated");
 }
