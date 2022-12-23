@@ -3,8 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_index_canister::add_local_group_index_canister::{Response::*, *};
 use ic_cdk_macros::update;
-use local_group_index_canister::c2c_add_initial_groups::Group;
-use tracing::{error, info};
+use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
 use utils::canister::install;
 
@@ -22,13 +21,7 @@ async fn add_local_group_index_canister(args: Args) -> Response {
             {
                 Ok(_) => {
                     let response = mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state));
-
                     info!(canister_id = %args.canister_id, "local group index canister added");
-
-                    if read_state(|state| state.data.local_index_map.len() == 1) {
-                        bootstrap_first_local_group_index(args.canister_id).await;
-                    }
-
                     response
                 }
                 Err(error) => InternalError(format!("{error:?}")),
@@ -68,40 +61,5 @@ fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut Ru
         Success
     } else {
         AlreadyAdded
-    }
-}
-
-async fn bootstrap_first_local_group_index(canister_id: CanisterId) {
-    let groups: Vec<_> = read_state(|state| {
-        let private_groups = state.data.private_groups.iter().map(|g| Group {
-            chat_id: g.id(),
-            wasm_version: g.wasm_version(),
-        });
-        let public_groups = state.data.public_groups.iter().map(|g| Group {
-            chat_id: g.id(),
-            wasm_version: g.wasm_version(),
-        });
-        private_groups.chain(public_groups).collect()
-    });
-
-    let group_ids: Vec<_> = groups.iter().map(|g| g.chat_id).collect();
-
-    match local_group_index_canister_c2c_client::c2c_add_initial_groups(
-        canister_id,
-        &local_group_index_canister::c2c_add_initial_groups::Args { groups },
-    )
-    .await
-    {
-        Ok(_) => {
-            mutate_state(|state| {
-                for chat_id in group_ids {
-                    state.data.local_index_map.add_group(canister_id, chat_id);
-                }
-            });
-            info!(canister_id = %canister_id, "groups added to first local group index canister");
-        }
-        Err(error) => {
-            error!(?error, "Error calling c2c_notify_group_index_events");
-        }
     }
 }
