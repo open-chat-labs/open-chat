@@ -168,8 +168,6 @@ impl Default for Data {
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm: CanisterWasm::default(),
-            notifications_index_canister_id: Principal::anonymous(),
-            notifications_canister_id: Principal::anonymous(),
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),
