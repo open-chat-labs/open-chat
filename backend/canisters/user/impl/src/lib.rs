@@ -85,7 +85,7 @@ impl RuntimeState {
         if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
             let args = c2c_push_notification::Args {
                 recipients,
-                authorizer: Some(self.data.user_index_canister_id),
+                authorizer: Some(self.data.local_user_index_canister_id),
                 notification_bytes: candid::encode_one(notification).unwrap(),
             };
             ic_cdk::spawn(push_notification_inner(*canister_id, args));
