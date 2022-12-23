@@ -49,21 +49,24 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
+    let user_index_canister_id = create_canister(env, None);
     let group_index_canister_id = create_canister(env, None);
-    let notifications_canister_id = create_canister(env, None);
+    let notifications_index_canister_id = create_canister(env, None);
     let online_users_canister_id = create_canister(env, None);
     let proposals_bot_canister_id = create_canister(env, None);
-    let user_index_canister_id = create_canister(env, None);
     let cycles_dispenser_canister_id = create_canister(env, None);
     let open_storage_index_canister_id = create_canister(env, None);
     let ledger_canister_id = create_canister(env, None);
-    let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
+
     let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
+    let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
+    let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
 
     let group_canister_wasm = wasms::GROUP.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
+    let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let user_canister_wasm = wasms::USER.clone();
@@ -76,7 +79,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_canister_wasm,
         local_user_index_canister_wasm,
         group_index_canister_id,
-        notifications_canister_ids: vec![notifications_canister_id],
+        notifications_index_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,
@@ -90,7 +93,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         service_principals: vec![controller],
         group_canister_wasm,
         local_group_index_canister_wasm,
-        notifications_canister_ids: vec![notifications_canister_id],
         user_index_canister_id,
         cycles_dispenser_canister_id,
         ledger_canister_id,
@@ -99,18 +101,21 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(env, group_index_canister_id, group_index_canister_wasm, group_index_init_args);
 
-    let notifications_init_args = notifications_canister::init::Args {
+    let notifications_index_init_args = notifications_index_canister::init::Args {
+        service_principals: vec![controller],
         push_service_principals: vec![controller],
         user_index_canister_id,
+        authorizers: vec![user_index_canister_id, group_index_canister_id],
         cycles_dispenser_canister_id,
+        notifications_canister_wasm,
         wasm_version: Version::min(),
         test_mode: true,
     };
     install_canister(
         env,
-        notifications_canister_id,
-        notifications_canister_wasm,
-        notifications_init_args,
+        notifications_index_canister_id,
+        notifications_index_canister_wasm,
+        notifications_index_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -156,6 +161,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index_canister_id,
         &group_index_canister::add_local_group_index_canister::Args {
             canister_id: local_group_index_canister_id,
+            local_user_index_canister_id,
+            notifications_canister_id,
         },
     );
     assert!(
@@ -172,6 +179,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index_canister_id,
         &user_index_canister::add_local_user_index_canister::Args {
             canister_id: local_user_index_canister_id,
+            notifications_canister_id,
         },
     );
     assert!(
@@ -182,9 +190,27 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         "{add_local_user_index_canister_response:?}"
     );
 
+    let add_notifications_canister_response = client::notifications_index::add_notifications_canister(
+        env,
+        controller,
+        notifications_index_canister_id,
+        &notifications_index_canister::add_notifications_canister::Args {
+            canister_id: notifications_canister_id,
+            authorizers: vec![local_user_index_canister_id, local_group_index_canister_id],
+        },
+    );
+    assert!(
+        matches!(
+            add_notifications_canister_response,
+            notifications_index_canister::add_notifications_canister::Response::Success
+        ),
+        "{add_notifications_canister_response:?}"
+    );
+
     CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
+        notifications_index: notifications_index_canister_id,
         notifications: notifications_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,

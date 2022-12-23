@@ -25,6 +25,12 @@
       "wasm": "wasms/local_group_index_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_group_canister_impl"
     },
+    "notifications_index": {
+      "type": "custom",
+      "candid": "backend/canisters/notifications_index/api/can.did",
+      "wasm": "wasms/notifications_index_canister_impl.wasm.gz",
+      "build": "./scripts/generate-wasm.sh notifications_index_canister_impl"
+    },
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/can.did",

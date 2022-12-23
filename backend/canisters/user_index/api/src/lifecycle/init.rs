@@ -13,8 +13,7 @@ pub struct Args {
     pub user_canister_wasm: CanisterWasm,
     pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
-
+    pub notifications_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,

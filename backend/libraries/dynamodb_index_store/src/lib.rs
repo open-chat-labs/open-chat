@@ -9,29 +9,24 @@ use types::{CanisterId, Error};
 pub struct DynamoDbIndexStore {
     client: Client,
     table_name: String,
-    canister_id_attr: AttributeValue,
 }
 
 impl DynamoDbIndexStore {
-    pub fn build(config: &SdkConfig, table_name: String, canister_id: CanisterId) -> DynamoDbIndexStore {
+    pub fn build(config: &SdkConfig, table_name: String) -> DynamoDbIndexStore {
         let client = Client::new(config);
 
-        DynamoDbIndexStore {
-            client,
-            table_name,
-            canister_id_attr: AttributeValue::S(canister_id.to_string()),
-        }
+        DynamoDbIndexStore { client, table_name }
     }
 }
 
 #[async_trait]
 impl IndexStore for DynamoDbIndexStore {
-    async fn get(&self) -> Result<Option<u64>, Error> {
+    async fn get(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
         let response = self
             .client
             .get_item()
             .table_name(&self.table_name)
-            .key("canister_id", self.canister_id_attr.clone())
+            .key("canister_id", AttributeValue::S(canister_id.to_string()))
             .send()
             .await?;
 
@@ -43,11 +38,11 @@ impl IndexStore for DynamoDbIndexStore {
         }
     }
 
-    async fn set(&self, index: u64) -> Result<(), Error> {
+    async fn set(&self, canister_id: CanisterId, index: u64) -> Result<(), Error> {
         self.client
             .put_item()
             .table_name(&self.table_name)
-            .item("canister_id", self.canister_id_attr.clone())
+            .item("canister_id", AttributeValue::S(canister_id.to_string()))
             .item("index", AttributeValue::N(index.to_string()))
             .send()
             .await?;

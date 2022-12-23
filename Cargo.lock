@@ -856,6 +856,8 @@ dependencies = [
  "ic-utils 0.22.0",
  "itertools",
  "notifications_canister",
+ "notifications_index_canister",
+ "notifications_index_canister_client",
  "online_users_canister",
  "proposals_bot_canister",
  "serde",
@@ -2336,6 +2338,8 @@ dependencies = [
  "itertools",
  "lazy_static",
  "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
@@ -2351,8 +2355,6 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_canister_c2c_client",
- "user_index_canister",
- "user_index_canister_c2c_client",
  "utils 0.1.0",
 ]
 
@@ -2398,7 +2400,6 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -4625,6 +4626,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "notifications_canister",
+ "notifications_index_canister",
  "online_users_canister",
  "proposals_bot_canister",
  "rand",
@@ -4922,7 +4924,6 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -5191,6 +5192,7 @@ dependencies = [
  "candid",
  "dotenv",
  "dynamodb_index_store",
+ "futures",
  "index_store",
  "notification_pusher_core",
  "serde",
@@ -5228,6 +5230,8 @@ dependencies = [
  "index_store",
  "notifications_canister",
  "notifications_canister_client",
+ "notifications_index_canister",
+ "notifications_index_canister_client",
  "openssl",
  "serde",
  "tokio",
@@ -5242,6 +5246,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen 0.1.0",
+ "notifications_index_canister",
  "serde",
  "types 0.1.0",
 ]
@@ -5275,15 +5280,75 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client_macros 0.1.0",
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "msgpack",
  "notifications_canister",
+ "notifications_index_canister",
+ "serde",
+ "stable_memory",
+ "tracing",
+ "types 0.1.0",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils 0.1.0",
+]
+
+[[package]]
+name = "notifications_index_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen 0.1.0",
+ "serde",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "notifications_index_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client_macros 0.1.0",
+ "ic-cdk",
+ "msgpack",
+ "notifications_index_canister",
+ "tracing",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "notifications_index_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros 0.1.0",
+ "ic-agent",
+ "notifications_index_canister",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "notifications_index_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
+ "canister_tracing_macros",
+ "futures",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "msgpack",
+ "notifications_canister",
+ "notifications_canister_c2c_client",
+ "notifications_index_canister",
  "serde",
  "stable_memory",
  "tracing",
@@ -5517,7 +5582,6 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
@@ -6119,7 +6183,6 @@ dependencies = [
  "canister_logger",
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
- "cycles_dispenser_client",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -8169,7 +8232,6 @@ dependencies = [
  "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=8ad7972521dff55ec84085fdab35b8b6c27619ed)",
  "canister_tracing_macros",
  "captcha",
- "cycles_dispenser_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -8185,8 +8247,8 @@ dependencies = [
  "local_user_index_canister_c2c_client",
  "lodepng",
  "msgpack",
- "notifications_canister",
- "notifications_canister_c2c_client",
+ "notifications_index_canister",
+ "notifications_index_canister_c2c_client",
  "rand",
  "rand_chacha",
  "rand_core 0.6.4",
