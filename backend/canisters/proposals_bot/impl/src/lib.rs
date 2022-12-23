@@ -56,14 +56,9 @@ struct Data {
     pub service_owner_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "cycles_dispenser_canister_id")]
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub test_mode: bool,
-}
-
-fn cycles_dispenser_canister_id() -> CanisterId {
-    CanisterId::from_text("gonut-hqaaa-aaaaf-aby7a-cai").unwrap()
 }
 
 impl Data {
