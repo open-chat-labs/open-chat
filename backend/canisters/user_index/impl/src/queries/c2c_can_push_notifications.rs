@@ -1,10 +1,9 @@
-use crate::guards::caller_is_notifications_canister;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query_msgpack;
 use canister_tracing_macros::trace;
 use user_index_canister::c2c_can_push_notifications::*;
 
-#[query_msgpack(guard = "caller_is_notifications_canister")]
+#[query_msgpack]
 #[trace]
 fn c2c_can_push_notifications(args: Args) -> Response {
     read_state(|state| c2c_can_push_notifications_impl(args, state))

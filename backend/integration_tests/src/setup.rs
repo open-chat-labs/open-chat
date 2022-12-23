@@ -80,7 +80,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         local_user_index_canister_wasm,
         group_index_canister_id,
         notifications_index_canister_id,
-        notifications_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
         ledger_canister_id,
@@ -179,6 +178,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index_canister_id,
         &user_index_canister::add_local_user_index_canister::Args {
             canister_id: local_user_index_canister_id,
+            notifications_canister_id,
         },
     );
     assert!(
@@ -188,7 +188,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         ),
         "{add_local_user_index_canister_response:?}"
     );
-    
+
     let add_notifications_canister_response = client::notifications_index::add_notifications_canister(
         env,
         controller,
@@ -196,8 +196,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         &notifications_index_canister::add_notifications_canister::Args {
             canister_id: notifications_canister_id,
             authorizers: vec![local_user_index_canister_id, local_group_index_canister_id],
-            add_notifications_canister_response,
-            notifications_index_canister::add_notifications_canister::Response::Success
         },
     );
     assert!(

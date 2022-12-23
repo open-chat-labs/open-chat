@@ -129,7 +129,6 @@ async fn install_service_canisters_impl(
         local_user_index_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
-        notifications_canister_id: canister_ids.notifications,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         ledger_canister_id: canister_ids.ledger,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
@@ -281,6 +280,7 @@ async fn install_service_canisters_impl(
         &canister_ids.user_index,
         &user_index_canister::add_local_user_index_canister::Args {
             canister_id: canister_ids.local_user_index,
+            notifications_canister_id: canister_ids.notifications,
         },
     )
     .await
@@ -292,7 +292,7 @@ async fn install_service_canisters_impl(
     ) {
         panic!("{add_local_user_index_canister_response:?}");
     }
-    
+
     let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
         agent,
         &canister_ids.notifications_index,

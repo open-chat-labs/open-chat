@@ -9,7 +9,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
@@ -77,11 +77,6 @@ impl RuntimeState {
         self.data.sms_service_principals.contains(&caller)
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.data.notifications_canister_id
-    }
-
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -133,8 +128,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
     pub notifications_index_canister_id: CanisterId,
-    // TODO #[serde(default = "")]
-    pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -173,7 +166,6 @@ impl Data {
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -202,7 +194,6 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_index_canister_id,
-            notifications_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
