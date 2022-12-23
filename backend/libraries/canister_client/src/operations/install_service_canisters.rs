@@ -121,10 +121,12 @@ async fn install_service_canisters_impl(
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min());
+    let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
         sms_service_principals: vec![principal],
         user_canister_wasm,
+        local_user_index_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
         notifications_canister_id: canister_ids.notifications,
@@ -274,6 +276,23 @@ async fn install_service_canisters_impl(
         panic!("{add_local_group_index_canister_response:?}");
     }
 
+    let add_local_user_index_canister_response = user_index_canister_client::add_local_user_index_canister(
+        agent,
+        &canister_ids.user_index,
+        &user_index_canister::add_local_user_index_canister::Args {
+            canister_id: canister_ids.local_user_index,
+        },
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        add_local_user_index_canister_response,
+        user_index_canister::add_local_user_index_canister::Response::Success
+    ) {
+        panic!("{add_local_user_index_canister_response:?}");
+    }
+    
     let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
         agent,
         &canister_ids.notifications_index,

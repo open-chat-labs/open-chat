@@ -1,6 +1,5 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
-use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::timer_job_types::TimerJob;
@@ -60,6 +59,10 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.env.caller() == self.data.local_user_index_canister_id
     }
 
     pub fn is_caller_group_index(&self) -> bool {
@@ -132,12 +135,13 @@ struct Data {
     pub group_chats: GroupChats,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "default_local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub username: String,
@@ -154,11 +158,16 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
 }
 
+fn default_local_user_index_canister_id() -> CanisterId {
+    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         ledger_canister_id: CanisterId,
@@ -172,12 +181,12 @@ impl Data {
             group_chats: GroupChats::default(),
             blocked_users: Timestamped::default(),
             user_index_canister_id,
+            local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
             ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             avatar: Timestamped::default(),
             test_mode,
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             username,

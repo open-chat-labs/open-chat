@@ -16,9 +16,11 @@ async fn c2c_assume_super_admin(args: Args) -> Response {
     let user_id = prepare_result.user_id;
 
     let canister_id = prepare_result.user_index_canister_id;
-    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
-    match user_index_canister_c2c_client::c2c_lookup_principal(canister_id, &c2c_args).await {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) if r.is_super_admin => {
+    let c2c_args = user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: user_id.into(),
+    };
+    match user_index_canister_c2c_client::c2c_lookup_user(canister_id, &c2c_args).await {
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) if r.is_super_admin => {
             mutate_state(|state| commit(user_id, args.correlation_id, state))
         }
         Ok(_) => NotSuperAdmin,
