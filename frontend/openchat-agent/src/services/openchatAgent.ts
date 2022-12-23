@@ -1040,6 +1040,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
+    lastOnline(userIds: string[]): Promise<Record<string, number>> {
+        return this._onlineClient.lastOnline(userIds);
+    }
+
     markAsOnline(): Promise<void> {
         return this._onlineClient.markAsOnline();
     }

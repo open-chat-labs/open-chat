@@ -18,8 +18,7 @@ fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     if let Some(user) = user {
-        let now = runtime_state.env.now();
-        Success(user.to_summary(now))
+        Success(user.to_summary())
     } else {
         UserNotFound
     }

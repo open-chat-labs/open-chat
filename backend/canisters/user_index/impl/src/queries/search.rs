@@ -34,7 +34,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let results = matches
         .iter()
         .take(args.max_results as usize)
-        .map(|(u, _)| u.to_summary(now))
+        .map(|(u, _)| u.to_summary())
         .collect();
 
     Success(Result {
@@ -182,7 +182,6 @@ mod tests {
         let user = results.users.first().unwrap();
         assert_eq!(user.user_id, Principal::from_slice(&[4, 1]).into());
         assert_eq!(user.username, "hamish");
-        assert_eq!(user.seconds_since_last_online, 5);
     }
 
     fn setup_runtime_state() -> RuntimeState {
@@ -203,7 +202,6 @@ mod tests {
                 username: usernames[index].to_string(),
                 date_created: env.now,
                 date_updated: env.now,
-                last_online: env.now,
                 phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, format!("+44 1111 111 11{index}"))),
                 ..Default::default()
             });

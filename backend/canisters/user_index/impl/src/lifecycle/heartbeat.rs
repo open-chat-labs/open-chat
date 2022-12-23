@@ -16,7 +16,6 @@ fn heartbeat() {
     sync_users_to_open_storage::run();
     sync_events_to_user_canisters::run();
     notify_user_principal_migrations::run();
-    calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
     set_users_suspended::run();
@@ -325,19 +324,6 @@ mod notify_user_principal_migrations {
             Ok(_) => state.data.user_principal_migration_queue.mark_success(user_id),
             Err(_) => state.data.user_principal_migration_queue.mark_failure(user_id, canister),
         });
-    }
-}
-
-mod calculate_metrics {
-    use super::*;
-
-    pub fn run() {
-        mutate_state(calculate_metrics);
-    }
-
-    fn calculate_metrics(runtime_state: &mut RuntimeState) {
-        let now = runtime_state.env.now();
-        runtime_state.data.users.calculate_metrics(now);
     }
 }
 
