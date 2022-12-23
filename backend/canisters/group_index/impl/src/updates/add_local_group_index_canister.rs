@@ -10,7 +10,7 @@ use utils::canister::install;
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn add_local_group_index_canister(args: Args) -> Response {
-    match read_state(|state| prepare(args.canister_id, args.local_user_index_canister_id, state)) {
+    match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
             match install(
                 args.canister_id,
@@ -36,21 +36,17 @@ struct PrepareResult {
     init_args: local_group_index_canister::init::Args,
 }
 
-fn prepare(
-    canister_id: CanisterId,
-    local_user_index_canister_id: CanisterId,
-    runtime_state: &RuntimeState,
-) -> Result<PrepareResult, Response> {
-    if !runtime_state.data.local_index_map.contains_key(&canister_id) {
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !runtime_state.data.local_index_map.contains_key(&args.canister_id) {
         Ok(PrepareResult {
             canister_wasm: runtime_state.data.local_group_index_canister_wasm.clone(),
             init_args: local_group_index_canister::init::Args {
                 group_canister_wasm: runtime_state.data.group_canister_wasm.clone(),
                 wasm_version: runtime_state.data.local_group_index_canister_wasm.version,
                 user_index_canister_id: runtime_state.data.user_index_canister_id,
-                local_user_index_canister_id,
+                local_user_index_canister_id: args.local_user_index_canister_id,
                 group_index_canister_id: runtime_state.env.canister_id(),
-                notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
+                notifications_canister_id: args.notifications_canister_id,
                 cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
                 ledger_canister_id: runtime_state.data.ledger_canister_id,
                 test_mode: runtime_state.data.test_mode,

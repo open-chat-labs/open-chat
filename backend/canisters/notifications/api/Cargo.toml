@@ -14,5 +14,6 @@ path = "src/notification_candid_gen.rs"
 [dependencies]
 candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
+notifications_index_canister = { path = "../../notifications_index/api" }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

@@ -32,7 +32,7 @@ fn c2c_migrate_user_principal_impl(args: Args, runtime_state: &mut RuntimeState)
                 args.new_principal,
                 args.groups,
                 runtime_state.data.open_storage_index_canister_id,
-                runtime_state.data.notifications_canister_ids.first().copied().unwrap(),
+                runtime_state.data.notifications_index_canister_id,
             );
 
             Success

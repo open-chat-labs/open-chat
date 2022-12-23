@@ -13,6 +13,9 @@ LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 group_index
+dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 notifications_index
+dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 local_user_index
+dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 local_group_index
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 notifications
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 online_users
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 proposals_bot

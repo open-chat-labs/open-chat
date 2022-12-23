@@ -39,12 +39,12 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
             for message_id in deleted.iter().copied() {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                    TimerJob::RemoveDeletedMessageContent(Box::new(RemoveDeletedMessageContentJob {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
                         message_id,
                         delete_files: true,
-                    }),
+                    })),
                     remove_deleted_message_content_at,
                     now,
                 );
@@ -63,6 +63,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
+// TODO retry this if it fails
 async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>, correlation_id: u64) {
     let args = c2c_delete_messages::Args {
         message_ids,
