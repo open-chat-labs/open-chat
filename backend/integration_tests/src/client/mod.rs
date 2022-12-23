@@ -37,6 +37,26 @@ pub fn install_canister<P: CandidType>(env: &mut StateMachine, canister_id: Cani
     .unwrap();
 }
 
+pub fn start_canister(env: &mut StateMachine, sender: Principal, canister_id: CanisterId) {
+    env.execute_ingress_as(
+        sender.as_slice().try_into().unwrap(),
+        Principal::management_canister().as_slice().try_into().unwrap(),
+        "start_canister",
+        candid::encode_one(StartStopArgs::new(canister_id)).unwrap(),
+    )
+    .unwrap();
+}
+
+pub fn stop_canister(env: &mut StateMachine, sender: Principal, canister_id: CanisterId) {
+    env.execute_ingress_as(
+        sender.as_slice().try_into().unwrap(),
+        Principal::management_canister().as_slice().try_into().unwrap(),
+        "stop_canister",
+        candid::encode_one(StartStopArgs::new(canister_id)).unwrap(),
+    )
+    .unwrap();
+}
+
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
     env: &StateMachine,
     sender: Principal,
@@ -75,4 +95,15 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
         .bytes();
 
     candid::decode_one(&bytes).unwrap()
+}
+
+#[derive(CandidType)]
+struct StartStopArgs {
+    canister_id: CanisterId,
+}
+
+impl StartStopArgs {
+    fn new(canister_id: CanisterId) -> StartStopArgs {
+        StartStopArgs { canister_id }
+    }
 }

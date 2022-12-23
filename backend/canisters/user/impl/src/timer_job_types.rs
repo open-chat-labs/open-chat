@@ -1,11 +1,21 @@
 use crate::mutate_state;
+use crate::updates::send_message::send_to_recipients_canister;
 use serde::{Deserialize, Serialize};
 use timer_jobs::Job;
-use types::{ChatId, MessageId, MessageIndex};
+use types::{ChatId, MessageId, MessageIndex, UserId};
+use user_canister::c2c_send_message;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    RemoveDeletedMessageContent(RemoveDeletedMessageContentJob),
+    RetrySendingFailedMessage(Box<RetrySendingFailedMessageJob>),
+    RemoveDeletedMessageContent(Box<RemoveDeletedMessageContentJob>),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RetrySendingFailedMessageJob {
+    pub recipient: UserId,
+    pub args: c2c_send_message::Args,
+    pub attempt: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -19,8 +29,15 @@ pub struct RemoveDeletedMessageContentJob {
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
+            TimerJob::RetrySendingFailedMessage(job) => job.execute(),
             TimerJob::RemoveDeletedMessageContent(job) => job.execute(),
         }
+    }
+}
+
+impl Job for RetrySendingFailedMessageJob {
+    fn execute(&self) {
+        ic_cdk::spawn(send_to_recipients_canister(self.recipient, self.args.clone(), self.attempt));
     }
 }
 
