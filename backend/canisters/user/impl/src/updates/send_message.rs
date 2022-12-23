@@ -23,12 +23,14 @@ async fn send_message(mut args: Args) -> Response {
     let user_type = match read_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(t) => t,
         ValidateRequestResult::Invalid(response) => return response,
-        ValidateRequestResult::RecipientUnknown(user_index_canister_id) => {
-            let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id: args.recipient };
-            match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) if result.is_bot => UserType::Bot,
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(_)) => UserType::User,
-                Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => return RecipientNotFound,
+        ValidateRequestResult::RecipientUnknown(local_user_index_canister_id) => {
+            let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
+                user_id_or_principal: args.recipient.into(),
+            };
+            match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
+                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
+                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
+                Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
                 Err(error) => return InternalError(format!("{:?}", error)),
             }
         }
@@ -50,7 +52,7 @@ async fn send_message(mut args: Args) -> Response {
         }
 
         // We have to use `process_transaction_without_caller_check` because we may be within a
-        // reply callback due to calling `c2c_lookup_principal` earlier.
+        // reply callback due to calling `c2c_lookup_user` earlier.
         completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
             Ok(completed) => {
                 c.transfer = CryptoTransaction::Completed(completed.clone());
@@ -118,7 +120,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
         let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
         ValidateRequestResult::Valid(user_type)
     } else {
-        ValidateRequestResult::RecipientUnknown(runtime_state.data.user_index_canister_id)
+        ValidateRequestResult::RecipientUnknown(runtime_state.data.local_user_index_canister_id)
     }
 }
 
@@ -179,7 +181,7 @@ fn send_message_impl(
         if user_type.is_bot() {
             ic_cdk::spawn(send_to_bot_canister(recipient, message_event.event.message_index, c2c_args));
         } else {
-            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
+            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args));
         }
     }
 
@@ -201,24 +203,13 @@ fn send_message_impl(
     }
 }
 
-pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_message::Args, is_retry: bool) {
+pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_message::Args) {
     // Note: We ignore any Blocked responses - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
     if let Err(error) = user_canister_c2c_client::c2c_send_message(recipient.into(), &args).await {
-        if is_retry {
-            // If this is already a retry, don't try sending again
-            error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
-        } else {
-            // If this is not a retry, queue up the message to be retried
-            let user_index_canister_id = mutate_state(|state| queue_failed_message_for_retry(recipient, args, state));
-
-            let _ = user_index_canister_c2c_client::c2c_mark_send_message_failed(
-                user_index_canister_id,
-                &user_index_canister::c2c_mark_send_message_failed::Args { recipient },
-            )
-            .await;
-        }
+        // TODO: Retry using a timer
+        error!(?error, ?recipient, "Failed to send message to recipient");
     }
 }
 
@@ -254,15 +245,4 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
             // TODO push message saying that the message failed to send
         }
     }
-}
-
-// Returns the user_index_canister_id
-fn queue_failed_message_for_retry(
-    recipient: UserId,
-    args: c2c_send_message::Args,
-    runtime_state: &mut RuntimeState,
-) -> CanisterId {
-    runtime_state.data.failed_messages_pending_retry.add(recipient, args);
-
-    runtime_state.data.user_index_canister_id
 }

@@ -31,13 +31,6 @@ impl User {
         self.date_updated = now;
     }
 
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
-        self.upgrade_in_progress = upgrade_in_progress;
-        if let Some(version) = new_version {
-            self.wasm_version = version;
-        }
-    }
-
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
     }

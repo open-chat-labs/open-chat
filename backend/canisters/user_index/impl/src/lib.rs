@@ -7,7 +7,8 @@ use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use model::user_event_sync_queue::UserEventSyncQueue;
+use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
+use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -15,11 +16,11 @@ use types::{
     CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::memory;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
-use utils::{canister, memory};
 
 mod guards;
 mod lifecycle;
@@ -29,7 +30,6 @@ mod updates;
 
 pub const USER_LIMIT: usize = 70_000;
 
-const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * MINUTE_IN_MS; // 10 minutes
@@ -105,7 +105,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
-            canisters_in_pool: self.data.canister_pool.len() as u16,
             users_created: self.data.users.len() as u64,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
@@ -117,7 +116,7 @@ impl RuntimeState {
             super_admins: self.data.super_admins.len() as u8,
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
-            user_events_queue_length: self.data.user_event_sync_queue.len(),
+            user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
         }
     }
 }
@@ -127,17 +126,19 @@ struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
+    #[serde(default)]
+    pub local_user_index_canister_wasm: CanisterWasm,
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
-    pub user_event_sync_queue: UserEventSyncQueue,
+    #[serde(default)]
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
@@ -147,6 +148,8 @@ struct Data {
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     pub set_user_suspended_queue: SetUserSuspendedQueue,
+    #[serde(default)]
+    pub local_index_map: LocalUserIndexMap,
 }
 
 impl Data {
@@ -155,13 +158,13 @@ impl Data {
         service_principals: Vec<Principal>,
         sms_service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
+        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
-        canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
         let mut users = UserMap::default();
@@ -181,17 +184,17 @@ impl Data {
             users,
             service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
+            local_user_index_canister_wasm,
             sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_canister_ids,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
-            user_event_sync_queue: UserEventSyncQueue::default(),
+            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
@@ -201,6 +204,19 @@ impl Data {
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
             set_user_suspended_queue: SetUserSuspendedQueue::default(),
+            local_index_map: LocalUserIndexMap::default(),
+        }
+    }
+
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: UserIndexEvent) {
+        if let Some(canister_id) = self.local_index_map.get_index_canister(&user_id) {
+            self.user_index_event_sync_queue.push(canister_id, event);
+        }
+    }
+
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: UserIndexEvent) {
+        for canister_id in self.local_index_map.canisters() {
+            self.user_index_event_sync_queue.push(*canister_id, event.clone());
         }
     }
 }
@@ -212,17 +228,17 @@ impl Default for Data {
             users: UserMap::default(),
             service_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
+            local_user_index_canister_wasm: CanisterWasm::default(),
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_ids: vec![Principal::anonymous()],
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
-            canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
-            user_event_sync_queue: UserEventSyncQueue::default(),
+            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
@@ -232,6 +248,7 @@ impl Default for Data {
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
             set_user_suspended_queue: SetUserSuspendedQueue::default(),
+            local_index_map: LocalUserIndexMap::default(),
         }
     }
 }
@@ -245,7 +262,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
-    pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -256,5 +272,5 @@ pub struct Metrics {
     pub super_admins: u8,
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
-    pub user_events_queue_length: usize,
+    pub user_index_events_queue_length: usize,
 }

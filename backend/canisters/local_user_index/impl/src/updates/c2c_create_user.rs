@@ -80,6 +80,8 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     let init_canister_args = InitUserCanisterArgs {
         owner: args.principal,
         group_index_canister_id: runtime_state.data.group_index_canister_id,
+        user_index_canister_id: runtime_state.data.user_index_canister_id,
+        local_user_index_canister_id: runtime_state.env.canister_id(),
         notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
         ledger_canister_id: runtime_state.data.ledger_canister_id,
         wasm_version: canister_wasm.version,
@@ -109,7 +111,7 @@ fn commit(
 
     if let Some(referred_by) = referred_by {
         runtime_state.data.user_event_sync_queue.push(
-            referred_by,
+            referred_by.into(),
             UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
         );
     }
