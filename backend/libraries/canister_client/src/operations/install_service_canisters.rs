@@ -278,7 +278,7 @@ async fn install_service_canisters_impl(
         agent,
         &canister_ids.notifications_index,
         &notifications_index_canister::add_notifications_canister::Args {
-            canister_id: canister_ids.notifications_index,
+            canister_id: canister_ids.notifications,
             authorizers: vec![canister_ids.local_user_index, canister_ids.local_group_index],
         },
     )
