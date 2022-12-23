@@ -11,7 +11,6 @@ pub mod c2c_mark_read_v2;
 pub mod c2c_notify_group_deleted;
 pub mod c2c_notify_user_events;
 pub mod c2c_remove_from_group;
-pub mod c2c_retry_sending_failed_messages;
 pub mod c2c_revoke_super_admin;
 pub mod c2c_send_message;
 pub mod c2c_set_user_suspended;
