@@ -92,10 +92,6 @@ impl PrivateGroupInfo {
         self.id
     }
 
-    pub fn wasm_version(&self) -> Version {
-        self.wasm_version
-    }
-
     pub fn mark_active(&mut self, until: TimestampMillis) {
         self.marked_active_until = until;
     }

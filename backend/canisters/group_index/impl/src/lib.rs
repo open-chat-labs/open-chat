@@ -21,7 +21,6 @@ mod model;
 mod queries;
 mod updates;
 
-const LOCAL_GROUP_INDEX_CANISTER_TOP_UP_AMOUNT: Cycles = 25_000_000_000_000; // 25T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 40;

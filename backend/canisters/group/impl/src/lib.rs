@@ -216,7 +216,6 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "default_local_group_index_canister_id")]
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
@@ -230,12 +229,7 @@ struct Data {
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-}
-
-fn default_local_group_index_canister_id() -> CanisterId {
-    Principal::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
