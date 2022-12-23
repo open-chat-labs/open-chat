@@ -126,7 +126,7 @@ struct Data {
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
-    #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
+    #[serde(alias = "notifications_canister_ids", deserialize_with = "vec_to_single")]
     pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -148,13 +148,14 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
 }
 
-fn notifications_index_canister<'de, D>(deserializer: D) -> Result<CanisterId, D::Error>
+fn vec_to_single<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
+    T: Deserialize<'de>,
     D: Deserializer<'de>,
 {
-    let vec: Vec<CanisterId> = Vec::deserialize(deserializer)?;
+    let vec: Vec<T> = Vec::deserialize(deserializer)?;
 
-    Ok(vec.first().copied().unwrap())
+    Ok(vec.into_iter().next().unwrap())
 }
 
 impl Data {

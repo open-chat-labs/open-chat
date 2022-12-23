@@ -80,7 +80,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         local_group_index_canister_id: runtime_state.env.canister_id(),
         user_index_canister_id: runtime_state.data.user_index_canister_id,
         local_user_index_canister_id: runtime_state.data.local_user_index_canister_id,
-        notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
+        notifications_canister_id: runtime_state.data.notifications_canister_id,
         ledger_canister_id: runtime_state.data.ledger_canister_id,
         avatar: args.avatar,
         test_mode: runtime_state.data.test_mode,

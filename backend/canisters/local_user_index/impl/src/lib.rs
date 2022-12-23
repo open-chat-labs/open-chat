@@ -1,3 +1,4 @@
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
@@ -49,7 +50,7 @@ impl RuntimeState {
 
     pub fn is_caller_notifications_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.notifications_canister_ids.iter().any(|c| *c == caller)
+        self.data.notifications_canister_id == caller
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -81,7 +82,8 @@ struct Data {
     pub user_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "default_notifications_canister_id")]
+    pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub ledger_canister_id: CanisterId,
@@ -92,13 +94,17 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
 }
 
+fn default_notifications_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         user_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
@@ -110,7 +116,7 @@ impl Data {
             user_canister_wasm,
             user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_ids,
+            notifications_canister_id,
             cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),

@@ -24,7 +24,7 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.local_user_index_canister_id,
         args.group_index_canister_id,
-        vec![args.notifications_canister_id],
+        args.notifications_canister_id,
         args.cycles_dispenser_canister_id,
         args.ledger_canister_id,
         canister_pool_target_size,

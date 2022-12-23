@@ -19,7 +19,6 @@ use types::{
 };
 use utils::env::Environment;
 use utils::memory;
-use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
@@ -64,16 +63,12 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let random = self.env.random_u32() as usize;
-
-        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification::Args {
-                recipients,
-                authorizer: Some(self.data.local_group_index_canister_id),
-                notification_bytes: candid::encode_one(notification).unwrap(),
-            };
-            ic_cdk::spawn(push_notification_inner(*canister_id, args));
-        }
+        let args = c2c_push_notification::Args {
+            recipients,
+            authorizer: Some(self.data.local_group_index_canister_id),
+            notification_bytes: candid::encode_one(notification).unwrap(),
+        };
+        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
@@ -220,7 +215,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     #[serde(default = "default_local_user_index_canister_id")]
     pub local_user_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "default_notifications_canister_id")]
+    pub notifications_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -236,6 +232,10 @@ struct Data {
 
 fn default_local_user_index_canister_id() -> CanisterId {
     Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+}
+
+fn default_notifications_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -257,7 +257,7 @@ impl Data {
         local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
@@ -281,7 +281,7 @@ impl Data {
             local_group_index_canister_id,
             user_index_canister_id,
             local_user_index_canister_id,
-            notifications_canister_ids,
+            notifications_canister_id,
             ledger_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),

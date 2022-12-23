@@ -19,7 +19,7 @@ pub struct Args {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    pub notifications_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub wasm_version: Version,
     pub test_mode: bool,
