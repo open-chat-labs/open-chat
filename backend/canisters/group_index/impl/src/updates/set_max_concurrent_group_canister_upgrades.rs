@@ -5,15 +5,13 @@ use group_index_canister::set_max_concurrent_group_canister_upgrades::{Response:
 use ic_cdk_macros::update;
 use tracing::info;
 
-// dfx --identity openchat canister --network ic call group_index set_max_concurrent_group_canister_upgrades '(record { value=N:nat64 })'
+// dfx --identity openchat canister --network ic call group_index set_max_concurrent_group_canister_upgrades '(record { value=N:nat32 })'
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn set_max_concurrent_group_canister_upgrades(args: Args) -> Response {
     let canisters: Vec<_> = read_state(|state| state.data.local_index_map.canisters().copied().collect());
 
-    let args = local_group_index_canister::c2c_set_max_concurrent_group_upgrades::Args {
-        value: args.value as u32,
-    };
+    let args = local_group_index_canister::c2c_set_max_concurrent_group_upgrades::Args { value: args.value };
 
     let futures: Vec<_> = canisters
         .into_iter()

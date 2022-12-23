@@ -6,7 +6,7 @@ use local_user_index_canister::c2c_notify_user_index_events::{MaxConcurrentCanis
 use tracing::info;
 use user_index_canister::set_max_concurrent_user_canister_upgrades::{Response::*, *};
 
-// dfx --identity openchat canister --network ic call user_index set_max_concurrent_user_canister_upgrades '(record { value=N:nat64 })'
+// dfx --identity openchat canister --network ic call user_index set_max_concurrent_user_canister_upgrades '(record { value=N:nat32 })'
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn set_max_concurrent_user_canister_upgrades(args: Args) -> Response {
