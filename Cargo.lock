@@ -8094,6 +8094,8 @@ dependencies = [
  "ic-ledger-types",
  "itertools",
  "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
