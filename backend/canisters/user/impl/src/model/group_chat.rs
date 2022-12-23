@@ -92,7 +92,6 @@ impl GroupChat {
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
             notifications_muted: None,
             mentions: Vec::new(),
-            wasm_version: None,
             owner_id: None,
             permissions: None,
             affected_events: Vec::new(),

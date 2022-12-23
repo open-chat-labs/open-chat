@@ -32,7 +32,6 @@ mod tests {
     use crate::model::public_groups::GroupCreatedArgs;
     use crate::Data;
     use candid::Principal;
-    use types::Version;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -132,7 +131,6 @@ mod tests {
                 subtype: None,
                 avatar_id: None,
                 now: env.now,
-                wasm_version: Version::new(1, 0, 0),
             });
         }
 

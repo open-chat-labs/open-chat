@@ -264,7 +264,6 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
         metrics: ChatMetrics;
@@ -292,7 +291,6 @@ type GroupCanisterGroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
         notifications_muted: bool;
@@ -317,7 +315,6 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
@@ -342,7 +339,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
@@ -513,7 +509,6 @@ type PublicGroupSummary =
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         participant_count: nat32;
-        wasm_version: Version;
         owner_id: UserId;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
