@@ -10,6 +10,7 @@ aws-config = { workspace = true }
 candid = { workspace = true }
 dotenv = { workspace = true }
 dynamodb_index_store = { path = "../../libraries/dynamodb_index_store" }
+futures = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
 serde = { workspace = true }

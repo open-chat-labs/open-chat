@@ -11,13 +11,14 @@ async fn main() {
     let canister_ids = CanisterIds {
         user_index: opts.user_index,
         group_index: opts.group_index,
+        notifications_index: opts.notifications_index,
+        local_user_index: opts.local_user_index,
+        local_group_index: opts.local_group_index,
         notifications: opts.notifications,
         online_users: opts.online_users,
         proposals_bot: opts.proposals_bot,
         cycles_dispenser: opts.cycles_dispenser,
         open_storage_index: opts.open_storage_index,
-        local_group_index: opts.local_group_index,
-        local_user_index: opts.local_user_index,
         ledger: opts.ledger,
     };
 
@@ -34,12 +35,13 @@ struct Opts {
     controller: String,
     user_index: CanisterId,
     group_index: CanisterId,
+    notifications_index: CanisterId,
+    local_user_index: CanisterId,
+    local_group_index: CanisterId,
     notifications: CanisterId,
     online_users: CanisterId,
     proposals_bot: CanisterId,
     cycles_dispenser: CanisterId,
     open_storage_index: CanisterId,
-    local_group_index: CanisterId,
-    local_user_index: CanisterId,
     ledger: CanisterId,
 }
