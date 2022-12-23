@@ -71,7 +71,9 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
 
     match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
-        &user_index_canister::c2c_lookup_user::Args { user_id_or_principal: caller.into() },
+        &user_index_canister::c2c_lookup_user::Args {
+            user_id_or_principal: caller.into(),
+        },
     )
     .await
     {

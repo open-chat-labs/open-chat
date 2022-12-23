@@ -24,7 +24,9 @@ async fn send_message(mut args: Args) -> Response {
         ValidateRequestResult::Valid(t) => t,
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(local_user_index_canister_id) => {
-            let c2c_args = local_user_index_canister::c2c_lookup_user::Args { user_id_or_principal: args.recipient.into() };
+            let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
+                user_id_or_principal: args.recipient.into(),
+            };
             match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
