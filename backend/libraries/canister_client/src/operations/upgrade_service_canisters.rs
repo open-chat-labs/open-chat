@@ -177,12 +177,31 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
 }
 
 pub async fn upgrade_local_user_index_canister(
-    _identity: BasicIdentity,
-    _url: String,
-    _user_index_canister_id: CanisterId,
-    _version: Version,
+    identity: BasicIdentity,
+    url: String,
+    user_index_canister_id: CanisterId,
+    version: Version,
 ) {
-    // TODO
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
+    let args = user_index_canister::upgrade_local_user_index_canister_wasm::Args {
+        local_user_index_canister_wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+    };
+
+    let response = user_index_canister_client::upgrade_local_user_index_canister_wasm(&agent, &user_index_canister_id, &args)
+        .await
+        .unwrap();
+
+    if !matches!(
+        response,
+        user_index_canister::upgrade_local_user_index_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Local user index canister wasm upgraded to version {version}");
 }
 
 pub async fn upgrade_notifications_canister(
