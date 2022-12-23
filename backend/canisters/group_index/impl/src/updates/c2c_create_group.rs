@@ -69,14 +69,14 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     let (caller, user_index_canister_id): (UserId, CanisterId) =
         read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
 
-    match user_index_canister_c2c_client::c2c_lookup_principal(
+    match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
-        &user_index_canister::c2c_lookup_principal::Args { user_id: caller },
+        &user_index_canister::c2c_lookup_user::Args { user_id_or_principal: caller.into() },
     )
     .await
     {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => Ok((caller, r.principal)),
-        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => Err(UserNotFound),
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
         Err(_) => Err(InternalError),
     }
 }

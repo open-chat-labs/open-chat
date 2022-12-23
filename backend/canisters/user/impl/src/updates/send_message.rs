@@ -24,11 +24,11 @@ async fn send_message(mut args: Args) -> Response {
         ValidateRequestResult::Valid(t) => t,
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(user_index_canister_id) => {
-            let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id: args.recipient };
-            match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(result)) if result.is_bot => UserType::Bot,
-                Ok(user_index_canister::c2c_lookup_principal::Response::Success(_)) => UserType::User,
-                Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => return RecipientNotFound,
+            let c2c_args = user_index_canister::c2c_lookup_user::Args { user_id_or_principal: args.recipient.into() };
+            match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &c2c_args).await {
+                Ok(user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
+                Ok(user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
+                Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
                 Err(error) => return InternalError(format!("{:?}", error)),
             }
         }
@@ -50,7 +50,7 @@ async fn send_message(mut args: Args) -> Response {
         }
 
         // We have to use `process_transaction_without_caller_check` because we may be within a
-        // reply callback due to calling `c2c_lookup_principal` earlier.
+        // reply callback due to calling `c2c_lookup_user` earlier.
         completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
             Ok(completed) => {
                 c.transfer = CryptoTransaction::Completed(completed.clone());

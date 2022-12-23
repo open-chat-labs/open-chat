@@ -22,17 +22,17 @@ async fn c2c_join_group_v2(args: Args) -> Response {
         Err(response) => return *response,
     };
 
-    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
-    match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => {
+    let c2c_args = user_index_canister::c2c_lookup_user::Args { user_id_or_principal: user_id.into() };
+    match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &c2c_args).await {
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => {
             if args.as_super_admin && !r.is_super_admin {
                 NotSuperAdmin
             } else {
                 mutate_state(|state| commit(args, user_id, r.principal, state))
             }
         }
-        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => UserNotFound,
-        Err(error) => InternalError(format!("Failed to call 'user_index::c2c_lookup_principal': {error:?}")),
+        Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => UserNotFound,
+        Err(error) => InternalError(format!("Failed to call 'user_index::c2c_lookup_user': {error:?}")),
     }
 }
 
