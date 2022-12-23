@@ -22,7 +22,7 @@ async fn main() -> Result<(), Error> {
     let pinpoint_application_id = dotenv::var("PINPOINT_APPLICATION_ID")?;
 
     let aws_config = aws_config::load_from_env().await;
-    let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "sms_stream_indexes".to_string(), canister_id);
+    let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "sms_stream_indexes".to_string());
     let pinpoint_client = PinpointClient::build(&aws_config, pinpoint_application_id);
 
     info!("DynamoDbClient created");
@@ -37,5 +37,5 @@ async fn main() -> Result<(), Error> {
 
     info!("Configuration complete");
 
-    run(&ic_agent, &dynamodb_index_store, &pinpoint_client).await
+    run(canister_id, &ic_agent, &dynamodb_index_store, &pinpoint_client).await
 }

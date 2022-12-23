@@ -10,7 +10,7 @@ use canister_state_macros::canister_state;
 use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
 use model::canisters_requiring_controller_swap::CanistersRequiringControllerSwap;
 use model::local_user_index_map::LocalUserIndexMap;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
@@ -78,11 +78,6 @@ impl RuntimeState {
         self.data.sms_service_principals.contains(&caller)
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.notifications_canister_ids.contains(&caller)
-    }
-
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -138,7 +133,8 @@ struct Data {
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(alias = "notifications_canister_ids", deserialize_with = "vec_to_single")]
+    pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -161,6 +157,16 @@ struct Data {
     pub canisters_requiring_controller_swap: CanistersRequiringControllerSwap,
 }
 
+fn vec_to_single<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let vec: Vec<T> = Vec::deserialize(deserializer)?;
+
+    Ok(vec.into_iter().next().unwrap())
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -169,7 +175,7 @@ impl Data {
         user_canister_wasm: CanisterWasm,
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -197,7 +203,7 @@ impl Data {
             sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_messages: EventStream::default(),
             group_index_canister_id,
-            notifications_canister_ids,
+            notifications_index_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -242,7 +248,7 @@ impl Default for Data {
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
-            notifications_canister_ids: vec![Principal::anonymous()],
+            notifications_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,

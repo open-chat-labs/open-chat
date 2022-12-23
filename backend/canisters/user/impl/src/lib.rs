@@ -8,7 +8,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
-use notifications_canister::c2c_push_notification_v2;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -17,7 +17,6 @@ use timer_jobs::TimerJobs;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
-use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -80,18 +79,15 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let random = self.env.random_u32() as usize;
+        let args = c2c_push_notification::Args {
+            recipients,
+            authorizer: Some(self.data.local_user_index_canister_id),
+            notification_bytes: candid::encode_one(notification).unwrap(),
+        };
+        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
-        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification_v2::Args {
-                recipients,
-                notification_bytes: candid::encode_one(notification).unwrap(),
-            };
-            ic_cdk::spawn(push_notification_inner(*canister_id, args));
-        }
-
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification_v2::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification_v2(canister_id, &args).await;
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
     }
 
@@ -137,7 +133,8 @@ struct Data {
     #[serde(default = "default_local_user_index_canister_id")]
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "default_notifications_canister_id")]
+    pub notifications_canister_id: CanisterId,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
@@ -161,6 +158,10 @@ fn default_local_user_index_canister_id() -> CanisterId {
     Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
 }
 
+fn default_notifications_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -168,7 +169,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         username: String,
         test_mode: bool,
@@ -182,7 +183,7 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_ids,
+            notifications_canister_id,
             ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             avatar: Timestamped::default(),
             test_mode,

@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub sender_message_index: MessageIndex,
@@ -19,7 +19,7 @@ pub enum Response {
     Blocked,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum C2CReplyContext {
     ThisChat(MessageId),
     OtherChat(ChatId, EventIndex),

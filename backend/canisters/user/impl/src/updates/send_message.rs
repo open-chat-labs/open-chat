@@ -1,6 +1,7 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::timer_job_types::RetrySendingFailedMessageJob;
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
@@ -12,6 +13,7 @@ use types::{
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -181,7 +183,7 @@ fn send_message_impl(
         if user_type.is_bot() {
             ic_cdk::spawn(send_to_bot_canister(recipient, message_event.event.message_index, c2c_args));
         } else {
-            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args));
+            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, 0));
         }
     }
 
@@ -203,13 +205,35 @@ fn send_message_impl(
     }
 }
 
-pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_message::Args) {
+pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_message::Args, attempt: u32) {
     // Note: We ignore any Blocked responses - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
     if let Err(error) = user_canister_c2c_client::c2c_send_message(recipient.into(), &args).await {
-        // TODO: Retry using a timer
-        error!(?error, ?recipient, "Failed to send message to recipient");
+        let retry_interval = match attempt {
+            0 => Some(10 * SECOND_IN_MS),
+            1 => Some(20 * SECOND_IN_MS),
+            2 => Some(30 * SECOND_IN_MS),
+            3 => Some(MINUTE_IN_MS),
+            4 => Some(2 * MINUTE_IN_MS),
+            _ => None,
+        };
+        if let Some(interval) = retry_interval {
+            mutate_state(|state| {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::RetrySendingFailedMessage(Box::new(RetrySendingFailedMessageJob {
+                        recipient,
+                        args,
+                        attempt: attempt + 1,
+                    })),
+                    now + interval,
+                    now,
+                );
+            });
+        } else {
+            error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
+        }
     }
 }
 
