@@ -143,8 +143,6 @@ async fn install_service_canisters_impl(
         service_principals: vec![principal],
         group_canister_wasm,
         local_group_index_canister_wasm,
-        notifications_index_canister_id: canister_ids.notifications_index,
-        notifications_canister_id: canister_ids.notifications,
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         ledger_canister_id: canister_ids.ledger,
@@ -263,6 +261,7 @@ async fn install_service_canisters_impl(
         &canister_ids.group_index,
         &group_index_canister::add_local_group_index_canister::Args {
             canister_id: canister_ids.local_group_index,
+            notifications_canister_id: canister_ids.notifications,
         },
     )
     .await
@@ -277,9 +276,9 @@ async fn install_service_canisters_impl(
 
     let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
         agent,
-        &canister_ids.group_index,
+        &canister_ids.notifications_index,
         &notifications_index_canister::add_notifications_canister::Args {
-            canister_id: canister_ids.local_group_index,
+            canister_id: canister_ids.notifications_index,
             authorizers: vec![canister_ids.local_user_index, canister_ids.local_group_index],
         },
     )

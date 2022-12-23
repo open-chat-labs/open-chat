@@ -6,7 +6,7 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::local_group_index_map::LocalGroupIndexMap;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
@@ -47,11 +47,6 @@ impl RuntimeState {
         self.data.service_principals.contains(&caller)
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.data.notifications_canister_id
-    }
-
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
@@ -88,10 +83,6 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm: CanisterWasm,
-    #[serde(alias = "notifications_canister_ids", deserialize_with = "notifications_index_canister")]
-    pub notifications_index_canister_id: CanisterId,
-    // TODO #[serde(default = "")]
-    pub notifications_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
@@ -104,23 +95,12 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
 }
 
-fn notifications_index_canister<'de, D>(deserializer: D) -> Result<CanisterId, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let vec: Vec<CanisterId> = Vec::deserialize(deserializer)?;
-
-    Ok(vec.first().copied().unwrap())
-}
-
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         local_group_index_canister_wasm: CanisterWasm,
-        notifications_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -133,8 +113,6 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             local_group_index_canister_wasm,
-            notifications_index_canister_id,
-            notifications_canister_id,
             user_index_canister_id,
             cycles_dispenser_canister_id,
             ledger_canister_id,

@@ -46,6 +46,11 @@ impl RuntimeState {
         self.data.local_groups.get(&caller.into()).is_some()
     }
 
+    pub fn is_caller_notifications_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notifications_canister_ids.iter().any(|c| *c == caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {

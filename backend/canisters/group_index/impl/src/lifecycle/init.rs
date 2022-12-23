@@ -20,8 +20,6 @@ fn init(args: Args) {
         args.service_principals,
         args.group_canister_wasm,
         args.local_group_index_canister_wasm,
-        args.notifications_index_canister_id,
-        args.notifications_canister_id,
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.ledger_canister_id,
