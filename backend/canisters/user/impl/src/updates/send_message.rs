@@ -222,11 +222,11 @@ pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_sen
             mutate_state(|state| {
                 let now = state.env.now();
                 state.data.timer_jobs.enqueue_job(
-                    TimerJob::RetrySendingFailedMessage(RetrySendingFailedMessageJob {
+                    TimerJob::RetrySendingFailedMessage(Box::new(RetrySendingFailedMessageJob {
                         recipient,
                         args,
                         attempt: attempt + 1,
-                    }),
+                    })),
                     now + interval,
                     now,
                 );
