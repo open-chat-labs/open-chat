@@ -105,7 +105,6 @@ impl RuntimeState {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions: participant.most_recent_mentions(None, &data.events),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted.value,
