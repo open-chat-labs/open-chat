@@ -156,6 +156,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index_canister_id,
         &group_index_canister::add_local_group_index_canister::Args {
             canister_id: local_group_index_canister_id,
+            local_user_index_canister_id,
         },
     );
     assert!(

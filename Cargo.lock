@@ -2321,6 +2321,8 @@ dependencies = [
  "itertools",
  "lazy_static",
  "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
@@ -2336,8 +2338,6 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_canister_c2c_client",
- "user_index_canister",
- "user_index_canister_c2c_client",
  "utils 0.1.0",
 ]
 

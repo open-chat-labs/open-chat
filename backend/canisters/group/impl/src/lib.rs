@@ -217,6 +217,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "default_local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
@@ -229,6 +231,10 @@ struct Data {
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
+}
+
+fn default_local_user_index_canister_id() -> CanisterId {
+    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -249,6 +255,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         ledger_canister_id: CanisterId,
         test_mode: bool,
@@ -272,6 +279,7 @@ impl Data {
             group_index_canister_id,
             local_group_index_canister_id,
             user_index_canister_id,
+            local_user_index_canister_id,
             notifications_canister_ids,
             ledger_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
