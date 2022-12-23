@@ -401,7 +401,7 @@ mod swap_group_canister_controller {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> (Vec<CanisterId>, CanisterId) {
         let count_in_progress = runtime_state.data.canisters_requiring_controller_swap.count_in_progress();
-        let max_concurrent_canister_swaps: usize = 10;
+        let max_concurrent_canister_swaps: usize = 100;
 
         let canisters = (0..(max_concurrent_canister_swaps.saturating_sub(count_in_progress)))
             .map_while(|_| runtime_state.data.canisters_requiring_controller_swap.try_take_next())
