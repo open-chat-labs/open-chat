@@ -3,7 +3,7 @@ use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
-use utils::canister::{upgrade, FailedUpgrade};
+use utils::canister::{set_controllers, upgrade, FailedUpgrade};
 use utils::consts::MIN_CYCLES_BALANCE;
 use utils::time::SECOND_IN_MS;
 
@@ -17,6 +17,7 @@ fn heartbeat() {
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
     set_users_suspended::run();
+    swap_group_canister_controller::run();
 }
 
 mod upgrade_canisters {
@@ -383,6 +384,55 @@ mod set_users_suspended {
                         );
                     });
                 }
+            }
+        }
+    }
+}
+
+mod swap_group_canister_controller {
+    use super::*;
+
+    pub fn run() {
+        let (chats_to_swap, local_user_index_canister_id) = mutate_state(next_batch);
+        if !chats_to_swap.is_empty() {
+            ic_cdk::spawn(perform_swaps(chats_to_swap, local_user_index_canister_id));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> (Vec<CanisterId>, CanisterId) {
+        let count_in_progress = runtime_state.data.canisters_requiring_controller_swap.count_in_progress();
+        let max_concurrent_canister_swaps: usize = 100;
+
+        let canisters = (0..(max_concurrent_canister_swaps.saturating_sub(count_in_progress)))
+            .map_while(|_| runtime_state.data.canisters_requiring_controller_swap.try_take_next())
+            .collect();
+
+        let local_user_index_canister_id = *runtime_state
+            .data
+            .local_index_map
+            .canisters()
+            .next()
+            .expect("local_index_map should not be empty");
+
+        (canisters, local_user_index_canister_id)
+    }
+
+    async fn perform_swaps(canisters_to_upgrade: Vec<CanisterId>, local_user_index_canister_id: CanisterId) {
+        let futures: Vec<_> = canisters_to_upgrade
+            .into_iter()
+            .map(|id| perform_swap(id, local_user_index_canister_id))
+            .collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn perform_swap(canister_id: CanisterId, local_user_index_canister_id: CanisterId) {
+        match set_controllers(canister_id, vec![local_user_index_canister_id]).await {
+            Ok(_) => {
+                mutate_state(|state| state.data.canisters_requiring_controller_swap.mark_success(&canister_id));
+            }
+            Err(_) => {
+                mutate_state(|state| state.data.canisters_requiring_controller_swap.mark_failure(canister_id));
             }
         }
     }

@@ -1,4 +1,5 @@
 pub mod account_billing;
+pub mod canisters_requiring_controller_swap;
 pub mod challenges;
 pub mod failed_messages_pending_retry;
 pub mod local_user_index_map;
