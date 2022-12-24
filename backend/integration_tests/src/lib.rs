@@ -41,6 +41,8 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
