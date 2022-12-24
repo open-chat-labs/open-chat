@@ -211,6 +211,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications_index: notifications_index_canister_id,
+        local_user_index: local_user_index_canister_id,
+        local_group_index: local_group_index_canister_id,
         notifications: notifications_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,

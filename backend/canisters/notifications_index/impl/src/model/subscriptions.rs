@@ -1,17 +1,20 @@
 use candid::CandidType;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{SubscriptionInfo, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Subscriptions {
-    #[serde(deserialize_with = "deserialize_subscriptions")]
     subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     total: u64,
 }
 
 impl Subscriptions {
+    pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
+        self.subscriptions.get(user_id).cloned()
+    }
+
     pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
@@ -26,6 +29,10 @@ impl Subscriptions {
         }
 
         self.total = self.total.saturating_add(1);
+    }
+
+    pub fn any_for_user(&self, user_id: &UserId) -> bool {
+        self.subscriptions.contains_key(user_id)
     }
 
     pub fn remove_all(&mut self, user_id: UserId) {
@@ -68,18 +75,6 @@ impl Subscriptions {
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfo>)> {
         self.subscriptions.iter()
     }
-}
-
-fn deserialize_subscriptions<'de, D>(deserializer: D) -> Result<HashMap<UserId, Vec<SubscriptionInfo>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let map: HashMap<UserId, Vec<Subscription>> = HashMap::deserialize(deserializer)?;
-
-    Ok(map
-        .into_iter()
-        .map(|(u, subs)| (u, subs.into_iter().map(|s| s.value).collect()))
-        .collect())
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

@@ -1,15 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::CanisterWasm;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub user_canister_wasm: CanisterWasm,
+    pub up_to_notification_index: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    VersionNotHigher,
-    InternalError(String),
 }

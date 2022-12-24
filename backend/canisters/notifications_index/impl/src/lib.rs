@@ -7,9 +7,12 @@ use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, S
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, Cycles, NotificationEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
+use utils::event_stream::EventStream;
 use utils::memory;
 
 mod guards;
@@ -81,6 +84,8 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
+            queued_notifications: self.data.notifications.len() as u32,
+            latest_notification_index: self.data.notifications.latest_event_index(),
         }
     }
 
@@ -106,6 +111,8 @@ struct Data {
     pub notifications_canister_wasm: CanisterWasm,
     #[serde(default)]
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    #[serde(default)]
+    pub notifications: EventStream<NotificationEnvelope>,
     pub test_mode: bool,
 }
 
@@ -134,6 +141,7 @@ impl Data {
             subscriptions: Subscriptions::default(),
             notifications_canister_wasm,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
+            notifications: EventStream::default(),
             test_mode,
         }
     }
@@ -148,4 +156,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
+    pub queued_notifications: u32,
+    pub latest_notification_index: u64,
 }
