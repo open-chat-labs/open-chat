@@ -114,12 +114,12 @@ fn send_message_retries_if_fails() {
     let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
 
-    stop_canister(&mut env, canister_ids.user_index, user2.user_id.into());
+    stop_canister(&mut env, canister_ids.local_user_index, user2.user_id.into());
 
     let send_message_result = client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT", None);
     env.tick();
 
-    start_canister(&mut env, canister_ids.user_index, user2.user_id.into());
+    start_canister(&mut env, canister_ids.local_user_index, user2.user_id.into());
 
     env.advance_time(Duration::from_secs(10));
     env.tick();
