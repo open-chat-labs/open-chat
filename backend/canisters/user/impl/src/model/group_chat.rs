@@ -111,6 +111,7 @@ impl GroupChat {
                 .collect(),
             archived: self.archived.if_set_after(updates_since).copied(),
             frozen: OptionUpdate::NoChange,
+            wasm_version: None,
         }
     }
 }

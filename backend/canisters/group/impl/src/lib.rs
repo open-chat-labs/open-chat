@@ -112,6 +112,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
             frozen: data.frozen.value.clone(),
+            wasm_version: Version::default(),
         }
     }
 

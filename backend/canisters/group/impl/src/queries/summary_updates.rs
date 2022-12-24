@@ -63,6 +63,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             ),
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
+            wasm_version: None,
         };
         Success(SuccessResult { updates })
     } else {

@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
     ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -107,6 +108,7 @@ impl PublicGroups {
             owner_id: summary.owner_id,
             is_public: true,
             frozen: None,
+            wasm_version: Version::default(),
         })
     }
 
