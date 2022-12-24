@@ -271,6 +271,7 @@ type GroupChatSummary =
         latest_threads: vec ThreadSyncDetails;
         archived: bool;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -298,6 +299,7 @@ type GroupCanisterGroupChatSummary =
         my_metrics: ChatMetrics;
         latest_threads: vec GroupCanisterThreadDetails;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type GroupChatSummaryUpdates =
@@ -324,6 +326,7 @@ type GroupChatSummaryUpdates =
         latest_threads: vec ThreadSyncDetails;
         archived: opt bool;
         frozen: FrozenGroupUpdate;
+        wasm_version: opt Version;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -349,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         latest_threads: vec GroupCanisterThreadDetails;
         notifications_muted: opt bool;
         frozen: FrozenGroupUpdate;
+        wasm_version: opt Version;
     };
 
 type GroupDescriptionChanged =
@@ -512,6 +516,7 @@ type PublicGroupSummary =
         owner_id: UserId;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type ReplyContext =
