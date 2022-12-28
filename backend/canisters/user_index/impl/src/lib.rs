@@ -9,7 +9,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
@@ -121,19 +121,16 @@ struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
-    #[serde(default)]
     pub local_user_index_canister_wasm: CanisterWasm,
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
-    #[serde(alias = "notifications_canister_ids", deserialize_with = "vec_to_single")]
     pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
-    #[serde(default)]
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
@@ -144,18 +141,7 @@ struct Data {
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     pub set_user_suspended_queue: SetUserSuspendedQueue,
-    #[serde(default)]
     pub local_index_map: LocalUserIndexMap,
-}
-
-fn vec_to_single<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Deserialize<'de>,
-    D: Deserializer<'de>,
-{
-    let vec: Vec<T> = Vec::deserialize(deserializer)?;
-
-    Ok(vec.into_iter().next().unwrap())
 }
 
 impl Data {
