@@ -13,6 +13,10 @@ impl LocalUserMap {
         self.users.insert(user_id, user);
     }
 
+    pub fn remove(&mut self, user_id: &UserId) -> bool {
+        self.users.remove(user_id).is_some()
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<&LocalUser> {
         self.users.get(user_id)
     }
