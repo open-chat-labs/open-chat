@@ -21,6 +21,10 @@ impl GlobalUserMap {
         }
     }
 
+    pub fn set_bot(&mut self, user_id: UserId) -> bool {
+        self.bots.insert(user_id)
+    }
+
     pub fn set_super_admin(&mut self, user_id: UserId, is_super_admin: bool) {
         if is_super_admin {
             self.super_admins.insert(user_id);

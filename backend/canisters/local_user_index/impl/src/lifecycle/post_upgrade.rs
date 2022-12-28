@@ -6,6 +6,7 @@ use ic_cdk_macros::post_upgrade;
 use local_user_index_canister::post_upgrade::Args;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
@@ -16,8 +17,10 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+
+    remove_openchat_bot(&mut data);
 
     init_logger(data.test_mode);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
@@ -28,6 +31,11 @@ fn post_upgrade(args: Args) {
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+fn remove_openchat_bot(data: &mut Data) {
+    data.local_users.remove(&OPENCHAT_BOT_USER_ID);
+    data.global_users.set_bot(OPENCHAT_BOT_USER_ID);
 }
 
 fn rehydrate_log_messages(
