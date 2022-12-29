@@ -7,15 +7,17 @@
     import GroupVisibility from "./GroupVisibility.svelte";
     import Rules from "../groupdetails/Rules.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ChooseMembers from "./ChooseMembers.svelte";
     import {
         CandidateGroupChat,
         CreateGroupResponse,
-        defaultGroupRules,
+        GroupPermissions,
         OpenChat,
         UnsupportedValueError,
+        UpdateGroupResponse,
     } from "openchat-client";
     import StageHeader from "./StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -26,43 +28,68 @@
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
 
-    let candidateGroup: CandidateGroupChat = defaultCandidateGroup();
+    export let candidateGroup: CandidateGroupChat;
+
     let busy = false;
     let step = 0;
     let user = client.user;
     let actualWidth = 0;
+    let originalGroup = {
+        ...candidateGroup,
+        rules: { ...candidateGroup.rules },
+        permissions: { ...candidateGroup.permissions },
+    };
+    $: editing = candidateGroup.chatId !== undefined;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
     $: finalStep = candidateGroup.isPublic ? 3 : 4;
+    $: canEditPermissions =
+        candidateGroup.chatId === undefined
+            ? true
+            : client.canChangePermissions(candidateGroup.chatId);
 
-    function defaultCandidateGroup(): CandidateGroupChat {
-        return {
-            name: "",
-            description: "",
-            historyVisible: true,
-            isPublic: false,
-            members: [],
-            permissions: {
-                changePermissions: "admins",
-                changeRoles: "admins",
-                addMembers: "admins",
-                removeMembers: "admins",
-                blockUsers: "admins",
-                deleteMessages: "admins",
-                updateGroup: "admins",
-                pinMessages: "admins",
-                inviteUsers: "admins",
-                createPolls: "members",
-                sendMessages: "members",
-                reactToMessages: "members",
-                replyInThread: "members",
-            },
-            rules: {
-                text: defaultGroupRules,
-                enabled: false,
-            },
-        };
+    $: permissionsDirty = havePermissionsChanged(
+        originalGroup.permissions,
+        candidateGroup.permissions
+    );
+    $: rulesDirty =
+        editing &&
+        candidateGroup.rules !== undefined &&
+        (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
+            candidateGroup.rules.text !== originalGroup.rules.text);
+    $: rulesInvalid =
+        candidateGroup.rules !== undefined &&
+        candidateGroup.rules.enabled &&
+        candidateGroup.rules.text.length === 0;
+    $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
+    $: descDirty = editing && candidateGroup.description !== originalGroup.description;
+    $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
+    $: infoDirty = nameDirty || descDirty || avatarDirty;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty;
+
+    function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
+        const args = client.mergeKeepingOnlyChanged(p1, p2);
+        return Object.keys(args).length > 0;
+    }
+
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "unchanged") return undefined;
+        if (resp === "name_too_short") return "groupNameTooShort";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_reserved") return "groupNameReserved";
+        if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
+        if (resp === "not_in_group") return "userNotInGroup";
+        if (resp === "internal_error") return "groupUpdateFailed";
+        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "avatar_too_big") return "avatarTooBig";
+        if (resp === "rules_too_short") return "groupRulesTooShort";
+        if (resp === "rules_too_long") return "groupRulesTooLong";
+        if (resp === "user_suspended") return "userSuspended";
+        if (resp === "chat_frozen") return "chatFrozen";
+        throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
@@ -97,6 +124,89 @@
                 if (resp.kind !== "add_members_success") {
                     Promise.reject("Unable to add members to the new group");
                 }
+            });
+    }
+
+    function updateGroup() {
+        console.log("Update group");
+        busy = true;
+
+        const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
+        const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
+        const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
+
+        Promise.all([p1, p2, p3]).finally(() => {
+            busy = false;
+            dispatch("close");
+        });
+    }
+
+    function doUpdatePermissions(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroupPermissions(
+                candidateGroup.chatId,
+                originalGroup.permissions,
+                candidateGroup.permissions
+            )
+            .then((success) => {
+                if (success) {
+                    // TODO this doesn't seem to update properly
+                    originalGroup = {
+                        ...originalGroup,
+                        permissions: { ...candidateGroup.permissions },
+                    };
+                } else {
+                    toastStore.showFailureToast("group.permissionsUpdateFailed");
+                }
+            });
+    }
+
+    function doUpdateRules(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
+            .then((success) => {
+                if (success) {
+                    dispatch("updateGroupRules", {
+                        chatId: candidateGroup.chatId,
+                        rules: candidateGroup.rules,
+                    });
+                } else {
+                    toastStore.showFailureToast("group.rulesUpdateFailed");
+                }
+            });
+    }
+
+    function doUpdateInfo(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroup(
+                candidateGroup.chatId,
+                nameDirty ? candidateGroup.name : undefined,
+                descDirty ? candidateGroup.description : undefined,
+                undefined,
+                undefined,
+                avatarDirty ? candidateGroup.avatar?.blobData : undefined
+            )
+            .then((resp) => {
+                const err = groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                } else {
+                    originalGroup = {
+                        ...originalGroup,
+                        ...candidateGroup.avatar,
+                        name: candidateGroup.name,
+                        description: candidateGroup.description,
+                    };
+                }
+            })
+            .catch(() => {
+                toastStore.showFailureToast("groupUpdateFailed");
             });
     }
 
@@ -135,16 +245,10 @@
             isPublic: candidateGroup.isPublic,
             rules: candidateGroup.rules,
         });
-        reset();
+        dispatch("close");
 
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
         tick().then(() => push(url)); // trigger the selection of the chat
-    }
-
-    function reset() {
-        step = 0;
-        busy = false;
-        candidateGroup = defaultCandidateGroup();
     }
 
     function changeStep(ev: CustomEvent<number>) {
@@ -157,24 +261,30 @@
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">{$_("group.createTitle")}</div>
     <div class="body" slot="body">
-        <StageHeader {candidateGroup} enabled={valid} on:step={changeStep} {step} />
+        <StageHeader {editing} {candidateGroup} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <GroupDetails bind:candidateGroup />
+                    <GroupDetails {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <GroupVisibility bind:candidateGroup />
+                    <GroupVisibility {editing} bind:candidateGroup />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />
                 </div>
                 <div class="permissions" class:visible={step === 3}>
-                    <GroupPermissionsEditor
-                        bind:permissions={candidateGroup.permissions}
-                        isPublic={candidateGroup.isPublic} />
+                    {#if canEditPermissions}
+                        <GroupPermissionsEditor
+                            bind:permissions={candidateGroup.permissions}
+                            isPublic={candidateGroup.isPublic} />
+                    {:else}
+                        <GroupPermissionsViewer
+                            bind:permissions={candidateGroup.permissions}
+                            isPublic={candidateGroup.isPublic} />
+                    {/if}
                 </div>
-                {#if !candidateGroup.isPublic}
+                {#if !candidateGroup.isPublic && !editing}
                     <div class="members" class:visible={step === 4}>
                         <ChooseMembers bind:candidateGroup {busy} />
                     </div>
@@ -184,7 +294,7 @@
     </div>
     <span class="footer" slot="footer">
         <div class="back">
-            {#if step > 0}
+            {#if !editing && step > 0}
                 <Button
                     disabled={busy}
                     small={!$mobileWidth}
@@ -199,7 +309,15 @@
                 tiny={$mobileWidth}
                 on:click={() => dispatch("close")}
                 secondary>{$_("cancel")}</Button>
-            {#if step < finalStep}
+
+            {#if editing}
+                <Button
+                    disabled={!dirty || busy}
+                    loading={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={updateGroup}>{$_("group.update")}</Button>
+            {:else if step < finalStep}
                 <Button
                     disabled={!valid}
                     small={!$mobileWidth}

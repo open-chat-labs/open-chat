@@ -5,10 +5,11 @@
     export let id: string;
     export let label: string = "radio-label";
     export let align: "center" | "start" = "center";
+    export let disabled: boolean = false;
 </script>
 
 <div class="radio" class:align-start={align === "start"}>
-    <input {id} type="radio" name={group} {checked} {value} on:change />
+    <input {disabled} {id} type="radio" name={group} {checked} {value} on:change />
     <label for={id}>
         <slot>
             {label}
@@ -53,6 +54,12 @@
 
         display: grid;
         place-content: center;
+    }
+
+    input[type="radio"]:disabled {
+        --color: var(--txt-light);
+        color: var(--txt-light);
+        cursor: not-allowed;
     }
 
     input[type="radio"]::before {

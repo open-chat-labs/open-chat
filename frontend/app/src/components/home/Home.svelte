@@ -26,6 +26,8 @@
         SendMessageFailed,
         ChatsUpdated,
         Notification,
+        CandidateGroupChat,
+        defaultGroupRules,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -59,6 +61,7 @@
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
+    let candidateGroup: CandidateGroupChat | undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -340,6 +343,7 @@
 
     function closeModal() {
         modal = ModalType.None;
+        candidateGroup = undefined;
     }
 
     function cancelRecommendations() {
@@ -788,6 +792,57 @@
 
     function newGroup() {
         modal = ModalType.NewGroup;
+        candidateGroup = {
+            name: "",
+            description: "",
+            historyVisible: true,
+            isPublic: false,
+            members: [],
+            permissions: {
+                changePermissions: "admins",
+                changeRoles: "admins",
+                addMembers: "admins",
+                removeMembers: "admins",
+                blockUsers: "admins",
+                deleteMessages: "admins",
+                updateGroup: "admins",
+                pinMessages: "admins",
+                inviteUsers: "admins",
+                createPolls: "members",
+                sendMessages: "members",
+                reactToMessages: "members",
+                replyInThread: "members",
+            },
+            rules: {
+                text: defaultGroupRules,
+                enabled: false,
+            },
+        };
+    }
+
+    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+        modal = ModalType.NewGroup;
+        const { chat, rules } = ev.detail;
+        candidateGroup = {
+            chatId: chat.chatId,
+            name: chat.name,
+            description: chat.description,
+            historyVisible: chat.historyVisibleToNewJoiners,
+            isPublic: chat.public,
+            members: [],
+            permissions: { ...chat.permissions },
+            rules:
+                rules !== undefined
+                    ? { ...rules }
+                    : {
+                          text: defaultGroupRules,
+                          enabled: false,
+                      },
+            avatar: {
+                blobUrl: chat.blobUrl,
+                blobData: chat.blobData,
+            },
+        };
     }
 
     function filterChatSelection(
@@ -891,6 +946,7 @@
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:makeGroupPrivate={triggerConfirm}
+            on:editGroup={editGroup}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -912,6 +968,7 @@
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:makeGroupPrivate={triggerConfirm}
+                on:editGroup={editGroup}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>
@@ -952,8 +1009,8 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
-        {:else if modal === ModalType.NewGroup}
-            <NewGroup on:close={closeModal} />
+        {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
+            <NewGroup {candidateGroup} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

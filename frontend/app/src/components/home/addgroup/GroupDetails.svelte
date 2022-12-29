@@ -1,18 +1,16 @@
 <script lang="ts">
-    import type { CandidateGroupChat, OpenChat } from "openchat-client";
+    import type { CandidateGroupChat } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import Legend from "../../Legend.svelte";
     import FormField from "./FormField.svelte";
 
-    const client = getContext<OpenChat>("client");
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
+    export let busy: boolean;
     export let candidateGroup: CandidateGroupChat;
 
     function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
@@ -34,6 +32,7 @@
 <FormField label={"Group name"} required>
     <Input
         autofocus
+        disabled={busy}
         bind:value={candidateGroup.name}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -43,6 +42,7 @@
 <FormField label={"Description"} required>
     <TextArea
         rows={4}
+        disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
         placeholder={$_("newGroupDesc")} />
@@ -53,9 +53,5 @@
         text-align: center;
         padding: $sp4 0;
         margin-bottom: $sp3;
-    }
-
-    .photo-legend {
-        margin-top: $sp4;
     }
 </style>

@@ -331,6 +331,7 @@
             on:close={popHistory}
             on:updateGroupRules={updateGroupRules}
             on:deleteGroup
+            on:editGroup
             on:makeGroupPrivate
             on:chatWith
             on:showMembers />

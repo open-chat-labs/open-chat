@@ -2,23 +2,25 @@
     import { createEventDispatcher } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
 
-    export let saving: boolean;
+    export let canEdit: boolean;
 
     const dispatch = createEventDispatcher();
     function close() {
-        if (!saving) {
-            dispatch("close");
-        }
+        dispatch("close");
     }
     function showMembers() {
-        if (!saving) {
-            dispatch("showMembers");
+        dispatch("showMembers");
+    }
+    function editGroup() {
+        if (canEdit) {
+            dispatch("editGroup");
         }
     }
 </script>
@@ -29,6 +31,13 @@
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
+    {#if canEdit}
+        <span title={$_("group.edit")} class="edit" on:click={editGroup}>
+            <HoverIcon>
+                <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </span>
+    {/if}
     <h4>{$_("groupDetails")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>

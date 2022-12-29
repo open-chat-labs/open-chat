@@ -7,6 +7,7 @@
     export let step: number;
     export let enabled: boolean;
     export let candidateGroup: CandidateGroupChat;
+    export let editing: boolean;
 
     function selectStep(n: number) {
         if (enabled) {
@@ -28,7 +29,7 @@
     <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">
         {$_("group.permissions.permissions")}
     </div>
-    {#if !candidateGroup.isPublic}
+    {#if !candidateGroup.isPublic && !editing}
         <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">
             {$_("group.members")}
         </div>
