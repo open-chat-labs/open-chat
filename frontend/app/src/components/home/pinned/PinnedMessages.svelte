@@ -32,7 +32,7 @@
         dispatch("chatWith", ev.detail);
     }
 
-    $: {
+    function reloadPinned(pinned: Set<number>): void {
         if (pinned.size > 0) {
             if (messages.kind !== "success") {
                 messages = { kind: "loading" };
@@ -58,6 +58,10 @@
         } else {
             messages = { kind: "success", data: [] };
         }
+    }
+
+    $: {
+        reloadPinned(pinned);
     }
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
