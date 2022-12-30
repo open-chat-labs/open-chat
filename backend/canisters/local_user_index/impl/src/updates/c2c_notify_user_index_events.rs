@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Args, Response, UserIndexEvent};
 use tracing::info;
-use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UsernameChanged};
+use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UserSuspended, UsernameChanged};
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
@@ -24,13 +24,24 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
     match event {
         UserIndexEvent::UsernameChanged(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::UsernameChanged(UsernameChanged { username: ev.username }),
+            );
+        }
+        UserIndexEvent::UserSuspended(ev) => {
+            runtime_state.data.user_event_sync_queue.push(
+                ev.user_id.into(),
+                UserEvent::UserSuspended(UserSuspended {
+                    timestamp: ev.timestamp,
+                    duration: ev.duration,
+                    reason: ev.reason,
+                    suspended_by: ev.suspended_by,
+                }),
             );
         }
         UserIndexEvent::PhoneNumberConfirmed(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
                     phone_number: ev.phone_number,
                     storage_added: ev.storage_added,
@@ -40,7 +51,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
         }
         UserIndexEvent::StorageUpgraded(ev) => {
             runtime_state.data.user_event_sync_queue.push(
-                ev.user_id,
+                ev.user_id.into(),
                 UserEvent::StorageUpgraded(StorageUpgraded {
                     cost: ev.cost,
                     storage_added: ev.storage_added,
@@ -54,7 +65,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             if let Some(referred_by) = ev.referred_by {
                 if runtime_state.data.local_users.get(&referred_by).is_some() {
                     runtime_state.data.user_event_sync_queue.push(
-                        referred_by,
+                        referred_by.into(),
                         UserEvent::ReferredUserRegistered(ReferredUserRegistered {
                             user_id: ev.user_id,
                             username: ev.username,

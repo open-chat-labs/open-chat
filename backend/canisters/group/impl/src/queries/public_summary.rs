@@ -1,8 +1,8 @@
 use crate::read_state;
-use crate::{RuntimeState, WASM_VERSION};
+use crate::RuntimeState;
 use canister_api_macros::query_candid_and_msgpack;
 use group_canister::public_summary::{Response::*, *};
-use types::{Avatar, PublicGroupSummary};
+use types::{Avatar, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
@@ -28,10 +28,10 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         latest_message: chat_events.latest_message(None),
         latest_event_index: latest_event.index,
         participant_count: data.participants.len(),
-        wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         owner_id: runtime_state.data.owner_id,
         is_public: runtime_state.data.is_public,
         frozen: runtime_state.data.frozen.value.clone(),
+        wasm_version: Version::default(),
     };
     Success(SuccessResult { summary })
 }

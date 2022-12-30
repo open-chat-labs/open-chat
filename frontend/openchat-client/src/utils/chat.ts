@@ -1,4 +1,4 @@
-import { compareUsersOnlineFirst, nullUser } from "./user";
+import { compareUsername, nullUser } from "./user";
 import {
     ChatSummary,
     EventWrapper,
@@ -207,7 +207,7 @@ export function getMembersString(
     }
     const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersFn ?? compareUsersOnlineFirst)
+        .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.username}**`);
 
     // TODO Improve i18n, don't hardcode 'and'

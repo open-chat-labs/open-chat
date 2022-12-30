@@ -34,12 +34,12 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         for (message_id, result) in delete_message_results {
             if matches!(result, DeleteMessageResult::Success) {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                    TimerJob::RemoveDeletedMessageContent(Box::new(RemoveDeletedMessageContentJob {
                         chat_id,
                         thread_root_message_index: None,
                         message_id,
                         delete_files: false,
-                    }),
+                    })),
                     remove_deleted_message_content_at,
                     now,
                 );

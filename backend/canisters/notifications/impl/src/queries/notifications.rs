@@ -1,5 +1,5 @@
 use crate::guards::caller_is_push_service;
-use crate::{read_state, RuntimeState, MAX_SUBSCRIPTION_AGE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
@@ -23,8 +23,6 @@ fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 }
 
 fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, runtime_state: &RuntimeState) -> SuccessResult {
-    let now = runtime_state.env.now();
-
     let mut active_notifications: Vec<IndexedEvent<NotificationEnvelope>> = Vec::new();
     let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
@@ -32,7 +30,7 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, run
         let mut has_subscriptions = false;
 
         for u in n.value.recipients.iter() {
-            if let Some(s) = runtime_state.data.subscriptions.get(u, MAX_SUBSCRIPTION_AGE, now) {
+            if let Some(s) = runtime_state.data.subscriptions.get(u) {
                 subscriptions.insert(*u, s);
                 has_subscriptions = true;
             }

@@ -254,6 +254,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "lastOnline":
+                agent
+                    .lastOnline(payload.userIds)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "markAsOnline":
                 agent
                     .markAsOnline()

@@ -3,6 +3,7 @@ use types::{Timestamped, Version};
 use utils::env::Environment;
 
 mod init;
+mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 

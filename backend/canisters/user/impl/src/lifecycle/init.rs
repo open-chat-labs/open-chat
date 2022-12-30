@@ -14,13 +14,13 @@ fn init(args: Args) {
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
-    let user_index_canister_id = env.caller();
 
     let data = Data::new(
         args.owner,
-        user_index_canister_id,
+        args.user_index_canister_id,
+        args.local_user_index_canister_id,
         args.group_index_canister_id,
-        args.notifications_canister_ids,
+        args.notifications_canister_id,
         args.ledger_canister_id,
         args.username,
         args.test_mode,

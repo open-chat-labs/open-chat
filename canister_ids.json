@@ -7,13 +7,21 @@
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
   },
+  "notifications_index": {
+    "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
+    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
+  },
+  "local_user_index": {
+    "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
+    "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai"
+  },
   "local_group_index": {
     "ic": "suaf3-hqaaa-aaaaf-bfyoa-cai",
     "ic_test": "sbhuw-gyaaa-aaaaf-bfynq-cai"
   },
   "notifications": {
-    "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
-    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
+    "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
+    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
   },
   "online_users": {
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",

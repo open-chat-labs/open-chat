@@ -823,6 +823,7 @@
             <div class="big-avatar">
                 <Avatar
                     url={client.userAvatarUrl($userStore[chat.them])}
+                    userId={chat.them}
                     size={AvatarSize.ExtraLarge} />
             </div>
         {/if}

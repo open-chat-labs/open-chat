@@ -21,7 +21,6 @@ mod model;
 mod queries;
 mod updates;
 
-const LOCAL_GROUP_INDEX_CANISTER_TOP_UP_AMOUNT: Cycles = 25_000_000_000_000; // 25T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 40;
@@ -84,7 +83,6 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm: CanisterWasm,
-    pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
@@ -103,7 +101,6 @@ impl Data {
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         local_group_index_canister_wasm: CanisterWasm,
-        notifications_canister_ids: Vec<CanisterId>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
@@ -116,7 +113,6 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             local_group_index_canister_wasm,
-            notifications_canister_ids,
             user_index_canister_id,
             cycles_dispenser_canister_id,
             ledger_canister_id,
@@ -172,7 +168,6 @@ impl Default for Data {
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm: CanisterWasm::default(),
-            notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),

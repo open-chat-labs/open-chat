@@ -17,8 +17,8 @@ async fn c2c_send_message(args: Args) -> Response {
     let sender_user_id = match read_state(get_sender_status) {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return Blocked,
-        SenderStatus::UnknownUser(user_index_canister_id, user_id) => {
-            if !verify_user(user_index_canister_id, user_id).await {
+        SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
+            if !verify_user(local_user_index_canister_id, user_id).await {
                 panic!("This request is not from an OpenChat user");
             }
             user_id
@@ -110,19 +110,18 @@ fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
     } else if runtime_state.data.direct_chats.get(&sender.into()).is_some() {
         SenderStatus::Ok(sender)
     } else {
-        SenderStatus::UnknownUser(runtime_state.data.user_index_canister_id, sender)
+        SenderStatus::UnknownUser(runtime_state.data.local_user_index_canister_id, sender)
     }
 }
 
-async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> bool {
-    let args = user_index_canister::user::Args {
-        user_id: Some(user_id),
-        username: None,
+async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> bool {
+    let args = local_user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: user_id.into(),
     };
-    if let Ok(response) = user_index_canister_c2c_client::user(user_index_canister_id, &args).await {
-        matches!(response, user_index_canister::user::Response::Success(_))
+    if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
+        matches!(response, local_user_index_canister::c2c_lookup_user::Response::Success(_))
     } else {
-        panic!("Failed to call user_index to verify user");
+        panic!("Failed to call local_user_index to verify user");
     }
 }
 

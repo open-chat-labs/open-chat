@@ -1,4 +1,3 @@
-pub mod c2c_add_initial_groups;
 pub mod c2c_create_group;
 pub mod c2c_delete_group;
 pub mod c2c_notify_low_balance;
