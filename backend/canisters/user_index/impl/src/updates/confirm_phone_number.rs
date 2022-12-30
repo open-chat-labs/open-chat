@@ -2,8 +2,8 @@ use crate::model::user_map::ConfirmPhoneNumberResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
+use local_user_index_canister::c2c_notify_user_index_events::{PhoneNumberConfirmed, UserIndexEvent};
 use open_storage_index_canister::add_or_update_users::UserConfig;
-use types::{PhoneNumberConfirmed, UserEvent};
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -22,9 +22,10 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
     {
         ConfirmPhoneNumberResult::Success(result) => {
-            runtime_state.data.user_event_sync_queue.push(
+            runtime_state.data.push_event_to_local_user_index(
                 result.user_id,
-                UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
+                UserIndexEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
+                    user_id: result.user_id,
                     phone_number: result.phone_number,
                     storage_added: result.storage_added,
                     new_storage_limit: result.new_byte_limit,

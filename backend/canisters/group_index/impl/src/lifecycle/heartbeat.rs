@@ -14,7 +14,7 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
-    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
+    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<local_group_index_canister::post_upgrade::Args>;
 
     pub fn run() {
         let chats_to_upgrade = mutate_state(next_batch);
@@ -51,7 +51,7 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm,
             deposit_cycles_if_needed: false,
-            args: group_canister::post_upgrade::Args { wasm_version },
+            args: local_group_index_canister::post_upgrade::Args { wasm_version },
         })
     }
 

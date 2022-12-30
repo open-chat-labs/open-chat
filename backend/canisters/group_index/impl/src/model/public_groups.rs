@@ -62,12 +62,11 @@ impl PublicGroups {
             subtype,
             avatar_id,
             now,
-            wasm_version,
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now, wasm_version);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -106,10 +105,10 @@ impl PublicGroups {
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
             participant_count: summary.participant_count,
-            wasm_version: group.wasm_version,
             owner_id: summary.owner_id,
             is_public: true,
             frozen: None,
+            wasm_version: Version::default(),
         })
     }
 
@@ -171,7 +170,6 @@ pub struct PublicGroupInfo {
     id: ChatId,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
-    wasm_version: Version,
     frozen: Option<FrozenGroupInfo>,
 
     // Fields particular to PublicGroupInfo
@@ -197,7 +195,6 @@ impl PublicGroupInfo {
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
         now: TimestampMillis,
-        wasm_version: Version,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -208,21 +205,12 @@ impl PublicGroupInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::default(),
-            wasm_version,
             frozen: None,
         }
     }
 
     pub fn id(&self) -> ChatId {
         self.id
-    }
-
-    pub fn wasm_version(&self) -> Version {
-        self.wasm_version
-    }
-
-    pub fn set_wasm_version(&mut self, version: Version) {
-        self.wasm_version = version;
     }
 
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicGroupActivity) {
@@ -300,7 +288,6 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
             public_group_info.id,
             public_group_info.created,
             public_group_info.marked_active_until,
-            public_group_info.wasm_version,
         )
     }
 }
@@ -312,7 +299,6 @@ pub struct GroupCreatedArgs {
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub now: TimestampMillis,
-    pub wasm_version: Version,
 }
 
 #[derive(PartialEq, Eq, Debug)]

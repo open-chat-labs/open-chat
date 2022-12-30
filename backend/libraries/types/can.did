@@ -264,7 +264,6 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
         metrics: ChatMetrics;
@@ -272,6 +271,7 @@ type GroupChatSummary =
         latest_threads: vec ThreadSyncDetails;
         archived: bool;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -292,7 +292,6 @@ type GroupCanisterGroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
         notifications_muted: bool;
@@ -300,6 +299,7 @@ type GroupCanisterGroupChatSummary =
         my_metrics: ChatMetrics;
         latest_threads: vec GroupCanisterThreadDetails;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type GroupChatSummaryUpdates =
@@ -317,7 +317,6 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
@@ -327,6 +326,7 @@ type GroupChatSummaryUpdates =
         latest_threads: vec ThreadSyncDetails;
         archived: opt bool;
         frozen: FrozenGroupUpdate;
+        wasm_version: opt Version;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -342,7 +342,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
@@ -353,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         latest_threads: vec GroupCanisterThreadDetails;
         notifications_muted: opt bool;
         frozen: FrozenGroupUpdate;
+        wasm_version: opt Version;
     };
 
 type GroupDescriptionChanged =
@@ -513,10 +513,10 @@ type PublicGroupSummary =
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         participant_count: nat32;
-        wasm_version: Version;
         owner_id: UserId;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
+        wasm_version: Version;
     };
 
 type ReplyContext =
@@ -616,7 +616,6 @@ type PartialUserSummary =
     record {
         user_id: UserId;
         username: opt text;
-        seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
         suspended: bool;
@@ -894,7 +893,6 @@ type UserSummary =
     record {
         user_id: UserId;
         username: text;
-        seconds_since_last_online: nat32;
         avatar_id: opt nat;
         is_bot: bool;
         suspended: bool;

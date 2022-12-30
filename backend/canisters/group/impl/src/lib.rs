@@ -7,7 +7,7 @@ use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::{AllChatEvents, ChatEventInternal};
-use notifications_canister::c2c_push_notification_v2;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -19,7 +19,6 @@ use types::{
 };
 use utils::env::Environment;
 use utils::memory;
-use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
@@ -64,18 +63,15 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let random = self.env.random_u32() as usize;
+        let args = c2c_push_notification::Args {
+            recipients,
+            authorizer: Some(self.data.local_group_index_canister_id),
+            notification_bytes: candid::encode_one(notification).unwrap(),
+        };
+        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
-        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification_v2::Args {
-                recipients,
-                notification_bytes: candid::encode_one(notification).unwrap(),
-            };
-            ic_cdk::spawn(push_notification_inner(*canister_id, args));
-        }
-
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification_v2::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification_v2(canister_id, &args).await;
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
     }
 
@@ -105,7 +101,6 @@ impl RuntimeState {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions: participant.most_recent_mentions(None, &data.events),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted.value,
@@ -117,6 +112,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
             frozen: data.frozen.value.clone(),
+            wasm_version: Version::default(),
         }
     }
 
@@ -215,10 +211,12 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "default_local_group_index_canister_id")]
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "default_local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
+    #[serde(default = "default_notifications_canister_id")]
+    pub notifications_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -229,12 +227,15 @@ struct Data {
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
 }
 
-fn default_local_group_index_canister_id() -> CanisterId {
-    Principal::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap()
+fn default_local_user_index_canister_id() -> CanisterId {
+    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+}
+
+fn default_notifications_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -255,7 +256,8 @@ impl Data {
         group_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        local_user_index_canister_id: CanisterId,
+        notifications_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
@@ -278,7 +280,8 @@ impl Data {
             group_index_canister_id,
             local_group_index_canister_id,
             user_index_canister_id,
-            notifications_canister_ids,
+            local_user_index_canister_id,
+            notifications_canister_id,
             ledger_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),

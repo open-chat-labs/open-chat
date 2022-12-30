@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{nns::CryptoAmount, PhoneNumber, TimestampMillis, UserId, Version};
+use types::{nns::CryptoAmount, PhoneNumber, SuspensionDuration, TimestampMillis, UserId, Version};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -20,6 +20,7 @@ pub enum UserIndexEvent {
     UserRegistered(UserRegistered),
     SuperAdminStatusChanged(SuperAdminStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
+    UserSuspended(UserSuspended),
     // Use this as a one-off to initialize the first local_user_index from the user_index
     LocalUserAdded(LocalUserAdded),
 }
@@ -72,4 +73,13 @@ pub struct LocalUserAdded {
     pub user_principal: Principal,
     pub wasm_version: Version,
     pub created: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserSuspended {
+    pub user_id: UserId,
+    pub timestamp: TimestampMillis,
+    pub duration: SuspensionDuration,
+    pub reason: String,
+    pub suspended_by: UserId,
 }

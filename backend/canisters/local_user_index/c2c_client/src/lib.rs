@@ -2,6 +2,7 @@ use canister_client_macros::*;
 use local_user_index_canister::*;
 
 // Queries
+generate_c2c_call!(c2c_can_push_notifications);
 generate_c2c_call!(c2c_lookup_user);
 
 // Updates

@@ -23,11 +23,14 @@
 
     let profile: PublicProfile | undefined = undefined;
     let user: PartialUserSummary | undefined;
+    let lastOnline: number | undefined;
 
     $: me = userId === client.user.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
-    $: status = client.formatLastOnlineDate($_, Date.now(), user);
+    $: status = lastOnline !== undefined
+        ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
+        : "";
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
@@ -39,9 +42,11 @@
 
     onMount(async () => {
         try {
-            const task1 = client.getUser(userId);
-            profile = await client.getPublicProfile(userId);
-            user = await task1;
+            const task1 = client.getPublicProfile(userId);
+            const task2 = client.getUser(userId);
+            lastOnline = await client.getLastOnlineDate(userId, Date.now());
+            user = await task2;
+            profile = await task1;
         } catch (e: any) {
             logger.error("Failed to load user profile", e);
             onClose();
@@ -95,7 +100,7 @@
             </div>
             <div slot="body" class="body" class:modal>
                 <div class="avatar">
-                    <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
+                    <Avatar url={avatarUrl} {userId} size={AvatarSize.ExtraLarge} />
                 </div>
                 <h2>{profile.username}</h2>
                 {#if profile.bio.length > 0}

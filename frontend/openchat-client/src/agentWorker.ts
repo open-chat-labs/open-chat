@@ -366,6 +366,15 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    lastOnline(userIds: string[]): Promise<Record<string, number>> {
+        return this.sendRequest({
+            kind: "lastOnline",
+            payload: {
+                userIds
+            },
+        });
+    }
+
     markAsOnline(): Promise<void> {
         return this.sendRequest({
             kind: "markAsOnline",

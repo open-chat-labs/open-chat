@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, ChatId, GroupSubtype, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, GroupSubtype, UserId};
 
 #[update_msgpack]
 #[trace]
@@ -18,7 +18,6 @@ async fn c2c_create_group(args: Args) -> Response {
 
     let PrepareResult {
         local_group_index_canister,
-        group_wasm_version,
     } = match mutate_state(|state| prepare(&args.name, args.is_public, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -48,7 +47,6 @@ async fn c2c_create_group(args: Args) -> Response {
                         description: args.description,
                         subtype: args.subtype,
                         avatar_id,
-                        wasm_version: group_wasm_version,
                         local_group_index_canister,
                     },
                     state,
@@ -69,21 +67,22 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     let (caller, user_index_canister_id): (UserId, CanisterId) =
         read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
 
-    match user_index_canister_c2c_client::c2c_lookup_principal(
+    match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
-        &user_index_canister::c2c_lookup_principal::Args { user_id: caller },
+        &user_index_canister::c2c_lookup_user::Args {
+            user_id_or_principal: caller.into(),
+        },
     )
     .await
     {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => Ok((caller, r.principal)),
-        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => Err(UserNotFound),
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
         Err(_) => Err(InternalError),
     }
 }
 
 struct PrepareResult {
     pub local_group_index_canister: CanisterId,
-    pub group_wasm_version: Version,
 }
 
 fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -94,10 +93,8 @@ fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Res
     }
 
     if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_group() {
-        let group_wasm_version = runtime_state.data.group_canister_wasm.version;
         Ok(PrepareResult {
             local_group_index_canister,
-            group_wasm_version,
         })
     } else {
         Err(InternalError)
@@ -111,7 +108,6 @@ struct CommitArgs {
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    wasm_version: Version,
     local_group_index_canister: CanisterId,
 }
 
@@ -125,13 +121,9 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             subtype: args.subtype,
             avatar_id: args.avatar_id,
             now,
-            wasm_version: args.wasm_version,
         });
     } else {
-        runtime_state
-            .data
-            .private_groups
-            .handle_group_created(args.chat_id, now, args.wasm_version);
+        runtime_state.data.private_groups.handle_group_created(args.chat_id, now);
     }
     runtime_state
         .data
