@@ -186,11 +186,7 @@
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
                 headerText={$_("group.advanced")}>
-                <AdvancedSection
-                    on:deleteGroup
-                    on:makeGroupPrivate
-                    group={chat}
-                    canMakeGroupPrivate={client.canMakeGroupPrivate(chat.chatId)} />
+                <AdvancedSection on:deleteGroup group={chat} />
             </CollapsibleCard>
         {/if}
     </div>

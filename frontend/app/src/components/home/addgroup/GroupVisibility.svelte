@@ -3,32 +3,18 @@
     import type { CandidateGroupChat, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../../Radio.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-
-    // TODO - in edit mode - all we can ever do here is make a group private.
-    // we cannot change the history visibility an we cannot make a group public
-    // we also need some sort of confirmation dialog since this action is irreversible
-    // Not 100% convinced that this is better than what we currently have
-    // what is that visibility tab going to look like? How is it clear what can be changed
-    // and what cannot (and why)?
+    import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    const dispatch = createEventDispatcher();
-
     export let candidateGroup: CandidateGroupChat;
+    export let originalGroup: CandidateGroupChat;
     export let editing: boolean;
 
     $: canMakePrivate =
         candidateGroup.chatId !== undefined
             ? client.canMakeGroupPrivate(candidateGroup.chatId)
             : true;
-
-    function makeGroupPrivate() {
-        if (candidateGroup.chatId !== undefined && canMakePrivate) {
-            dispatch("makeGroupPrivate", { kind: "makePrivate", chatId: candidateGroup.chatId });
-        }
-    }
 
     function toggleScope() {
         candidateGroup.isPublic = !candidateGroup.isPublic;
@@ -45,7 +31,7 @@
         checked={candidateGroup.isPublic}
         id={"public"}
         align={"start"}
-        disabled={editing}
+        disabled={editing && !originalGroup.isPublic}
         group={"group-visibility"}>
         <div class="section-title">
             <div class={"img public"} />

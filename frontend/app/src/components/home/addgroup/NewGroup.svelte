@@ -22,6 +22,7 @@
     import StageHeader from "./StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import { push } from "svelte-spa-router";
+    import AreYouSure from "../../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -30,6 +31,7 @@
 
     export let candidateGroup: CandidateGroupChat;
 
+    let confirming = false;
     let busy = false;
     let step = 0;
     let user = client.user;
@@ -65,8 +67,9 @@
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
+    $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
-    $: dirty = infoDirty || rulesDirty || permissionsDirty;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty;
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
         const args = client.mergeKeepingOnlyChanged(p1, p2);
@@ -127,17 +130,52 @@
             });
     }
 
-    function updateGroup() {
-        console.log("Update group");
+    function updateGroup(yes: boolean = true): Promise<void> {
         busy = true;
+
+        const makePrivate = visDirty && !candidateGroup.isPublic && originalGroup.isPublic;
+
+        if (makePrivate && !confirming) {
+            confirming = true;
+            return Promise.resolve();
+        }
+
+        if (makePrivate && confirming && !yes) {
+            confirming = false;
+            busy = false;
+            candidateGroup.isPublic = true;
+            return Promise.resolve();
+        }
+
+        confirming = false;
 
         const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
         const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
         const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
+        const p4 = makePrivate ? doMakeGroupPrivate() : Promise.resolve();
 
-        Promise.all([p1, p2, p3]).finally(() => {
-            busy = false;
-            dispatch("close");
+        return Promise.all([p1, p2, p3, p4])
+            .then((_) => {
+                return;
+            })
+            .finally(() => {
+                busy = false;
+                dispatch("close");
+            });
+    }
+
+    function doMakeGroupPrivate(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
+            if (success) {
+                originalGroup = {
+                    ...originalGroup,
+                    isPublic: candidateGroup.isPublic,
+                };
+            } else {
+                toastStore.showFailureToast("makeGroupPrivateFailed");
+            }
         });
     }
 
@@ -258,8 +296,12 @@
     }
 </script>
 
+{#if confirming}
+    <AreYouSure message={$_("confirmMakeGroupPrivate")} action={updateGroup} />
+{/if}
+
 <ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">{$_("group.createTitle")}</div>
+    <div class="header" slot="header">{editing ? $_("group.edit") : $_("group.createTitle")}</div>
     <div class="body" slot="body">
         <StageHeader {editing} {candidateGroup} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
@@ -268,7 +310,7 @@
                     <GroupDetails {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <GroupVisibility {editing} bind:candidateGroup />
+                    <GroupVisibility {originalGroup} {editing} bind:candidateGroup />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />
@@ -316,7 +358,7 @@
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={updateGroup}>{$_("group.update")}</Button>
+                    on:click={() => updateGroup()}>{$_("group.update")}</Button>
             {:else if step < finalStep}
                 <Button
                     disabled={!valid}

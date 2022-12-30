@@ -63,11 +63,7 @@
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
 
-    type ConfirmActionEvent =
-        | ConfirmLeaveEvent
-        | ConfirmDeleteEvent
-        | ConfirmMakePrivateEvent
-        | ConfirmRulesEvent;
+    type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
 
     interface ConfirmLeaveEvent {
         kind: "leave";
@@ -78,11 +74,6 @@
         kind: "delete";
         chatId: string;
         doubleCheck: { challenge: string; response: string };
-    }
-
-    interface ConfirmMakePrivateEvent {
-        kind: "makePrivate";
-        chatId: string;
     }
 
     interface ConfirmRulesEvent {
@@ -463,8 +454,6 @@
                 return $_("confirmLeaveGroup");
             case "delete":
                 return $_("irreversible");
-            case "makePrivate":
-                return $_("confirmMakeGroupPrivate");
             case "rules": {
                 return confirmActionEvent.rules;
             }
@@ -491,23 +480,11 @@
                 return deleteGroup(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory.set([]);
                 });
-            case "makePrivate":
-                return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory.set([]);
-                });
             case "rules":
                 return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
                 return Promise.reject();
         }
-    }
-
-    function makeGroupPrivate(chatId: string): Promise<void> {
-        return client.makeGroupPrivate(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("makeGroupPrivateFailed");
-            }
-        });
     }
 
     function deleteGroup(chatId: string): Promise<void> {
@@ -949,7 +926,6 @@
             on:upgrade={upgrade}
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
-            on:makeGroupPrivate={triggerConfirm}
             on:editGroup={editGroup}
             on:groupCreated={groupCreated} />
     {/if}
@@ -971,7 +947,6 @@
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
-                on:makeGroupPrivate={triggerConfirm}
                 on:editGroup={editGroup}
                 on:groupCreated={groupCreated} />
         </div>

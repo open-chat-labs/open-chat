@@ -332,7 +332,6 @@
             on:updateGroupRules={updateGroupRules}
             on:deleteGroup
             on:editGroup
-            on:makeGroupPrivate
             on:chatWith
             on:showMembers />
     {:else if lastState.kind === "add_members"}
