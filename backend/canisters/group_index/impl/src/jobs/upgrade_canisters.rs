@@ -91,15 +91,11 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
 }
 
 fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
-    let local_group_index = runtime_state
-        .data
-        .local_index_map
-        .get_mut(&canister_id)
-        .expect("Cannot find local_group_index");
+    if let Some(local_group_index) = runtime_state.data.local_index_map.get_mut(&canister_id) {
+        local_group_index.set_wasm_version(to_version);
 
-    local_group_index.set_wasm_version(to_version);
-
-    runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+        runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+    }
 }
 
 fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
