@@ -335,55 +335,84 @@
         </div>
     </div>
     <span class="footer" slot="footer">
-        <div class="back">
-            {#if !editing && step > 0}
+        <div class="group-buttons">
+            <div class="back">
+                {#if !editing && step > 0}
+                    <Button
+                        disabled={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                {/if}
+            </div>
+            <div class="actions">
                 <Button
-                    disabled={busy}
+                    disabled={false}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
-            {/if}
-        </div>
-        <ButtonGroup align="end">
-            <Button
-                disabled={false}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}
-                on:click={() => dispatch("close")}
-                secondary>{$_("cancel")}</Button>
+                    on:click={() => dispatch("close")}
+                    secondary>{$_("cancel")}</Button>
 
-            {#if editing}
-                <Button
-                    disabled={!dirty || busy}
-                    loading={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => updateGroup()}>{$_("group.update")}</Button>
-            {:else if step < finalStep}
-                <Button
-                    disabled={!valid}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => (step = step + 1)}>
-                    {$_("group.next")}
-                </Button>
-            {:else}
-                <Button
-                    disabled={busy}
-                    loading={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={createGroup}>{$_("group.create")}</Button>
-            {/if}
-        </ButtonGroup>
+                {#if editing}
+                    <Button
+                        disabled={!dirty || busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => updateGroup()}>{$_("group.update")}</Button>
+                {:else if step < finalStep}
+                    <Button
+                        disabled={!valid}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step + 1)}>
+                        {$_("group.next")}
+                    </Button>
+                {:else}
+                    <Button
+                        disabled={busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={createGroup}>{$_("group.create")}</Button>
+                {/if}
+            </div>
+        </div>
     </span>
 </ModalContent>
 
 <style type="text/scss">
+    :global(.group-buttons button:not(.loading)) {
+        @include mobile() {
+            min-width: 0 !important;
+        }
+    }
+
+    :global(.group-buttons .actions button) {
+        height: auto;
+    }
+
     .footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .group-buttons {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        gap: $sp3;
+
+        .back {
+            display: flex;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: $sp3;
+        }
     }
 
     .wrapper {
