@@ -32,7 +32,7 @@ fn run() {
         if !batches.is_empty() {
             ic_cdk::spawn(process_batches(batches));
         }
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.get()) {
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk::timer::clear_timer(timer_id);
     }
 }
