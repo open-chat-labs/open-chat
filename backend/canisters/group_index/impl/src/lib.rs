@@ -16,6 +16,7 @@ use utils::memory;
 use utils::time::MINUTE_IN_MS;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod model;
 mod queries;
