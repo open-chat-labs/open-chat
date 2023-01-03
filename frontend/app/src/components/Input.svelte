@@ -82,6 +82,7 @@
         right: 10px;
         top: 11px;
         @include font(light, normal, fs-80);
+        color: var(--txt-light);
 
         &.near-max {
             color: var(--warn);
