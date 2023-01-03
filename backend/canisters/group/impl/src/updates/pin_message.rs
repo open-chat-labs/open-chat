@@ -50,6 +50,8 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 now,
             );
 
+            runtime_state.data.date_last_pinned = Some(now);
+
             handle_activity_notification(runtime_state);
 
             Success(event_index)

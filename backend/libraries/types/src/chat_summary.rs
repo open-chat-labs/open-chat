@@ -81,6 +81,8 @@ pub struct GroupChatSummary {
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: bool,
     pub frozen: Option<FrozenGroupInfo>,
+    #[serde(default)]
+    pub pinned_messages_unread: bool,
 }
 
 impl GroupChatSummary {
@@ -145,6 +147,8 @@ pub struct GroupChatSummaryUpdates {
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
+    #[serde(default)]
+    pub pinned_messages_unread: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -190,6 +194,8 @@ pub struct GroupCanisterGroupChatSummary {
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub frozen: Option<FrozenGroupInfo>,
+    #[serde(default)]
+    pub date_last_pinned: Option<TimestampMillis>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -246,6 +252,7 @@ impl GroupCanisterGroupChatSummary {
             my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
             latest_threads,
             frozen: updates.frozen.apply_to(self.frozen),
+            date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
         }
     }
 }
@@ -279,6 +286,7 @@ impl From<GroupCanisterGroupChatSummary> for GroupChatSummary {
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: false,
             frozen: s.frozen,
+            pinned_messages_unread: false,
         }
     }
 }
@@ -307,6 +315,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
+    #[serde(default)]
+    pub date_last_pinned: Option<TimestampMillis>,
 }
 
 impl From<GroupCanisterGroupChatSummaryUpdates> for GroupChatSummaryUpdates {
@@ -335,6 +345,7 @@ impl From<GroupCanisterGroupChatSummaryUpdates> for GroupChatSummaryUpdates {
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: None,
             frozen: s.frozen,
+            pinned_messages_unread: None,
         }
     }
 }

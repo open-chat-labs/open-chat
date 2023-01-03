@@ -32,6 +32,10 @@ impl GroupChats {
         self.group_chats.get(chat_id)
     }
 
+    pub fn get_since(&self, chat_id: &ChatId, updated_since: TimestampMillis) -> Option<&GroupChat> {
+        self.group_chats.get(chat_id).filter(|c| c.last_updated() > updated_since)
+    }
+
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut GroupChat> {
         self.group_chats.get_mut(chat_id)
     }

@@ -106,5 +106,10 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         archived: user_details.archived.value,
         frozen: cached.frozen.clone(),
         wasm_version: Version::default(),
+        pinned_messages_unread: cached.date_last_pinned.map_or(false, |date_last_pinned| {
+            user_details
+                .date_read_pinned
+                .map_or(true, |date_read_pinned| date_read_pinned < date_last_pinned)
+        }),
     }
 }

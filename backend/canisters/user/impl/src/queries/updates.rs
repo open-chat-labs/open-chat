@@ -1,5 +1,6 @@
 use crate::group_summaries::{build_summaries_args, build_updates_args};
 use crate::guards::caller_is_owner;
+use crate::model::group_chat::GroupChat;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
@@ -87,37 +88,39 @@ fn finalize(
         group_chats_deleted.iter().map(|gd| gd.id).collect()
     };
 
-    let mut group_chats_added: HashMap<ChatId, GroupChatSummary> =
-        group_chats_added.into_iter().map(|s| (s.chat_id, s.into())).collect();
+    let mut already_processed: HashSet<ChatId> = chats_removed.iter().copied().collect();
 
-    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> =
-        group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
+    let group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
+        .into_iter()
+        .map(|s| {
+            let processed = already_processed.contains(&s.chat_id);
+            let chat = processed
+                .then(|| runtime_state.data.group_chats.get_since(&s.chat_id, updates_since))
+                .flatten();
+            already_processed.insert(s.chat_id);
+            (s.chat_id, merge_group_chats_added(s, chat))
+        })
+        .collect();
 
-    for group_chat in runtime_state.data.group_chats.get_all(Some(updates_since)) {
-        if has_group_been_deleted(&group_chats_deleted, &group_chat.chat_id) {
-            continue;
-        }
+    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> = group_chats_updated
+        .into_iter()
+        .map(|s| {
+            let processed = already_processed.contains(&s.chat_id);
+            let chat = processed
+                .then(|| runtime_state.data.group_chats.get_since(&s.chat_id, updates_since))
+                .flatten();
+            already_processed.insert(s.chat_id);
+            (s.chat_id, merge_group_chats_updated(s, chat, updates_since))
+        })
+        .collect();
 
-        if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
-            summary.read_by_me_up_to = group_chat.read_by_me_up_to.value;
-            summary.archived = group_chat.archived.value;
-
-            for thread in summary.latest_threads.iter_mut() {
-                thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
-            }
-        } else {
-            group_chats_updated
-                .entry(group_chat.chat_id)
-                .and_modify(|su| {
-                    su.read_by_me_up_to = group_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
-                    su.archived = group_chat.archived.if_set_after(updates_since).copied();
-
-                    for thread in su.latest_threads.iter_mut() {
-                        thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
-                    }
-                })
-                .or_insert_with(|| group_chat.to_updates(updates_since));
-        }
+    for group_chat in runtime_state
+        .data
+        .group_chats
+        .get_all(Some(updates_since))
+        .filter(|c| !already_processed.contains(&c.chat_id))
+    {
+        group_chats_updated.insert(group_chat.chat_id, group_chat.to_updates(updates_since));
     }
 
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
@@ -165,6 +168,56 @@ fn finalize(
     }
 }
 
-fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {
-    groups.iter().any(|g| g.id == *group_id)
+fn merge_group_chats_added(
+    canister_summary: GroupCanisterGroupChatSummary,
+    user_details: Option<&GroupChat>,
+) -> GroupChatSummary {
+    let date_last_pinned = canister_summary.date_last_pinned;
+    let mut summary: GroupChatSummary = canister_summary.into();
+
+    if let Some(user_details) = user_details {
+        summary.read_by_me_up_to = user_details.read_by_me_up_to.value;
+        summary.archived = user_details.archived.value;
+        summary.pinned_messages_unread = date_last_pinned.map_or(false, |date_last_pinned| {
+            user_details
+                .date_read_pinned
+                .map_or(true, |date_read_pinned| date_read_pinned < date_last_pinned)
+        });
+
+        for thread in summary.latest_threads.iter_mut() {
+            thread.read_up_to = user_details.threads_read.get(&thread.root_message_index).map(|v| v.value);
+        }
+    }
+
+    summary
+}
+
+fn merge_group_chats_updated(
+    canister_summary_updates: GroupCanisterGroupChatSummaryUpdates,
+    user_details: Option<&GroupChat>,
+    updates_since: TimestampMillis,
+) -> GroupChatSummaryUpdates {
+    let date_last_pinned = canister_summary_updates.date_last_pinned;
+    let mut summary_updates: GroupChatSummaryUpdates = canister_summary_updates.into();
+
+    if let Some(user_details) = user_details {
+        summary_updates.read_by_me_up_to = user_details.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
+        summary_updates.archived = user_details.archived.if_set_after(updates_since).copied();
+
+        if date_last_pinned.unwrap_or_default() > updates_since
+            || user_details.date_read_pinned.unwrap_or_default() > updates_since
+        {
+            summary_updates.pinned_messages_unread = Some(date_last_pinned.map_or(false, |date_last_pinned| {
+                user_details
+                    .date_read_pinned
+                    .map_or(true, |date_read_pinned| date_read_pinned < date_last_pinned)
+            }));
+        }
+
+        for thread in summary_updates.latest_threads.iter_mut() {
+            thread.read_up_to = user_details.threads_read.get(&thread.root_message_index).map(|v| v.value);
+        }
+    }
+
+    summary_updates
 }
