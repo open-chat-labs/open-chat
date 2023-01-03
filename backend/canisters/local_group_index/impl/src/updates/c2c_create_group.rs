@@ -34,7 +34,7 @@ async fn c2c_create_group(args: Args) -> Response {
         }
         Err(error) => {
             let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed((_, id)) = error {
+            if let CreateAndInstallError::InstallFailed(id, ..) = error {
                 canister_id = Some(id);
             }
             mutate_state(|state| rollback(canister_id, state));
