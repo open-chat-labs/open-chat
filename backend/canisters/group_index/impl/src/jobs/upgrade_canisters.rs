@@ -2,7 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use ic_cdk::timer::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use types::{CanisterId, Cycles, CyclesTopUp, Version};
+use types::{CanisterId, Version};
 use utils::canister::{upgrade, FailedUpgrade};
 
 type CanisterToUpgrade = utils::canister::CanisterToUpgrade<local_group_index_canister::post_upgrade::Args>;
@@ -25,47 +25,48 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    if let Some(chats_to_upgrade) = mutate_state(next_batch) {
-        if !chats_to_upgrade.is_empty() {
-            ic_cdk::spawn(perform_upgrades(chats_to_upgrade));
+    match mutate_state(try_get_next) {
+        GetNextResult::Success(canister_to_upgrade) => ic_cdk::spawn(perform_upgrade(canister_to_upgrade)),
+        GetNextResult::Continue => {}
+        GetNextResult::QueueEmpty => {
+            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+                ic_cdk::timer::clear_timer(timer_id);
+            }
         }
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-        ic_cdk::timer::clear_timer(timer_id);
     }
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
-    let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-    let count_pending = runtime_state.data.canisters_requiring_upgrade.count_pending();
-
-    if count_in_progress == 0 && count_pending == 0 {
-        None
-    } else {
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_local_group_index_canister_upgrades;
-
-        Some(
-            (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
-                .map_while(|_| try_get_next(runtime_state))
-                .collect(),
-        )
-    }
+enum GetNextResult {
+    Success(CanisterToUpgrade),
+    Continue,
+    QueueEmpty,
 }
 
-fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-    let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
+fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
+    if runtime_state.data.canisters_requiring_upgrade.count_in_progress() > 0 {
+        return GetNextResult::Continue;
+    }
+    if runtime_state.data.canisters_requiring_upgrade.count_pending() == 0 {
+        return GetNextResult::QueueEmpty;
+    }
+
+    let canister_id = match runtime_state.data.canisters_requiring_upgrade.try_take_next() {
+        Some(c) => c,
+        None => return GetNextResult::Continue,
+    };
 
     let current_wasm_version = match runtime_state.data.local_index_map.get(&canister_id) {
-        Some(local_group_index) => local_group_index.wasm_version(),
+        Some(canister) => canister.wasm_version(),
         None => {
             runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
-            return None;
+            return GetNextResult::Continue;
         }
     };
 
     let new_wasm = runtime_state.data.local_group_index_canister_wasm.clone();
     let wasm_version = new_wasm.version;
 
-    Some(CanisterToUpgrade {
+    GetNextResult::Success(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
         new_wasm,
@@ -74,20 +75,14 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
     })
 }
 
-async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
-    let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
-
-    futures::future::join_all(futures).await;
-}
-
 async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     let canister_id = canister_to_upgrade.canister_id;
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm.version;
 
     match upgrade(canister_to_upgrade).await {
-        Ok(cycles_top_up) => {
-            mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
+        Ok(_) => {
+            mutate_state(|state| on_success(canister_id, to_version, state));
         }
         Err(_) => {
             mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
@@ -95,7 +90,7 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     }
 }
 
-fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
+fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
     let local_group_index = runtime_state
         .data
         .local_index_map
@@ -103,15 +98,6 @@ fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycle
         .expect("Cannot find local_group_index");
 
     local_group_index.set_wasm_version(to_version);
-
-    let top_up = top_up.map(|c| CyclesTopUp {
-        amount: c,
-        date: runtime_state.env.now(),
-    });
-
-    if let Some(top_up) = top_up {
-        local_group_index.mark_cycles_top_up(top_up);
-    }
 
     runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
 }
