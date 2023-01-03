@@ -420,14 +420,7 @@
     }
 
     function doUndeleteMessage(message: Message) {
-        if (
-            message.content.kind !== "deleted_content" ||
-            message.content.deletedBy !== user.userId
-        ) {
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, undefined, message.messageId).then((success) => {
+        client.undeleteMessage(chat.chatId, undefined, message).then((success) => {
             if (!success) {
                 toastStore.showFailureToast("undeleteMessageFailed");
             }

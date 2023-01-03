@@ -919,7 +919,7 @@ export class OpenChat extends EventTarget {
     validateTokenInput = validateTokenInput;
     toShortTimeString = toShortTimeString;
     formatMessageDate = formatMessageDate;
-    userIdsFromEvents = userIdsFromEvents;
+    private userIdsFromEvents = userIdsFromEvents;
     missingUserIds = missingUserIds;
     toRecord2 = toRecord2;
     toDatetimeString = toDatetimeString;
@@ -1026,12 +1026,12 @@ export class OpenChat extends EventTarget {
         return this.user.isSuperAdmin;
     }
 
+    private createMessage = createMessage;
+    private findMessageById = findMessageById;
+    private getMessageContent = getMessageContent;
+    private getStorageRequiredForMessage = getStorageRequiredForMessage;
     canForward = canForward;
     containsReaction = containsReaction;
-    createMessage = createMessage;
-    findMessageById = findMessageById;
-    getMessageContent = getMessageContent;
-    getStorageRequiredForMessage = getStorageRequiredForMessage;
     groupEvents = groupEvents;
     startTyping = startTyping;
     stopTyping = stopTyping;
@@ -1120,7 +1120,7 @@ export class OpenChat extends EventTarget {
     undeleteMessage(
         chatId: string,
         threadRootMessageIndex: number | undefined,
-        messageId: bigint
+        msg: Message
     ): Promise<boolean> {
         const chat = this._liveState.chatSummaries[chatId];
 
@@ -1128,14 +1128,21 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(false);
         }
 
-        undeletingMessagesStore.add(messageId);
+        if (msg.content.kind !== "deleted_content" || msg.content.deletedBy !== this.user.userId) {
+            return Promise.resolve(false);
+        }
+
+        undeletingMessagesStore.add(msg.messageId);
 
         return this.api
-            .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
+            .undeleteMessage(chat.kind, chatId, msg.messageId, threadRootMessageIndex)
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
+                    localMessageUpdates.markUndeleted(
+                        msg.messageId.toString(),
+                        resp.message.content
+                    );
                 }
                 return success;
             })
@@ -1144,7 +1151,7 @@ export class OpenChat extends EventTarget {
                 return false;
             })
             .finally(() => {
-                undeletingMessagesStore.delete(messageId);
+                undeletingMessagesStore.delete(msg.messageId);
             });
     }
 
@@ -1578,9 +1585,14 @@ export class OpenChat extends EventTarget {
     }
 
     clearSelectedChat = clearSelectedChat;
-    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile = messageContentFromFile;
     formatFileSize = formatFileSize;
+
+    havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
+        const args = this.mergeKeepingOnlyChanged(p1, p2);
+        return Object.keys(args).length > 0;
+    }
 
     async loadPreviousMessages(chatId: string): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -2314,7 +2326,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    handleWebRtcMessage(msg: WebRtcMessage): void {
+    private handleWebRtcMessage(msg: WebRtcMessage): void {
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -2585,7 +2597,7 @@ export class OpenChat extends EventTarget {
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
         if (userGroups.length === 0) {
             return Promise.resolve({
-                users: []
+                users: [],
             });
         }
 
@@ -2613,7 +2625,9 @@ export class OpenChat extends EventTarget {
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {
-        return this.getLastOnlineDate(userId, now).then((lastOnline) => userStatus(lastOnline, Date.now()));
+        return this.getLastOnlineDate(userId, now).then((lastOnline) =>
+            userStatus(lastOnline, Date.now())
+        );
     }
 
     async getLastOnlineDate(userId: string, now: number): Promise<number | undefined> {
@@ -3019,8 +3033,9 @@ export class OpenChat extends EventTarget {
         userIds.forEach((u) => this._lastOnlineDatesPending.add(u));
         if (this._lastOnlineDatesPromise === undefined) {
             // Wait 50ms so that the last online dates can be retrieved in a single batch
-            this._lastOnlineDatesPromise =
-                new Promise(resolve => window.setTimeout(resolve, 50)).then((_) => this.processLastOnlineDatesQueue());
+            this._lastOnlineDatesPromise = new Promise((resolve) =>
+                window.setTimeout(resolve, 50)
+            ).then((_) => this.processLastOnlineDatesQueue());
         }
 
         return this._lastOnlineDatesPromise;

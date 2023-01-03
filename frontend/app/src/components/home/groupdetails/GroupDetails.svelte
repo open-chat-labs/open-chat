@@ -122,7 +122,7 @@
     $: rulesInvalid =
         updatedRules !== undefined && updatedRules.enabled && updatedRules.text.length === 0;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
-    $: permissionsDirty = havePermissionsChanged(
+    $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
         updatedGroup.permissions
     );
@@ -141,11 +141,6 @@
 
     function closeUserProfile() {
         viewProfile = false;
-    }
-
-    function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        const args = client.mergeKeepingOnlyChanged(p1, p2);
-        return Object.keys(args).length > 0;
     }
 
     function clickClose() {

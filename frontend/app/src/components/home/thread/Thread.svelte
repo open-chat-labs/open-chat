@@ -319,7 +319,11 @@
             return;
         }
 
-        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
+        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("undeleteMessageFailed");
+            }
+        });
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
