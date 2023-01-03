@@ -29,7 +29,7 @@ fn run() {
         if !chats_to_upgrade.is_empty() {
             ic_cdk::spawn(perform_upgrades(chats_to_upgrade));
         }
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.get()) {
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk::timer::clear_timer(timer_id);
     }
 }
