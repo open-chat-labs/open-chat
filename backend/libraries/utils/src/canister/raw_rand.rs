@@ -1,10 +1,9 @@
-use candid::Principal;
-use ic_cdk::api::call::call;
+use ic_cdk::api::management_canister;
 use types::Salt;
 
 // Get a random seed based on 'raw_rand'
 pub async fn get_random_seed() -> Salt {
-    let raw_rand: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
+    let raw_rand: Vec<u8> = match management_canister::main::raw_rand().await {
         Ok((res,)) => res,
         Err((_, err)) => ic_cdk::trap(&format!("failed to get seed: {}", err)),
     };
