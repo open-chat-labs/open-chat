@@ -422,7 +422,13 @@
             "acceptTitle": "Reglas de grupo",
             "accept": "Aceptar",
             "reject": "Rechazar"
-        }
+        },
+        "createTitle": "Crear nuevo grupo",
+        "back": "atrás",
+        "next": "Próximo",
+        "create": "Crea un grupo",
+        "details": "Detalles",
+        "members": "miembros"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",

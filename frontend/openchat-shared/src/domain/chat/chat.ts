@@ -915,6 +915,7 @@ export type CandidateMember = {
 };
 
 export type CandidateGroupChat = {
+    chatId?: string;
     name: string;
     description: string;
     rules: GroupRules;

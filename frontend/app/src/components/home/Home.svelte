@@ -26,6 +26,8 @@
         SendMessageFailed,
         ChatsUpdated,
         Notification,
+        CandidateGroupChat,
+        defaultGroupRules,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -41,7 +43,7 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory, RightPanelState } from "../../stores/rightPanel";
+    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -53,17 +55,15 @@
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
+    import NewGroup from "./addgroup/NewGroup.svelte";
 
     export let logout: () => void;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
+    let candidateGroup: CandidateGroupChat | undefined;
 
-    type ConfirmActionEvent =
-        | ConfirmLeaveEvent
-        | ConfirmDeleteEvent
-        | ConfirmMakePrivateEvent
-        | ConfirmRulesEvent;
+    type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
 
     interface ConfirmLeaveEvent {
         kind: "leave";
@@ -74,11 +74,6 @@
         kind: "delete";
         chatId: string;
         doubleCheck: { challenge: string; response: string };
-    }
-
-    interface ConfirmMakePrivateEvent {
-        kind: "makePrivate";
-        chatId: string;
     }
 
     interface ConfirmRulesEvent {
@@ -93,6 +88,7 @@
         Faq,
         SelectChat,
         Suspended,
+        NewGroup,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -300,9 +296,7 @@
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
         rightPanelHistory.update((history) => {
-            return history.filter(
-                (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
-            );
+            return history.filter((panel) => panel.kind === "user_profile");
         });
     }
 
@@ -338,6 +332,7 @@
 
     function closeModal() {
         modal = ModalType.None;
+        candidateGroup = undefined;
     }
 
     function cancelRecommendations() {
@@ -457,8 +452,6 @@
                 return $_("confirmLeaveGroup");
             case "delete":
                 return $_("irreversible");
-            case "makePrivate":
-                return $_("confirmMakeGroupPrivate");
             case "rules": {
                 return confirmActionEvent.rules;
             }
@@ -485,23 +478,11 @@
                 return deleteGroup(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory.set([]);
                 });
-            case "makePrivate":
-                return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory.set([]);
-                });
             case "rules":
                 return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
                 return Promise.reject();
         }
-    }
-
-    function makeGroupPrivate(chatId: string): Promise<void> {
-        return client.makeGroupPrivate(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("makeGroupPrivateFailed");
-            }
-        });
     }
 
     function deleteGroup(chatId: string): Promise<void> {
@@ -789,7 +770,58 @@
     }
 
     function newGroup() {
-        rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
+        modal = ModalType.NewGroup;
+        candidateGroup = {
+            name: "",
+            description: "",
+            historyVisible: true,
+            isPublic: false,
+            members: [],
+            permissions: {
+                changePermissions: "admins",
+                changeRoles: "admins",
+                addMembers: "admins",
+                removeMembers: "admins",
+                blockUsers: "admins",
+                deleteMessages: "admins",
+                updateGroup: "admins",
+                pinMessages: "admins",
+                inviteUsers: "admins",
+                createPolls: "members",
+                sendMessages: "members",
+                reactToMessages: "members",
+                replyInThread: "members",
+            },
+            rules: {
+                text: defaultGroupRules,
+                enabled: false,
+            },
+        };
+    }
+
+    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+        modal = ModalType.NewGroup;
+        const { chat, rules } = ev.detail;
+        candidateGroup = {
+            chatId: chat.chatId,
+            name: chat.name,
+            description: chat.description,
+            historyVisible: chat.historyVisibleToNewJoiners,
+            isPublic: chat.public,
+            members: [],
+            permissions: { ...chat.permissions },
+            rules:
+                rules !== undefined
+                    ? { ...rules }
+                    : {
+                          text: defaultGroupRules,
+                          enabled: false,
+                      },
+            avatar: {
+                blobUrl: chat.blobUrl,
+                blobData: chat.blobData,
+            },
+        };
     }
 
     function filterChatSelection(
@@ -892,7 +924,7 @@
             on:upgrade={upgrade}
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
-            on:makeGroupPrivate={triggerConfirm}
+            on:editGroup={editGroup}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -913,7 +945,7 @@
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
-                on:makeGroupPrivate={triggerConfirm}
+                on:editGroup={editGroup}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>
@@ -954,6 +986,8 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
+            <NewGroup {candidateGroup} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

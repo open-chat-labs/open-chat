@@ -421,7 +421,13 @@
             "acceptTitle": "群组规则",
             "accept": "接受",
             "reject": "拒绝"
-        }
+        },
+        "createTitle": "创建新组",
+        "back": "后退",
+        "next": "下一个",
+        "create": "创建组",
+        "details": "细节",
+        "members": "成员"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

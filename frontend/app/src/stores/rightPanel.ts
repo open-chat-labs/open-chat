@@ -8,7 +8,6 @@ export type RightPanelState =
     | ShowMembersPanel
     | ShowPinnedPanel
     | UserProfilePanel
-    | NewGroupPanel
     | MessageThreadPanel
     | ProposalFilterPanel
     | NoPanel;
@@ -29,10 +28,6 @@ export type GroupDetailsPanel = {
 
 export type UserProfilePanel = {
     kind: "user_profile";
-};
-
-export type NewGroupPanel = {
-    kind: "new_group_panel";
 };
 
 export type AddMembersPanel = {
