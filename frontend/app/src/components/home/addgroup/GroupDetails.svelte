@@ -39,7 +39,7 @@
         countdown
         placeholder={$_("newGroupName")} />
 </FormField>
-<FormField label={"Description"} required>
+<FormField label={"Description"}>
     <TextArea
         rows={4}
         disabled={busy}

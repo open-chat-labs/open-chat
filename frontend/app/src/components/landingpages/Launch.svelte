@@ -18,7 +18,7 @@
     }
 </script>
 
-<div on:click={launch} class="launch">{txt}</div>
+<div role="button" on:click={launch} class="launch">{txt}</div>
 
 <style type="text/scss">
     .launch {
