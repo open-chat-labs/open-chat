@@ -93,11 +93,10 @@ fn finalize(
     let group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
         .into_iter()
         .map(|s| {
-            let processed = already_processed.contains(&s.chat_id);
-            let chat = processed
-                .then(|| runtime_state.data.group_chats.get_since(&s.chat_id, updates_since))
+            let chat = already_processed
+                .insert(s.chat_id)
+                .then(|| runtime_state.data.group_chats.get_if_updated_since(&s.chat_id, updates_since))
                 .flatten();
-            already_processed.insert(s.chat_id);
             (s.chat_id, merge_group_chats_added(s, chat))
         })
         .collect();
@@ -105,11 +104,10 @@ fn finalize(
     let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> = group_chats_updated
         .into_iter()
         .map(|s| {
-            let processed = already_processed.contains(&s.chat_id);
-            let chat = processed
-                .then(|| runtime_state.data.group_chats.get_since(&s.chat_id, updates_since))
+            let chat = already_processed
+                .insert(s.chat_id)
+                .then(|| runtime_state.data.group_chats.get_if_updated_since(&s.chat_id, updates_since))
                 .flatten();
-            already_processed.insert(s.chat_id);
             (s.chat_id, merge_group_chats_updated(s, chat, updates_since))
         })
         .collect();
