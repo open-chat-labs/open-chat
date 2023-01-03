@@ -78,8 +78,8 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         quote! { #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)] };
 
     TokenStream::from(quote! {
-        use msgpack::serialize as #serializer_ident;
-        use msgpack::deserialize as #deserializer_ident;
+        use msgpack::serialize_then_unwrap as #serializer_ident;
+        use msgpack::deserialize_then_unwrap as #deserializer_ident;
 
         #candid
         #msgpack
