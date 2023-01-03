@@ -82,7 +82,9 @@ pub struct GroupChatSummary {
     pub archived: bool,
     pub frozen: Option<FrozenGroupInfo>,
     #[serde(default)]
-    pub pinned_messages_unread: bool,
+    pub date_last_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub date_read_pinned: Option<TimestampMillis>,
 }
 
 impl GroupChatSummary {
@@ -148,7 +150,9 @@ pub struct GroupChatSummaryUpdates {
     pub archived: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     #[serde(default)]
-    pub pinned_messages_unread: Option<bool>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub date_read_pinned: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -286,7 +290,8 @@ impl From<GroupCanisterGroupChatSummary> for GroupChatSummary {
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: false,
             frozen: s.frozen,
-            pinned_messages_unread: false,
+            date_last_pinned: s.date_last_pinned,
+            date_read_pinned: None,
         }
     }
 }
@@ -345,7 +350,8 @@ impl From<GroupCanisterGroupChatSummaryUpdates> for GroupChatSummaryUpdates {
             latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
             archived: None,
             frozen: s.frozen,
-            pinned_messages_unread: None,
+            date_last_pinned: s.date_last_pinned,
+            date_read_pinned: None,
         }
     }
 }

@@ -120,7 +120,10 @@ impl GroupChat {
             archived: self.archived.if_set_after(updates_since).copied(),
             frozen: OptionUpdate::NoChange,
             wasm_version: None,
-            pinned_messages_unread: None,
+            date_last_pinned: None,
+            date_read_pinned: self
+                .date_read_pinned
+                .filter(|date_read_pinned| *date_read_pinned > updates_since),
         }
     }
 }

@@ -176,11 +176,8 @@ fn merge_group_chats_added(
     if let Some(user_details) = user_details {
         summary.read_by_me_up_to = user_details.read_by_me_up_to.value;
         summary.archived = user_details.archived.value;
-        summary.pinned_messages_unread = date_last_pinned.map_or(false, |date_last_pinned| {
-            user_details
-                .date_read_pinned
-                .map_or(true, |date_read_pinned| date_read_pinned < date_last_pinned)
-        });
+        summary.date_last_pinned = date_last_pinned;
+        summary.date_read_pinned = user_details.date_read_pinned;
 
         for thread in summary.latest_threads.iter_mut() {
             thread.read_up_to = user_details.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -201,16 +198,10 @@ fn merge_group_chats_updated(
     if let Some(user_details) = user_details {
         summary_updates.read_by_me_up_to = user_details.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
         summary_updates.archived = user_details.archived.if_set_after(updates_since).copied();
-
-        if date_last_pinned.unwrap_or_default() > updates_since
-            || user_details.date_read_pinned.unwrap_or_default() > updates_since
-        {
-            summary_updates.pinned_messages_unread = Some(date_last_pinned.map_or(false, |date_last_pinned| {
-                user_details
-                    .date_read_pinned
-                    .map_or(true, |date_read_pinned| date_read_pinned < date_last_pinned)
-            }));
-        }
+        summary_updates.date_last_pinned = date_last_pinned.filter(|date_last_pinned| *date_last_pinned > updates_since);
+        summary_updates.date_read_pinned = user_details
+            .date_read_pinned
+            .filter(|date_read_pinned| *date_read_pinned > updates_since);
 
         for thread in summary_updates.latest_threads.iter_mut() {
             thread.read_up_to = user_details.threads_read.get(&thread.root_message_index).map(|v| v.value);

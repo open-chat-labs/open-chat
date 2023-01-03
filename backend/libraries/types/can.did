@@ -272,7 +272,8 @@ type GroupChatSummary =
         archived: bool;
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
-        pinned_messages_unread: bool;
+        date_last_pinned: opt TimestampMillis;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -329,7 +330,8 @@ type GroupChatSummaryUpdates =
         archived: opt bool;
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
-        pinned_messages_unread: opt bool;
+        date_last_pinned: opt TimestampMillis;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
