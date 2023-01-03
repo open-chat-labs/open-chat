@@ -140,6 +140,7 @@
 
     $: thread = rootEvent.event.thread;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
+    $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
@@ -302,28 +303,6 @@
                     }
                 });
         }
-    }
-
-    function onDeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
-            return;
-        }
-
-        client.deleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_undelete_message", message: ev.detail });
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("undeleteMessageFailed");
-            }
-        });
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -497,7 +476,7 @@
                             focused={evt.event.kind === "message" &&
                                 focusMessageIndex === evt.event.messageIndex}
                             {readonly}
-                            inThread
+                            {threadRootMessage}
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
@@ -516,8 +495,6 @@
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:selectReaction={onSelectReaction}
-                            on:deleteMessage={onDeleteMessage}
-                            on:undeleteMessage={onUndeleteMessage}
                             on:blockUser
                             on:registerVote={registerVote}
                             on:editEvent={() => editEvent(evt)}
@@ -526,7 +503,6 @@
                             on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
-                            on:undeleteMessage={onUndeleteMessage}
                             on:upgrade
                             on:forward />
                     {/each}

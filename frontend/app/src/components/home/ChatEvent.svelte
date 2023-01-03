@@ -49,10 +49,10 @@
     export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
     export let collapsed: boolean;
+    export let threadRootMessage: Message | undefined;
 
     let userSummary: UserSummary | undefined = undefined;
 
@@ -97,7 +97,7 @@
         canStartThread={canReplyInThread}
         {publicGroup}
         {editing}
-        {inThread}
+        {threadRootMessage}
         {supportsEdit}
         {supportsReply}
         {collapsed}
@@ -106,8 +106,6 @@
         on:replyPrivatelyTo
         on:replyTo
         on:selectReaction
-        on:deleteMessage
-        on:undeleteMessage
         on:blockUser
         on:pinMessage
         on:unpinMessage

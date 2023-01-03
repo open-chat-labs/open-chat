@@ -26,6 +26,7 @@
     import type { Message, OpenChat } from "openchat-client";
     import { push } from "svelte-spa-router";
     import { toastStore } from "../../stores/toast";
+    import { isValidAttribute } from "dompurify";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -42,7 +43,6 @@
     export let pinned: boolean;
     export let supportsReply: boolean;
     export let canQuoteReply: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let groupChat: boolean;
     export let canForward: boolean;
@@ -54,9 +54,16 @@
     export let translated: boolean;
     export let crypto: boolean;
     export let msg: Message;
+    export let threadRootMessage: Message | undefined;
 
+    $: user = client.user;
+    $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
     $: storageStore = client.storageStore;
+    $: threadRootMessageIndex =
+        msg.messageId === threadRootMessage?.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex;
 
     function blockUser() {
         dispatch("blockUser", { userId: senderId });
@@ -96,11 +103,17 @@
     }
 
     function deleteMessage() {
-        dispatch("deleteMessage", msg);
+        if (!canDelete && user.userId !== msg.sender) return;
+        client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
     function undeleteMessage() {
-        dispatch("undeleteMessage", msg);
+        if (!canUndelete) return;
+        client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("undeleteMessageFailed");
+            }
+        });
     }
 
     function untranslateMessage() {

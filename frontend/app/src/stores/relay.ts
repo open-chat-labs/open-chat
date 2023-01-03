@@ -6,17 +6,7 @@
 
 import type { Message } from "openchat-client";
 
-export type RelayedEvent =
-    | RelayedDeleteMessage
-    | RelayedUndeleteMessage
-    | RelayedSelectReaction
-    | RelayedRegisterVote
-    | RelayedGoToMessage;
-
-export type RelayedDeleteMessage = {
-    kind: "relayed_delete_message";
-    message: Message;
-};
+export type RelayedEvent = RelayedSelectReaction | RelayedRegisterVote | RelayedGoToMessage;
 
 export type RelayedUndeleteMessage = {
     kind: "relayed_undelete_message";

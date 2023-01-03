@@ -64,11 +64,11 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
     export let collapsed: boolean = false;
+    export let threadRootMessage: Message | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -84,6 +84,7 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
+    $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
     $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
@@ -438,7 +439,7 @@
                     {pinned}
                     {supportsReply}
                     {canQuoteReply}
-                    {inThread}
+                    {threadRootMessage}
                     {canStartThread}
                     {groupChat}
                     {msg}
@@ -456,7 +457,6 @@
                     on:pinMessage
                     on:forward
                     on:unpinMessage
-                    on:deleteMessage
                     on:reply={reply}
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />

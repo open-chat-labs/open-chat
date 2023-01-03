@@ -149,14 +149,6 @@
 
         // this is where we pick up events that may be published from a thread
         relaySubscribe((event: RelayedEvent) => {
-            if (event.kind === "relayed_delete_message") {
-                doDeleteMessage(event.message);
-            }
-
-            if (event.kind === "relayed_undelete_message") {
-                doUndeleteMessage(event.message);
-            }
-
             if (event.kind === "relayed_goto_message") {
                 doGoToMessageIndex(event.index);
             }
@@ -403,28 +395,6 @@
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
         currentChatDraftMessage.setEditing(chat.chatId, ev.detail);
-    }
-
-    function onDeleteMessage(ev: CustomEvent<Message>) {
-        doDeleteMessage(ev.detail);
-    }
-
-    function doDeleteMessage(message: Message) {
-        if (!canDelete && user.userId !== message.sender) return;
-
-        client.deleteMessage(chat.chatId, undefined, message.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>) {
-        doUndeleteMessage(ev.detail);
-    }
-
-    function doUndeleteMessage(message: Message) {
-        client.undeleteMessage(chat.chatId, undefined, message).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("undeleteMessageFailed");
-            }
-        });
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -778,15 +748,13 @@
                         collapsed={isCollapsed(evt, filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
-                        inThread={false}
+                        threadRootMessage={undefined}
                         publicGroup={chat.kind === "group_chat" && chat.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
-                        on:deleteMessage={onDeleteMessage}
-                        on:undeleteMessage={onUndeleteMessage}
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={onSelectReactionEv}
