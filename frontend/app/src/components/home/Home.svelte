@@ -296,9 +296,7 @@
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
         rightPanelHistory.update((history) => {
-            return history.filter(
-                (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
-            );
+            return history.filter((panel) => panel.kind === "user_profile");
         });
     }
 
