@@ -25,7 +25,7 @@ fn run() {
         if !batch.is_empty() {
             ic_cdk::spawn(push_notifications(batch));
         }
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.get()) {
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk::timer::clear_timer(timer_id);
     }
 }
