@@ -8,7 +8,6 @@ export type RightPanelState =
     | ShowMembersPanel
     | ShowPinnedPanel
     | UserProfilePanel
-    | NewGroupPanel
     | MessageThreadPanel
     | ProposalFilterPanel
     | NoPanel;
