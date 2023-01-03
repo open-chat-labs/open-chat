@@ -422,7 +422,13 @@
             "acceptTitle": "Quy tắc nhóm",
             "accept": "Chấp nhận",
             "reject": "Từ chối"
-        }
+        },
+        "createTitle": "Tạo nhóm mới",
+        "back": "Trở lại",
+        "next": "Tiếp theo",
+        "create": "Tạo nhóm",
+        "details": "Chi tiết",
+        "members": "Các thành viên"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",

@@ -39,7 +39,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         bd: borderDark,
         error: "#CF6679",
         warn: "#f36D28",
-        accent: "#ff005c",
+        accent: "#ff2e2e",
         disabledTxt: txtLow,
         primary,
 

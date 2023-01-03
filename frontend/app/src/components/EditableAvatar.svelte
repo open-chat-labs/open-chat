@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Camera from "svelte-material-icons/Camera.svelte";
     import Overlay from "./Overlay.svelte";
     import { _ } from "svelte-i18n";
     import Button from "./Button.svelte";
@@ -8,6 +7,7 @@
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
+    import ChooseImage from "./icons/ChooseImage.svelte";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
@@ -114,11 +114,11 @@
             <div class="avatar" style={`background-image: url(${image})`} />
             {#if overlayIcon}
                 <div class="overlay">
-                    <Camera size={"3em"} color={"#fff"} />
+                    <ChooseImage size={"3em"} color={"#fff"} />
                 </div>
             {/if}
         {:else}
-            <Camera size={"3em"} color={"var(--icon-txt)"} />
+            <ChooseImage size={"3em"} color={"var(--icon-txt)"} />
         {/if}
     </div>
 </div>
@@ -139,7 +139,7 @@
 
     .overlay {
         position: absolute;
-        opacity: 0.5;
+        opacity: 0.3;
     }
 
     .photo-icon {
@@ -150,6 +150,7 @@
         justify-content: center;
         align-items: center;
         position: relative;
+        background-color: var(--input-bg);
 
         &.small {
             width: toRem(48);
