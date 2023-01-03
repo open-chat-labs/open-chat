@@ -75,8 +75,8 @@ fn finalize(
 ) -> updates::SuccessResult {
     let now = runtime_state.env.now();
 
-    // The list of chats_removed currently consists of deleted groups and groups the user
-    // has been removed from since the given timestamp
+    // The list of chats_removed currently consists of deleted groups and groups the
+    // user has been removed from since the given timestamp
     let chats_removed: Vec<ChatId> = if updates_since > 0 {
         let mut chats_removed: HashSet<ChatId> = group_chats_deleted.iter().map(|gd| gd.id).collect();
         let groups_removed = runtime_state.data.group_chats.removed_since(updates_since);
