@@ -29,7 +29,7 @@ fn run() {
         GetNextResult::Success(canister_to_upgrade) => ic_cdk::spawn(perform_upgrade(canister_to_upgrade)),
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.get()) {
+            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
                 ic_cdk::timer::clear_timer(timer_id);
             }
         }
