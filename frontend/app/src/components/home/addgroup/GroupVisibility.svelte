@@ -28,6 +28,24 @@
 <div class="section">
     <Radio
         on:change={toggleScope}
+        checked={!candidateGroup.isPublic}
+        id={"private"}
+        disabled={!canMakePrivate}
+        align={"start"}
+        group={"group-visibility"}>
+        <div class="section-title">
+            <div class={"img private"} />
+            <p>{$_("group.privateGroup")}</p>
+        </div>
+        <div class="info">
+            <p>{$_("privateGroupInfo")}</p>
+        </div>
+    </Radio>
+</div>
+
+<div class="section">
+    <Radio
+        on:change={toggleScope}
         checked={candidateGroup.isPublic}
         id={"public"}
         align={"start"}
@@ -40,24 +58,6 @@
         <div class="info">
             <p>{$_("publicGroupInfo")}</p>
             <p>{$_("publicGroupUnique")}</p>
-        </div>
-    </Radio>
-</div>
-
-<div class="section">
-    <Radio
-        on:change={toggleScope}
-        checked={!candidateGroup.isPublic}
-        id={"private"}
-        disabled={!canMakePrivate}
-        align={"start"}
-        group={"group-visibility"}>
-        <div class="section-title">
-            <div class={"img private"} />
-            <p>{$_("group.privateGroup")}</p>
-        </div>
-        <div class="info">
-            <p>{$_("privateGroupInfo")}</p>
         </div>
     </Radio>
 </div>
