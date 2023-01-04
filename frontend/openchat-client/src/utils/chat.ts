@@ -651,6 +651,8 @@ export function groupChatFromCandidate(
         archived: false,
         previewed: false,
         frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
     };
 }
 

@@ -903,6 +903,7 @@ export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     chatId: string;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }>;
 export type RelayedStorageUpdated = WorkerEventCommon<{
     subkind: "storage_updated";

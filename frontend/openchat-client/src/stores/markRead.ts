@@ -6,7 +6,8 @@ import type {
     ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import type { OpenChatAgentWorker } from "src/agentWorker";
+import type { OpenChatAgentWorker } from "../agentWorker";
+import { bigIntMax } from "../utils/bigint";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -17,10 +18,12 @@ export interface MarkMessagesRead {
 export class MessagesRead {
     public readUpTo: number | undefined;
     public threads: Record<number, number>;
+    public dateReadPinned: bigint | undefined;
 
     constructor() {
         this.readUpTo = undefined;
         this.threads = {};
+        this.dateReadPinned = undefined;
     }
 
     get threadsList(): ThreadRead[] {
@@ -31,7 +34,7 @@ export class MessagesRead {
     }
 
     empty(): boolean {
-        return this.readUpTo === undefined && Object.keys(this.threads).length === 0;
+        return this.readUpTo === undefined && Object.keys(this.threads).length === 0 && this.dateReadPinned === undefined;
     }
 
     markReadUpTo(index: number): void {
@@ -47,6 +50,10 @@ export class MessagesRead {
             rec[t.threadRootMessageIndex] = t.readUpTo;
             return rec;
         }, {} as Record<number, number>);
+    }
+
+    markReadPinned(dateReadPinned: bigint | undefined): void {
+        this.dateReadPinned = dateReadPinned;
     }
 }
 
@@ -109,6 +116,7 @@ export class MessageReadTracker {
                     chatId,
                     readUpTo: data.readUpTo,
                     threads: data.threadsList,
+                    dateReadPinned: data.dateReadPinned,
                 });
             }
             return req;
@@ -166,6 +174,14 @@ export class MessageReadTracker {
         this.state[chatId].markReadUpTo(to);
         this.publish();
     }
+
+    markPinnedMessagesRead(chatId: string, dateLastPinned: bigint): void {
+        if (!this.state[chatId]) {
+            this.state[chatId] = new MessagesRead();
+        }
+        this.state[chatId].markReadPinned(dateLastPinned);
+        this.publish();
+    }    
 
     confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
         // this is called when a message is confirmed so that we can move it from
@@ -235,6 +251,13 @@ export class MessageReadTracker {
         return Math.max(total, 0);
     }
 
+    unreadPinned(chatId: string, dateLastPinned: bigint | undefined): boolean {
+        const readServer = this.serverState[chatId]?.dateReadPinned ?? BigInt(0);
+        const readLocal = this.state[chatId]?.dateReadPinned ?? BigInt(0);
+        const dateReadPinned = bigIntMax(readServer, readLocal);
+        return (dateLastPinned ?? BigInt(0)) > dateReadPinned;
+    }
+
     getFirstUnreadMessageIndex(
         chatId: string,
         latestMessageIndex: number | undefined
@@ -261,10 +284,11 @@ export class MessageReadTracker {
         return undefined;
     }
 
-    syncWithServer(chatId: string, readUpTo: number | undefined, threads: ThreadRead[]): void {
+    syncWithServer(chatId: string, readUpTo: number | undefined, threads: ThreadRead[], dateReadPinned: bigint | undefined): void {
         const serverState = new MessagesRead();
         serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);
+        serverState.markReadPinned(dateReadPinned);
         this.serverState[chatId] = serverState;
 
         const state = this.state[chatId];
@@ -285,6 +309,10 @@ export class MessageReadTracker {
                     delete state.threads[t.threadRootMessageIndex];
                 }
             });
+
+            if ((dateReadPinned ?? BigInt(0)) > (state.dateReadPinned ?? BigInt(0))) {
+                state.dateReadPinned = dateReadPinned;
+            }
         }
         this.publish();
     }

@@ -144,6 +144,8 @@ function mergeUpdatedGroupChat(
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
         archived: updatedChat.archived ?? chat.archived,
         frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false,
+        dateLastPinned: updatedChat.dateLastPinned ?? chat.dateLastPinned,
+        dateReadPinned: updatedChat.dateReadPinned ?? chat.dateReadPinned,
     };
 }
 

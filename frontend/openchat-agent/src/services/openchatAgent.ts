@@ -799,7 +799,8 @@ export class OpenChatAgent extends EventTarget {
                     new MessagesReadFromServer(
                         chat.chatId,
                         chat.readByMeUpTo,
-                        threadsReadFromChat(chat)
+                        threadsReadFromChat(chat),
+                        (chat as GroupChatSummary)?.dateReadPinned,
                     )
                 );
 

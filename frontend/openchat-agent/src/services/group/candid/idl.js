@@ -663,6 +663,20 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
   });
+  const EventResult = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const PinMessageV2Response = IDL.Variant({
+    'MessageIndexOutOfRange' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : EventResult,
+    'UserSuspended' : IDL.Null,
+  });
   const PublicSummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
@@ -905,6 +919,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
+    'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -950,6 +965,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
+    'date_last_pinned' : IDL.Opt(TimestampMillis),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'affected_events' : IDL.Vec(EventIndex),
@@ -1128,6 +1144,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'pin_message' : IDL.Func([PinMessageArgs], [PinMessageResponse], []),
+    'pin_message_v2' : IDL.Func([PinMessageArgs], [PinMessageV2Response], []),
     'public_summary' : IDL.Func(
         [PublicSummaryArgs],
         [PublicSummaryResponse],
