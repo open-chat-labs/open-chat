@@ -15,8 +15,12 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+
+    // One-time code to initialize the date_last_pinned if the chat has pinned messages.
+    // This means that all members will initially see the pinned messages as unread.
+    init_date_last_pinned(&mut data);
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
@@ -26,6 +30,12 @@ fn post_upgrade(args: Args) {
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+fn init_date_last_pinned(data: &mut Data) {
+    if !data.pinned_messages.is_empty() && data.date_last_pinned.is_none() {
+        data.date_last_pinned = Some(0);
+    }
 }
 
 fn rehydrate_log_messages(

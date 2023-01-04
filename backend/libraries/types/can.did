@@ -272,6 +272,8 @@ type GroupChatSummary =
         archived: bool;
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
+        date_last_pinned: opt TimestampMillis;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -300,6 +302,7 @@ type GroupCanisterGroupChatSummary =
         latest_threads: vec GroupCanisterThreadDetails;
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
+        date_last_pinned: opt TimestampMillis;
     };
 
 type GroupChatSummaryUpdates =
@@ -327,6 +330,8 @@ type GroupChatSummaryUpdates =
         archived: opt bool;
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
+        date_last_pinned: opt TimestampMillis;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -353,6 +358,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         notifications_muted: opt bool;
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
+        date_last_pinned: opt TimestampMillis;
     };
 
 type GroupDescriptionChanged =
@@ -1135,4 +1141,10 @@ type ChatFrozen =
 type ChatUnfrozen =
     record {
         unfrozen_by: UserId;
+    };
+
+type EventResult =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
     };

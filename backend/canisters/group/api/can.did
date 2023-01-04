@@ -373,6 +373,18 @@ type PinMessageResponse =
         ChatFrozen;
     };
 
+type PinMessageV2Response =
+    variant {
+        Success: EventResult;
+        NoChange;
+        MessageIndexOutOfRange;
+        NotAuthorized;
+        CallerNotInGroup;
+        MessageNotFound;
+        UserSuspended;
+        ChatFrozen;
+    };
+
 type UnpinMessageArgs =
     record {
         message_index: MessageIndex;
@@ -651,6 +663,7 @@ service: {
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
+    pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
     invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
