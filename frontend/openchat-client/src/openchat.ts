@@ -919,7 +919,7 @@ export class OpenChat extends EventTarget {
     validateTokenInput = validateTokenInput;
     toShortTimeString = toShortTimeString;
     formatMessageDate = formatMessageDate;
-    private userIdsFromEvents = userIdsFromEvents;
+    userIdsFromEvents = userIdsFromEvents;
     missingUserIds = missingUserIds;
     toRecord2 = toRecord2;
     toDatetimeString = toDatetimeString;

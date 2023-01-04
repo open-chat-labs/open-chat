@@ -51,7 +51,7 @@
             ? true
             : client.canChangePermissions(candidateGroup.chatId);
 
-    $: permissionsDirty = havePermissionsChanged(
+    $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
         candidateGroup.permissions
     );
@@ -70,11 +70,6 @@
     $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty;
-
-    function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        const args = client.mergeKeepingOnlyChanged(p1, p2);
-        return Object.keys(args).length > 0;
-    }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
