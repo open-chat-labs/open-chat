@@ -26,6 +26,7 @@
     import type { Message, OpenChat } from "openchat-client";
     import { push } from "svelte-spa-router";
     import { toastStore } from "../../stores/toast";
+    import * as shareFunctions from "../../utils/share";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -80,7 +81,7 @@
     }
 
     function shareMessage() {
-        dispatch("shareMessage", msg);
+        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg);
     }
 
     function copyMessageUrl() {

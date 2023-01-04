@@ -109,7 +109,6 @@
         on:upgrade
         on:forward
         on:copyMessageUrl
-        on:shareMessage
         on:expandMessage
         on:collapseMessage
         eventIndex={event.index}

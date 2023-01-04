@@ -317,10 +317,6 @@
         $fromBottom = calculateFromBottom();
     }
 
-    function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
     function copyMessageUrl(ev: CustomEvent<Message>) {
         shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
     }
@@ -427,7 +423,6 @@
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:shareMessage={shareMessage}
                             on:copyMessageUrl={copyMessageUrl}
                             on:chatWith
                             on:replyTo={replyTo}

@@ -42,8 +42,7 @@
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
-    import { copyMessageUrl, shareMessage } from "../../utils/share";
-    import { toastStore } from "../../stores/toast";
+    import { copyMessageUrl } from "../../utils/share";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -525,10 +524,6 @@
         return false;
     }
 
-    function onShareMessage(ev: CustomEvent<Message>) {
-        shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
     function onCopyMessageUrl(ev: CustomEvent<Message>) {
         copyMessageUrl(chat.chatId, ev.detail.messageIndex);
     }
@@ -659,7 +654,6 @@
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:copyMessageUrl={onCopyMessageUrl}
-                        on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade

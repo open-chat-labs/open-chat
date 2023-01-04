@@ -191,7 +191,6 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
-    MessageSelected,
     SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
