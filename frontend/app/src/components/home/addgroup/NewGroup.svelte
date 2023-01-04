@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import GroupDetails from "./GroupDetails.svelte";
     import GroupVisibility from "./GroupVisibility.svelte";
@@ -14,7 +13,6 @@
     import {
         CandidateGroupChat,
         CreateGroupResponse,
-        GroupPermissions,
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
