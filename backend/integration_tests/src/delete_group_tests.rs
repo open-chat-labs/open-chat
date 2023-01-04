@@ -12,7 +12,7 @@ fn delete_group_succeeds() {
         controller,
     } = setup_env();
 
-    let TestData { user1, group_id, .. } = init_test_data(&mut env, canister_ids.user_index);
+    let TestData { user1, user2, group_id } = init_test_data(&mut env, canister_ids.user_index);
 
     let delete_group_response = client::user::delete_group(
         &mut env,
@@ -26,6 +26,10 @@ fn delete_group_succeeds() {
         "{:?}",
         delete_group_response
     );
+
+    let initial_state = client::user::happy_path::initial_state(&env, &user2);
+
+    assert!(!initial_state.chats.iter().any(|c| c.chat_id() == group_id));
 
     return_env(TestEnv {
         env,
