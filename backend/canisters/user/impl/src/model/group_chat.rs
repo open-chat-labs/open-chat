@@ -13,7 +13,7 @@ pub struct GroupChat {
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
     pub archived: Timestamped<bool>,
     #[serde(default)]
-    pub date_read_pinned: Option<TimestampMillis>,
+    pub date_read_pinned: Timestamped<Option<TimestampMillis>>,
 }
 
 impl GroupChat {
@@ -26,7 +26,7 @@ impl GroupChat {
             is_super_admin,
             threads_read: TimestampedMap::default(),
             archived: Timestamped::new(false, now),
-            date_read_pinned: None,
+            date_read_pinned: Timestamped::new(None, now),
         }
     }
 
@@ -36,7 +36,7 @@ impl GroupChat {
             self.last_changed_for_my_data,
             self.threads_read.last_updated().unwrap_or_default(),
             self.archived.timestamp,
-            self.date_read_pinned.unwrap_or_default(),
+            self.date_read_pinned.timestamp,
         ]
         .iter()
         .max()
@@ -65,7 +65,7 @@ impl GroupChat {
             read_by_me_up_to: self.read_by_me_up_to.value,
             threads_read: self.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
             archived: self.archived.value,
-            date_read_pinned: self.date_read_pinned,
+            date_read_pinned: self.date_read_pinned.value,
         }
     }
 
@@ -79,9 +79,7 @@ impl GroupChat {
                 .map(|(k, v)| (*k, v.value))
                 .collect(),
             archived: self.archived.if_set_after(updates_since).copied(),
-            date_read_pinned: self
-                .date_read_pinned
-                .filter(|date_read_pinned| *date_read_pinned > updates_since),
+            date_read_pinned: self.date_read_pinned.if_set_after(updates_since).copied().flatten(),
         }
     }
 
@@ -121,9 +119,7 @@ impl GroupChat {
             frozen: OptionUpdate::NoChange,
             wasm_version: None,
             date_last_pinned: None,
-            date_read_pinned: self
-                .date_read_pinned
-                .filter(|date_read_pinned| *date_read_pinned > updates_since),
+            date_read_pinned: self.date_read_pinned.if_set_after(updates_since).copied().flatten(),
         }
     }
 }
