@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import GroupDetails from "./GroupDetails.svelte";
     import GroupVisibility from "./GroupVisibility.svelte";
@@ -14,7 +13,6 @@
     import {
         CandidateGroupChat,
         CreateGroupResponse,
-        GroupPermissions,
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
@@ -51,7 +49,7 @@
             ? true
             : client.canChangePermissions(candidateGroup.chatId);
 
-    $: permissionsDirty = havePermissionsChanged(
+    $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
         candidateGroup.permissions
     );
@@ -70,11 +68,6 @@
     $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty;
-
-    function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        const args = client.mergeKeepingOnlyChanged(p1, p2);
-        return Object.keys(args).length > 0;
-    }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
