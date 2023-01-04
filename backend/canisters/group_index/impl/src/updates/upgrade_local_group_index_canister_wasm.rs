@@ -23,6 +23,7 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, runtime_state: &mut 
         for canister_id in runtime_state.data.local_index_map.canisters() {
             runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);
         }
+        crate::jobs::upgrade_canisters::start_job_if_required(runtime_state);
 
         let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "Local group index canister wasm upgraded");
