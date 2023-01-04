@@ -16,6 +16,7 @@ use utils::event_stream::EventStream;
 use utils::memory;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod model;
 mod queries;
@@ -93,6 +94,7 @@ impl RuntimeState {
         for notifications_canister in self.data.notifications_canisters.values_mut() {
             notifications_canister.enqueue_event(event.clone())
         }
+        jobs::sync_notifications_canisters::start_job_if_required(self);
     }
 }
 

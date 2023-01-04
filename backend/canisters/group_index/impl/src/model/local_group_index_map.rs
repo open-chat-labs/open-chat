@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, ChatId, CyclesTopUp, Version};
+use types::{CanisterId, ChatId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct LocalGroupIndexMap {
@@ -13,7 +13,6 @@ pub struct LocalGroupIndexMap {
 pub struct LocalGroupIndex {
     group_count: u32,
     full: bool,
-    cycle_top_ups: Vec<CyclesTopUp>,
     wasm_version: Version,
 }
 
@@ -26,7 +25,6 @@ impl LocalGroupIndexMap {
                 LocalGroupIndex {
                     group_count: 0,
                     full: false,
-                    cycle_top_ups: Vec::default(),
                     wasm_version,
                 },
             );
@@ -75,10 +73,6 @@ impl LocalGroupIndexMap {
 }
 
 impl LocalGroupIndex {
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up);
-    }
-
     pub fn set_wasm_version(&mut self, wasm_version: Version) {
         self.wasm_version = wasm_version;
     }

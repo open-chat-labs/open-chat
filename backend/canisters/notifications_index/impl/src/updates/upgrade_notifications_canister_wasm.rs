@@ -23,6 +23,7 @@ fn upgrade_notifications_canister_wasm_impl(args: Args, runtime_state: &mut Runt
         for canister_id in runtime_state.data.notifications_canisters.keys() {
             runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);
         }
+        crate::jobs::upgrade_canisters::start_job_if_required(runtime_state);
 
         let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "Notifications canister wasm upgraded");
