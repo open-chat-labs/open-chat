@@ -125,7 +125,7 @@ tokio = "1.21.2"
 tracing = "0.1.37"
 tracing-attributes = "0.1.23"
 tracing-subscriber = "0.3.16"
-web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "12a08c29e5175066cd70428699e10ac509036f01" }
+web-push = "0.9.3"
 
 [profile.release]
 lto = true
@@ -140,4 +140,3 @@ ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b1
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "986e0d8531cd152d5da747b760b099f1d4f16136" }
-jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }

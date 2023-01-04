@@ -19,7 +19,7 @@ async fn main() -> Result<(), Error> {
     let command: &str = &args[1];
     let index = args[2].parse::<u64>().unwrap();
     let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
-    let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
+    let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
     let notifications_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
     let index_store = DummyStore::new(HashMap::from([(notifications_canister_id, index)]));
     let ic_url = dotenv::var("IC_URL")?;
