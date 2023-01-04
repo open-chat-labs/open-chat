@@ -25,8 +25,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import { relayPublish } from "../../../stores/relay";
-    import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
@@ -57,7 +55,6 @@
     let previousRootEvent: EventWrapper<Message> | undefined;
 
     $: currentChatMembers = client.currentChatMembers;
-    $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
@@ -140,6 +137,7 @@
 
     $: thread = rootEvent.event.thread;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
+    $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
@@ -273,88 +271,8 @@
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
-    function registerVote(
-        ev: CustomEvent<{
-            messageIndex: number;
-            messageId: bigint;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_register_vote", data: ev.detail });
-            return;
-        }
-
-        if ($selectedChatId !== undefined) {
-            client
-                .registerPollVote(
-                    $selectedChatId,
-                    threadRootMessageIndex,
-                    ev.detail.messageId,
-                    ev.detail.messageIndex,
-                    ev.detail.answerIndex,
-                    ev.detail.type
-                )
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast("poll.voteFailed");
-                    }
-                });
-        }
-    }
-
-    function onDeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
-            return;
-        }
-
-        client.deleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_undelete_message", message: ev.detail });
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
-    }
-
-    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        if (ev.detail.message === rootEvent.event) {
-            relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
-            return;
-        }
-
-        if (!canReact) return;
-
-        const { message, reaction } = ev.detail;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                threadRootMessageIndex,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
     }
 
     function clearFocusIndex() {
@@ -382,10 +300,6 @@
     function onGoToMessageIndex(
         ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
     ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_goto_message", ...ev.detail });
-            return;
-        }
         goToMessageIndex(ev.detail.index);
     }
 
@@ -400,14 +314,6 @@
 
     function onScroll() {
         $fromBottom = calculateFromBottom();
-    }
-
-    function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
-    function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
@@ -493,7 +399,7 @@
                             focused={evt.event.kind === "message" &&
                                 focusMessageIndex === evt.event.messageIndex}
                             {readonly}
-                            inThread
+                            {threadRootMessage}
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
@@ -511,18 +417,10 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
-                            on:selectReaction={onSelectReaction}
-                            on:deleteMessage={onDeleteMessage}
-                            on:undeleteMessage={onUndeleteMessage}
-                            on:blockUser
-                            on:registerVote={registerVote}
                             on:editEvent={() => editEvent(evt)}
-                            on:shareMessage={shareMessage}
-                            on:copyMessageUrl={copyMessageUrl}
                             on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
-                            on:undeleteMessage={onUndeleteMessage}
                             on:upgrade
                             on:forward />
                     {/each}

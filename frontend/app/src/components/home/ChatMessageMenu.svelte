@@ -26,6 +26,7 @@
     import type { Message, OpenChat } from "openchat-client";
     import { push } from "svelte-spa-router";
     import { toastStore } from "../../stores/toast";
+    import * as shareFunctions from "../../utils/share";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -42,7 +43,6 @@
     export let pinned: boolean;
     export let supportsReply: boolean;
     export let canQuoteReply: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let groupChat: boolean;
     export let canForward: boolean;
@@ -54,12 +54,26 @@
     export let translated: boolean;
     export let crypto: boolean;
     export let msg: Message;
+    export let threadRootMessage: Message | undefined;
 
+    $: user = client.user;
+    $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
     $: storageStore = client.storageStore;
+    $: threadRootMessageIndex =
+        msg.messageId === threadRootMessage?.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex;
 
     function blockUser() {
-        dispatch("blockUser", { userId: senderId });
+        if (!canBlockUser) return;
+        client.blockUser(chatId, senderId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
+        });
     }
 
     function collapseMessage() {
@@ -67,19 +81,29 @@
     }
 
     function shareMessage() {
-        dispatch("shareMessage", msg);
+        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg);
     }
 
     function copyMessageUrl() {
-        dispatch("copyMessageUrl", msg);
+        shareFunctions.copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
     }
 
     function pinMessage() {
-        dispatch("pinMessage", msg);
+        if (!canPin || inThread) return;
+        client.pinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinMessageFailed");
+            }
+        });
     }
 
     function unpinMessage() {
-        dispatch("unpinMessage", msg);
+        if (!canPin || inThread) return;
+        client.unpinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("unpinMessageFailed");
+            }
+        });
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
@@ -96,11 +120,17 @@
     }
 
     function deleteMessage() {
-        dispatch("deleteMessage", msg);
+        if (!canDelete && user.userId !== msg.sender) return;
+        client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
     function undeleteMessage() {
-        dispatch("undeleteMessage", msg);
+        if (!canUndelete) return;
+        client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("undeleteMessageFailed");
+            }
+        });
     }
 
     function untranslateMessage() {
@@ -224,15 +254,12 @@
                             slot="icon" />
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
-                    {#if canBlockUser}
-                        <MenuItem on:click={blockUser}>
-                            <Cancel
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
-                        </MenuItem>
-                    {/if}
+                {/if}
+                {#if confirmed && groupChat && !me && canBlockUser}
+                    <MenuItem on:click={blockUser}>
+                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("blockUser")}</div>
+                    </MenuItem>
                 {/if}
                 {#if canEdit && !inert}
                     <MenuItem on:click={() => dispatch("editMessage")}>

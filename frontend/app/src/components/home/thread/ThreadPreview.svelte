@@ -130,7 +130,7 @@
                         first={true}
                         last={true}
                         readonly={true}
-                        inThread={true}
+                        threadRootMessage={thread.rootMessage.event}
                         pinned={false}
                         supportsEdit={false}
                         supportsReply={false}
@@ -171,7 +171,7 @@
                             first={i === 0}
                             last={i === userGroup.length - 1}
                             readonly={true}
-                            inThread={true}
+                            threadRootMessage={thread.rootMessage.event}
                             pinned={false}
                             supportsEdit={false}
                             supportsReply={false}
