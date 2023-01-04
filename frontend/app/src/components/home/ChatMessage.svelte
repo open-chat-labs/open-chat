@@ -479,7 +479,6 @@
                     translatable={msg.content.kind === "text_content"}
                     {translated}
                     on:collapseMessage
-                    on:copyMessageUrl
                     on:forward
                     on:reply={reply}
                     on:replyPrivately={replyPrivately}

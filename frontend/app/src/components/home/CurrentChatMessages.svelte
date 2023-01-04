@@ -42,7 +42,6 @@
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
-    import { copyMessageUrl } from "../../utils/share";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -524,10 +523,6 @@
         return false;
     }
 
-    function onCopyMessageUrl(ev: CustomEvent<Message>) {
-        copyMessageUrl(chat.chatId, ev.detail.messageIndex);
-    }
-
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
         filteredProposals: FilteredProposals | undefined
@@ -653,7 +648,6 @@
                         on:replyPrivatelyTo
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:copyMessageUrl={onCopyMessageUrl}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade

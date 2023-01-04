@@ -25,7 +25,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
@@ -317,10 +316,6 @@
         $fromBottom = calculateFromBottom();
     }
 
-    function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
-    }
-
     function defaultCryptoTransferReceiver(): string | undefined {
         return $replyingTo?.sender?.userId;
     }
@@ -423,7 +418,6 @@
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:copyMessageUrl={copyMessageUrl}
                             on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo

@@ -85,7 +85,7 @@
     }
 
     function copyMessageUrl() {
-        dispatch("copyMessageUrl", msg);
+        shareFunctions.copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
     }
 
     function pinMessage() {

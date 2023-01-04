@@ -108,7 +108,6 @@
         on:editMessage={editEvent}
         on:upgrade
         on:forward
-        on:copyMessageUrl
         on:expandMessage
         on:collapseMessage
         eventIndex={event.index}
