@@ -2,13 +2,30 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::pin_message::{Response::*, *};
+use group_canister::pin_message_v2::{Response::*, *};
 use ic_cdk_macros::update;
-use types::MessagePinned;
+use types::{EventResult, MessagePinned};
 
 #[update]
 #[trace]
-fn pin_message(args: Args) -> Response {
+fn pin_message(args: Args) -> group_canister::pin_message::Response {
+    run_regular_jobs();
+
+    match mutate_state(|state| pin_message_impl(args, state)) {
+        Response::CallerNotInGroup => group_canister::pin_message::Response::CallerNotInGroup,
+        Response::ChatFrozen => group_canister::pin_message::Response::ChatFrozen,
+        Response::MessageIndexOutOfRange => group_canister::pin_message::Response::MessageIndexOutOfRange,
+        Response::MessageNotFound => group_canister::pin_message::Response::MessageNotFound,
+        Response::NoChange => group_canister::pin_message::Response::NoChange,
+        Response::NotAuthorized => group_canister::pin_message::Response::NotAuthorized,
+        Response::UserSuspended => group_canister::pin_message::Response::UserSuspended,
+        Response::Success(er) => group_canister::pin_message::Response::Success(er.index),
+    }
+}
+
+#[update]
+#[trace]
+fn pin_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| pin_message_impl(args, state))
@@ -54,7 +71,10 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
             handle_activity_notification(runtime_state);
 
-            Success(event_index)
+            Success(EventResult {
+                index: event_index,
+                timestamp: now,
+            })
         } else {
             NoChange
         }

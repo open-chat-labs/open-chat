@@ -1142,3 +1142,9 @@ type ChatUnfrozen =
     record {
         unfrozen_by: UserId;
     };
+
+type EventResult =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+    };
