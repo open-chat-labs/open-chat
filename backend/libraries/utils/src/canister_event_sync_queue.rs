@@ -25,13 +25,17 @@ impl<T> Default for CanisterEventSyncQueue<T> {
     }
 }
 
-impl<'a, T: Serialize + Deserialize<'a> + Clone> CanisterEventSyncQueue<T> {
+impl<T> CanisterEventSyncQueue<T> {
     pub fn len(&self) -> usize {
         self.queue.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
+    }
+
+    pub fn sync_in_progress(&self) -> bool {
+        self.sync_in_progress
     }
 
     pub fn push(&mut self, canister_id: CanisterId, event: T) {

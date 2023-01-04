@@ -2939,7 +2939,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.6.8"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=f758bf78e6ec18850e6d023c4f60586376d24885#f758bf78e6ec18850e6d023c4f60586376d24885"
 dependencies = [
  "candid",
  "cfg-if 1.0.0",
@@ -2954,7 +2954,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.6.8"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=f758bf78e6ec18850e6d023c4f60586376d24885#f758bf78e6ec18850e6d023c4f60586376d24885"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -3900,7 +3900,7 @@ dependencies = [
 [[package]]
 name = "ic-ledger-types"
 version = "0.2.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=f758bf78e6ec18850e6d023c4f60586376d24885#f758bf78e6ec18850e6d023c4f60586376d24885"
 dependencies = [
  "candid",
  "crc32fast",
@@ -4474,7 +4474,7 @@ dependencies = [
 [[package]]
 name = "ic0"
 version = "0.18.7"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=77408c7262a4aad8b11da90e05cfc51dfebc0edc#77408c7262a4aad8b11da90e05cfc51dfebc0edc"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=f758bf78e6ec18850e6d023c4f60586376d24885#f758bf78e6ec18850e6d023c4f60586376d24885"
 
 [[package]]
 name = "ic_bls12_381"
