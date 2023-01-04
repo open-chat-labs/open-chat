@@ -358,17 +358,6 @@
         }
     }
 
-    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
-        if (!canBlockUser) return;
-        client.blockUser(chat.chatId, ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("blockUserFailed");
-            }
-        });
-    }
-
     function onMessageWindowLoaded(messageIndex: number | undefined) {
         if (messageIndex === undefined) return;
         tick()
@@ -669,7 +658,6 @@
                         on:replyPrivatelyTo
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:blockUser={onBlockUser}
                         on:copyMessageUrl={onCopyMessageUrl}
                         on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}

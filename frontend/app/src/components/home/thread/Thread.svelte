@@ -56,7 +56,6 @@
     let previousRootEvent: EventWrapper<Message> | undefined;
 
     $: currentChatMembers = client.currentChatMembers;
-    $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
@@ -427,7 +426,6 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
-                            on:blockUser
                             on:editEvent={() => editEvent(evt)}
                             on:shareMessage={shareMessage}
                             on:copyMessageUrl={copyMessageUrl}

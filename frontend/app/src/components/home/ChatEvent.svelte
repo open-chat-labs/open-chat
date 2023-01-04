@@ -105,7 +105,6 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:blockUser
         on:editMessage={editEvent}
         on:upgrade
         on:forward

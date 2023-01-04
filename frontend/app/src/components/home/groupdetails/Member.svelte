@@ -39,7 +39,6 @@
     let hovering = false;
     let viewProfile = false;
 
-    $: userStore = client.userStore;
     $: showMenu =
         canDismissAdmin ||
         canMakeAdmin ||

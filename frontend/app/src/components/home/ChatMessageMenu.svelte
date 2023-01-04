@@ -26,7 +26,6 @@
     import type { Message, OpenChat } from "openchat-client";
     import { push } from "svelte-spa-router";
     import { toastStore } from "../../stores/toast";
-    import { isValidAttribute } from "dompurify";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -66,7 +65,14 @@
             : threadRootMessage?.messageIndex;
 
     function blockUser() {
-        dispatch("blockUser", { userId: senderId });
+        if (!canBlockUser) return;
+        client.blockUser(chatId, senderId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
+        });
     }
 
     function collapseMessage() {
@@ -247,15 +253,12 @@
                             slot="icon" />
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
-                    {#if canBlockUser}
-                        <MenuItem on:click={blockUser}>
-                            <Cancel
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
-                        </MenuItem>
-                    {/if}
+                {/if}
+                {#if confirmed && groupChat && !me && canBlockUser}
+                    <MenuItem on:click={blockUser}>
+                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("blockUser")}</div>
+                    </MenuItem>
                 {/if}
                 {#if canEdit && !inert}
                     <MenuItem on:click={() => dispatch("editMessage")}>
