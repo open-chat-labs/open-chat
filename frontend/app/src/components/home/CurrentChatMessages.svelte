@@ -536,24 +536,6 @@
         return false;
     }
 
-    function onPinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.pinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinMessageFailed");
-            }
-        });
-    }
-
-    function onUnpinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.unpinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("unpinMessageFailed");
-            }
-        });
-    }
-
     function onShareMessage(ev: CustomEvent<Message>) {
         shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
     }
@@ -688,8 +670,6 @@
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:blockUser={onBlockUser}
-                        on:pinMessage={onPinMessage}
-                        on:unpinMessage={onUnpinMessage}
                         on:copyMessageUrl={onCopyMessageUrl}
                         on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}

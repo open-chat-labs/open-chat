@@ -82,11 +82,21 @@
     }
 
     function pinMessage() {
-        dispatch("pinMessage", msg);
+        if (!canPin || inThread) return;
+        client.pinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinMessageFailed");
+            }
+        });
     }
 
     function unpinMessage() {
-        dispatch("unpinMessage", msg);
+        if (!canPin || inThread) return;
+        client.unpinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("unpinMessageFailed");
+            }
+        });
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param

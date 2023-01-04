@@ -481,9 +481,7 @@
                     on:collapseMessage
                     on:shareMessage
                     on:copyMessageUrl
-                    on:pinMessage
                     on:forward
-                    on:unpinMessage
                     on:reply={reply}
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />

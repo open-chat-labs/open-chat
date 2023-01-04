@@ -106,8 +106,6 @@
         on:replyPrivatelyTo
         on:replyTo
         on:blockUser
-        on:pinMessage
-        on:unpinMessage
         on:editMessage={editEvent}
         on:upgrade
         on:forward
