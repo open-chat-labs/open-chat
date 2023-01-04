@@ -21,6 +21,7 @@ pub mod edit_message;
 pub mod enable_invite_code;
 pub mod make_private;
 pub mod pin_message;
+pub mod pin_message_v2;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;
 pub mod remove_participant;

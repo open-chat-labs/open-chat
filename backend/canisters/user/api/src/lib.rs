@@ -12,7 +12,7 @@ pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
 use std::collections::HashMap;
-use types::{ChatId, MessageIndex};
+use types::{ChatId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
@@ -20,6 +20,7 @@ pub struct GroupChatSummary {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub threads_read: HashMap<MessageIndex, MessageIndex>,
     pub archived: bool,
+    pub date_read_pinned: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -28,4 +29,5 @@ pub struct GroupChatSummaryUpdates {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub threads_read: HashMap<MessageIndex, MessageIndex>,
     pub archived: Option<bool>,
+    pub date_read_pinned: Option<TimestampMillis>,
 }

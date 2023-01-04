@@ -113,6 +113,7 @@ impl RuntimeState {
             latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
+            date_last_pinned: data.date_last_pinned,
         }
     }
 
@@ -228,6 +229,8 @@ struct Data {
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub date_last_pinned: Option<TimestampMillis>,
 }
 
 fn default_local_user_index_canister_id() -> CanisterId {
@@ -293,6 +296,7 @@ impl Data {
             new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
+            date_last_pinned: None,
         }
     }
 

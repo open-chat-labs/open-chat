@@ -85,4 +85,5 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.local_users.add(ev.user_id, ev.wasm_version, ev.created);
         }
     }
+    crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
 }

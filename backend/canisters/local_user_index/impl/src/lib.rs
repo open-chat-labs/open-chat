@@ -13,6 +13,7 @@ use utils::env::Environment;
 use utils::{canister, memory};
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod model;
 mod queries;

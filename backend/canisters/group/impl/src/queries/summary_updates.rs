@@ -64,6 +64,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
             wasm_version: None,
+            date_last_pinned: updates_from_events.date_last_pinned,
         };
         Success(SuccessResult { updates })
     } else {
@@ -89,6 +90,7 @@ struct UpdatesFromEvents {
     is_public: Option<bool>,
     notifications_muted: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
+    date_last_pinned: Option<TimestampMillis>,
 }
 
 fn process_events(
@@ -96,20 +98,21 @@ fn process_events(
     participant: &ParticipantInternal,
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
-    let chat_events = &runtime_state.data.events.main();
+    let data = &runtime_state.data;
+    let chat_events = &data.events.main();
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
-        mentions: participant.most_recent_mentions(Some(since), &runtime_state.data.events),
+        mentions: participant.most_recent_mentions(Some(since), &data.events),
         ..Default::default()
     };
 
-    if runtime_state.data.subtype.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(runtime_state.data.subtype.timestamp));
-        updates.subtype = OptionUpdate::from_update(runtime_state.data.subtype.value.clone());
+    if data.subtype.timestamp > since {
+        updates.latest_update = max(updates.latest_update, Some(data.subtype.timestamp));
+        updates.subtype = OptionUpdate::from_update(data.subtype.value.clone());
     }
 
     if participant.notifications_muted.timestamp > since {
@@ -117,9 +120,17 @@ fn process_events(
         updates.notifications_muted = Some(participant.notifications_muted.value);
     }
 
-    if runtime_state.data.frozen.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(runtime_state.data.frozen.timestamp));
-        updates.frozen = OptionUpdate::from_update(runtime_state.data.frozen.value.clone());
+    if data.frozen.timestamp > since {
+        updates.latest_update = max(updates.latest_update, Some(data.frozen.timestamp));
+        updates.frozen = OptionUpdate::from_update(data.frozen.value.clone());
+    }
+
+    if data
+        .date_last_pinned
+        .map_or(false, |date_last_pinned| date_last_pinned > since)
+    {
+        updates.latest_update = max(updates.latest_update, data.date_last_pinned);
+        updates.date_last_pinned = data.date_last_pinned;
     }
 
     let new_proposal_votes = participant
