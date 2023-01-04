@@ -32,7 +32,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "delete_group" => role.can_delete_group(),
             "enable_invite_code" | "disable_invite_code" | "reset_invite_code" => role.can_invite_users(permissions),
             "make_private" => role.can_change_group_visibility(),
-            "pin_message" => role.can_pin_messages(permissions),
+            "pin_message" | "pin_message_v2" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
             "send_message" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
             "unblock_user" => role.can_block_users(permissions),

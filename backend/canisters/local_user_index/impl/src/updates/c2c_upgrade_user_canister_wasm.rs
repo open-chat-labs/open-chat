@@ -33,6 +33,7 @@ fn c2c_upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeSt
                 .canisters_requiring_upgrade
                 .enqueue(CanisterId::from(*user_id))
         }
+        crate::jobs::upgrade_canisters::start_job_if_required(runtime_state);
 
         let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");

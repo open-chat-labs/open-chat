@@ -94,13 +94,14 @@ fn finalize(
         group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
 
     for group_chat in runtime_state.data.group_chats.get_all(Some(updates_since)) {
-        if has_group_been_deleted(&group_chats_deleted, &group_chat.chat_id) {
+        if has_group_been_deleted(&chats_removed, &group_chat.chat_id) {
             continue;
         }
 
         if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
             summary.read_by_me_up_to = group_chat.read_by_me_up_to.value;
             summary.archived = group_chat.archived.value;
+            summary.date_read_pinned = group_chat.date_read_pinned.value;
 
             for thread in summary.latest_threads.iter_mut() {
                 thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -111,6 +112,7 @@ fn finalize(
                 .and_modify(|su| {
                     su.read_by_me_up_to = group_chat.read_by_me_up_to.if_set_after(updates_since).copied().flatten();
                     su.archived = group_chat.archived.if_set_after(updates_since).copied();
+                    su.date_read_pinned = group_chat.date_read_pinned.if_set_after(updates_since).copied().flatten();
 
                     for thread in su.latest_threads.iter_mut() {
                         thread.read_up_to = group_chat.threads_read.get(&thread.root_message_index).map(|v| v.value);
@@ -165,6 +167,6 @@ fn finalize(
     }
 }
 
-fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {
-    groups.iter().any(|g| g.id == *group_id)
+fn has_group_been_deleted(groups: &[ChatId], group_id: &ChatId) -> bool {
+    groups.iter().any(|g_id| g_id == group_id)
 }

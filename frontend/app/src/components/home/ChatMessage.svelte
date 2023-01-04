@@ -36,6 +36,7 @@
     import { pathParams } from "../../stores/routing";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -64,11 +65,11 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
     export let collapsed: boolean = false;
+    export let threadRootMessage: Message | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -84,6 +85,11 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
+    $: inThread = threadRootMessage !== undefined;
+    $: threadRootMessageIndex =
+        threadRootMessage?.messageId === msg.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
     $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
@@ -110,8 +116,6 @@
         !undeleting;
 
     afterUpdate(() => {
-        // console.log("updating ChatMessage component");
-
         if (readByMe && observer && msgElement) {
             observer.unobserve(msgElement);
         }
@@ -182,10 +186,25 @@
 
     function toggleReaction(reaction: string) {
         if (canReact) {
-            dispatch("selectReaction", {
-                message: msg,
-                reaction,
-            });
+            const kind = client.containsReaction(user.userId, reaction, msg.reactions)
+                ? "remove"
+                : "add";
+
+            client
+                .selectReaction(
+                    chatId,
+                    user.userId,
+                    threadRootMessageIndex,
+                    msg.messageId,
+                    reaction,
+                    user.username,
+                    kind
+                )
+                .then((success) => {
+                    if (success && kind === "add") {
+                        client.trackEvent("reacted_to_message");
+                    }
+                });
         }
         showEmojiPicker = false;
     }
@@ -255,11 +274,20 @@
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
-        dispatch("registerVote", {
-            ...ev.detail,
-            messageIndex: msg.messageIndex,
-            messageId: msg.messageId,
-        });
+        client
+            .registerPollVote(
+                chatId,
+                threadRootMessageIndex,
+                msg.messageId,
+                msg.messageIndex,
+                ev.detail.answerIndex,
+                ev.detail.type
+            )
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("poll.voteFailed");
+                }
+            });
     }
 
     function canShare(): boolean {
@@ -438,7 +466,7 @@
                     {pinned}
                     {supportsReply}
                     {canQuoteReply}
-                    {inThread}
+                    {threadRootMessage}
                     {canStartThread}
                     {groupChat}
                     {msg}
@@ -451,12 +479,7 @@
                     translatable={msg.content.kind === "text_content"}
                     {translated}
                     on:collapseMessage
-                    on:shareMessage
-                    on:copyMessageUrl
-                    on:pinMessage
                     on:forward
-                    on:unpinMessage
-                    on:deleteMessage
                     on:reply={reply}
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />

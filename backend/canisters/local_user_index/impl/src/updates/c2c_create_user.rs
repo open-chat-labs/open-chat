@@ -89,6 +89,8 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         test_mode: runtime_state.data.test_mode,
     };
 
+    crate::jobs::topup_canister_pool::start_job_if_required(runtime_state);
+
     Ok(PrepareOk {
         canister_id,
         canister_wasm,

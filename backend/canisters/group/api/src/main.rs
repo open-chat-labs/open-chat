@@ -25,6 +25,7 @@ fn main() {
     generate_candid_method!(group, edit_message, update);
     generate_candid_method!(group, enable_invite_code, update);
     generate_candid_method!(group, make_private, update);
+    generate_candid_method!(group, pin_message_v2, update);
     generate_candid_method!(group, pin_message, update);
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);
