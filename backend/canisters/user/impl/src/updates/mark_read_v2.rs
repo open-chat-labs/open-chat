@@ -31,10 +31,12 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     .insert(thread.root_message_index, thread.read_up_to, now);
             }
 
-            group_chat.date_read_pinned = Timestamped::new(
-                max(group_chat.date_read_pinned.value, chat_messages_read.date_read_pinned),
-                now,
-            );
+            if chat_messages_read.date_read_pinned.is_some() {
+                group_chat.date_read_pinned = Timestamped::new(
+                    max(group_chat.date_read_pinned.value, chat_messages_read.date_read_pinned),
+                    now,
+                );
+            }
         } else if let Some(direct_chat) = runtime_state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
             if let Some(read_up_to) = chat_messages_read.read_up_to {
                 if read_up_to <= direct_chat.events.main().latest_message_index().unwrap_or_default()
