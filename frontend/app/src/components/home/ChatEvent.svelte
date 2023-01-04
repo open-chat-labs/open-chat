@@ -105,11 +105,9 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:selectReaction
         on:blockUser
         on:pinMessage
         on:unpinMessage
-        on:registerVote
         on:editMessage={editEvent}
         on:upgrade
         on:forward

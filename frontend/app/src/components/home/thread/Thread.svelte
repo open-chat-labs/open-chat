@@ -25,7 +25,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import { relayPublish } from "../../../stores/relay";
     import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
@@ -274,70 +273,8 @@
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
-    function registerVote(
-        ev: CustomEvent<{
-            messageIndex: number;
-            messageId: bigint;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_register_vote", data: ev.detail });
-            return;
-        }
-
-        if ($selectedChatId !== undefined) {
-            client
-                .registerPollVote(
-                    $selectedChatId,
-                    threadRootMessageIndex,
-                    ev.detail.messageId,
-                    ev.detail.messageIndex,
-                    ev.detail.answerIndex,
-                    ev.detail.type
-                )
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast("poll.voteFailed");
-                    }
-                });
-        }
-    }
-
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
-    }
-
-    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        if (ev.detail.message === rootEvent.event) {
-            relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
-            return;
-        }
-
-        if (!canReact) return;
-
-        const { message, reaction } = ev.detail;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                threadRootMessageIndex,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
     }
 
     function clearFocusIndex() {
@@ -365,10 +302,6 @@
     function onGoToMessageIndex(
         ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
     ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_goto_message", ...ev.detail });
-            return;
-        }
         goToMessageIndex(ev.detail.index);
     }
 
@@ -494,9 +427,7 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
-                            on:selectReaction={onSelectReaction}
                             on:blockUser
-                            on:registerVote={registerVote}
                             on:editEvent={() => editEvent(evt)}
                             on:shareMessage={shareMessage}
                             on:copyMessageUrl={copyMessageUrl}

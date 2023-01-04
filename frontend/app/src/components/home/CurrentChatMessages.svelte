@@ -40,7 +40,6 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
     import { copyMessageUrl, shareMessage } from "../../utils/share";
@@ -147,33 +146,10 @@
             });
         }, options);
 
-        // this is where we pick up events that may be published from a thread
-        relaySubscribe((event: RelayedEvent) => {
-            if (event.kind === "relayed_goto_message") {
-                doGoToMessageIndex(event.index);
-            }
-
-            if (event.kind === "relayed_select_reaction") {
-                onSelectReaction(event);
-            }
-
-            if (event.kind === "relayed_register_vote") {
-                client.registerPollVote(
-                    chat.chatId,
-                    undefined,
-                    event.data.messageId,
-                    event.data.messageIndex,
-                    event.data.answerIndex,
-                    event.data.type
-                );
-            }
-        });
-
         client.addEventListener("openchat_event", clientEvent);
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
-            relayUnsubscribe();
         };
     });
 
@@ -349,34 +325,6 @@
 
     function calculateFromBottom(): number {
         return -(messagesDiv?.scrollTop ?? 0);
-    }
-
-    function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
-        if (!canReact) return;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                undefined,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
-    }
-
-    function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        onSelectReaction(ev.detail);
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
@@ -606,24 +554,6 @@
         });
     }
 
-    function registerVote(
-        ev: CustomEvent<{
-            messageId: bigint;
-            messageIndex: number;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        client.registerPollVote(
-            chat.chatId,
-            undefined,
-            ev.detail.messageId,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type
-        );
-    }
-
     function onShareMessage(ev: CustomEvent<Message>) {
         shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
     }
@@ -757,11 +687,9 @@
                         on:replyPrivatelyTo
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={onSelectReactionEv}
                         on:blockUser={onBlockUser}
                         on:pinMessage={onPinMessage}
                         on:unpinMessage={onUnpinMessage}
-                        on:registerVote={registerVote}
                         on:copyMessageUrl={onCopyMessageUrl}
                         on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
