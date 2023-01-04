@@ -252,6 +252,7 @@
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
+                        console.log("PathParams: ", pathParams);
                         newChatSelected(pathParams.chatId, pathParams.messageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
