@@ -67,4 +67,5 @@ fn commit(args: Args, chat_id: ChatId, state: &mut RuntimeState) {
         },
         args.members,
     );
+    crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
 }
