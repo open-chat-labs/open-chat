@@ -120,15 +120,16 @@ fn commit(
         .local_index_map
         .add_user(local_user_index_canister_id, user_id);
 
-    runtime_state
-        .data
-        .push_event_to_all_local_user_indexes(UserIndexEvent::UserRegistered(UserRegistered {
+    runtime_state.data.push_event_to_all_local_user_indexes(
+        UserIndexEvent::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
             username,
             is_bot: false,
             referred_by,
-        }));
+        }),
+        Some(local_user_index_canister_id),
+    );
 }
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
