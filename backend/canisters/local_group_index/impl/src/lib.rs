@@ -69,6 +69,14 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
+            },
         }
     }
 }
@@ -147,4 +155,15 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub notifications: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub icp_ledger: CanisterId,
 }

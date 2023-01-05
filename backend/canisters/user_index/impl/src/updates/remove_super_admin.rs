@@ -36,10 +36,11 @@ fn commit(user_id: &UserId, groups_to_dismiss_user_from: Vec<ChatId>, runtime_st
         runtime_state.data.super_admins_to_dismiss.push_back((*user_id, group_id));
     }
 
-    runtime_state
-        .data
-        .push_event_to_all_local_user_indexes(UserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
+    runtime_state.data.push_event_to_all_local_user_indexes(
+        UserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id: *user_id,
             is_super_admin: false,
-        }));
+        }),
+        None,
+    );
 }

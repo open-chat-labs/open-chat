@@ -1,6 +1,6 @@
 use crate::model::notifications_canister::NotificationsCanister;
 use crate::model::subscriptions::Subscriptions;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
@@ -87,6 +87,10 @@ impl RuntimeState {
             users: self.data.principal_to_user_id.len() as u64,
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+            },
         }
     }
 
@@ -149,7 +153,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -160,4 +164,11 @@ pub struct Metrics {
     pub users: u64,
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }

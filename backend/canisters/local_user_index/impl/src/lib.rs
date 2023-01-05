@@ -65,6 +65,7 @@ impl RuntimeState {
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
+            global_user_count: self.data.global_users.len() as u64,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -72,6 +73,13 @@ impl RuntimeState {
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
+            },
         }
     }
 }
@@ -139,6 +147,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub local_user_count: u64,
+    pub global_user_count: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
@@ -147,4 +156,14 @@ pub struct Metrics {
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
     pub user_events_queue_length: usize,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub notifications: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub icp_ledger: CanisterId,
 }

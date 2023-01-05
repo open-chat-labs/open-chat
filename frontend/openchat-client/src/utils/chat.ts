@@ -63,7 +63,7 @@ export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
-export function upToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
+export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
     return (
         chat.latestMessage === undefined ||
         events[events.length - 1]?.index >= chat.latestEventIndex
@@ -76,7 +76,7 @@ export function getRecentlyActiveUsers(
     maxUsers: number
 ): Set<string> {
     const users = new Set<string>();
-    if (upToDate(chat, events)) {
+    if (isUpToDate(chat, events)) {
         const tenMinsAgo = Date.now() - 10 * 60 * 1000;
 
         for (let i = events.length - 1; i >= 0; i--) {

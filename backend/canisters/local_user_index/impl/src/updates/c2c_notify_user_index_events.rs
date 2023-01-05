@@ -82,6 +82,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
         UserIndexEvent::LocalUserAdded(ev) => {
+            runtime_state.data.global_users.add(ev.user_principal, ev.user_id, false);
             runtime_state.data.local_users.add(ev.user_id, ev.wasm_version, ev.created);
         }
     }

@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
-import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
@@ -47,7 +46,7 @@ import {
     buildTransactionLink,
     buildCryptoTransferText,
     mergeSendMessageResponse,
-    upToDate,
+    isUpToDate,
     serialiseMessageForRtc,
 } from "./utils/chat";
 import {
@@ -117,6 +116,7 @@ import {
     addGroupPreview,
     removeGroupPreview,
     groupPreviewsStore,
+    isContiguous,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -222,7 +222,6 @@ import {
     missingUserIds,
     type EventsResponse,
     type ChatEvent,
-    type EventsSuccessResult,
     type ThreadSummary,
     type DataContent,
     type SendMessageSuccess,
@@ -1297,7 +1296,7 @@ export class OpenChat extends EventTarget {
         if (!keepCurrentEvents) {
             clearServerEvents(chat.chatId);
             chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
-        } else if (!this.isContiguous(chat.chatId, resp)) {
+        } else if (!isContiguous(chat.chatId, resp.events)) {
             return;
         }
 
@@ -1313,29 +1312,6 @@ export class OpenChat extends EventTarget {
         addServerEventsToStores(chat.chatId, events, undefined);
 
         makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
-    }
-
-    private isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
-        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
-
-        if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
-
-        const firstIndex = response.events[0].index;
-        const lastIndex = response.events[response.events.length - 1].index;
-        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
-
-        const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
-
-        if (!isContiguous) {
-            console.log(
-                "Events in response are not contiguous with the loaded events",
-                confirmedLoaded,
-                firstIndex,
-                lastIndex
-            );
-        }
-
-        return isContiguous;
     }
 
     private async updateUserStore(chatId: string, userIdsFromEvents: Set<string>): Promise<void> {
@@ -2002,9 +1978,9 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Exception forwarding message", err);
             });
 
-        this.sendMessage(chat, currentEvents, event, undefined).then((jumpTo) => {
-            this.dispatchEvent(new SentMessage(jumpTo));
-            return jumpTo;
+        this.sendMessage(chat, currentEvents, event, undefined).then((upToDate) => {
+            this.dispatchEvent(new SentMessage(upToDate));
+            return upToDate;
         });
     }
 
@@ -2026,21 +2002,15 @@ export class OpenChat extends EventTarget {
         currentEvents: EventWrapper<ChatEvent>[],
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined
-    ): Promise<number | undefined> {
-        let jumpingTo: number | undefined = undefined;
+    ): Promise<boolean> {
+        let upToDate = true;
         const key =
             threadRootMessageIndex === undefined
                 ? clientChat.chatId
                 : `${clientChat.chatId}_${threadRootMessageIndex}`;
 
         if (threadRootMessageIndex === undefined) {
-            if (!upToDate(clientChat, currentEvents)) {
-                jumpingTo = await this.loadEventWindow(
-                    clientChat.chatId,
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    clientChat.latestMessage!.event.messageIndex
-                );
-            }
+            upToDate = isUpToDate(clientChat, currentEvents);
         }
 
         unconfirmed.add(key, messageEvent);
@@ -2068,7 +2038,7 @@ export class OpenChat extends EventTarget {
             currentChatDraftMessage.clear(clientChat.chatId);
         }
 
-        return jumpingTo;
+        return upToDate;
     }
 
     sendMessageWithAttachment(
@@ -2165,14 +2135,16 @@ export class OpenChat extends EventTarget {
                     this.dispatchEvent(new SendMessageFailed());
                 });
 
-            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then((jumpTo) => {
-                if (threadRootMessageIndex !== undefined) {
-                    this.dispatchEvent(new SentThreadMessage(event));
-                } else {
-                    this.dispatchEvent(new SentMessage(jumpTo));
+            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then(
+                (upToDate) => {
+                    if (threadRootMessageIndex !== undefined) {
+                        this.dispatchEvent(new SentThreadMessage(event));
+                    } else {
+                        this.dispatchEvent(new SentMessage(upToDate));
+                    }
+                    return upToDate;
                 }
-                return jumpTo;
-            });
+            );
         }
     }
 

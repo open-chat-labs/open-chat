@@ -112,10 +112,12 @@ fn commit(
     runtime_state.data.global_users.add(user_principal, user_id, false);
 
     if let Some(referred_by) = referred_by {
-        runtime_state.data.user_event_sync_queue.push(
-            referred_by.into(),
-            UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
-        );
+        if runtime_state.data.local_users.get(&referred_by).is_some() {
+            runtime_state.data.user_event_sync_queue.push(
+                referred_by.into(),
+                UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
+            );
+        }
     }
 }
 
