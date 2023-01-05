@@ -1,14 +1,11 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{Data, LOG_MESSAGES};
-use candid::Principal;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use local_user_index_canister::post_upgrade::Args;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
-use types::UserId;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
 
@@ -19,7 +16,7 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+    let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     init_logger(data.test_mode);
