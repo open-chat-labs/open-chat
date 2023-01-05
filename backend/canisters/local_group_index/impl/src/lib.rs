@@ -75,7 +75,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                ledger: self.data.ledger_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
             },
         }
     }
@@ -165,5 +165,5 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub ledger: CanisterId,
+    pub icp_ledger: CanisterId,
 }

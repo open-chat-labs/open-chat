@@ -74,7 +74,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                ledger: self.data.ledger_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
             },
         }
     }
@@ -222,5 +222,5 @@ pub struct CachedMetrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub ledger: CanisterId,
+    pub icp_ledger: CanisterId,
 }

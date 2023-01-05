@@ -124,6 +124,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
             },
         }
     }
@@ -295,4 +296,5 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub icp_ledger: CanisterId,
 }
