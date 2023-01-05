@@ -3,7 +3,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::timer_job_types::TimerJob;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
@@ -119,6 +119,12 @@ impl RuntimeState {
             reactions: chat_metrics.reactions,
             created: self.data.user_created,
             last_active: chat_metrics.last_active,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+            },
         }
     }
 }
@@ -249,7 +255,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -276,8 +282,17 @@ pub struct Metrics {
     pub reactions: u64,
     pub created: TimestampMillis,
     pub last_active: TimestampMillis,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub notifications: CanisterId,
 }

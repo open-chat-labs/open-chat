@@ -1,6 +1,5 @@
 use crate::model::last_online_dates::LastOnlineDates;
 use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
-use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -41,6 +40,10 @@ impl RuntimeState {
             mark_as_online_count: self.data.mark_as_online_count,
             batches_sent_to_user_index: self.data.batches_sent_to_user_index,
             failed_batches: self.data.failed_batches,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+            },
         }
     }
 }
@@ -72,7 +75,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -82,4 +85,11 @@ pub struct Metrics {
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,
     pub failed_batches: u64,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }

@@ -194,6 +194,14 @@ impl RuntimeState {
             last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                local_group_index: self.data.local_group_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                ledger: self.data.ledger_canister_id,
+            },
         }
     }
 }
@@ -363,6 +371,7 @@ pub struct Metrics {
     pub last_active: TimestampMillis,
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {
@@ -377,4 +386,14 @@ struct AddParticipantArgs {
     min_visible_message_index: MessageIndex,
     as_super_admin: bool,
     mute_notifications: bool,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
+    pub notifications: CanisterId,
+    pub ledger: CanisterId,
 }

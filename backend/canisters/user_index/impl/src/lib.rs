@@ -4,7 +4,7 @@ use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use local_user_index_canister::c2c_notify_user_index_events::UserIndexEvent;
@@ -112,6 +112,12 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            canister_ids: CanisterIds {
+                group_index: self.data.group_index_canister_id,
+                notifications_index: self.data.notifications_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
+            },
         }
     }
 }
@@ -247,7 +253,7 @@ impl Default for Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
@@ -267,4 +273,13 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub icp_ledger: CanisterId,
 }
