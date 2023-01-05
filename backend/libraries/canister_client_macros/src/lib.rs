@@ -62,17 +62,22 @@ macro_rules! generate_c2c_call {
                 )
             })?;
 
+            tracing::trace!(method_name, %canister_id, "Starting c2c call");
+
             let result = ic_cdk::api::call::call_raw(canister_id, method_name, &payload_bytes, 0).await;
 
             match result {
-                Ok(response) => msgpack::deserialize(&response).map_err(|e| {
-                    (
-                        ic_cdk::api::call::RejectionCode::CanisterError,
-                        format!("Deserialization error: {:?}", e),
-                    )
-                }),
+                Ok(response) => {
+                    tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
+                    msgpack::deserialize(&response).map_err(|e| {
+                        (
+                            ic_cdk::api::call::RejectionCode::CanisterError,
+                            format!("Deserialization error: {:?}", e),
+                        )
+                    })
+                },
                 Err((error_code, error_message)) => {
-                    tracing::error!(method_name, ?error_code, error_message, "Error calling c2c");
+                    tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
                     Err((error_code, error_message))
                 }
             }
