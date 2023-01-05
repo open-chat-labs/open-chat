@@ -24,9 +24,9 @@ export class LoadedPreviousMessages extends Event {
     }
 }
 
-export class SentMessage extends CustomEvent<number | undefined> {
-    constructor(jumpTo: number | undefined) {
-        super("openchat_event", { detail: jumpTo });
+export class SentMessage extends CustomEvent<boolean> {
+    constructor(upToDate: boolean) {
+        super("openchat_event", { detail: upToDate });
     }
 }
 
