@@ -222,7 +222,6 @@ import {
     missingUserIds,
     type EventsResponse,
     type ChatEvent,
-    type EventsSuccessResult,
     type ThreadSummary,
     type DataContent,
     type SendMessageSuccess,
