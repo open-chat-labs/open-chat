@@ -18,16 +18,13 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
+    init_logger(data.test_mode);
+    LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()));
+
     // One-time code to initialize the date_last_pinned if the chat has pinned messages.
     // This means that all members will initially see the pinned messages as unread.
     init_date_last_pinned(&mut data);
-
-    init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
-
-    if !log_messages.is_empty() || !trace_messages.is_empty() {
-        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-    }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
