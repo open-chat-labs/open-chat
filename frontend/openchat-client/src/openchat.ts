@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
-import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
