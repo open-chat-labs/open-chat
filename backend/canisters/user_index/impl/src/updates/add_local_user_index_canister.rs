@@ -28,6 +28,14 @@ async fn add_local_user_index_canister(args: Args) -> Response {
                 Err(error) => InternalError(format!("{error:?}")),
             }
         }
+        Err(AlreadyAdded) => mutate_state(|state| {
+            if state.data.local_index_map.len() == 1 {
+                bootstrap_first_local_user_index(args.canister_id, state);
+                Success
+            } else {
+                AlreadyAdded
+            }
+        }),
         Err(response) => response,
     }
 }
