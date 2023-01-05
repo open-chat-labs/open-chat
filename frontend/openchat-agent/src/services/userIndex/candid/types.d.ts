@@ -222,6 +222,10 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
+export interface EventResult {
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
@@ -270,6 +274,7 @@ export interface GroupCanisterGroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -295,6 +300,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
   'affected_events' : Uint32Array | number[],
@@ -329,6 +335,7 @@ export interface GroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -346,6 +353,7 @@ export interface GroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -356,6 +364,7 @@ export interface GroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
   'affected_events' : Uint32Array | number[],
@@ -370,6 +379,7 @@ export interface GroupChatSummaryUpdates {
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
