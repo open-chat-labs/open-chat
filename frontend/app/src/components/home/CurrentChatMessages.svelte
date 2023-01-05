@@ -574,7 +574,7 @@
     }
 
     function afterSendMessage(upToDate: boolean) {
-        if (upToDate) {
+        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
             tick().then(() => scrollBottom("smooth"));
         }
     }
