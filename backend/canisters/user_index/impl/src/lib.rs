@@ -206,9 +206,11 @@ impl Data {
         }
     }
 
-    pub fn push_event_to_all_local_user_indexes(&mut self, event: UserIndexEvent) {
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: UserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.local_index_map.canisters() {
-            self.user_index_event_sync_queue.push(*canister_id, event.clone());
+            if except.map_or(true, |id| id != *canister_id) {
+                self.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
         }
     }
 }
