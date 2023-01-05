@@ -69,10 +69,6 @@ impl LocalUserIndexMap {
         self.index_map.keys()
     }
 
-    pub fn len(&self) -> usize {
-        self.index_map.len()
-    }
-
     pub fn get_index_canister(&self, user_id: &UserId) -> Option<CanisterId> {
         self.user_to_index.get(user_id).copied()
     }

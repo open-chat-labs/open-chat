@@ -358,10 +358,6 @@ impl UserMap {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &User> {
-        self.users.values()
-    }
-
     pub fn len(&self) -> usize {
         self.users.len()
     }
