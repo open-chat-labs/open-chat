@@ -1,6 +1,6 @@
 use crate::model::authorized_principals::AuthorizedPrincipals;
 use crate::model::subscriptions::Subscriptions;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -52,6 +52,10 @@ impl RuntimeState {
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
+            canister_ids: CanisterIds {
+                notifications_index: self.data.notifications_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+            },
         }
     }
 }
@@ -87,7 +91,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -97,4 +101,11 @@ pub struct Metrics {
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub subscriptions: u64,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub notifications_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }

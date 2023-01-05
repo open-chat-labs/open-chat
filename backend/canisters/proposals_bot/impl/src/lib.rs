@@ -46,6 +46,12 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                nns_governance: self.data.nns_governance_canister_id,
+            },
         }
     }
 }
@@ -82,7 +88,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -90,6 +96,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -103,4 +110,12 @@ pub struct NervousSystemMetrics {
     pub latest_failed_proposals_update: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub nns_governance: CanisterId,
 }
