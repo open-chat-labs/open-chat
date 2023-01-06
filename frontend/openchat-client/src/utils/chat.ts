@@ -530,7 +530,6 @@ function reduceJoinedOrLeft(
 function messageIsHidden(message: Message, myUserId: string) {
     return (
         message.content.kind === "deleted_content" &&
-        message.content.deletedBy !== myUserId &&
         message.sender !== myUserId &&
         message.thread === undefined
     );
