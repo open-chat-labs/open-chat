@@ -1,10 +1,13 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
+use crate::{mutate_state, openchat_bot, read_state, Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
+use itertools::Itertools;
 use stable_memory::deserialize_from_stable_memory;
+use std::time::Duration;
 use tracing::info;
+use types::{CanisterId, MessageContent, TextContent, UserId};
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
@@ -27,6 +30,10 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    if let Some((local_user_index_canister_id, failed_message_counts)) = get_failed_message_counts() {
+        notify_failed_messages(local_user_index_canister_id, failed_message_counts);
+    }
 }
 
 fn rehydrate_log_messages(
@@ -41,4 +48,48 @@ fn rehydrate_log_messages(
     for message in trace_messages {
         messages_container.traces.push(message);
     }
+}
+
+fn get_failed_message_counts() -> Option<(CanisterId, Vec<UserId>)> {
+    read_state(|state| {
+        if !state.data.failed_messages_pending_retry.messages.is_empty() {
+            let recipients: Vec<_> = state.data.failed_messages_pending_retry.messages.keys().copied().collect();
+
+            Some((state.data.local_user_index_canister_id, recipients))
+        } else {
+            None
+        }
+    })
+}
+
+fn notify_failed_messages(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
+    let users = recipients.iter().map(|u| format!("@UserId{u}")).join("\n");
+
+    mutate_state(|state| {
+        openchat_bot::send_message(
+            MessageContent::Text(TextContent {
+                text: format!(
+                    "Due to a bug (which has now been fixed) some of your direct messages to the following users were delayed:
+
+{users}
+
+Apologies for the inconvenience
+"
+                ),
+            }),
+            false,
+            state,
+        )
+    });
+    ic_cdk::timer::set_timer(Duration::default(), move || {
+        ic_cdk::spawn(notify_failed_messages_async(local_user_index_canister_id, recipients));
+    });
+}
+
+async fn notify_failed_messages_async(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
+    let _ = local_user_index_canister_c2c_client::c2c_notify_failed_messages(
+        local_user_index_canister_id,
+        &local_user_index_canister::c2c_notify_failed_messages::Args { recipients },
+    )
+    .await;
 }
