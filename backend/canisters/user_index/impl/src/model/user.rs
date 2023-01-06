@@ -96,6 +96,7 @@ impl User {
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
+            seconds_since_last_online: 0,
         }
     }
 

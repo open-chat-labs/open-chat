@@ -444,7 +444,8 @@ export class OpenChat extends EventTarget {
             messagesRead.syncWithServer(
                 ev.detail.chatId,
                 ev.detail.readByMeUpTo,
-                ev.detail.threadsRead
+                ev.detail.threadsRead,
+                ev.detail.dateReadPinned,
             );
         }
         if (ev instanceof StorageUpdated) {
@@ -608,12 +609,20 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.staleThreadsCount(this._liveState.threadsByChat);
     }
 
+    unreadPinned(chatId: string, dateLastPinned: bigint | undefined): boolean {
+        return this.messagesRead.unreadPinned(chatId, dateLastPinned);
+    }
+
     markThreadRead(chatId: string, threadRootMessageIndex: number, readUpTo: number): void {
-        return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
+        this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
     markMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): void {
-        return this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+        this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+    }
+
+    markPinnedMessagesRead(chatId: string, dateLastPinned: bigint): void {
+        this.messagesRead.markPinnedMessagesRead(chatId, dateLastPinned);
     }
 
     isMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): boolean {
@@ -1866,9 +1875,12 @@ export class OpenChat extends EventTarget {
             return this.api
                 .pinMessage(chatId, messageIndex)
                 .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
+                    if (resp.kind !== "success" && resp.kind !== "no_change") {
                         this.removePinnedMessage(chatId, messageIndex);
                         return false;
+                    }
+                    if (resp.kind === "success") {
+                        this.markPinnedMessagesRead(chatId, resp.timestamp);
                     }
                     return true;
                 })

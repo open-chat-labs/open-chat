@@ -9,6 +9,12 @@ fn inspect_message() {
 fn accept_if_valid(runtime_state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
+    // TODO temp hack!
+    if method_name == "start_jobs" {
+        ic_cdk::api::call::accept_message();
+        return;
+    }
+
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
     if is_c2c_method {

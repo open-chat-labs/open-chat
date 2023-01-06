@@ -6,5 +6,6 @@ mod remove_notifications;
 mod remove_subscription;
 mod remove_subscriptions;
 mod remove_subscriptions_for_user;
+mod start_jobs;
 mod upgrade_notifications_canister_wasm;
 mod wallet_receive;

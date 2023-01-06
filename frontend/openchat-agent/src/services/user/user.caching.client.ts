@@ -267,7 +267,8 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     new MessagesReadFromServer(
                         chat.chatId,
                         chat.readByMeUpTo,
-                        threadsReadFromChat(chat)
+                        threadsReadFromChat(chat),
+                        (chat as GroupChatSummary)?.dateReadPinned,
                     )
                 );
 

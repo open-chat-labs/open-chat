@@ -46,6 +46,7 @@ function handleAgentEvent(ev: Event): void {
                 chatId: ev.detail.chatId,
                 readByMeUpTo: ev.detail.readByMeUpTo,
                 threadsRead: ev.detail.threadsRead,
+                dateReadPinned: ev.detail.dateReadPinned,
             },
         });
     }

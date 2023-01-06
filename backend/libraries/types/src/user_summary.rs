@@ -9,6 +9,7 @@ pub struct UserSummary {
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
+    pub seconds_since_last_online: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -2,6 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES
 use ic_cdk::timer::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
+use tracing::info;
 use types::{CanisterId, Cycles};
 use utils::canister::create;
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
@@ -14,6 +15,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.canister_pool.is_full() {
         let timer_id = ic_cdk::timer::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
+        info!("'topup_canister_pool' job started");
         true
     } else {
         false
@@ -31,6 +33,7 @@ fn run() {
         }
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk::timer::clear_timer(timer_id);
+        info!("'topup_canister_pool' job stopped");
     }
 }
 
