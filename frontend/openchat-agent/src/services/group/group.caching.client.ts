@@ -319,7 +319,7 @@ export class CachingGroupClient implements IGroupClient {
             return resp === "events_failed"
                 ? resp
                 : {
-                      events: [...resp.events],
+                      events: [...fromCache.messageEvents, ...resp.events],
                       affectedEvents: resp.affectedEvents,
                       latestEventIndex: resp.latestEventIndex,
                   };
