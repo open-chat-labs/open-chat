@@ -10,7 +10,9 @@ cd openchat-shared
 pm2 start --name "shared" "npm run dev" 
 cd ../openchat-agent
 pm2 start --name "agent" "npm run dev" 
+cd ../openchat-worker
+pm2 start --name "worker" "npm run dev" 
 cd ../openchat-client
 pm2 start --name "client" "npm run dev" 
-cd ../openchat-sw
+cd ../app
 pm2 start --name "app" "npm run dev" 

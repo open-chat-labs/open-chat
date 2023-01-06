@@ -15,6 +15,7 @@
     "openchat-client",
     "openchat-agent",
     "openchat-shared",
+    "openchat-worker",
     "openchat-sw"
   ],
   "devDependencies": {

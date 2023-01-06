@@ -1,16 +1,18 @@
 import { IDL } from "@dfinity/candid";
-import type { ApiNotification } from "../services/notifications/candid/idl";
-import { Notification as NotificationIdl } from "../services/notifications/candid/notification";
-import { notification as toNotification } from "../services/notifications/mappers";
-import type { Notification } from "../domain/notifications";
+import { ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
+import {
+    Notification,
+    CryptocurrencyContent,
+    MessageContent,
+    User,
+    Cryptocurrency,
+    E8S_PER_TOKEN,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { handleRequest } from "./http_request";
 import { registerRoute, setCatchHandler, setDefaultHandler } from "workbox-routing";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CustomCacheFirst, CustomStaleWhileRevalidate } from "./strategies";
-import { UnsupportedValueError } from "../utils/error";
-import { CryptocurrencyContent, MessageContent } from "../domain/chat";
-import { User } from "../domain/user/user";
-import { Cryptocurrency, E8S_PER_TOKEN } from "../domain/crypto";
 import { CacheableResponsePlugin } from "./cacheable";
 
 declare const self: ServiceWorkerGlobalScope;
