@@ -25,38 +25,38 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
         UserIndexEvent::UsernameChanged(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
-                UserEvent::UsernameChanged(UsernameChanged { username: ev.username }),
+                UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
             );
         }
         UserIndexEvent::UserSuspended(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
-                UserEvent::UserSuspended(UserSuspended {
+                UserEvent::UserSuspended(Box::new(UserSuspended {
                     timestamp: ev.timestamp,
                     duration: ev.duration,
                     reason: ev.reason,
                     suspended_by: ev.suspended_by,
-                }),
+                })),
             );
         }
         UserIndexEvent::PhoneNumberConfirmed(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
-                UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
+                UserEvent::PhoneNumberConfirmed(Box::new(PhoneNumberConfirmed {
                     phone_number: ev.phone_number,
                     storage_added: ev.storage_added,
                     new_storage_limit: ev.new_storage_limit,
-                }),
+                })),
             );
         }
         UserIndexEvent::StorageUpgraded(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
-                UserEvent::StorageUpgraded(StorageUpgraded {
+                UserEvent::StorageUpgraded(Box::new(StorageUpgraded {
                     cost: ev.cost,
                     storage_added: ev.storage_added,
                     new_storage_limit: ev.new_storage_limit,
-                }),
+                })),
             );
         }
         UserIndexEvent::UserRegistered(ev) => {
@@ -66,10 +66,10 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
                 if runtime_state.data.local_users.get(&referred_by).is_some() {
                     runtime_state.data.user_event_sync_queue.push(
                         referred_by.into(),
-                        UserEvent::ReferredUserRegistered(ReferredUserRegistered {
+                        UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
                             user_id: ev.user_id,
                             username: ev.username,
-                        }),
+                        })),
                     );
                 }
             }

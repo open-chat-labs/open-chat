@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
-    UsernameChanged(UsernameChanged),
-    PhoneNumberConfirmed(PhoneNumberConfirmed),
-    StorageUpgraded(StorageUpgraded),
-    ReferredUserRegistered(ReferredUserRegistered),
-    UserSuspended(UserSuspended),
-    OpenChatBotMessage(MessageContent),
+    UsernameChanged(Box<UsernameChanged>),
+    PhoneNumberConfirmed(Box<PhoneNumberConfirmed>),
+    StorageUpgraded(Box<StorageUpgraded>),
+    ReferredUserRegistered(Box<ReferredUserRegistered>),
+    UserSuspended(Box<UserSuspended>),
+    OpenChatBotMessage(Box<MessageContent>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

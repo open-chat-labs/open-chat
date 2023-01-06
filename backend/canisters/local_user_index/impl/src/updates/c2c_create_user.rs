@@ -115,7 +115,7 @@ fn commit(
         if runtime_state.data.local_users.get(&referred_by).is_some() {
             runtime_state.data.user_event_sync_queue.push(
                 referred_by.into(),
-                UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
             );
         }
     }
