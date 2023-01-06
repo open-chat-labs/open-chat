@@ -1,6 +1,6 @@
 # OpenChat front-end
 
-The OpenChat frontend is composed of four packages.
+The OpenChat frontend is composed of five packages.
 
 ### app
 
@@ -20,9 +20,13 @@ This is a library which encapsulates all interaction with the OpenChat server ca
 
 This library contains the OpenChat frontend domain model and is referenced by both the openchat-client and the openchat-agent libraries. The domain types are also re-exported from the openchat-client library so that the website itself can make use of them without directly depending on the shared lib.
 
+### openchat-sw
+
+This contains the site which bootstraps the custom OpenChat service worker. Our custom service worker supports the custom oc.app domain, provides fine grained caching of assets and handles push notifications.
+
 ### Turborepo
 
-The four packages are managed by `turborepo`. Unfortunately turborepo doesn't handle dev mode very well as it doesn't really have any way to deal with tasks that do not end very well.
+The five packages are managed by `turborepo`. Unfortunately turborepo doesn't handle dev mode very well as it doesn't really have any way to deal with tasks that do not end.
 
 Therefore to run locally you need to run the `npm run dev` tasks for each front end project separately. This can be made easier using a process manager such as `pm2`.
 
@@ -35,6 +39,8 @@ This will do the following:
     * run openchat-agent in dev mode
     * run openchat-client in dev mode
     * run app in dev mode
+
+Note that in dev mode, we run _without_ the service worker. It should be possible to run via the service worker, but that would involve running against a frontend deployed to the local replica which is not generally what you want for local development.
 
 To monitor the process you can either run `pm2 monit` from the command line or run `pm2 plus` to get a nice web interface.
 

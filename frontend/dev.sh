@@ -12,5 +12,5 @@ cd ../openchat-agent
 pm2 start --name "agent" "npm run dev" 
 cd ../openchat-client
 pm2 start --name "client" "npm run dev" 
-cd ../app
+cd ../openchat-sw
 pm2 start --name "app" "npm run dev" 
