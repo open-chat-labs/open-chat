@@ -10,7 +10,8 @@ use types::{
     CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, MessageId, MessageIndex,
     UserId,
 };
-use user_canister::c2c_send_message::{self, C2CReplyContext};
+use user_canister::c2c_send_message;
+use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::send_message::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
