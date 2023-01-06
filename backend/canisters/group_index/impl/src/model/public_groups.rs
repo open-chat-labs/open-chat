@@ -17,7 +17,8 @@ use utils::time::DAY_IN_MS;
 
 use super::private_groups::PrivateGroupInfo;
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
+#[serde(from = "PublicGroupsTrimmed")]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
     #[serde(skip)]
@@ -26,12 +27,6 @@ pub struct PublicGroups {
 }
 
 impl PublicGroups {
-    pub fn hydrate(&mut self) {
-        for (chat_id, group) in self.groups.iter() {
-            self.name_to_id_map.insert(&group.name, *chat_id);
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.groups.len()
     }
@@ -316,5 +311,27 @@ impl PartialOrd for WeightedGroup {
 impl Ord for WeightedGroup {
     fn cmp(&self, other: &Self) -> Ordering {
         self.weighting.cmp(&other.weighting)
+    }
+}
+
+#[derive(Deserialize)]
+struct PublicGroupsTrimmed {
+    groups: HashMap<ChatId, PublicGroupInfo>,
+    groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
+}
+
+impl From<PublicGroupsTrimmed> for PublicGroups {
+    fn from(value: PublicGroupsTrimmed) -> Self {
+        let mut public_groups = PublicGroups {
+            groups: value.groups,
+            groups_pending: value.groups_pending,
+            ..Default::default()
+        };
+
+        for (chat_id, group) in public_groups.groups.iter() {
+            public_groups.name_to_id_map.insert(&group.name, *chat_id);
+        }
+
+        public_groups
     }
 }
