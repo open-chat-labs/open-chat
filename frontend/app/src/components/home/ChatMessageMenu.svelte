@@ -283,7 +283,7 @@
                 {/if}
                 {#if canUndelete}
                     <MenuItem on:click={undeleteMessage}>
-                        <DeleteOffOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <DeleteOffOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">{$_("undeleteMessage")}</div>
                     </MenuItem>
                 {/if}
