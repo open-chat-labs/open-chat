@@ -73,7 +73,7 @@
     }
 
     function expandDeletedMessages() {
-        client.showDeletedMessages(chatId);
+        client.expandDeletedMessages(chatId);
     }
 </script>
 

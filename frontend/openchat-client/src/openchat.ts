@@ -2296,7 +2296,7 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
-    showDeletedMessages(chatId: string): void {
+    expandDeletedMessages(chatId: string): void {
         chatStateStore.setProp(chatId, "aggregateDeletedMessages", false);
     }
 
