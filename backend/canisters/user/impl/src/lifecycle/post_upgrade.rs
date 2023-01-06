@@ -1,13 +1,16 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{mutate_state, openchat_bot, read_state, Data, LOG_MESSAGES};
+use crate::updates::send_message::send_to_recipients_canister;
+use crate::{mutate_state, openchat_bot, Data, LOG_MESSAGES};
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use itertools::Itertools;
 use stable_memory::deserialize_from_stable_memory;
+use std::mem;
 use std::time::Duration;
 use tracing::info;
 use types::{CanisterId, MessageContent, TextContent, UserId};
+use user_canister::c2c_send_message;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
@@ -31,8 +34,10 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    if let Some((local_user_index_canister_id, recipients)) = get_failed_message_counts() {
-        notify_failed_messages(local_user_index_canister_id, recipients);
+    if let Some(messages) = get_failed_messages() {
+        ic_cdk::timer::set_timer(Duration::default(), move || {
+            process_failed_messages(messages.local_user_index_canister_id, messages.failed_messages)
+        });
     }
 }
 
@@ -50,20 +55,33 @@ fn rehydrate_log_messages(
     }
 }
 
-fn get_failed_message_counts() -> Option<(CanisterId, Vec<UserId>)> {
-    read_state(|state| {
-        if !state.data.failed_messages_pending_retry.messages.is_empty() {
-            let recipients: Vec<_> = state.data.failed_messages_pending_retry.messages.keys().copied().collect();
+struct FailedMessages {
+    local_user_index_canister_id: CanisterId,
+    failed_messages: Vec<(UserId, Vec<c2c_send_message::Args>)>,
+}
 
-            Some((state.data.local_user_index_canister_id, recipients))
+fn get_failed_messages() -> Option<FailedMessages> {
+    mutate_state(|state| {
+        let messages = mem::take(&mut state.data.failed_messages_pending_retry.messages);
+        if !messages.is_empty() {
+            let failed_messages: Vec<_> = messages.into_iter().collect();
+
+            Some(FailedMessages {
+                local_user_index_canister_id: state.data.local_user_index_canister_id,
+                failed_messages,
+            })
         } else {
             None
         }
     })
 }
 
-fn notify_failed_messages(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
-    let users = recipients.iter().map(|u| format!("@UserId({u})")).join("\n");
+fn process_failed_messages(
+    local_user_index_canister_id: CanisterId,
+    failed_messages: Vec<(UserId, Vec<c2c_send_message::Args>)>,
+) {
+    let recipients: Vec<_> = failed_messages.iter().map(|(u, _)| *u).collect();
+    let recipients_string = recipients.iter().map(|u| format!("@UserId({u})")).join("\n");
 
     mutate_state(|state| {
         openchat_bot::send_message(
@@ -71,7 +89,7 @@ fn notify_failed_messages(local_user_index_canister_id: CanisterId, recipients: 
                 text: format!(
                     "Due to a bug (which has now been fixed) some of your direct messages to the following users were delayed:
 
-{users}
+{recipients_string}
 
 Apologies for the inconvenience
 "
@@ -81,15 +99,23 @@ Apologies for the inconvenience
             state,
         )
     });
-    ic_cdk::timer::set_timer(Duration::default(), move || {
-        ic_cdk::spawn(notify_failed_messages_async(local_user_index_canister_id, recipients));
-    });
+    ic_cdk::spawn(notify_failed_messages(local_user_index_canister_id, recipients));
+    ic_cdk::spawn(resend_failed_messages(failed_messages));
 }
 
-async fn notify_failed_messages_async(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
+async fn notify_failed_messages(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
     let _ = local_user_index_canister_c2c_client::c2c_notify_failed_messages(
         local_user_index_canister_id,
         &local_user_index_canister::c2c_notify_failed_messages::Args { recipients },
     )
     .await;
+}
+
+async fn resend_failed_messages(failed_messages: Vec<(UserId, Vec<c2c_send_message::Args>)>) {
+    let futures: Vec<_> = failed_messages
+        .into_iter()
+        .flat_map(|(user_id, messages)| messages.into_iter().map(move |m| send_to_recipients_canister(user_id, m, 0)))
+        .collect();
+
+    futures::future::join_all(futures).await;
 }
