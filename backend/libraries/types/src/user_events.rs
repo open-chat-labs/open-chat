@@ -1,7 +1,6 @@
+use crate::{MessageContent, Milliseconds, PhoneNumber, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-
-use crate::{Milliseconds, PhoneNumber, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
@@ -10,6 +9,7 @@ pub enum UserEvent {
     StorageUpgraded(StorageUpgraded),
     ReferredUserRegistered(ReferredUserRegistered),
     UserSuspended(UserSuspended),
+    OpenChatBotMessage(MessageContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

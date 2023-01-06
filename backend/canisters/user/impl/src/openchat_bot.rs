@@ -122,6 +122,21 @@ You can appeal this suspension by sending a direct message to the @OpenChat Twit
     send_text_message(text, false, runtime_state);
 }
 
+pub(crate) fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
+    let args = HandleMessageArgs {
+        message_id: None,
+        sender_message_index: None,
+        sender_name: OPENCHAT_BOT_USERNAME.to_string(),
+        content,
+        replies_to: None,
+        forwarding: false,
+        correlation_id: 0,
+        is_bot: true,
+    };
+
+    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+}
+
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
@@ -135,21 +150,6 @@ fn to_tokens(tokens: Tokens) -> String {
 fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
     let content = MessageContent::Text(TextContent { text });
     send_message(content, mute_notification, runtime_state);
-}
-
-fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let args = HandleMessageArgs {
-        message_id: None,
-        sender_message_index: None,
-        sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-        content,
-        replies_to: None,
-        forwarding: false,
-        correlation_id: 0,
-        is_bot: true,
-    };
-
-    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
 fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
