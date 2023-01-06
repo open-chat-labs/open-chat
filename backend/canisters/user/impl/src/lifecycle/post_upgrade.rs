@@ -35,7 +35,7 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     if let Some(messages) = get_failed_messages() {
-        ic_cdk::timer::set_timer(Duration::default(), move || {
+        ic_cdk::timer::set_timer(Duration::from_secs(120), move || {
             process_failed_messages(messages.local_user_index_canister_id, messages.failed_messages)
         });
     }
