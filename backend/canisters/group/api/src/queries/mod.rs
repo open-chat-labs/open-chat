@@ -1,5 +1,6 @@
 pub mod c2c_summary;
 pub mod c2c_summary_updates;
+pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
 pub mod events_range;
