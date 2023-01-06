@@ -31,8 +31,8 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    if let Some((local_user_index_canister_id, failed_message_counts)) = get_failed_message_counts() {
-        notify_failed_messages(local_user_index_canister_id, failed_message_counts);
+    if let Some((local_user_index_canister_id, recipients)) = get_failed_message_counts() {
+        notify_failed_messages(local_user_index_canister_id, recipients);
     }
 }
 
@@ -63,7 +63,7 @@ fn get_failed_message_counts() -> Option<(CanisterId, Vec<UserId>)> {
 }
 
 fn notify_failed_messages(local_user_index_canister_id: CanisterId, recipients: Vec<UserId>) {
-    let users = recipients.iter().map(|u| format!("@UserId{u}")).join("\n");
+    let users = recipients.iter().map(|u| format!("@UserId({u})")).join("\n");
 
     mutate_state(|state| {
         openchat_bot::send_message(
@@ -77,7 +77,7 @@ Apologies for the inconvenience
 "
                 ),
             }),
-            false,
+            true,
             state,
         )
     });
