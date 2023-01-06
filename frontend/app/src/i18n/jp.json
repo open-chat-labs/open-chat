@@ -427,7 +427,9 @@
         "next": "次",
         "create": "グループを作る",
         "details": "詳細",
-        "members": "メンバー"
+        "members": "メンバー",
+        "edit": "グループを編集",
+        "update": "グループを更新"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",
@@ -669,5 +671,6 @@
     "useAtOwnRisk": "自己責任",
     "deleteMessageAndReport": "削除して報告",
     "howToBuyToken": "{token} の購入についてサポートが必要です",
-    "reason": "理由"
+    "reason": "理由",
+    "expandDeletedMessages": "このチャットで削除されたメッセージを展開する"
 }

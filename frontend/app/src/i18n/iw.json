@@ -439,7 +439,9 @@
         "next": "הַבָּא",
         "create": "צור קבוצה",
         "details": "פרטים",
-        "members": "חברים"
+        "members": "חברים",
+        "edit": "ערוך קבוצה",
+        "update": "עדכן את הקבוצה"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -666,5 +668,6 @@
     "useAtOwnRisk": "השימוש על אחריותך בלבד",
     "deleteMessageAndReport": "מחק ודווח",
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
-    "reason": "סיבה"
+    "reason": "סיבה",
+    "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה"
 }
