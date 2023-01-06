@@ -428,7 +428,9 @@
         "next": "Tiếp theo",
         "create": "Tạo nhóm",
         "details": "Chi tiết",
-        "members": "Các thành viên"
+        "members": "Các thành viên",
+        "edit": "Chỉnh sửa nhóm",
+        "update": "Cập nhật nhóm"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -669,5 +671,6 @@
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
     "deleteMessageAndReport": "Xóa và báo cáo",
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
-    "reason": "Lý do"
+    "reason": "Lý do",
+    "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này"
 }
