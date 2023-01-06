@@ -73,7 +73,6 @@ impl RuntimeState {
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
-            failed_message_user_pairs: self.data.failed_message_users.len(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -102,8 +101,6 @@ struct Data {
     pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
-    #[serde(default)]
-    pub failed_message_users: Vec<FailedMessageUsers>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -143,7 +140,6 @@ impl Data {
             user_event_sync_queue: CanisterEventSyncQueue::<UserEvent>::default(),
             test_mode,
             max_concurrent_canister_upgrades: 10,
-            failed_message_users: Vec::new(),
         }
     }
 }
@@ -166,7 +162,6 @@ pub struct Metrics {
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
     pub user_events_queue_length: usize,
-    pub failed_message_user_pairs: usize,
     pub canister_ids: CanisterIds,
 }
 
