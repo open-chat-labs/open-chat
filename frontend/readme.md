@@ -1,6 +1,6 @@
 # OpenChat front-end
 
-The OpenChat frontend is composed of five packages.
+The OpenChat frontend is composed of six packages.
 
 ### app
 
@@ -10,7 +10,11 @@ This is the svelte website itself.
 
 This is a the top level library which represents the interface that OpenChat exposes to the outside world. This library exposes a set of functions to perform useful tasks and a set of svelte stores to provide access to reactive application state.
 
-Internally, this library will install the openchat-agent web worker and provide async access to it.
+Internally, this library will install the openchat-worker package and provide async access to it.
+
+### openchat-worker
+
+This is a thin layer that provides correlated async access to the openchat-agent via the postMessage api.
 
 ### openchat-agent
 
@@ -37,6 +41,7 @@ This will do the following:
     * start dfx
     * run openchat-shared in dev mode
     * run openchat-agent in dev mode
+    * run openchat-worker in dev mode
     * run openchat-client in dev mode
     * run app in dev mode
 
