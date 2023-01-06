@@ -148,8 +148,9 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
+    $: aggregateDeletedMessages = client.aggregateDeletedMessages;
     $: messages = client
-        .groupEvents([rootEvent, ...$threadEvents], user.userId)
+        .groupEvents([rootEvent, ...$threadEvents], user.userId, $aggregateDeletedMessages)
         .reverse() as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;

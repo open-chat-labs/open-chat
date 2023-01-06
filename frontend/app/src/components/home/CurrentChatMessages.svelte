@@ -424,8 +424,10 @@
         return firstKey;
     }
 
+    $: aggregateDeletedMessages = client.aggregateDeletedMessages;
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .groupEvents(events, user.userId, $aggregateDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
