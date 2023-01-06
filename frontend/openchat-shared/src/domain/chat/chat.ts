@@ -828,6 +828,7 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
+    aggregateDeletedMessages: boolean;
 };
 
 export type GroupRules = {

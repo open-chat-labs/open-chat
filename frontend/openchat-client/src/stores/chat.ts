@@ -277,6 +277,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     userGroupKeys: new Set<string>(),
     confirmedEventIndexesLoaded: new DRange(),
     serverEvents: [],
+    aggregateDeletedMessages: true,
 }));
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
@@ -308,6 +309,12 @@ export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focu
     chatStateStore,
     "focusMessageIndex",
     () => undefined
+);
+
+export const aggregateDeletedMessages = createDerivedPropStore<ChatSpecificState, "aggregateDeletedMessages">(
+    chatStateStore,
+    "aggregateDeletedMessages",
+    () => true
 );
 
 export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
@@ -389,6 +396,7 @@ export function setSelectedChat(
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.chatId);
     chatStateStore.setProp(clientChat.chatId, "focusMessageIndex", messageIndex);
+    chatStateStore.setProp(clientChat.chatId, "aggregateDeletedMessages", true);
     chatStateStore.setProp(
         clientChat.chatId,
         "userIds",

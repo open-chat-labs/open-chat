@@ -91,6 +91,7 @@ import {
     currentUserStore,
     eventsStore,
     focusMessageIndex,
+    aggregateDeletedMessages,
     isProposalGroup,
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
@@ -2283,6 +2284,10 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
+    showDeletedMessages(chatId: string): void {
+        chatStateStore.setProp(chatId, "aggregateDeletedMessages", false);
+    }
+
     remoteUserToggledReaction(
         events: EventWrapper<ChatEvent>[],
         message: RemoteUserToggledReaction
@@ -3069,6 +3074,7 @@ export class OpenChat extends EventTarget {
     blockedUsers = blockedUsers;
     undeletingMessagesStore = undeletingMessagesStore;
     focusMessageIndex = focusMessageIndex;
+    aggregateDeletedMessages = aggregateDeletedMessages;
     userGroupKeys = userGroupKeys;
     unconfirmedReadByThem = unconfirmedReadByThem;
     currentChatReplyingTo = currentChatReplyingTo;

@@ -6,8 +6,7 @@
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
 
-    const client = getContext<OpenChat>("client");
-
+    export let chatId: string;
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
     export let messagesDeleted: number[];
@@ -15,6 +14,8 @@
     export let readByMe: boolean;
 
     let deletedMessagesElement: HTMLElement;
+
+    const client = getContext<OpenChat>("client");
 
     $: userStore = client.userStore;
     $: joinedText = buildJoinedText($userStore, joined);
@@ -70,6 +71,10 @@
             false
         );
     }
+
+    function expandDeletedMessages() {
+        client.showDeletedMessages(chatId);
+    }
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined}
@@ -78,7 +83,13 @@
             <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
-            <p bind:this={deletedMessagesElement} data-index={messagesDeleted.join(" ")}>
+            <p 
+                class="deleted" 
+                title={$_("expandDeletedMessages")} 
+                bind:this={deletedMessagesElement} 
+                data-index={messagesDeleted.join(" ")} 
+                on:click={expandDeletedMessages}
+            >
                 {deletedText}
             </p>
         {/if}
@@ -99,6 +110,11 @@
             margin-bottom: $sp3;
             &:last-child {
                 margin-bottom: 0;
+            }
+
+            &.deleted:hover {
+                cursor: pointer;
+                text-decoration: underline;
             }
         }
     }
