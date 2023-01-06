@@ -1,6 +1,5 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
-use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::timer_job_types::TimerJob;
@@ -146,7 +145,6 @@ struct Data {
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub username: String,
@@ -196,7 +194,6 @@ impl Data {
             ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             avatar: Timestamped::default(),
             test_mode,
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             username,
