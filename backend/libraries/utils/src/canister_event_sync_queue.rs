@@ -66,6 +66,7 @@ impl<T> CanisterEventSyncQueue<T> {
         } else {
             self.sync_in_progress = true;
             let mut batch = Vec::new();
+            let mut canisters_to_readd = Vec::new();
             while let Some(canister_id) = self.queue.pop_front() {
                 if let Occupied(mut e) = self.events.entry(canister_id) {
                     let vec = e.get_mut();
@@ -79,13 +80,16 @@ impl<T> CanisterEventSyncQueue<T> {
                         e.remove();
                     } else {
                         // If there are more events, queue up the canister to be processed again
-                        self.queue.push_back(canister_id);
+                        canisters_to_readd.push(canister_id);
                     }
                     batch.push((canister_id, items));
                     if batch.len() >= self.max_canisters_per_batch {
                         break;
                     }
                 }
+            }
+            for canister_id in canisters_to_readd {
+                self.queue.push_back(canister_id);
             }
             Some(batch)
         }
@@ -115,7 +119,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn events_returned_in_expected_order() {
+    fn canister_count_exceeds_batch_size() {
         let mut queue = CanisterEventSyncQueue {
             max_canisters_per_batch: 2,
             max_events_per_canister_per_batch: 5,
@@ -158,6 +162,49 @@ mod tests {
         assert_eq!(batch[0].1, vec![5, 6, 7]);
         assert_eq!(batch[1].0, canister_id1);
         assert_eq!(batch[1].1, vec![10]);
+        queue.mark_sync_completed();
+
+        assert!(queue.try_start_sync().is_none());
+    }
+
+    #[test]
+    fn canister_count_lower_than_batch_size() {
+        let mut queue = CanisterEventSyncQueue {
+            max_canisters_per_batch: 3,
+            max_events_per_canister_per_batch: 5,
+            ..Default::default()
+        };
+
+        let canister_id1 = CanisterId::from_slice(&[1]);
+        let canister_id2 = CanisterId::from_slice(&[2]);
+
+        for i in 0..11 {
+            queue.push(canister_id1, i);
+        }
+
+        for i in 0..8 {
+            queue.push(canister_id2, i);
+        }
+
+        let batch = queue.try_start_sync().unwrap();
+        assert_eq!(batch.len(), 2);
+        assert_eq!(batch[0].0, canister_id1);
+        assert_eq!(batch[0].1, vec![0, 1, 2, 3, 4]);
+        assert_eq!(batch[1].0, canister_id2);
+        assert_eq!(batch[1].1, vec![0, 1, 2, 3, 4]);
+        queue.mark_sync_completed();
+
+        let batch = queue.try_start_sync().unwrap();
+        assert_eq!(batch.len(), 2);
+        assert_eq!(batch[0].0, canister_id1);
+        assert_eq!(batch[0].1, vec![5, 6, 7, 8, 9]);
+        assert_eq!(batch[1].0, canister_id2);
+        assert_eq!(batch[1].1, vec![5, 6, 7]);
+        queue.mark_sync_completed();
+
+        let batch = queue.try_start_sync().unwrap();
+        assert_eq!(batch[0].0, canister_id1);
+        assert_eq!(batch[0].1, vec![10]);
         queue.mark_sync_completed();
 
         assert!(queue.try_start_sync().is_none());
