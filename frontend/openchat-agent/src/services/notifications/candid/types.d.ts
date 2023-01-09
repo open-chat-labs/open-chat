@@ -182,6 +182,10 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
+export interface EventResult {
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
@@ -230,9 +234,11 @@ export interface GroupCanisterGroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -255,8 +261,10 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -289,9 +297,11 @@ export interface GroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -306,6 +316,7 @@ export interface GroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -316,8 +327,10 @@ export interface GroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -330,6 +343,7 @@ export interface GroupChatSummaryUpdates {
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -640,6 +654,7 @@ export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
   'name' : string,
+  'wasm_version' : Version,
   'description' : string,
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
@@ -731,7 +746,12 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
+export interface Tally {
+  'no' : bigint,
+  'yes' : bigint,
+  'total' : bigint,
+  'timestamp' : TimestampMillis,
+}
 export interface TextContent { 'text' : string }
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
@@ -770,6 +790,7 @@ export interface UserSummary {
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
+  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {

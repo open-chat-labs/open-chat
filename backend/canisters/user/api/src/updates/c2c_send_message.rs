@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex};
+use types::{MessageContent, MessageId, MessageIndex};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -8,7 +8,7 @@ pub struct Args {
     pub sender_message_index: MessageIndex,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<C2CReplyContext>,
+    pub replies_to: Option<crate::c2c_send_messages::C2CReplyContext>,
     pub forwarding: bool,
     pub correlation_id: u64,
 }
@@ -17,10 +17,4 @@ pub struct Args {
 pub enum Response {
     Success,
     Blocked,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum C2CReplyContext {
-    ThisChat(MessageId),
-    OtherChat(ChatId, EventIndex),
 }

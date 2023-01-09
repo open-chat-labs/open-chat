@@ -1,5 +1,5 @@
 use crate::model::direct_chat::DirectChat;
-use crate::updates::c2c_send_message::{handle_message_impl, HandleMessageArgs};
+use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
 use types::{
