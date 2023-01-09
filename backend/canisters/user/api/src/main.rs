@@ -2,6 +2,7 @@ use candid_gen::generate_candid_method;
 
 fn main() {
     generate_candid_method!(user, bio, query);
+    generate_candid_method!(user, deleted_message, query);
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
     generate_candid_method!(user, events_range, query);

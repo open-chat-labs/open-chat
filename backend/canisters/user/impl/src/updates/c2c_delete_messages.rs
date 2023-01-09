@@ -1,4 +1,4 @@
-use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -34,7 +34,7 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         for (message_id, result) in delete_message_results {
             if matches!(result, DeleteMessageResult::Success) {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(Box::new(RemoveDeletedMessageContentJob {
+                    TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,
                         thread_root_message_index: None,
                         message_id,

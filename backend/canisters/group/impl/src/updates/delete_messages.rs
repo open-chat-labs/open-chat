@@ -1,4 +1,4 @@
-use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
@@ -91,7 +91,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         {
             // After 5 minutes hard delete those messages where the deleter was the message sender
             runtime_state.data.timer_jobs.enqueue_job(
-                TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
                     thread_root_message_index: args.thread_root_message_index,
                     message_id,
                 }),

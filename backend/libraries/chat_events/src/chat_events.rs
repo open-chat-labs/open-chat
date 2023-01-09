@@ -803,7 +803,7 @@ impl AllChatEvents {
             if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
                 if deleted_by == caller {
                     match message.content {
-                        MessageContentInternal::Deleted(_) => UndeleteMessageResult::ContentRemoved,
+                        MessageContentInternal::Deleted(_) => UndeleteMessageResult::HardDeleted,
                         MessageContentInternal::Crypto(_) => UndeleteMessageResult::InvalidMessageType,
                         _ => {
                             message.last_updated = Some(now);
@@ -937,7 +937,7 @@ pub enum DeleteMessageResult {
 pub enum UndeleteMessageResult {
     Success,
     NotDeleted,
-    ContentRemoved,
+    HardDeleted,
     InvalidMessageType,
     NotAuthorized,
     NotFound,
