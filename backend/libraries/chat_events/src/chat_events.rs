@@ -222,6 +222,7 @@ impl AllChatEvents {
     pub fn undelete_messages(
         &mut self,
         caller: UserId,
+        is_admin: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         correlation_id: u64,
@@ -232,7 +233,7 @@ impl AllChatEvents {
             .map(|message_id| {
                 (
                     message_id,
-                    self.undelete_message(caller, thread_root_message_index, message_id, correlation_id, now),
+                    self.undelete_message(caller, is_admin, thread_root_message_index, message_id, correlation_id, now),
                 )
             })
             .collect();
@@ -794,6 +795,7 @@ impl AllChatEvents {
     fn undelete_message(
         &mut self,
         caller: UserId,
+        is_admin: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         correlation_id: u64,
@@ -801,7 +803,7 @@ impl AllChatEvents {
     ) -> UndeleteMessageResult {
         if let Some(message) = self.message_internal_mut_by_message_id(thread_root_message_index, message_id) {
             if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
-                if deleted_by == caller {
+                if deleted_by == caller || (is_admin && message.sender != deleted_by) {
                     match message.content {
                         MessageContentInternal::Deleted(_) => UndeleteMessageResult::HardDeleted,
                         MessageContentInternal::Crypto(_) => UndeleteMessageResult::InvalidMessageType,
