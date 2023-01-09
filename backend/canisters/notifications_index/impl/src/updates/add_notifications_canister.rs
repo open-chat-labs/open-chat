@@ -57,7 +57,8 @@ fn prepare(
 
 fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) -> Response {
     if let Vacant(e) = runtime_state.data.notifications_canisters.entry(canister_id) {
-        let mut notifications_canister = NotificationsCanister::new(wasm_version);
+        let now = runtime_state.env.now();
+        e.insert(NotificationsCanister::new(wasm_version, now));
 
         for (user_id, subscription) in runtime_state
             .data
@@ -65,13 +66,11 @@ fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut Ru
             .iter()
             .flat_map(|(user_id, subs)| subs.iter().map(|s| (*user_id, s.clone())))
         {
-            notifications_canister.enqueue_event(NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded {
-                user_id,
-                subscription,
-            }));
+            runtime_state.data.notifications_index_event_sync_queue.push(
+                canister_id,
+                NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription }),
+            );
         }
-
-        e.insert(notifications_canister);
 
         Success
     } else {
