@@ -25,18 +25,21 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 if event_index < min_visible_event_index {
                     return NotAuthorized;
                 } else if let Some(message) = chat_events.message_internal_by_event_index(event_index) {
-                    if message.deleted_by.is_none() {
-                        return MessageNotDeleted;
-                    } else if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                        return MessageHardDeleted;
-                    } else if participant.user_id != message.sender
-                        && !participant.role.can_delete_messages(&runtime_state.data.permissions)
-                    {
-                        return NotAuthorized;
+                    if let Some(deleted_by) = &message.deleted_by {
+                        if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                            return MessageHardDeleted;
+                        } else if participant.user_id == message.sender
+                            || (deleted_by.deleted_by != message.sender
+                                && participant.role.can_delete_messages(&runtime_state.data.permissions))
+                        {
+                            return Success(SuccessResult {
+                                content: message.content.hydrate(Some(participant.user_id)),
+                            });
+                        } else {
+                            return NotAuthorized;
+                        }
                     } else {
-                        return Success(SuccessResult {
-                            content: message.content.hydrate(Some(participant.user_id)),
-                        });
+                        return MessageNotDeleted;
                     }
                 }
             }
