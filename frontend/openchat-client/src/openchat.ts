@@ -445,7 +445,7 @@ export class OpenChat extends EventTarget {
                 ev.detail.chatId,
                 ev.detail.readByMeUpTo,
                 ev.detail.threadsRead,
-                ev.detail.dateReadPinned,
+                ev.detail.dateReadPinned
             );
         }
         if (ev instanceof StorageUpdated) {
@@ -3037,8 +3037,14 @@ export class OpenChat extends EventTarget {
 
         try {
             const response = await this.api.lastOnline(userIds);
-            lastOnlineDates.set(Object.entries(response), Date.now());
-            return response;
+            // for any userIds that did not come back in the response set the lastOnline value to 0
+            // we still want to capture a value so that we don't keep trying to look up the same user over and over
+            const updates = userIds.reduce((updates, userId) => {
+                updates[userId] = response[userId] ?? 0;
+                return updates;
+            }, {} as Record<string, number>);
+            lastOnlineDates.set(Object.entries(updates), Date.now());
+            return updates;
         } catch {
             return {};
         }
