@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
@@ -39,7 +39,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
             for message_id in deleted.iter().copied() {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(Box::new(RemoveDeletedMessageContentJob {
+                    TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
                         message_id,

@@ -5,12 +5,13 @@ use types::{MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    RemoveDeletedMessageContent(RemoveDeletedMessageContentJob),
+    #[serde(alias = "RemoveDeletedMessageContent")]
+    HardDeleteMessageContent(HardDeleteMessageContentJob),
     EndPoll(EndPollJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RemoveDeletedMessageContentJob {
+pub struct HardDeleteMessageContentJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
 }
@@ -24,13 +25,13 @@ pub struct EndPollJob {
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
-            TimerJob::RemoveDeletedMessageContent(job) => job.execute(),
+            TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
         }
     }
 }
 
-impl Job for RemoveDeletedMessageContentJob {
+impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
             if let Some(content) = state

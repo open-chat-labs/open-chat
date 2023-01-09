@@ -8,7 +8,8 @@ use user_canister::c2c_send_message;
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     RetrySendingFailedMessage(Box<RetrySendingFailedMessageJob>),
-    RemoveDeletedMessageContent(Box<RemoveDeletedMessageContentJob>),
+    #[serde(alias = "RemoveDeletedMessageContent")]
+    HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -19,7 +20,7 @@ pub struct RetrySendingFailedMessageJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RemoveDeletedMessageContentJob {
+pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
@@ -30,7 +31,7 @@ impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::RetrySendingFailedMessage(job) => job.execute(),
-            TimerJob::RemoveDeletedMessageContent(job) => job.execute(),
+            TimerJob::HardDeleteMessageContent(job) => job.execute(),
         }
     }
 }
@@ -41,7 +42,7 @@ impl Job for RetrySendingFailedMessageJob {
     }
 }
 
-impl Job for RemoveDeletedMessageContentJob {
+impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
             if let Some(content) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {

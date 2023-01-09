@@ -62,7 +62,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
 
         if !message_ids.is_empty() {
             runtime_state.data.timer_jobs.cancel_jobs(|job| {
-                if let TimerJob::RemoveDeletedMessageContent(j) = job {
+                if let TimerJob::HardDeleteMessageContent(j) = job {
                     j.thread_root_message_index == args.thread_root_message_index && message_ids.contains(&j.message_id)
                 } else {
                     false
