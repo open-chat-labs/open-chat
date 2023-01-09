@@ -130,25 +130,25 @@ mod tests {
             queue.push(canister_id, i);
         }
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 1);
         assert_eq!(batch[0].0, canister_id);
         assert_eq!(batch[0].1, vec![0, 1, 2, 3, 4]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 1);
         assert_eq!(batch[0].0, canister_id);
         assert_eq!(batch[0].1, vec![5, 6, 7, 8, 9]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 1);
         assert_eq!(batch[0].0, canister_id);
         assert_eq!(batch[0].1, vec![10]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        assert!(queue.try_start_sync().is_none());
+        assert!(queue.try_start_batch().is_none());
     }
 
     #[test]
@@ -170,29 +170,29 @@ mod tests {
             queue.push(canister_id2, i);
         }
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 2);
         assert_eq!(batch[0].0, canister_id1);
         assert_eq!(batch[0].1, vec![0, 1, 2, 3, 4]);
         assert_eq!(batch[1].0, canister_id2);
         assert_eq!(batch[1].1, vec![0, 1, 2, 3, 4]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 2);
         assert_eq!(batch[0].0, canister_id1);
         assert_eq!(batch[0].1, vec![5, 6, 7, 8, 9]);
         assert_eq!(batch[1].0, canister_id2);
         assert_eq!(batch[1].1, vec![5, 6, 7]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 1);
         assert_eq!(batch[0].0, canister_id1);
         assert_eq!(batch[0].1, vec![10]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        assert!(queue.try_start_sync().is_none());
+        assert!(queue.try_start_batch().is_none());
     }
 
     #[test]
@@ -217,30 +217,30 @@ mod tests {
 
         queue.push(canister_id3, 0);
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 2);
         assert_eq!(batch[0].0, canister_id1);
         assert_eq!(batch[0].1, vec![0, 1, 2, 3, 4]);
         assert_eq!(batch[1].0, canister_id2);
         assert_eq!(batch[1].1, vec![0, 1, 2, 3, 4]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 2);
         assert_eq!(batch[0].0, canister_id3);
         assert_eq!(batch[0].1, vec![0]);
         assert_eq!(batch[1].0, canister_id1);
         assert_eq!(batch[1].1, vec![5, 6, 7, 8, 9]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        let batch = queue.try_start_sync().unwrap();
+        let batch = queue.try_start_batch().unwrap();
         assert_eq!(batch.len(), 2);
         assert_eq!(batch[0].0, canister_id2);
         assert_eq!(batch[0].1, vec![5, 6, 7]);
         assert_eq!(batch[1].0, canister_id1);
         assert_eq!(batch[1].1, vec![10]);
-        queue.mark_sync_completed();
+        queue.mark_batch_completed();
 
-        assert!(queue.try_start_sync().is_none());
+        assert!(queue.try_start_batch().is_none());
     }
 }
