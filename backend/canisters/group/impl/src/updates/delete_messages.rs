@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::timer_job_types::RemoveDeletedMessageContentJob;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
@@ -7,6 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, DeleteMessageResult};
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
+use std::collections::HashSet;
 use types::{MessageId, MessageUnpinned};
 use utils::time::MINUTE_IN_MS;
 
@@ -84,20 +83,21 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         );
 
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-        for (message_id, result) in delete_message_results {
-            if matches!(result, DeleteMessageResult::Success) {
-                // After 5 minutes hard delete those messages where the deleter was the message sender
-                if my_messages.contains(&message_id) {
-                    runtime_state.data.timer_jobs.enqueue_job(
-                        TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_id,
-                        }),
-                        remove_deleted_message_content_at,
-                        now,
-                    );
-                }
-            }
+        for message_id in delete_message_results
+            .into_iter()
+            .filter(|(_, result)| matches!(result, DeleteMessageResult::Success))
+            .map(|(message_id, _)| message_id)
+            .filter(|message_id| my_messages.contains(message_id))
+        {
+            // After 5 minutes hard delete those messages where the deleter was the message sender
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_id,
+                }),
+                remove_deleted_message_content_at,
+                now,
+            );
         }
 
         handle_activity_notification(runtime_state);
