@@ -24,11 +24,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 
 fn run() {
     match mutate_state(next_batch) {
-        NextBatchResult::Success(batch) => {
-            for (canister_id, events) in batch {
-                ic_cdk::spawn(sync_events(canister_id, events));
-            }
-        }
+        NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch)),
         NextBatchResult::Continue => {}
         NextBatchResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
@@ -46,7 +42,7 @@ enum NextBatchResult {
 }
 
 fn next_batch(runtime_state: &mut RuntimeState) -> NextBatchResult {
-    if let Some(batch) = runtime_state.data.user_event_sync_queue.try_start_sync() {
+    if let Some(batch) = runtime_state.data.user_event_sync_queue.try_start_batch() {
         NextBatchResult::Success(batch)
     } else if !runtime_state.data.user_event_sync_queue.is_empty()
         || runtime_state.data.user_event_sync_queue.sync_in_progress()
@@ -57,18 +53,25 @@ fn next_batch(runtime_state: &mut RuntimeState) -> NextBatchResult {
     }
 }
 
+async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
+    let futures: Vec<_> = batch
+        .into_iter()
+        .map(|(canister_id, events)| sync_events(canister_id, events))
+        .collect();
+
+    futures::future::join_all(futures).await;
+
+    mutate_state(|state| state.data.user_event_sync_queue.mark_batch_completed());
+}
+
 async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
     let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
-    match user_canister_c2c_client::c2c_notify_user_events(canister_id, &args).await {
-        Ok(_) => mutate_state(on_success),
-        Err(_) => mutate_state(|state| on_failure(canister_id, events, state)),
+    if let Err(_) = user_canister_c2c_client::c2c_notify_user_events(canister_id, &args).await {
+        mutate_state(|state| {
+            state
+                .data
+                .user_event_sync_queue
+                .mark_sync_failed_for_canister(canister_id, events);
+        });
     }
-}
-
-fn on_success(runtime_state: &mut RuntimeState) {
-    runtime_state.data.user_event_sync_queue.mark_sync_completed();
-}
-
-fn on_failure(canister_id: CanisterId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
-    runtime_state.data.user_event_sync_queue.mark_sync_failed(canister_id, events);
 }

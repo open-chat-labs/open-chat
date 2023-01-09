@@ -60,7 +60,7 @@ impl<T> CanisterEventSyncQueue<T> {
         }
     }
 
-    pub fn try_start_sync(&mut self) -> Option<Vec<(CanisterId, Vec<T>)>> {
+    pub fn try_start_batch(&mut self) -> Option<Vec<(CanisterId, Vec<T>)>> {
         if self.sync_in_progress || self.queue.is_empty() {
             None
         } else {
@@ -95,11 +95,11 @@ impl<T> CanisterEventSyncQueue<T> {
         }
     }
 
-    pub fn mark_sync_completed(&mut self) {
+    pub fn mark_batch_completed(&mut self) {
         self.sync_in_progress = false;
     }
 
-    pub fn mark_sync_failed(&mut self, canister_id: CanisterId, events: Vec<T>) {
+    pub fn mark_sync_failed_for_canister(&mut self, canister_id: CanisterId, events: Vec<T>) {
         let merged_events = match self.events.remove_entry(&canister_id) {
             Some((_, old_events)) => events.into_iter().chain(old_events).collect(),
             None => {
@@ -109,8 +109,6 @@ impl<T> CanisterEventSyncQueue<T> {
         };
 
         self.events.insert(canister_id, merged_events);
-
-        self.sync_in_progress = false;
     }
 }
 
