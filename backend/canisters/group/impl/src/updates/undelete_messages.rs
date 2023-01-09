@@ -38,6 +38,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
 
         let results = runtime_state.data.events.undelete_messages(
             user_id,
+            participant.role.can_delete_messages(&runtime_state.data.permissions),
             args.thread_root_message_index,
             args.message_ids,
             args.correlation_id,

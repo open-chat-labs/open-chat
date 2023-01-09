@@ -2,6 +2,7 @@ import { MAX_EVENTS } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import {
     ChatEvent,
+    ChatStateFull,
     ChatSummary,
     EventsResponse,
     EventsSuccessResult,
@@ -18,7 +19,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 53;
+const CACHE_VERSION = 54;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -28,6 +29,11 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 };
 
 export interface ChatSchema extends DBSchema {
+    chats_v2: {
+        key: string;
+        value: ChatStateFull;
+    }
+
     chats: {
         key: string; // the user's principal as a string
         value: MergedUpdatesResponse;
@@ -81,6 +87,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("chats")) {
                 db.deleteObjectStore("chats");
             }
+            if (db.objectStoreNames.contains("chats_v2")) {
+                db.deleteObjectStore("chats_v2");
+            }
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
             }
@@ -89,6 +98,7 @@ export function openCache(principal: Principal): Database {
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
+            db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
         },
     });
@@ -113,6 +123,52 @@ export async function openDbAndGetCachedChats(
     if (db !== undefined) {
         return getCachedChats(db, principal);
     }
+}
+
+export async function getCachedChatsV2(
+    db: Database,
+    principal: Principal
+): Promise<ChatStateFull | undefined> {
+    return await (await db).get("chats_v2", principal.toString());
+}
+
+export async function setCachedChatsV2(
+    db: Database,
+    principal: Principal,
+    chatState: ChatStateFull,
+    affectedEvents: Record<string, number[]>,
+): Promise<void> {
+    const directChats = chatState.directChats
+        .filter((c) => !isUninitialisedDirectChat(c))
+        .map(makeChatSummarySerializable);
+
+    const groupChats = chatState.groupChats
+        .filter((c) => !isPreviewing(c))
+        .map(makeChatSummarySerializable);
+
+    const stateToCache = {
+        ...chatState,
+        directChats,
+        groupChats,
+    }
+    const latestMessages = prepareLatestMessagesForCache((directChats as ChatSummary[]).concat(groupChats));
+
+    const tx = (await db).transaction(["chats_v2", "chat_events"], "readwrite");
+    const chatsStore = tx.objectStore("chats_v2");
+    const eventsStore = tx.objectStore("chat_events");
+
+    const promises = [
+        chatsStore.put(stateToCache, principal.toString()),
+        ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
+            eventsStore.put(message, createCacheKey(chatId, message.index)),
+        ]),
+        ...Object.entries(affectedEvents)
+            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
+            .map((key) => eventsStore.delete(key)),
+    ];
+
+    await Promise.all(promises);
+    await tx.done;
 }
 
 export async function getCachedChats(
@@ -569,4 +625,27 @@ export async function loadMessagesByMessageIndex(
         messageEvents: messages,
         missing,
     };
+}
+
+function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
+    if (chat.latestMessage === undefined) return chat;
+
+    return {
+        ...chat,
+        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId)
+    };
+}
+
+function prepareLatestMessagesForCache(chats: ChatSummary[]): Record<string, EnhancedWrapper<Message>> {
+    const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
+    for (const { chatId, latestMessage } of chats) {
+        if (latestMessage !== undefined) {
+            latestMessages[chatId] = {
+                ...latestMessage,
+                chatId,
+                messageKey: createCacheKey(chatId, latestMessage.event.messageIndex),
+            };
+        }
+    }
+    return latestMessages;
 }

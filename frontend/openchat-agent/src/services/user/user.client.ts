@@ -7,6 +7,8 @@ import {
     UserService,
 } from "./candid/idl";
 import {
+    InitialStateV2Response,
+    UpdatesV2Response,
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -57,7 +59,9 @@ import {
     editMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
+    getUpdatesV2Response,
     initialStateResponse,
+    initialStateV2Response,
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
@@ -121,6 +125,28 @@ export class UserClient extends CandidService implements IUserClient {
             new UserClient(identity, userId, config),
             groupInvite
         );
+    }
+
+    @profile("userClient")
+    getInitialStateV2(): Promise<InitialStateV2Response> {
+        const args = {
+            disable_cache: apiOptional(identity, false),
+        };
+        return this.handleQueryResponse(
+            () => this.userService.initial_state_v2(args),
+            initialStateV2Response,
+            args)
+    }
+
+    @profile("userClient")
+    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
+        const args = {
+            updates_since: updatesSince,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.updates_v2(args),
+            getUpdatesV2Response,
+            args)
     }
 
     @profile("userClient")

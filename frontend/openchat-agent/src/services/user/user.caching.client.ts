@@ -43,6 +43,8 @@ import {
     MessagesReadFromServer,
     UsersLoaded,
     compareChats,
+    InitialStateV2Response,
+    UpdatesV2Response,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -136,6 +138,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     return resp;
                 });
         }
+    }
+
+    getInitialStateV2(): Promise<InitialStateV2Response> {
+        return this.client.getInitialStateV2();
+    }
+
+    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
+        return this.client.getUpdatesV2(updatesSince);
     }
 
     @profile("userCachingClient")
