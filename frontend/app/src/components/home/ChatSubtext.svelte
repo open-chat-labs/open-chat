@@ -20,6 +20,8 @@
             client.getLastOnlineDate(chat.them, $now).then((lastOnline) => {
                 if (lastOnline !== undefined && lastOnline !== 0) {
                     subtext = client.formatLastOnlineDate($_, $now, lastOnline);
+                } else {
+                    subtext = "";
                 }
             });
         }
