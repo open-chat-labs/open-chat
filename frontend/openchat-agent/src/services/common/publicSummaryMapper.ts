@@ -58,6 +58,8 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         archived: false,
         previewed: true,
         frozen: candid.frozen.length > 0,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
     };
 }
 

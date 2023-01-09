@@ -424,8 +424,10 @@
         return firstKey;
     }
 
+    $: aggregateDeletedMessages = client.aggregateDeletedMessages;
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .groupEvents(events, user.userId, $aggregateDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
@@ -573,10 +575,8 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    function afterSendMessage(jumpingTo: number | undefined) {
-        if (jumpingTo !== undefined && jumpingTo !== null) {
-            onMessageWindowLoaded(jumpingTo);
-        } else {
+    function afterSendMessage(upToDate: boolean) {
+        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
             tick().then(() => scrollBottom("smooth"));
         }
     }

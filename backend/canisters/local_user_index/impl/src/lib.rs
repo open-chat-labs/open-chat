@@ -5,7 +5,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserEvent, Version};
+use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserEvent, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -103,6 +103,12 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct FailedMessageUsers {
+    pub sender: UserId,
+    pub recipient: UserId,
+}
+
 fn default_notifications_canister_id() -> CanisterId {
     Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
@@ -133,7 +139,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: CanisterEventSyncQueue::<UserEvent>::default(),
             test_mode,
-            max_concurrent_canister_upgrades: 2,
+            max_concurrent_canister_upgrades: 10,
         }
     }
 }

@@ -2,6 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use ic_cdk::timer::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
+use tracing::info;
 use types::{DeletedGroupInfo, UserId};
 
 const MAX_BATCH_SIZE: usize = 100;
@@ -14,6 +15,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none()) && runtime_state.data.deleted_groups.notifications_pending() > 0 {
         let timer_id = ic_cdk::timer::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
+        info!("'push_group_deleted_notifications' job started");
         true
     } else {
         false
@@ -27,6 +29,7 @@ fn run() {
         }
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk::timer::clear_timer(timer_id);
+        info!("'push_group_deleted_notifications' job stopped");
     }
 }
 

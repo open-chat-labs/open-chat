@@ -162,7 +162,8 @@ export class OpenChatAgentWorker extends EventTarget {
                         new MessagesReadFromServer(
                             data.event.chatId,
                             data.event.readByMeUpTo,
-                            data.event.threadsRead
+                            data.event.threadsRead,
+                            data.event.dateReadPinned,
                         )
                     );
                 }

@@ -133,6 +133,7 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
     <AggregateCommonEvents
+        {chatId}
         {observer}
         {readByMe}
         user={userSummary}

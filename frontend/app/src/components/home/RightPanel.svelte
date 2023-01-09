@@ -361,6 +361,7 @@
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
+            dateLastPinned={$groupChat.dateLastPinned}
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile

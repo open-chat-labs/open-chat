@@ -7,11 +7,36 @@ use ic_cdk_macros::update;
 use types::{
     CanisterId, DirectMessageNotification, MessageContent, MessageId, MessageIndex, Notification, ReplyContext, UserId,
 };
-use user_canister::c2c_send_message::{Response::*, *};
+use user_canister::c2c_send_messages::{Response::*, *};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_send_message(args: Args) -> Response {
+async fn c2c_send_message(args: user_canister::c2c_send_message::Args) -> user_canister::c2c_send_message::Response {
+    match c2c_send_messages_impl(Args {
+        messages: vec![SendMessageArgs {
+            message_id: args.message_id,
+            sender_message_index: args.sender_message_index,
+            content: args.content,
+            replies_to: args.replies_to,
+            forwarding: args.forwarding,
+            correlation_id: args.correlation_id,
+        }],
+        sender_name: args.sender_name,
+    })
+    .await
+    {
+        Success => user_canister::c2c_send_message::Response::Success,
+        Blocked => user_canister::c2c_send_message::Response::Blocked,
+    }
+}
+
+#[update_msgpack]
+#[trace]
+async fn c2c_send_messages(args: Args) -> Response {
+    c2c_send_messages_impl(args).await
+}
+
+async fn c2c_send_messages_impl(args: Args) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -26,22 +51,26 @@ async fn c2c_send_message(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        handle_message_impl(
-            sender_user_id,
-            HandleMessageArgs {
-                message_id: Some(args.message_id),
-                sender_message_index: Some(args.sender_message_index),
-                sender_name: args.sender_name,
-                content: args.content,
-                replies_to: args.replies_to,
-                forwarding: args.forwarding,
-                correlation_id: args.correlation_id,
-                is_bot: false,
-            },
-            false,
-            state,
-        )
-    })
+        for message in args.messages {
+            handle_message_impl(
+                sender_user_id,
+                HandleMessageArgs {
+                    message_id: Some(message.message_id),
+                    sender_message_index: Some(message.sender_message_index),
+                    sender_name: args.sender_name.clone(),
+                    content: message.content,
+                    replies_to: message.replies_to,
+                    forwarding: message.forwarding,
+                    correlation_id: message.correlation_id,
+                    is_bot: false,
+                },
+                false,
+                state,
+            );
+        }
+    });
+
+    Success
 }
 
 #[update(guard = "caller_is_known_bot")]

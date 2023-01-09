@@ -10,7 +10,8 @@ use types::{
     CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, MessageId, MessageIndex,
     UserId,
 };
-use user_canister::c2c_send_message::{self, C2CReplyContext};
+use user_canister::c2c_send_message;
+use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::send_message::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -154,6 +155,10 @@ fn send_message_impl(
             .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
     if !user_type.is_self() {
+        if let Some(chat) = runtime_state.data.direct_chats.get_mut(&recipient.into()) {
+            chat.mark_message_pending(args.message_id);
+        }
+
         let c2c_args = c2c_send_message::Args {
             message_id: args.message_id,
             sender_name: args.sender_name,
@@ -234,6 +239,12 @@ pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_sen
         } else {
             error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
         }
+    } else {
+        mutate_state(|state| {
+            if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
+                chat.mark_message_confirmed(&args.message_id);
+            }
+        });
     }
 }
 
@@ -259,9 +270,10 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         .push_message(false, recipient, None, push_message_args, true);
                 }
 
-                // Mark that the bot has read the message we just sent
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
+                    // Mark that the bot has read the message we just sent
                     chat.mark_read_up_to(message_index, false, now);
+                    chat.mark_message_confirmed(&args.message_id);
                 }
             });
         }

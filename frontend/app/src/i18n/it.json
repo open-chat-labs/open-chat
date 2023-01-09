@@ -427,7 +427,9 @@
         "next": "Prossimo",
         "create": "Creare un gruppo",
         "details": "Dettagli",
-        "members": "Membri"
+        "members": "Membri",
+        "edit": "Modifica gruppo",
+        "update": "Aggiorna gruppo"
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",
@@ -668,5 +670,6 @@
     "useAtOwnRisk": "Utilizzare a proprio rischio",
     "deleteMessageAndReport": "Elimina e segnala",
     "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
-    "reason": "Motivo"
+    "reason": "Motivo",
+    "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat"
 }

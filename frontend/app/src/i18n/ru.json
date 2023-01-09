@@ -427,7 +427,9 @@
         "next": "Следующий",
         "create": "Создать группу",
         "details": "Подробности",
-        "members": "Члены"
+        "members": "Члены",
+        "edit": "Редактировать группу",
+        "update": "Обновить группу"
     },
     "updateNow": "перезагрузить сейчас",
     "updateRequired": "Доступна новая версия OpenChat — перезагрузка через {countdown} с.",
@@ -668,5 +670,6 @@
     "useAtOwnRisk": "Используйте на свой риск",
     "deleteMessageAndReport": "Удалить и пожаловаться",
     "howToBuyToken": "Мне нужна помощь в покупке {token}",
-    "reason": "Причина"
+    "reason": "Причина",
+    "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате"
 }

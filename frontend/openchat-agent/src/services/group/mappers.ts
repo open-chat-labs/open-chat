@@ -592,28 +592,32 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
 
 export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
     if ("Success" in candid) {
-        return "success";
+        return { 
+            kind: "success",
+            eventIndex: candid.Success.index,
+            timestamp: candid.Success.timestamp,
+        };
     }
     if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
+        return { kind: "caller_not_in_group" };
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return { kind: "not_authorised" };
     }
     if ("NoChange" in candid) {
-        return "no_change";
+        return { kind: "no_change" };
     }
     if ("MessageIndexOutOfRange" in candid) {
-        return "index_out_of_range";
+        return { kind: "index_out_of_range" };
     }
     if ("MessageNotFound" in candid) {
-        return "message_not_found";
+        return { kind: "message_not_found" };
     }
     if ("UserSuspended" in candid) {
-        return "user_suspended";
+        return { kind: "user_suspended" };
     }
     if ("ChatFrozen" in candid) {
-        return "chat_frozen";
+        return { kind: "chat_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
 }
