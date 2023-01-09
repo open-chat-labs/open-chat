@@ -2,7 +2,7 @@ import "core-js/actual/structured-clone";
 
 import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { OpenChatAgent } from "./services";
+import { OpenChatAgent } from "openchat-agent";
 import {
     MessagesReadFromServer,
     StorageUpdated,
