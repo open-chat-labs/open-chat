@@ -544,7 +544,10 @@
     function addMembers() {
         if ($selectedChatId !== undefined) {
             rightPanelHistory.update((history) => {
-                return [...history, { kind: "add_members" }];
+                return [
+                    ...history.filter((p) => p.kind !== "add_members"),
+                    { kind: "add_members" },
+                ];
             });
         }
     }
@@ -572,7 +575,10 @@
     function showMembers() {
         if ($selectedChatId !== undefined) {
             rightPanelHistory.update((history) => {
-                return [...history, { kind: "show_members" }];
+                return [
+                    ...history.filter((p) => p.kind !== "show_members"),
+                    { kind: "show_members" },
+                ];
             });
         }
     }
