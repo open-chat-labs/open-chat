@@ -26,7 +26,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
 
         let delete_message_results =
             chat.events
-                .undelete_messages(my_user_id, None, args.message_ids, args.correlation_id, now);
+                .undelete_messages(my_user_id, false, None, args.message_ids, args.correlation_id, now);
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()

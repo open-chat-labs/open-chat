@@ -6,6 +6,7 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
+    ChatStateFull,
     CreateGroupResponse,
     CurrentChatState,
     DeleteGroupResponse,
@@ -49,6 +50,7 @@ import type {
     UnpinMessageResponse,
     UpdateArgs,
     UpdateGroupResponse,
+    UpdatesResult,
     WithdrawCryptocurrencyResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
@@ -185,7 +187,9 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState;
+    | GetInitialState
+    | GetInitialStateV2
+    | GetUpdatesV2;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -788,6 +792,16 @@ type GetInitialState = Request<{
     kind: "getInitialState";
 };
 
+type GetUpdatesV2 = Request<{
+    currentState: ChatStateFull;
+}> & {
+    kind: "getUpdatesV2";
+};
+
+type GetInitialStateV2 = Request<Record<string, never>> & {
+    kind: "getInitialStateV2";
+};
+
 /**
  * Worker error type
  */
@@ -877,6 +891,7 @@ export type WorkerResponse =
     | Response<UnfreezeGroupResponse>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
+    | Response<UpdatesResult>
     | Response<undefined>;
 
 type Response<T> = {

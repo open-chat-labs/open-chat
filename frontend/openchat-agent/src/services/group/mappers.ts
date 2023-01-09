@@ -32,6 +32,13 @@ import type {
     ApiRegisterProposalVoteResponse,
     ApiGroupRules,
     ApiRulesResponse,
+    ApiGroupCanisterGroupChatSummary,
+    ApiGroupCanisterGroupChatSummaryUpdates,
+    ApiGroupCanisterSummaryResponse,
+    ApiGroupCanisterSummaryUpdatesResponse,
+    ApiGroupCanisterThreadDetails,
+    ApiGroupSubtype,
+    ApiMention,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -70,11 +77,19 @@ import {
     SearchGroupChatResponse,
     codeToText,
     UnsupportedValueError,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
+    GroupCanisterThreadDetails,
+    GroupSubtype,
+    Mention,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
     apiPermissionRole,
+    chatMetrics,
     groupPermissions,
     message,
     updatedMessage,
@@ -82,7 +97,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
-import { identity, optional } from "../../utils/mapping";
+import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
 
@@ -101,6 +116,110 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
         default:
             return undefined;
     }
+}
+
+export function summaryResponse(candid: ApiGroupCanisterSummaryResponse): GroupCanisterSummaryResponse {
+    if ("Success" in candid) {
+        return groupChatSummary(candid.Success.summary);
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiGroupCanisterSummaryResponse type received", candid);
+}
+
+function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
+    return {
+        chatId: candid.chat_id.toString(),
+        lastUpdated: candid.last_updated,
+        name: candid.name,
+        description: candid.description,
+        subtype: optional(candid.subtype, groupSubtype),
+        avatarId: optional(candid.avatar_id, identity),
+        public: candid.is_public,
+        historyVisibleToNewJoiners: candid.history_visible_to_new_joiners,
+        minVisibleEventIndex: candid.min_visible_event_index,
+        minVisibleMessageIndex: candid.min_visible_message_index,
+        latestMessage: optional(candid.latest_message, messageEvent),
+        latestEventIndex: candid.latest_event_index,
+        joined: candid.joined,
+        memberCount: candid.participant_count,
+        myRole: memberRole(candid.role),
+        mentions: candid.mentions.map(mention),
+        ownerId: candid.owner_id.toString(),
+        permissions: groupPermissions(candid.permissions),
+        notificationsMuted: candid.notifications_muted,
+        metrics: chatMetrics(candid.metrics),
+        myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: candid.latest_threads.map(threadDetails),
+        frozen: candid.frozen.length > 0,
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+    }
+}
+
+export function summaryUpdatesResponse(candid: ApiGroupCanisterSummaryUpdatesResponse): GroupCanisterSummaryUpdatesResponse {
+    if ("Success" in candid) {
+        return groupChatSummaryUpdates(candid.Success.updates);
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return { kind: "success_no_updates" };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiGroupCanisterSummaryUpdatesResponse type received", candid);
+}
+
+function groupChatSummaryUpdates(candid: ApiGroupCanisterGroupChatSummaryUpdates): GroupCanisterGroupChatSummaryUpdates {
+    return {
+        chatId: candid.chat_id.toString(),
+        lastUpdated: candid.last_updated,
+        name: optional(candid.name, identity),
+        description: optional(candid.description, identity),
+        subtype: optionUpdate(candid.subtype, groupSubtype),
+        avatarId: optionUpdate(candid.avatar_id, identity),
+        public: optional(candid.is_public, identity),
+        latestMessage: optional(candid.latest_message, messageEvent),
+        latestEventIndex: optional(candid.latest_event_index, identity),
+        memberCount: optional(candid.participant_count, identity),
+        myRole: optional(candid.role, memberRole),
+        mentions: candid.mentions.map(mention),
+        ownerId: optional(candid.owner_id, (o) => o.toString()),
+        permissions: optional(candid.permissions, groupPermissions),
+        notificationsMuted: optional(candid.notifications_muted, identity),
+        metrics: optional(candid.metrics, chatMetrics),
+        myMetrics: optional(candid.my_metrics, chatMetrics),
+        latestThreads: candid.latest_threads.map(threadDetails),
+        frozen: optionUpdate(candid.frozen, (_) => true),
+        affectedEvents: [...candid.affected_events],
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+    }
+}
+
+function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThreadDetails {
+    return {
+        threadRootMessageIndex: candid.root_message_index,
+        lastUpdated: candid.last_updated,
+        latestEventIndex: candid.latest_event,
+        latestMessageIndex: candid.latest_message,
+    }
+}
+
+function mention(candid: ApiMention): Mention {
+    return {
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+        eventIndex: candid.event_index,
+        mentionedBy: candid.mentioned_by.toString(),
+    };
+}
+
+function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
+    };
 }
 
 export function apiOptionalGroupPermissions(
@@ -592,7 +711,7 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
 
 export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
     if ("Success" in candid) {
-        return { 
+        return {
             kind: "success",
             eventIndex: candid.Success.index,
             timestamp: candid.Success.timestamp,

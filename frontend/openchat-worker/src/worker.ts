@@ -174,6 +174,28 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "getInitialStateV2":
+                agent
+                    .getInitialStateV2()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "getUpdatesV2":
+                agent
+                    .getUpdatesV2(payload.currentState)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "createUserClient":
                 agent.createUserClient(payload.userId);
                 sendResponse(correlationId, {

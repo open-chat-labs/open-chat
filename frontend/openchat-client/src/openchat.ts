@@ -216,6 +216,7 @@ import {
     type ChatSummary,
     type EventWrapper,
     type Message,
+    type DirectChatSummary,
     type GroupChatSummary,
     type MemberRole,
     type GroupRules,
@@ -283,6 +284,9 @@ import {
     type ChatUnfrozenEvent,
     type UserStatus,
     userStatus,
+    MergedUpdatesResponse,
+    ThreadRead,
+    UpdatesResult,
 } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
@@ -1258,6 +1262,11 @@ export class OpenChat extends EventTarget {
         }
 
         if (messageIndex >= 0) {
+            const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? 0;
+            if (messageIndex > latestMessageIndex) {
+                messageIndex = latestMessageIndex;
+            }
+
             const range = indexRangeForChat(clientChat);
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 clientChat.kind === "direct_chat"
@@ -2921,8 +2930,13 @@ export class OpenChat extends EventTarget {
                 blockedUsers: this._liveState.blockedUsers,
                 pinnedChats: this._liveState.pinnedChats,
             };
-            const chatsResponse =
-                this._chatUpdatesSince === undefined
+            const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
+            const useNewUpdatesMethod = true
+            const chatsResponse = useNewUpdatesMethod
+                ? this._chatUpdatesSince === undefined
+                    ? await this.initialStateV2()
+                    : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId)
+                : this._chatUpdatesSince === undefined
                     ? await this.api.getInitialState(userLookup, selectedChat?.chatId)
                     : await this.api.getUpdates(
                           currentState,
@@ -3047,6 +3061,86 @@ export class OpenChat extends EventTarget {
             return updates;
         } catch {
             return {};
+        }
+    }
+
+    private async initialStateV2(): Promise<MergedUpdatesResponse> {
+        const response = await this.api.getInitialStateV2();
+
+        return this.handleUpdatesV2Result(response, BigInt(0), undefined);
+    }
+
+    private async updatesV2(
+        updatesSince: bigint,
+        current: CurrentChatState,
+        avatarId: bigint | undefined
+    ): Promise<MergedUpdatesResponse> {
+        const directChats: DirectChatSummary[] = [];
+        const groupChats: GroupChatSummary[] = [];
+        current.chatSummaries.forEach((c) => {
+            if (c.kind === "direct_chat") {
+                directChats.push(c);
+            } else {
+                groupChats.push(c);
+            }
+        });
+
+        const response = await this.api.getUpdatesV2({
+            timestamp: updatesSince,
+            directChats,
+            groupChats,
+            avatarId,
+            blockedUsers: [...current.blockedUsers],
+            pinnedChats: current.pinnedChats,
+        });
+
+        return this.handleUpdatesV2Result(response, updatesSince, avatarId);
+    }
+
+    private handleUpdatesV2Result(
+        result: UpdatesResult,
+        updatesSince: bigint,
+        avatarId: bigint | undefined
+    ): MergedUpdatesResponse {
+        const chatSummaries = (result.state.directChats as ChatSummary[]).concat(result.state.groupChats);
+
+        this.updateReadUpToStore(chatSummaries);
+
+        const avatarIdUpdate = result.state.avatarId === avatarId
+            ? undefined
+            : result.state.avatarId !== undefined
+                ? { value: result.state.avatarId }
+                : "set_to_none";
+
+        return {
+            wasUpdated: result.anyUpdates,
+            chatSummaries,
+            blockedUsers: new Set(result.state.blockedUsers),
+            pinnedChats: result.state.pinnedChats,
+            avatarIdUpdate,
+            affectedEvents: result.affectedEvents,
+            // If there were any errors we don't bump the timestamp, this ensures no updates get missed
+            timestamp: result.anyErrors ? updatesSince : result.state.timestamp
+        };
+    }
+
+    private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
+        for (const chat of chatSummaries) {
+            if (chat.kind === "group_chat") {
+                const threads: ThreadRead[] = chat.latestThreads.reduce((res, next) => {
+                    if (next.readUpTo !== undefined) {
+                        res.push({
+                            threadRootMessageIndex: next.threadRootMessageIndex,
+                            readUpTo: next.readUpTo
+                        });
+                    }
+                    return res;
+                }, [] as ThreadRead[]);
+
+                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, threads, chat.dateReadPinned);
+            } else {
+                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, [], undefined);
+            }
         }
     }
 

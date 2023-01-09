@@ -22,13 +22,14 @@ import type {
     ApiMessageMatch,
     ApiEditMessageResponse,
     ApiInitialStateResponse,
+    ApiInitialStateV2Response,
+    ApiUpdatesV2Response,
     ApiRole,
     ApiMention,
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiTransferCryptoWithinGroupResponse,
-    ApiChatMetrics,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
@@ -38,12 +39,15 @@ import type {
     ApiGroupSubtypeUpdate,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
+    ApiUserCanisterGroupChatSummary,
+    ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
     ApiNnsCompletedCryptoTransaction,
     ApiSnsFailedCryptoTransaction,
     ApiSnsCompletedCryptoTransaction,
     ApiArchiveChatResponse,
     ApiIcrc1Account,
+    ApiDirectChatSummaryUpdates,
 } from "./candid/idl";
 import {
     ChatSummary,
@@ -66,14 +70,17 @@ import {
     JoinGroupResponse,
     EditMessageResponse,
     InitialStateResponse,
+    InitialStateV2Response,
+    UpdatesV2Response,
     MemberRole,
     Mention,
     GroupChatSummary,
     DirectChatSummary,
+    UserCanisterGroupChatSummary,
+    UserCanisterGroupChatSummaryUpdates,
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    ChatMetrics,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
     GroupSubtype,
@@ -87,9 +94,11 @@ import {
     SetBioResponse,
     UnpinChatResponse,
     UnsupportedValueError,
+    DirectChatSummaryUpdates,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
+    chatMetrics,
     completedCryptoTransfer,
     groupPermissions,
     message,
@@ -737,6 +746,36 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
+export function initialStateV2Response(candid: ApiInitialStateV2Response): InitialStateV2Response {
+    if ("Success" in candid) {
+        const result = candid.Success;
+        return {
+            timestamp: result.timestamp,
+            directChats: result.direct_chats.map(directChatSummary),
+            cacheTimestamp: undefined,
+            cachedGroupChatSummaries: [],
+            groupChatsAdded: result.group_chats.map(userCanisterGroupSummary),
+            avatarId: optional(result.avatar_id, identity),
+            blockedUsers: result.blocked_users.map((u) => u.toString()),
+            pinnedChats: result.pinned_chats.map((c) => c.toString()),
+        };
+    }
+    if ("SuccessCached" in candid) {
+        const result = candid.SuccessCached;
+        return {
+            timestamp: result.timestamp,
+            directChats: result.direct_chats.map(directChatSummary),
+            cacheTimestamp: result.cache_timestamp,
+            cachedGroupChatSummaries: result.cached_group_chat_summaries.map((g) => groupChatSummary(g, false)),
+            groupChatsAdded: result.group_chats_added.map(userCanisterGroupSummary),
+            avatarId: optional(result.avatar_id, identity),
+            blockedUsers: result.blocked_users.map((u) => u.toString()),
+            pinnedChats: result.pinned_chats.map((c) => c.toString()),
+        };
+    }
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
@@ -747,7 +786,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
-            avatarIdUpdate: optionUpdate(candid.Success.avatar_id, (id) => id),
+            avatarIdUpdate: optionUpdate(candid.Success.avatar_id, identity),
             timestamp: candid.Success.timestamp,
             cyclesBalance: optional(candid.Success.cycles_balance, identity),
             transactions: [], // todo - come back when we need this
@@ -757,6 +796,50 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+export function getUpdatesV2Response(candid: ApiUpdatesV2Response): UpdatesV2Response {
+    if ("Success" in candid) {
+        return {
+            timestamp: candid.Success.timestamp,
+            directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
+            directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
+            groupChatsAdded: candid.Success.group_chats_added.map(userCanisterGroupSummary),
+            groupChatsUpdated: candid.Success.group_chats_updated.map(userCanisterGroupSummaryUpdates),
+            chatsRemoved: candid.Success.chats_removed.map((c) => c.toString()),
+            avatarId: optionUpdate(candid.Success.avatar_id, identity),
+            blockedUsers: optional(candid.Success.blocked_users_v2, (b) => b.map((u) => u.toString())),
+            pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString()))
+        }
+    }
+
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function userCanisterGroupSummary(summary: ApiUserCanisterGroupChatSummary): UserCanisterGroupChatSummary {
+    return {
+        chatId: summary.chat_id.toString(),
+        readByMeUpTo: optional(summary.read_by_me_up_to, identity),
+        threadsRead: summary.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
+        archived: summary.archived,
+        dateReadPinned: optional(summary.date_read_pinned, identity),
+    };
+}
+
+function userCanisterGroupSummaryUpdates(summary: ApiUserCanisterGroupChatSummaryUpdates): UserCanisterGroupChatSummaryUpdates {
+    return {
+        chatId: summary.chat_id.toString(),
+        readByMeUpTo: optional(summary.read_by_me_up_to, identity),
+        threadsRead: summary.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
+        archived: optional(summary.archived, identity),
+        dateReadPinned: optional(summary.date_read_pinned, identity),
+    };
 }
 
 function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
@@ -802,26 +885,29 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     if ("Direct" in candid) {
-        const chatId = candid.Direct.chat_id.toString();
-        return {
-            kind: "direct_chat",
-            chatId,
-            readByMeUpTo: optional(candid.Direct.read_by_me_up_to, identity),
-            readByThemUpTo: optional(candid.Direct.read_by_them_up_to, identity),
-            latestMessage: optional(candid.Direct.latest_message, (ev) => ({
-                index: ev.index,
-                timestamp: ev.timestamp,
-                event: message(ev.event),
-            })),
-            latestEventIndex: optional(candid.Direct.latest_event_index, identity),
-            notificationsMuted: optional(candid.Direct.notifications_muted, identity),
-            affectedEvents: [...candid.Direct.affected_events],
-            metrics: optional(candid.Direct.metrics, chatMetrics),
-            myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
-            archived: optional(candid.Direct.archived, identity),
-        };
+        return directChatSummaryUpdates(candid.Direct);
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
+}
+
+function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
+    return {
+        kind: "direct_chat",
+        chatId: candid.chat_id.toString(),
+        readByMeUpTo: optional(candid.read_by_me_up_to, identity),
+        readByThemUpTo: optional(candid.read_by_them_up_to, identity),
+        latestMessage: optional(candid.latest_message, (ev) => ({
+            index: ev.index,
+            timestamp: ev.timestamp,
+            event: message(ev.event),
+        })),
+        latestEventIndex: optional(candid.latest_event_index, identity),
+        notificationsMuted: optional(candid.notifications_muted, identity),
+        affectedEvents: [...candid.affected_events],
+        metrics: optional(candid.metrics, chatMetrics),
+        myMetrics: optional(candid.my_metrics, chatMetrics),
+        archived: optional(candid.archived, identity),
+    };
 }
 
 function updatedSubtype(candid: ApiGroupSubtypeUpdate): GroupSubtypeUpdate {
@@ -869,40 +955,18 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
 }
 
-function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
-    return {
-        audioMessages: Number(candid.audio_messages),
-        cyclesMessages: Number(candid.cycles_messages),
-        edits: Number(candid.edits),
-        icpMessages: Number(candid.icp_messages),
-        giphyMessages: Number(candid.giphy_messages),
-        deletedMessages: Number(candid.deleted_messages),
-        reportedMessages: Number(candid.reported_messages),
-        fileMessages: Number(candid.file_messages),
-        pollVotes: Number(candid.poll_votes),
-        textMessages: Number(candid.text_messages),
-        imageMessages: Number(candid.image_messages),
-        replies: Number(candid.replies),
-        videoMessages: Number(candid.video_messages),
-        polls: Number(candid.polls),
-        reactions: Number(candid.reactions),
-    };
-}
-
-function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true): GroupChatSummary {
     const ownerId = candid.owner_id.toString();
-    const latestMessage = optional(candid.latest_message, (ev) => {
-        return {
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        };
-    });
+    const latestMessage = optional(candid.latest_message, (ev) => ({
+        index: ev.index,
+        timestamp: ev.timestamp,
+        event: message(ev.event),
+    }));
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
         latestMessage,
-        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => latestMessage !== undefined
+        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => limitReadByMeUpTo && latestMessage !== undefined
             ? Math.min(latestMessage.event.messageIndex, r)
             : r),
         name: candid.name,
