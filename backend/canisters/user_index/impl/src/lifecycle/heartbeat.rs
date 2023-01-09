@@ -216,7 +216,10 @@ mod sync_events_to_user_index_canisters {
 
     async fn sync_events(canister_id: CanisterId, events: Vec<UserIndexEvent>) {
         let args = local_user_index_canister::c2c_notify_user_index_events::Args { events: events.clone() };
-        if let Err(_) = local_user_index_canister_c2c_client::c2c_notify_user_index_events(canister_id, &args).await {
+        if local_user_index_canister_c2c_client::c2c_notify_user_index_events(canister_id, &args)
+            .await
+            .is_err()
+        {
             mutate_state(|state| {
                 state
                     .data

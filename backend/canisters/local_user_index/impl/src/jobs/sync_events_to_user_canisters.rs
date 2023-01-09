@@ -66,7 +66,10 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
 
 async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
     let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
-    if let Err(_) = user_canister_c2c_client::c2c_notify_user_events(canister_id, &args).await {
+    if user_canister_c2c_client::c2c_notify_user_events(canister_id, &args)
+        .await
+        .is_err()
+    {
         mutate_state(|state| {
             state
                 .data
