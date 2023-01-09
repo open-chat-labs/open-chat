@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use group_canister::deleted_message::{Response::*, *};
 use ic_cdk_macros::query;
+use types::MessageContentInternal;
 
 #[query]
 fn deleted_message(args: Args) -> Response {
@@ -14,10 +15,6 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(p) => p,
     };
 
-    if !participant.role.can_delete_messages(&runtime_state.data.permissions) {
-        return NotAuthorized;
-    }
-
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, None) {
         if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
@@ -28,9 +25,19 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 if event_index < min_visible_event_index {
                     return NotAuthorized;
                 } else if let Some(message) = chat_events.message_internal_by_event_index(event_index) {
-                    return Success(SuccessResult {
-                        content: message.content.hydrate(Some(participant.user_id)),
-                    });
+                    if message.deleted_by.is_none() {
+                        return MessageNotDeleted;
+                    } else if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                        return MessageHardDeleted;
+                    } else if participant.user_id != message.sender
+                        && !participant.role.can_delete_messages(&runtime_state.data.permissions)
+                    {
+                        return NotAuthorized;
+                    } else {
+                        return Success(SuccessResult {
+                            content: message.content.hydrate(Some(participant.user_id)),
+                        });
+                    }
                 }
             }
         }

@@ -614,6 +614,7 @@ type DeletedMessageResponse =
         NotAuthorized;
         MessageNotFound;
         MessageNotDeleted;
+        MessageHardDeleted;
     };
 
 type SearchMessagesArgs =
