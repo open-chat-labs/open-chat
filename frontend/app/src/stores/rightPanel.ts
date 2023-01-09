@@ -58,18 +58,6 @@ export type UpdatedGroup = {
     permissions: GroupPermissions;
 };
 
-export function replaceOrAddHistory(
-    history: RightPanelState[],
-    next: RightPanelState
-): RightPanelState[] {
-    if (history.length > 0) {
-        if (history[history.length - 1].kind === next.kind) {
-            history.pop();
-        }
-    }
-    return [...history, next];
-}
-
 export function filterByChatType(
     history: RightPanelState[],
     chat: ChatSummary | undefined

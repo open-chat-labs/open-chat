@@ -43,11 +43,7 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import {
-        filterByChatType,
-        replaceOrAddHistory,
-        rightPanelHistory,
-    } from "../../stores/rightPanel";
+    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -545,11 +541,15 @@
         }
     }
 
-    function addMembers() {
+    function addMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.update((history) => {
-                return replaceOrAddHistory(history, { kind: "add_members" });
-            });
+            if (ev.detail) {
+                rightPanelHistory.set([{ kind: "add_members" }]);
+            } else {
+                rightPanelHistory.update((history) => {
+                    return [...history, { kind: "add_members" }];
+                });
+            }
         }
     }
 
@@ -573,11 +573,15 @@
         modal = ModalType.SelectChat;
     }
 
-    function showMembers() {
+    function showMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.update((history) => {
-                return replaceOrAddHistory(history, { kind: "show_members" });
-            });
+            if (ev.detail) {
+                rightPanelHistory.set([{ kind: "show_members" }]);
+            } else {
+                rightPanelHistory.update((history) => {
+                    return [...history, { kind: "show_members" }];
+                });
+            }
         }
     }
 

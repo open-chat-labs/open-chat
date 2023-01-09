@@ -47,11 +47,11 @@
     $: membersSelected = lastState.kind === "show_members";
     $: addMembersSelected = lastState.kind === "add_members";
     $: desktop = !$mobileWidth;
-    
+
     let hasUnreadPinned = false;
-    
+
     $: {
-        setUnreadPinned(hasPinned, selectedChatSummary);        
+        setUnreadPinned(hasPinned, selectedChatSummary);
     }
 
     onMount(() => {
@@ -59,9 +59,10 @@
     });
 
     function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
-        hasUnreadPinned = hasPinned 
-            && chat.kind === "group_chat" 
-            && client.unreadPinned(chat.chatId, chat.dateLastPinned);
+        hasUnreadPinned =
+            hasPinned &&
+            chat.kind === "group_chat" &&
+            client.unreadPinned(chat.chatId, chat.dateLastPinned);
     }
 
     function toggleMuteNotifications(mute: boolean) {
@@ -85,7 +86,7 @@
     }
 
     function showMembers() {
-        dispatch("showMembers");
+        dispatch("showMembers", true);
     }
 
     function markAllRead() {
@@ -105,7 +106,7 @@
     }
 
     function addMembers() {
-        dispatch("addMembers");
+        dispatch("addMembers", true);
     }
 
     function leaveGroup() {
@@ -160,7 +161,10 @@
     {#if hasPinned}
         <span on:click={showPinned}>
             <HoverIcon title={$_("showPinned")}>
-                <div class="pin" class:unread={!pinnedSelected && hasUnreadPinned} class:rtl={$rtlStore}>
+                <div
+                    class="pin"
+                    class:unread={!pinnedSelected && hasUnreadPinned}
+                    class:rtl={$rtlStore}>
                     <Pin
                         size={$iconSize}
                         color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
@@ -225,8 +229,10 @@
                             <MenuItem on:click={showPinned}>
                                 <Pin
                                     size={$iconSize}
-                                    color={hasUnreadPinned ? "var(--icon-selected)" : "var(--icon-inverted-txt)"} />
-                                    slot="icon" />
+                                    color={hasUnreadPinned
+                                        ? "var(--icon-selected)"
+                                        : "var(--icon-inverted-txt)"} />
+                                slot="icon" />
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
@@ -409,5 +415,5 @@
             left: -$sp2;
             right: auto;
         }
-    }    
+    }
 </style>
