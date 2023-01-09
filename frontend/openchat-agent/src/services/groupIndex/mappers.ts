@@ -1,7 +1,28 @@
 import { identity, optional } from "../../utils/mapping";
-import type { FreezeGroupResponse, GroupMatch, GroupSearchResponse, UnfreezeGroupResponse } from "openchat-shared";
-import type { ApiFreezeGroupResponse, ApiGroupMatch, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
+import type {
+    FilterGroupsResponse,
+    FreezeGroupResponse,
+    GroupMatch,
+    GroupSearchResponse,
+    UnfreezeGroupResponse
+} from "openchat-shared";
+import type { ApiFilterGroupsResponse, ApiFreezeGroupResponse, ApiGroupMatch, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
 import { UnsupportedValueError } from "openchat-shared";
+
+export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
+    return {
+        timestamp: candid.Success.timestamp,
+        activeGroups: candid.Success.active_groups.map((g) => g.toString()),
+        deletedGroups: candid.Success.deleted_groups.map((d) => ({
+            id: d.id.toString(),
+            timestamp: d.timestamp,
+            deletedBy: d.deleted_by.toString(),
+            groupName: d.group_name,
+            public: d.public,
+        })),
+        upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString())
+    };
+}
 
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
     if ("Success" in candid) {

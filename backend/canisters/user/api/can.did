@@ -566,6 +566,7 @@ type UserCanisterGroupChatSummary =
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: bool;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type UserCanisterGroupChatSummaryUpdates =
@@ -574,6 +575,7 @@ type UserCanisterGroupChatSummaryUpdates =
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: opt bool;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type EventsArgs =

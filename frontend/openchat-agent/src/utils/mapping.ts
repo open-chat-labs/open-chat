@@ -24,6 +24,11 @@ export function applyOptionUpdate<T>(
     return update.value;
 }
 
+export function mapOptionUpdate<A, B>(original: OptionUpdate<A>, mapper: (a: A) => B): OptionUpdate<B> {
+    if (original === undefined || original === "set_to_none") return original;
+    return { value: mapper(original.value) };
+}
+
 export function identity<T>(x: T): T {
     return x;
 }
