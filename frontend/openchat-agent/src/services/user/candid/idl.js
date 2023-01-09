@@ -741,6 +741,7 @@ export const idlFactory = ({ IDL }) => {
   const UserCanisterGroupChatSummary = IDL.Record({
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Bool,
   });
@@ -1127,6 +1128,7 @@ export const idlFactory = ({ IDL }) => {
   const UserCanisterGroupChatSummaryUpdates = IDL.Record({
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Opt(IDL.Bool),
   });

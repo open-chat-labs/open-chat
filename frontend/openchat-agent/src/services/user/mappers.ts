@@ -825,6 +825,7 @@ function userCanisterGroupSummary(summary: ApiUserCanisterGroupChatSummary): Use
             return curr;
         }, {} as Record<number, number>),
         archived: summary.archived,
+        dateReadPinned: optional(summary.date_read_pinned, identity),
     };
 }
 
@@ -837,6 +838,7 @@ function userCanisterGroupSummaryUpdates(summary: ApiUserCanisterGroupChatSummar
             return curr;
         }, {} as Record<number, number>),
         archived: optional(summary.archived, identity),
+        dateReadPinned: optional(summary.date_read_pinned, identity),
     };
 }
 

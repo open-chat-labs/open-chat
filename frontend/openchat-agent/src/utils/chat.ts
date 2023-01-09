@@ -61,7 +61,7 @@ function mergeThings<A, U>(
         return things;
 
     // create a lookup of all existing and added things
-    const dict = toLookup(keyFn, things.concat(updates.added));
+    const dict = toRecord(things.concat(updates.added), keyFn);
 
     // delete all removed things
     updates.removed.forEach((key) => {
@@ -343,7 +343,9 @@ export function mergeGroupChatUpdates(
             metrics: g?.metrics ?? c.metrics,
             myMetrics: g?.myMetrics ?? c.myMetrics,
             archived: u?.archived ?? c.archived,
-            blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate)
+            blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
+            dateLastPinned: g.dateLastPinned ?? c.dateLastPinned,
+            dateReadPinned: u.dateReadPinned ?? c.dateReadPinned,
         }
     })
 }
@@ -387,6 +389,8 @@ export function mergeGroupChats(
             blobReference: g.avatarId !== undefined
                 ? { blobId: g.avatarId, canisterId: g.chatId }
                 : undefined,
+            dateLastPinned: g.dateLastPinned,
+            dateReadPinned: u.dateReadPinned,
         }
     });
 }

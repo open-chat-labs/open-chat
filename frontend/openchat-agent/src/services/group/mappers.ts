@@ -152,7 +152,8 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
         latestThreads: candid.latest_threads.map(threadDetails),
-        frozen: candid.frozen.length > 0
+        frozen: candid.frozen.length > 0,
+        dateLastPinned: optional(candid.date_last_pinned, identity),
     }
 }
 
@@ -191,6 +192,7 @@ function groupChatSummaryUpdates(candid: ApiGroupCanisterGroupChatSummaryUpdates
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: optionUpdate(candid.frozen, (_) => true),
         affectedEvents: [...candid.affected_events],
+        dateLastPinned: optional(candid.date_last_pinned, identity),
     }
 }
 
@@ -709,7 +711,7 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
 
 export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
     if ("Success" in candid) {
-        return { 
+        return {
             kind: "success",
             eventIndex: candid.Success.index,
             timestamp: candid.Success.timestamp,

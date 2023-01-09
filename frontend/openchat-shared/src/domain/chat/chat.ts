@@ -757,6 +757,7 @@ export type UserCanisterGroupChatSummary = {
     readByMeUpTo: number | undefined,
     threadsRead: Record<number, number>;
     archived: boolean;
+    dateReadPinned: bigint | undefined;
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
@@ -764,6 +765,7 @@ export type UserCanisterGroupChatSummaryUpdates = {
     readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean | undefined;
+    dateReadPinned: bigint | undefined;
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -982,6 +984,7 @@ export type GroupCanisterGroupChatSummary = {
     myMetrics: ChatMetrics;
     latestThreads: GroupCanisterThreadDetails[];
     frozen: boolean;
+    dateLastPinned: bigint | undefined;
 };
 
 export type GroupCanisterGroupChatSummaryUpdates = {
@@ -1005,6 +1008,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     latestThreads: GroupCanisterThreadDetails[];
     frozen: OptionUpdate<boolean>;
     affectedEvents: number[];
+    dateLastPinned: bigint | undefined;
 };
 
 export type GroupCanisterThreadDetails = {
