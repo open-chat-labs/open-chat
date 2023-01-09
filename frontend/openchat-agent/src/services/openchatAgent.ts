@@ -983,14 +983,16 @@ export class OpenChatAgent extends EventTarget {
         }
         const affectedEvents = getAffectedEvents(userResponse.directChatsUpdated, groupUpdates);
 
-        await setCachedChatsV2(this.db, this.principal, state, affectedEvents);
+        return await this.hydrateChatState(state).then((s) => {
+            setCachedChatsV2(this.db, this.principal, s, affectedEvents);
 
-        return await this.hydrateChatState(state).then((s) => ({
-            state: s,
-            affectedEvents,
-            anyUpdates,
-            anyErrors,
-        }));
+            return {
+                state: s,
+                affectedEvents,
+                anyUpdates,
+                anyErrors,
+            };
+        });
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
