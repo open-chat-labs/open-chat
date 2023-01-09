@@ -11,6 +11,10 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
+    pub fn recalculate_total(&mut self) {
+        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
         self.subscriptions.get(user_id).cloned()
     }
@@ -28,7 +32,7 @@ impl Subscriptions {
             }
         }
 
-        self.total += 1;
+        self.total = self.total.saturating_add(1);
     }
 
     pub fn any_for_user(&self, user_id: &UserId) -> bool {
@@ -37,7 +41,7 @@ impl Subscriptions {
 
     pub fn remove_all(&mut self, user_id: UserId) {
         if let Some(removed) = self.subscriptions.remove(&user_id) {
-            self.total -= removed.len() as u64;
+            self.total = self.total.saturating_sub(removed.len() as u64);
         }
     }
 
@@ -54,6 +58,7 @@ impl Subscriptions {
                 if subs.is_empty() {
                     e.remove();
                 }
+                self.total = self.total.saturating_sub(1);
                 return true;
             }
         }
