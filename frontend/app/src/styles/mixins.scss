@@ -31,75 +31,75 @@ $font-weights: (
 $font-sizes: (
     fs-50: (
         font-size: toRem(11),
-        line-height: 130%,
+        line-height: 1.3,
     ),
     fs-60: (
         font-size: toRem(12),
-        line-height: 135%,
+        line-height: 1.35,
     ),
     fs-70: (
         font-size: toRem(13),
-        line-height: 140%,
+        line-height: 1.4,
     ),
     fs-80: (
         font-size: toRem(14),
-        line-height: 140%,
+        line-height: 1.4,
     ),
     fs-90: (
         font-size: toRem(15),
-        line-height: 145%,
+        line-height: 1.45,
     ),
     fs-100: (
         font-size: toRem(16),
-        line-height: 150%,
+        line-height: 1.5,
     ),
     fs-110: (
         font-size: toRem(18),
-        line-height: 130%,
+        line-height: 1.3,
     ),
     fs-120: (
         font-size: toRem(20),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-130: (
         font-size: toRem(22),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-140: (
         font-size: toRem(24),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-160: (
         font-size: toRem(28),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-180: (
         font-size: toRem(32),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-200: (
         font-size: toRem(36),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-220: (
         font-size: toRem(40),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-230: (
         font-size: toRem(48),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-240: (
         font-size: toRem(60),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-250: (
         font-size: toRem(70),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-260: (
         font-size: toRem(80),
-        line-height: 120%,
+        line-height: 1.2,
     ),
 );
 
@@ -168,8 +168,8 @@ $sp11: 192px;
     }
 }
 
-@mixin spin() {
-    animation: loading-spinner 0.8s linear infinite;
+@mixin spin($speed: 0.8s) {
+    animation: loading-spinner $speed linear infinite;
 }
 
 @mixin pulse() {
@@ -184,7 +184,8 @@ $sp11: 192px;
     $size: 1.2em,
     $offset: 0.6em,
     $spinner-color: #191919,
-    $background-image: "../assets/spinner.svg"
+    $background-image: "../assets/spinner.svg",
+    $speed: 0.8s
 ) {
     position: relative;
 
@@ -200,7 +201,7 @@ $sp11: 192px;
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
         transform-origin: 50% 50%;
-        @include spin();
+        @include spin($speed);
         color: $spinner-color;
         z-index: 10;
     }
@@ -280,6 +281,7 @@ $z-indexed-items: (
         "date-label",
         "section-header",
         "fab",
+        "action-list",
         "powered-by",
         "features",
         "phone",
@@ -464,4 +466,19 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @include mobile() {
         padding: 0 toRem(24);
     }
+}
+
+@mixin input($whitespace: nowrap) {
+    padding: $sp3 $sp4;
+    @include font(book, normal, fs-100);
+    color: var(--txt);
+    background-color: var(--input-bg);
+    // border: 1px solid var(--bd);
+    border: 1px solid transparent;
+    border-radius: $sp2;
+    outline: none;
+    box-shadow: var(--input-sh);
+    white-space: $whitespace;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

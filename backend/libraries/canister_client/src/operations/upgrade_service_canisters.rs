@@ -45,42 +45,42 @@ pub async fn upgrade_user_index_canister(
     println!("User index canister upgraded");
 }
 
-pub async fn upgrade_notifications_canister(
+pub async fn upgrade_notifications_index_canister(
     identity: BasicIdentity,
     url: String,
-    notifications_canister_id: CanisterId,
+    notifications_index_canister_id: CanisterId,
     version: Version,
 ) {
     upgrade_top_level_canister(
         identity,
         url,
-        notifications_canister_id,
+        notifications_index_canister_id,
         version,
-        notifications_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::Notifications,
+        notifications_index_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::NotificationsIndex,
     )
     .await;
 
-    println!("Notifications canister upgraded");
+    println!("Notifications index canister upgraded");
 }
 
-pub async fn upgrade_online_users_aggregator_canister(
+pub async fn upgrade_online_users_canister(
     identity: BasicIdentity,
     url: String,
-    online_users_aggregator_canister_id: CanisterId,
+    online_users_canister_id: CanisterId,
     version: Version,
 ) {
     upgrade_top_level_canister(
         identity,
         url,
-        online_users_aggregator_canister_id,
+        online_users_canister_id,
         version,
-        online_users_aggregator_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::OnlineUsersAggregator,
+        online_users_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::OnlineUsers,
     )
     .await;
 
-    println!("Online users aggregator canister upgraded");
+    println!("Online users canister upgraded");
 }
 
 pub async fn upgrade_proposals_bot_canister(
@@ -100,6 +100,35 @@ pub async fn upgrade_proposals_bot_canister(
     .await;
 
     println!("Proposals bot canister upgraded");
+}
+
+pub async fn upgrade_local_group_index_canister(
+    identity: BasicIdentity,
+    url: String,
+    group_index_canister_id: CanisterId,
+    version: Version,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
+    let args = group_index_canister::upgrade_local_group_index_canister_wasm::Args {
+        local_group_index_canister_wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+    };
+
+    let response =
+        group_index_canister_client::upgrade_local_group_index_canister_wasm(&agent, &group_index_canister_id, &args)
+            .await
+            .unwrap();
+
+    if !matches!(
+        response,
+        group_index_canister::upgrade_local_group_index_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Local group index canister wasm upgraded to version {version}");
 }
 
 pub async fn upgrade_group_canister(
@@ -145,6 +174,66 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
         panic!("{response:?}");
     }
     println!("User canister wasm upgraded to version {version}");
+}
+
+pub async fn upgrade_local_user_index_canister(
+    identity: BasicIdentity,
+    url: String,
+    user_index_canister_id: CanisterId,
+    version: Version,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
+    let args = user_index_canister::upgrade_local_user_index_canister_wasm::Args {
+        local_user_index_canister_wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+    };
+
+    let response = user_index_canister_client::upgrade_local_user_index_canister_wasm(&agent, &user_index_canister_id, &args)
+        .await
+        .unwrap();
+
+    if !matches!(
+        response,
+        user_index_canister::upgrade_local_user_index_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Local user index canister wasm upgraded to version {version}");
+}
+
+pub async fn upgrade_notifications_canister(
+    identity: BasicIdentity,
+    url: String,
+    notifications_index_canister_id: CanisterId,
+    version: Version,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
+    let args = notifications_index_canister::upgrade_notifications_canister_wasm::Args {
+        notifications_canister_wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+    };
+
+    let response = notifications_index_canister_client::upgrade_notifications_canister_wasm(
+        &agent,
+        &notifications_index_canister_id,
+        &args,
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        response,
+        notifications_index_canister::upgrade_notifications_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Notifications canister wasm upgraded to version {version}");
 }
 
 async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(

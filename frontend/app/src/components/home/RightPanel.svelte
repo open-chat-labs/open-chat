@@ -3,10 +3,9 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddMembers from "./groupdetails/AddMembers.svelte";
-    import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import type { RightPanelState } from "./rightPanel";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import type {
         AddMembersResponse,
         ChatEvent,
@@ -31,8 +30,6 @@
 
     const dispatch = createEventDispatcher();
 
-    export let rightPanelHistory: RightPanelState[];
-
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
 
@@ -48,10 +45,10 @@
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
-    $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
+    $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
-    $: empty = rightPanelHistory.length === 0;
+    $: empty = $rightPanelHistory.length === 0;
 
     function onDismissAsAdmin(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
@@ -75,7 +72,7 @@
     }
 
     function popHistory() {
-        rightPanelHistory = rightPanelHistory.slice(0, rightPanelHistory.length - 1);
+        rightPanelHistory.update((history) => history.slice(0, history.length - 1));
     }
 
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
@@ -334,18 +331,18 @@
             on:close={popHistory}
             on:updateGroupRules={updateGroupRules}
             on:deleteGroup
-            on:makeGroupPrivate
+            on:editGroup
             on:chatWith
             on:showMembers />
     {:else if lastState.kind === "add_members"}
         <AddMembers
             busy={savingMembers}
-            closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:saveMembers={saveMembers}
             on:cancelAddMembers={popHistory} />
     {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
         <Members
-            closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             chat={$groupChat}
             members={currentChatMembers}
             blockedUsers={currentChatBlockedUsers}
@@ -364,6 +361,7 @@
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
+            dateLastPinned={$groupChat.dateLastPinned}
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
@@ -373,8 +371,6 @@
             {user}
             on:userAvatarSelected
             on:closeProfile={popHistory} />
-    {:else if lastState.kind === "new_group_panel"}
-        <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
     {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             on:chatWith

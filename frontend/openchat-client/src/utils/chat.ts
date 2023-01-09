@@ -1,4 +1,4 @@
-import { compareUsersOnlineFirst, nullUser } from "./user";
+import { compareUsername, nullUser } from "./user";
 import {
     ChatSummary,
     EventWrapper,
@@ -63,7 +63,7 @@ export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
-export function upToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
+export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
     return (
         chat.latestMessage === undefined ||
         events[events.length - 1]?.index >= chat.latestEventIndex
@@ -76,7 +76,7 @@ export function getRecentlyActiveUsers(
     maxUsers: number
 ): Set<string> {
     const users = new Set<string>();
-    if (upToDate(chat, events)) {
+    if (isUpToDate(chat, events)) {
         const tenMinsAgo = Date.now() - 10 * 60 * 1000;
 
         for (let i = events.length - 1; i >= 0; i--) {
@@ -207,8 +207,8 @@ export function getMembersString(
     }
     const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersFn ?? compareUsersOnlineFirst)
-        .map((p) => (p.userId === user.userId ? you : p.username));
+        .sort(compareUsersFn ?? compareUsername)
+        .map((p) => `**${p.userId === user.userId ? you : p.username}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1
@@ -459,16 +459,18 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
+    aggregateDeleted: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
-        .map((e) => reduceJoinedOrLeft(e, myUserId))
+        .map((e) => reduceJoinedOrLeft(e, myUserId, aggregateDeleted))
         .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
-    myUserId: string
+    myUserId: string,
+    aggregateDeleted: boolean,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
@@ -482,7 +484,7 @@ function reduceJoinedOrLeft(
         if (
             e.event.kind === "member_joined" ||
             e.event.kind === "member_left" ||
-            (e.event.kind === "message" && messageIsHidden(e.event, myUserId))
+            (aggregateDeleted && e.event.kind === "message" && messageIsHidden(e.event, myUserId))
         ) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
@@ -528,7 +530,6 @@ function reduceJoinedOrLeft(
 function messageIsHidden(message: Message, myUserId: string) {
     return (
         message.content.kind === "deleted_content" &&
-        message.content.deletedBy !== myUserId &&
         message.sender !== myUserId &&
         message.thread === undefined
     );
@@ -651,6 +652,8 @@ export function groupChatFromCandidate(
         archived: false,
         previewed: false,
         frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
     };
 }
 

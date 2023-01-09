@@ -2,7 +2,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{UserEvent, UsernameChanged};
+use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -17,9 +17,6 @@ fn set_username(args: Args) -> Response {
 fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-
-    runtime_state.data.users.mark_online(&caller, now);
-
     let username = args.username;
 
     match validate_username(&username) {
@@ -36,10 +33,10 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let user_id = user.user_id;
         match runtime_state.data.users.update(user_to_update) {
             UpdateUserResult::Success => {
-                runtime_state
-                    .data
-                    .user_event_sync_queue
-                    .push(user_id, UserEvent::UsernameChanged(UsernameChanged { username }));
+                runtime_state.data.push_event_to_local_user_index(
+                    user_id,
+                    UserIndexEvent::UsernameChanged(UsernameChanged { user_id, username }),
+                );
 
                 Success
             }
@@ -116,7 +113,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -143,7 +139,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -166,7 +161,6 @@ mod tests {
             username: "abcdef".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         data.users.add_test_user(User {
@@ -176,7 +170,6 @@ mod tests {
             username: "vwxyz".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -199,7 +192,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -222,7 +214,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -245,7 +236,6 @@ mod tests {
             username: "abcde".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);

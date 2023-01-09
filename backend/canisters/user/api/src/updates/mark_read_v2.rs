@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, MessageIndex};
+use types::{ChatId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,6 +12,7 @@ pub struct ChatMessagesRead {
     pub chat_id: ChatId,
     pub read_up_to: Option<MessageIndex>,
     pub threads: Vec<ThreadRead>,
+    pub date_read_pinned: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

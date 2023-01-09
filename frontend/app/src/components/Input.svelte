@@ -49,6 +49,7 @@
 <div class="input-wrapper">
     <input
         class:invalid
+        class:hasCountdown={countdown}
         spellcheck="false"
         {disabled}
         {type}
@@ -81,9 +82,10 @@
         right: 10px;
         top: 11px;
         @include font(light, normal, fs-80);
+        color: var(--txt-light);
 
         &.near-max {
-            color: darkred;
+            color: var(--warn);
         }
     }
 
@@ -91,19 +93,8 @@
         transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
-        height: 40px;
-        line-height: 24px;
-        padding: $sp4;
-        @include font(book, normal, fs-100);
-        color: var(--txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--bd);
-        outline: none;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
-        box-shadow: var(--input-sh);
+
+        @include input();
 
         &.small {
             @include font(book, normal, fs-80);
@@ -136,6 +127,10 @@
 
         &::placeholder {
             color: var(--placeholder);
+        }
+
+        &.hasCountdown {
+            padding-right: 40px;
         }
     }
 </style>

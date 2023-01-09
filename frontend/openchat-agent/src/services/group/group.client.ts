@@ -534,7 +534,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
         return this.handleResponse(
-            this.groupService.pin_message({
+            this.groupService.pin_message_v2({
                 message_index: messageIndex,
                 correlation_id: generateUint64(),
             }),

@@ -2,8 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLE
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, Cycles, CyclesTopUp, Version};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
-use utils::cycles::can_spend_cycles;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
 #[heartbeat]
 fn heartbeat() {
@@ -47,20 +46,15 @@ mod upgrade_canisters {
         let group = runtime_state.data.local_groups.get_mut(&chat_id)?;
         let current_wasm_version = group.wasm_version;
         let group_canister_wasm = &runtime_state.data.group_canister_wasm;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
         group.set_canister_upgrade_status(true, None);
-
-        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
-            Some(CYCLES_REQUIRED_FOR_UPGRADE)
-        } else {
-            None
-        };
 
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
             new_wasm: group_canister_wasm.clone(),
-            cycles_to_deposit_if_needed,
+            deposit_cycles_if_needed,
             args: group_canister::post_upgrade::Args {
                 wasm_version: group_canister_wasm.version,
             },

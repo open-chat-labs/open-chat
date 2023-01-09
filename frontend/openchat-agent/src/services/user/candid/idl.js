@@ -199,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
     'no' : IDL.Nat64,
     'yes' : IDL.Nat64,
     'total' : IDL.Nat64,
+    'timestamp' : TimestampMillis,
   });
   const ProposalRewardStatus = IDL.Variant({
     'ReadyToSettle' : IDL.Null,
@@ -684,6 +685,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
+    'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -702,6 +704,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
     'archived' : IDL.Bool,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
@@ -803,6 +806,7 @@ export const idlFactory = ({ IDL }) => {
     'threads' : IDL.Vec(ThreadRead),
     'read_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
   });
   const MarkReadArgs = IDL.Record({
     'messages_read' : IDL.Vec(ChatMessagesRead),
@@ -1066,6 +1070,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
+    'date_last_pinned' : IDL.Opt(TimestampMillis),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
@@ -1081,6 +1086,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
     'archived' : IDL.Opt(IDL.Bool),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),

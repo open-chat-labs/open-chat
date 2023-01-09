@@ -1,7 +1,8 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
-use types::{DirectChatSummary, DirectChatSummaryUpdates, MessageIndex, TimestampMillis, Timestamped, UserId};
+use std::collections::HashSet;
+use types::{DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -14,6 +15,8 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
+    #[serde(default)]
+    pub unconfirmed: HashSet<MessageId>,
 }
 
 impl DirectChat {
@@ -28,6 +31,7 @@ impl DirectChat {
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
             is_bot,
+            unconfirmed: HashSet::new(),
         }
     }
 
@@ -51,6 +55,14 @@ impl DirectChat {
         } else {
             false
         }
+    }
+
+    pub fn mark_message_pending(&mut self, message_id: MessageId) {
+        self.unconfirmed.insert(message_id);
+    }
+
+    pub fn mark_message_confirmed(&mut self, message_id: &MessageId) {
+        self.unconfirmed.remove(message_id);
     }
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {

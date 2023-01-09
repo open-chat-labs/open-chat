@@ -150,6 +150,7 @@ export type WorkerRequest =
     | GroupChatEventsByEventIndex
     | DirectChatEventsWindow
     | GroupChatEventsWindow
+    | LastOnline
     | MarkAsOnline
     | GetGroupDetails
     | GetGroupDetailUpdates
@@ -715,6 +716,12 @@ type GetAllCachedUsers = Request & {
     kind: "getAllCachedUsers";
 };
 
+type LastOnline = Request<{
+    userIds: string[]
+}> & {
+    kind: "lastOnline";
+};
+
 type MarkAsOnline = Request & {
     kind: "markAsOnline";
 };
@@ -869,6 +876,7 @@ export type WorkerResponse =
     | Response<EventsResponse<GroupChatEvent>>
     | Response<EventsResponse<DirectChatEvent>>
     | Response<EventsResponse<GroupChatEvent>>
+    | Response<Record<string, number>>
     | Response<undefined>
     | Response<GroupChatDetailsResponse>
     | Response<GroupChatDetails>
@@ -910,6 +918,7 @@ export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     chatId: string;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }>;
 export type RelayedStorageUpdated = WorkerEventCommon<{
     subkind: "storage_updated";

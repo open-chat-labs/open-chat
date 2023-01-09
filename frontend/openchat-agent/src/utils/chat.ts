@@ -56,8 +56,19 @@ function mergeThings<A, U>(
     things: A[],
     updates: { added: A[]; updated: U[]; removed: Set<string> }
 ): A[] {
-    const remaining = things.filter((t) => !updates.removed.has(keyFn(t)));
-    const dict = toRecord(remaining, keyFn);
+    // if there's nothing to do - do nothing
+    if (updates.added.length === 0 && updates.updated.length === 0 && updates.removed.size === 0)
+        return things;
+
+    // create a lookup of all existing and added things
+    const dict = toLookup(keyFn, things.concat(updates.added));
+
+    // delete all removed things
+    updates.removed.forEach((key) => {
+        delete dict[key];
+    });
+
+    // merge in all updates
     const updated = updates.updated.reduce((dict, updated) => {
         const key = keyFn(updated);
         const merged = mergeFn(dict[key], updated);
@@ -67,14 +78,8 @@ function mergeThings<A, U>(
         return dict;
     }, dict);
 
-    // concat the updated and the added and then merge the result so we are sure
-    // there are no duplicates (according to the provided keyFn)
-    return Object.values(
-        [...Object.values(updated), ...updates.added].reduce((merged, thing) => {
-            merged[keyFn(thing)] = thing;
-            return merged;
-        }, {} as Record<string, A>)
-    );
+    // return the result
+    return Object.values(updated);
 }
 
 export function mergeUpdates(
@@ -125,9 +130,10 @@ function mergeUpdatedGroupChat(
         ...chat,
         name: updatedChat.name ?? chat.name,
         description: updatedChat.description ?? chat.description,
-        readByMeUpTo: latestMessage !== undefined && readByMeUpTo !== undefined
-            ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-            : readByMeUpTo,
+        readByMeUpTo:
+            latestMessage !== undefined && readByMeUpTo !== undefined
+                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                : readByMeUpTo,
         lastUpdated: updatedChat.lastUpdated,
         latestEventIndex: getLatestEventIndex(chat, updatedChat),
         latestMessage,
@@ -145,6 +151,8 @@ function mergeUpdatedGroupChat(
         subtype: mergeSubtype(updatedChat.subtype, chat.subtype),
         archived: updatedChat.archived ?? chat.archived,
         frozen: applyOptionUpdate(chat.frozen, updatedChat.frozen) ?? false,
+        dateLastPinned: updatedChat.dateLastPinned ?? chat.dateLastPinned,
+        dateReadPinned: updatedChat.dateReadPinned ?? chat.dateReadPinned,
     };
 }
 

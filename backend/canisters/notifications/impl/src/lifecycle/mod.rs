@@ -2,8 +2,8 @@ use crate::{init_state as set_state, Data, RuntimeState, LOG_MESSAGES, WASM_VERS
 use types::{Timestamped, Version};
 use utils::env::Environment;
 
-mod heartbeat;
 mod init;
+mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 

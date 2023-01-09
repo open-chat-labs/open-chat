@@ -7,7 +7,6 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -19,17 +18,21 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    let now = env.now();
-    data.events.remove_old_deleted_message_content(now);
-
     init_logger(data.test_mode);
+    LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()));
+
+    // One-time code to initialize the date_last_pinned if the chat has pinned messages.
+    // This means that all members will initially see the pinned messages as unread.
+    init_date_last_pinned(&mut data);
     init_state(env, data, args.wasm_version);
 
-    if !log_messages.is_empty() || !trace_messages.is_empty() {
-        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-    }
-
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+fn init_date_last_pinned(data: &mut Data) {
+    if !data.pinned_messages.is_empty() && data.date_last_pinned.is_none() {
+        data.date_last_pinned = Some(0);
+    }
 }
 
 fn rehydrate_log_messages(

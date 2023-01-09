@@ -800,6 +800,8 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     latestThreads?: ThreadSyncDetailsUpdates[];
     subtype?: GroupSubtypeUpdate;
     frozen?: OptionUpdate<boolean>;
+    dateLastPinned?: bigint;
+    dateReadPinned?: bigint;
 };
 
 export type GroupSubtypeUpdate =
@@ -881,6 +883,7 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
+    aggregateDeletedMessages: boolean;
 };
 
 export type GroupRules = {
@@ -945,6 +948,8 @@ export type GroupChatSummary = DataContent &
         subtype: GroupSubtype;
         previewed: boolean;
         frozen: boolean;
+        dateLastPinned: bigint | undefined;
+        dateReadPinned: bigint | undefined;
     };
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
@@ -1030,6 +1035,7 @@ export type CandidateMember = {
 };
 
 export type CandidateGroupChat = {
+    chatId?: string;
     name: string;
     description: string;
     rules: GroupRules;
@@ -1347,6 +1353,7 @@ export type MarkReadRequest = {
     readUpTo: number | undefined;
     chatId: string;
     threads: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }[];
 
 export type ThreadRead = {
@@ -1421,14 +1428,18 @@ export type UnpinMessageResponse =
     | "success";
 
 export type PinMessageResponse =
-    | "index_out_of_range"
-    | "no_change"
-    | "caller_not_in_group"
-    | "not_authorised"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+    | {
+        kind: "success";
+        eventIndex: number;
+        timestamp: bigint;
+    }
+    | { kind: "index_out_of_range" }
+    | { kind: "no_change" }
+    | { kind: "caller_not_in_group" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | UserSuspended
+    | ChatFrozen;
 
 export type RegisterPollVoteResponse =
     | "caller_not_in_group"
@@ -1566,3 +1577,7 @@ export type UnfreezeGroupResponse =
     | "chat_not_found"
     | "not_authorized"
     | "internal_error";
+
+export type MarkPinnedMessagesReadResponse =
+    | "success"
+    | "chat_frozen";

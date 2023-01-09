@@ -39,7 +39,6 @@
     let hovering = false;
     let viewProfile = false;
 
-    $: userStore = client.userStore;
     $: showMenu =
         canDismissAdmin ||
         canMakeAdmin ||
@@ -111,8 +110,8 @@
         <Avatar
             statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
             blocked={member.memberKind === "blocked_member"}
+            userId={member.userId}
             url={client.userAvatarUrl(member)}
-            status={client.getUserStatus($now, $userStore, member.userId)}
             size={AvatarSize.Small} />
     </span>
     <div class="details">

@@ -14,7 +14,6 @@ fn init(args: Args) {
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
-    let group_index_canister_id = env.caller();
 
     let data = Data::new(
         env.canister_id().into(),
@@ -29,9 +28,11 @@ fn init(args: Args) {
         args.created_by_user_id,
         env.now(),
         args.mark_active_duration,
-        group_index_canister_id,
+        args.group_index_canister_id,
+        args.local_group_index_canister_id,
         args.user_index_canister_id,
-        args.notifications_canister_ids,
+        args.local_user_index_canister_id,
+        args.notifications_canister_id,
         args.ledger_canister_id,
         args.test_mode,
         args.permissions,

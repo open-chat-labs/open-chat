@@ -26,9 +26,13 @@ members = [
     "backend/canisters/notifications/c2c_client",
     "backend/canisters/notifications/client",
     "backend/canisters/notifications/impl",
-    "backend/canisters/online_users_aggregator/api",
-    "backend/canisters/online_users_aggregator/client",
-    "backend/canisters/online_users_aggregator/impl",
+    "backend/canisters/notifications_index/api",
+    "backend/canisters/notifications_index/c2c_client",
+    "backend/canisters/notifications_index/client",
+    "backend/canisters/notifications_index/impl",
+    "backend/canisters/online_users/api",
+    "backend/canisters/online_users/client",
+    "backend/canisters/online_users/impl",
     "backend/canisters/proposals_bot/api",
     "backend/canisters/proposals_bot/impl",
     "backend/canisters/user/api",
@@ -72,25 +76,26 @@ aws-sdk-pinpoint = "0.19.0"
 aws-types = "0.49.0"
 base64 = "0.13.0"
 candid = "0.8.3"
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "8ad7972521dff55ec84085fdab35b8b6c27619ed" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 clap = "3.0.14"
-cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "4cae7b26bb812c69875fc6524ee4ec99018064fd" }
+cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "c65b84be6663b82ff1387523f89aa7fa98b46eb7" }
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.25"
 garcon = "0.2.3"
 getrandom = "0.2.8"
 ic-agent = "0.22.0"
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
 ic-cdk = "0.6.8"
 ic-cdk-macros = "0.6.8"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
 ic-ledger-types = "0.2.0"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "997ab2e9cc49189302fe54c1e60709abfbeb1d42" }
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
+ic-stable-structures = "0.3.0"
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "70754517f862aba2b524936a1e8e4be08562c97d" }
 ic-utils = "0.22.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
@@ -112,14 +117,15 @@ serde_bytes = "0.11.7"
 serde_cbor = "0.11.2"
 serde_json = "1.0.86"
 sha2 = "0.10.6"
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d9c575fb4b91e1cfe80add0746eac389df33c8f7" }
+serializer = { git = "https://github.com/open-ic/ic-utils", rev = "8ad7972521dff55ec84085fdab35b8b6c27619ed" }
+stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "8ad7972521dff55ec84085fdab35b8b6c27619ed" }
 syn = "1.0.102"
 test-case = "2.2.2"
 tokio = "1.21.2"
 tracing = "0.1.37"
 tracing-attributes = "0.1.23"
 tracing-subscriber = "0.3.16"
-web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "12a08c29e5175066cd70428699e10ac509036f01" }
+web-push = "0.9.3"
 
 [profile.release]
 lto = true
@@ -128,7 +134,9 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "77408c7262a4aad8b11da90e05cfc51dfebc0edc" }
-jwt-simple = { git = "https://github.com/hpeebles/rust-jwt-simple", rev = "6ead8a70f6cc8ee7877cce043e8d3876a7fe854e" }
+candid = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
+candid_derive = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "986e0d8531cd152d5da747b760b099f1d4f16136" }

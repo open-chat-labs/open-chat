@@ -17,7 +17,6 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 captcha = { workspace = true }
-cycles_dispenser_client = { workspace = true }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
@@ -26,11 +25,13 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
-notifications_canister = { path = "../../notifications/api" }
-notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+notifications_index_canister = { path = "../../notifications_index/api" }
+notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
 open_storage_index_canister = { workspace = true }
 open_storage_index_canister_c2c_client = { workspace = true }
 rand = { workspace = true }

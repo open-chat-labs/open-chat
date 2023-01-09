@@ -6,11 +6,14 @@ use types::{CanisterWasm, Version};
 
 lazy_static! {
     pub static ref GROUP: CanisterWasm = get_canister_wasm("group");
+    pub static ref LOCAL_GROUP_INDEX: CanisterWasm = get_canister_wasm("local_group_index");
     pub static ref GROUP_INDEX: CanisterWasm = get_canister_wasm("group_index");
     pub static ref NOTIFICATIONS: CanisterWasm = get_canister_wasm("notifications");
-    pub static ref ONLINE_USERS_AGGREGATOR: CanisterWasm = get_canister_wasm("online_users_aggregator");
+    pub static ref NOTIFICATIONS_INDEX: CanisterWasm = get_canister_wasm("notifications_index");
+    pub static ref ONLINE_USERS: CanisterWasm = get_canister_wasm("online_users");
     pub static ref PROPOSALS_BOT: CanisterWasm = get_canister_wasm("proposals_bot");
     pub static ref USER: CanisterWasm = get_canister_wasm("user");
+    pub static ref LOCAL_USER_INDEX: CanisterWasm = get_canister_wasm("local_user_index");
     pub static ref USER_INDEX: CanisterWasm = get_canister_wasm("user_index");
 }
 

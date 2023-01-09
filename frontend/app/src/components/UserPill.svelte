@@ -18,7 +18,7 @@
 
 <div class="pill" class:add={mode === "add"} class:edit={mode === "edit"}>
     <div class="avatar">
-        <Avatar url={client.userAvatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
+        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
     <div class="username">{user.username}</div>
     <div on:click={deleteUser} class="delete">

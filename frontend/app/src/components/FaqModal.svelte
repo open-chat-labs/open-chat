@@ -47,14 +47,6 @@
 </ModalContent>
 
 <style type="text/scss">
-    :global(.faq-body .card) {
-        margin-bottom: $sp3;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-
     .header {
         display: flex;
         align-items: center;

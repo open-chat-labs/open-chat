@@ -1,6 +1,7 @@
 <script lang="ts">
     export let disabled: boolean = false;
     export let selected: boolean = false;
+    export let warning: boolean = false;
 </script>
 
 {#if disabled}
@@ -11,7 +12,7 @@
         <slot name="text" />
     </div>
 {:else}
-    <div class="menu-item" on:click role="menuitem" class:selected>
+    <div class="menu-item" on:click role="menuitem" class:selected class:warning>
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -23,16 +24,10 @@
     .menu-item {
         display: flex;
         cursor: pointer;
-        // border-bottom: 1px solid var(--bd);
         color: var(--menu-txt);
         align-items: center;
         @include font-size(fs-90);
         padding: 12px $sp4;
-
-        // @include mobile() {
-        //     @include font-size(fs-80);
-        //     padding: 9px 12px;
-        // }
 
         &:last-child {
             border-bottom: none;
@@ -51,6 +46,10 @@
         &.disabled {
             color: var(--menu-disabled-txt);
             cursor: not-allowed;
+        }
+
+        &.warning {
+            color: var(--menu-warn);
         }
     }
 </style>

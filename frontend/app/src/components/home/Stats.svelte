@@ -323,7 +323,6 @@
         stroke-width: 150px;
         cursor: pointer;
     }
-
     .pie {
         width: min(250px, 100%);
         margin-bottom: $sp5;

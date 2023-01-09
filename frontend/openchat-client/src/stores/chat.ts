@@ -35,6 +35,7 @@ import type { DraftMessage } from "./draftMessageFactory";
 import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
+import { setsAreEqual } from "../utils/set";
 
 export type ChatState = {
     chatId: string;
@@ -74,19 +75,16 @@ export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> =
 export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
 
 export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [
-        myServerChatSummariesStore,
-        groupPreviewsStore
-    ],
+    [myServerChatSummariesStore, groupPreviewsStore],
     ([summaries, previews]) => {
-        return Object.entries<ChatSummary>(previews).concat(Object.entries(summaries)).reduce<Record<string, ChatSummary>>(
-            (result, [chatId, summary]) => {
+        return Object.entries<ChatSummary>(previews)
+            .concat(Object.entries(summaries))
+            .reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
                 result[chatId] = summary;
                 return result;
-            },
-            {}
-        );
-    });
+            }, {});
+    }
+);
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
     [
@@ -107,7 +105,7 @@ export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived
                         currentUser.userId,
                         summary,
                         unconfirmed,
-                        localUpdates,
+                        localUpdates
                     );
                 }
                 return result;
@@ -279,6 +277,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     userGroupKeys: new Set<string>(),
     confirmedEventIndexesLoaded: new DRange(),
     serverEvents: [],
+    aggregateDeletedMessages: true,
 }));
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
@@ -310,6 +309,12 @@ export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focu
     chatStateStore,
     "focusMessageIndex",
     () => undefined
+);
+
+export const aggregateDeletedMessages = createDerivedPropStore<ChatSpecificState, "aggregateDeletedMessages">(
+    chatStateStore,
+    "aggregateDeletedMessages",
+    () => true
 );
 
 export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
@@ -346,12 +351,13 @@ export const chatDetailsLatestEventIndex = createDerivedPropStore<
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,
     "blockedUsers",
-    () => new Set<string>()
+    () => new Set<string>(),
+    setsAreEqual
 );
 export const currentChatPinnedMessages = createDerivedPropStore<
     ChatSpecificState,
     "pinnedMessages"
->(chatStateStore, "pinnedMessages", () => new Set<number>());
+>(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
 
 export function setSelectedChat(
     api: OpenChatAgentWorker,
@@ -390,6 +396,7 @@ export function setSelectedChat(
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.chatId);
     chatStateStore.setProp(clientChat.chatId, "focusMessageIndex", messageIndex);
+    chatStateStore.setProp(clientChat.chatId, "aggregateDeletedMessages", true);
     chatStateStore.setProp(
         clientChat.chatId,
         "userIds",
@@ -462,7 +469,7 @@ export function addGroupPreview(chat: GroupChatSummary): void {
     localChatSummaryUpdates.delete(chat.chatId);
     groupPreviewsStore.update((summaries) => ({
         ...summaries,
-        [chat.chatId]: chat
+        [chat.chatId]: chat,
     }));
 }
 
@@ -489,6 +496,29 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
+export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
+    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
+
+    if (confirmedLoaded.length === 0 || events.length === 0) return true;
+
+    const firstIndex = events[0].index;
+    const lastIndex = events[events.length - 1].index;
+    const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
+
+    const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
+
+    if (!isContiguous) {
+        console.log(
+            "Events in response are not contiguous with the loaded events",
+            confirmedLoaded,
+            firstIndex,
+            lastIndex
+        );
+    }
+
+    return isContiguous;
+}
+
 export function addServerEventsToStores(
     chatId: string,
     newEvents: EventWrapper<ChatEvent>[],
@@ -498,9 +528,12 @@ export function addServerEventsToStores(
         return;
     }
 
-    const key = threadRootMessageIndex === undefined
-        ? chatId
-        : `${chatId}_${threadRootMessageIndex}`;
+    if (!isContiguous(chatId, newEvents)) {
+        return;
+    }
+
+    const key =
+        threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
 
     for (const event of newEvents) {
         if (event.event.kind === "message") {

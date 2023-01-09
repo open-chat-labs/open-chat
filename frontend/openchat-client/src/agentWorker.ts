@@ -164,7 +164,8 @@ export class OpenChatAgentWorker extends EventTarget {
                         new MessagesReadFromServer(
                             data.event.chatId,
                             data.event.readByMeUpTo,
-                            data.event.threadsRead
+                            data.event.threadsRead,
+                            data.event.dateReadPinned,
                         )
                     );
                 }
@@ -382,6 +383,15 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 previous,
+            },
+        });
+    }
+
+    lastOnline(userIds: string[]): Promise<Record<string, number>> {
+        return this.sendRequest({
+            kind: "lastOnline",
+            payload: {
+                userIds
             },
         });
     }

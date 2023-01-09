@@ -8,7 +8,7 @@ pub struct Args {
     pub service_principals: Vec<Principal>,
 
     pub group_canister_wasm: CanisterWasm,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    pub local_group_index_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,

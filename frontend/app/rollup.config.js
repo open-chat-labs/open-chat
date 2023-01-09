@@ -41,8 +41,8 @@ if (dfxNetwork) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
         process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
-        process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
-        process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
+        process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
+        process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
         process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.open_storage_index[dfxNetwork];
 
@@ -289,7 +289,7 @@ export default {
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
-                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Roboto:wght@200;300;400&display=swap"
+                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>

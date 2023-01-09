@@ -21,11 +21,14 @@ pub const USER3_DEFAULT_NAME: &str = "Charlie";
 #[derive(Debug)]
 pub enum CanisterName {
     Group,
+    LocalGroupIndex,
     GroupIndex,
     Notifications,
-    OnlineUsersAggregator,
+    NotificationsIndex,
+    OnlineUsers,
     ProposalsBot,
     User,
+    LocalUserIndex,
     UserIndex,
 }
 
@@ -35,12 +38,15 @@ impl FromStr for CanisterName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "group" => Ok(CanisterName::Group),
+            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
             "group_index" => Ok(CanisterName::GroupIndex),
             "notifications" => Ok(CanisterName::Notifications),
-            "online_users_aggregator" => Ok(CanisterName::OnlineUsersAggregator),
+            "notifications_index" => Ok(CanisterName::NotificationsIndex),
+            "online_users" => Ok(CanisterName::OnlineUsers),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
+            "local_user_index" => Ok(CanisterName::LocalUserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
         }
     }
@@ -50,11 +56,14 @@ impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
             CanisterName::Group => "group",
+            CanisterName::LocalGroupIndex => "local_group_index",
             CanisterName::GroupIndex => "group_index",
             CanisterName::Notifications => "notifications",
-            CanisterName::OnlineUsersAggregator => "online_users_aggregator",
+            CanisterName::NotificationsIndex => "notifications_index",
+            CanisterName::OnlineUsers => "online_users",
             CanisterName::ProposalsBot => "proposals_bot",
             CanisterName::User => "user",
+            CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::UserIndex => "user_index",
         };
 
@@ -66,8 +75,11 @@ impl Display for CanisterName {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-    pub online_users_aggregator: CanisterId,
+    pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,

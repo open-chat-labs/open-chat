@@ -819,7 +819,8 @@ export class OpenChatAgent extends EventTarget {
                     new MessagesReadFromServer(
                         chat.chatId,
                         chat.readByMeUpTo,
-                        threadsReadFromChat(chat)
+                        threadsReadFromChat(chat),
+                        (chat as GroupChatSummary)?.dateReadPinned,
                     )
                 );
 
@@ -1216,6 +1217,10 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number
     ): Promise<UndeleteMessageResponse> {
         return this.userClient.undeleteMessage(otherUserId, messageId, threadRootMessageIndex);
+    }
+
+    lastOnline(userIds: string[]): Promise<Record<string, number>> {
+        return this._onlineClient.lastOnline(userIds);
     }
 
     markAsOnline(): Promise<void> {

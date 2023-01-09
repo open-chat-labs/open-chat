@@ -49,10 +49,10 @@
     export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
     export let collapsed: boolean;
+    export let threadRootMessage: Message | undefined;
 
     let userSummary: UserSummary | undefined = undefined;
 
@@ -62,7 +62,6 @@
             kind: "user",
             userId: user.userId,
             username: user.username,
-            lastOnline: Date.now(),
             updated: BigInt(0),
             suspended: false,
         };
@@ -98,7 +97,7 @@
         canStartThread={canReplyInThread}
         {publicGroup}
         {editing}
-        {inThread}
+        {threadRootMessage}
         {supportsEdit}
         {supportsReply}
         {collapsed}
@@ -106,18 +105,9 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:selectReaction
-        on:deleteMessage
-        on:undeleteMessage
-        on:blockUser
-        on:pinMessage
-        on:unpinMessage
-        on:registerVote
         on:editMessage={editEvent}
         on:upgrade
         on:forward
-        on:copyMessageUrl
-        on:shareMessage
         on:expandMessage
         on:collapseMessage
         eventIndex={event.index}
@@ -142,11 +132,12 @@
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
-    <AggregateCommonEvents 
-        {observer} 
+    <AggregateCommonEvents
+        {chatId}
+        {observer}
         {readByMe}
-        user={userSummary} 
-        joined={event.event.usersJoined} 
+        user={userSummary}
+        joined={event.event.usersJoined}
         messagesDeleted={event.event.messagesDeleted} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />

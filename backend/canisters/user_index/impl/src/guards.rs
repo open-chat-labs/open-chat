@@ -16,27 +16,11 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_notifications_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_notifications_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the notifications canister".to_string())
-    }
-}
-
 pub fn caller_is_sms_sender() -> Result<(), String> {
     if read_state(|state| state.is_caller_sms_service()) {
         Ok(())
     } else {
         Err("Caller is not the sms sender".to_string())
-    }
-}
-
-pub fn caller_is_online_users_aggregator_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_online_users_aggregator_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the online users aggregator canister".to_string())
     }
 }
 

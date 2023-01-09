@@ -1,3 +1,4 @@
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
@@ -46,6 +47,11 @@ impl RuntimeState {
         self.data.local_groups.get(&caller.into()).is_some()
     }
 
+    pub fn is_caller_notifications_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notifications_canister_id == caller
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
@@ -57,12 +63,20 @@ impl RuntimeState {
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_group_count: self.data.local_groups.len() as u64,
-            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                icp_ledger: self.data.ledger_canister_id,
+            },
         }
     }
 }
@@ -72,9 +86,13 @@ struct Data {
     pub local_groups: LocalGroupMap,
     pub group_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "default_local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "default_notifications_canister_id")]
+    pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -82,13 +100,23 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
 }
 
+fn default_local_user_index_canister_id() -> CanisterId {
+    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+}
+
+fn default_notifications_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         group_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
+        notifications_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
@@ -97,8 +125,10 @@ impl Data {
             local_groups: LocalGroupMap::default(),
             group_canister_wasm,
             user_index_canister_id,
+            local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_ids,
+            notifications_canister_id,
+            cycles_dispenser_canister_id,
             ledger_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -125,4 +155,15 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub notifications: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub icp_ledger: CanisterId,
 }

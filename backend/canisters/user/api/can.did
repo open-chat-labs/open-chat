@@ -138,6 +138,7 @@ type ChatMessagesRead =
         chat_id: ChatId;
         read_up_to: opt MessageIndex;
         threads: vec ThreadRead;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type ThreadRead =

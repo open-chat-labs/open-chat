@@ -1,20 +1,17 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, SuspensionDetails, SuspensionDuration, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};
-use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
+use utils::time::MINUTE_IN_MS;
 
-use super::user::{SuspensionDetails, SuspensionDuration};
-
-const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
-const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
 const PRUNE_UNCONFIRMED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "UserMapTrimmed")]
 pub struct UserMap {
     users: HashMap<UserId, User>,
     #[serde(skip)]
@@ -23,7 +20,6 @@ pub struct UserMap {
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
-    cached_metrics: Timestamped<Metrics>,
     #[serde(skip)]
     users_with_unconfirmed_phone_numbers: HashSet<UserId>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
@@ -33,38 +29,7 @@ pub struct UserMap {
     suspected_bots: BTreeSet<UserId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
-pub struct Metrics {
-    pub users_created: u64,
-    pub users_online_5_minutes: u32,
-    pub users_online_1_hour: u32,
-    pub users_online_1_week: u32,
-    pub users_online_1_month: u32,
-}
-
 impl UserMap {
-    pub fn rehydrate(&mut self) {
-        for (user_id, user) in self.users.iter() {
-            match &user.phone_status {
-                PhoneStatus::Confirmed(p) => {
-                    self.phone_number_to_user_id.insert(p.clone(), *user_id);
-                }
-                PhoneStatus::Unconfirmed(p) => {
-                    self.phone_number_to_user_id.insert(p.phone_number.clone(), *user_id);
-                    self.users_with_unconfirmed_phone_numbers.insert(*user_id);
-                }
-                _ => {}
-            };
-
-            if let Some(referred_by) = user.referred_by {
-                self.user_referrals.entry(referred_by).or_default().push(*user_id);
-            }
-
-            self.username_to_user_id.insert(&user.username, *user_id);
-            self.principal_to_user_id.insert(user.principal, *user_id);
-        }
-    }
-
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username) || self.reserved_usernames.contains(username)
     }
@@ -243,15 +208,6 @@ impl UserMap {
         }
     }
 
-    pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
-        if let Some(user) = self.principal_to_user_id.get(principal).and_then(|u| self.users.get_mut(u)) {
-            user.last_online = now;
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn get(&self, user_id_or_principal: &Principal) -> Option<&User> {
         let user_id = self
             .principal_to_user_id
@@ -379,37 +335,6 @@ impl UserMap {
         }
     }
 
-    pub fn metrics(&self) -> Metrics {
-        self.cached_metrics.value.clone()
-    }
-
-    pub fn calculate_metrics(&mut self, now: TimestampMillis) {
-        // Throttle to once every 5 minutes
-        if now < self.cached_metrics.timestamp + FIVE_MINUTES_IN_MS {
-            return;
-        }
-
-        let mut metrics = Metrics::default();
-
-        for user in self.users.values() {
-            metrics.users_created += 1;
-            if user.last_online > now - FIVE_MINUTES_IN_MS {
-                metrics.users_online_5_minutes += 1;
-            }
-            if user.last_online > now - HOUR_IN_MS {
-                metrics.users_online_1_hour += 1;
-            }
-            if user.last_online > now - WEEK_IN_MS {
-                metrics.users_online_1_week += 1;
-            }
-            if user.last_online > now - THIRTY_DAYS_IN_MS {
-                metrics.users_online_1_month += 1;
-            }
-        }
-
-        self.cached_metrics = Timestamped::new(metrics, now);
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
     }
@@ -484,6 +409,48 @@ pub struct ConfirmPhoneNumberSuccess {
     pub storage_added: u64,
     pub new_byte_limit: u64,
     pub phone_number: PhoneNumber,
+}
+
+#[derive(Deserialize)]
+struct UserMapTrimmed {
+    users: HashMap<UserId, User>,
+    unconfirmed_phone_numbers_last_pruned: TimestampMillis,
+    reserved_usernames: HashSet<String>,
+    suspected_bots: BTreeSet<UserId>,
+}
+
+impl From<UserMapTrimmed> for UserMap {
+    fn from(value: UserMapTrimmed) -> Self {
+        let mut user_map = UserMap {
+            users: value.users,
+            unconfirmed_phone_numbers_last_pruned: value.unconfirmed_phone_numbers_last_pruned,
+            reserved_usernames: value.reserved_usernames,
+            suspected_bots: value.suspected_bots,
+            ..Default::default()
+        };
+
+        for (user_id, user) in user_map.users.iter() {
+            match &user.phone_status {
+                PhoneStatus::Confirmed(p) => {
+                    user_map.phone_number_to_user_id.insert(p.clone(), *user_id);
+                }
+                PhoneStatus::Unconfirmed(p) => {
+                    user_map.phone_number_to_user_id.insert(p.phone_number.clone(), *user_id);
+                    user_map.users_with_unconfirmed_phone_numbers.insert(*user_id);
+                }
+                _ => {}
+            };
+
+            if let Some(referred_by) = user.referred_by {
+                user_map.user_referrals.entry(referred_by).or_default().push(*user_id);
+            }
+
+            user_map.username_to_user_id.insert(&user.username, *user_id);
+            user_map.principal_to_user_id.insert(user.principal, *user_id);
+        }
+
+        user_map
+    }
 }
 
 #[cfg(test)]
@@ -620,7 +587,6 @@ mod tests {
             username: username1.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 
@@ -631,7 +597,6 @@ mod tests {
             username: username2.clone(),
             date_created: 2,
             date_updated: 2,
-            last_online: 2,
             ..Default::default()
         };
 
@@ -665,7 +630,6 @@ mod tests {
             username: username1.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 
@@ -676,7 +640,6 @@ mod tests {
             username: username2.clone(),
             date_created: 2,
             date_updated: 2,
-            last_online: 2,
             ..Default::default()
         };
 
@@ -703,7 +666,6 @@ mod tests {
             username: username.clone(),
             date_created: 1,
             date_updated: 1,
-            last_online: 1,
             ..Default::default()
         };
 

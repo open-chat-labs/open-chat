@@ -52,7 +52,6 @@
     "unableToLoadSMSUpgrade": "לפני שדרוג האחסון שלך עלינו לרענן את OpenChat. טען מחדש ונסה שוב.",
     "leave": "לעזוב",
     "preview": "תצוגה מקדימה",
-    "howToBuyToken": "איך לקנות {token}",
     "copyGroupUrl": "העתק את כתובת האתר של הקבוצה",
     "copyToClipboard": "העתק ללוח",
     "copiedToClipboard": "כתובת החשבון הועתקה ללוח!",
@@ -366,7 +365,8 @@
         "numVotesBy": "{votes} הצבעות מאת",
         "oneVote": "הצבעה אחת",
         "oneVoteBy": "הצבעה 1 מאת",
-        "numVotesIncludingYours": "{votes} הצבעות כולל שלך"
+        "numVotesIncludingYours": "{votes} הצבעות כולל שלך",
+        "atLeastTwo": "מינימום 2"
     },
     "group": {
         "addGroupPhoto": "הוסף תמונה קבוצתית",
@@ -433,7 +433,15 @@
             "acceptTitle": "חוקי הקבוצה",
             "accept": "לְקַבֵּל",
             "reject": "לִדחוֹת"
-        }
+        },
+        "createTitle": "צור קבוצה חדשה",
+        "back": "חזור",
+        "next": "הַבָּא",
+        "create": "צור קבוצה",
+        "details": "פרטים",
+        "members": "חברים",
+        "edit": "ערוך קבוצה",
+        "update": "עדכן את הקבוצה"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -441,24 +449,28 @@
     "ownedBy": "בבעלות @{username}",
     "tokenTransfer": {
         "title": "שלח {token}",
-        "amount": "סכום ({token}) *",
         "send": "לִשְׁלוֹחַ",
         "message": "הוֹדָעָה",
         "messagePlaceholder": "כלול הודעה אופציונלית",
-        "fee": "* עמלה של {fee} {token} תתווסף",
         "unexpected": "התקבל סוג העברת קריפטו לא צפוי",
         "confirmedSent": "{sender} שלח את {token} {amount} אל {receiver}",
         "pendingSent": "{sender} שולח את {token} {amount} אל {receiver}",
         "pendingSentByYou": "אתה שולח {token} {amount} אל {receiver}",
         "viewTransaction": "[הצג עסקה]({url})",
-        "warning": "אזהרה - באחריותך להיות בטוח שאתה סומך על זהותו ומניעיו של הנמען. OpenChat לא יכול לבטל העברות {token}.",
         "confirm": "לְאַשֵׁר",
         "transfer": "העברת {token}",
         "makeDeposit": "אנא בצע הפקדה לחשבון למעלה ורענן את יתרתך.",
-        "zeroBalance": "אין לך {token} 😭.",
-        "receiver": "מַקְלֵט",
-        "chooseReceiver": "הזן את שם המשתמש של המקלט",
-        "done": "לרענן ולהמשיך"
+        "done": "לרענן ולהמשיך",
+        "amount": "כמות",
+        "fee": "תתווסף עמלה בסך {fee} {token}",
+        "warning": "אזהרה - באחריותך להיות בטוח שאתה סומך על זהותו ומניעיו של הנמען. OpenChat לא יכול לבטל העברות של {token}.",
+        "zeroBalance": "אין לך {token}.",
+        "yourAccount": "כתובת ה-{token} שלך",
+        "receiver": "מקבל",
+        "chooseReceiver": "הזן את שם המשתמש של הנמען",
+        "icp": "מחשב אינטרנט",
+        "btc": "ביטקוין",
+        "chat": "OpenChat"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",
@@ -620,7 +632,12 @@
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו",
-    "profile": "הגדרות פרופיל",
+    "profile": {
+        "title": "הגדרות פרופיל",
+        "chat": "לְשׂוֹחֵחַ",
+        "settings": "הגדרות",
+        "label": "פּרוֹפִיל"
+    },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
     "undeleteMessageFailed": "ביטול מחיקת ההודעה נכשל",
@@ -649,5 +666,8 @@
     "communityTheme": "נושא קהילה",
     "selectCommunityTheme": "בחר נושא קהילה",
     "useAtOwnRisk": "השימוש על אחריותך בלבד",
-    "deleteMessageAndReport": "מחק ודווח"
+    "deleteMessageAndReport": "מחק ודווח",
+    "howToBuyToken": "אני צריך עזרה בקניית {token}",
+    "reason": "סיבה",
+    "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה"
 }

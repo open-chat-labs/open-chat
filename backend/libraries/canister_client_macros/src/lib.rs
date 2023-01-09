@@ -50,17 +50,37 @@ macro_rules! generate_query_call {
 #[macro_export]
 macro_rules! generate_c2c_call {
     ($method_name:ident) => {
-        pub async fn $method_name(canister_id: types::CanisterId, args: &$method_name::Args) -> ic_cdk::api::call::CallResult<$method_name::Response> {
+        pub async fn $method_name(
+            canister_id: types::CanisterId,
+            args: &$method_name::Args,
+        ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
-            let payload_bytes = msgpack::serialize(args);
+            let payload_bytes = msgpack::serialize(args).map_err(|e| {
+                (
+                    ic_cdk::api::call::RejectionCode::CanisterError,
+                    format!("Serialization error: {:?}", e),
+                )
+            })?;
+
+            tracing::trace!(method_name, %canister_id, "Starting c2c call");
 
             let result = ic_cdk::api::call::call_raw(canister_id, method_name, &payload_bytes, 0).await;
 
-            if let Err(error) = &result {
-                tracing::error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
+            match result {
+                Ok(response) => {
+                    tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
+                    msgpack::deserialize(&response).map_err(|e| {
+                        (
+                            ic_cdk::api::call::RejectionCode::CanisterError,
+                            format!("Deserialization error: {:?}", e),
+                        )
+                    })
+                },
+                Err((error_code, error_message)) => {
+                    tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
+                    Err((error_code, error_message))
+                }
             }
-
-            result.map(|r| msgpack::deserialize(&r))
         }
     };
 }

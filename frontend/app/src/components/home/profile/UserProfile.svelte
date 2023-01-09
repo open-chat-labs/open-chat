@@ -161,7 +161,7 @@
 </script>
 
 <SectionHeader flush={true} shadow={true}>
-    <h4 class="title">{$_("profile")}</h4>
+    <h4 class="title">{$_("profile.title")}</h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -177,7 +177,7 @@
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
                 {#if readonly}
-                    <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                    <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.ExtraLarge} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}
@@ -412,22 +412,6 @@
 
     .userid {
         margin-bottom: $sp4;
-    }
-
-    .user,
-    .chats,
-    .invite,
-    .accounts,
-    .stats,
-    .appearance,
-    .storage,
-    .advanced {
-        margin-bottom: $sp3;
-        border-bottom: var(--bd);
-    }
-
-    .advanced {
-        margin-bottom: 0;
     }
 
     .para {

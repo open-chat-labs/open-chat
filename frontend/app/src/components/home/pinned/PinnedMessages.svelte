@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { logger } from "../../../utils/logging";
@@ -14,9 +14,14 @@
 
     export let pinned: Set<number>;
     export let chatId: string;
+    export let dateLastPinned: bigint | undefined;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
+
+    let unread: boolean = false;
+
+    $: messagesRead = client.messagesRead;
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
 
@@ -24,6 +29,7 @@
 
     function close() {
         dispatch("close");
+        messages = { kind: "idle" };
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -31,9 +37,11 @@
         dispatch("chatWith", ev.detail);
     }
 
-    $: {
+    function reloadPinned(pinned: Set<number>): void {
         if (pinned.size > 0) {
-            messages = { kind: "loading" };
+            if (messages.kind !== "success") {
+                messages = { kind: "loading" };
+            }
             client
                 .getGroupMessagesByMessageIndex(chatId, pinned)
                 .then((resp) => {
@@ -46,6 +54,10 @@
                                 .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index))
                                 .reverse(),
                         };
+
+                        if (unread) {
+                            client.markPinnedMessagesRead(chatId, dateLastPinned!);
+                        }
                     }
                 })
                 .catch((err) => {
@@ -57,13 +69,24 @@
         }
     }
 
+    $: {
+        reloadPinned(pinned);
+        unread = client.unreadPinned(chatId, dateLastPinned);
+    }
+
     function dateGroupKey(group: EventWrapper<Message>[]): string {
         const first = group[0] && group[0] && group[0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
+
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            unread = client.unreadPinned(chatId, dateLastPinned);
+        });
+    });
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader gap>
     <h4>{$_("pinnedMessages")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
@@ -99,7 +122,7 @@
     h4 {
         flex: 1;
         margin: 0;
-        text-align: center;
+        @include font-size(fs-120);
     }
     .close {
         flex: 0 0 30px;

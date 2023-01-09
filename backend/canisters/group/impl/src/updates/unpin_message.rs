@@ -51,6 +51,10 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
                 now,
             );
 
+            if runtime_state.data.pinned_messages.is_empty() {
+                runtime_state.data.date_last_pinned = None;
+            }
+
             handle_activity_notification(runtime_state);
 
             Success(event_index)

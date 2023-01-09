@@ -40,11 +40,8 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
-    import { copyMessageUrl, shareMessage } from "../../utils/share";
-    import { toastStore } from "../../stores/toast";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -147,41 +144,10 @@
             });
         }, options);
 
-        // this is where we pick up events that may be published from a thread
-        relaySubscribe((event: RelayedEvent) => {
-            if (event.kind === "relayed_delete_message") {
-                doDeleteMessage(event.message);
-            }
-
-            if (event.kind === "relayed_undelete_message") {
-                doUndeleteMessage(event.message);
-            }
-
-            if (event.kind === "relayed_goto_message") {
-                doGoToMessageIndex(event.index);
-            }
-
-            if (event.kind === "relayed_select_reaction") {
-                onSelectReaction(event);
-            }
-
-            if (event.kind === "relayed_register_vote") {
-                client.registerPollVote(
-                    chat.chatId,
-                    undefined,
-                    event.data.messageId,
-                    event.data.messageIndex,
-                    event.data.answerIndex,
-                    event.data.type
-                );
-            }
-        });
-
         client.addEventListener("openchat_event", clientEvent);
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
-            relayUnsubscribe();
         };
     });
 
@@ -359,34 +325,6 @@
         return -(messagesDiv?.scrollTop ?? 0);
     }
 
-    function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
-        if (!canReact) return;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                undefined,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
-    }
-
-    function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        onSelectReaction(ev.detail);
-    }
-
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
     }
@@ -405,35 +343,6 @@
         currentChatDraftMessage.setEditing(chat.chatId, ev.detail);
     }
 
-    function onDeleteMessage(ev: CustomEvent<Message>) {
-        doDeleteMessage(ev.detail);
-    }
-
-    function doDeleteMessage(message: Message) {
-        if (!canDelete && user.userId !== message.sender) return;
-
-        client.deleteMessage(chat.chatId, undefined, message.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>) {
-        doUndeleteMessage(ev.detail);
-    }
-
-    function doUndeleteMessage(message: Message) {
-        if (
-            message.content.kind !== "deleted_content" ||
-            message.content.deletedBy !== user.userId
-        ) {
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, undefined, message.messageId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("undeleteMessageFailed");
-            }
-        });
-    }
-
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
@@ -445,17 +354,6 @@
         } else {
             return e.index.toString();
         }
-    }
-
-    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
-        if (!canBlockUser) return;
-        client.blockUser(chat.chatId, ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("blockUserFailed");
-            }
-        });
     }
 
     function onMessageWindowLoaded(messageIndex: number | undefined) {
@@ -526,8 +424,10 @@
         return firstKey;
     }
 
+    $: aggregateDeletedMessages = client.aggregateDeletedMessages;
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .groupEvents(events, user.userId, $aggregateDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
@@ -625,50 +525,6 @@
         return false;
     }
 
-    function onPinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.pinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinMessageFailed");
-            }
-        });
-    }
-
-    function onUnpinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.unpinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("unpinMessageFailed");
-            }
-        });
-    }
-
-    function registerVote(
-        ev: CustomEvent<{
-            messageId: bigint;
-            messageIndex: number;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        client.registerPollVote(
-            chat.chatId,
-            undefined,
-            ev.detail.messageId,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type
-        );
-    }
-
-    function onShareMessage(ev: CustomEvent<Message>) {
-        shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
-    function onCopyMessageUrl(ev: CustomEvent<Message>) {
-        copyMessageUrl(chat.chatId, ev.detail.messageIndex);
-    }
-
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
         filteredProposals: FilteredProposals | undefined
@@ -719,10 +575,8 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    function afterSendMessage(jumpingTo: number | undefined) {
-        if (jumpingTo !== undefined && jumpingTo !== null) {
-            onMessageWindowLoaded(jumpingTo);
-        } else {
+    function afterSendMessage(upToDate: boolean) {
+        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
             tick().then(() => scrollBottom("smooth"));
         }
     }
@@ -785,24 +639,15 @@
                         collapsed={isCollapsed(evt, filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
-                        inThread={false}
+                        threadRootMessage={undefined}
                         publicGroup={chat.kind === "group_chat" && chat.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
-                        on:deleteMessage={onDeleteMessage}
-                        on:undeleteMessage={onUndeleteMessage}
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={onSelectReactionEv}
-                        on:blockUser={onBlockUser}
-                        on:pinMessage={onPinMessage}
-                        on:unpinMessage={onUnpinMessage}
-                        on:registerVote={registerVote}
-                        on:copyMessageUrl={onCopyMessageUrl}
-                        on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
@@ -823,6 +668,7 @@
             <div class="big-avatar">
                 <Avatar
                     url={client.userAvatarUrl($userStore[chat.them])}
+                    userId={chat.them}
                     size={AvatarSize.ExtraLarge} />
             </div>
         {/if}

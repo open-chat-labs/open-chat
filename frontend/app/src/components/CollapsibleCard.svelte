@@ -50,7 +50,7 @@
     }
 
     .header {
-        padding: toRem(24) 0;
+        padding: toRem(20) 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;

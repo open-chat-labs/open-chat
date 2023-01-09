@@ -17,7 +17,9 @@
 
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
-    $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
+    $: changedByStr = `**${
+        me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser")
+    }**`;
     $: members = client.getMembersString(
         user!,
         $userStore,

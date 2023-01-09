@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
-import DRange from "drange";
 import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
@@ -47,7 +46,7 @@ import {
     buildTransactionLink,
     buildCryptoTransferText,
     mergeSendMessageResponse,
-    upToDate,
+    isUpToDate,
     serialiseMessageForRtc,
 } from "./utils/chat";
 import {
@@ -92,6 +91,7 @@ import {
     currentUserStore,
     eventsStore,
     focusMessageIndex,
+    aggregateDeletedMessages,
     isProposalGroup,
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
@@ -117,6 +117,7 @@ import {
     addGroupPreview,
     removeGroupPreview,
     groupPreviewsStore,
+    isContiguous,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -127,6 +128,7 @@ import {
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
+import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
@@ -167,7 +169,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { chunk, findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -219,12 +221,9 @@ import {
     type MemberRole,
     type GroupRules,
     type GroupPermissions,
-    userStatus,
-    getUserStatus,
     missingUserIds,
     type EventsResponse,
     type ChatEvent,
-    type EventsSuccessResult,
     type ThreadSummary,
     type DataContent,
     type SendMessageSuccess,
@@ -283,6 +282,8 @@ import {
     type Logger,
     type ChatFrozenEvent,
     type ChatUnfrozenEvent,
+    type UserStatus,
+    userStatus,
     MergedUpdatesResponse,
     ThreadRead,
     UpdatesResult,
@@ -297,7 +298,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -314,6 +315,8 @@ export class OpenChat extends EventTarget {
     private _logger: Logger;
     private _chatUpdatesSince: bigint | undefined = undefined;
     private _botDetected = false;
+    private _lastOnlineDatesPending = new Set<string>();
+    private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -445,7 +448,8 @@ export class OpenChat extends EventTarget {
             messagesRead.syncWithServer(
                 ev.detail.chatId,
                 ev.detail.readByMeUpTo,
-                ev.detail.threadsRead
+                ev.detail.threadsRead,
+                ev.detail.dateReadPinned,
             );
         }
         if (ev instanceof StorageUpdated) {
@@ -609,12 +613,20 @@ export class OpenChat extends EventTarget {
         return this.messagesRead.staleThreadsCount(this._liveState.threadsByChat);
     }
 
+    unreadPinned(chatId: string, dateLastPinned: bigint | undefined): boolean {
+        return this.messagesRead.unreadPinned(chatId, dateLastPinned);
+    }
+
     markThreadRead(chatId: string, threadRootMessageIndex: number, readUpTo: number): void {
-        return this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
+        this.messagesRead.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
     }
 
     markMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): void {
-        return this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+        this.messagesRead.markMessageRead(chatId, messageIndex, messageId);
+    }
+
+    markPinnedMessagesRead(chatId: string, dateLastPinned: bigint): void {
+        this.messagesRead.markPinnedMessagesRead(chatId, dateLastPinned);
     }
 
     isMessageRead(chatId: string, messageIndex: number, messageId: bigint | undefined): boolean {
@@ -913,9 +925,7 @@ export class OpenChat extends EventTarget {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    userStatus = userStatus;
     groupAvatarUrl = groupAvatarUrl;
-    getUserStatus = getUserStatus;
     phoneNumberToString = phoneNumberToString;
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
@@ -1029,12 +1039,12 @@ export class OpenChat extends EventTarget {
         return this.user.isSuperAdmin;
     }
 
+    private createMessage = createMessage;
+    private findMessageById = findMessageById;
+    private getMessageContent = getMessageContent;
+    private getStorageRequiredForMessage = getStorageRequiredForMessage;
     canForward = canForward;
     containsReaction = containsReaction;
-    createMessage = createMessage;
-    findMessageById = findMessageById;
-    getMessageContent = getMessageContent;
-    getStorageRequiredForMessage = getStorageRequiredForMessage;
     groupEvents = groupEvents;
     startTyping = startTyping;
     stopTyping = stopTyping;
@@ -1123,7 +1133,7 @@ export class OpenChat extends EventTarget {
     undeleteMessage(
         chatId: string,
         threadRootMessageIndex: number | undefined,
-        messageId: bigint
+        msg: Message
     ): Promise<boolean> {
         const chat = this._liveState.chatSummaries[chatId];
 
@@ -1131,14 +1141,21 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(false);
         }
 
-        undeletingMessagesStore.add(messageId);
+        if (msg.content.kind !== "deleted_content" || msg.content.deletedBy !== this.user.userId) {
+            return Promise.resolve(false);
+        }
+
+        undeletingMessagesStore.add(msg.messageId);
 
         return this.api
-            .undeleteMessage(chat.kind, chatId, messageId, threadRootMessageIndex)
+            .undeleteMessage(chat.kind, chatId, msg.messageId, threadRootMessageIndex)
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markUndeleted(messageId.toString(), resp.message.content);
+                    localMessageUpdates.markUndeleted(
+                        msg.messageId.toString(),
+                        resp.message.content
+                    );
                 }
                 return success;
             })
@@ -1147,7 +1164,7 @@ export class OpenChat extends EventTarget {
                 return false;
             })
             .finally(() => {
-                undeletingMessagesStore.delete(messageId);
+                undeletingMessagesStore.delete(msg.messageId);
             });
     }
 
@@ -1289,7 +1306,7 @@ export class OpenChat extends EventTarget {
         if (!keepCurrentEvents) {
             clearServerEvents(chat.chatId);
             chatStateStore.setProp(chat.chatId, "userGroupKeys", new Set<string>());
-        } else if (!this.isContiguous(chat.chatId, resp)) {
+        } else if (!isContiguous(chat.chatId, resp.events)) {
             return;
         }
 
@@ -1305,29 +1322,6 @@ export class OpenChat extends EventTarget {
         addServerEventsToStores(chat.chatId, events, undefined);
 
         makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
-    }
-
-    private isContiguous(chatId: string, response: EventsSuccessResult<ChatEvent>): boolean {
-        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
-
-        if (confirmedLoaded.length === 0 || response.events.length === 0) return true;
-
-        const firstIndex = response.events[0].index;
-        const lastIndex = response.events[response.events.length - 1].index;
-        const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
-
-        const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
-
-        if (!isContiguous) {
-            console.log(
-                "Events in response are not contiguous with the loaded events",
-                confirmedLoaded,
-                firstIndex,
-                lastIndex
-            );
-        }
-
-        return isContiguous;
     }
 
     private async updateUserStore(chatId: string, userIdsFromEvents: Set<string>): Promise<void> {
@@ -1586,9 +1580,14 @@ export class OpenChat extends EventTarget {
     }
 
     clearSelectedChat = clearSelectedChat;
-    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile = messageContentFromFile;
     formatFileSize = formatFileSize;
+
+    havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
+        const args = this.mergeKeepingOnlyChanged(p1, p2);
+        return Object.keys(args).length > 0;
+    }
 
     async loadPreviousMessages(chatId: string): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -1844,15 +1843,13 @@ export class OpenChat extends EventTarget {
 
     private addPinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.add(messageIndex);
-            return new Set(s);
+            return new Set([...s, messageIndex]);
         });
     }
 
     private removePinnedMessage(chatId: string, messageIndex: number): void {
         chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            s.delete(messageIndex);
-            return new Set(s);
+            return new Set([...s].filter((idx) => idx !== messageIndex));
         });
     }
 
@@ -1887,9 +1884,12 @@ export class OpenChat extends EventTarget {
             return this.api
                 .pinMessage(chatId, messageIndex)
                 .then((resp) => {
-                    if (resp !== "success" && resp !== "no_change") {
+                    if (resp.kind !== "success" && resp.kind !== "no_change") {
                         this.removePinnedMessage(chatId, messageIndex);
                         return false;
+                    }
+                    if (resp.kind === "success") {
+                        this.markPinnedMessagesRead(chatId, resp.timestamp);
                     }
                     return true;
                 })
@@ -1988,9 +1988,9 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Exception forwarding message", err);
             });
 
-        this.sendMessage(chat, currentEvents, event, undefined).then((jumpTo) => {
-            this.dispatchEvent(new SentMessage(jumpTo));
-            return jumpTo;
+        this.sendMessage(chat, currentEvents, event, undefined).then((upToDate) => {
+            this.dispatchEvent(new SentMessage(upToDate));
+            return upToDate;
         });
     }
 
@@ -2012,21 +2012,15 @@ export class OpenChat extends EventTarget {
         currentEvents: EventWrapper<ChatEvent>[],
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined
-    ): Promise<number | undefined> {
-        let jumpingTo: number | undefined = undefined;
+    ): Promise<boolean> {
+        let upToDate = true;
         const key =
             threadRootMessageIndex === undefined
                 ? clientChat.chatId
                 : `${clientChat.chatId}_${threadRootMessageIndex}`;
 
         if (threadRootMessageIndex === undefined) {
-            if (!upToDate(clientChat, currentEvents)) {
-                jumpingTo = await this.loadEventWindow(
-                    clientChat.chatId,
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    clientChat.latestMessage!.event.messageIndex
-                );
-            }
+            upToDate = isUpToDate(clientChat, currentEvents);
         }
 
         unconfirmed.add(key, messageEvent);
@@ -2054,7 +2048,7 @@ export class OpenChat extends EventTarget {
             currentChatDraftMessage.clear(clientChat.chatId);
         }
 
-        return jumpingTo;
+        return upToDate;
     }
 
     sendMessageWithAttachment(
@@ -2151,14 +2145,16 @@ export class OpenChat extends EventTarget {
                     this.dispatchEvent(new SendMessageFailed());
                 });
 
-            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then((jumpTo) => {
-                if (threadRootMessageIndex !== undefined) {
-                    this.dispatchEvent(new SentThreadMessage(event));
-                } else {
-                    this.dispatchEvent(new SentMessage(jumpTo));
+            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then(
+                (upToDate) => {
+                    if (threadRootMessageIndex !== undefined) {
+                        this.dispatchEvent(new SentThreadMessage(event));
+                    } else {
+                        this.dispatchEvent(new SentMessage(upToDate));
+                    }
+                    return upToDate;
                 }
-                return jumpTo;
-            });
+            );
         }
     }
 
@@ -2309,6 +2305,10 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
+    expandDeletedMessages(chatId: string): void {
+        chatStateStore.setProp(chatId, "aggregateDeletedMessages", false);
+    }
+
     remoteUserToggledReaction(
         events: EventWrapper<ChatEvent>[],
         message: RemoteUserToggledReaction
@@ -2324,7 +2324,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    handleWebRtcMessage(msg: WebRtcMessage): void {
+    private handleWebRtcMessage(msg: WebRtcMessage): void {
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -2592,7 +2592,14 @@ export class OpenChat extends EventTarget {
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.api.getUsers(users, allowStale).then((resp) => {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+        if (userGroups.length === 0) {
+            return Promise.resolve({
+                users: [],
+            });
+        }
+
+        return this.api.getUsers({ userGroups }, allowStale).then((resp) => {
             userStore.addMany(resp.users);
             if (resp.serverTimestamp !== undefined) {
                 // If we went to the server, all users not returned are still up to date, so we mark them as such
@@ -2613,6 +2620,26 @@ export class OpenChat extends EventTarget {
             }
             return resp;
         });
+    }
+
+    getUserStatus(userId: string, now: number): Promise<UserStatus> {
+        return this.getLastOnlineDate(userId, now).then((lastOnline) =>
+            userStatus(lastOnline, Date.now())
+        );
+    }
+
+    async getLastOnlineDate(userId: string, now: number): Promise<number | undefined> {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return undefined;
+
+        if (userId === this.user.userId) return now;
+
+        let lastOnline = lastOnlineDates.get(userId, now);
+        if (lastOnline === undefined) {
+            const response = await this.getLastOnlineDatesBatched([userId]);
+            lastOnline = response[userId];
+        }
+        return lastOnline;
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
@@ -2859,27 +2886,28 @@ export class OpenChat extends EventTarget {
                 }
             }
 
-            // Also update any users who haven't been updated for at least an hour
+            // Also update any users who haven't been updated for at least 24 hours
             const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
+                    if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
+                        break;
+                    }
                 }
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-                const userGroups = groupBy<string, bigint>(batch, (u) => {
-                    return allUsers[u]?.updated ?? BigInt(0);
-                });
+            const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
 
-                await this.getUsers({
-                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                        users,
-                        updatedSince,
-                    })),
-                });
-            }
+            await this.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
         } catch (err) {
             this._logger.error("Error updating users", err as Error);
         }
@@ -3004,6 +3032,32 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    private async getLastOnlineDatesBatched(userIds: string[]): Promise<Record<string, number>> {
+        userIds.forEach((u) => this._lastOnlineDatesPending.add(u));
+        if (this._lastOnlineDatesPromise === undefined) {
+            // Wait 50ms so that the last online dates can be retrieved in a single batch
+            this._lastOnlineDatesPromise = new Promise((resolve) =>
+                window.setTimeout(resolve, 50)
+            ).then((_) => this.processLastOnlineDatesQueue());
+        }
+
+        return this._lastOnlineDatesPromise;
+    }
+
+    private async processLastOnlineDatesQueue(): Promise<Record<string, number>> {
+        const userIds = [...this._lastOnlineDatesPending];
+        this._lastOnlineDatesPromise = undefined;
+        this._lastOnlineDatesPending.clear();
+
+        try {
+            const response = await this.api.lastOnline(userIds);
+            lastOnlineDates.set(Object.entries(response), Date.now());
+            return response;
+        } catch {
+            return {};
+        }
+    }
+
     private async initialStateV2(): Promise<MergedUpdatesResponse> {
         const response = await this.api.getInitialStateV2();
 
@@ -3124,6 +3178,7 @@ export class OpenChat extends EventTarget {
     blockedUsers = blockedUsers;
     undeletingMessagesStore = undeletingMessagesStore;
     focusMessageIndex = focusMessageIndex;
+    aggregateDeletedMessages = aggregateDeletedMessages;
     userGroupKeys = userGroupKeys;
     unconfirmedReadByThem = unconfirmedReadByThem;
     currentChatReplyingTo = currentChatReplyingTo;

@@ -44,7 +44,7 @@ async fn c2c_create_user(args: Args) -> Response {
         }
         Err(error) => {
             let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed((_, id)) = error {
+            if let CreateAndInstallError::InstallFailed(id, ..) = error {
                 canister_id = Some(id);
             }
             mutate_state(|state| rollback(canister_id, state));
@@ -80,12 +80,16 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     let init_canister_args = InitUserCanisterArgs {
         owner: args.principal,
         group_index_canister_id: runtime_state.data.group_index_canister_id,
-        notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
+        user_index_canister_id: runtime_state.data.user_index_canister_id,
+        local_user_index_canister_id: runtime_state.env.canister_id(),
+        notifications_canister_id: runtime_state.data.notifications_canister_id,
         ledger_canister_id: runtime_state.data.ledger_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         test_mode: runtime_state.data.test_mode,
     };
+
+    crate::jobs::topup_canister_pool::start_job_if_required(runtime_state);
 
     Ok(PrepareOk {
         canister_id,
@@ -108,10 +112,12 @@ fn commit(
     runtime_state.data.global_users.add(user_principal, user_id, false);
 
     if let Some(referred_by) = referred_by {
-        runtime_state.data.user_event_sync_queue.push(
-            referred_by,
-            UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
-        );
+        if runtime_state.data.local_users.get(&referred_by).is_some() {
+            runtime_state.data.user_event_sync_queue.push(
+                referred_by.into(),
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            );
+        }
     }
 }
 

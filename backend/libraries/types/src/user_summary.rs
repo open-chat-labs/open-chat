@@ -6,17 +6,16 @@ use serde::{Deserialize, Serialize};
 pub struct UserSummary {
     pub user_id: UserId,
     pub username: String,
-    pub seconds_since_last_online: u32,
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
+    pub seconds_since_last_online: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PartialUserSummary {
     pub user_id: UserId,
     pub username: Option<String>,
-    pub seconds_since_last_online: u32,
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,

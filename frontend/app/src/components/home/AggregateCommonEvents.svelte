@@ -4,9 +4,9 @@
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import Markdown from "./Markdown.svelte";
 
-    const client = getContext<OpenChat>("client");
-
+    export let chatId: string;
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
     export let messagesDeleted: number[];
@@ -15,13 +15,16 @@
 
     let deletedMessagesElement: HTMLElement;
 
+    const client = getContext<OpenChat>("client");
+
     $: userStore = client.userStore;
     $: joinedText = buildJoinedText($userStore, joined);
-    $: deletedText = messagesDeleted.length > 0 
-        ? messagesDeleted.length === 1
-        ? $_("oneMessageDeleted") 
-        : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } }) 
-        : undefined;
+    $: deletedText =
+        messagesDeleted.length > 0
+            ? messagesDeleted.length === 1
+                ? $_("oneMessageDeleted")
+                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
+            : undefined;
 
     afterUpdate(() => {
         if (readByMe && observer && deletedMessagesElement) {
@@ -41,10 +44,7 @@
         }
     });
 
-    function buildJoinedText(
-        userStore: UserLookup,
-        userIds: Set<string>
-    ): string | undefined {
+    function buildJoinedText(userStore: UserLookup, userIds: Set<string>): string | undefined {
         return userIds.size > 10
             ? $_("nUsersJoined", {
                   values: {
@@ -71,15 +71,27 @@
             false
         );
     }
+
+    function expandDeletedMessages() {
+        client.expandDeletedMessages(chatId);
+    }
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined}
     <div class="timeline-event">
         {#if joinedText !== undefined}
-            <p>{joinedText}</p>
+            <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
-            <p bind:this={deletedMessagesElement} data-index={messagesDeleted.join(" ")}>{deletedText}</p>
+            <p 
+                class="deleted" 
+                title={$_("expandDeletedMessages")} 
+                bind:this={deletedMessagesElement} 
+                data-index={messagesDeleted.join(" ")} 
+                on:click={expandDeletedMessages}
+            >
+                {deletedText}
+            </p>
         {/if}
     </div>
 {/if}
@@ -98,6 +110,11 @@
             margin-bottom: $sp3;
             &:last-child {
                 margin-bottom: 0;
+            }
+
+            &.deleted:hover {
+                cursor: pointer;
+                text-decoration: underline;
             }
         }
     }

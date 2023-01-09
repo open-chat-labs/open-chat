@@ -4,9 +4,10 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
+use local_user_index_canister::c2c_notify_user_index_events::{StorageUpgraded, UserIndexEvent};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use std::cmp::max;
-use types::{nns::CryptoAmount, Cryptocurrency, StorageUpgraded, UserEvent, ICP};
+use types::{nns::CryptoAmount, Cryptocurrency, ICP};
 use user_index_canister::upgrade_storage::{Response::*, *};
 
 const FEE_PER_GB: ICP = ICP::from_e8s(2 * ICP::SUBDIVIDABLE_BY); // 2 ICP
@@ -97,9 +98,10 @@ fn process_charge(
         .users
         .set_storage_limit(&user.user_id, new_storage_limit_bytes);
 
-    runtime_state.data.user_event_sync_queue.push(
+    runtime_state.data.push_event_to_local_user_index(
         user.user_id,
-        UserEvent::StorageUpgraded(StorageUpgraded {
+        UserIndexEvent::StorageUpgraded(StorageUpgraded {
+            user_id: user.user_id,
             cost: CryptoAmount {
                 token: Cryptocurrency::InternetComputer,
                 amount: charge_amount,

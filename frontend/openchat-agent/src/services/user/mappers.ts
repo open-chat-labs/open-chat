@@ -878,6 +878,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             subtype: updatedSubtype(candid.Group.subtype),
             archived: optional(candid.Group.archived, identity),
             frozen: optionUpdate(candid.Group.frozen, (_) => true),
+            dateLastPinned: optional(candid.Group.date_last_pinned, identity),
+            dateReadPinned: optional(candid.Group.date_read_pinned, identity),
         };
     }
     if ("Direct" in candid) {
@@ -993,6 +995,8 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         archived: candid.archived,
         previewed: false,
         frozen: candid.frozen.length > 0,
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+        dateReadPinned: optional(candid.date_read_pinned, identity),
     };
 }
 

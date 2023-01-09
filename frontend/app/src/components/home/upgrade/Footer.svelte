@@ -12,9 +12,11 @@
 
 <style type="text/scss">
     .footer {
-        padding: $sp3;
-        // background-color: var(--bg);
-        border-top: 1px solid var(--bd);
+        padding: $sp4 $sp5;
         position: relative;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
     }
 </style>

@@ -1,17 +1,21 @@
 mod canisters_requiring_upgrade;
 mod create;
 mod delete;
-mod error;
+mod deposit_cycles;
 mod pool;
 mod raw_rand;
+mod start;
 mod stop;
+mod update_settings;
 mod upgrade;
 
 pub use canisters_requiring_upgrade::*;
 pub use create::*;
 pub use delete::*;
-pub use error::*;
+pub use deposit_cycles::*;
 pub use pool::*;
 pub use raw_rand::*;
+pub use start::*;
 pub use stop::*;
+pub use update_settings::*;
 pub use upgrade::*;

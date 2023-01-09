@@ -1,12 +1,12 @@
+use crate::model::authorized_principals::AuthorizedPrincipals;
 use crate::model::subscriptions::Subscriptions;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
-use types::{CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, UserId, Version};
+use std::collections::HashSet;
+use types::{CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::memory;
@@ -16,8 +16,6 @@ mod lifecycle;
 mod model;
 mod queries;
 mod updates;
-
-const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -36,8 +34,8 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_user_index(&self) -> bool {
-        self.env.caller() == self.data.user_index_canister_id
+    pub fn is_caller_notifications_index(&self) -> bool {
+        self.env.caller() == self.data.notifications_index_canister_id
     }
 
     pub fn is_caller_push_service(&self) -> bool {
@@ -54,27 +52,38 @@ impl RuntimeState {
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
-            users: self.data.principal_to_user_id.len() as u64,
+            canister_ids: CanisterIds {
+                notifications_index: self.data.notifications_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+            },
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub notifications_index_canister_id: CanisterId,
     pub push_service_principals: HashSet<Principal>,
-    pub user_index_canister_id: CanisterId,
-    pub principal_to_user_id: HashMap<Principal, UserId>,
+    pub authorized_principals: AuthorizedPrincipals,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub test_mode: bool,
 }
 
 impl Data {
-    pub fn new(push_service_principals: Vec<Principal>, user_index_canister_id: CanisterId, test_mode: bool) -> Data {
+    pub fn new(
+        notifications_index_canister_id: CanisterId,
+        push_service_principals: Vec<Principal>,
+        authorizers: Vec<CanisterId>,
+        cycles_dispenser_canister_id: CanisterId,
+        test_mode: bool,
+    ) -> Data {
         Data {
+            notifications_index_canister_id,
             push_service_principals: push_service_principals.into_iter().collect(),
-            user_index_canister_id,
-            principal_to_user_id: HashMap::default(),
+            authorized_principals: AuthorizedPrincipals::new(authorizers.into_iter().collect()),
+            cycles_dispenser_canister_id,
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             test_mode,
@@ -82,7 +91,7 @@ impl Data {
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -92,5 +101,11 @@ pub struct Metrics {
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub subscriptions: u64,
-    pub users: u64,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub notifications_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }

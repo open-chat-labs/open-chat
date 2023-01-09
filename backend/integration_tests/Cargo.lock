@@ -3287,7 +3287,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "notifications_canister",
- "online_users_aggregator_canister",
+ "online_users_canister",
  "proposals_bot_canister",
  "rand",
  "serde",
@@ -3833,7 +3833,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1"
 
 [[package]]
-name = "online_users_aggregator_canister"
+name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
