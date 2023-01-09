@@ -2,6 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
+use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UserRegistered};
 use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
@@ -58,6 +59,19 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
 fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.local_index_map.add_index(canister_id, wasm_version) {
+        // We need to initialize the new local user index with all of the existing users
+        for user in runtime_state.data.users.iter() {
+            runtime_state.data.user_index_event_sync_queue.push(
+                canister_id,
+                UserIndexEvent::UserRegistered(UserRegistered {
+                    user_id: user.user_id,
+                    user_principal: user.principal,
+                    username: user.username.clone(),
+                    is_bot: user.is_bot,
+                    referred_by: user.referred_by,
+                }),
+            )
+        }
         Success
     } else {
         AlreadyAdded
