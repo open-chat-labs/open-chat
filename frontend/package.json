@@ -14,7 +14,9 @@
     "app",
     "openchat-client",
     "openchat-agent",
-    "openchat-shared"
+    "openchat-shared",
+    "openchat-worker",
+    "openchat-sw"
   ],
   "devDependencies": {
     "turbo": "^1.5.6"
