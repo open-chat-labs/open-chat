@@ -705,6 +705,24 @@ type PublicProfile =
         created: TimestampMillis;
     };
 
+type DeletedMessageArgs =
+    record {
+        user_id: UserId;
+        message_id: MessageId;
+    };
+
+type DeletedMessageResponse =
+    variant {
+        Success: record {
+            content: MessageContent;
+        };
+        ChatNotFound;
+        NotAuthorized;
+        MessageNotFound;
+        MessageNotDeleted;
+        MessageHardDeleted;
+    };
+
 service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
@@ -741,6 +759,7 @@ service: {
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     initial_state: (InitialStateArgs) -> (InitialStateResponse) query;

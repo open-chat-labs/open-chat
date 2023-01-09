@@ -1,4 +1,4 @@
-use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
@@ -78,7 +78,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         for (message_id, result) in delete_message_results {
             if matches!(result, DeleteMessageResult::Success) {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                    TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
                         thread_root_message_index: args.thread_root_message_index,
                         message_id,
                     }),

@@ -11,6 +11,7 @@ use types::{
     CanisterId, CanisterWasm, Cycles, NotificationEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::canister::CanistersRequiringUpgrade;
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::memory;
@@ -95,8 +96,10 @@ impl RuntimeState {
     }
 
     fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent) {
-        for notifications_canister in self.data.notifications_canisters.values_mut() {
-            notifications_canister.enqueue_event(event.clone())
+        for canister_id in self.data.notifications_canisters.keys().copied() {
+            self.data
+                .notifications_index_event_sync_queue
+                .push(canister_id, event.clone());
         }
         jobs::sync_notifications_canisters::start_job_if_required(self);
     }
@@ -119,6 +122,8 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     #[serde(default)]
     pub notifications: EventStream<NotificationEnvelope>,
+    #[serde(default)]
+    pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
     pub test_mode: bool,
 }
 
@@ -148,6 +153,7 @@ impl Data {
             notifications_canister_wasm,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications: EventStream::default(),
+            notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             test_mode,
         }
     }
