@@ -324,7 +324,7 @@ export function mergeGroupChatUpdates(
             minVisibleMessageIndex: c.minVisibleMessageIndex,
             lastUpdated: g?.lastUpdated ?? c.lastUpdated,
             memberCount: g?.memberCount ?? c.memberCount,
-            mentions: [...g?.mentions, ...c.mentions],
+            mentions: g === undefined ? c.mentions : [...g.mentions, ...c.mentions],
             ownerId: g?.ownerId ?? c.ownerId,
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
@@ -344,8 +344,8 @@ export function mergeGroupChatUpdates(
             myMetrics: g?.myMetrics ?? c.myMetrics,
             archived: u?.archived ?? c.archived,
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
-            dateLastPinned: g.dateLastPinned ?? c.dateLastPinned,
-            dateReadPinned: u.dateReadPinned ?? c.dateReadPinned,
+            dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
+            dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
         }
     })
 }
@@ -390,7 +390,7 @@ export function mergeGroupChats(
                 ? { blobId: g.avatarId, canisterId: g.chatId }
                 : undefined,
             dateLastPinned: g.dateLastPinned,
-            dateReadPinned: u.dateReadPinned,
+            dateReadPinned: u?.dateReadPinned,
         }
     });
 }
