@@ -43,7 +43,11 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
+    import {
+        filterByChatType,
+        replaceOrAddHistory,
+        rightPanelHistory,
+    } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -544,10 +548,7 @@
     function addMembers() {
         if ($selectedChatId !== undefined) {
             rightPanelHistory.update((history) => {
-                return [
-                    ...history.filter((p) => p.kind !== "add_members"),
-                    { kind: "add_members" },
-                ];
+                return replaceOrAddHistory(history, { kind: "add_members" });
             });
         }
     }
@@ -575,10 +576,7 @@
     function showMembers() {
         if ($selectedChatId !== undefined) {
             rightPanelHistory.update((history) => {
-                return [
-                    ...history.filter((p) => p.kind !== "show_members"),
-                    { kind: "show_members" },
-                ];
+                return replaceOrAddHistory(history, { kind: "show_members" });
             });
         }
     }
