@@ -3120,8 +3120,8 @@ export class OpenChat extends EventTarget {
 
     private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
         for (const chat of chatSummaries) {
-            const threads: ThreadRead[] = chat.kind === "group_chat"
-                ? chat.latestThreads.reduce((res, next) => {
+            if (chat.kind === "group_chat") {
+                const threads: ThreadRead[] = chat.latestThreads.reduce((res, next) => {
                     if (next.readUpTo !== undefined) {
                         res.push({
                             threadRootMessageIndex: next.threadRootMessageIndex,
@@ -3129,10 +3129,12 @@ export class OpenChat extends EventTarget {
                         });
                     }
                     return res;
-                }, [] as ThreadRead[])
-                : [];
+                }, [] as ThreadRead[]);
 
-            messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, threads);
+                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, threads, chat.dateReadPinned);
+            } else {
+                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, [], undefined);
+            }
         }
     }
 
