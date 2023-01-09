@@ -199,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
     'no' : IDL.Nat64,
     'yes' : IDL.Nat64,
     'total' : IDL.Nat64,
+    'timestamp' : TimestampMillis,
   });
   const ProposalRewardStatus = IDL.Variant({
     'ReadyToSettle' : IDL.Null,
@@ -688,6 +689,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
+    'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
@@ -858,6 +860,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'subtype' : IDL.Opt(GroupSubtype),
     'name' : IDL.Text,
+    'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'owner_id' : UserId,
@@ -1070,6 +1073,7 @@ export const idlFactory = ({ IDL }) => {
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
+    'wasm_version' : IDL.Opt(Version),
     'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),

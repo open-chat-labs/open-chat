@@ -376,6 +376,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -401,6 +402,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -437,6 +439,7 @@ export interface GroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -465,6 +468,7 @@ export interface GroupChatSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -850,6 +854,7 @@ export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
   'name' : string,
+  'wasm_version' : Version,
   'description' : string,
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
@@ -1067,7 +1072,12 @@ export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'updates' : GroupCanisterGroupChatSummaryUpdates } } |
   { 'SuccessNoUpdates' : null };
-export interface Tally { 'no' : bigint, 'yes' : bigint, 'total' : bigint }
+export interface Tally {
+  'no' : bigint,
+  'yes' : bigint,
+  'total' : bigint,
+  'timestamp' : TimestampMillis,
+}
 export interface TextContent { 'text' : string }
 export interface ThreadPreview {
   'latest_replies' : Array<MessageEventWrapper>,
@@ -1179,6 +1189,7 @@ export interface UserSummary {
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
+  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {
