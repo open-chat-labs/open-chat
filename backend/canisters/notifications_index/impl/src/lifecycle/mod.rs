@@ -1,5 +1,4 @@
-use crate::{init_state as set_state, read_state, Data, RuntimeState, LOG_MESSAGES, WASM_VERSION};
-use std::time::Duration;
+use crate::{init_state as set_state, Data, RuntimeState, LOG_MESSAGES, WASM_VERSION};
 use types::{Timestamped, Version};
 use utils::env::Environment;
 
@@ -19,7 +18,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();
     let runtime_state = RuntimeState::new(env, data);
 
-    ic_cdk::timer::set_timer(Duration::from_secs(120), || read_state(crate::jobs::start));
+    crate::jobs::start(&runtime_state);
 
     set_state(runtime_state);
     WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
