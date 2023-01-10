@@ -9,6 +9,7 @@ pub async fn delete(canister_id: CanisterId) -> CallResult<()> {
         .await
         .map_err(|(code, msg)| {
             error!(
+                %canister_id,
                 error_code = code as u8,
                 error_message = msg.as_str(),
                 "Error calling delete_canister"
