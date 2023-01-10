@@ -7,7 +7,7 @@ use types::{CanisterId, Cycles};
 pub async fn deposit_cycles(canister_id: CanisterId, amount: Cycles) -> CallResult<()> {
     if let Err((code, msg)) = management_canister::main::deposit_cycles(CanisterIdRecord { canister_id }, amount).await {
         error!(
-            canister_id = canister_id.to_string().as_str(),
+            %canister_id,
             error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'deposit_cycles'"
@@ -15,8 +15,9 @@ pub async fn deposit_cycles(canister_id: CanisterId, amount: Cycles) -> CallResu
         Err((code, msg))
     } else {
         info!(
-            canister_id = canister_id.to_string().as_str(),
-            amount, "Topped up canister with cycles"
+            %canister_id,
+            amount,
+            "Topped up canister with cycles"
         );
         Ok(())
     }

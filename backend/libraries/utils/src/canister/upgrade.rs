@@ -17,9 +17,8 @@ pub struct CanisterToUpgrade<A: CandidType> {
 
 pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -> CallResult<Option<Cycles>> {
     let canister_id = canister_to_upgrade.canister_id;
-    let canister_id_string = canister_id.to_string();
 
-    trace!(canister_id = canister_id_string.as_str(), "Canister upgrade starting");
+    trace!(%canister_id, "Canister upgrade starting");
 
     canister::stop(canister_id).await?;
 
@@ -48,7 +47,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
 
     if let Err((code, msg)) = install_code_response {
         error!(
-            canister_id = canister_id_string.as_str(),
+            %canister_id,
             from_wasm_version = %canister_to_upgrade.current_wasm_version,
             to_wasm_version = %canister_to_upgrade.new_wasm.version,
             error_code = code as u8,
@@ -64,10 +63,10 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     }
 
     if let Some(error) = error {
-        error!(canister_id = canister_id_string.as_str(), "Canister upgrade failed");
+        error!(%canister_id, "Canister upgrade failed");
         Err(error)
     } else {
-        trace!(canister_id = canister_id_string.as_str(), "Canister upgrade completed");
+        trace!(%canister_id, "Canister upgrade completed");
         Ok(cycles_used)
     }
 }

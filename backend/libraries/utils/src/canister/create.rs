@@ -74,6 +74,7 @@ pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Ve
     .await
     .map_err(|(code, msg)| {
         error!(
+            %canister_id,
             error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling install_code"
