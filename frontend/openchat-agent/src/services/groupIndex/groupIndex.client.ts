@@ -4,6 +4,7 @@ import type { AgentConfig } from "../../config";
 import type {
     FilterGroupsResponse,
     FreezeGroupResponse,
+    GroupChatSummary,
     GroupSearchResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
@@ -14,6 +15,7 @@ import {
     filterGroupsResponse,
     freezeGroupResponse,
     groupSearchResponse,
+    recommendedGroupsResponse,
     unfreezeGroupResponse
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
@@ -44,6 +46,18 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         return this.handleQueryResponse(
             () => this.groupIndexService.filter_groups(args),
             filterGroupsResponse,
+            args
+        );
+    }
+
+    recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
+        const args = {
+            count: 20,
+            exclusions: exclusions.map((c) => Principal.fromText(c))
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.recommended_groups(args),
+            recommendedGroupsResponse,
             args
         );
     }

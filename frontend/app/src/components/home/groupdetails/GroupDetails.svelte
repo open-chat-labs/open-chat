@@ -114,7 +114,7 @@
                 <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
                     {$_("ownedBy", {
                         values: {
-                            username: $userStore[chat.ownerId]?.username ?? "uknown",
+                            username: $userStore[chat.ownerId]?.username ?? "unknown",
                         },
                     })}
                 </p>

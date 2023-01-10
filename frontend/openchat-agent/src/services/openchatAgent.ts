@@ -1272,9 +1272,9 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId).getRules();
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.userClient
-            .getRecommendedGroups()
+    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
+        return this._groupIndexClient
+            .recommendedGroups(exclusions)
             .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
 

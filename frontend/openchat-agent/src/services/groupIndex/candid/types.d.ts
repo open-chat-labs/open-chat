@@ -706,6 +706,13 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface RecommendedGroupsArgs {
+  'count' : number,
+  'exclusions' : Array<ChatId>,
+}
+export type RecommendedGroupsResponse = {
+    'Success' : { 'groups' : Array<PublicGroupSummary> }
+  };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
@@ -870,6 +877,10 @@ export type VoteOperation = { 'RegisterVote' : null } |
 export interface _SERVICE {
   'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
+  'recommended_groups' : ActorMethod<
+    [RecommendedGroupsArgs],
+    RecommendedGroupsResponse
+  >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }

@@ -342,7 +342,9 @@ type GetGroupRules = Request<{
     kind: "getGroupRules";
 };
 
-type GetRecommendedGroups = Request & {
+type GetRecommendedGroups = Request<{
+    exclusions: string[]
+}> & {
     kind: "getRecommendedGroups";
 };
 
