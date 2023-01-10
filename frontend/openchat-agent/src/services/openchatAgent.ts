@@ -875,7 +875,12 @@ export class OpenChatAgent extends EventTarget {
     async getInitialStateV2(): Promise<UpdatesResult> {
         const cached = await getCachedChatsV2(this.db, this.principal);
         if (cached !== undefined) {
-            return await this.getUpdatesV2(cached);
+            return await this.getUpdatesV2(cached).then((result) => {
+                return {
+                    ...result,
+                    anyUpdates: true
+                };
+            });
         }
 
         let state: ChatStateFull;
