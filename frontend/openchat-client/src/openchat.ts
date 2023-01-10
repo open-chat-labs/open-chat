@@ -371,7 +371,7 @@ export class OpenChat extends EventTarget {
         }
 
         this.refreshAffectedEvents(chat, affectedEvents);
-        this.updateDetails(chat, this._liveState.events);
+        this.updateDetails(chat);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -1433,15 +1433,15 @@ export class OpenChat extends EventTarget {
 
         setSelectedChat(this.api, clientChat, serverChat, messageIndex);
 
-        const { selectedChat, focusMessageIndex, events } = this._liveState;
+        const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(chatId, focusMessageIndex).then(() => {
-                    this.loadDetails(selectedChat, events);
+                    this.loadDetails(selectedChat);
                 });
             } else {
                 this.loadPreviousMessages(chatId).then(() => {
-                    this.loadDetails(selectedChat, events);
+                    this.loadDetails(selectedChat);
                 });
             }
             if (selectedChat.kind === "direct_chat") {
