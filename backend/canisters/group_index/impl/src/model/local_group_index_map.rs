@@ -34,7 +34,7 @@ impl LocalGroupIndexMap {
 
     pub fn add_group(&mut self, index_id: CanisterId, chat_id: ChatId) -> bool {
         if let Some(index) = self.index_map.get_mut(&index_id) {
-            if self.group_to_index.insert(chat_id, index_id).is_some() {
+            if self.group_to_index.insert(chat_id, index_id).is_none() {
                 index.group_count += 1;
                 return true;
             }
