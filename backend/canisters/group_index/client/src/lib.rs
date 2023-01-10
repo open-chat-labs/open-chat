@@ -2,6 +2,7 @@ use canister_client_macros::*;
 use group_index_canister::*;
 
 // Queries
+generate_query_call!(recommended_groups);
 generate_query_call!(search);
 
 // Updates

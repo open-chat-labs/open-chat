@@ -895,7 +895,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getRecommendedGroups":
                 agent
-                    .getRecommendedGroups()
+                    .getRecommendedGroups(payload.exclusions)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

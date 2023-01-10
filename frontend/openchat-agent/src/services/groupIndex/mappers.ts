@@ -6,8 +6,9 @@ import type {
     GroupSearchResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
-import type { ApiFilterGroupsResponse, ApiFreezeGroupResponse, ApiGroupMatch, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
-import { UnsupportedValueError } from "openchat-shared";
+import type { ApiFilterGroupsResponse, ApiFreezeGroupResponse, ApiGroupMatch, ApiRecommendedGroupsResponse, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
+import { GroupChatSummary, UnsupportedValueError } from "openchat-shared";
+import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
     return {
@@ -22,6 +23,15 @@ export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGro
         })),
         upgradesInProgress: candid.Success.upgrades_in_progress.map((c) => c.toString())
     };
+}
+
+export function recommendedGroupsResponse(
+    candid: ApiRecommendedGroupsResponse
+): GroupChatSummary[] {
+    if ("Success" in candid) {
+        return candid.Success.groups.map(publicGroupSummary);
+    }
+    throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
 }
 
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {

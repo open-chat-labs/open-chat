@@ -982,10 +982,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         return this.sendRequest({
             kind: "getRecommendedGroups",
-            payload: undefined,
+            payload: {
+                exclusions
+            },
         });
     }
 

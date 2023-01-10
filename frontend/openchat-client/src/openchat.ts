@@ -140,6 +140,7 @@ import {
 } from "./stores/notifications";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { profileStore } from "./stores/profiling";
+import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import {
     percentageStorageRemaining,
     percentageStorageUsed,
@@ -2501,7 +2502,15 @@ export class OpenChat extends EventTarget {
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.api.getRecommendedGroups();
+        // TODO get the list of exclusions from the user canister
+
+        const exclusions = new Set<string>(this._liveState.chatSummariesList
+            .filter((c) => c.kind === "group_chat" && c.public)
+            .map((g) => g.chatId));
+
+        recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
+
+        return this.api.getRecommendedGroups([...exclusions]);
     }
 
     getGroupRules(chatId: string): Promise<GroupRules | undefined> {
@@ -2513,6 +2522,7 @@ export class OpenChat extends EventTarget {
     }
 
     dismissRecommendation(chatId: string): Promise<void> {
+        recommendedGroupExclusions.add(chatId);
         return this.api.dismissRecommendation(chatId);
     }
 
