@@ -9,7 +9,7 @@ pub struct LocalUserIndexMap {
     user_to_index: HashMap<UserId, CanisterId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LocalUserIndex {
     user_count: u32,
     full: bool,
@@ -36,7 +36,7 @@ impl LocalUserIndexMap {
 
     pub fn add_user(&mut self, index_id: CanisterId, user_id: UserId) -> bool {
         if let Some(index) = self.index_map.get_mut(&index_id) {
-            if self.user_to_index.insert(user_id, index_id).is_some() {
+            if self.user_to_index.insert(user_id, index_id).is_none() {
                 index.user_count += 1;
                 return true;
             }
@@ -71,6 +71,10 @@ impl LocalUserIndexMap {
 
     pub fn get_index_canister(&self, user_id: &UserId) -> Option<CanisterId> {
         self.user_to_index.get(user_id).copied()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalUserIndex)> {
+        self.index_map.iter()
     }
 }
 

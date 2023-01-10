@@ -446,7 +446,7 @@
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",
     "member": "Mitglied",
     "memberCount": "{count} Mitglied(er)",
-    "ownedBy": "Im Besitz von @{Benutzername}",
+    "ownedBy": "Im Besitz von @{username}",
     "tokenTransfer": {
         "title": "{token} senden",
         "send": "Schicken",

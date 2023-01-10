@@ -32,9 +32,13 @@ import type {
     RegisterProposalVoteResponse,
     GroupRules,
     SearchGroupChatResponse,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
+    summary(): Promise<GroupCanisterSummaryResponse>,
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse>,
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,

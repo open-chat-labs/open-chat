@@ -1,5 +1,6 @@
 use crate::model::cached_hot_groups::CachedHotGroups;
 use crate::model::deleted_groups::DeletedGroups;
+use crate::model::local_group_index_map::LocalGroupIndex;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
@@ -71,6 +72,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
+            local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -205,6 +207,7 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub local_group_index_wasm_version: Version,
+    pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub canister_ids: CanisterIds,
 }
 

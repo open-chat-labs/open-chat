@@ -23,9 +23,16 @@ import {
     UpdatesResponse,
     compareChats,
     eventIsVisible,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    UserCanisterGroupChatSummary,
+    UserCanisterGroupChatSummaryUpdates,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
+    GroupCanisterThreadDetails,
 } from "openchat-shared";
 import { toRecord } from "./list";
-import { applyOptionUpdate } from "./mapping";
+import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { EVENT_PAGE_SIZE, OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
@@ -54,7 +61,7 @@ function mergeThings<A, U>(
         return things;
 
     // create a lookup of all existing and added things
-    const dict = toLookup(keyFn, things.concat(updates.added));
+    const dict = toRecord(things.concat(updates.added), keyFn);
 
     // delete all removed things
     updates.removed.forEach((key) => {
@@ -216,13 +223,6 @@ function getLatestMessage(
         : chat.latestMessage;
 }
 
-function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
-    return things.reduce<Record<string, T>>((agg, thing) => {
-        agg[keyFn(thing)] = thing;
-        return agg;
-    }, {});
-}
-
 export function mergeGroupChatDetails(
     previous: GroupChatDetails,
     updates: GroupChatDetailsUpdates
@@ -262,6 +262,176 @@ function mergePinnedMessages(
 
 function mergeParticipants(_: Member | undefined, updated: Member) {
     return updated;
+}
+
+export function mergeDirectChatUpdates(
+    directChats: DirectChatSummary[],
+    updates: DirectChatSummaryUpdates[]): DirectChatSummary[]
+{
+    const lookup = toRecord(updates, (u) => u.chatId);
+
+    return directChats.map((c) => {
+        const u = lookup[c.chatId];
+
+        if (u === undefined) return c;
+
+        return {
+            kind: "direct_chat",
+            chatId: c.them,
+            them: c.them,
+            readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
+            dateCreated: c.dateCreated,
+            readByMeUpTo: u.readByMeUpTo ?? c.readByMeUpTo,
+            latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
+            latestMessage: u.latestMessage ?? c.latestMessage,
+            notificationsMuted: u.notificationsMuted ?? c.notificationsMuted,
+            metrics: u.metrics ?? c.metrics,
+            myMetrics: u.myMetrics ?? c.myMetrics,
+            archived: u.archived ?? c.archived,
+        }
+    });
+}
+
+export function mergeGroupChatUpdates(
+    groupChats: GroupChatSummary[],
+    userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
+    groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
+): GroupChatSummary[] {
+    const userLookup = toRecord(userCanisterUpdates, (c) => c.chatId);
+    const groupLookup = toRecord(groupCanisterUpdates, (c) => c.chatId);
+
+    return groupChats.map((c) => {
+        const u = userLookup[c.chatId];
+        const g = groupLookup[c.chatId];
+
+        if (u === undefined && g === undefined) return c;
+
+        const latestMessage = g?.latestMessage ?? c.latestMessage;
+        const readByMeUpTo = u?.readByMeUpTo ?? c.readByMeUpTo;
+
+        const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
+            blobId: avatarId,
+            canisterId: c.chatId,
+        }));
+
+        return {
+            kind: "group_chat",
+            chatId: c.chatId,
+            name: g?.name ?? c.name,
+            description: g?.description ?? c.description,
+            joined: c.joined,
+            minVisibleEventIndex: c.minVisibleEventIndex,
+            minVisibleMessageIndex: c.minVisibleMessageIndex,
+            lastUpdated: g?.lastUpdated ?? c.lastUpdated,
+            memberCount: g?.memberCount ?? c.memberCount,
+            mentions: g === undefined ? c.mentions : [...g.mentions, ...c.mentions],
+            ownerId: g?.ownerId ?? c.ownerId,
+            public: g?.public ?? c.public,
+            myRole: g?.myRole ?? c.myRole,
+            permissions: g?.permissions ?? c.permissions,
+            historyVisibleToNewJoiners: c.historyVisibleToNewJoiners,
+            latestThreads: mergeThreads(c.latestThreads, g?.latestThreads ?? [], u?.threadsRead ?? {}),
+            subtype: applyOptionUpdate(c.subtype, g?.subtype),
+            previewed: false,
+            frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
+            readByMeUpTo: readByMeUpTo !== undefined && latestMessage !== undefined
+                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                : readByMeUpTo,
+            latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
+            latestMessage,
+            notificationsMuted: g?.notificationsMuted ?? c.notificationsMuted,
+            metrics: g?.metrics ?? c.metrics,
+            myMetrics: g?.myMetrics ?? c.myMetrics,
+            archived: u?.archived ?? c.archived,
+            blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
+            dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
+            dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
+        }
+    })
+}
+
+export function mergeGroupChats(
+    userCanisterGroups: UserCanisterGroupChatSummary[],
+    groupCanisterGroups: GroupCanisterGroupChatSummary[]): GroupChatSummary[]
+{
+    const userCanisterGroupLookup = toRecord(userCanisterGroups, (u) => u.chatId);
+
+    return groupCanisterGroups.map((g) => {
+        const u = userCanisterGroupLookup[g.chatId];
+
+        return {
+            kind: "group_chat",
+            chatId: g.chatId,
+            name: g.name,
+            description: g.description,
+            joined: g.joined,
+            minVisibleEventIndex: g.minVisibleEventIndex,
+            minVisibleMessageIndex: g.minVisibleMessageIndex,
+            lastUpdated: g.lastUpdated,
+            memberCount: g.memberCount,
+            mentions: g.mentions,
+            ownerId: g.ownerId,
+            public: g.public,
+            myRole: g.myRole,
+            permissions: g.permissions,
+            historyVisibleToNewJoiners: g.historyVisibleToNewJoiners,
+            latestThreads: mergeThreads([], g.latestThreads, u.threadsRead),
+            subtype: g.subtype,
+            previewed: false,
+            frozen: g.frozen,
+            readByMeUpTo: u?.readByMeUpTo,
+            latestEventIndex: g.latestEventIndex,
+            latestMessage: g.latestMessage,
+            notificationsMuted: g.notificationsMuted,
+            metrics: g.metrics,
+            myMetrics: g.myMetrics,
+            archived: u?.archived ?? false,
+            blobReference: g.avatarId !== undefined
+                ? { blobId: g.avatarId, canisterId: g.chatId }
+                : undefined,
+            dateLastPinned: g.dateLastPinned,
+            dateReadPinned: u?.dateReadPinned,
+        }
+    });
+}
+
+function mergeThreads(
+    current: ThreadSyncDetails[],
+    groupCanisterUpdates: GroupCanisterThreadDetails[],
+    readUpToUpdates: Record<number, number>): ThreadSyncDetails[]
+{
+    const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
+
+    for (const groupUpdate of groupCanisterUpdates) {
+        threadsRecord[groupUpdate.threadRootMessageIndex] = {
+            ...threadsRecord[groupUpdate.threadRootMessageIndex],
+            ...groupUpdate
+        };
+    }
+
+    return Object.values(threadsRecord).map((t) => {
+        const readUpToUpdate = readUpToUpdates[t.threadRootMessageIndex];
+        return readUpToUpdate !== undefined
+            ? { ...t, readUpTo: readUpToUpdate }
+            : t;
+    });
+}
+
+export function isSuccessfulGroupSummaryResponse(response: GroupCanisterSummaryResponse): response is GroupCanisterGroupChatSummary {
+    return "chatId" in response;
+}
+
+export function isSuccessfulGroupSummaryUpdatesResponse(response: GroupCanisterSummaryUpdatesResponse): response is GroupCanisterGroupChatSummaryUpdates {
+    return "chatId" in response;
+}
+
+export function getAffectedEvents(directChats: DirectChatSummaryUpdates[], groupChats: GroupCanisterGroupChatSummaryUpdates[]): Record<string, number[]> {
+    const result = {} as Record<string, number[]>;
+
+    directChats.forEach((c) => result[c.chatId] = c.affectedEvents);
+    groupChats.forEach((c) => result[c.chatId] = c.affectedEvents);
+
+    return result;
 }
 
 export function identity<T>(x: T): T {

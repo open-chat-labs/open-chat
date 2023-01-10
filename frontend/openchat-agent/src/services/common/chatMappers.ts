@@ -36,6 +36,7 @@ import type {
     ApiProposal,
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
+    ApiChatMetrics,
 } from "../user/candid/idl";
 import type {
     ApiListNervousSystemFunctionsResponse,
@@ -79,6 +80,7 @@ import {
     type ListNervousSystemFunctionsResponse,
     type NervousSystemFunction,
     type SnsFunctionType,
+    type ChatMetrics,
     UnsupportedValueError,
 } from "openchat-shared";
 
@@ -524,6 +526,26 @@ export function permissionRole(candid: ApiPermissionRole): PermissionRole {
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admins";
     return "members";
+}
+
+export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
+    return {
+        audioMessages: Number(candid.audio_messages),
+        cyclesMessages: Number(candid.cycles_messages),
+        edits: Number(candid.edits),
+        icpMessages: Number(candid.icp_messages),
+        giphyMessages: Number(candid.giphy_messages),
+        deletedMessages: Number(candid.deleted_messages),
+        fileMessages: Number(candid.file_messages),
+        pollVotes: Number(candid.poll_votes),
+        textMessages: Number(candid.text_messages),
+        imageMessages: Number(candid.image_messages),
+        replies: Number(candid.replies),
+        videoMessages: Number(candid.video_messages),
+        polls: Number(candid.polls),
+        reactions: Number(candid.reactions),
+        reportedMessages: Number(candid.reported_messages),
+    };
 }
 
 export function apiReplyContextArgs(

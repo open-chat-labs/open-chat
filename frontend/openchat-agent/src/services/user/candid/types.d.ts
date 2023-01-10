@@ -1193,12 +1193,14 @@ export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserCanisterGroupChatSummary {
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'threads_read' : Array<[MessageIndex, MessageIndex]>,
   'archived' : boolean,
 }
 export interface UserCanisterGroupChatSummaryUpdates {
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
   'threads_read' : Array<[MessageIndex, MessageIndex]>,
   'archived' : [] | [boolean],
 }

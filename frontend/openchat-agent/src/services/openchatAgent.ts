@@ -2,7 +2,13 @@ import type { Identity } from "@dfinity/agent";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, initDb, setCachedMessageIfNotExists } from "../utils/caching";
+import {
+    Database,
+    getCachedChatsV2,
+    initDb,
+    setCachedChatsV2,
+    setCachedMessageIfNotExists
+} from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -18,7 +24,16 @@ import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
-import { buildBlobUrl, buildUserAvatarUrl, threadsReadFromChat } from "../utils/chat";
+import {
+    buildBlobUrl,
+    buildUserAvatarUrl, getAffectedEvents,
+    isSuccessfulGroupSummaryResponse,
+    isSuccessfulGroupSummaryUpdatesResponse,
+    mergeDirectChatUpdates,
+    mergeGroupChats,
+    mergeGroupChatUpdates,
+    threadsReadFromChat
+} from "../utils/chat";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
@@ -114,8 +129,13 @@ import {
     UnfreezeGroupResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    ChatStateFull,
+    ChatSummary,
+    UpdatesResult,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
+import { applyOptionUpdate } from "../utils/mapping";
+import {waitAll} from "../utils/promise";
 
 export const apiKey = Symbol();
 
@@ -850,6 +870,166 @@ export class OpenChatAgent extends EventTarget {
             .then((resp) => {
                 return this.handleMergedUpdatesResponse(resp);
             });
+    }
+
+    async getInitialStateV2(): Promise<UpdatesResult> {
+        const cached = await getCachedChatsV2(this.db, this.principal);
+        if (cached !== undefined) {
+            return await this.getUpdatesV2(cached);
+        }
+
+        let state: ChatStateFull;
+        let anyErrors: boolean;
+        const userResponse = await this.userClient.getInitialStateV2();
+        if (userResponse.cacheTimestamp === undefined) {
+            const groupPromises = userResponse.groupChatsAdded.map((g) => this.getGroupClient(g.chatId).summary());
+
+            const groupPromiseResults = await waitAll(groupPromises);
+            const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+
+            state = {
+                timestamp: userResponse.timestamp,
+                directChats: userResponse.directChats,
+                groupChats: mergeGroupChats(userResponse.groupChatsAdded, groupChats),
+                avatarId: userResponse.avatarId,
+                blockedUsers: userResponse.blockedUsers,
+                pinnedChats: userResponse.pinnedChats,
+            };
+            anyErrors = groupPromiseResults.errors.length > 0;
+        } else {
+            const groupPromises = userResponse.groupChatsAdded.map((g) => this.getGroupClient(g.chatId).summary());
+            const groupUpdatePromises = userResponse.cachedGroupChatSummaries.map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
+
+            const groupPromiseResults = await waitAll(groupPromises);
+            const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+
+            const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+            const groupUpdates = groupUpdatePromiseResults.success.filter(isSuccessfulGroupSummaryUpdatesResponse);
+
+            const groupChats = mergeGroupChats(userResponse.groupChatsAdded, groups).concat(
+                mergeGroupChatUpdates(userResponse.cachedGroupChatSummaries, [], groupUpdates));
+
+            state = {
+                timestamp: userResponse.timestamp,
+                directChats: userResponse.directChats,
+                groupChats,
+                avatarId: userResponse.avatarId,
+                blockedUsers: userResponse.blockedUsers,
+                pinnedChats: userResponse.pinnedChats,
+            };
+            anyErrors = groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
+        }
+
+        await setCachedChatsV2(this.db, this.principal, state, {});
+
+        return await this.hydrateChatState(state).then((s) => ({
+            state: s,
+            affectedEvents: {},
+            anyUpdates: true,
+            anyErrors,
+        }));
+    }
+
+    async getUpdatesV2(current: ChatStateFull): Promise<UpdatesResult> {
+        const userResponse = await this.userClient.getUpdatesV2(current.timestamp);
+        const groupChatIds = current.groupChats.map((g) => g.chatId).concat(userResponse.groupChatsAdded.map((g) => g.chatId));
+        const groupIndexResponse = await this._groupIndexClient.filterGroups(groupChatIds, current.timestamp);
+
+        const activeGroups = new Set(groupIndexResponse.activeGroups);
+
+        const groupPromises = userResponse.groupChatsAdded.map((g) => this.getGroupClient(g.chatId).summary());
+        const groupUpdatePromises = current.groupChats
+            .filter((g) => activeGroups.has(g.chatId))
+            .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
+
+        const groupPromiseResults = await waitAll(groupPromises);
+        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+
+        const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const groupUpdates = groupUpdatePromiseResults.success.filter(isSuccessfulGroupSummaryUpdatesResponse);
+
+        const anyUpdates =
+            userResponse.directChatsAdded.length > 0 ||
+            userResponse.directChatsUpdated.length > 0 ||
+            userResponse.groupChatsAdded.length > 0 ||
+            userResponse.groupChatsUpdated.length > 0 ||
+            userResponse.chatsRemoved.length > 0 ||
+            userResponse.avatarId !== undefined ||
+            userResponse.blockedUsers !== undefined ||
+            userResponse.pinnedChats !== undefined ||
+            groups.length > 0 ||
+            groupUpdates.length > 0;
+
+        const anyErrors =
+            groupPromiseResults.errors.length > 0 ||
+            groupUpdatePromiseResults.errors.length > 0;
+
+        const directChats = userResponse.directChatsAdded.concat(
+            mergeDirectChatUpdates(current.directChats, userResponse.directChatsUpdated));
+
+        const chatsRemoved = new Set(userResponse.chatsRemoved.concat(groupIndexResponse.deletedGroups.map((g) => g.id)));
+
+        const groupChats = mergeGroupChats(userResponse.groupChatsAdded, groups)
+            .concat(mergeGroupChatUpdates(current.groupChats, userResponse.groupChatsUpdated, groupUpdates))
+            .filter((g) => !chatsRemoved.has(g.chatId));
+
+        const state = {
+            timestamp: userResponse.timestamp,
+            directChats,
+            groupChats,
+            avatarId: applyOptionUpdate(current.avatarId, userResponse.avatarId),
+            blockedUsers: userResponse.blockedUsers ?? current.blockedUsers,
+            pinnedChats: userResponse.pinnedChats ?? current.pinnedChats,
+        }
+        const affectedEvents = getAffectedEvents(userResponse.directChatsUpdated, groupUpdates);
+
+        return await this.hydrateChatState(state).then((s) => {
+            setCachedChatsV2(this.db, this.principal, s, affectedEvents);
+
+            return {
+                state: s,
+                affectedEvents,
+                anyUpdates,
+                anyErrors,
+            };
+        });
+    }
+
+    async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
+        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
+        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
+
+        const directChats = await Promise.all(directChatPromises);
+        const groupChats = await Promise.all(groupChatPromises);
+
+        return {
+            ...state,
+            directChats,
+            groupChats,
+        }
+    }
+
+    async hydrateChatSummary<T extends ChatSummary>(chat: T): Promise<T> {
+        const latestMessage = chat.latestMessage !== undefined
+            ? await this.rehydrateMessage(
+                chat.kind,
+                chat.chatId,
+                chat.latestMessage,
+                undefined,
+                chat.latestEventIndex)
+            : undefined;
+
+        if (chat.kind === "group_chat") {
+            return {
+                ...this.rehydrateDataContent(chat as GroupChatSummary, "avatar") as T,
+                latestMessage
+            };
+        } else {
+            return {
+                ...chat,
+                latestMessage
+            };
+        }
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

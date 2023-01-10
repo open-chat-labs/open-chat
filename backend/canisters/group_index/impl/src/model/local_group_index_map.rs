@@ -9,7 +9,7 @@ pub struct LocalGroupIndexMap {
     group_to_index: HashMap<ChatId, CanisterId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LocalGroupIndex {
     group_count: u32,
     full: bool,
@@ -34,7 +34,7 @@ impl LocalGroupIndexMap {
 
     pub fn add_group(&mut self, index_id: CanisterId, chat_id: ChatId) -> bool {
         if let Some(index) = self.index_map.get_mut(&index_id) {
-            if self.group_to_index.insert(chat_id, index_id).is_some() {
+            if self.group_to_index.insert(chat_id, index_id).is_none() {
                 index.group_count += 1;
                 return true;
             }
@@ -69,6 +69,10 @@ impl LocalGroupIndexMap {
 
     pub fn get_index_canister(&self, chat_id: &ChatId) -> Option<CanisterId> {
         self.group_to_index.get(chat_id).copied()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalGroupIndex)> {
+        self.index_map.iter()
     }
 }
 
