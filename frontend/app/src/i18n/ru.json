@@ -446,7 +446,7 @@
     "removeMemberFailed": "Не удалось удалить участника",
     "member": "член",
     "memberCount": "{count} участников",
-    "ownedBy": "Владелец @ {имя пользователя}",
+    "ownedBy": "Владелец @{username}",
     "tokenTransfer": {
         "title": "Отправить {token}",
         "send": "Отправлять",
