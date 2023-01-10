@@ -3,7 +3,7 @@ import type { UserLookup } from "./user";
 import { UserStatus } from "./user";
 
 export function userStatus(lastOnline: number | undefined, now: number): UserStatus {
-    if (lastOnline === undefined) return UserStatus.None;
+    if (lastOnline === undefined || lastOnline === 0) return UserStatus.None;
     const secondsSinceOnline = (now - lastOnline) / 1000;
     return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }

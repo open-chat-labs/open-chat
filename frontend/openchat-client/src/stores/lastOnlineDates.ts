@@ -3,26 +3,24 @@ import { writable } from "svelte/store";
 const TWO_MINUTES_MILLIS = 120 * 1000;
 
 type LastOnline = {
-    lastOnline: number,
-    updated: number,
-}
+    lastOnline: number;
+    updated: number;
+};
 
 function createLastOnlineDatesStore() {
     const store = writable<Map<string, LastOnline>>(new Map<string, LastOnline>());
     let storeValue = new Map<string, LastOnline>();
-    store.subscribe((v) => storeValue = v);
+    store.subscribe((v) => (storeValue = v));
 
     function expired(lastOnline: LastOnline, now: number): boolean {
-        return now - lastOnline.updated > TWO_MINUTES_MILLIS
+        return now - lastOnline.updated > TWO_MINUTES_MILLIS;
     }
 
     return {
         subscribe: store.subscribe,
         get: (userId: string, now: number): number | undefined => {
             const value = storeValue.get(userId);
-            return value !== undefined && !expired(value, now)
-                ? value.lastOnline
-                : undefined;
+            return value !== undefined && !expired(value, now) ? value.lastOnline : undefined;
         },
         set: (values: Iterable<[string, number]>, now: number): void => {
             store.update((map) => {
@@ -37,7 +35,7 @@ function createLastOnlineDatesStore() {
                 }
                 return newMap;
             });
-        }
+        },
     };
 }
 

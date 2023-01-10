@@ -28,9 +28,10 @@
     $: me = userId === client.user.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
-    $: status = lastOnline !== undefined
-        ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-        : "";
+    $: status =
+        lastOnline !== undefined && lastOnline !== 0
+            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
+            : "";
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
