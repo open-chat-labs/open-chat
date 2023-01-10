@@ -52,7 +52,7 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
 
     recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         const args = {
-            count: 20,
+            count: 30,
             exclusions: exclusions.map((c) => Principal.fromText(c))
         };
         return this.handleQueryResponse(
