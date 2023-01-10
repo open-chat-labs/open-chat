@@ -9,7 +9,7 @@ pub struct LocalUserIndexMap {
     user_to_index: HashMap<UserId, CanisterId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LocalUserIndex {
     user_count: u32,
     full: bool,
@@ -71,6 +71,10 @@ impl LocalUserIndexMap {
 
     pub fn get_index_canister(&self, user_id: &UserId) -> Option<CanisterId> {
         self.user_to_index.get(user_id).copied()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalUserIndex)> {
+        self.index_map.iter()
     }
 }
 

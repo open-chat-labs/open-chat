@@ -1,5 +1,6 @@
 use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
+use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::user_map::UserMap;
@@ -112,6 +113,7 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -273,6 +275,7 @@ pub struct Metrics {
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
+    pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
 }
 
