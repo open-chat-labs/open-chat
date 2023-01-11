@@ -117,12 +117,15 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     // layout stuff
-    $: showRight = $numberOfColumns === 3 || $rightPanelHistory.length > 0;
+    $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
     $: floatRightPanel = $numberOfColumns < 3;
     $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
     $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
+
+    $: console.log("RPH: ", $rightPanelHistory);
+    $: console.log("ShowRight: ", showRight);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -285,8 +288,10 @@
             creatingThread = false;
             return;
         }
-        rightPanelHistory.update((history) => {
-            return history.filter((panel) => panel.kind !== "message_thread_panel");
+        tick().then(() => {
+            rightPanelHistory.update((history) => {
+                return history.filter((panel) => panel.kind !== "message_thread_panel");
+            });
         });
     }
 
