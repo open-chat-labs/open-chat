@@ -1749,10 +1749,25 @@ mod tests {
     }
 
     #[test]
+    fn from_index_message_limit() {
+        let events = setup_events();
+
+        let results = events.main.events.from_index(10.into(), true, 15, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            15
+        );
+    }
+
+    #[test]
     fn from_index_event_limit() {
         let events = setup_events();
 
-        let results = events.main.events.from_index(10.into(), true, 25, EventIndex::default());
+        let results = events.main.events.from_index(10.into(), true, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1762,10 +1777,28 @@ mod tests {
     }
 
     #[test]
+    fn from_index_message_limit_rev() {
+        let events = setup_events();
+
+        let results = events
+            .main
+            .events
+            .from_index(80.into(), false, 25, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            25
+        );
+    }
+
+    #[test]
     fn from_index_event_limit_rev() {
         let events = setup_events();
 
-        let results = events.main.events.from_index(40.into(), false, 25, EventIndex::default());
+        let results = events.main.events.from_index(40.into(), false, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1781,7 +1814,7 @@ mod tests {
         let results = events
             .main
             .events
-            .from_index(u32::MAX.into(), true, 25, EventIndex::default());
+            .from_index(u32::MAX.into(), true, 25, 25, EventIndex::default());
 
         assert!(results.is_empty());
     }
@@ -1793,7 +1826,7 @@ mod tests {
         let results = events
             .main
             .events
-            .from_index(u32::MAX.into(), false, 25, EventIndex::default());
+            .from_index(u32::MAX.into(), false, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1803,11 +1836,27 @@ mod tests {
     }
 
     #[test]
+    fn get_events_window_message_limit() {
+        let events = setup_events();
+        let mid_point = 21.into();
+
+        let results = events.main.events.get_window(mid_point, 10, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            10
+        );
+    }
+
+    #[test]
     fn get_events_window_event_limit() {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.main.events.get_window(mid_point, 25, EventIndex::default());
+        let results = events.main.events.get_window(mid_point, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1824,7 +1873,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.main.events.get_window(mid_point, 40, 18.into());
+        let results = events.main.events.get_window(mid_point, 40, 40, 18.into());
 
         assert_eq!(
             results
