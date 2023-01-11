@@ -19,9 +19,6 @@ import {
     ThreadRead,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
-    UpdateArgs,
-    UpdatesResponse,
-    compareChats,
     eventIsVisible,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
@@ -36,17 +33,6 @@ import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { EVENT_PAGE_SIZE, OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
-
-export function mergeChatUpdates(
-    chatSummaries: ChatSummary[],
-    updateResponse: UpdatesResponse
-): ChatSummary[] {
-    return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
-        added: updateResponse.chatsAdded,
-        updated: updateResponse.chatsUpdated,
-        removed: updateResponse.chatsRemoved,
-    }).sort(compareChats);
-}
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -453,20 +439,6 @@ export function threadsReadFromChat(chat: ChatSummary): ThreadRead[] {
                   readUpTo: t.readUpTo!,
               }))
         : [];
-}
-
-export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
-    return {
-        updatesSince: {
-            timestamp,
-            groupChats: chatSummaries
-                .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
-                .map((g) => ({
-                    chatId: g.chatId,
-                    lastUpdated: (g as GroupChatSummary).lastUpdated,
-                })),
-        },
-    };
 }
 
 export function buildBlobUrl(

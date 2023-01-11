@@ -663,20 +663,6 @@ export type EventsSuccessResult<T extends ChatEvent> = {
     latestEventIndex: number | undefined;
 };
 
-export type GroupChatUpdatesSince = {
-    updatesSince: bigint;
-    chatId: string;
-};
-
-export type UpdatesSince = {
-    groupChats: { lastUpdated: bigint; chatId: string }[];
-    timestamp: bigint;
-};
-
-export type UpdateArgs = {
-    updatesSince: UpdatesSince;
-};
-
 export type UpdatesResult = {
     state: ChatStateFull,
     affectedEvents: Record<string, number[]>;

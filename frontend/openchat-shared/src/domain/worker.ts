@@ -8,7 +8,6 @@ import type {
     ChatEvent,
     ChatStateFull,
     CreateGroupResponse,
-    CurrentChatState,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -48,7 +47,6 @@ import type {
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
     UnpinMessageResponse,
-    UpdateArgs,
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
@@ -161,7 +159,6 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | GetUpdates
     | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
@@ -187,7 +184,6 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState
     | GetInitialStateV2
     | GetUpdatesV2;
 
@@ -776,22 +772,6 @@ type ChatEvents = Request<{
 
 type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
-};
-
-type GetUpdates = Request<{
-    currentState: CurrentChatState;
-    args: UpdateArgs;
-    userStore: UserLookup;
-    selectedChatId: string | undefined;
-}> & {
-    kind: "getUpdates";
-};
-
-type GetInitialState = Request<{
-    userStore: UserLookup;
-    selectedChatId: string | undefined;
-}> & {
-    kind: "getInitialState";
 };
 
 type GetUpdatesV2 = Request<{
