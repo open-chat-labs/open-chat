@@ -4,6 +4,7 @@ use candid::CandidType;
 use ic_agent::identity::BasicIdentity;
 use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
+use ic_utils::interfaces::management_canister::CanisterStatus;
 use ic_utils::interfaces::ManagementCanister;
 use types::{CanisterId, CanisterWasm, Version};
 
@@ -263,6 +264,19 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
         .call_and_wait(delay())
         .await
         .expect("Failed to stop canister");
+
+    loop {
+        let (canister_status,) = management_canister
+            .canister_status(canister_id)
+            .call_and_wait(delay())
+            .await
+            .expect("Failed to call 'canister_status'");
+
+        if canister_status.status == CanisterStatus::Stopped {
+            break;
+        }
+        println!("Waiting for canister to stop");
+    }
     println!("Canister stopped");
 
     println!("Upgrading wasm for canister {}", canister_id);

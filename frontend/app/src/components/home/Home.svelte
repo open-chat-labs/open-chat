@@ -680,11 +680,7 @@
                     toastStore.showFailureToast("joinGroupFailed");
                 } else if (select) {
                     hotGroups = { kind: "idle" };
-                    if ($selectedChatId === group.chatId) {
-                        client.setSelectedChat(group.chatId);
-                    } else {
-                        push(`/${group.chatId}`);
-                    }
+                    push(`/${group.chatId}`);
                 }
             })
             .finally(() => (joining = undefined));

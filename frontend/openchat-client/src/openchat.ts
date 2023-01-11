@@ -371,7 +371,7 @@ export class OpenChat extends EventTarget {
         }
 
         this.refreshAffectedEvents(chat, affectedEvents);
-        this.updateDetails(chat, this._liveState.events);
+        this.updateDetails(chat);
         this.dispatchEvent(new ChatUpdated());
     }
 
@@ -854,19 +854,20 @@ export class OpenChat extends EventTarget {
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     localChatSummaryUpdates.markAdded(resp);
-                    return "success";
+                    this.loadDetails(resp);
+                    messagesRead.syncWithServer(resp.chatId, resp.readByMeUpTo, [], undefined);
                 } else if (resp.kind === "already_in_group") {
                     localChatSummaryUpdates.markAdded({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    return "success";
                 } else {
                     if (resp.kind === "blocked") {
                         return "blocked";
                     }
                     return "failure";
                 }
+                return "success";
             })
             .then((resp) => {
                 if (
@@ -1325,12 +1326,14 @@ export class OpenChat extends EventTarget {
         makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
     }
 
-    private async updateUserStore(chatId: string, userIdsFromEvents: Set<string>): Promise<void> {
+    private async updateUserStore(chatId: string, userIdsFromEvents: Iterable<string>): Promise<void> {
         const userId = this.user.userId;
         const allUserIds = new Set<string>();
         chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
-        userIdsFromEvents.forEach((u) => allUserIds.add(u));
+        for (const u of userIdsFromEvents) {
+            allUserIds.add(u);
+        }
 
         chatStateStore.updateProp(chatId, "userIds", (userIds) => {
             allUserIds.forEach((u) => {
@@ -1430,15 +1433,15 @@ export class OpenChat extends EventTarget {
 
         setSelectedChat(this.api, clientChat, serverChat, messageIndex);
 
-        const { selectedChat, focusMessageIndex, events } = this._liveState;
+        const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(chatId, focusMessageIndex).then(() => {
-                    this.loadDetails(selectedChat, events);
+                    this.loadDetails(selectedChat);
                 });
             } else {
                 this.loadPreviousMessages(chatId).then(() => {
-                    this.loadDetails(selectedChat, events);
+                    this.loadDetails(selectedChat);
                 });
             }
             if (selectedChat.kind === "direct_chat") {
@@ -1709,10 +1712,7 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    private async loadDetails(
-        clientChat: ChatSummary,
-        currentEvents: EventWrapper<ChatEvent>[]
-    ): Promise<void> {
+    private async loadDetails(clientChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat") {
             if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
@@ -1736,17 +1736,14 @@ export class OpenChat extends EventTarget {
                     );
                     chatStateStore.setProp(clientChat.chatId, "rules", resp.rules);
                 }
-                await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
+                await this.updateUserStore(clientChat.chatId, []);
             } else {
-                await this.updateDetails(clientChat, currentEvents);
+                await this.updateDetails(clientChat);
             }
         }
     }
 
-    private async updateDetails(
-        clientChat: ChatSummary,
-        currentEvents: EventWrapper<ChatEvent>[]
-    ): Promise<void> {
+    private async updateDetails(clientChat: ChatSummary): Promise<void> {
         if (clientChat.kind === "group_chat") {
             const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
@@ -1762,7 +1759,7 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
                 chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
                 chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
-                await this.updateUserStore(clientChat.chatId, userIdsFromEvents(currentEvents));
+                await this.updateUserStore(clientChat.chatId, []);
             }
         }
     }
