@@ -105,12 +105,9 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
-  const DisableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const DisableInviteCodeResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
+  const DeletedMessageArgs = IDL.Record({
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
@@ -356,6 +353,21 @@ export const idlFactory = ({ IDL }) => {
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
   });
+  const DeletedMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'content' : MessageContent }),
+    'MessageHardDeleted' : IDL.Null,
+    'MessageNotDeleted' : IDL.Null,
+  });
+  const DisableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
+  const DisableInviteCodeResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
     'correlation_id' : IDL.Nat64,
@@ -379,6 +391,7 @@ export const idlFactory = ({ IDL }) => {
   const EventsArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -612,6 +625,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -1125,6 +1139,11 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
         [],
+      ),
+    'deleted_message' : IDL.Func(
+        [DeletedMessageArgs],
+        [DeletedMessageResponse],
+        ['query'],
       ),
     'disable_invite_code' : IDL.Func(
         [DisableInviteCodeArgs],

@@ -80,7 +80,7 @@ import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
-import { MAX_EVENTS } from "../../constants";
+import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import { profile } from "../common/profiling";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { generateUint64 } from "../../utils/rng";
@@ -171,6 +171,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
+            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             invite_code: apiOptional(textToCode, this.inviteCode),
@@ -200,7 +201,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            max_events: MAX_EVENTS,
+            max_messages: MAX_MESSAGES,
+            max_events: 500,
             ascending,
             start_index: startIndex,
             invite_code: apiOptional(textToCode, this.inviteCode),

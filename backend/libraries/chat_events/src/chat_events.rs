@@ -1406,12 +1406,13 @@ impl ChatEvents {
         &self,
         start: EventIndex,
         ascending: bool,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
         self.events
-            .from_index(start, ascending, max_events, min_visible_event_index)
+            .from_index(start, ascending, max_messages, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -1420,12 +1421,13 @@ impl ChatEvents {
     pub fn get_events_window(
         &self,
         mid_point: EventIndex,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
         self.events
-            .get_window(mid_point, max_events, min_visible_event_index)
+            .get_window(mid_point, max_messages, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -1570,6 +1572,7 @@ impl ChatEventsVec {
         &self,
         start: EventIndex,
         ascending: bool,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
@@ -1584,8 +1587,17 @@ impl ChatEventsVec {
         };
 
         let mut events = Vec::new();
+        let mut message_count = 0;
         for event in iter.take(max_events) {
+            let is_message = matches!(event.event, ChatEventInternal::Message(_));
             events.push(event);
+
+            if is_message {
+                message_count += 1;
+                if message_count == max_messages {
+                    break;
+                }
+            }
         }
         if !ascending {
             events.reverse();
@@ -1596,6 +1608,7 @@ impl ChatEventsVec {
     pub fn get_window(
         &self,
         mid_point: EventIndex,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
@@ -1608,7 +1621,7 @@ impl ChatEventsVec {
             .rev();
 
         let mut events = VecDeque::new();
-
+        let mut message_count = 0;
         let mut max_reached = false;
         let mut min_reached = false;
 
@@ -1622,8 +1635,10 @@ impl ChatEventsVec {
                 break;
             }
 
+            let mut message_added = false;
             if iter_forwards {
                 if let Some(next) = forwards_iter.next() {
+                    message_added = matches!(next.event, ChatEventInternal::Message(_));
                     events.push_back(next);
                 } else {
                     max_reached = true;
@@ -1633,12 +1648,19 @@ impl ChatEventsVec {
                 }
             } else {
                 if let Some(previous) = backwards_iter.next() {
+                    message_added = matches!(previous.event, ChatEventInternal::Message(_));
                     events.push_front(previous);
                 } else {
                     min_reached = true;
                 }
                 if !max_reached {
                     iter_forwards = true;
+                }
+            }
+            if message_added {
+                message_count += 1;
+                if message_count == max_messages {
+                    break;
                 }
             }
         }
@@ -1727,10 +1749,25 @@ mod tests {
     }
 
     #[test]
+    fn from_index_message_limit() {
+        let events = setup_events();
+
+        let results = events.main.events.from_index(10.into(), true, 15, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            15
+        );
+    }
+
+    #[test]
     fn from_index_event_limit() {
         let events = setup_events();
 
-        let results = events.main.events.from_index(10.into(), true, 25, EventIndex::default());
+        let results = events.main.events.from_index(10.into(), true, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1740,10 +1777,28 @@ mod tests {
     }
 
     #[test]
+    fn from_index_message_limit_rev() {
+        let events = setup_events();
+
+        let results = events
+            .main
+            .events
+            .from_index(80.into(), false, 25, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            25
+        );
+    }
+
+    #[test]
     fn from_index_event_limit_rev() {
         let events = setup_events();
 
-        let results = events.main.events.from_index(40.into(), false, 25, EventIndex::default());
+        let results = events.main.events.from_index(40.into(), false, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1759,7 +1814,7 @@ mod tests {
         let results = events
             .main
             .events
-            .from_index(u32::MAX.into(), true, 25, EventIndex::default());
+            .from_index(u32::MAX.into(), true, 25, 25, EventIndex::default());
 
         assert!(results.is_empty());
     }
@@ -1771,7 +1826,7 @@ mod tests {
         let results = events
             .main
             .events
-            .from_index(u32::MAX.into(), false, 25, EventIndex::default());
+            .from_index(u32::MAX.into(), false, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1781,11 +1836,27 @@ mod tests {
     }
 
     #[test]
+    fn get_events_window_message_limit() {
+        let events = setup_events();
+        let mid_point = 21.into();
+
+        let results = events.main.events.get_window(mid_point, 10, 100, EventIndex::default());
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
+            10
+        );
+    }
+
+    #[test]
     fn get_events_window_event_limit() {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.main.events.get_window(mid_point, 25, EventIndex::default());
+        let results = events.main.events.get_window(mid_point, 25, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1802,7 +1873,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.main.events.get_window(mid_point, 40, 18.into());
+        let results = events.main.events.get_window(mid_point, 40, 40, 18.into());
 
         assert_eq!(
             results

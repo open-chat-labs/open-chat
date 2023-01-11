@@ -292,6 +292,7 @@ export interface EventResult {
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
+  'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -322,6 +323,7 @@ export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'user_id' : UserId,
+  'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }

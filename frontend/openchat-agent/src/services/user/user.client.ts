@@ -71,7 +71,7 @@ import {
     archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { MAX_EVENTS } from "../../constants";
+import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -199,6 +199,7 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             thread_root_message_index,
             user_id: Principal.fromText(userId),
+            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
@@ -222,6 +223,7 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
+            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             start_index: startIndex,
             ascending: ascending,
