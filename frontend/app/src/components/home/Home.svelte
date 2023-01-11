@@ -117,33 +117,14 @@
     $: chatStateStore = client.chatStateStore;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: x = $rtlStore ? -500 : 500;
-    $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
 
-    /** SHOW LEFT
-     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  F
-     * T             |  F            |  T            |  F
-     * T             |  F            |  F            |  T
-     */
-    $: showLeft =
-        !$mobileWidth ||
-        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind === "idle");
-
-    /** SHOW MIDDLE
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  T
-     * T             |  F            |  T            |  T
-     * T             |  F            |  F            |  F
-     */
-    $: showMiddle =
-        !$mobileWidth ||
-        ($mobileWidth && $pathParams.chatId !== undefined) ||
-        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
+    // layout stuff
+    $: showRight = $numberOfColumns === 3 || $rightPanelHistory.length > 0;
+    $: floatRightPanel = $numberOfColumns < 3;
+    $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
+    $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
+    $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
+    $: showLeft = !$mobileWidth || (leftSelected && !showRight);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -863,8 +844,6 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
-
-    $: console.log("RPH: ", rightPanelHistory);
 </script>
 
 <main>
@@ -918,7 +897,7 @@
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
-    {#if $numberOfColumns === 3}
+    {#if showRight && !floatRightPanel}
         <RightPanel
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
@@ -934,12 +913,9 @@
     {/if}
 </main>
 
-{#if $numberOfColumns === 2 && $rightPanelHistory.length > 0}
+{#if showRight && floatRightPanel}
     <Overlay fade={!$mobileWidth}>
-        <div
-            transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
-            class="right-wrapper"
-            class:rtl={$rtlStore}>
+        <div class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
