@@ -447,7 +447,7 @@
     "removeMemberFailed": "Không thể xóa thành viên",
     "member": "hội viên",
     "memberCount": "{count} thành viên",
-    "ownedBy": "Thuộc sở hữu của @ {username}",
+    "ownedBy": "Thuộc sở hữu của @{username}",
     "tokenTransfer": {
         "title": "Gửi {token}",
         "send": "Gửi",

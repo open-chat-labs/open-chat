@@ -16,6 +16,19 @@ type FilterGroupsResponse =
         };
     };
 
+type RecommendedGroupsArgs =
+    record {
+        count: nat8;
+        exclusions: vec ChatId;
+    };
+
+type RecommendedGroupsResponse =
+    variant {
+        Success: record {
+            groups: vec PublicGroupSummary;
+        }
+    };
+
 type DeletedGroupInfo =
     record {
         id: ChatId;
@@ -93,6 +106,7 @@ type UnfreezeGroupResponse =
 
 service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
+    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);

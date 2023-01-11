@@ -10,7 +10,6 @@ generate_c2c_call!(c2c_mark_read_v2);
 generate_c2c_call!(c2c_notify_group_deleted);
 generate_c2c_call!(c2c_notify_user_events);
 generate_c2c_call!(c2c_remove_from_group);
-generate_c2c_call!(c2c_retry_sending_failed_messages);
 generate_c2c_call!(c2c_revoke_super_admin);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_send_messages);

@@ -1,5 +1,4 @@
 use crate::model::challenges::Challenges;
-use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
@@ -29,7 +28,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 70_000;
+pub const USER_LIMIT: usize = 100_000;
 
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
@@ -142,7 +141,6 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
-    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
@@ -197,7 +195,6 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id,
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
@@ -243,7 +240,6 @@ impl Default for Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             ledger_canister_id: Principal::anonymous(),
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode: true,

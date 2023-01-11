@@ -2,9 +2,6 @@ import {
     CurrentUserResponse,
     WorkerRequest,
     UserLookup,
-    MergedUpdatesResponse,
-    CurrentChatState,
-    UpdateArgs,
     UsersArgs,
     UsersResponse,
     MessagesReadFromServer,
@@ -256,36 +253,6 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "getCurrentUser",
             payload: undefined,
-        });
-    }
-
-    getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.sendRequest({
-            kind: "getInitialState",
-            payload: {
-                userStore,
-                selectedChatId,
-            },
-        });
-    }
-
-    getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.sendRequest({
-            kind: "getUpdates",
-            payload: {
-                currentState,
-                args,
-                userStore,
-                selectedChatId,
-            },
         });
     }
 
@@ -982,10 +949,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         return this.sendRequest({
             kind: "getRecommendedGroups",
-            payload: undefined,
+            payload: {
+                exclusions
+            },
         });
     }
 

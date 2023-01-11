@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, ThreadSyncDetails, TimestampMillis, Timestamped};
+use types::{ChatId, MessageIndex, TimestampMillis, Timestamped};
 use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
 
@@ -79,46 +79,6 @@ impl GroupChat {
                 .map(|(k, v)| (*k, v.value))
                 .collect(),
             archived: self.archived.if_set_after(updates_since).copied(),
-            date_read_pinned: self.date_read_pinned.if_set_after(updates_since).copied().flatten(),
-        }
-    }
-
-    pub fn to_updates(&self, updates_since: TimestampMillis) -> GroupChatSummaryUpdates {
-        GroupChatSummaryUpdates {
-            chat_id: self.chat_id,
-            last_updated: self.last_updated(),
-            name: None,
-            description: None,
-            subtype: OptionUpdate::NoChange,
-            avatar_id: OptionUpdate::NoChange,
-            latest_message: None,
-            latest_event_index: None,
-            participant_count: None,
-            role: None,
-            read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
-            notifications_muted: None,
-            mentions: Vec::new(),
-            owner_id: None,
-            permissions: None,
-            affected_events: Vec::new(),
-            metrics: None,
-            my_metrics: None,
-            is_public: None,
-            latest_threads: self
-                .threads_read
-                .updated_since(updates_since)
-                .map(|(&root_message_index, read_up_to)| ThreadSyncDetails {
-                    root_message_index,
-                    latest_event: None,
-                    latest_message: None,
-                    read_up_to: Some(read_up_to.value),
-                    last_updated: read_up_to.last_updated,
-                })
-                .collect(),
-            archived: self.archived.if_set_after(updates_since).copied(),
-            frozen: OptionUpdate::NoChange,
-            wasm_version: None,
-            date_last_pinned: None,
             date_read_pinned: self.date_read_pinned.if_set_after(updates_since).copied().flatten(),
         }
     }

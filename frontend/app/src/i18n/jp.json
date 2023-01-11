@@ -446,7 +446,7 @@
     "removeMembersFailed": "メンバーを削除できません",
     "member": "メンバー",
     "memberCount": "{カウント}メンバー",
-    "ownedBy": "@ {username}が所有",
+    "ownedBy": "@{username}が所有",
     "tokenTransfer": {
         "title": "{token}を送信する",
         "send": "送信",

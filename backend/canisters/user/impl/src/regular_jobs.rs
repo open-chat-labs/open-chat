@@ -51,7 +51,6 @@ async fn update_cached_group_summaries_impl(args: SummariesArgs) {
                 let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
                     groups: summaries
-                        .groups
                         .into_iter()
                         // This ensures we don't cache any groups which have been deleted or the
                         // user has been removed from, which they were members of at the beginning

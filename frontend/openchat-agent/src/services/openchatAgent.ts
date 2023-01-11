@@ -32,7 +32,6 @@ import {
     mergeDirectChatUpdates,
     mergeGroupChats,
     mergeGroupChatUpdates,
-    threadsReadFromChat
 } from "../utils/chat";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
@@ -53,7 +52,6 @@ import {
     CreatedUser,
     CreateGroupResponse,
     Cryptocurrency,
-    CurrentChatState,
     CurrentUserResponse,
     DataContent,
     DeleteGroupResponse,
@@ -81,10 +79,8 @@ import {
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
-    MergedUpdatesResponse,
     Message,
     MessageContent,
-    MessagesReadFromServer,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
     PendingCryptocurrencyWithdrawal,
@@ -116,7 +112,6 @@ import {
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsupportedValueError,
-    UpdateArgs,
     UpdateGroupResponse,
     UpgradeStorageResponse,
     User,
@@ -195,7 +190,6 @@ export class OpenChatAgent extends EventTarget {
             this.identity,
             this.config,
             this.db,
-            this._groupInvite
         );
         return this;
     }
@@ -809,69 +803,6 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    private async handleMergedUpdatesResponse(
-        resp: MergedUpdatesResponse,
-        rehydrateLastMessage = true
-    ): Promise<MergedUpdatesResponse> {
-        const chatSummaries = await Promise.all(
-            resp.chatSummaries.map(async (chat) => {
-                this.dispatchEvent(
-                    new MessagesReadFromServer(
-                        chat.chatId,
-                        chat.readByMeUpTo,
-                        threadsReadFromChat(chat),
-                        (chat as GroupChatSummary)?.dateReadPinned,
-                    )
-                );
-
-                if (chat.latestMessage !== undefined && rehydrateLastMessage) {
-                    const latestMessage = await this.rehydrateMessage(
-                        chat.kind,
-                        chat.chatId,
-                        chat.latestMessage,
-                        undefined,
-                        chat.latestEventIndex
-                    );
-                    chat = {
-                        ...chat,
-                        latestMessage,
-                    };
-                }
-
-                return chat.kind === "direct_chat"
-                    ? chat
-                    : this.rehydrateDataContent(chat, "avatar");
-            })
-        );
-
-        return {
-            ...resp,
-            chatSummaries,
-        };
-    }
-
-    getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(userStore, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(resp, false);
-        });
-    }
-
-    getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.userClient
-            .getUpdates(currentState, args, userStore, selectedChatId)
-            .then((resp) => {
-                return this.handleMergedUpdatesResponse(resp);
-            });
-    }
-
     async getInitialStateV2(): Promise<UpdatesResult> {
         const cached = await getCachedChatsV2(this.db, this.principal);
         if (cached !== undefined) {
@@ -1272,9 +1203,9 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId).getRules();
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.userClient
-            .getRecommendedGroups()
+    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
+        return this._groupIndexClient
+            .recommendedGroups(exclusions)
             .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
 
@@ -1284,14 +1215,14 @@ export class OpenChatAgent extends EventTarget {
 
     getBio(userId?: string): Promise<string> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db, undefined)
+            ? UserClient.create(userId, this.identity, this.config, this.db)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db, undefined)
+            ? UserClient.create(userId, this.identity, this.config, this.db)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -1419,8 +1350,7 @@ export class OpenChatAgent extends EventTarget {
             userId,
             this.identity,
             this.config,
-            this.db,
-            undefined
+            this.db
         );
         return userClient.migrateUserPrincipal();
     }
