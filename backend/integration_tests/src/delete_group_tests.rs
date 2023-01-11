@@ -27,6 +27,8 @@ fn delete_group_succeeds() {
         delete_group_response
     );
 
+    env.tick();
+
     let initial_state = client::user::happy_path::initial_state_v2(&env, &user2);
 
     assert!(!initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
