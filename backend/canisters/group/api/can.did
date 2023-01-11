@@ -511,6 +511,7 @@ type EventsArgs =
         thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
+        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
@@ -537,6 +538,7 @@ type EventsWindowArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
+        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;

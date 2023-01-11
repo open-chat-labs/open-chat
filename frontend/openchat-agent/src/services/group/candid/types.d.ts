@@ -217,6 +217,16 @@ export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DeletedMessageArgs {
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type DeletedMessageResponse = { 'MessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : { 'content' : MessageContent } } |
+  { 'MessageHardDeleted' : null } |
+  { 'MessageNotDeleted' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -290,6 +300,7 @@ export interface EventResult {
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
+  'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -321,6 +332,7 @@ export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'invite_code' : [] | [bigint],
+  'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -1225,6 +1237,7 @@ export interface _SERVICE {
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'disable_invite_code' : ActorMethod<
     [DisableInviteCodeArgs],
     DisableInviteCodeResponse

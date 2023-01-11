@@ -536,6 +536,7 @@ type EventsArgs =
         thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
+        max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
     };
@@ -562,6 +563,7 @@ type EventsWindowArgs =
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
+        max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
     };

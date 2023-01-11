@@ -27,6 +27,7 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             let events = chat_events.from_index(
                 args.start_index,
                 args.ascending,
+                if args.max_messages == 0 { 50 } else { args.max_messages as usize },
                 args.max_events as usize,
                 min_visible_event_index,
                 user_id,

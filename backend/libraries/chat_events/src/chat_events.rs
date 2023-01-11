@@ -1406,12 +1406,13 @@ impl ChatEvents {
         &self,
         start: EventIndex,
         ascending: bool,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
         self.events
-            .from_index(start, ascending, max_events, min_visible_event_index)
+            .from_index(start, ascending, max_messages, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -1420,12 +1421,13 @@ impl ChatEvents {
     pub fn get_events_window(
         &self,
         mid_point: EventIndex,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
         self.events
-            .get_window(mid_point, max_events, min_visible_event_index)
+            .get_window(mid_point, max_messages, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -1570,6 +1572,7 @@ impl ChatEventsVec {
         &self,
         start: EventIndex,
         ascending: bool,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
@@ -1584,8 +1587,17 @@ impl ChatEventsVec {
         };
 
         let mut events = Vec::new();
+        let mut message_count = 0;
         for event in iter.take(max_events) {
+            let is_message = matches!(event.event, ChatEventInternal::Message(_));
             events.push(event);
+
+            if is_message {
+                message_count += 1;
+                if message_count == max_messages {
+                    break;
+                }
+            }
         }
         if !ascending {
             events.reverse();
@@ -1596,6 +1608,7 @@ impl ChatEventsVec {
     pub fn get_window(
         &self,
         mid_point: EventIndex,
+        max_messages: usize,
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
@@ -1608,7 +1621,7 @@ impl ChatEventsVec {
             .rev();
 
         let mut events = VecDeque::new();
-
+        let mut message_count = 0;
         let mut max_reached = false;
         let mut min_reached = false;
 
@@ -1622,8 +1635,10 @@ impl ChatEventsVec {
                 break;
             }
 
+            let mut message_added = false;
             if iter_forwards {
                 if let Some(next) = forwards_iter.next() {
+                    message_added = matches!(next.event, ChatEventInternal::Message(_));
                     events.push_back(next);
                 } else {
                     max_reached = true;
@@ -1633,12 +1648,19 @@ impl ChatEventsVec {
                 }
             } else {
                 if let Some(previous) = backwards_iter.next() {
+                    message_added = matches!(previous.event, ChatEventInternal::Message(_));
                     events.push_front(previous);
                 } else {
                     min_reached = true;
                 }
                 if !max_reached {
                     iter_forwards = true;
+                }
+            }
+            if message_added {
+                message_count += 1;
+                if message_count == max_messages {
+                    break;
                 }
             }
         }
