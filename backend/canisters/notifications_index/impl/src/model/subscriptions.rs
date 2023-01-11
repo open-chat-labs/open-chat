@@ -11,17 +11,14 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
-        self.subscriptions.get(user_id).cloned()
-    }
-
     pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if !subscriptions.iter().any(|s| *s == subscription) {
-                    subscriptions.push(subscription);
+                if subscriptions.iter().any(|s| *s == subscription) {
+                    return;
                 }
+                subscriptions.push(subscription);
             }
             Vacant(e) => {
                 e.insert(vec![subscription]);
@@ -29,10 +26,6 @@ impl Subscriptions {
         }
 
         self.total = self.total.saturating_add(1);
-    }
-
-    pub fn any_for_user(&self, user_id: &UserId) -> bool {
-        self.subscriptions.contains_key(user_id)
     }
 
     pub fn remove_all(&mut self, user_id: UserId) {
