@@ -28,7 +28,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 70_000;
+pub const USER_LIMIT: usize = 100_000;
 
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
