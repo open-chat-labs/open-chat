@@ -124,9 +124,6 @@
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
 
-    $: console.log("RPH: ", $rightPanelHistory);
-    $: console.log("ShowRight: ", showRight);
-
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
