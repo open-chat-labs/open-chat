@@ -41,7 +41,7 @@ async fn register_user(args: Args) -> Response {
                         state,
                     )
                 });
-                Success(user_id)
+                return Success(user_id);
             }
             Ok(local_user_index_canister::c2c_create_user::Response::AlreadyRegistered) => AlreadyRegistered,
             Ok(local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
@@ -49,9 +49,7 @@ async fn register_user(args: Args) -> Response {
             Err(error) => InternalError(format!("{error:?}")),
         };
 
-    if !matches!(result, Success(_)) {
-        mutate_state(|state| rollback(&args.username, state));
-    }
+    mutate_state(|state| rollback(&args.username, state));
 
     result
 }
