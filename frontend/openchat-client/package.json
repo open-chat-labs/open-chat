@@ -26,12 +26,12 @@
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
-        "openchat-worker": "*",
         "openchat-shared": "*",
+        "openchat-worker": "*",
         "peerjs": "^1.4.7",
         "svelte": "^3.51.0",
         "svelte-i18n": "^3.4.0",
-        "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
+        "usergeek-ic-js": "^1.0.4",
         "uuid": "^9.0.0"
     },
     "devDependencies": {
