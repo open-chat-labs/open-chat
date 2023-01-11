@@ -3,7 +3,7 @@ use ic_cdk::timer::TimerId;
 use notifications_index_canister::NotificationsIndexEvent;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::info;
+use tracing::trace;
 use types::CanisterId;
 
 thread_local! {
@@ -17,7 +17,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     {
         let timer_id = ic_cdk::timer::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
-        info!("'sync_notifications_canisters' job started");
+        trace!("'sync_notifications_canisters' job started");
         true
     } else {
         false
@@ -26,7 +26,12 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 
 pub fn run() {
     if let Some(batch) = mutate_state(next_batch) {
-        ic_cdk::spawn(process_batch(batch));
+        if !batch.is_empty() {
+            ic_cdk::spawn(process_batch(batch));
+        }
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk::timer::clear_timer(timer_id);
+        trace!("'sync_notifications_canisters' job stopped");
     }
 }
 
