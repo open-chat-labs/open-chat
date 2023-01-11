@@ -4,8 +4,8 @@ use user_canister::*;
 // Queries
 generate_query_call!(events_by_index);
 generate_query_call!(events_range);
-generate_query_call!(initial_state);
-generate_query_call!(updates);
+generate_query_call!(initial_state_v2);
+generate_query_call!(updates_v2);
 
 // Updates
 generate_update_call!(add_reaction);
@@ -89,17 +89,17 @@ pub mod happy_path {
         }
     }
 
-    pub fn initial_state(env: &StateMachine, sender: &User) -> user_canister::initial_state::SuccessResult {
-        let response = super::initial_state(
+    pub fn initial_state_v2(env: &StateMachine, sender: &User) -> user_canister::initial_state_v2::SuccessResult {
+        let response = super::initial_state_v2(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::initial_state::Args { disable_cache: None },
+            &user_canister::initial_state_v2::Args { disable_cache: None },
         );
 
         match response {
-            user_canister::initial_state::Response::Success(result) => result,
-            response => panic!("'initial_state' error: {:?}", response),
+            user_canister::initial_state_v2::Response::Success(result) => result,
+            response => panic!("'initial_state_v2' error: {:?}", response),
         }
     }
 

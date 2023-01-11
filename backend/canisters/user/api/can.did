@@ -462,23 +462,9 @@ type MigrateUserPrincipalResponse =
         InternalError: text;
     };
 
-type InitialStateArgs =
+type InitialStateV2Args =
     record {
         disable_cache: opt bool;
-    };
-
-type InitialStateResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            chats: vec ChatSummary;
-            blocked_users: vec UserId;
-            cycles_balance: Cycles;
-            upgrades_in_progress: vec ChatId;
-            user_canister_wasm_version: Version;
-            pinned_chats: vec ChatId;
-        };
-        InternalError: text;
     };
 
 type InitialStateV2Response =
@@ -503,40 +489,6 @@ type InitialStateV2Response =
             pinned_chats: vec ChatId;
             user_canister_wasm_version: Version;
         };
-    };
-
-type GroupChatUpdatesSince =
-    record {
-        chat_id: ChatId;
-        updates_since: TimestampMillis;
-    };
-
-type UpdatesSince =
-    record {
-        timestamp: TimestampMillis;
-        group_chats: vec GroupChatUpdatesSince;
-    };
-
-type UpdatesArgs =
-    record {
-        updates_since: UpdatesSince;
-    };
-
-type UpdatesResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            chats_added: vec ChatSummary;
-            chats_updated: vec ChatSummaryUpdates;
-            chats_removed: vec ChatId;
-            cycles_balance: opt Cycles;
-            avatar_id: AvatarIdUpdate;
-            upgrades_in_progress: vec ChatId;
-            user_canister_wasm_version: opt Version;
-            blocked_users_v2: opt vec UserId;
-            pinned_chats: opt vec ChatId;
-        };
-        InternalError: text;
     };
 
 type UpdatesV2Args =
@@ -646,22 +598,6 @@ type MessagesByMessageIndexResponse =
         ReplicaNotUpToDate: EventIndex;
     };
 
-type RecommendedGroupsArgs =
-    record {
-        count: nat8;
-    };
-
-type RecommendedGroupsResponse =
-    variant {
-        Success: RecommendedGroupsSuccessResult;
-        InternalError: text;
-    };
-
-type RecommendedGroupsSuccessResult =
-    record {
-        groups: vec PublicGroupSummary;
-    };
-
 type SearchMessagesArgs =
     record {
         user_id: UserId;
@@ -763,10 +699,7 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
-    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
-    initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
-    updates: (UpdatesArgs) -> (UpdatesResponse) query;
-    initial_state_v2: (InitialStateArgs) -> (InitialStateV2Response) query;
+    initial_state_v2: (InitialStateV2Args) -> (InitialStateV2Response) query;
     updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     bio: (BioArgs) -> (BioResponse) query;

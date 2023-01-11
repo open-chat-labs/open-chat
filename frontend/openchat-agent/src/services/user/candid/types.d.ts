@@ -218,6 +218,16 @@ export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DeletedMessageArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type DeletedMessageResponse = { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : { 'content' : MessageContent } } |
+  { 'MessageHardDeleted' : null } |
+  { 'MessageNotDeleted' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -478,10 +488,6 @@ export interface GroupChatSummaryUpdates {
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface GroupChatUpdatesSince {
-  'updates_since' : TimestampMillis,
-  'chat_id' : ChatId,
-}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -575,19 +581,7 @@ export interface IndexedNotification {
 }
 export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
 export type InitUserPrincipalMigrationResponse = { 'Success' : null };
-export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
-export type InitialStateResponse = {
-    'Success' : {
-      'cycles_balance' : Cycles,
-      'user_canister_wasm_version' : Version,
-      'upgrades_in_progress' : Array<ChatId>,
-      'chats' : Array<ChatSummary>,
-      'blocked_users' : Array<UserId>,
-      'timestamp' : TimestampMillis,
-      'pinned_chats' : Array<ChatId>,
-    }
-  } |
-  { 'InternalError' : string };
+export interface InitialStateV2Args { 'disable_cache' : [] | [boolean] }
 export type InitialStateV2Response = {
     'SuccessCached' : {
       'user_canister_wasm_version' : Version,
@@ -906,14 +900,6 @@ export interface PublicProfile {
 }
 export type PublicProfileArgs = {};
 export type PublicProfileResponse = { 'Success' : PublicProfile };
-export interface RecommendedGroupsArgs { 'count' : number }
-export type RecommendedGroupsResponse = {
-    'Success' : RecommendedGroupsSuccessResult
-  } |
-  { 'InternalError' : string };
-export interface RecommendedGroupsSuccessResult {
-  'groups' : Array<PublicGroupSummary>,
-}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs {
@@ -1154,26 +1140,6 @@ export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface UpdatesArgs { 'updates_since' : UpdatesSince }
-export type UpdatesResponse = {
-    'Success' : {
-      'cycles_balance' : [] | [Cycles],
-      'user_canister_wasm_version' : [] | [Version],
-      'upgrades_in_progress' : Array<ChatId>,
-      'chats_updated' : Array<ChatSummaryUpdates>,
-      'blocked_users_v2' : [] | [Array<UserId>],
-      'chats_added' : Array<ChatSummary>,
-      'avatar_id' : AvatarIdUpdate,
-      'chats_removed' : Array<ChatId>,
-      'timestamp' : TimestampMillis,
-      'pinned_chats' : [] | [Array<ChatId>],
-    }
-  } |
-  { 'InternalError' : string };
-export interface UpdatesSince {
-  'group_chats' : Array<GroupChatUpdatesSince>,
-  'timestamp' : TimestampMillis,
-}
 export interface UpdatesV2Args { 'updates_since' : TimestampMillis }
 export type UpdatesV2Response = {
     'Success' : {
@@ -1257,6 +1223,7 @@ export interface _SERVICE {
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
@@ -1266,8 +1233,10 @@ export interface _SERVICE {
     [InitUserPrincipalMigrationArgs],
     InitUserPrincipalMigrationResponse
   >,
-  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
-  'initial_state_v2' : ActorMethod<[InitialStateArgs], InitialStateV2Response>,
+  'initial_state_v2' : ActorMethod<
+    [InitialStateV2Args],
+    InitialStateV2Response
+  >,
   'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
@@ -1285,10 +1254,6 @@ export interface _SERVICE {
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
-  'recommended_groups' : ActorMethod<
-    [RecommendedGroupsArgs],
-    RecommendedGroupsResponse
-  >,
   'relinquish_group_super_admin' : ActorMethod<
     [RelinquishGroupSuperAdminArgs],
     RelinquishGroupSuperAdminResponse
@@ -1313,7 +1278,6 @@ export interface _SERVICE {
     UnmuteNotificationsResponse
   >,
   'unpin_chat' : ActorMethod<[UnpinChatRequest], UnpinChatResponse>,
-  'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
   'updates_v2' : ActorMethod<[UpdatesV2Args], UpdatesV2Response>,
   'withdraw_crypto_v2' : ActorMethod<
     [WithdrawCryptoArgs],

@@ -1,11 +1,9 @@
 import type {
     EventsResponse,
-    UpdateArgs,
     CreateGroupResponse,
     DeleteGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
-    MergedUpdatesResponse,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -19,10 +17,8 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    GroupChatSummary,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
-    CurrentChatState,
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
@@ -33,23 +29,12 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    UserLookup,
     InitialStateV2Response,
     UpdatesV2Response,
 } from "openchat-shared";
 
 export interface IUserClient {
     userId: string;
-    getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse>;
-    getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse>;
     getInitialStateV2(): Promise<InitialStateV2Response>;
     getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response>;
     chatEventsWindow(
@@ -131,7 +116,6 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
-    getRecommendedGroups(): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     getPublicProfile(): Promise<PublicProfile>;

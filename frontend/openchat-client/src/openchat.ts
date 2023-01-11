@@ -269,7 +269,6 @@ import {
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
-    type UpdateArgs,
     type CurrentChatState,
     type Notification,
     getTimeUntilSessionExpiryMs,
@@ -2842,20 +2841,6 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    private updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
-        return {
-            updatesSince: {
-                timestamp,
-                groupChats: chatSummaries
-                    .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
-                    .map((g) => ({
-                        chatId: g.chatId,
-                        lastUpdated: (g as GroupChatSummary).lastUpdated,
-                    })),
-            },
-        };
-    }
-
     // FIXME - this is duplicated
     private extractUserIdsFromMentions(text: string): string[] {
         return [...text.matchAll(/@UserId\(([\d\w-]+)\)/g)].map((m) => m[1]);
@@ -2930,27 +2915,15 @@ export class OpenChat extends EventTarget {
             chatsLoading.set(!init);
 
             const chats = Object.values(this._liveState.myServerChatSummaries);
-            const selectedChat = this._liveState.selectedChat;
-            const userLookup = this._liveState.userStore;
             const currentState: CurrentChatState = {
                 chatSummaries: chats,
                 blockedUsers: this._liveState.blockedUsers,
                 pinnedChats: this._liveState.pinnedChats,
             };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
-            const useNewUpdatesMethod = true
-            const chatsResponse = useNewUpdatesMethod
-                ? this._chatUpdatesSince === undefined
-                    ? await this.initialStateV2()
-                    : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId)
-                : this._chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(userLookup, selectedChat?.chatId)
-                    : await this.api.getUpdates(
-                          currentState,
-                          this.updateArgsFromChats(this._chatUpdatesSince, chats),
-                          userLookup,
-                          selectedChat?.chatId
-                      );
+            const chatsResponse = this._chatUpdatesSince === undefined
+                ? await this.initialStateV2()
+                : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId)
 
             this._chatUpdatesSince = chatsResponse.timestamp;
 

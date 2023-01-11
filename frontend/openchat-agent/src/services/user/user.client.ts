@@ -10,12 +10,10 @@ import {
     InitialStateV2Response,
     UpdatesV2Response,
     EventsResponse,
-    UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
     DirectChatEvent,
-    MergedUpdatesResponse,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -29,15 +27,12 @@ import {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    GroupChatSummary,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
-    CurrentChatState,
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    GroupInvite,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
@@ -46,8 +41,6 @@ import {
     textToCode,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    UserLookup,
-    compareChats,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -58,14 +51,11 @@ import {
     undeleteMessageResponse,
     editMessageResponse,
     getEventsResponse,
-    getUpdatesResponse,
     getUpdatesV2Response,
-    initialStateResponse,
     initialStateV2Response,
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
-    recommendedGroupsResponse,
     searchDirectChatResponse,
     sendMessageResponse,
     setAvatarResponse,
@@ -81,7 +71,6 @@ import {
     archiveChatResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { mergeChatUpdates } from "../../utils/chat";
 import { MAX_EVENTS } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
@@ -116,14 +105,12 @@ export class UserClient extends CandidService implements IUserClient {
         identity: Identity,
         config: AgentConfig,
         db: Database,
-        groupInvite: GroupInvite | undefined
     ): IUserClient {
         return new CachingUserClient(
             db,
             identity,
             config,
-            new UserClient(identity, userId, config),
-            groupInvite
+            new UserClient(identity, userId, config)
         );
     }
 
@@ -246,82 +233,6 @@ export class UserClient extends CandidService implements IUserClient {
             (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
             args
         );
-    }
-
-    @profile("userClient")
-    async getInitialState(
-        _userStore: UserLookup,
-        _selectedChatId?: string
-    ): Promise<MergedUpdatesResponse> {
-        // FIXME - can't access localstorage in a worker
-        // const disableCache =
-        //     localStorage.getItem("openchat_disable_initial_state_cache") === "true";
-        const disableCache = false;
-
-        const resp = await this.handleQueryResponse(
-            () => this.userService.initial_state({ disable_cache: [disableCache] }),
-            initialStateResponse
-        );
-
-        return {
-            wasUpdated: true,
-            chatSummaries: resp.chats.sort(compareChats),
-            timestamp: resp.timestamp,
-            blockedUsers: resp.blockedUsers,
-            pinnedChats: resp.pinnedChats,
-            avatarIdUpdate: undefined,
-            affectedEvents: {},
-        };
-    }
-
-    @profile("userClient")
-    async getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        _userStore: UserLookup,
-        _selectedChatId?: string
-    ): Promise<MergedUpdatesResponse> {
-        const updatesResponse = await this.handleQueryResponse(
-            () =>
-                this.userService.updates({
-                    updates_since: {
-                        timestamp: args.updatesSince.timestamp,
-                        group_chats: args.updatesSince.groupChats.map((g) => ({
-                            chat_id: Principal.fromText(g.chatId),
-                            updates_since: g.lastUpdated,
-                        })),
-                    },
-                }),
-            getUpdatesResponse,
-            args
-        );
-
-        const anyUpdates =
-            updatesResponse.blockedUsers !== undefined ||
-            updatesResponse.pinnedChats !== undefined ||
-            updatesResponse.chatsUpdated.length > 0 ||
-            updatesResponse.chatsAdded.length > 0 ||
-            updatesResponse.chatsRemoved.size > 0 ||
-            updatesResponse.avatarIdUpdate !== undefined ||
-            updatesResponse.cyclesBalance !== undefined ||
-            updatesResponse.transactions.length > 0;
-
-        return {
-            wasUpdated: anyUpdates,
-            chatSummaries: anyUpdates
-                ? mergeChatUpdates(currentState.chatSummaries, updatesResponse)
-                : currentState.chatSummaries,
-            timestamp: updatesResponse.timestamp,
-            blockedUsers: updatesResponse.blockedUsers ?? currentState.blockedUsers,
-            pinnedChats: updatesResponse.pinnedChats ?? currentState.pinnedChats,
-            avatarIdUpdate: updatesResponse.avatarIdUpdate,
-            affectedEvents: updatesResponse.chatsUpdated.reduce((result, chatSummary) => {
-                if (chatSummary.affectedEvents.length > 0) {
-                    result[chatSummary.chatId] = chatSummary.affectedEvents;
-                }
-                return result;
-            }, {} as Record<string, number[]>),
-        };
     }
 
     @profile("userClient")
@@ -604,18 +515,6 @@ export class UserClient extends CandidService implements IUserClient {
                 muteNotificationsResponse
             );
         }
-    }
-
-    @profile("userClient")
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        const args = {
-            count: 20,
-        };
-        return this.handleQueryResponse(
-            () => this.userService.recommended_groups(args),
-            recommendedGroupsResponse,
-            args
-        );
     }
 
     @profile("userClient")

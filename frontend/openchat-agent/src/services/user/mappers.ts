@@ -1,10 +1,7 @@
 import type {
-    ApiChatSummary,
     ApiEventsResponse,
-    ApiUpdatesResponse,
     ApiCreateGroupResponse,
     ApiDeleteGroupResponse,
-    ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
@@ -21,12 +18,10 @@ import type {
     ApiSearchDirectChatResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
-    ApiInitialStateResponse,
     ApiInitialStateV2Response,
     ApiUpdatesV2Response,
     ApiRole,
     ApiMention,
-    ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiTransferCryptoWithinGroupResponse,
@@ -36,7 +31,6 @@ import type {
     ApiThreadSyncDetails,
     ApiMigrateUserPrincipalResponse,
     ApiGroupSubtype,
-    ApiGroupSubtypeUpdate,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
@@ -50,11 +44,8 @@ import type {
     ApiDirectChatSummaryUpdates,
 } from "./candid/idl";
 import {
-    ChatSummary,
-    UpdatesResponse,
     EventsResponse,
     EventWrapper,
-    ChatSummaryUpdates,
     CreateGroupResponse,
     DeleteGroupResponse,
     DirectChatEvent,
@@ -69,7 +60,6 @@ import {
     UndeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
-    InitialStateResponse,
     InitialStateV2Response,
     UpdatesV2Response,
     MemberRole,
@@ -82,9 +72,7 @@ import {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ThreadSyncDetails,
-    ThreadSyncDetailsUpdates,
     GroupSubtype,
-    GroupSubtypeUpdate,
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
@@ -107,7 +95,6 @@ import {
     updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import { publicGroupSummary } from "../common/publicSummaryMapper";
 import { ReplicaNotUpToDateError } from "../error";
 import type { Principal } from "@dfinity/principal";
 
@@ -134,21 +121,6 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
         return "user_suspended";
     }
     throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, candid);
-}
-
-export function recommendedGroupsResponse(
-    candid: ApiRecommendedGroupsResponse
-): GroupChatSummary[] {
-    if ("Success" in candid) {
-        return candid.Success.groups.map(publicGroupSummary);
-    }
-    if ("InternalError" in candid) {
-        return [];
-    }
-    throw new UnsupportedValueError(
-        `Unexpected ApiRecommendedGroupsResponse type received`,
-        candid
-    );
 }
 
 export function searchDirectChatResponse(
@@ -733,19 +705,6 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
-export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
-    if ("Success" in candid) {
-        return {
-            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-            pinnedChats: candid.Success.pinned_chats.map((u) => u.toString()),
-            chats: candid.Success.chats.map(chatSummary),
-            timestamp: candid.Success.timestamp,
-            cyclesBalance: candid.Success.cycles_balance,
-        };
-    }
-    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
-}
-
 export function initialStateV2Response(candid: ApiInitialStateV2Response): InitialStateV2Response {
     if ("Success" in candid) {
         const result = candid.Success;
@@ -771,28 +730,6 @@ export function initialStateV2Response(candid: ApiInitialStateV2Response): Initi
             avatarId: optional(result.avatar_id, identity),
             blockedUsers: result.blocked_users.map((u) => u.toString()),
             pinnedChats: result.pinned_chats.map((c) => c.toString()),
-        };
-    }
-    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
-}
-
-export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
-    if ("Success" in candid) {
-        return {
-            blockedUsers: optional(
-                candid.Success.blocked_users_v2,
-                (user_ids) => new Set(user_ids.map((u) => u.toString()))
-            ),
-            chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
-            chatsAdded: candid.Success.chats_added.map(chatSummary),
-            chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
-            avatarIdUpdate: optionUpdate(candid.Success.avatar_id, identity),
-            timestamp: candid.Success.timestamp,
-            cyclesBalance: optional(candid.Success.cycles_balance, identity),
-            transactions: [], // todo - come back when we need this
-            pinnedChats: optional(candid.Success.pinned_chats, (chat_ids) =>
-                chat_ids.map((u) => u.toString())
-            ),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -842,54 +779,6 @@ function userCanisterGroupSummaryUpdates(summary: ApiUserCanisterGroupChatSummar
     };
 }
 
-function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
-    if ("Group" in candid) {
-        const chatId = candid.Group.chat_id.toString();
-        return {
-            kind: "group_chat",
-            chatId,
-            lastUpdated: candid.Group.last_updated,
-            readByMeUpTo: optional(candid.Group.read_by_me_up_to, identity),
-            latestMessage: optional(candid.Group.latest_message, (ev) => ({
-                index: ev.index,
-                timestamp: ev.timestamp,
-                event: message(ev.event),
-            })),
-            name: optional(candid.Group.name, identity),
-            description: optional(candid.Group.description, identity),
-            latestEventIndex: optional(candid.Group.latest_event_index, identity),
-            avatarBlobReferenceUpdate: optionUpdate(candid.Group.avatar_id, (blobId) => ({
-                blobId,
-                canisterId: chatId,
-            })),
-            notificationsMuted: optional(candid.Group.notifications_muted, identity),
-            memberCount: optional(candid.Group.participant_count, identity),
-            myRole: optional(candid.Group.role, memberRole),
-            mentions: candid.Group.mentions
-                .filter((m) => m.thread_root_message_index.length === 0)
-                .map(mention),
-            ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
-            permissions: optional(candid.Group.permissions, (permissions) =>
-                groupPermissions(permissions)
-            ),
-            affectedEvents: [...candid.Group.affected_events],
-            metrics: optional(candid.Group.metrics, chatMetrics),
-            myMetrics: optional(candid.Group.my_metrics, chatMetrics),
-            public: optional(candid.Group.is_public, identity),
-            latestThreads: candid.Group.latest_threads.map(threadSyncDetailsUpdates),
-            subtype: updatedSubtype(candid.Group.subtype),
-            archived: optional(candid.Group.archived, identity),
-            frozen: optionUpdate(candid.Group.frozen, (_) => true),
-            dateLastPinned: optional(candid.Group.date_last_pinned, identity),
-            dateReadPinned: optional(candid.Group.date_read_pinned, identity),
-        };
-    }
-    if ("Direct" in candid) {
-        return directChatSummaryUpdates(candid.Direct);
-    }
-    throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
-}
-
 function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
     return {
         kind: "direct_chat",
@@ -908,16 +797,6 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
     };
-}
-
-function updatedSubtype(candid: ApiGroupSubtypeUpdate): GroupSubtypeUpdate {
-    if ("NoChange" in candid) {
-        return { kind: "no_change" };
-    } else if ("SetToNone" in candid) {
-        return { kind: "set_to_none" };
-    } else {
-        return { kind: "set_to_some", subtype: apiGroupSubtype(candid.SetToSome) };
-    }
 }
 
 function memberRole(candid: ApiRole): MemberRole {
@@ -943,16 +822,6 @@ function mention(candid: ApiMention): Mention {
         eventIndex: candid.event_index,
         mentionedBy: candid.mentioned_by.toString(),
     };
-}
-
-function chatSummary(candid: ApiChatSummary): ChatSummary {
-    if ("Group" in candid) {
-        return groupChatSummary(candid.Group);
-    }
-    if ("Direct" in candid) {
-        return directChatSummary(candid.Direct);
-    }
-    throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true): GroupChatSummary {
@@ -1017,16 +886,6 @@ function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
         readUpTo: optional(candid.read_up_to, identity),
         latestEventIndex: optional(candid.latest_event, identity) ?? -1,
         latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
-    };
-}
-
-function threadSyncDetailsUpdates(candid: ApiThreadSyncDetails): ThreadSyncDetailsUpdates {
-    return {
-        threadRootMessageIndex: candid.root_message_index,
-        lastUpdated: candid.last_updated,
-        readUpTo: optional(candid.read_up_to, identity),
-        latestEventIndex: optional(candid.latest_event, identity),
-        latestMessageIndex: optional(candid.latest_message, identity),
     };
 }
 

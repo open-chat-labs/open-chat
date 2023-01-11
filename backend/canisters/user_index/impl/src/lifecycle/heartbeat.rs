@@ -10,7 +10,6 @@ use utils::time::SECOND_IN_MS;
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
-    retry_failed_messages::run();
     sync_users_to_open_storage::run();
     sync_events_to_user_index_canisters::run();
     notify_user_principal_migrations::run();
@@ -111,47 +110,6 @@ mod upgrade_canisters {
             from_version,
             to_version,
         });
-    }
-}
-
-mod retry_failed_messages {
-    use super::*;
-
-    const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
-
-    pub fn run() {
-        let messages_to_retry = mutate_state(next_batch);
-        if !messages_to_retry.is_empty() {
-            ic_cdk::spawn(send_to_canisters(messages_to_retry));
-        }
-    }
-
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, UserId)> {
-        let canisters_requiring_upgrade = &runtime_state.data.canisters_requiring_upgrade;
-        // Filter out canisters that are currently being upgraded
-        let filter = |_: &UserId, recipient: &UserId| {
-            let canister_id: CanisterId = (*recipient).into();
-            !canisters_requiring_upgrade.is_in_progress(&canister_id)
-        };
-
-        runtime_state
-            .data
-            .failed_messages_pending_retry
-            .take_oldest(MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT, filter)
-    }
-
-    async fn send_to_canisters(messages_to_retry: Vec<(UserId, UserId)>) {
-        let futures: Vec<_> = messages_to_retry
-            .into_iter()
-            .map(|(sender, recipient)| send_to_canister(sender, recipient))
-            .collect();
-
-        futures::future::join_all(futures).await;
-    }
-
-    async fn send_to_canister(sender: UserId, recipient: UserId) {
-        let args = user_canister::c2c_retry_sending_failed_messages::Args { recipient };
-        let _ = user_canister_c2c_client::c2c_retry_sending_failed_messages(sender.into(), &args).await;
     }
 }
 

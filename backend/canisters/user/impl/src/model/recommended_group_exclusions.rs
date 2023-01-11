@@ -24,7 +24,7 @@ impl RecommendedGroupExclusions {
         self.exclusions.remove(chat_id).is_some()
     }
 
-    pub fn get_all(&self, now: TimestampMillis) -> impl Iterator<Item = &ChatId> {
+    pub fn _get_all(&self, now: TimestampMillis) -> impl Iterator<Item = &ChatId> {
         self.exclusions
             .iter()
             .filter(move |(_, &expiry)| expiry > now)

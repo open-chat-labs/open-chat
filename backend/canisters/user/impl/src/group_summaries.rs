@@ -14,11 +14,6 @@ pub(crate) struct SummariesArgs {
     now: TimestampMillis,
 }
 
-pub(crate) struct Summaries {
-    pub groups: Vec<GroupCanisterGroupChatSummary>,
-    pub upgrades_in_progress: Vec<ChatId>,
-}
-
 pub(crate) struct UpdatesArgs {
     group_index_canister_id: CanisterId,
     updates_since: UpdatesSince,
@@ -31,7 +26,6 @@ pub(crate) struct Updates {
     pub added: Vec<GroupCanisterGroupChatSummary>,
     pub updated: Vec<GroupCanisterGroupChatSummaryUpdates>,
     pub deleted: Vec<DeletedGroupInfo>,
-    pub upgrades_in_progress: Vec<ChatId>,
 }
 
 pub(crate) fn build_summaries_args(disable_cache: bool, now: TimestampMillis, data: &Data) -> SummariesArgs {
@@ -43,23 +37,7 @@ pub(crate) fn build_summaries_args(disable_cache: bool, now: TimestampMillis, da
     }
 }
 
-pub(crate) fn build_updates_args(updates_since: UpdatesSince, now: TimestampMillis, data: &Data) -> UpdatesArgs {
-    let since = updates_since.timestamp;
-    UpdatesArgs {
-        group_index_canister_id: data.group_index_canister_id,
-        updates_since,
-        group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
-        group_chat_ids_with_my_changes: data
-            .group_chats
-            .iter()
-            .filter(|g| g.last_changed_for_my_data > since)
-            .map(|g| g.chat_id)
-            .collect(),
-        now,
-    }
-}
-
-pub(crate) async fn summaries(args: SummariesArgs) -> Result<Summaries, String> {
+pub(crate) async fn summaries(args: SummariesArgs) -> Result<Vec<GroupCanisterGroupChatSummary>, String> {
     let updates_args = UpdatesArgs {
         group_index_canister_id: args.group_index_canister_id,
         updates_since: args
@@ -85,13 +63,10 @@ pub(crate) async fn summaries(args: SummariesArgs) -> Result<Summaries, String> 
         updates.added
     };
 
-    Ok(Summaries {
-        groups,
-        upgrades_in_progress: updates.upgrades_in_progress,
-    })
+    Ok(groups)
 }
 
-pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
+async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
     let group_chat_args_map: HashMap<_, _> = args
         .updates_since
         .group_chats
@@ -116,7 +91,6 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
     let mut added = Vec::new();
     let mut updated = Vec::new();
     let mut deleted = Vec::new();
-    let mut upgrades_in_progress = Vec::new();
     if !all_groups.is_empty() {
         let duration_since_last_sync = if args.updates_since.timestamp == 0 {
             None
@@ -135,31 +109,21 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
             };
 
         let active_groups: HashSet<_> = filter_groups_result.active_groups.into_iter().collect();
-        group_chats_added.retain(|id| {
-            !has_group_been_deleted(&filter_groups_result.deleted_groups, id) && !upgrades_in_progress.contains(id)
-        });
-        group_chats_to_check_for_updates.retain(|(id, _)| {
-            (active_groups.contains(id) && !upgrades_in_progress.contains(id))
-                || args.group_chat_ids_with_my_changes.contains(id)
-        });
+        group_chats_added.retain(|id| !has_group_been_deleted(&filter_groups_result.deleted_groups, id));
+        group_chats_to_check_for_updates
+            .retain(|(id, _)| active_groups.contains(id) || args.group_chat_ids_with_my_changes.contains(id));
 
         let summaries_future = c2c::summaries(group_chats_added);
         let summary_updates_future = c2c::summary_updates(group_chats_to_check_for_updates);
 
         let (s, su) = futures::future::join(summaries_future, summary_updates_future).await;
 
-        added = s;
-        updated = su;
+        added = s.map_err(|(code, msg)| format!("Failed to get summaries. {code:?}: {msg}"))?;
+        updated = su.map_err(|(code, msg)| format!("Failed to get summary updates. {code:?}: {msg}"))?;
         deleted = filter_groups_result.deleted_groups;
-        upgrades_in_progress = filter_groups_result.upgrades_in_progress;
     }
 
-    Ok(Updates {
-        added,
-        updated,
-        deleted,
-        upgrades_in_progress,
-    })
+    Ok(Updates { added, updated, deleted })
 }
 
 fn merge_updates(
@@ -185,9 +149,9 @@ fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> boo
 mod c2c {
     use super::*;
 
-    pub async fn summaries(chat_ids: Vec<ChatId>) -> Vec<GroupCanisterGroupChatSummary> {
+    pub async fn summaries(chat_ids: Vec<ChatId>) -> CallResult<Vec<GroupCanisterGroupChatSummary>> {
         if chat_ids.is_empty() {
-            return Vec::new();
+            return Ok(Vec::new());
         }
 
         let args = group_canister::summary::Args {};
@@ -196,21 +160,25 @@ mod c2c {
             .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
             .collect();
 
-        let responses = futures::future::join_all(futures).await;
+        let responses: CallResult<Vec<group_canister::summary::Response>> =
+            futures::future::join_all(futures).await.into_iter().collect();
 
         let mut summaries = Vec::new();
-        for response in responses.into_iter().flatten() {
+        // Exit if any failed, this ensures we never miss any updates
+        for response in responses? {
             if let group_canister::summary::Response::Success(result) = response {
                 summaries.push(result.summary);
             }
         }
 
-        summaries
+        Ok(summaries)
     }
 
-    pub async fn summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupCanisterGroupChatSummaryUpdates> {
+    pub async fn summary_updates(
+        group_chats: Vec<(ChatId, TimestampMillis)>,
+    ) -> CallResult<Vec<GroupCanisterGroupChatSummaryUpdates>> {
         if group_chats.is_empty() {
-            return Vec::new();
+            return Ok(Vec::new());
         }
 
         async fn get_summary_updates(
@@ -228,15 +196,17 @@ mod c2c {
             })
             .collect();
 
-        let responses = futures::future::join_all(futures).await;
+        let responses: CallResult<Vec<group_canister::summary_updates::Response>> =
+            futures::future::join_all(futures).await.into_iter().collect();
 
         let mut summary_updates = Vec::new();
-        for response in responses.into_iter().flatten() {
+        // Exit if any failed, this ensures we never miss any updates
+        for response in responses? {
             if let group_canister::summary_updates::Response::Success(result) = response {
                 summary_updates.push(result.updates);
             }
         }
 
-        summary_updates
+        Ok(summary_updates)
     }
 }
