@@ -8,7 +8,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
-    import { fly } from "svelte/transition";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -36,7 +35,6 @@
     import { push, replace, querystring } from "svelte-spa-router";
     import { pathParams } from "../../stores/routing";
     import type { RouteParams } from "../../stores/routing";
-    import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import {
         closeNotificationsForChat,
@@ -583,13 +581,15 @@
                 creatingThread = true;
                 replace(`/${$selectedChatId}`);
             }
-            rightPanelHistory.set([
-                {
-                    kind: "message_thread_panel",
-                    threadRootMessageIndex: ev.threadRootMessageIndex,
-                    threadRootMessageId: ev.threadRootMessageId,
-                },
-            ]);
+            tick().then(() => {
+                rightPanelHistory.set([
+                    {
+                        kind: "message_thread_panel",
+                        threadRootMessageIndex: ev.threadRootMessageIndex,
+                        threadRootMessageId: ev.threadRootMessageId,
+                    },
+                ]);
+            });
         }
     }
 
