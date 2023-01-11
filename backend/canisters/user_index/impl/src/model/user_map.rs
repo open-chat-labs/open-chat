@@ -36,7 +36,7 @@ impl UserMap {
 
     // Returns true if the username can be reserved or false if the username is taken
     pub fn reserve_username(&mut self, username: &str) -> bool {
-        !self.username_to_user_id.contains_key(username) && self.reserved_usernames.insert(username.to_owned())
+        !self.username_to_user_id.contains_key(username) && self.reserved_usernames.insert(username.to_string())
     }
 
     pub fn release_username(&mut self, username: &str) {
