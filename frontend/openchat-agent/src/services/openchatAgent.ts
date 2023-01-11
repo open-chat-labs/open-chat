@@ -127,6 +127,8 @@ import {
     ChatStateFull,
     ChatSummary,
     UpdatesResult,
+    DeletedGroupMessageResponse,
+    DeletedDirectMessageResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -506,6 +508,29 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             latestClientEventIndex
         );
+    }
+
+    async getDeletedGroupMessage(
+        chatId: string, 
+        messageId: bigint, 
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse> {
+        const response = await this.getGroupClient(chatId).getDeletedMessage(messageId, threadRootMessageIndex);
+        if (response.kind === "success") {
+            response.content = this.rehydrateMessageContent(response.content);
+        }
+        return response;
+    }
+
+    async getDeletedDirectMessage(
+        userId: string, 
+        messageId: bigint
+    ): Promise<DeletedDirectMessageResponse> {
+        const response = await this.userClient.getDeletedMessage(userId, messageId);
+        if (response.kind === "success") {
+            response.content = this.rehydrateMessageContent(response.content);
+        }
+        return response;
     }
 
     private rehydrateMessageContent(content: MessageContent): MessageContent {

@@ -37,6 +37,7 @@ import {
     User,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
+    DeletedGroupMessageResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -72,6 +73,7 @@ import {
     rulesResponse,
     summaryResponse,
     summaryUpdatesResponse,
+    deletedMessageResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -532,6 +534,17 @@ export class GroupClient extends CandidService implements IGroupClient {
             args
         );
     }
+
+    @profile("groupClient")
+    getDeletedMessage(messageId: bigint, threadRootMessageIndex?: number): Promise<DeletedGroupMessageResponse> {
+        return this.handleResponse(
+            this.groupService.deleted_message({
+                message_id: messageId,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            }),
+            deletedMessageResponse
+        );
+    }    
 
     @profile("groupClient")
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {

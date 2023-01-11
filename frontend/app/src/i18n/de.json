@@ -671,5 +671,6 @@
     "deleteMessageAndReport": "Löschen und melden",
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
     "reason": "Grund",
-    "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat"
+    "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
+    "revealDeletedMessage": "Nachricht enthüllen"
 }

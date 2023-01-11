@@ -37,6 +37,7 @@ import type {
     User,
     SearchGroupChatResponse,
     Logger,
+    DeletedGroupMessageResponse,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -340,6 +341,10 @@ export class CachingGroupClient implements IGroupClient {
             latestEventIndex: undefined,
         };
     }
+
+    getDeletedMessage(messageId: bigint, threadRootMessageIndex?: number): Promise<DeletedGroupMessageResponse> {
+        return this.client.getDeletedMessage(messageId, threadRootMessageIndex);
+    }    
 
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
         return this.client.pinMessage(messageIndex);

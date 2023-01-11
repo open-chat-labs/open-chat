@@ -1138,11 +1138,7 @@ export class OpenChat extends EventTarget {
     ): Promise<boolean> {
         const chat = this._liveState.chatSummaries[chatId];
 
-        if (chat === undefined) {
-            return Promise.resolve(false);
-        }
-
-        if (msg.content.kind !== "deleted_content" || msg.content.deletedBy !== this.user.userId) {
+        if (chat === undefined || !msg.deleted) {
             return Promise.resolve(false);
         }
 
@@ -1167,6 +1163,39 @@ export class OpenChat extends EventTarget {
             .finally(() => {
                 undeletingMessagesStore.delete(msg.messageId);
             });
+    }
+
+    revealDeletedMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex: number | undefined
+    ): Promise<boolean> {
+        const chat = this._liveState.chatSummaries[chatId];
+
+        if (chat === undefined) {
+            return Promise.resolve(false);
+        }
+
+        const result = chat.kind === "group_chat"
+            ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
+            : this.api.getDeletedDirectMessage(chatId, messageId);
+
+        return result
+            .then((resp) => {
+                const success = resp.kind === "success";
+                if (success) {
+                    localMessageUpdates.markContentRevealed(
+                        messageId.toString(),
+                        resp.content
+                    );
+                }
+                return success;
+            })
+            .catch((err) => {
+                this._logger.error("Get deleted message failed: ", err);
+                return false;
+            });
+
     }
 
     selectReaction(
@@ -1953,6 +1982,7 @@ export class OpenChat extends EventTarget {
             reactions: [],
             edited: false,
             forwarded: msg.content.kind !== "giphy_content",
+            deleted: false,
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 

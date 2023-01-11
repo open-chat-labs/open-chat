@@ -671,5 +671,6 @@
     "deleteMessageAndReport": "Elimina e segnala",
     "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
     "reason": "Motivo",
-    "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat"
+    "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat",
+    "revealDeletedMessage": "Rivela messaggio"
 }

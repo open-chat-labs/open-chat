@@ -669,5 +669,6 @@
     "deleteMessageAndReport": "מחק ודווח",
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
     "reason": "סיבה",
-    "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה"
+    "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
+    "revealDeletedMessage": "לחשוף הודעה"
 }

@@ -39,6 +39,7 @@ import type {
     ApiGroupCanisterThreadDetails,
     ApiGroupSubtype,
     ApiMention,
+    ApiDeletedGroupMessageResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -84,6 +85,7 @@ import {
     GroupCanisterThreadDetails,
     GroupSubtype,
     Mention,
+    DeletedGroupMessageResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -92,6 +94,7 @@ import {
     chatMetrics,
     groupPermissions,
     message,
+    messageContent,
     updatedMessage,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
@@ -707,6 +710,31 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
         return { kind: "chat_frozen" };
     }
     throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
+}
+
+export function deletedMessageResponse(candid: ApiDeletedGroupMessageResponse): DeletedGroupMessageResponse {
+    if ("Success" in candid) {
+        return { 
+            kind: "success",
+            content: messageContent(candid.Success.content, "unknown"),
+        };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "caller_not_in_group" };
+    }
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorised" };
+    }
+    if ("MessageNotFound" in candid) {
+        return { kind: "message_not_found" };
+    }
+    if ("MessageNotDeleted" in candid) {
+        return { kind: "message_not_deleted" };
+    }
+    if ("MessageHardDeleted" in candid) {
+        return { kind: "message_hard_deleted" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeletedGroupMessageResponse type received", candid);
 }
 
 export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {

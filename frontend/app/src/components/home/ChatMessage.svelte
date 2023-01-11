@@ -92,28 +92,28 @@
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
     $: userStore = client.userStore;
-    $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
+    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
     $: sender = $userStore[senderId];
     $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
-    $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
-    $: inert = deleted || collapsed;
+    $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
-    $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: canUndelete =
+    $: undeleting = $undeletingMessagesStore.has(msg.messageId);    
+    $: canRevealDeleted = 
+        !undeleting && 
         msg.content.kind === "deleted_content" &&
-        msg.content.deletedBy === user.userId &&
-        $now - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
-        !undeleting;
+            ((canDelete && msg.content.deletedBy !== msg.sender) || 
+                (msg.content.deletedBy === user.userId && $now - Number(msg.content.timestamp) < 5 * 60 * 1000)); // Only allow undeleting for 5 minutes
+    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -434,6 +434,8 @@
                     {timestamp}
                     {me}
                     {confirmed}
+                    deleted={msg.deleted}
+                    {undeleting}
                     {readByThem}
                     {crypto}
                     {chatType}
@@ -452,12 +454,12 @@
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if (!inert || canUndelete) && !readonly}
+            {#if showChatMenu}
                 <ChatMessageMenu
                     {chatId}
                     {senderId}
                     {isProposal}
-                    {inert}
+                    inert={msg.deleted || collapsed}
                     {publicGroup}
                     {confirmed}
                     canShare={canShare()}
@@ -474,7 +476,8 @@
                     {canBlockUser}
                     {canEdit}
                     {canDelete}
-                    {canUndelete}
+                    canUndelete={msg.deleted && msg.content.kind !== "deleted_content"}
+                    {canRevealDeleted}
                     {crypto}
                     translatable={msg.content.kind === "text_content"}
                     {translated}
@@ -486,7 +489,7 @@
             {/if}
         </div>
 
-        {#if !inert && canReact}
+        {#if !collapsed && !msg.deleted && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>

@@ -671,5 +671,6 @@
     "deleteMessageAndReport": "Удалить и пожаловаться",
     "howToBuyToken": "Мне нужна помощь в покупке {token}",
     "reason": "Причина",
-    "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате"
+    "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате",
+    "revealDeletedMessage": "Показать сообщение"
 }

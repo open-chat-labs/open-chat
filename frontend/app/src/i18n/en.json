@@ -669,5 +669,6 @@
     "suspend": "Suspend",
     "deleteMessageAndReport": "Delete and report",
     "reason": "Reason",
-    "expandDeletedMessages": "Expand deleted messages in this chat"
+    "expandDeletedMessages": "Expand deleted messages in this chat",
+    "revealDeletedMessage": "Reveal message"
 }

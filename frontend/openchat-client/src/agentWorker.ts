@@ -88,6 +88,8 @@ import {
     UnsuspendUserResponse,
     ChatStateFull,
     UpdatesResult,
+    DeletedGroupMessageResponse,
+    DeletedDirectMessageResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -270,6 +272,34 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "getUpdatesV2",
             payload: {
                 currentState,
+            },
+        });
+    }
+
+    getDeletedGroupMessage(
+        chatId: string, 
+        messageId: bigint, 
+        threadRootMessageIndex: number | undefined,
+    ): Promise<DeletedGroupMessageResponse> {
+        return this.sendRequest({
+            kind: "getDeletedGroupMessage",
+            payload: {
+                chatId,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    getDeletedDirectMessage(
+        userId: string, 
+        messageId: bigint, 
+    ): Promise<DeletedDirectMessageResponse> {
+        return this.sendRequest({
+            kind: "getDeletedDirectMessage",
+            payload: {
+                userId,
+                messageId,
             },
         });
     }
