@@ -5,6 +5,7 @@ mod events_range;
 mod events_window;
 mod http_request;
 mod invite_code;
+mod local_user_index;
 mod messages_by_message_index;
 mod public_summary;
 mod rules;

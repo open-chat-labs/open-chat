@@ -30,7 +30,6 @@ import type {
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
     ApiMigrateUserPrincipalResponse,
-    ApiGroupSubtype,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
@@ -72,7 +71,6 @@ import {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ThreadSyncDetails,
-    GroupSubtype,
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
@@ -86,6 +84,7 @@ import {
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
+    apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
     groupPermissions,
@@ -316,7 +315,7 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
-    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiJoinGroupResponse type received", candid);
 }
 
 export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {
@@ -868,14 +867,6 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-    };
-}
-
-export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
-    return {
-        kind: "governance_proposals",
-        isNns: subtype.GovernanceProposals.is_nns,
-        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toText(),
     };
 }
 

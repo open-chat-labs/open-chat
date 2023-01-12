@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UserRegistered};
+use local_user_index_canister::{Event, UserRegistered};
 use types::{CanisterId, UserId, Version};
 use user_index_canister::register_user::{Response::*, *};
 
@@ -123,7 +123,7 @@ fn commit(
         .add_user(local_user_index_canister_id, user_id);
 
     runtime_state.data.push_event_to_all_local_user_indexes(
-        UserIndexEvent::UserRegistered(UserRegistered {
+        Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
             username,

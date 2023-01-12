@@ -4,7 +4,9 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserEvent, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use user_canister::Event as UserEvent;
+use user_index_canister::Event as UserIndexEvent;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -53,6 +55,11 @@ impl RuntimeState {
         self.data.notifications_canister_id == caller
     }
 
+    pub fn is_caller_openchat_user(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.global_users.get_by_principal(&caller).is_some()
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
@@ -97,6 +104,8 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
+    #[serde(default)]
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
 }
@@ -131,7 +140,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: CanisterEventSyncQueue::<UserEvent>::default(),
+            user_event_sync_queue: CanisterEventSyncQueue::default(),
+            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             test_mode,
             max_concurrent_canister_upgrades: 10,
         }
