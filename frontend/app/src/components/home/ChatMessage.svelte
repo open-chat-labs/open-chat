@@ -178,6 +178,8 @@
     }
 
     function doubleClickMessage() {
+        if (msg.deleted) return;
+        
         if (me) {
             editMessage();
         } else if (confirmed) {
